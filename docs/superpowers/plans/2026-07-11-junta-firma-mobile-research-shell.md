@@ -23,7 +23,7 @@
 
 ---
 
-### Task R1: Reproducible secure Android project
+### Task 1: Reproducible secure Android project
 
 **Files:**
 - Create: `.gitignore`, `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`
@@ -122,7 +122,7 @@ git commit -m "build: scaffold secure Android research shell"
 
 ---
 
-### Task R2: Typed sanitized observations
+### Task 2: Typed sanitized observations
 
 **Files:**
 - Create: `app/src/main/java/dev/junta/firmamobile/model/AppError.kt`
@@ -188,7 +188,7 @@ git commit -m "feat: add sanitized protocol observations"
 
 ---
 
-### Task R3: Exact Junta origins and safe navigation classification
+### Task 3: Exact Junta origins and safe navigation classification
 
 **Files:**
 - Create: `app/src/main/java/dev/junta/firmamobile/network/AllowedOrigins.kt`
@@ -236,7 +236,7 @@ git commit -m "feat: restrict research shell to Junta origins"
 
 ---
 
-### Task R4: Minimal secure TrustedJuntaWebView and debug probe Activity
+### Task 4: Minimal secure TrustedJuntaWebView and debug probe Activity
 
 **Files:**
 - Create: `app/src/main/java/dev/junta/firmamobile/browser/TrustedJuntaWebView.kt`
@@ -295,7 +295,7 @@ git commit -m "feat: add secure Junta WebView probe"
 
 ---
 
-### Task R5: Document-start MiniApplet metadata bridge
+### Task 5: Document-start MiniApplet metadata bridge
 
 **Files:**
 - Create: `app/src/main/res/raw/afirma_shim.js`
@@ -362,7 +362,7 @@ git commit -m "feat: observe MiniApplet calls at document start"
 
 ---
 
-### Task R6: Install, inspect, and document the real Android 16 flow
+### Task 6: Install, inspect, and document the real Android 16 flow
 
 **Files:**
 - Modify: `docs/protocol-observations.md`
@@ -428,7 +428,7 @@ hash/value, certificate, password, or signature.
 
 ## Phase 1 completion gate
 
-Phase 1 is complete only when all R1–R5 tests/builds pass, debug and release
+Phase 1 is complete only when all Tasks 1–5 tests/builds pass, debug and release
 research-shell APKs build, debug installs/launches on API 36, the real page
 renders under secure policy, no Play/AutoFirma opens, an actual MiniApplet call
 is intercepted before original execution, safe runtime metadata is committed,
