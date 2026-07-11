@@ -42,7 +42,8 @@
 
 **Interfaces:**
 - Produces launcher `.MainActivity` and `@Composable fun AppRoot()`.
-- Produces `debug` and non-debuggable `release` APK variants.
+- Produces installable `debug` and non-debuggable QA `release` APK variants;
+  the latter uses AGP's local debug key until the final external-key release gate.
 - Produces a fail-closed, project-local Termux/aarch64 AAPT2 bootstrap and
   integrity-verification contract; supported desktop hosts keep AGP's Maven AAPT2.
 
@@ -123,9 +124,11 @@ and selection button. This phase does not open the portal from the launcher.
 ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration lintDebug testDebugUnitTest assembleDebug assembleRelease compileDebugAndroidTestKotlin
 ./gradlew :app:dependencyInsight --dependency androidx.core:core-ktx --configuration debugRuntimeClasspath
 aapt dump badging app/build/outputs/apk/debug/app-debug.apk | rg "package: name='dev.junta.firmamobile'|sdkVersion:'26'|targetSdkVersion:'36'"
+apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
 ```
 
-Expected: tasks pass, both APKs exist, package/min/target match.
+Expected: tasks pass, both APKs exist and verify as installable, and
+package/min/target match. The QA release signature is not the final export key.
 
 - [ ] **Step 6: Commit**
 

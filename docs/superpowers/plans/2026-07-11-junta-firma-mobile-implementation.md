@@ -181,6 +181,8 @@ app/src/androidTest/java/dev/junta/firmamobile/ConfigurationStateTest.kt
 **Interfaces:**
 - Produces launcher `dev.junta.firmamobile/.MainActivity` and `@Composable fun AppRoot()`.
 - Establishes dependency coordinates and release/debug build policy for every later task.
+- Produces installable debug and non-debuggable QA release APKs; the QA release
+  uses AGP's local debug key until Task 15 replaces it with the external key.
 - Establishes a verified project-local Termux/aarch64 AAPT2 bootstrap while
   leaving supported desktop hosts on AGP's standard Maven AAPT2.
 
@@ -360,9 +362,11 @@ Run:
 ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration lintDebug testDebugUnitTest assembleDebug assembleRelease compileDebugAndroidTestKotlin
 ./gradlew :app:dependencyInsight --dependency androidx.core:core-ktx --configuration debugRuntimeClasspath
 aapt dump badging app/build/outputs/apk/debug/app-debug.apk | rg "package: name='dev.junta.firmamobile'|sdkVersion:'26'|targetSdkVersion:'36'"
+apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
 ```
 
-Expected: all Gradle tasks pass and all three manifest facts match.
+Expected: all Gradle tasks pass, both APKs verify as installable, and all three
+manifest facts match. The QA release signature is not the final export key.
 
 - [ ] **Step 9: Commit**
 

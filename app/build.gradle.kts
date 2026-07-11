@@ -28,6 +28,9 @@ android {
         }
         release {
             isDebuggable = false
+            // On-device QA builds are installable without repository secrets.
+            // Task 15 replaces this with the external private release key before export.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
