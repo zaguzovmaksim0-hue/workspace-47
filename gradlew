@@ -88,12 +88,28 @@ APP_BASE_NAME=${0##*/}
 # Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
 APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
 
-# Termux cannot execute the x86_64 AAPT2 distributed by the Android Gradle Plugin.
-# A local ARM64 wrapper may be provisioned in this ignored, project-relative path.
-LOCAL_AAPT2=$APP_HOME/.superpowers/sdd/tools/aapt2-16/aapt2
-if [ -x "$LOCAL_AAPT2" ]; then
+# Termux cannot execute the desktop AAPT2 distributed by the Android Gradle Plugin.
+# Verify the project-local ARM64 provision before passing its path to Gradle.
+case ${PREFIX:-} in
+  */com.termux/files/usr)
+    if [ "$( uname -m )" != aarch64 ]; then
+        echo "ERROR: The project-local Termux AAPT2 bootstrap supports aarch64 only." >&2
+        exit 1
+    fi
+    TERMUX_AAPT2_HOME=$APP_HOME/.gradle/termux-aapt2
+    TERMUX_AAPT2_BOOTSTRAP=$APP_HOME/tools/bootstrap-termux-aapt2.sh
+    if [ ! -x "$TERMUX_AAPT2_BOOTSTRAP" ]; then
+        echo "ERROR: Missing executable $TERMUX_AAPT2_BOOTSTRAP" >&2
+        exit 1
+    fi
+    if ! LOCAL_AAPT2=$( "$TERMUX_AAPT2_BOOTSTRAP" verify --root "$TERMUX_AAPT2_HOME" )
+    then
+        echo "Run: ./tools/bootstrap-termux-aapt2.sh bootstrap" >&2
+        exit 1
+    fi
     set -- "-Pandroid.aapt2FromMavenOverride=$LOCAL_AAPT2" "$@"
-fi
+    ;;
+esac
 
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD=maximum

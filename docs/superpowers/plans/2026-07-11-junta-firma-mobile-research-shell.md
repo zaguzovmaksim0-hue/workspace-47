@@ -26,8 +26,9 @@
 ### Task 1: Reproducible secure Android project
 
 **Files:**
-- Create: `.gitignore`, `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`
+- Create: `.gitignore`, `.gitattributes`, `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`
 - Create: `gradle/libs.versions.toml` and Gradle Wrapper pinned to 9.4.1
+- Create: `tools/bootstrap-termux-aapt2.sh`, `docs/building-on-termux.md`
 - Create: `keystore.properties.example`, `app/build.gradle.kts`, `app/proguard-rules.pro`
 - Create: `app/src/main/AndroidManifest.xml`
 - Create: `app/src/main/res/xml/network_security_config.xml`
@@ -42,15 +43,25 @@
 **Interfaces:**
 - Produces launcher `.MainActivity` and `@Composable fun AppRoot()`.
 - Produces `debug` and non-debuggable `release` APK variants.
+- Produces a fail-closed, project-local Termux/aarch64 AAPT2 bootstrap and
+  integrity-verification contract; supported desktop hosts keep AGP's Maven AAPT2.
 
 - [ ] **Step 1: Generate wrapper and pin the build matrix**
 
 ```bash
 gradle wrapper --gradle-version 9.4.1 --distribution-type bin
+./tools/bootstrap-termux-aapt2.sh bootstrap # native Termux/aarch64 only
 ./gradlew --version
 ```
 
-Expected: Gradle 9.4.1 starts on JDK 21.
+Expected: Gradle 9.4.1 starts on JDK 21. On native Termux/aarch64 the tracked
+bootstrap downloads exact packages through configured Termux apt metadata,
+verifies pinned archive/native hashes, and extracts only into ignored
+`.gradle/termux-aapt2/`. Literal `./gradlew` verifies this installation before
+injecting a project-local launcher as the experimental AAPT2 override. The
+launcher pins the runtime even for existing Gradle daemons, and verification
+includes a real resource compile. Missing or corrupt state fails with the
+bootstrap command. No package is installed globally.
 
 Use exact versions in `libs.versions.toml`:
 
@@ -60,7 +71,7 @@ agp = "9.2.1"
 compose-compiler = "2.3.10"
 compose-bom = "2026.06.00"
 activity = "1.13.0"
-core = "1.17.0"
+core = "1.18.0"
 webkit = "1.16.0"
 junit = "4.13.2"
 robolectric = "4.16.1"
@@ -72,6 +83,8 @@ espresso = "3.7.0"
 Root plugins are `com.android.application` 9.2.1 and
 `org.jetbrains.kotlin.plugin.compose` 2.3.10. Do not apply
 `org.jetbrains.kotlin.android`; AGP 9.2 supplies built-in Kotlin.
+`verifyResolvedCoreVersion` must prove that both `androidx.core:core` and
+`androidx.core:core-ktx` resolve to exactly 1.18.0 on `debugRuntimeClasspath`.
 
 - [ ] **Step 2: Add manifest/network/backup policy before behavior**
 
@@ -107,7 +120,8 @@ and selection button. This phase does not open the portal from the launcher.
 - [ ] **Step 5: Validate the build contract**
 
 ```bash
-./gradlew lintDebug testDebugUnitTest assembleDebug assembleRelease compileDebugAndroidTestKotlin
+./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration lintDebug testDebugUnitTest assembleDebug assembleRelease compileDebugAndroidTestKotlin
+./gradlew :app:dependencyInsight --dependency androidx.core:core-ktx --configuration debugRuntimeClasspath
 aapt dump badging app/build/outputs/apk/debug/app-debug.apk | rg "package: name='dev.junta.firmamobile'|sdkVersion:'26'|targetSdkVersion:'36'"
 ```
 
@@ -116,7 +130,7 @@ Expected: tasks pass, both APKs exist, package/min/target match.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add .gitignore settings.gradle.kts build.gradle.kts gradle.properties gradle gradlew gradlew.bat keystore.properties.example app
+git add .gitignore .gitattributes settings.gradle.kts build.gradle.kts gradle.properties gradle gradlew gradlew.bat keystore.properties.example tools docs/building-on-termux.md app
 git commit -m "build: scaffold secure Android research shell"
 ```
 
