@@ -22,21 +22,31 @@ sealed interface CertificateSelectionResult {
     data class Failure(val code: CertificateSelectionErrorCode) : CertificateSelectionResult
 }
 
+interface CertificateGateway {
+    suspend fun currentReference(): StoredCertificateReference?
+
+    suspend fun select(uri: Uri): CertificateSelectionResult
+
+    suspend fun unlock(password: CharArray): CertificateLoadResult
+
+    suspend fun forget()
+}
+
 class CertificateRepository(
     private val documentAccess: CertificateDocumentAccess,
     private val referenceStore: CertificateReferenceStore,
     private val loader: Pkcs12Loader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) {
-    suspend fun currentReference(): StoredCertificateReference? = withContext(ioDispatcher) {
+) : CertificateGateway {
+    override suspend fun currentReference(): StoredCertificateReference? = withContext(ioDispatcher) {
         referenceStore.read()
     }
 
-    suspend fun select(uri: Uri): CertificateSelectionResult = withContext(ioDispatcher) {
+    override suspend fun select(uri: Uri): CertificateSelectionResult = withContext(ioDispatcher) {
         selectOnIo(uri)
     }
 
-    suspend fun unlock(password: CharArray): CertificateLoadResult = withContext(ioDispatcher) {
+    override suspend fun unlock(password: CharArray): CertificateLoadResult = withContext(ioDispatcher) {
         val reference = try {
             referenceStore.read()
         } catch (cancellation: CancellationException) {
@@ -78,7 +88,7 @@ class CertificateRepository(
         result
     }
 
-    suspend fun forget() = withContext(ioDispatcher) {
+    override suspend fun forget() = withContext(ioDispatcher) {
         val reference = referenceStore.read()
         referenceStore.clear()
         if (reference != null) {
