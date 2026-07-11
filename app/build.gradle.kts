@@ -84,6 +84,9 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.bouncycastle.provider)
+    testImplementation(libs.bouncycastle.pkix)
 
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
