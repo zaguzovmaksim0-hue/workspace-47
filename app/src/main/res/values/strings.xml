@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Junta Firma Mobile</string>
+    <string name="unofficial_disclosure">Cliente no oficial para uso personal</string>
+    <string name="certificate_title">Certificado digital</string>
+    <string name="certificate_copy">Selecciona tu archivo .p12 o .pfx.</string>
+    <string name="privacy_copy">El archivo y la contraseña no se enviarán a terceros.</string>
+    <string name="select_certificate">Seleccionar certificado</string>
+    <string name="certificate_selection_phase_two">La selección de certificados estará disponible en la fase 2.</string>
+</resources>
