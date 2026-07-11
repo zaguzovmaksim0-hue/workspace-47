@@ -33,6 +33,9 @@ enum class CertificateErrorCode {
     CERTIFICATE_NOT_YET_VALID,
     KEY_USAGE_NOT_PERMITTED,
     KEY_CERTIFICATE_MISMATCH,
+    NO_CERTIFICATE_SELECTED,
+    DOCUMENT_UNAVAILABLE,
+    REFERENCE_STORAGE_FAILURE,
 }
 
 sealed interface CertificateLoadResult {
