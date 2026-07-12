@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.browser
 
+import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
@@ -32,6 +33,8 @@ interface BrowserNavigationCallbacks {
     fun onNavigationBlocked(reason: NavigationBlockReason)
 
     fun onBrowserError(error: BrowserErrorCode)
+
+    fun onTopLevelUrlChanged(url: String) = Unit
 }
 
 class JuntaWebViewClient(
@@ -76,6 +79,14 @@ class JuntaWebViewClient(
                 true
             }
         }
+
+    override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+        callbacks.onTopLevelUrlChanged(url)
+    }
+
+    override fun onPageFinished(view: WebView, url: String) {
+        callbacks.onTopLevelUrlChanged(url)
+    }
 
     override fun onReceivedSslError(
         view: WebView,

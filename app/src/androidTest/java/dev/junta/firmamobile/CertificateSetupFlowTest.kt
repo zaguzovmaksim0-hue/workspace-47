@@ -2,6 +2,7 @@ package dev.junta.firmamobile
 
 import android.net.Uri
 import android.util.Base64
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -52,6 +53,11 @@ class CertificateSetupFlowTest {
 
         TestCertificateDependencies.install(repository, session).use {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                rule.onNodeWithContentDescription("Contraseña del certificado")
+                    .performScrollTo()
+                    .assertIsDisplayed()
+                assertSecureFlag(scenario, expected = true)
+
                 enterPassword("wrong-password")
                 waitForText(
                     "La contraseña no es correcta o el archivo PKCS#12 no es válido.",
@@ -60,18 +66,20 @@ class CertificateSetupFlowTest {
                     "La contraseña no es correcta o el archivo PKCS#12 no es válido.",
                 ).performScrollTo().assertIsDisplayed()
                 rule.onNodeWithText("wrong-password").assertDoesNotExist()
+                assertSecureFlag(scenario, expected = true)
 
                 enterPassword(TEST_PASSPHRASE)
                 waitForText("Certificado encontrado")
                 rule.onNodeWithText("Certificado encontrado")
                     .performScrollTo()
                     .assertIsDisplayed()
-                rule.onNodeWithText("Persona de Prueba", substring = true)
+                rule.onNodeWithText("Titular: Persona de Prueba", substring = true)
                     .performScrollTo()
                     .assertIsDisplayed()
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
+                assertSecureFlag(scenario, expected = false)
 
                 scenario.recreate()
                 rule.onNodeWithContentDescription("Contraseña del certificado")
@@ -80,9 +88,11 @@ class CertificateSetupFlowTest {
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Locked)
                 }
+                assertSecureFlag(scenario, expected = true)
 
                 enterPassword(TEST_PASSPHRASE)
                 waitForText("Certificado encontrado")
+                assertSecureFlag(scenario, expected = false)
                 rule.onNodeWithText("Bloquear certificado")
                     .performScrollTo()
                     .performClick()
@@ -92,6 +102,7 @@ class CertificateSetupFlowTest {
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Locked)
                 }
+                assertSecureFlag(scenario, expected = true)
             }
         }
     }
@@ -108,6 +119,18 @@ class CertificateSetupFlowTest {
     private fun waitForText(text: String) {
         rule.waitUntil(timeoutMillis = 15_000) {
             rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun assertSecureFlag(
+        scenario: ActivityScenario<MainActivity>,
+        expected: Boolean,
+    ) {
+        scenario.onActivity { activity ->
+            val isSecure = activity.window.attributes.flags and FLAG_SECURE != 0
+            check(isSecure == expected) {
+                "FLAG_SECURE expected=$expected actual=$isSecure"
+            }
         }
     }
 

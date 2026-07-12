@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="protocol_probe_root" type="id" />
+    <item name="protocol_probe_status" type="id" />
+    <item name="protocol_probe_webview" type="id" />
+</resources>

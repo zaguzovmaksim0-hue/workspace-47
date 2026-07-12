@@ -117,6 +117,18 @@ class JuntaWebViewClientTest {
         assertTrue(logger.exportText().contains("event=SAFE_BROWSING_BLOCKED"))
     }
 
+    @Test
+    fun topLevelPageLifecycleUpdatesAddressWithoutLoggingTheUrl() {
+        val rawUrl =
+            "https://www.juntadeandalucia.es/path?secret-canary=value#fragment"
+
+        client.onPageStarted(webView, rawUrl, null)
+        client.onPageFinished(webView, rawUrl)
+
+        assertEquals(listOf("url:$rawUrl", "url:$rawUrl"), callbacks.events)
+        assertFalse(logger.exportText().contains("secret-canary"))
+    }
+
     private fun request(rawUrl: String) = object : WebResourceRequest {
         override fun getUrl(): Uri = Uri.parse(rawUrl)
         override fun isForMainFrame(): Boolean = true
@@ -143,6 +155,10 @@ class JuntaWebViewClientTest {
 
         override fun onBrowserError(error: BrowserErrorCode) {
             events += "error:${error.name}"
+        }
+
+        override fun onTopLevelUrlChanged(url: String) {
+            events += "url:$url"
         }
     }
 

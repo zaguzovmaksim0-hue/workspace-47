@@ -10,16 +10,27 @@ internal interface WebViewStateTarget {
     fun saveState(state: Bundle): Boolean
 
     fun loadUrl(url: String)
+
+    fun currentUrl(): String?
 }
 
 class WebViewStateHolder(savedInstanceState: Bundle?) {
     private var pendingHistory: Bundle? = savedInstanceState?.getBundle(STATE_KEY)
 
-    fun restoreOrLoad(webView: WebView): Boolean = restoreOrLoad(AndroidTarget(webView))
+    fun restoreOrLoad(
+        webView: WebView,
+        onRestoredUrl: (String) -> Unit = {},
+    ): Boolean = restoreOrLoad(AndroidTarget(webView), onRestoredUrl)
 
-    internal fun restoreOrLoad(target: WebViewStateTarget): Boolean {
+    internal fun restoreOrLoad(
+        target: WebViewStateTarget,
+        onRestoredUrl: (String) -> Unit = {},
+    ): Boolean {
         val history = pendingHistory.also { pendingHistory = null }
-        if (history != null && target.restoreState(history)) return true
+        if (history != null && target.restoreState(history)) {
+            target.currentUrl()?.let(onRestoredUrl)
+            return true
+        }
 
         target.loadUrl(JuntaOriginPolicy.START_URL)
         return false
@@ -58,6 +69,9 @@ class WebViewStateHolder(savedInstanceState: Bundle?) {
         override fun loadUrl(url: String) {
             webView.loadUrl(url)
         }
+
+        override fun currentUrl(): String? =
+            webView.copyBackForwardList().currentItem?.url ?: webView.url
     }
 
     companion object {

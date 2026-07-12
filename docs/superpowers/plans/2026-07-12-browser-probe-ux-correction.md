@@ -110,6 +110,7 @@ says the signing branch remains unknown.
 - Create: `app/src/test/java/dev/junta/firmamobile/ui/BrowserWindowInsetsTest.kt`
 - Create: `app/src/test/java/dev/junta/firmamobile/ui/SensitiveWindowProtectionTest.kt`
 - Modify: `app/src/test/java/dev/junta/firmamobile/browser/JuntaWebViewClientTest.kt`
+- Modify: `app/src/test/java/dev/junta/firmamobile/browser/WebViewStateHolderTest.kt`
 - Modify: `app/src/androidTest/java/dev/junta/firmamobile/AppLaunchTest.kt`
 - Modify: `app/src/androidTest/java/dev/junta/firmamobile/CertificateSetupFlowTest.kt`
 - Modify: `app/src/androidTest/java/dev/junta/firmamobile/browser/ProtocolProbeInstrumentedTest.kt`
@@ -121,7 +122,7 @@ says the signing branch remains unknown.
 ```kotlin
 object BrowserWindowInsetsPolicy {
     @Composable fun current(): WindowInsets
-    fun install(window: Window, root: View)
+    fun install(root: View)
 }
 
 object BrowserAddressPresentation {
@@ -129,7 +130,12 @@ object BrowserAddressPresentation {
 }
 
 @Composable
-fun BrowserAddressBar(currentUrl: String, onSubmit: (String) -> Unit)
+fun BrowserAddressBar(
+    currentUrl: String,
+    editing: Boolean,
+    onEditingChange: (Boolean) -> Unit,
+    onSubmit: (String) -> Unit,
+)
 
 object WindowSecureFlagPolicy {
     fun apply(window: Window, sensitive: Boolean)
@@ -296,6 +302,7 @@ production code until the failure is for the missing behavior.
 - Create: `app/src/main/java/dev/junta/firmamobile/ui/SensitiveWindowProtection.kt`
 - Modify: `app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt`
 - Modify: `app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt`
+- Modify: `app/src/main/java/dev/junta/firmamobile/browser/WebViewStateHolder.kt`
 - Modify: `app/src/main/java/dev/junta/firmamobile/MainActivity.kt`
 - Modify: `app/src/main/AndroidManifest.xml`
 - Modify: `app/src/main/res/values/strings.xml`
@@ -303,6 +310,7 @@ production code until the failure is for the missing behavior.
   `app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt`,
   `app/src/debug/AndroidManifest.xml`
 - Create: `app/src/debug/res/values/ids.xml`
+- Create: `app/src/debug/res/values/strings.xml`
 
 **Interfaces:**
 
@@ -425,6 +433,11 @@ override fun onPageFinished(view: WebView, url: String) {
 `BrowserScreen` stores the callback value in non-saveable Compose state. It
 does not call `SanitizedLogger` with the URL.
 
+Extend `WebViewStateHolder.restoreOrLoad` with an optional UI-only callback.
+After a successful restore, publish
+`webView.copyBackForwardList().currentItem?.url ?: webView.url`; do not alter
+the saved Bundle key, history contents, or fallback start URL.
+
 - [ ] **Step 4: Scope the secure window flag to password input**
 
 Create `SensitiveWindowProtection.kt`:
@@ -472,6 +485,11 @@ In `ProtocolProbeActivity`:
 - update it from a new UI callback in `ProtocolProbeWebViewClient`;
 - never pass it to `ProtocolObservationRecorder` or `SanitizedLogger`.
 
+Keep the complete sanitized observation text in a vertically scrollable
+`TextView` capped at 144 dp. Assign stable debug IDs to that view and the
+WebView; instrumentation must set a long synthetic report and assert the
+status remains below half the root while the WebView retains positive height.
+
 Set `android:windowSoftInputMode="adjustResize"` on both `MainActivity` and the
 debug probe manifest entry. Extend probe instrumentation to dispatch synthetic
 navigation/IME insets to `R.id.protocol_probe_root` and verify max/no
@@ -488,6 +506,7 @@ document-start shim behavior.
   --tests '*BrowserWindowInsetsTest' \
   --tests '*SensitiveWindowProtectionTest' \
   --tests '*JuntaWebViewClientTest' \
+  --tests '*WebViewStateHolderTest' \
   compileDebugAndroidTestKotlin \
   --console=plain
 ```
@@ -623,6 +642,7 @@ git add \
   app/src/main/AndroidManifest.xml \
   app/src/main/java/dev/junta/firmamobile/MainActivity.kt \
   app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt \
+  app/src/main/java/dev/junta/firmamobile/browser/WebViewStateHolder.kt \
   app/src/main/java/dev/junta/firmamobile/ui/BrowserAddressBar.kt \
   app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt \
   app/src/main/java/dev/junta/firmamobile/ui/BrowserWindowInsets.kt \
@@ -631,10 +651,12 @@ git add \
   app/src/debug/AndroidManifest.xml \
   app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt \
   app/src/debug/res/values/ids.xml \
+  app/src/debug/res/values/strings.xml \
   app/src/test/java/dev/junta/firmamobile/ui/BrowserScreenTest.kt \
   app/src/test/java/dev/junta/firmamobile/ui/BrowserWindowInsetsTest.kt \
   app/src/test/java/dev/junta/firmamobile/ui/SensitiveWindowProtectionTest.kt \
   app/src/test/java/dev/junta/firmamobile/browser/JuntaWebViewClientTest.kt \
+  app/src/test/java/dev/junta/firmamobile/browser/WebViewStateHolderTest.kt \
   app/src/androidTest/java/dev/junta/firmamobile/AppLaunchTest.kt \
   app/src/androidTest/java/dev/junta/firmamobile/CertificateSetupFlowTest.kt \
   app/src/androidTest/java/dev/junta/firmamobile/browser/ProtocolProbeInstrumentedTest.kt

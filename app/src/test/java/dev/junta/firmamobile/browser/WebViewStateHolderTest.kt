@@ -46,6 +46,28 @@ class WebViewStateHolderTest {
     }
 
     @Test
+    fun restoredHistoryPublishesItsActualCurrentUrl() {
+        val restoredUrl = "https://ssoweb.juntadeandalucia.es/restored"
+        val saved = Bundle().apply {
+            putBundle(WebViewStateHolder.STATE_KEY, Bundle())
+        }
+        val target = FakeTarget(
+            restoreResult = true,
+            currentUrlValue = restoredUrl,
+        )
+        var publishedUrl: String? = null
+
+        assertTrue(
+            WebViewStateHolder(saved).restoreOrLoad(target) { url ->
+                publishedUrl = url
+            },
+        )
+
+        assertEquals(restoredUrl, publishedUrl)
+        assertTrue(target.loadedUrls.isEmpty())
+    }
+
+    @Test
     fun failedRestoreFallsBackToTheExactStartUrl() {
         val saved = Bundle().apply {
             putBundle(WebViewStateHolder.STATE_KEY, Bundle())
@@ -82,6 +104,7 @@ class WebViewStateHolderTest {
     private class FakeTarget(
         private val restoreResult: Boolean = false,
         private val saveResult: Boolean = false,
+        private val currentUrlValue: String? = null,
     ) : WebViewStateTarget {
         var restoredState: Bundle? = null
         val loadedUrls = mutableListOf<String>()
@@ -95,6 +118,8 @@ class WebViewStateHolderTest {
             state.putString("saved", "yes")
             return saveResult
         }
+
+        override fun currentUrl(): String? = currentUrlValue
 
         override fun loadUrl(url: String) {
             loadedUrls += url

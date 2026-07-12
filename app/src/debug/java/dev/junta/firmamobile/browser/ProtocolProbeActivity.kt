@@ -5,8 +5,10 @@ import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.text.TextUtils
+import android.text.method.ScrollingMovementMethod
+import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.webkit.SafeBrowsingResponse
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
@@ -14,52 +16,113 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.webkit.WebMessageCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
+import dev.junta.firmamobile.R
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
+import dev.junta.firmamobile.ui.BrowserAddressPresentation
+import dev.junta.firmamobile.ui.BrowserWindowInsetsPolicy
 
 class ProtocolProbeActivity : ComponentActivity() {
     private lateinit var webView: TrustedJuntaWebView
     private lateinit var statusView: TextView
+    private lateinit var hostView: TextView
+    private lateinit var urlDetailsView: TextView
+    private lateinit var detailsButton: Button
     private var bridgeAttachment: WebMessageBridgeAttachment? = null
     private var probeListenerAttached = false
+    private var detailsExpanded = false
+    private var currentUrl = JuntaOriginPolicy.START_URL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        enableEdgeToEdge()
 
         statusView = TextView(this).apply {
+            id = R.id.protocol_probe_status
             text = STATUS_STARTING
+            maxHeight = dp(PROBE_STATUS_MAX_HEIGHT_DP)
+            isVerticalScrollBarEnabled = true
+            movementMethod = ScrollingMovementMethod.getInstance()
             setPadding(dp(16), dp(12), dp(16), dp(12))
         }
-        webView = TrustedJuntaWebView(this)
-        setContentView(
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                addView(
-                    statusView,
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ),
-                )
-                addView(
-                    webView,
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        0,
-                        1f,
-                    ),
-                )
-            },
-        )
+        hostView = TextView(this).apply {
+            text = BrowserAddressPresentation.hostOf(currentUrl)
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            setPadding(dp(16), dp(8), dp(8), dp(8))
+        }
+        detailsButton = Button(this).apply {
+            text = getString(R.string.browser_probe_details)
+            setOnClickListener { toggleDetails() }
+        }
+        urlDetailsView = TextView(this).apply {
+            visibility = View.GONE
+            maxLines = 1
+            setHorizontallyScrolling(true)
+            setTextIsSelectable(true)
+            setPadding(dp(16), dp(4), dp(16), dp(8))
+        }
+        webView = TrustedJuntaWebView(this).apply {
+            id = R.id.protocol_probe_webview
+        }
+        val root = LinearLayout(this).apply {
+            id = R.id.protocol_probe_root
+            orientation = LinearLayout.VERTICAL
+            addView(
+                LinearLayout(this@ProtocolProbeActivity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    addView(
+                        hostView,
+                        LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
+                    )
+                    addView(
+                        detailsButton,
+                        LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ),
+                    )
+                },
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            addView(
+                urlDetailsView,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            addView(
+                statusView,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            addView(
+                webView,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    0,
+                    1f,
+                ),
+            )
+        }
+        BrowserWindowInsetsPolicy.install(root)
+        setContentView(root)
 
         val logger = SanitizedLogger()
         val recorder = ProtocolObservationRecorder(logger) { safeText ->
@@ -76,6 +139,7 @@ class ProtocolProbeActivity : ComponentActivity() {
             onSafeStatus = { safeStatus ->
                 statusView.text = recorder.exportText().ifBlank { safeStatus }
             },
+            onUrlChanged = ::updatePageUrl,
         )
         bridgeAttachment = WebMessageBridge(
             logger = logger,
@@ -90,6 +154,25 @@ class ProtocolProbeActivity : ComponentActivity() {
             return
         }
         webView.loadUrl(JuntaOriginPolicy.START_URL)
+    }
+
+    private fun toggleDetails() {
+        detailsExpanded = !detailsExpanded
+        if (detailsExpanded) {
+            urlDetailsView.text = currentUrl
+            urlDetailsView.visibility = View.VISIBLE
+            detailsButton.text = getString(R.string.browser_probe_hide_details)
+        } else {
+            urlDetailsView.text = ""
+            urlDetailsView.visibility = View.GONE
+            detailsButton.text = getString(R.string.browser_probe_details)
+        }
+    }
+
+    private fun updatePageUrl(url: String) {
+        currentUrl = url
+        hostView.text = BrowserAddressPresentation.hostOf(url)
+        if (detailsExpanded) urlDetailsView.text = url
     }
 
     private fun attachOriginRestrictedProbe(recorder: ProtocolObservationRecorder): Boolean {
@@ -132,6 +215,7 @@ class ProtocolProbeActivity : ComponentActivity() {
         private const val STATUS_STARTING = "Preparando observación segura…"
         private const val STATUS_WAITING = "Esperando una llamada MiniApplet…"
         private const val STATUS_INCOMPATIBLE = "WebView incompatible con observación segura."
+        private const val PROBE_STATUS_MAX_HEIGHT_DP = 144
     }
 }
 
@@ -139,6 +223,7 @@ private class ProtocolProbeWebViewClient(
     private val recorder: ProtocolObservationRecorder,
     private val logger: SanitizedLogger,
     private val onSafeStatus: (String) -> Unit,
+    private val onUrlChanged: (String) -> Unit,
     private val navigationPolicy: JuntaNavigationPolicy = JuntaNavigationPolicy(),
 ) : WebViewClient() {
     @Volatile
@@ -203,10 +288,12 @@ private class ProtocolProbeWebViewClient(
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         topLevelOriginHost = trustedHostFor(url)
+        onUrlChanged(url)
     }
 
     override fun onPageFinished(view: WebView, url: String) {
         topLevelOriginHost = trustedHostFor(url)
+        onUrlChanged(url)
         onSafeStatus("Página Junta cargada. Esperando una llamada MiniApplet…")
     }
 

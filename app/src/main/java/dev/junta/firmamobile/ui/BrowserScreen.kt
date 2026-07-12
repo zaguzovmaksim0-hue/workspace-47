@@ -9,9 +9,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -32,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,6 +50,7 @@ import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
 import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.JuntaWebViewClient
 import dev.junta.firmamobile.browser.NavigationBlockReason
+import dev.junta.firmamobile.browser.NavigationDecision
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
@@ -69,10 +76,12 @@ fun BrowserScreen(
     val webViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
     val bridgeRef = remember { AtomicReference<WebMessageBridgeAttachment?>() }
     val discardHistory = remember { AtomicBoolean(false) }
+    val navigationPolicy = remember { JuntaNavigationPolicy() }
     var pendingRequest by remember { mutableStateOf<AfirmaRequest?>(null) }
     var blockedReason by remember { mutableStateOf<NavigationBlockReason?>(null) }
     var browserError by remember { mutableStateOf<BrowserErrorCode?>(null) }
     var compatibilityError by remember { mutableStateOf(false) }
+    var currentUrl by remember { mutableStateOf(JuntaOriginPolicy.START_URL) }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
         pendingRequest = request
@@ -92,12 +101,46 @@ fun BrowserScreen(
             override fun onBrowserError(error: BrowserErrorCode) {
                 browserError = error
             }
+
+            override fun onTopLevelUrlChanged(url: String) {
+                currentUrl = url
+            }
         }
     }
 
     fun goBack() {
         val webView = webViewRef.get()
         if (webView?.canGoBack() == true) webView.goBack() else onExitBrowser()
+    }
+
+    fun submitAddress(rawAddress: String) {
+        val candidate = rawAddress.trim()
+        val target = try {
+            Uri.parse(candidate)
+        } catch (_: Exception) {
+            null
+        }
+        if (target == null || target.isOpaque ||
+            !target.scheme.equals("https", ignoreCase = true) ||
+            target.encodedUserInfo != null || target.host.isNullOrBlank()
+        ) {
+            blockedReason = NavigationBlockReason.INVALID_URL
+            return
+        }
+        when (val decision = navigationPolicy.decide(candidate, currentUrl)) {
+            NavigationDecision.AllowInWebView -> {
+                browserError = null
+                blockedReason = null
+                webViewRef.get()?.loadUrl(candidate)
+            }
+            is NavigationDecision.OpenExternal -> callbacks.openExternal(decision.uri)
+            is NavigationDecision.HandleAfirma -> {
+                blockedReason = NavigationBlockReason.INVALID_URL
+            }
+            is NavigationDecision.Block -> {
+                blockedReason = decision.reason
+            }
+        }
     }
 
     BackHandler(onBack = ::goBack)
@@ -114,11 +157,14 @@ fun BrowserScreen(
     }
 
     BrowserLayout(
+        currentUrl = currentUrl,
         certificateOwner = certificateState.summary.ownerName,
+        onAddressSubmitted = ::submitAddress,
         onBack = ::goBack,
         onHome = {
             browserError = null
             blockedReason = null
+            currentUrl = JuntaOriginPolicy.START_URL
             webViewRef.get()?.loadUrl(JuntaOriginPolicy.START_URL)
         },
         onReload = {
@@ -182,7 +228,7 @@ fun BrowserScreen(
                         val client = JuntaWebViewClient(
                             callbacks = callbacks,
                             logger = logger,
-                            navigationPolicy = JuntaNavigationPolicy(),
+                            navigationPolicy = navigationPolicy,
                         )
                         webView.webViewClient = client
                         val attachment = WebMessageBridge(
@@ -197,7 +243,9 @@ fun BrowserScreen(
                         }
                         webViewRef.set(webView)
                         onWebViewChanged(webView)
-                        stateHolder.restoreOrLoad(webView)
+                        stateHolder.restoreOrLoad(webView) { restoredUrl ->
+                            currentUrl = restoredUrl
+                        }
                     }
                 },
                 modifier = Modifier
@@ -220,6 +268,9 @@ fun BrowserScreen(
 @Composable
 internal fun BrowserLayout(
     certificateOwner: String,
+    currentUrl: String = JuntaOriginPolicy.START_URL,
+    browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(),
+    onAddressSubmitted: (String) -> Unit = {},
     onBack: () -> Unit,
     onHome: () -> Unit,
     onReload: () -> Unit,
@@ -230,14 +281,30 @@ internal fun BrowserLayout(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     var confirmClearSession by remember { mutableStateOf(false) }
+    var addressEditing by remember { mutableStateOf(false) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.browser_title)) },
+                title = {
+                    BrowserAddressBar(
+                        currentUrl = currentUrl,
+                        editing = addressEditing,
+                        onEditingChange = { addressEditing = it },
+                        onSubmit = onAddressSubmitted,
+                    )
+                },
+                expandedHeight = BrowserToolbarHeight,
+                windowInsets = browserInsets.only(
+                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+                ),
+                modifier = Modifier.testTag(BROWSER_TOOLBAR_TAG),
                 navigationIcon = {
                     IconButton(
-                        onClick = onBack,
+                        onClick = {
+                            if (addressEditing) addressEditing = false else onBack()
+                        },
                         modifier = Modifier.semantics {
                             contentDescription = "Atrás"
                         },
@@ -247,20 +314,29 @@ internal fun BrowserLayout(
                 },
                 actions = {
                     IconButton(
-                        onClick = onHome,
+                        onClick = {
+                            addressEditing = false
+                            onHome()
+                        },
                         modifier = Modifier.semantics {
                             contentDescription = "Inicio"
                         },
                     ) { Text("⌂") }
                     IconButton(
-                        onClick = onReload,
+                        onClick = {
+                            addressEditing = false
+                            onReload()
+                        },
                         modifier = Modifier.semantics {
                             contentDescription = "Recargar"
                         },
                     ) { Text("↻") }
                     Box {
                         IconButton(
-                            onClick = { menuExpanded = true },
+                            onClick = {
+                                addressEditing = false
+                                menuExpanded = true
+                            },
                             modifier = Modifier.semantics {
                                 contentDescription = "Más opciones"
                             },
@@ -296,7 +372,16 @@ internal fun BrowserLayout(
             )
         },
         bottomBar = {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                modifier = Modifier
+                    .testTag(BROWSER_BOTTOM_BAR_TAG)
+                    .windowInsetsPadding(
+                        browserInsets.only(
+                            WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
+                        ),
+                    ),
+            ) {
                 Text(
                     text = stringResource(R.string.browser_certificate_status, certificateOwner),
                     style = MaterialTheme.typography.bodyMedium,
@@ -310,7 +395,11 @@ internal fun BrowserLayout(
         content(
             Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .consumeWindowInsets(padding)
+                .windowInsetsPadding(
+                    browserInsets.only(WindowInsetsSides.Horizontal),
+                ),
         )
     }
 

@@ -1,5 +1,8 @@
 package dev.junta.firmamobile
 
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
+import android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+import android.view.WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -17,7 +20,7 @@ class AppLaunchTest {
     @Test
     fun showsRequiredFirstRunCopy() {
         TestCertificateDependencies.install().use {
-            ActivityScenario.launch(MainActivity::class.java).use {
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 rule.onNodeWithText("Junta Firma Mobile").assertIsDisplayed()
                 rule.onNodeWithText("Cliente no oficial para uso personal").assertIsDisplayed()
                 rule.onNodeWithText("Certificado digital").assertIsDisplayed()
@@ -25,6 +28,13 @@ class AppLaunchTest {
                 rule.onNodeWithText("El archivo y la contraseña no se enviarán a terceros.")
                     .assertIsDisplayed()
                 rule.onNodeWithText("Seleccionar certificado").assertIsDisplayed()
+                scenario.onActivity { activity ->
+                    check(activity.window.attributes.flags and FLAG_SECURE == 0)
+                    check(
+                        activity.window.attributes.softInputMode and
+                            SOFT_INPUT_MASK_ADJUST == SOFT_INPUT_ADJUST_RESIZE,
+                    )
+                }
             }
         }
     }

@@ -1,13 +1,23 @@
 package dev.junta.firmamobile.ui
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import org.junit.Rule
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -42,7 +52,7 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithText("Portal Junta de Andalucía").assertIsDisplayed()
+        rule.onNodeWithText("www.juntadeandalucia.es").assertIsDisplayed()
         rule.onNodeWithText("Certificado: Persona de Prueba").assertIsDisplayed()
         rule.onNodeWithText("contenido-web").assertIsDisplayed()
 
@@ -63,5 +73,166 @@ class BrowserScreenTest {
         rule.runOnIdle { check("clear" !in events) }
         rule.onNodeWithText("Confirmar cierre").performClick()
         rule.runOnIdle { check(events.last() == "clear") }
+    }
+
+    @Test
+    fun longAddressUsesOneLineHostAndFullUrlOnlyWhileEditing() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserLayout(
+                    currentUrl = LONG_URL,
+                    certificateOwner = "Persona de Prueba",
+                    browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
+                    onAddressSubmitted = {},
+                    onBack = {},
+                    onHome = {},
+                    onReload = {},
+                    onChangeCertificate = {},
+                    onLockCertificate = {},
+                    onClearSession = {},
+                ) { modifier ->
+                    Text(
+                        text = "contenido-web",
+                        modifier = modifier.testTag(BROWSER_CONTENT_TAG),
+                    )
+                }
+            }
+        }
+
+        rule.onNodeWithText("www.juntadeandalucia.es").assertIsDisplayed()
+        rule.onNodeWithText(LONG_URL).assertDoesNotExist()
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(64.dp)
+
+        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
+
+        rule.onNodeWithText(LONG_URL).assertIsDisplayed()
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(64.dp)
+    }
+
+    @Test
+    fun browserBottomChromeReservesInjectedNavigationInset() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserLayout(
+                    currentUrl = LONG_URL,
+                    certificateOwner = "Persona de Prueba",
+                    browserInsets = WindowInsets(bottom = 96.dp),
+                    onAddressSubmitted = {},
+                    onBack = {},
+                    onHome = {},
+                    onReload = {},
+                    onChangeCertificate = {},
+                    onLockCertificate = {},
+                    onClearSession = {},
+                ) { modifier ->
+                    Text(
+                        text = "contenido-web",
+                        modifier = modifier.testTag(BROWSER_CONTENT_TAG),
+                    )
+                }
+            }
+        }
+
+        rule.onNodeWithTag(BROWSER_BOTTOM_BAR_TAG).assertHeightIsAtLeast(96.dp)
+        rule.onNodeWithTag(BROWSER_CONTENT_TAG).assertIsDisplayed()
+        val contentBounds = rule.onNodeWithTag(BROWSER_CONTENT_TAG)
+            .fetchSemanticsNode().boundsInRoot
+        val bottomBarBounds = rule.onNodeWithTag(BROWSER_BOTTOM_BAR_TAG)
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(contentBounds.bottom <= bottomBarBounds.top)
+    }
+
+    @Test
+    fun safeTopInsetIsAddedOnceAndEditingDoesNotChangeChromeHeight() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserLayout(
+                    currentUrl = LONG_URL,
+                    certificateOwner = "Persona de Prueba",
+                    browserInsets = WindowInsets(top = 24.dp),
+                    onAddressSubmitted = {},
+                    onBack = {},
+                    onHome = {},
+                    onReload = {},
+                    onChangeCertificate = {},
+                    onLockCertificate = {},
+                    onClearSession = {},
+                ) { modifier ->
+                    Text("contenido-web", modifier.testTag(BROWSER_CONTENT_TAG))
+                }
+            }
+        }
+
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(88.dp)
+        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(88.dp)
+    }
+
+    @Test
+    fun toolbarActionLeavesEditModeAndReturnsToHostOnlyDisplay() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserLayout(
+                    currentUrl = LONG_URL,
+                    certificateOwner = "Persona de Prueba",
+                    browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
+                    onAddressSubmitted = {},
+                    onBack = {},
+                    onHome = {},
+                    onReload = {},
+                    onChangeCertificate = {},
+                    onLockCertificate = {},
+                    onClearSession = {},
+                ) { modifier ->
+                    Text("contenido-web", modifier.testTag(BROWSER_CONTENT_TAG))
+                }
+            }
+        }
+
+        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
+        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertIsDisplayed()
+        rule.onNodeWithContentDescription("Inicio").performClick()
+
+        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
+        rule.onNodeWithText("www.juntadeandalucia.es").assertIsDisplayed()
+    }
+
+    @Test
+    fun pageLifecycleUpdateDoesNotReplaceTheUsersEditBuffer() {
+        val currentUrl = mutableStateOf(LONG_URL)
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserLayout(
+                    currentUrl = currentUrl.value,
+                    certificateOwner = "Persona de Prueba",
+                    browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
+                    onAddressSubmitted = {},
+                    onBack = {},
+                    onHome = {},
+                    onReload = {},
+                    onChangeCertificate = {},
+                    onLockCertificate = {},
+                    onClearSession = {},
+                ) { modifier ->
+                    Text("contenido-web", modifier.testTag(BROWSER_CONTENT_TAG))
+                }
+            }
+        }
+
+        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
+        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG)
+            .performTextReplacement(EDITED_URL)
+        rule.runOnIdle { currentUrl.value = REDIRECT_URL }
+
+        rule.onNodeWithText(EDITED_URL).assertIsDisplayed()
+        rule.onNodeWithText(REDIRECT_URL).assertDoesNotExist()
+    }
+
+    private companion object {
+        const val LONG_URL =
+            "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/" +
+                "ovorion/auth/signInAutcertjs?redacted=not-logged#fragment"
+        const val EDITED_URL = "https://sede.juntadeandalucia.es/user-entry"
+        const val REDIRECT_URL = "https://ssoweb.juntadeandalucia.es/redirected"
     }
 }

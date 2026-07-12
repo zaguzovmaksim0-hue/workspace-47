@@ -78,6 +78,11 @@ Existing WebView history restoration remains unchanged and can contain the
 browser's own full URLs; sanitizing that history is a later security task and
 is outside this UI-only correction.
 
+After a successful history restore, `WebViewStateHolder` publishes the
+restored current item's URL to the same non-saveable UI state so the toolbar
+shows the actual restored host. The saved Bundle key and history contents are
+not changed.
+
 Normal mode:
 
 - parse the current HTTPS URL and show the ASCII host only;
@@ -107,6 +112,11 @@ while expanded, cleared and set to `GONE` on collapse, and never appended to
 `SanitizedLogger` or the protocol report. QA captures details collapsed and
 deletes or scans its temporary UI-tree artifact.
 
+The sanitized observation report keeps its complete text but is capped to a
+144 dp vertically scrollable debug region. This prevents a long observation
+from displacing the WebView and is presentation-only: recorder content,
+parsing, and branch detection are unchanged.
+
 ## Screenshot and secure-window policy
 
 Browser, home, probe, browse-only, and sanitized diagnostic UI do not set
@@ -130,6 +140,8 @@ Expected production changes:
 - create `app/src/main/java/dev/junta/firmamobile/ui/SensitiveWindowProtection.kt`;
 - modify `app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt`;
 - modify `app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt`;
+- modify `app/src/main/java/dev/junta/firmamobile/browser/WebViewStateHolder.kt`
+  only to publish the current restored URL;
 - modify `app/src/main/java/dev/junta/firmamobile/MainActivity.kt`;
 - modify `app/src/main/AndroidManifest.xml` for explicit `adjustResize`;
 - modify `app/src/main/res/values/strings.xml`;
@@ -137,6 +149,8 @@ Expected production changes:
   `app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt`
   and `app/src/debug/AndroidManifest.xml`;
 - create `app/src/debug/res/values/ids.xml` for the probe test seam.
+- create `app/src/debug/res/values/strings.xml` for probe-only labels so no
+  probe resource is packaged in release.
 
 Expected test changes:
 
@@ -146,11 +160,13 @@ Expected test changes:
   `app/src/test/java/dev/junta/firmamobile/ui/SensitiveWindowProtectionTest.kt`;
 - extend
   `app/src/test/java/dev/junta/firmamobile/browser/JuntaWebViewClientTest.kt`;
+- extend
+  `app/src/test/java/dev/junta/firmamobile/browser/WebViewStateHolderTest.kt`;
 - extend `app/src/androidTest/java/dev/junta/firmamobile/AppLaunchTest.kt`;
 - extend
   `app/src/androidTest/java/dev/junta/firmamobile/CertificateSetupFlowTest.kt`;
 - extend debug probe instrumentation coverage without changing observer
-  assertions.
+  assertions, including a bounds regression for long sanitized observations.
 
 Exact paths may be reduced if one focused file cleanly owns two of the small UI
 helpers. No new runtime dependency is required.

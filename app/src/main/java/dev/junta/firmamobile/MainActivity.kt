@@ -3,7 +3,6 @@ package dev.junta.firmamobile
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
-import android.view.WindowManager
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.junta.firmamobile.browser.WebViewStateHolder
@@ -21,6 +21,8 @@ import dev.junta.firmamobile.ui.AppRoot
 import dev.junta.firmamobile.ui.BrowserScreen
 import dev.junta.firmamobile.ui.CertificateUiState
 import dev.junta.firmamobile.ui.CertificateViewModel
+import dev.junta.firmamobile.ui.SensitiveWindowProtection
+import dev.junta.firmamobile.ui.WindowSecureFlagPolicy
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 
 class MainActivity : ComponentActivity() {
@@ -45,13 +47,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val certificateState = certificateViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(certificateState.value) {
-                val passwordVisible = certificateState.value is CertificateUiState.Locked
-                if (passwordVisible) {
-                    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                } else {
-                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            val updateSecureWindow = remember(window) {
+                { sensitive: Boolean ->
+                    WindowSecureFlagPolicy.apply(window, sensitive)
                 }
+            }
+            SensitiveWindowProtection(
+                enabled = certificateState.value is CertificateUiState.Locked,
+                updateSecure = updateSecureWindow,
+            )
+            LaunchedEffect(certificateState.value) {
                 if (certificateState.value !is CertificateUiState.Unlocked) {
                     showBrowser = false
                 }
