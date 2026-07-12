@@ -81,6 +81,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.bouncycastle.provider)
+    implementation(libs.bouncycastle.pkix)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -89,9 +91,6 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.bouncycastle.provider)
-    testImplementation(libs.bouncycastle.pkix)
-
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.espresso.core)

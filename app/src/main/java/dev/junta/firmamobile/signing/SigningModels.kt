@@ -108,10 +108,30 @@ data class PreSignResult internal constructor(
     internal val bytesToSign: ByteArray,
 )
 
-@ConsistentCopyVisibility
-data class LocalSignature internal constructor(
-    internal val bytes: ByteArray,
-)
+internal fun interface SensitiveSignatureCopyObserver {
+    fun onCleared(allZero: Boolean)
+}
+
+class LocalSignature internal constructor(
+    bytes: ByteArray,
+    private val observer: SensitiveSignatureCopyObserver = SensitiveSignatureCopyObserver {},
+) : Closeable {
+    private var ownedBytes: ByteArray? = bytes
+
+    @Synchronized
+    internal fun <T> withBytes(block: (ByteArray) -> T): T = block(requireBytes())
+
+    @Synchronized
+    override fun close() {
+        val bytesToClear = ownedBytes ?: return
+        bytesToClear.fill(0)
+        observer.onCleared(bytesToClear.all { it == 0.toByte() })
+        ownedBytes = null
+    }
+
+    private fun requireBytes(): ByteArray =
+        checkNotNull(ownedBytes) { "Local signature is closed" }
+}
 
 sealed interface SignDelivery {
     @ConsistentCopyVisibility
