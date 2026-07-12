@@ -100,6 +100,25 @@ Debe determinarse con evidencia:
 La implementación de firma remota permanece cerrada hasta registrar estos
 puntos y convertir cada observación en una prueba de regresión.
 
+## Observación 2026-07-12 — POCO F6 Pro debug probe
+
+Método: `ProtocolProbeActivity` debug con listener limitado al origin Junta y
+sin certificado cargado. La captura visible contiene únicamente campos
+cerrados y longitudes.
+
+- top-level host: `www.juntadeandalucia.es`;
+- MiniApplet call: `LOAD`;
+- argument count: `1`;
+- argument lengths: `48`;
+- observed runtime branch: `NONE`;
+- no se abrió AutoFirma externa ni Google Play;
+- no se leyó ningún certificado y no se intentó firmar.
+
+Conclusión: la página pública llama realmente a `cargarMiniApplet`, pero esta
+captura todavía no demuestra si `sign` selecciona `afirma`, `intent`,
+WebSocket o red directa. Task 1 permanece abierto y no se infiere ninguna rama
+de transporte.
+
 ## Política para nuevas observaciones
 
 - Verificar que el host pertenece a la Junta mediante fuente oficial y TLS

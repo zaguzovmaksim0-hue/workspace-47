@@ -17,6 +17,7 @@ enum class DiagnosticEventCode {
     SAFE_BROWSING_BLOCKED,
     NETWORK_ERROR,
     AFIRMA_REQUEST_OBSERVED,
+    MINIAPPLET_OBSERVED,
 }
 
 class SanitizedLogger(
@@ -62,6 +63,32 @@ class SanitizedLogger(
             }
         }
         append(record)
+    }
+
+    @Synchronized
+    fun recordMiniAppletObservation(
+        call: String,
+        originHost: String,
+        algorithm: String?,
+        format: String?,
+        argumentLengths: List<Int>,
+        branch: String,
+    ) {
+        val fields = mutableListOf(
+            "timestamp=${clock.instant()}",
+            "event=${DiagnosticEventCode.MINIAPPLET_OBSERVED.name}",
+            "origin=${safeHost(originHost)}",
+            "call=${safeToken(call)}",
+            "branch=${safeToken(branch)}",
+            "algorithm=${safeToken(algorithm)}",
+            "format=${safeToken(format)}",
+        )
+        argumentLengths.take(MAX_OBSERVED_ARGUMENTS).forEachIndexed { index, length ->
+            val safeLength = length.takeIf { it in 0..MAX_OBSERVED_ARGUMENT_LENGTH }
+                ?: INVALID_LENGTH
+            fields += "argument.$index.length=$safeLength"
+        }
+        append(fields.joinToString(separator = " "))
     }
 
     @Synchronized
@@ -115,6 +142,9 @@ class SanitizedLogger(
         const val MAX_CAPACITY = 1000
         const val SHA256_PREFIX_BYTES = 4
         const val INVALID_VALUE = "invalid"
+        const val INVALID_LENGTH = -1
+        const val MAX_OBSERVED_ARGUMENTS = 32
+        const val MAX_OBSERVED_ARGUMENT_LENGTH = 1_048_576
         const val HEX = "0123456789abcdef"
         val HOST_PATTERN = Regex("[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?")
         val TOKEN_PATTERN = Regex("[A-Za-z0-9._+\\-]{1,64}")

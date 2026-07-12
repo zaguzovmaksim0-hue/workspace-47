@@ -42,4 +42,24 @@ class AfirmaJavascriptShimTest {
         assertFalse(script.contains("saveSignatureAuthCallback"))
         assertFalse(script.contains("ws024"))
     }
+
+    @Test
+    fun shimObservesMiniAppletCallsAndBlocksLoopbackWebSocketsWithoutCallbacks() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(context)
+
+        assertTrue(script.contains("window.JuntaFirmaProbe"))
+        assertTrue(script.contains("MiniApplet"))
+        assertTrue(script.contains("cargarMiniApplet"))
+        assertTrue(script.contains("MINIAPPLET_OBSERVATION"))
+        assertTrue(script.contains("RUNTIME_BRANCH_OBSERVATION"))
+        assertTrue(script.contains("window.WebSocket"))
+        assertTrue(script.contains("Reflect.apply"))
+        assertTrue(script.contains("window.top !== window"))
+        assertTrue(script.contains("btnacceso"))
+        assertTrue(script.contains("signInAutcertjs"))
+        assertFalse(script.contains("querySelector(\"input[type=button]"))
+        assertFalse(script.contains("saveSignatureAuthCallback"))
+        assertFalse(script.contains("showLogCallback"))
+    }
 }
