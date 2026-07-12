@@ -1,6 +1,6 @@
 # Browser and Probe UX Correction Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Subagent execution is not authorized for this workspace.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Read-only subagents may review independent risks; the primary agent owns production edits and final decisions.
 
 **Goal:** Keep Junta WebView controls above Android system UI, present the current address in a stable one-line toolbar, and scope `FLAG_SECURE` to password input while preserving the current browser, observer, certificate, and signing behavior.
 
@@ -13,7 +13,7 @@
 - Keep package ID `dev.junta.firmamobile`, minSdk 26, compileSdk/targetSdk 36.
 - Do not alter TLS handling, `JuntaOriginPolicy`, WebView hardening, cookies, bridge schema, protocol observer, certificate flow, or signing logic.
 - Do not add a runtime dependency, `addJavascriptInterface`, mixed content, universal file access, external-intent expansion, or release WebView debugging.
-- Do not log or persist URL query/fragment, cookies, P12 bytes, passwords, keys, or signing payload.
+- Do not log or additionally persist URL query/fragment, cookies, P12 bytes, passwords, keys, or signing payload. Existing WebView history restoration is preserved and remains a later sanitization task.
 - Do not launch `MainActivity` for routine build gates. Runtime launches are limited to instrumentation and the named browser/probe QA gate.
 - Use the real certificate only after the complete signing contour exists; this plan uses no real certificate.
 - One implementation commit must contain only this UX correction. Existing observer work is checkpointed first in a separate commit.
@@ -181,10 +181,11 @@ fun longAddressUsesOneLineHostAndFullUrlOnlyWhileEditing() {
 
 - [ ] **Step 2: Add RED Compose/native inset tests**
 
-The Compose test injects a 96 px bottom inset and verifies the tagged bottom
-chrome includes it while the tagged content ends above it. The native test
-dispatches navigation 96 px and IME 320 px twice and asserts bottom padding is
-320 px both times, never 416 or 640:
+The Compose tests inject zero and non-zero top/bottom insets, verify the tagged
+bottom chrome includes the bottom inset, and verify normal/edit top-slot
+heights are equal. The native test covers three-button 96 px, gestural 24 px,
+IME show 320 px, IME hide back to navigation, repeated dispatch, and repeated
+installation:
 
 ```kotlin
 @Test
@@ -193,16 +194,24 @@ fun nativePolicyUsesMaxImeAndNavigationInsetWithoutAccumulation() {
         .setup().get()
     val root = FrameLayout(activity)
     activity.setContentView(root)
-    BrowserWindowInsetsPolicy.install(activity.window, root)
-    val insets = WindowInsetsCompat.Builder()
+    BrowserWindowInsetsPolicy.install(root)
+    BrowserWindowInsetsPolicy.install(root)
+    val navigation = WindowInsetsCompat.Builder()
         .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, 96))
-        .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, 320))
+        .setVisible(WindowInsetsCompat.Type.navigationBars(), true)
+        .setVisible(WindowInsetsCompat.Type.ime(), false)
         .build()
+    ViewCompat.dispatchApplyWindowInsets(root, navigation)
+    assertEquals(96, root.paddingBottom)
 
-    ViewCompat.dispatchApplyWindowInsets(root, insets)
+    val keyboard = WindowInsetsCompat.Builder(navigation)
+        .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, 320))
+        .setVisible(WindowInsetsCompat.Type.ime(), true)
+        .build()
+    ViewCompat.dispatchApplyWindowInsets(root, keyboard)
     assertEquals(320, root.paddingBottom)
-    ViewCompat.dispatchApplyWindowInsets(root, insets)
-    assertEquals(320, root.paddingBottom)
+    ViewCompat.dispatchApplyWindowInsets(root, navigation)
+    assertEquals(96, root.paddingBottom)
 }
 ```
 
@@ -288,9 +297,12 @@ production code until the failure is for the missing behavior.
 - Modify: `app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt`
 - Modify: `app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt`
 - Modify: `app/src/main/java/dev/junta/firmamobile/MainActivity.kt`
+- Modify: `app/src/main/AndroidManifest.xml`
 - Modify: `app/src/main/res/values/strings.xml`
 - Modify UI only:
-  `app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt`
+  `app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt`,
+  `app/src/debug/AndroidManifest.xml`
+- Create: `app/src/debug/res/values/ids.xml`
 
 **Interfaces:**
 
@@ -307,11 +319,15 @@ object BrowserWindowInsetsPolicy {
     @Composable
     fun current(): WindowInsets = WindowInsets.safeDrawing.union(WindowInsets.ime)
 
-    fun install(window: Window, root: View) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        val initial = Insets.of(
-            root.paddingLeft, root.paddingTop, root.paddingRight, root.paddingBottom,
-        )
+    fun install(root: View) {
+        val initial = synchronized(initialPadding) {
+            initialPadding.getOrPut(root) {
+                Insets.of(
+                    root.paddingLeft, root.paddingTop,
+                    root.paddingRight, root.paddingBottom,
+                )
+            }
+        }
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, source ->
             val safe = source.getInsets(
                 WindowInsetsCompat.Type.systemBars() or
@@ -326,17 +342,26 @@ object BrowserWindowInsetsPolicy {
             )
             WindowInsetsCompat.CONSUMED
         }
-        ViewCompat.requestApplyInsets(root)
+        if (root.isAttachedToWindow) {
+            ViewCompat.requestApplyInsets(root)
+        } else {
+            root.doOnAttach(ViewCompat::requestApplyInsets)
+        }
     }
+
+    private val initialPadding = WeakHashMap<View, Insets>()
 }
 ```
 
 In `BrowserLayout`, pass an injectable
 `browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current()`. Set
-`Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0))`; apply top plus
-horizontal insets to the top chrome, bottom plus horizontal insets to the
-bottom chrome, and use the union with IME. Apply and consume Scaffold content
-padding once.
+`Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0))`.
+`TopAppBar(expandedHeight = 64.dp)` receives only
+`browserInsets.only(Top + Horizontal)` through its `windowInsets` argument;
+do not add outer top padding. The bottom Surface receives only
+`browserInsets.only(Bottom + Horizontal)`. The body applies
+`.padding(innerPadding).consumeWindowInsets(innerPadding)` exactly once and
+then `safeDrawing.only(Horizontal)`; the WebView adds no system padding.
 
 - [ ] **Step 2: Implement the one-line address component**
 
@@ -437,13 +462,20 @@ closes BrowserScreen when the certificate is not unlocked remains unchanged.
 In `ProtocolProbeActivity`:
 
 - remove `window.addFlags(FLAG_SECURE)` and its import;
-- install `BrowserWindowInsetsPolicy` on the root `LinearLayout`;
+- call `enableEdgeToEdge()` before `setContentView`;
+- install `BrowserWindowInsetsPolicy` on the stable-ID root `LinearLayout`;
 - add one-line host text plus a `Detalles` button;
-- keep the full URL TextView hidden until the user expands details;
+- assign the full URL only while details are expanded, then clear it and set
+  the TextView to `GONE` on collapse;
 - configure that TextView as selectable, single-line, and horizontally
   scrolling;
 - update it from a new UI callback in `ProtocolProbeWebViewClient`;
 - never pass it to `ProtocolObservationRecorder` or `SanitizedLogger`.
+
+Set `android:windowSoftInputMode="adjustResize"` on both `MainActivity` and the
+debug probe manifest entry. Extend probe instrumentation to dispatch synthetic
+navigation/IME insets to `R.id.protocol_probe_root` and verify max/no
+accumulation in addition to asserting `FLAG_SECURE == 0`.
 
 Do not change probe message parsing, observed enums, branch matching, or
 document-start shim behavior.
@@ -510,13 +542,17 @@ ZIPALIGN="$ANDROID_HOME/build-tools/36.0.0/zipalign"
   rg 'application-debuggable' && exit 1 || true
 unzip -l app/build/outputs/apk/release/app-release.apk | \
   rg 'ProtocolProbe|androidTest|synthetic-identity|\.p12|\.pfx' && exit 1 || true
+if rg -n 'ProtocolProbeActivity|ProtocolObservationRecorder|JuntaFirmaProbe' \
+  app/build/intermediates/packaged_manifests/release/processReleaseManifestForPackage/AndroidManifest.xml; then exit 1; fi
 sha256sum app/build/outputs/apk/debug/app-debug.apk \
   app/build/outputs/apk/release/app-release.apk
 ```
 
-Expected: v2 verification and zipalign succeed, release is non-debuggable and
-contains no probe/test/certificate fixture. Debug-key-signed release remains a
-documented non-production limitation until the final release phase.
+Expected: v2 verification and zipalign succeed; release is non-debuggable and
+contains no debug probe Activity/listener/recorder or test/certificate fixture.
+Passive compatibility-shim checks and the intentional WebSocket blocker are
+allowed common code. Debug-key-signed release remains a documented
+non-production limitation until the final release phase.
 
 - [ ] **Step 3: Install through Android shell with authoritative exit codes**
 
@@ -562,6 +598,9 @@ Inspect the real screenshot. Required observations:
 - lower controls can be scrolled into view and tapped;
 - no Google Play or external AutoFirma activity appears.
 
+Keep `Detalles` collapsed. After checking that the temporary UI tree contains
+no URL query/fragment, delete it or retain only the sanitized assertion result.
+
 If only one navigation mode is currently configured, verify that mode on the
 device and rely on injected inset tests for the other mode; do not mutate the
 user's system navigation preference.
@@ -581,6 +620,7 @@ Expected: app is not left open; only browser/probe UX and test files are dirty.
 
 ```bash
 git add \
+  app/src/main/AndroidManifest.xml \
   app/src/main/java/dev/junta/firmamobile/MainActivity.kt \
   app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt \
   app/src/main/java/dev/junta/firmamobile/ui/BrowserAddressBar.kt \
@@ -588,7 +628,9 @@ git add \
   app/src/main/java/dev/junta/firmamobile/ui/BrowserWindowInsets.kt \
   app/src/main/java/dev/junta/firmamobile/ui/SensitiveWindowProtection.kt \
   app/src/main/res/values/strings.xml \
+  app/src/debug/AndroidManifest.xml \
   app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt \
+  app/src/debug/res/values/ids.xml \
   app/src/test/java/dev/junta/firmamobile/ui/BrowserScreenTest.kt \
   app/src/test/java/dev/junta/firmamobile/ui/BrowserWindowInsetsTest.kt \
   app/src/test/java/dev/junta/firmamobile/ui/SensitiveWindowProtectionTest.kt \

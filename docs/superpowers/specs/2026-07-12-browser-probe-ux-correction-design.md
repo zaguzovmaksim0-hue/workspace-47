@@ -40,7 +40,10 @@ Rejected alternatives:
 ### Compose browser
 
 - The Activity remains edge-to-edge.
-- The top browser chrome consumes safe top and horizontal insets.
+- `TopAppBar` is the sole owner of safe top and horizontal insets through its
+  `windowInsets` parameter; no outer top padding is added.
+- The toolbar content height is 64 dp. The measured top slot is therefore
+  `safeTop + 64 dp`, and edit mode cannot change either component.
 - The bottom certificate chrome consumes safe bottom/horizontal and IME
   insets. The union uses the maximum bottom inset; navigation and IME values
   are never added together.
@@ -56,19 +59,24 @@ keyboard, while avoiding duplicate top/bottom padding.
 ### Debug probe
 
 - `ProtocolProbeActivity` explicitly uses edge-to-edge layout.
-- The root View receives one `WindowInsetsCompat` listener supplied by the
-  same policy.
+- The Activity enables edge-to-edge before `setContentView`; the root View
+  receives one idempotent `WindowInsetsCompat` listener supplied by the same
+  policy after attachment.
 - The listener combines system bars, display cutout, and IME with a per-side
   maximum and assigns padding relative to the root's original padding.
 - Re-dispatching insets replaces the previous inset contribution instead of
-  accumulating it.
+  accumulating it. Reinstalling the policy on the same View preserves the
+  original baseline padding.
 
 No WebView page JavaScript or DOM is modified for inset handling.
 
 ## Address presentation
 
-The browser tracks the latest top-level URL in Compose memory only. It is not
-written to DataStore, saved state, diagnostics, or logs.
+The new address-bar state tracks the latest top-level URL in non-saveable
+Compose memory and does not add writes to DataStore, diagnostics, or logs.
+Existing WebView history restoration remains unchanged and can contain the
+browser's own full URLs; sanitizing that history is a later security task and
+is outside this UI-only correction.
 
 Normal mode:
 
@@ -94,8 +102,10 @@ unchanged.
 
 The debug probe shows only the host in its collapsed header. A user-controlled
 `Detalles` section may expose the current full URL in a selectable,
-single-line, horizontally scrolling TextView. This URL is UI state only and is
-never appended to `SanitizedLogger` or the protocol report.
+single-line, horizontally scrolling TextView. The full text is assigned only
+while expanded, cleared and set to `GONE` on collapse, and never appended to
+`SanitizedLogger` or the protocol report. QA captures details collapsed and
+deletes or scans its temporary UI-tree artifact.
 
 ## Screenshot and secure-window policy
 
@@ -121,9 +131,12 @@ Expected production changes:
 - modify `app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt`;
 - modify `app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt`;
 - modify `app/src/main/java/dev/junta/firmamobile/MainActivity.kt`;
+- modify `app/src/main/AndroidManifest.xml` for explicit `adjustResize`;
 - modify `app/src/main/res/values/strings.xml`;
 - modify debug-only
-  `app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt`.
+  `app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt`
+  and `app/src/debug/AndroidManifest.xml`;
+- create `app/src/debug/res/values/ids.xml` for the probe test seam.
 
 Expected test changes:
 
@@ -148,8 +161,10 @@ RED tests prove:
 
 - a long URL displays only a one-line host in normal mode;
 - edit mode exposes the full URL without changing toolbar height;
-- injected navigation/IME insets reserve the expected bottom space;
-- repeated native inset dispatch does not accumulate padding;
+- injected three-button, gestural, and IME inset transitions reserve the
+  expected maximum bottom space;
+- repeated native inset dispatch and repeated adapter installation do not
+  accumulate padding;
 - browser and probe have no Activity-lifetime `FLAG_SECURE`;
 - password UI can set the flag and disposal/state transition clears it;
 - top-level URL updates reach browser UI without changing navigation policy.
@@ -171,8 +186,11 @@ current navigation mode, and force-stops the app afterward.
 - No `addJavascriptInterface`, mixed content, universal file access, external
   intent expansion, or release WebView debugging is introduced.
 - No cookie, URL query/fragment, PKCS#12 data, password, key, or signing payload
-  is logged or persisted by the new UI.
-- The probe remains debug-only and absent from release.
+  is logged or additionally persisted by the new UI.
+- The probe Activity, listener, recorder, and debug-only classes remain absent
+  from release. Passive compatibility-shim checks and the intentional
+  loopback WebSocket blocker remain common code until a separate hardening
+  task splits the diagnostic overlay.
 - WebView state/history capture remains unchanged.
 
 ## Completion boundary
