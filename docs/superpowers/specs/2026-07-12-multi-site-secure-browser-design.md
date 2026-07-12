@@ -155,7 +155,9 @@ no generan ninguna petición de red.
 
 ### 4.2. Site Profile
 
-El paquete nuevo `site/` contiene:
+El paquete nuevo `site/` contiene los modelos de perfil. `SigningProtocolId` se
+define una sola vez en `signing/SigningModels.kt` y el perfil lo importa; no hay
+un segundo tipo o conversión por String:
 
 ```kotlin
 @JvmInline value class SiteProfileId(val value: String)
@@ -171,8 +173,6 @@ enum class SigningRequestScheme {
     INTENT_AFIRMA,
     WEB_MESSAGE,
 }
-
-@JvmInline value class SigningProtocolId(val value: String)
 
 data class SiteProfile(
     val id: SiteProfileId,
