@@ -41,6 +41,12 @@ Expected: all Gradle tasks succeed; prohibited-pattern searches print nothing; d
 
 ### Task 1: Observe the real Junta MiniApplet branch without signing
 
+> **Required UX prerequisite:** Before the next long-running Task 1 runtime
+> gate, execute
+> `docs/superpowers/plans/2026-07-12-browser-probe-ux-correction.md` completely.
+> This prerequisite changes browser/probe layout only and must not be used to
+> infer a signing transport branch.
+
 **Files:**
 
 - Modify: `app/src/main/res/raw/afirma_shim.js`
