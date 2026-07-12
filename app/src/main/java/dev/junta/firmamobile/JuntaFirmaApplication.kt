@@ -8,6 +8,7 @@ import dev.junta.firmamobile.certificate.ContentResolverCertificateDocumentAcces
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.PreferencesCertificateReferenceStore
 import dev.junta.firmamobile.certificate.certificateReferenceDataStore
+import dev.junta.firmamobile.security.SanitizedLogger
 
 class JuntaFirmaApplication : Application() {
     lateinit var certificateGateway: CertificateGateway
@@ -16,8 +17,12 @@ class JuntaFirmaApplication : Application() {
     lateinit var certificateSession: CertificateSession
         internal set
 
+    lateinit var sanitizedLogger: SanitizedLogger
+        internal set
+
     override fun onCreate() {
         super.onCreate()
+        sanitizedLogger = SanitizedLogger()
         certificateSession = CertificateSession()
         certificateGateway = CertificateRepository(
             documentAccess = ContentResolverCertificateDocumentAccess(contentResolver),

@@ -36,4 +36,26 @@
     <string name="error_storage">No se pudo actualizar la referencia segura del certificado.</string>
     <string name="error_not_selected">Selecciona primero un certificado.</string>
     <string name="error_not_usable">El archivo contiene una identidad que no se puede usar.</string>
+    <string name="browser_title">Portal Junta de Andalucía</string>
+    <string name="browser_certificate_status">Certificado: %1$s</string>
+    <string name="browser_change_certificate">Cambiar certificado</string>
+    <string name="browser_lock_certificate">Bloquear certificado</string>
+    <string name="browser_clear_session">Cerrar sesión</string>
+    <string name="browser_clear_session_title">Cerrar sesión y borrar datos</string>
+    <string name="browser_clear_session_copy">Se borrarán las cookies, el almacenamiento web y el historial de esta sesión.</string>
+    <string name="browser_clear_session_confirm">Confirmar cierre</string>
+    <string name="browser_retry">Reintentar</string>
+    <string name="browser_compatibility_error">Este WebView no ofrece el bridge seguro requerido. La firma permanece deshabilitada.</string>
+    <string name="browser_load_error">No se pudo cargar el portal de forma segura.</string>
+    <string name="browser_play_store_blocked">Se bloqueó el intento de abrir AutoFirma o Google Play.</string>
+    <string name="browser_navigation_blocked">Se bloqueó una navegación no permitida.</string>
+    <string name="afirma_request_observed_title">Solicitud de firma interceptada</string>
+    <string name="afirma_request_site">Sitio: %1$s</string>
+    <string name="afirma_request_certificate">Certificado: %1$s</string>
+    <string name="afirma_request_format">Formato: %1$s</string>
+    <string name="afirma_request_algorithm">Algoritmo: %1$s</string>
+    <string name="afirma_request_observed_copy">La solicitud se ha detenido antes de firmar. La confirmación y la firma nativa se habilitarán en la siguiente fase.</string>
+    <string name="unknown_value">desconocido</string>
+    <string name="cancel">Cancelar</string>
+    <string name="close">Cerrar</string>
 </resources>
