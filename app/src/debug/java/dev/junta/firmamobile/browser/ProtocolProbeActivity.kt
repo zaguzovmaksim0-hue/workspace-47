@@ -13,7 +13,6 @@ import android.webkit.SafeBrowsingResponse
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
@@ -27,10 +26,13 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.ui.BrowserAddressPresentation
 import dev.junta.firmamobile.ui.BrowserWindowInsetsPolicy
+import org.json.JSONTokener
+import org.json.JSONObject
 
 class ProtocolProbeActivity : ComponentActivity() {
     private lateinit var webView: TrustedJuntaWebView
@@ -42,6 +44,7 @@ class ProtocolProbeActivity : ComponentActivity() {
     private var probeListenerAttached = false
     private var detailsExpanded = false
     private var currentUrl = JuntaOriginPolicy.START_URL
+    internal lateinit var protocolRecorderForTesting: ProtocolObservationRecorder
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -125,9 +128,13 @@ class ProtocolProbeActivity : ComponentActivity() {
         setContentView(root)
 
         val logger = SanitizedLogger()
-        val recorder = ProtocolObservationRecorder(logger) { safeText ->
-            statusView.text = safeText.ifBlank { STATUS_WAITING }
-        }
+        val recorder = ProtocolObservationRecorder(
+            logger = logger,
+            onUpdated = { safeText ->
+                statusView.text = safeText.ifBlank { STATUS_WAITING }
+            },
+        )
+        protocolRecorderForTesting = recorder
         if (!attachOriginRestrictedProbe(recorder)) {
             statusView.text = STATUS_INCOMPATIBLE
             return
@@ -143,9 +150,7 @@ class ProtocolProbeActivity : ComponentActivity() {
         )
         bridgeAttachment = WebMessageBridge(
             logger = logger,
-            onAfirmaRequest = { request ->
-                recorder.recordBranch(ObservedRuntimeBranch.AFIRMA, request.origin.host)
-            },
+            onAfirmaRequest = {},
         ).attach(webView)
         if (bridgeAttachment?.listenerAttached != true ||
             bridgeAttachment?.documentStartScriptAttached != true
@@ -153,7 +158,9 @@ class ProtocolProbeActivity : ComponentActivity() {
             statusView.text = STATUS_INCOMPATIBLE
             return
         }
-        webView.loadUrl(JuntaOriginPolicy.START_URL)
+        if (!intent.getBooleanExtra(EXTRA_SKIP_INITIAL_LOAD, false)) {
+            webView.loadUrl(JuntaOriginPolicy.START_URL)
+        }
     }
 
     private fun toggleDetails() {
@@ -187,9 +194,14 @@ class ProtocolProbeActivity : ComponentActivity() {
             JuntaOriginPolicy.webMessageOriginRules,
         ) { _, message, sourceOrigin, isMainFrame, _ ->
             if (message.type == WebMessageCompat.TYPE_STRING) {
-                message.data?.let { rawMessage ->
+                val rawMessage = message.data
+                if (rawMessage != null) {
                     recorder.recordMessage(rawMessage, sourceOrigin, isMainFrame)
+                } else {
+                    recorder.rejectInvalidMessage(sourceOrigin, isMainFrame)
                 }
+            } else {
+                recorder.rejectInvalidMessage(sourceOrigin, isMainFrame)
             }
         }
         probeListenerAttached = true
@@ -212,6 +224,8 @@ class ProtocolProbeActivity : ComponentActivity() {
 
     companion object {
         const val PROBE_BRIDGE_NAME = "JuntaFirmaProbe"
+        const val EXTRA_SKIP_INITIAL_LOAD =
+            "dev.junta.firmamobile.debug.SKIP_PROTOCOL_PROBE_INITIAL_LOAD"
         private const val STATUS_STARTING = "Preparando observación segura…"
         private const val STATUS_WAITING = "Esperando una llamada MiniApplet…"
         private const val STATUS_INCOMPATIBLE = "WebView incompatible con observación segura."
@@ -228,29 +242,47 @@ private class ProtocolProbeWebViewClient(
 ) : WebViewClient() {
     @Volatile
     private var topLevelOriginHost: String = INVALID_HOST
+    private var currentDocumentGeneration = 0L
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
-        handleNavigation(view, request.url.toString())
+        handleNavigation(view, request.url.toString(), request.isForMainFrame)
 
     @Deprecated("Legacy callback retained for WebView compatibility")
     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =
-        handleNavigation(view, url)
+        handleNavigation(view, url, isForMainFrame = false)
 
-    private fun handleNavigation(view: WebView, targetUrl: String): Boolean {
-        val scheme = try {
-            Uri.parse(targetUrl).scheme?.lowercase()
+    private fun handleNavigation(
+        view: WebView,
+        targetUrl: String,
+        isForMainFrame: Boolean,
+    ): Boolean {
+        val branch = try {
+            when (Uri.parse(targetUrl).scheme?.lowercase()) {
+                "afirma" -> ObservedRuntimeBranch.AFIRMA
+                "intent" -> ObservedRuntimeBranch.INTENT
+                "ws", "wss" -> ObservedRuntimeBranch.WEBSOCKET
+                else -> null
+            }
         } catch (_: Exception) {
             null
         }
-        val branch = when (scheme) {
-            "afirma" -> ObservedRuntimeBranch.AFIRMA
-            "intent" -> ObservedRuntimeBranch.INTENT
-            "ws", "wss" -> ObservedRuntimeBranch.WEBSOCKET
-            else -> null
+        if (branch != null && branch in NATIVE_CORRELATION_BRANCHES) {
+            recorder.recordNavigationBranch(
+                branch = branch,
+                originHost = topLevelOriginHost,
+                isMainFrame = isForMainFrame,
+            )
         }
-        branch?.let { recorder.recordBranch(it, topLevelOriginHost) }
-
-        return when (val decision = navigationPolicy.decide(targetUrl, view.url)) {
+        val decision = navigationPolicy.decide(targetUrl, view.url)
+        if ((branch == null || branch !in NATIVE_CORRELATION_BRANCHES) &&
+            decision !is NavigationDecision.AllowInWebView
+        ) {
+            recorder.rejectNavigationTransition(
+                originHost = topLevelOriginHost,
+                isMainFrame = isForMainFrame,
+            )
+        }
+        return when (decision) {
             NavigationDecision.AllowInWebView -> false
             is NavigationDecision.HandleAfirma -> {
                 logger.recordAfirmaRequest(decision.request)
@@ -272,29 +304,56 @@ private class ProtocolProbeWebViewClient(
         }
     }
 
-    override fun shouldInterceptRequest(
-        view: WebView,
-        request: WebResourceRequest,
-    ): WebResourceResponse? {
-        val uri = request.url
-        if (uri.scheme.equals("https", ignoreCase = true) &&
-            uri.host.equals(TRIPHASE_HOST, ignoreCase = true) &&
-            uri.path?.endsWith(TRIPHASE_PATH_SUFFIX) == true
-        ) {
-            recorder.recordBranch(ObservedRuntimeBranch.DIRECT_NETWORK, topLevelOriginHost)
-        }
-        return null
-    }
-
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+        currentDocumentGeneration = recorder.beginDocument()
         topLevelOriginHost = trustedHostFor(url)
         onUrlChanged(url)
+    }
+
+    override fun onPageCommitVisible(view: WebView, url: String) {
+        activateCurrentProbeDocument(view)
     }
 
     override fun onPageFinished(view: WebView, url: String) {
         topLevelOriginHost = trustedHostFor(url)
         onUrlChanged(url)
+        activateCurrentProbeDocument(view)
         onSafeStatus("Página Junta cargada. Esperando una llamada MiniApplet…")
+    }
+
+    private fun activateCurrentProbeDocument(view: WebView) {
+        val generation = currentDocumentGeneration
+        if (generation <= 0L) return
+        view.evaluateJavascript(PROBE_DOCUMENT_BINDING_EXPRESSION) { encodedValue ->
+            if (generation != currentDocumentGeneration) return@evaluateJavascript
+            val binding = parseDocumentBinding(encodedValue)
+            if (binding == null) {
+                recorder.rejectCurrentDocument(generation)
+            } else {
+                val activated = recorder.activateDocument(
+                    binding.documentId,
+                    binding.origin.host,
+                    generation,
+                )
+                if (activated) topLevelOriginHost = binding.origin.host
+            }
+        }
+    }
+
+    private fun parseDocumentBinding(encodedValue: String): ProbeDocumentBinding? = try {
+        val serialized = JSONTokener(encodedValue).nextValue() as? String ?: return null
+        val json = JSONObject(serialized)
+        if (json.length() != PROBE_DOCUMENT_BINDING_KEYS.size ||
+            PROBE_DOCUMENT_BINDING_KEYS.any { !json.has(it) }
+        ) {
+            return null
+        }
+        val documentId = json.opt(DOCUMENT_ID_FIELD) as? String ?: return null
+        val serializedOrigin = json.opt(ORIGIN_FIELD) as? String ?: return null
+        val origin = JuntaOriginPolicy.originFor(Uri.parse(serializedOrigin)) ?: return null
+        ProbeDocumentBinding(documentId, origin)
+    } catch (_: Exception) {
+        null
     }
 
     override fun onReceivedSslError(
@@ -342,7 +401,20 @@ private class ProtocolProbeWebViewClient(
 
     private companion object {
         const val INVALID_HOST = "invalid"
-        const val TRIPHASE_HOST = "ws024.juntadeandalucia.es"
-        const val TRIPHASE_PATH_SUFFIX = "/TriPhaseSignatureService"
+        const val DOCUMENT_ID_FIELD = "documentId"
+        const val ORIGIN_FIELD = "origin"
+        const val PROBE_DOCUMENT_BINDING_EXPRESSION =
+            "JSON.stringify({documentId:window.__jfmProbeDocumentId||null," +
+                "origin:window.location.origin})"
+        val PROBE_DOCUMENT_BINDING_KEYS = setOf(DOCUMENT_ID_FIELD, ORIGIN_FIELD)
+        val NATIVE_CORRELATION_BRANCHES = setOf(
+            ObservedRuntimeBranch.AFIRMA,
+            ObservedRuntimeBranch.INTENT,
+        )
     }
 }
+
+private data class ProbeDocumentBinding(
+    val documentId: String,
+    val origin: TrustedOrigin,
+)

@@ -197,6 +197,20 @@ La primera build de investigación registra únicamente nombres, longitudes y
 hashes truncados de parámetros. Hasta confirmar el contrato runtime, el bridge
 no envía una firma ni llama a endpoints tri-phase.
 
+La correlación de investigación es cerrada y explícita: una rama con el mismo
+UUID se marca `REQUEST_ID`; una navegación nativa top-level solo puede
+asociarse mientras existe una única llamada `SIGN` abierta en el mismo
+documento/origin y durante un máximo de 250 ms (`ACTIVE_CALL_WINDOW`). Nunca se
+asocia una navegación anterior a una llamada posterior. Cada documento usa un
+UUID efímero, una generación nativa y un origin HTTPS exacto; replay, TTL,
+overflow, duplicate keys, rama/end desconocido o cambio ambiguo dejan la
+correlación fail-closed hasta el documento siguiente, sin eviction. La rama
+solo se publica tras su `MINIAPPLET_CALL_END`; un fallo posterior muestra el
+marcador cerrado `PROTOCOL_CORRELATION_REJECTED`. El shim
+común contiene hooks de observación inertes, pero el listener, recorder y
+Activity que los consumen existen solo en debug. Ninguna capa registra el URI,
+el UUID de request/documento ni payloads.
+
 ## 7. Certificados
 
 `Pkcs12Loader` usa `KeyStore.getInstance("PKCS12")` y exige exactamente una

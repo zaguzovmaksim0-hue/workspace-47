@@ -18,6 +18,7 @@ enum class DiagnosticEventCode {
     NETWORK_ERROR,
     AFIRMA_REQUEST_OBSERVED,
     MINIAPPLET_OBSERVED,
+    PROTOCOL_CORRELATION_REJECTED,
 }
 
 class SanitizedLogger(
@@ -73,6 +74,7 @@ class SanitizedLogger(
         format: String?,
         argumentLengths: List<Int>,
         branch: String,
+        correlation: String,
     ) {
         val fields = mutableListOf(
             "timestamp=${clock.instant()}",
@@ -80,6 +82,7 @@ class SanitizedLogger(
             "origin=${safeHost(originHost)}",
             "call=${safeToken(call)}",
             "branch=${safeToken(branch)}",
+            "correlation=${safeToken(correlation)}",
             "algorithm=${safeToken(algorithm)}",
             "format=${safeToken(format)}",
         )

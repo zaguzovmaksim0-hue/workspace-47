@@ -181,7 +181,11 @@ SHA-256 y fingerprint registrados.
 - contrato exacto pre-sign/post-sign y sus content types;
 - significado y sensibilidad del challenge `semillaAut`;
 - comportamiento del SSO y cookies entre hosts;
-- momento exacto en que `cargarMiniApplet` intenta WebSocket/intent;
+- ramas de transporte distintas de la página pública: dos capturas anteriores
+  al endurecimiento vincularon `SIGN` con `INTENT`, mientras seis repeticiones
+  de la build endurecida dieron un falso negativo seguro; por tanto el parser
+  `intent` puede priorizarse, pero el perfil sigue experimental hasta una nueva
+  correlación endurecida y el E2E real;
 - si la página cambia el algoritmo o endpoints tras autenticación;
 - aceptación final por el portal y bloqueo correcto tras background.
 

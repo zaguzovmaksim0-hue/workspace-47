@@ -119,6 +119,73 @@ captura todavía no demuestra si `sign` selecciona `afirma`, `intent`,
 WebSocket o red directa. Task 1 permanece abierto y no se infiere ninguna rama
 de transporte.
 
+## Observación 2026-07-12 — evidencia previa y revalidación fail-closed
+
+Método final: `ProtocolProbeActivity` vincula cada mensaje a un UUID efímero de
+documento, al origin HTTPS evaluado en el contexto actual y a una generación
+nativa de navegación. Una rama emitida por el shim debe reutilizar el UUID
+exacto (`REQUEST_ID`). Una navegación nativa solo puede asociarse si ya existe
+exactamente una llamada top-level `SIGN` del mismo documento y origin, con
+algoritmo y formato válidos y una antigüedad máxima de 250 ms
+(`ACTIVE_CALL_WINDOW`). Si navigation llega antes que WebMessage, no existe
+correlación retroactiva: el documento queda fail-closed. Los UUID no se
+exportan. Una correlación candidata se publica únicamente después del
+`MINIAPPLET_CALL_END` correspondiente; cualquier transición posterior ambigua
+emite `PROTOCOL_CORRELATION_REJECTED` una sola vez e invalida la evidencia de
+ese documento. La captura no leyó ningún certificado ni ejecutó una firma.
+
+Fuente pública comprobada antes del runtime:
+
+- `miniapplet.js.sha256`:
+  `e5f17e93816d1875c57198917ed9fd1c6d6f9e71dd2d5c9fec3650d76544c713`;
+- la ruta de Chrome/Android sigue siendo síncrona:
+  `sign` → `execAppIntent` → `openUrl` → asignación de
+  `document.location`.
+
+Metadatos cerrados observados dos veces consecutivas antes del endurecimiento
+final de main-frame/document binding:
+
+- top-level host: `www.juntadeandalucia.es`;
+- MiniApplet call: `SIGN`;
+- algorithm: `SHA1withRSA`;
+- format: `CAdES`;
+- argument count: `6`;
+- argument lengths: `28, 11, 5, 156, 0, 0`;
+- runtime branch: `INTENT`;
+- correlation: `ACTIVE_CALL_WINDOW`;
+- intervalo entre `SIGN` y la rama: aproximadamente `3 ms`;
+- resultado de navegación: `NAVIGATION_BLOCKED`;
+- no se abrió AutoFirma externa ni Google Play;
+- no se leyó P12, contraseña, certificado ni clave privada;
+- no se guardó el URI `intent://`, sus parámetros ni payloads.
+
+Estas dos capturas son evidencia útil del transporte observado, pero no se
+presentan como validación de la implementación endurecida posterior.
+
+Revalidación de la build endurecida exacta:
+
+- nueve instrumentation tests en POCO F6 Pro verificaron `REQUEST_ID`, el
+  aislamiento de iframe, el rechazo de intent standalone, el resultado
+  fail-closed sin emparejamiento inverso, WebMessage no-string, transparencia
+  de return/exception del método portal, la ausencia de canaries en history y
+  que ninguna Activity externa se abre;
+- seis lanzamientos públicos independientes mostraron únicamente
+  `NAVIGATION_BLOCKED` o `LOAD` seguido de navegación bloqueada;
+- ninguno de esos seis lanzamientos produjo un nuevo
+  `ACTIVE_CALL_WINDOW`, por lo que no se contabiliza una reproducción causal
+  final;
+- el orden WebMessage/navigation es no determinista; el probe prefiere un
+  falso negativo seguro antes que atribuir una rama anterior a una llamada
+  posterior.
+
+Conclusión delimitada: el hash/fuente pública y las dos capturas iniciales
+justifican priorizar un parser interno estricto para transporte `intent`, pero
+la correlación pública no quedó reproducida después del endurecimiento. Esta
+limitación de investigación no autoriza firma ni `FULLY_VERIFIED`; el adapter
+permanece experimental hasta el E2E real. La observación inicial de
+`SHA1withRSA` se trata como compatibilidad legacy que requiere advertencia y
+revalidación, nunca como algoritmo general.
+
 ## Política para nuevas observaciones
 
 - Verificar que el host pertenece a la Junta mediante fuente oficial y TLS

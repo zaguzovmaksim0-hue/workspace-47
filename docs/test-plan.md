@@ -169,7 +169,11 @@ Con red real y sin introducir secretos en logs:
 
 1. abrir la URL inicial;
 2. confirmar status/host visible y ausencia de SSL bypass;
-3. capturar metadatos del `MiniApplet.cargarMiniApplet`/`sign` real;
+3. capturar metadatos del `MiniApplet.cargarMiniApplet`/`sign` real y aceptar
+   una rama solo con UUID idéntico o una única ventana top-level
+   SIGN/documento/origin de 250 ms; publicar solo tras `CALL_END`, mostrar
+   `PROTOCOL_CORRELATION_REJECTED` si se invalida y nunca emparejar una
+   navegación anterior;
 4. pulsar firma solo con certificado de prueba autorizado;
 5. verificar que no se abre Play/AutoFirma;
 6. registrar nombres, longitudes, hashes cortos, algoritmo, formato y hosts;

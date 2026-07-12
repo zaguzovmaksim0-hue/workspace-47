@@ -17,6 +17,7 @@
   const maxArguments = 32;
   const safeTokenPattern = /^[A-Za-z0-9._+\-]{1,64}$/;
   const wrappedMethods = new WeakSet();
+  let activeProbeRequestId = null;
 
   function requestId() {
     if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
@@ -35,6 +36,13 @@
     const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   }
+
+  const probeDocumentId = requestId();
+  Object.defineProperty(window, "__jfmProbeDocumentId", {
+    value: probeDocumentId,
+    writable: false,
+    configurable: false
+  });
 
   function safeToken(value) {
     return typeof value === "string" && safeTokenPattern.test(value) ? value : null;
@@ -57,7 +65,11 @@
     if (!probe || typeof probe.postMessage !== "function") {
       return;
     }
-    probe.postMessage(JSON.stringify(message));
+    try {
+      probe.postMessage(JSON.stringify(message));
+    } catch (_) {
+      // Diagnostics must never replace the portal method's return value or exception.
+    }
   }
 
   function triggerPublicJuntaAccessForProbe() {
@@ -80,21 +92,44 @@
 
   function observeMiniAppletCall(call, args) {
     const limitedArgs = Array.from(args).slice(0, maxArguments);
+    const observedRequestId = requestId();
     postProbeMessage({
       type: "MINIAPPLET_OBSERVATION",
-      requestId: requestId(),
+      documentId: probeDocumentId,
+      requestId: observedRequestId,
       call,
       algorithm: call === "SIGN" ? safeToken(limitedArgs[1]) : null,
       format: call === "SIGN" ? safeToken(limitedArgs[2]) : null,
       argumentLengths: limitedArgs.map(argumentLength)
     });
+    return observedRequestId;
+  }
+
+  function tryObserveMiniAppletCall(call, args) {
+    try {
+      return observeMiniAppletCall(call, args);
+    } catch (_) {
+      return null;
+    }
   }
 
   function observeBranch(branch) {
+    if (activeProbeRequestId === null) {
+      return;
+    }
     postProbeMessage({
       type: "RUNTIME_BRANCH_OBSERVATION",
-      requestId: requestId(),
+      documentId: probeDocumentId,
+      requestId: activeProbeRequestId,
       branch
+    });
+  }
+
+  function completeMiniAppletCall(observedRequestId) {
+    postProbeMessage({
+      type: "MINIAPPLET_CALL_END",
+      documentId: probeDocumentId,
+      requestId: observedRequestId
     });
   }
 
@@ -103,8 +138,18 @@
       return method;
     }
     function wrappedMiniAppletMethod(...args) {
-      observeMiniAppletCall(call, args);
-      return Reflect.apply(method, this, args);
+      const observedRequestId = tryObserveMiniAppletCall(call, args);
+      if (observedRequestId === null) {
+        return Reflect.apply(method, this, args);
+      }
+      const previousRequestId = activeProbeRequestId;
+      activeProbeRequestId = observedRequestId;
+      try {
+        return Reflect.apply(method, this, args);
+      } finally {
+        activeProbeRequestId = previousRequestId;
+        completeMiniAppletCall(observedRequestId);
+      }
     }
     wrappedMethods.add(wrappedMiniAppletMethod);
     return wrappedMiniAppletMethod;
@@ -180,11 +225,20 @@
     return prefix.startsWith("afirma:") || prefix.startsWith("intent:");
   }
 
-  function forwardUri(value) {
+  function observeSupportedUriBranch(value) {
     if (!isSupportedUri(value)) {
       return false;
     }
-    observeBranch(value.slice(0, 7).toLowerCase().startsWith("intent:") ? "INTENT" : "AFIRMA");
+    const branch = value.slice(0, 7).toLowerCase().startsWith("intent:") ?
+      "INTENT" : "AFIRMA";
+    observeBranch(branch);
+    return true;
+  }
+
+  function forwardUri(value) {
+    if (!observeSupportedUriBranch(value)) {
+      return false;
+    }
     if (!bridge || typeof bridge.postMessage !== "function") {
       return false;
     }

@@ -68,6 +68,7 @@ Expected: all Gradle tasks succeed; prohibited-pattern searches print nothing; d
 ```kotlin
 enum class ObservedMiniAppletCall { LOAD, SIGN }
 enum class ObservedRuntimeBranch { AFIRMA, INTENT, WEBSOCKET, DIRECT_NETWORK, NONE }
+enum class ObservationCorrelation { REQUEST_ID, ACTIVE_CALL_WINDOW, NONE }
 
 data class SafeProtocolObservation(
     val call: ObservedMiniAppletCall,
@@ -76,6 +77,7 @@ data class SafeProtocolObservation(
     val format: String?,
     val argumentLengths: List<Int>,
     val branch: ObservedRuntimeBranch,
+    val correlation: ObservationCorrelation,
 )
 
 interface ProtocolObservationSink {
@@ -124,6 +126,18 @@ Expected: FAIL because the current shim only handles `window.open` and `Protocol
 At document start, install a configurable property wrapper around `MiniApplet`. Wrap only callable `cargarMiniApplet` and `sign`; preserve `this`, arguments, return value, and callback references. The observation message contains `type`, UUID, operation, non-secret algorithm/format, and argument lengths. Let the current WebView client consume any resulting `afirma:`/`intent:` navigation; never invoke Package Manager, pre-sign, success callback, or error callback from the probe.
 
 Implement recorder parsing with a closed enum, maximum 32 arguments, maximum integer length 1,048,576, host sanitization, and no generic map/string payload API.
+
+Never attach a native branch to merely the latest or next call. A JavaScript
+branch must reuse the exact request UUID. Native navigation may use only an
+explicitly labelled `ACTIVE_CALL_WINDOW` when there is one already-open
+top-level SIGN, one bound document UUID/generation and trusted origin,
+algorithm and format are present, and elapsed time is at most 250 ms. If
+Android WebView delivers navigation before WebMessage, record a safe false
+negative and poison native correlation for that document. Overflow, expiry,
+replay, unknown transitions and duplicate critical JSON keys fail closed and
+never evict state to continue. Hold a candidate branch until its matching
+`MINIAPPLET_CALL_END`; emit one closed `PROTOCOL_CORRELATION_REJECTED` marker
+if any later transition invalidates that document.
 
 - [ ] **Step 4: Run focused GREEN and Android-test compilation**
 
