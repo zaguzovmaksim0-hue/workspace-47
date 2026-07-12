@@ -1,0 +1,128 @@
+package dev.junta.firmamobile.signing
+
+import dev.junta.firmamobile.browser.NavigationId
+import dev.junta.firmamobile.browser.WebBridgeMessage
+import dev.junta.firmamobile.network.TrustedOrigin
+import java.io.Closeable
+import java.time.Instant
+import java.util.UUID
+
+@JvmInline
+value class SigningProtocolId(val value: String) {
+    init {
+        require(PROTOCOL_ID_PATTERN.matches(value))
+    }
+
+    private companion object {
+        val PROTOCOL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,63}")
+    }
+}
+
+enum class SigningAlgorithm {
+    SHA1_WITH_RSA,
+    SHA256_WITH_RSA,
+}
+
+enum class SigningFormat {
+    CADES,
+}
+
+enum class SigningErrorCode {
+    INVALID_REQUEST,
+    REQUEST_TOO_LARGE,
+    REQUEST_EXPIRED,
+    PROFILE_NOT_ACTIVE,
+    ORIGIN_NOT_ALLOWED,
+    NAVIGATION_CHANGED,
+    PAYLOAD_CHANGED,
+    CERTIFICATE_LOCKED,
+    UNSUPPORTED_PROTOCOL,
+    UNOBSERVED_CONTRACT,
+    SESSION_EXPIRED,
+    LOCAL_SIGNATURE_FAILED,
+    PROTOCOL_FAILED,
+    USER_CANCELLED,
+}
+
+data class SigningContext(
+    val profileId: String,
+    val profileVersion: Int,
+    val origin: TrustedOrigin,
+    val navigationId: NavigationId,
+    val observedAt: Instant,
+)
+
+class NormalizedSignRequest internal constructor(
+    val requestId: UUID,
+    val protocolId: SigningProtocolId,
+    val context: SigningContext,
+    val algorithm: SigningAlgorithm,
+    val format: SigningFormat,
+    val safeDescription: String,
+    payload: ByteArray,
+    private val payloadObserver: SensitiveSigningCopyObserver = SensitiveSigningCopyObserver {},
+) : Closeable {
+    private var ownedPayload: ByteArray? = payload
+
+    internal val payloadSize: Int
+        @Synchronized get() = requirePayload().size
+
+    @Synchronized
+    internal fun payloadCopy(): ByteArray = requirePayload().copyOf()
+
+    @Synchronized
+    internal fun <T> withPayload(block: (ByteArray) -> T): T = block(requirePayload())
+
+    @Synchronized
+    override fun close() {
+        val payloadToClear = ownedPayload ?: return
+        payloadToClear.fill(0)
+        payloadObserver.onCleared(payloadToClear.all { it == 0.toByte() })
+        ownedPayload = null
+    }
+
+    private fun requirePayload(): ByteArray =
+        checkNotNull(ownedPayload) { "Signing payload is closed" }
+}
+
+sealed interface InterceptedSigningInput {
+    @ConsistentCopyVisibility
+    data class AfirmaUri internal constructor(
+        internal val rawUri: String,
+    ) : InterceptedSigningInput
+
+    @ConsistentCopyVisibility
+    data class WebMessage internal constructor(
+        internal val message: WebBridgeMessage,
+    ) : InterceptedSigningInput
+}
+
+sealed interface AdapterParseResult {
+    data class Accepted(val request: NormalizedSignRequest) : AdapterParseResult
+
+    data class Rejected(val code: SigningErrorCode) : AdapterParseResult
+}
+
+@ConsistentCopyVisibility
+data class PreSignResult internal constructor(
+    internal val bytesToSign: ByteArray,
+)
+
+@ConsistentCopyVisibility
+data class LocalSignature internal constructor(
+    internal val bytes: ByteArray,
+)
+
+sealed interface SignDelivery {
+    @ConsistentCopyVisibility
+    data class BridgeResult internal constructor(
+        val requestId: UUID,
+        internal val resultJson: String,
+    ) : SignDelivery
+}
+
+sealed interface ProtocolCompletionResult {
+    data class Success(val delivery: SignDelivery) : ProtocolCompletionResult
+
+    data class Failure(val code: SigningErrorCode) : ProtocolCompletionResult
+}
