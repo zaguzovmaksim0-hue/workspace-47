@@ -69,4 +69,29 @@ class AfirmaJavascriptShimTest {
         assertFalse(script.contains("saveSignatureAuthCallback"))
         assertFalse(script.contains("showLogCallback"))
     }
+
+    @Test
+    fun functionalModeOwnsMiniAppletSignWhileProbeModeKeepsObservationOnly() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val functional = AfirmaJavascriptShim.load(
+            context,
+            MiniAppletBridgeMode.FUNCTIONAL,
+        )
+        val observation = AfirmaJavascriptShim.load(
+            context,
+            MiniAppletBridgeMode.OBSERVATION,
+        )
+
+        assertTrue(functional.contains("const functionalSigningEnabled = true"))
+        assertTrue(observation.contains("const functionalSigningEnabled = false"))
+        assertTrue(functional.contains("MINIAPPLET_SIGN"))
+        assertTrue(functional.contains("MINIAPPLET_RESULT"))
+        assertTrue(functional.contains("MINIAPPLET_CANCEL"))
+        assertTrue(functional.contains("pendingCallbacks"))
+        assertTrue(functional.contains("pendingCallbacks.delete"))
+        assertTrue(functional.contains("successCallback(signatureB64, certificateB64)"))
+        assertTrue(functional.contains("errorCallback(errorCode"))
+        assertTrue(functional.contains("pagehide"))
+        assertFalse(functional.contains("evaluateJavascript"))
+    }
 }

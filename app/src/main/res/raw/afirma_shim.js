@@ -12,11 +12,19 @@
 
   const bridge = window.JuntaFirmaMobile;
   const probe = window.JuntaFirmaProbe;
+  const functionalSigningEnabled = __JFM_FUNCTIONAL_SIGNING_ENABLED__;
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
+  const maxDirectDataChars = 699052;
+  const maxExtraPropertiesChars = 65536;
+  const signTimeoutMillis = 120000;
   const safeTokenPattern = /^[A-Za-z0-9._+\-]{1,64}$/;
+  const canonicalUuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
   const wrappedMethods = new WeakSet();
+  const pendingCallbacks = new Map();
   let activeProbeRequestId = null;
 
   function requestId() {
@@ -36,6 +44,176 @@
     const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   }
+
+  function secureRequestId() {
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+      return globalThis.crypto.randomUUID();
+    }
+    if (!globalThis.crypto || typeof globalThis.crypto.getRandomValues !== "function") {
+      return null;
+    }
+    const bytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+
+  const closedErrorMessages = Object.freeze({
+    USER_CANCELLED: "La operación de firma se ha cancelado.",
+    REQUEST_EXPIRED: "La solicitud de firma ha caducado.",
+    CERTIFICATE_LOCKED: "El certificado está bloqueado.",
+    NAVIGATION_CHANGED: "La página cambió durante la firma.",
+    SESSION_EXPIRED: "La sesión del portal ha caducado.",
+    PROTOCOL_FAILED: "El portal no pudo completar la firma."
+  });
+
+  function safeErrorMessage(errorCode) {
+    return closedErrorMessages[errorCode] || "No se pudo completar la firma.";
+  }
+
+  function clearPending(requestIdValue) {
+    const pending = pendingCallbacks.get(requestIdValue);
+    if (!pending) {
+      return null;
+    }
+    pendingCallbacks.delete(requestIdValue);
+    clearTimeout(pending.timeoutId);
+    return pending;
+  }
+
+  function notifyNativeCancel(requestIdValue) {
+    if (!bridge || typeof bridge.postMessage !== "function") {
+      return;
+    }
+    try {
+      bridge.postMessage(JSON.stringify({
+        type: "MINIAPPLET_CANCEL",
+        documentId: probeDocumentId,
+        requestId: requestIdValue
+      }));
+    } catch (_) {
+      // Native cancellation is best-effort; page teardown still drops callbacks.
+    }
+  }
+
+  function rejectDirectCall(errorCallback, errorCode) {
+    if (typeof errorCallback === "function") {
+      try {
+        errorCallback(errorCode, safeErrorMessage(errorCode));
+      } catch (_) {
+        // Portal callback exceptions must not reopen native signing.
+      }
+    }
+  }
+
+  function interceptMiniAppletSign(args) {
+    if (!functionalSigningEnabled) {
+      return false;
+    }
+    const successCallback = args[4];
+    const errorCallback = args[5];
+    if (args.length !== 6 || typeof successCallback !== "function" ||
+        typeof errorCallback !== "function" || typeof args[0] !== "string" ||
+        args[0].length === 0 || args[0].length > maxDirectDataChars ||
+        !base64Pattern.test(args[0]) ||
+        (args[1] !== "SHA1withRSA" && args[1] !== "SHA256withRSA") ||
+        args[2] !== "CAdES" || typeof args[3] !== "string" ||
+        args[3].length > maxExtraPropertiesChars) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    if (!bridge || typeof bridge.postMessage !== "function") {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    if (pendingCallbacks.size !== 0) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    const directRequestId = secureRequestId();
+    if (!directRequestId) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    const timeoutId = setTimeout(() => {
+      const expired = clearPending(directRequestId);
+      if (expired) {
+        notifyNativeCancel(directRequestId);
+        rejectDirectCall(expired.errorCallback, "REQUEST_EXPIRED");
+      }
+    }, signTimeoutMillis);
+    pendingCallbacks.set(directRequestId, {
+      successCallback,
+      errorCallback,
+      timeoutId
+    });
+    try {
+      bridge.postMessage(JSON.stringify({
+        type: "MINIAPPLET_SIGN",
+        documentId: probeDocumentId,
+        requestId: directRequestId,
+        dataB64: args[0],
+        algorithm: args[1],
+        format: args[2],
+        extraProperties: args[3]
+      }));
+    } catch (_) {
+      clearPending(directRequestId);
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+    }
+    return true;
+  }
+
+  function receiveMiniAppletResult(event) {
+    if (!functionalSigningEnabled || !event || typeof event.data !== "string") {
+      return;
+    }
+    let result;
+    try {
+      result = JSON.parse(event.data);
+    } catch (_) {
+      return;
+    }
+    if (!result || result.type !== "MINIAPPLET_RESULT" ||
+        typeof result.requestId !== "string" ||
+        !canonicalUuidPattern.test(result.requestId)) {
+      return;
+    }
+    const pending = clearPending(result.requestId);
+    if (!pending) {
+      return;
+    }
+    if (result.status === "success" && typeof result.signature === "string" &&
+        typeof result.certificate === "string" &&
+        base64Pattern.test(result.signature) && base64Pattern.test(result.certificate)) {
+      const signatureB64 = result.signature;
+      const certificateB64 = result.certificate;
+      try {
+        pending.successCallback(signatureB64, certificateB64);
+      } catch (_) {
+        // Portal callback exceptions are terminal.
+      }
+      return;
+    }
+    const errorCode = typeof result.errorCode === "string" &&
+      safeTokenPattern.test(result.errorCode) ? result.errorCode : "PROTOCOL_FAILED";
+    const errorCallback = pending.errorCallback;
+    rejectDirectCall(errorCallback, errorCode);
+  }
+
+  if (functionalSigningEnabled && bridge) {
+    bridge.onmessage = receiveMiniAppletResult;
+  }
+
+  window.addEventListener("pagehide", () => {
+    for (const [pendingRequestId, pending] of pendingCallbacks.entries()) {
+      clearTimeout(pending.timeoutId);
+      notifyNativeCancel(pendingRequestId);
+    }
+    pendingCallbacks.clear();
+  });
 
   const probeDocumentId = requestId();
   Object.defineProperty(window, "__jfmProbeDocumentId", {
@@ -145,6 +323,9 @@
       const previousRequestId = activeProbeRequestId;
       activeProbeRequestId = observedRequestId;
       try {
+        if (call === "SIGN" && interceptMiniAppletSign(args)) {
+          return undefined;
+        }
         return Reflect.apply(method, this, args);
       } finally {
         activeProbeRequestId = previousRequestId;

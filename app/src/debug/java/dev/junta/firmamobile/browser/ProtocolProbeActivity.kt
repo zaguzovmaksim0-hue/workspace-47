@@ -151,6 +151,7 @@ class ProtocolProbeActivity : ComponentActivity() {
         bridgeAttachment = WebMessageBridge(
             logger = logger,
             onAfirmaRequest = {},
+            miniAppletMode = MiniAppletBridgeMode.OBSERVATION,
         ).attach(webView)
         if (bridgeAttachment?.listenerAttached != true ||
             bridgeAttachment?.documentStartScriptAttached != true
