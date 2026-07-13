@@ -24,6 +24,8 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
         settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            useWideViewPort = true
+            loadWithOverviewMode = true
             safeBrowsingEnabled = true
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
             allowFileAccess = false

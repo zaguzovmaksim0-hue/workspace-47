@@ -36,6 +36,8 @@ class TrustedJuntaWebViewTest {
         assertFalse(settings.javaScriptCanOpenWindowsAutomatically)
         assertFalse(settings.supportMultipleWindows())
         assertTrue(settings.mixedContentMode == WebSettings.MIXED_CONTENT_NEVER_ALLOW)
+        assertTrue(settings.useWideViewPort)
+        assertTrue(settings.loadWithOverviewMode)
 
         val cookieManager = CookieManager.getInstance()
         assertTrue(cookieManager.acceptCookie())
