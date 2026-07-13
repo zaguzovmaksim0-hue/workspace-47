@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -73,7 +74,13 @@ class MainActivity : ComponentActivity() {
             },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
         )
-        enableEdgeToEdge()
+        val paperSystemBar = getColor(R.color.jfm_paper)
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.light(
+                scrim = paperSystemBar,
+                darkScrim = paperSystemBar,
+            ),
+        )
         setContent {
             val certificateState = certificateViewModel.state.collectAsStateWithLifecycle()
             val signingState = signingCoordinator.state.collectAsStateWithLifecycle()

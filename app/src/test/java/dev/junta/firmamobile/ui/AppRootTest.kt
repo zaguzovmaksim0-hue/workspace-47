@@ -3,6 +3,7 @@ package dev.junta.firmamobile.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -45,6 +46,27 @@ class AppRootTest {
     }
 
     @Test
+    fun firstRunUsesReferenceStructureAndCurrentCertificateStatus() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                AppRoot(state = CertificateUiState.NoCertificate())
+            }
+        }
+
+        rule.onNodeWithTag("jfm-home-background").assertExists()
+        rule.onNodeWithTag("jfm-brand-title").assertExists()
+        rule.onNodeWithTag("jfm-certificate-card").assertExists()
+        rule.onNodeWithTag("jfm-home-navigation").assertExists()
+        rule.onNodeWithText("Junta Firma Mobile").assertIsDisplayed()
+        rule.onNodeWithText("Selección segura disponible")
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText(
+            "La selección de certificados estará disponible en la fase 2.",
+        ).assertDoesNotExist()
+    }
+
+    @Test
     fun lockedCertificateConsumesPasswordWithoutExposingText() {
         var submitted: CharArray? = null
         rule.setContent {
@@ -57,8 +79,11 @@ class AppRootTest {
         }
 
         rule.onNodeWithContentDescription("Contraseña del certificado")
+            .performScrollTo()
             .performTextInput("secret-canary")
-        rule.onNodeWithText("Desbloquear certificado").performClick()
+        rule.onNodeWithText("Desbloquear certificado")
+            .performScrollTo()
+            .performClick()
 
         rule.runOnIdle {
             check(submitted.contentEquals("secret-canary".toCharArray()))
@@ -77,9 +102,15 @@ class AppRootTest {
             }
         }
 
-        rule.onNodeWithText("Certificado encontrado").assertIsDisplayed()
-        rule.onNodeWithText("Persona de Prueba", substring = true).assertIsDisplayed()
-        rule.onNodeWithText("CA de Prueba", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("Certificado encontrado")
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText("Persona de Prueba", substring = true)
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText("CA de Prueba", substring = true)
+            .performScrollTo()
+            .assertIsDisplayed()
         rule.onNodeWithText("Continuar").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Elegir otro").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Bloquear certificado").performScrollTo().assertIsDisplayed()
