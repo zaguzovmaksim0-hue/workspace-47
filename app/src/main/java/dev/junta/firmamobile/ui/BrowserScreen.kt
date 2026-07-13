@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.ui
 
 import android.net.Uri
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import android.webkit.WebView
@@ -257,6 +258,10 @@ fun BrowserScreen(
             AndroidView(
                 factory = {
                     TrustedJuntaWebView(context).also { webView ->
+                        webView.layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                        )
                         val client = JuntaWebViewClient(
                             callbacks = callbacks,
                             logger = logger,

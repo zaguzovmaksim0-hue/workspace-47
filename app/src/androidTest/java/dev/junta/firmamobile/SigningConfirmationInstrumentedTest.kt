@@ -1,5 +1,8 @@
 package dev.junta.firmamobile
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.net.Uri
 import android.util.Base64
 import android.view.View
@@ -25,7 +28,10 @@ import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.StoredCertificateReference
 import java.io.ByteArrayInputStream
 import java.io.InputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
@@ -105,6 +111,117 @@ class SigningConfirmationInstrumentedTest {
         }
     }
 
+    @Test
+    fun composeBrowserUsesMatchParentLayoutAndCompositesWebViewPixels() {
+        val uri = Uri.parse("content://dev.junta.firmamobile.tests/rendering-identity.p12")
+        val bytes = syntheticPkcs12()
+        try {
+            val reference = StoredCertificateReference(
+                uri = uri,
+                displayName = "synthetic-rendering-identity.p12",
+                mimeType = CertificateRepository.MIME_X_PKCS12,
+                size = bytes.size.toLong(),
+                summary = null,
+            )
+            val repository = CertificateRepository(
+                documentAccess = SyntheticDocumentAccess(uri, bytes),
+                referenceStore = MemoryReferenceStore(reference),
+                loader = Pkcs12Loader(),
+            )
+
+            TestCertificateDependencies.install(repository, CertificateSession()).use {
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                        .performScrollTo()
+                        .performTextInput(TEST_PASSPHRASE)
+                    rule.onNodeWithText("Desbloquear certificado")
+                        .performScrollTo()
+                        .performClick()
+                    waitForText("Certificado encontrado")
+                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    waitForWebView(scenario)
+
+                    scenario.onActivity { activity ->
+                        checkNotNull(findWebView(activity.window.decorView)).apply {
+                            assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, layoutParams.width)
+                            assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, layoutParams.height)
+                            stopLoading()
+                            loadDataWithBaseURL(
+                                TRUSTED_BASE_URL,
+                                SYNTHETIC_RENDER_PAGE,
+                                "text/html",
+                                "UTF-8",
+                                TRUSTED_BASE_URL,
+                            )
+                        }
+                    }
+                    waitForWebViewTitle(scenario, RENDER_READY_TITLE)
+
+                    val visualStateLatch = CountDownLatch(1)
+                    scenario.onActivity { activity ->
+                        checkNotNull(findWebView(activity.window.decorView))
+                            .postVisualStateCallback(
+                                1L,
+                                object : WebView.VisualStateCallback() {
+                                    override fun onComplete(requestId: Long) {
+                                        visualStateLatch.countDown()
+                                    }
+                                },
+                            )
+                    }
+                    assertTrue(
+                        "Synthetic WebView visual-state callback timed out",
+                        visualStateLatch.await(5, TimeUnit.SECONDS),
+                    )
+                    InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+
+                    var internalPixel = Color.WHITE
+                    var screenX = 0
+                    var screenY = 0
+                    scenario.onActivity { activity ->
+                        val webView = checkNotNull(findWebView(activity.window.decorView))
+                        val bitmap = Bitmap.createBitmap(
+                            webView.width,
+                            webView.height,
+                            Bitmap.Config.ARGB_8888,
+                        )
+                        try {
+                            webView.draw(Canvas(bitmap))
+                            internalPixel = bitmap.getPixel(bitmap.width / 2, bitmap.height / 2)
+                        } finally {
+                            bitmap.recycle()
+                        }
+                        val location = IntArray(2)
+                        webView.getLocationOnScreen(location)
+                        screenX = location[0] + webView.width / 2
+                        screenY = location[1] + webView.height / 2
+                    }
+                    var windowPixel = Color.WHITE
+                    rule.waitUntil(timeoutMillis = 5_000) {
+                        val screen = InstrumentationRegistry.getInstrumentation()
+                            .uiAutomation
+                            .takeScreenshot()
+                        try {
+                            windowPixel = screen.getPixel(screenX, screenY)
+                            windowPixel.isNear(RENDER_COLOR)
+                        } finally {
+                            screen.recycle()
+                        }
+                    }
+
+                    assertTrue(
+                        "Expected the synthetic WebView color in its draw pass and window; " +
+                            "internal=${internalPixel.toColorHex()} " +
+                            "window=${windowPixel.toColorHex()}",
+                        internalPixel.isNear(RENDER_COLOR) && windowPixel.isNear(RENDER_COLOR),
+                    )
+                }
+            }
+        } finally {
+            bytes.fill(0)
+        }
+    }
+
     private fun waitForText(text: String) {
         rule.waitUntil(timeoutMillis = 15_000) {
             rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
@@ -164,6 +281,26 @@ class SigningConfirmationInstrumentedTest {
         }
     }
 
+    private fun waitForWebViewTitle(
+        scenario: ActivityScenario<MainActivity>,
+        expected: String,
+    ) {
+        rule.waitUntil(timeoutMillis = 15_000) {
+            var title: String? = null
+            scenario.onActivity { activity ->
+                title = findWebView(activity.window.decorView)?.title
+            }
+            title == expected
+        }
+    }
+
+    private fun Int.isNear(expected: Int, tolerance: Int = 16): Boolean =
+        kotlin.math.abs(Color.red(this) - Color.red(expected)) <= tolerance &&
+            kotlin.math.abs(Color.green(this) - Color.green(expected)) <= tolerance &&
+            kotlin.math.abs(Color.blue(this) - Color.blue(expected)) <= tolerance
+
+    private fun Int.toColorHex(): String = String.format("#%08X", this)
+
     private fun findWebView(view: View): WebView? {
         if (view is WebView) return view
         if (view !is ViewGroup) return null
@@ -218,6 +355,8 @@ class SigningConfirmationInstrumentedTest {
     private companion object {
         const val TEST_PASSPHRASE = "test-password-123"
         const val TRUSTED_BASE_URL = "https://www.juntadeandalucia.es/"
+        const val RENDER_READY_TITLE = "RENDER_READY"
+        val RENDER_COLOR: Int = Color.rgb(0, 94, 73)
         val TERMINAL_TITLES = setOf(
             "ORIGINAL",
             "INVALID_REQUEST",
@@ -246,6 +385,14 @@ class SigningConfirmationInstrumentedTest {
               );
             });
             </script></head><body>synthetic</body></html>
+        """
+        const val SYNTHETIC_RENDER_PAGE = """
+            <!doctype html><html><head><title>START</title>
+            <style>
+              html, body { margin: 0; width: 100%; height: 100%; background: #005e49; }
+            </style></head><body>
+            <script>document.title = 'RENDER_READY';</script>
+            </body></html>
         """
     }
 }
