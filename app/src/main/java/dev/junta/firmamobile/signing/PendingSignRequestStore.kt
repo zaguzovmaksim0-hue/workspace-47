@@ -25,7 +25,7 @@ data class PendingValidationContext(
     val profileVersion: Int,
     val origin: TrustedOrigin,
     val navigationId: NavigationId,
-    internal val payload: ByteArray,
+    internal val payloadFingerprint: ByteArray,
 )
 
 sealed interface PendingConsumeResult {
@@ -145,16 +145,13 @@ class PendingSignRequestStore internal constructor(
         if (expected.navigationId != current.summary.context.navigationId) {
             return rejectAndClear(ConsumeError.NAVIGATION_CHANGED)
         }
-        if (expected.payload.size > MAX_PAYLOAD_BYTES) {
+        if (expected.payloadFingerprint.size != SHA_256_BYTES) {
             return rejectAndClear(ConsumeError.PAYLOAD_CHANGED)
         }
-
-        val expectedFingerprint = digest(expected.payload)
-        val payloadMatches = try {
-            MessageDigest.isEqual(current.fingerprint, expectedFingerprint)
-        } finally {
-            expectedFingerprint.clearAndReport()
-        }
+        val payloadMatches = MessageDigest.isEqual(
+            current.fingerprint,
+            expected.payloadFingerprint,
+        )
         if (!payloadMatches) {
             return rejectAndClear(ConsumeError.PAYLOAD_CHANGED)
         }
@@ -214,5 +211,6 @@ class PendingSignRequestStore internal constructor(
         private const val MAX_SAFE_DESCRIPTION_CHARS = 256
         private const val MAX_TRACKED_REQUEST_IDS = 1_024
         private const val SHA_256 = "SHA-256"
+        private const val SHA_256_BYTES = 32
     }
 }

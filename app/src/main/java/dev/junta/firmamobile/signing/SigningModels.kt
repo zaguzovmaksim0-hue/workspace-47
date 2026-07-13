@@ -41,6 +41,7 @@ enum class SigningErrorCode {
     SESSION_EXPIRED,
     LOCAL_SIGNATURE_FAILED,
     PROTOCOL_FAILED,
+    RESULT_DELIVERY_FAILED,
     USER_CANCELLED,
 }
 
@@ -167,12 +168,14 @@ class LocalSignature internal constructor(
         checkNotNull(ownedBytes) { "Local signature is closed" }
 }
 
-sealed interface SignDelivery {
-    @ConsistentCopyVisibility
-    data class BridgeResult internal constructor(
-        val requestId: UUID,
-        internal val resultJson: String,
-    ) : SignDelivery
+interface SigningReplySink {
+    val requestId: UUID
+
+    fun success(signature: LocalSignature, certificateDer: ByteArray): Boolean
+
+    fun failure(code: SigningErrorCode): Boolean
+
+    fun abandon(): Boolean
 }
 
 sealed interface ProtocolCompletionResult {

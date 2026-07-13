@@ -49,6 +49,17 @@ internal object TestCertificateFactory {
         )
     }
 
+    fun freshValidRsa(): ByteArray {
+        val identity = identity(
+            commonName = "Persona de Prueba",
+            algorithm = "RSA",
+            notBefore = defaultNotBefore,
+            notAfter = defaultNotAfter,
+            keyUsage = KeyUsage.digitalSignature,
+        )
+        return identityStore("fresh-identidad", identity)
+    }
+
     fun certificateOnly(): ByteArray = store {
         setCertificateEntry("certificado", validIdentity.certificate)
     }

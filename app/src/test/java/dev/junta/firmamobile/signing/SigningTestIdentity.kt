@@ -18,9 +18,16 @@ internal data class NonExportableSyntheticIdentity(
 )
 
 internal fun syntheticIdentity(): UnlockedIdentity = runBlocking {
-    val bytes = TestCertificateFactory.validRsa()
+    loadSyntheticIdentity(TestCertificateFactory.validRsa())
+}
+
+internal fun freshSyntheticIdentity(): UnlockedIdentity = runBlocking {
+    loadSyntheticIdentity(TestCertificateFactory.freshValidRsa())
+}
+
+private suspend fun loadSyntheticIdentity(bytes: ByteArray): UnlockedIdentity {
     val password = TestCertificateFactory.password()
-    try {
+    return try {
         val result = Pkcs12Loader(
             clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
         ).load(

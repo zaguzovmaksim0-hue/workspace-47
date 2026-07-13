@@ -12,6 +12,7 @@ import dev.junta.firmamobile.signing.SigningContext
 import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningFormat
 import dev.junta.firmamobile.signing.SigningProtocolId
+import dev.junta.firmamobile.signing.SigningReplySink
 import java.io.StringReader
 import java.time.Clock
 import java.util.Base64
@@ -258,13 +259,13 @@ class MiniAppletBridgeAdapter(
 }
 
 class MiniAppletReplyChannel internal constructor(
-    private val requestId: UUID,
+    override val requestId: UUID,
     private val postMessage: (String) -> Unit,
     private val onTerminal: () -> Unit = {},
-) {
+) : SigningReplySink {
     private val terminal = AtomicBoolean(false)
 
-    fun success(signature: LocalSignature, certificateDer: ByteArray): Boolean {
+    override fun success(signature: LocalSignature, certificateDer: ByteArray): Boolean {
         if (!terminal.compareAndSet(false, true)) {
             signature.close()
             certificateDer.fill(0)
@@ -298,7 +299,7 @@ class MiniAppletReplyChannel internal constructor(
         }
     }
 
-    fun failure(code: SigningErrorCode): Boolean {
+    override fun failure(code: SigningErrorCode): Boolean {
         if (!terminal.compareAndSet(false, true)) return false
         return try {
             postMessage(
@@ -317,7 +318,7 @@ class MiniAppletReplyChannel internal constructor(
         }
     }
 
-    fun abandon(): Boolean {
+    override fun abandon(): Boolean {
         if (!terminal.compareAndSet(false, true)) return false
         onTerminal()
         return true

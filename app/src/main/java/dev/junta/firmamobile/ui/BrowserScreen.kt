@@ -49,6 +49,8 @@ import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
 import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.JuntaWebViewClient
+import dev.junta.firmamobile.browser.MiniAppletBridgeMode
+import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.browser.NavigationBlockReason
 import dev.junta.firmamobile.browser.NavigationDecision
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
@@ -57,6 +59,10 @@ import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
 import dev.junta.firmamobile.browser.WebViewStateHolder
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.security.SanitizedLogger
+import dev.junta.firmamobile.signing.SigningCancelReason
+import dev.junta.firmamobile.signing.SigningReplySink
+import dev.junta.firmamobile.signing.SigningUiState
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -65,6 +71,12 @@ fun BrowserScreen(
     certificateState: CertificateUiState.Unlocked,
     stateHolder: WebViewStateHolder,
     logger: SanitizedLogger,
+    signingState: SigningUiState,
+    onMiniAppletRequest: (MiniAppletBridgeRequest, SigningReplySink) -> Unit,
+    onMiniAppletCancel: (UUID) -> Unit,
+    onConfirmSigning: (UUID) -> Unit,
+    onCancelSigning: (SigningCancelReason, UUID?) -> Unit,
+    onDismissSigningState: () -> Unit,
     onExitBrowser: () -> Unit,
     onOpenExternal: (Uri) -> Unit,
     onChangeCertificate: () -> Unit,
@@ -86,9 +98,12 @@ fun BrowserScreen(
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
         pendingRequest = request
     }
-    val callbacks = remember(onOpenExternal) {
+    val callbacks = remember(onOpenExternal, onCancelSigning) {
         object : BrowserNavigationCallbacks {
-            override fun openExternal(uri: Uri) = onOpenExternal(uri)
+            override fun openExternal(uri: Uri) {
+                onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                onOpenExternal(uri)
+            }
 
             override fun onAfirmaRequest(request: AfirmaRequest) {
                 handleAfirmaRequest(request)
@@ -102,6 +117,10 @@ fun BrowserScreen(
                 browserError = error
             }
 
+            override fun onTopLevelNavigationStarted(url: String) {
+                onCancelSigning(SigningCancelReason.NAVIGATION, null)
+            }
+
             override fun onTopLevelUrlChanged(url: String) {
                 currentUrl = url
             }
@@ -109,6 +128,7 @@ fun BrowserScreen(
     }
 
     fun goBack() {
+        onCancelSigning(SigningCancelReason.NAVIGATION, null)
         val webView = webViewRef.get()
         if (webView?.canGoBack() == true) webView.goBack() else onExitBrowser()
     }
@@ -129,6 +149,7 @@ fun BrowserScreen(
         }
         when (val decision = navigationPolicy.decide(candidate, currentUrl)) {
             NavigationDecision.AllowInWebView -> {
+                onCancelSigning(SigningCancelReason.NAVIGATION, null)
                 browserError = null
                 blockedReason = null
                 webViewRef.get()?.loadUrl(candidate)
@@ -144,8 +165,9 @@ fun BrowserScreen(
     }
 
     BackHandler(onBack = ::goBack)
-    DisposableEffect(Unit) {
+    DisposableEffect(onCancelSigning) {
         onDispose {
+            onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeRef.getAndSet(null)?.close()
             webViewRef.getAndSet(null)?.let { webView ->
                 if (!discardHistory.get()) stateHolder.capture(webView)
@@ -162,18 +184,27 @@ fun BrowserScreen(
         onAddressSubmitted = ::submitAddress,
         onBack = ::goBack,
         onHome = {
+            onCancelSigning(SigningCancelReason.NAVIGATION, null)
             browserError = null
             blockedReason = null
             currentUrl = JuntaOriginPolicy.START_URL
             webViewRef.get()?.loadUrl(JuntaOriginPolicy.START_URL)
         },
         onReload = {
+            onCancelSigning(SigningCancelReason.RELOAD, null)
             browserError = null
             webViewRef.get()?.reload()
         },
-        onChangeCertificate = onChangeCertificate,
-        onLockCertificate = onLockCertificate,
+        onChangeCertificate = {
+            onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
+            onChangeCertificate()
+        },
+        onLockCertificate = {
+            onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
+            onLockCertificate()
+        },
         onClearSession = {
+            onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             discardHistory.set(true)
             stateHolder.clear()
             pendingRequest = null
@@ -213,6 +244,7 @@ fun BrowserScreen(
                         )
                         if (browserError != null) {
                             Button(onClick = {
+                                onCancelSigning(SigningCancelReason.RELOAD, null)
                                 browserError = null
                                 webViewRef.get()?.reload()
                             }) {
@@ -234,6 +266,11 @@ fun BrowserScreen(
                         val attachment = WebMessageBridge(
                             logger = logger,
                             onAfirmaRequest = handleAfirmaRequest,
+                            onMiniAppletRequest = { request, reply ->
+                                onMiniAppletRequest(request, reply)
+                            },
+                            onMiniAppletCancel = onMiniAppletCancel,
+                            miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                         ).attach(webView)
                         bridgeRef.set(attachment)
                         if (!attachment.listenerAttached ||
@@ -261,6 +298,30 @@ fun BrowserScreen(
             certificateOwner = certificateState.summary.ownerName,
             onDismiss = { pendingRequest = null },
         )
+    }
+
+    (signingState as? SigningUiState.AwaitingConfirmation)?.let { state ->
+        SigningConfirmationDialog(
+            state = state,
+            onConfirm = { onConfirmSigning(state.requestId) },
+            onCancel = {
+                onCancelSigning(SigningCancelReason.USER, state.requestId)
+            },
+        )
+    }
+
+    when (signingState) {
+        is SigningUiState.Signing,
+        is SigningUiState.Completed,
+        is SigningUiState.Failed,
+        -> SigningStatusDialog(
+            state = signingState,
+            onDismiss = onDismissSigningState,
+        )
+
+        SigningUiState.Idle,
+        is SigningUiState.AwaitingConfirmation,
+        -> Unit
     }
 }
 

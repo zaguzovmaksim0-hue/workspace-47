@@ -34,6 +34,8 @@ interface BrowserNavigationCallbacks {
 
     fun onBrowserError(error: BrowserErrorCode)
 
+    fun onTopLevelNavigationStarted(url: String) = Unit
+
     fun onTopLevelUrlChanged(url: String) = Unit
 }
 
@@ -81,6 +83,7 @@ class JuntaWebViewClient(
         }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+        callbacks.onTopLevelNavigationStarted(url)
         callbacks.onTopLevelUrlChanged(url)
     }
 

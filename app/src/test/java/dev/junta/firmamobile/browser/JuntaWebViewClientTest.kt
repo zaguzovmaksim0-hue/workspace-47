@@ -125,7 +125,10 @@ class JuntaWebViewClientTest {
         client.onPageStarted(webView, rawUrl, null)
         client.onPageFinished(webView, rawUrl)
 
-        assertEquals(listOf("url:$rawUrl", "url:$rawUrl"), callbacks.events)
+        assertEquals(
+            listOf("start:$rawUrl", "url:$rawUrl", "url:$rawUrl"),
+            callbacks.events,
+        )
         assertFalse(logger.exportText().contains("secret-canary"))
     }
 
@@ -159,6 +162,10 @@ class JuntaWebViewClientTest {
 
         override fun onTopLevelUrlChanged(url: String) {
             events += "url:$url"
+        }
+
+        override fun onTopLevelNavigationStarted(url: String) {
+            events += "start:$url"
         }
     }
 

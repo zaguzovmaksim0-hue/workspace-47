@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CertificateSessionTest {
@@ -76,7 +77,7 @@ class CertificateSessionTest {
     @Test
     fun replacementUsesOnlyNewestIdentity() = runTest {
         val first = validIdentity()
-        val second = validIdentity()
+        val second = validIdentity(TestCertificateFactory.freshValidRsa())
         val session = CertificateSession(mutableClock, Duration.ofMinutes(10))
 
         session.unlock(first)
@@ -85,8 +86,48 @@ class CertificateSessionTest {
         assertSame(second, session.identityForSigning())
     }
 
-    private suspend fun validIdentity(): UnlockedIdentity {
-        val bytes = TestCertificateFactory.validRsa()
+    @Test
+    fun signingSnapshotMatchesOnlyTheSameUnlockedCertificateAndClearsItsFingerprint() = runTest {
+        val clearedFingerprints = mutableListOf<Boolean>()
+        val first = validIdentity()
+        val second = validIdentity(TestCertificateFactory.freshValidRsa())
+        val firstSession = CertificateSession(
+            mutableClock,
+            Duration.ofMinutes(10),
+            SensitiveCertificateFingerprintObserver(clearedFingerprints::add),
+        )
+        val secondSession = CertificateSession(mutableClock, Duration.ofMinutes(10))
+        firstSession.unlock(first)
+        secondSession.unlock(second)
+
+        firstSession.signingSnapshot().use { matching ->
+            assertSame(first, firstSession.identityForSigning(checkNotNull(matching)))
+        }
+        secondSession.signingSnapshot().use { different ->
+            assertNull(firstSession.identityForSigning(checkNotNull(different)))
+        }
+
+        assertTrue(clearedFingerprints.isNotEmpty())
+        assertTrue(clearedFingerprints.all { it })
+    }
+
+    @Test
+    fun lockedSessionHasNoSigningSnapshotOrFingerprintMatchedIdentity() = runTest {
+        val session = CertificateSession(mutableClock, Duration.ofMinutes(10))
+        session.unlock(validIdentity())
+        val snapshot = checkNotNull(session.signingSnapshot())
+
+        session.lock()
+
+        snapshot.use {
+            assertNull(session.signingSnapshot())
+            assertNull(session.identityForSigning(it))
+        }
+    }
+
+    private suspend fun validIdentity(
+        bytes: ByteArray = TestCertificateFactory.validRsa(),
+    ): UnlockedIdentity {
         val result = Pkcs12Loader(
             clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
         ).load(

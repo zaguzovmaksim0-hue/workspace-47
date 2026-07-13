@@ -7,6 +7,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.security.MessageDigest
 import java.util.UUID
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -78,7 +79,7 @@ class PendingSignRequestStoreTest {
         assertThrows(IllegalStateException::class.java) {
             accepted.request.withPayload { error("accepted payload remained accessible") }
         }
-        assertTrue(clearedCopies.size >= 4)
+        assertTrue(clearedCopies.isNotEmpty())
         assertTrue(clearedCopies.all { it })
     }
 
@@ -98,7 +99,7 @@ class PendingSignRequestStoreTest {
             }) to
                 ConsumeError.NAVIGATION_CHANGED,
             ({ context: PendingValidationContext ->
-                context.copy(payload = "changed".encodeToByteArray())
+                context.copy(payloadFingerprint = fingerprint("changed".encodeToByteArray()))
             }) to
                 ConsumeError.PAYLOAD_CHANGED,
         )
@@ -168,8 +169,11 @@ class PendingSignRequestStoreTest {
         profileVersion = request.context.profileVersion,
         origin = request.context.origin,
         navigationId = request.context.navigationId,
-        payload = PAYLOAD.copyOf(),
+        payloadFingerprint = fingerprint(PAYLOAD),
     )
+
+    private fun fingerprint(payload: ByteArray): ByteArray =
+        MessageDigest.getInstance("SHA-256").digest(payload)
 
     private class MutableClock(
         private var current: Instant,
