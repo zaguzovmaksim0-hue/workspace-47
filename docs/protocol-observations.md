@@ -67,6 +67,43 @@ real del callback, sin hardcodear su nombre.
 
 No se observaron durante esta petición callbacks hacia otros hosts.
 
+## Contrato tri-phase derivado de fuente oficial — 2026-07-12
+
+La implementación ejecutable se limita al contrato del cliente oficial
+Cliente @firma, revisado en el commit
+`fe60ef3fdbae3c491e97c262a2179e2787b85776`. Las referencias principales son:
+
+- `AOCAdESTriPhaseSigner.java`: pre, PKCS#1 local, post y `OK NEWID=`;
+- `PreSigner.java` y `PostSigner.java`: nombres y orden de campos;
+- `TriphaseData.java` y `TriphaseDataSigner.java`: XML, `PRE`, `PK1` y
+  `NEED_PRE`;
+- `TriphaseUtil.java`: cadena de certificados;
+- `AOUtil.java`: serialización Java Properties;
+- `UrlHttpManagerImpl.java`: traslado de la cadena después de `?` al cuerpo
+  UTF-8 de un POST dirigido al endpoint sin query.
+
+El contrato cerrado usado por la app es:
+
+- endpoint exacto ya observado en la página pública, sin query, fragment,
+  userinfo, puerto alternativo ni redirecciones;
+- cuerpo `application/x-www-form-urlencoded; charset=UTF-8`, sin percent
+  encoding adicional, con Base64URL padded en `doc`, `cert`, `params` y
+  `session`;
+- Base64 estándar para `PRE` y `PK1` dentro del XML;
+- una sola `firma/PRE` para esta operación de autenticación;
+- respuesta HTTP 200 `text/plain` y resultado post exacto
+  `OK NEWID=<Base64URL>`;
+- ningún cookie de WebView, `Cookie`, `Authorization`, `Set-Cookie`, retry ni
+  redirect forma parte del transporte nativo.
+
+La ruta desplegada por Junta contiene `miniapplet-1_4`, mientras que el server
+stock del checkout oficial usa otra ruta servlet. Por tanto, la fuente oficial
+prueba la semántica del cliente, pero no prueba por sí sola el comportamiento
+runtime del fork desplegado (MIME, límites o errores). Cualquier divergencia
+falla cerrada y debe producir un defecto reproducible antes de ajustar el
+contrato. El perfil continúa siendo `EXPERIMENTAL`; no se declara
+`FULLY_VERIFIED` hasta que el portal acepte el E2E real.
+
 ## Runtime capture requerido
 
 La primera build debug debe registrar, sin valores sensibles:

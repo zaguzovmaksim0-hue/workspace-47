@@ -1,19 +1,18 @@
 package dev.junta.firmamobile.signing
 
+import java.security.cert.X509Certificate
+
 interface SigningProtocolAdapter {
     val id: SigningProtocolId
 
-    fun recognize(input: InterceptedSigningInput, profileId: String): Boolean
-
-    fun normalize(
-        input: InterceptedSigningInput,
-        context: SigningContext,
-    ): AdapterParseResult
-
-    suspend fun prepare(request: NormalizedSignRequest): PreSignResult
+    suspend fun prepare(
+        request: NormalizedSignRequest,
+        certificateChain: List<X509Certificate>,
+    ): ProtocolPrepareResult
 
     suspend fun complete(
         request: NormalizedSignRequest,
+        preSign: PreSignResult,
         localSignature: LocalSignature,
     ): ProtocolCompletionResult
 }

@@ -103,10 +103,44 @@ sealed interface AdapterParseResult {
     data class Rejected(val code: SigningErrorCode) : AdapterParseResult
 }
 
-@ConsistentCopyVisibility
-data class PreSignResult internal constructor(
-    internal val bytesToSign: ByteArray,
-)
+internal interface PreSignState : Closeable
+
+class PreSignResult internal constructor(
+    private val requestOwner: NormalizedSignRequest,
+    bytesToSign: ByteArray,
+    state: PreSignState,
+) : Closeable {
+    private var ownedBytesToSign: ByteArray? = bytesToSign
+    private var ownedState: PreSignState? = state
+
+    @Synchronized
+    internal fun <T> withBytesToSign(block: (ByteArray) -> T): T =
+        block(checkNotNull(ownedBytesToSign) { "Pre-sign input is closed" })
+
+    @Synchronized
+    internal fun consumeState(expectedOwner: NormalizedSignRequest): PreSignState? {
+        if (requestOwner !== expectedOwner) return null
+        val stateToTransfer = ownedState ?: return null
+        ownedState = null
+        ownedBytesToSign?.fill(0)
+        ownedBytesToSign = null
+        return stateToTransfer
+    }
+
+    @Synchronized
+    override fun close() {
+        ownedBytesToSign?.fill(0)
+        ownedBytesToSign = null
+        ownedState?.close()
+        ownedState = null
+    }
+}
+
+sealed interface ProtocolPrepareResult {
+    data class Success(val preSign: PreSignResult) : ProtocolPrepareResult
+
+    data class Failure(val code: SigningErrorCode) : ProtocolPrepareResult
+}
 
 internal fun interface SensitiveSignatureCopyObserver {
     fun onCleared(allZero: Boolean)
@@ -142,7 +176,7 @@ sealed interface SignDelivery {
 }
 
 sealed interface ProtocolCompletionResult {
-    data class Success(val delivery: SignDelivery) : ProtocolCompletionResult
+    data class Success(val signature: LocalSignature) : ProtocolCompletionResult
 
     data class Failure(val code: SigningErrorCode) : ProtocolCompletionResult
 }
