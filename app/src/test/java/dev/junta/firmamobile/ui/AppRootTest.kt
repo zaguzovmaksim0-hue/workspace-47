@@ -56,14 +56,17 @@ class AppRootTest {
         rule.onNodeWithTag("jfm-home-background").assertExists()
         rule.onNodeWithTag("jfm-brand-title").assertExists()
         rule.onNodeWithTag("jfm-certificate-card").assertExists()
-        rule.onNodeWithTag("jfm-home-navigation").assertExists()
+        rule.onNodeWithTag("jfm-home-navigation").assertDoesNotExist()
         rule.onNodeWithText("Junta Firma Mobile").assertIsDisplayed()
         rule.onNodeWithText("Selección segura disponible")
-            .performScrollTo()
             .assertIsDisplayed()
         rule.onNodeWithText(
             "La selección de certificados estará disponible en la fase 2.",
         ).assertDoesNotExist()
+        rule.onNodeWithText("Inicio").assertDoesNotExist()
+        rule.onNodeWithText("Historial").assertDoesNotExist()
+        rule.onNodeWithText("Ajustes").assertDoesNotExist()
+        rule.onNodeWithText("Ayuda").assertDoesNotExist()
     }
 
     @Test
@@ -114,6 +117,7 @@ class AppRootTest {
         rule.onNodeWithText("Continuar").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Elegir otro").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Bloquear certificado").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Olvidar certificado").performScrollTo().assertIsDisplayed()
     }
 
     private fun reference(summary: CertificateSummary? = null) = StoredCertificateReference(

@@ -1,6 +1,5 @@
 package dev.junta.firmamobile.ui
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,12 +32,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -88,7 +83,7 @@ internal fun JuntaBrandHeader() {
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val compact = maxWidth < 400.dp
+        val compact = maxWidth < 360.dp
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -100,32 +95,35 @@ internal fun JuntaBrandHeader() {
                     .weight(1f)
                     .testTag("jfm-brand-title")
                     .semantics { heading() },
-                maxLines = 3,
+                maxLines = 2,
                 overflow = TextOverflow.Clip,
                 style = if (compact) {
                     MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 54.sp,
-                        lineHeight = 50.sp,
+                        fontSize = 39.sp,
+                        lineHeight = 37.sp,
                     )
                 } else {
-                    MaterialTheme.typography.displayLarge
+                    MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 44.sp,
+                        lineHeight = 41.sp,
+                    )
                 },
             )
             Icon(
                 painter = painterResource(R.drawable.ic_jfm_shield_check),
                 contentDescription = null,
                 tint = androidx.compose.ui.graphics.Color.Unspecified,
-                modifier = Modifier.size(if (compact) 64.dp else 78.dp),
+                modifier = Modifier.size(if (compact) 48.dp else 54.dp),
             )
         }
     }
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(5.dp))
     Text(
         text = stringResource(R.string.unofficial_disclosure),
         color = JuntaInk,
         style = MaterialTheme.typography.bodyLarge,
     )
-    Spacer(modifier = Modifier.height(15.dp))
+    Spacer(modifier = Modifier.height(9.dp))
     JuntaDoubleRule()
 }
 
@@ -170,7 +168,7 @@ internal fun JuntaElevatedPanel(
                 .fillMaxWidth()
                 .background(JuntaPaperElevated.copy(alpha = 0.96f), JuntaPanelShape)
                 .border(2.dp, JuntaInk, JuntaPanelShape)
-                .padding(horizontal = 20.dp, vertical = 22.dp),
+                .padding(horizontal = 18.dp, vertical = 15.dp),
             content = content,
         )
     }
@@ -198,7 +196,7 @@ internal fun JuntaPrimaryButton(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 60.dp)
+                .heightIn(min = 50.dp)
                 .clip(JuntaButtonShape)
                 .background(
                     Brush.verticalGradient(
@@ -217,14 +215,14 @@ internal fun JuntaPrimaryButton(
                     role = Role.Button,
                     onClick = onClick,
                 )
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = text,
                 color = JuntaPaperElevated.copy(alpha = buttonAlpha),
                 fontFamily = JuntaDisplayFont,
-                fontSize = 26.sp,
+                fontSize = 23.sp,
                 letterSpacing = 1.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -244,7 +242,7 @@ internal fun JuntaOutlinedAction(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 50.dp),
+            .heightIn(min = 44.dp),
         shape = JuntaButtonShape,
         border = BorderStroke(1.5.dp, JuntaInk),
         colors = ButtonDefaults.outlinedButtonColors(
@@ -255,7 +253,7 @@ internal fun JuntaOutlinedAction(
         Text(
             text = text,
             fontFamily = JuntaDisplayFont,
-            fontSize = 19.sp,
+            fontSize = 17.sp,
             letterSpacing = 0.7.sp,
             textAlign = TextAlign.Center,
         )
@@ -272,15 +270,15 @@ internal fun JuntaStatusBanner(
             .fillMaxWidth()
             .background(JuntaPaperElevated.copy(alpha = 0.86f), JuntaPanelShape)
             .border(1.5.dp, JuntaTeal, JuntaPanelShape)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_jfm_shield_check),
             contentDescription = null,
             tint = androidx.compose.ui.graphics.Color.Unspecified,
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.size(40.dp),
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -297,95 +295,3 @@ internal fun JuntaStatusBanner(
         }
     }
 }
-
-@Composable
-internal fun JuntaHomeNavigation() {
-    val items = listOf(
-        HomeNavigationItem(R.drawable.ic_jfm_home, R.string.navigation_home, true),
-        HomeNavigationItem(R.drawable.ic_jfm_history, R.string.navigation_history, false),
-        HomeNavigationItem(R.drawable.ic_jfm_settings, R.string.navigation_settings, false),
-        HomeNavigationItem(R.drawable.ic_jfm_help, R.string.navigation_help, false),
-    )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(end = 4.dp, bottom = 5.dp)
-            .testTag("jfm-home-navigation"),
-    ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .offset(x = 4.dp, y = 5.dp)
-                .background(JuntaInk, JuntaPanelShape),
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(JuntaPaperElevated.copy(alpha = 0.94f), JuntaPanelShape)
-                .border(2.dp, JuntaInk, JuntaPanelShape)
-                .padding(horizontal = 7.dp, vertical = 9.dp),
-            horizontalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            items.forEach { item ->
-                JuntaHomeNavigationItem(
-                    item = item,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun JuntaHomeNavigationItem(
-    item: HomeNavigationItem,
-    modifier: Modifier = Modifier,
-) {
-    val label = stringResource(item.labelRes)
-    Column(
-        modifier = modifier
-            .heightIn(min = 62.dp)
-            .then(
-                if (item.active) {
-                    Modifier
-                        .background(JuntaTeal.copy(alpha = 0.10f), JuntaButtonShape)
-                        .border(1.dp, JuntaTeal, JuntaButtonShape)
-                } else {
-                    Modifier
-                },
-            )
-            .clearAndSetSemantics {
-                contentDescription = label
-                role = Role.Tab
-                selected = item.active
-                if (!item.active) disabled()
-            }
-            .padding(horizontal = 2.dp, vertical = 5.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            painter = painterResource(item.iconRes),
-            contentDescription = null,
-            tint = if (item.active) JuntaTeal else JuntaInk,
-            modifier = Modifier.size(26.dp),
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = label,
-            color = if (item.active) JuntaTeal else JuntaInk,
-            fontFamily = JuntaDisplayFont,
-            fontSize = 14.sp,
-            lineHeight = 15.sp,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-private data class HomeNavigationItem(
-    @param:DrawableRes val iconRes: Int,
-    val labelRes: Int,
-    val active: Boolean,
-)

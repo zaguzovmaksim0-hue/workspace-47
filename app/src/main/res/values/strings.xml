@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Junta Firma Mobile</string>
+    <string name="launcher_name">Junta Firma</string>
     <string name="unofficial_disclosure">Cliente no oficial para uso personal</string>
     <string name="certificate_title">Certificado digital</string>
     <string name="certificate_copy">Selecciona tu archivo .p12 o .pfx.</string>
@@ -16,10 +17,6 @@
     <string name="certificate_status_unlocking_copy">La identidad se está comprobando localmente.</string>
     <string name="certificate_status_unlocked_title">Certificado listo</string>
     <string name="certificate_status_unlocked_copy">La firma está disponible mientras mantengas abierta esta sesión.</string>
-    <string name="navigation_home">Inicio</string>
-    <string name="navigation_history">Historial</string>
-    <string name="navigation_settings">Ajustes</string>
-    <string name="navigation_help">Ayuda</string>
     <string name="certificate_loading">Cargando certificado…</string>
     <string name="certificate_selected">Certificado seleccionado: %1$s</string>
     <string name="certificate_password">Contraseña del certificado</string>
@@ -30,6 +27,7 @@
     <string name="certificate_issuer">Emisor: %1$s</string>
     <string name="certificate_valid_from">Válido desde: %1$s</string>
     <string name="certificate_valid_until">Válido hasta: %1$s</string>
+    <string name="certificate_validity">Validez: %1$s — %2$s</string>
     <string name="continue_to_portal">Continuar</string>
     <string name="choose_another_certificate">Elegir otro</string>
     <string name="lock_certificate">Bloquear certificado</string>

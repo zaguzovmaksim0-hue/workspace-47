@@ -78,12 +78,12 @@ fun AppRoot(
                 .verticalScroll(rememberScrollState())
                 .safeDrawingPadding()
                 .imePadding()
-                .padding(horizontal = 30.dp, vertical = 20.dp),
+                .padding(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.Top,
         ) {
-            Spacer(modifier = Modifier.height(58.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             JuntaBrandHeader()
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             CertificatePanel(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
@@ -92,10 +92,8 @@ fun AppRoot(
                 onForget = onForget,
                 onContinue = onContinue,
             )
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             CertificateStateBanner(state)
-            Spacer(modifier = Modifier.height(18.dp))
-            JuntaHomeNavigation()
             Spacer(modifier = Modifier.height(4.dp))
         }
     }
@@ -119,7 +117,7 @@ private fun CertificatePanel(
                 painter = painterResource(R.drawable.ic_jfm_document),
                 contentDescription = null,
                 tint = androidx.compose.ui.graphics.Color.Unspecified,
-                modifier = Modifier.size(width = 49.dp, height = 56.dp),
+                modifier = Modifier.size(width = 42.dp, height = 48.dp),
             )
             Text(
                 text = stringResource(R.string.certificate_title),
@@ -128,26 +126,26 @@ private fun CertificatePanel(
                 modifier = Modifier.semantics { heading() },
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Column(modifier = Modifier.padding(start = 63.dp)) {
+        Spacer(modifier = Modifier.height(10.dp))
+        Column(modifier = Modifier.padding(start = 56.dp)) {
             Text(
                 text = stringResource(R.string.certificate_copy),
                 color = JuntaInk,
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp,
                 ),
             )
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.privacy_copy),
                 color = JuntaMutedInk,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
-        Spacer(modifier = Modifier.height(19.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         HorizontalDivider(color = JuntaHairline, thickness = 1.dp)
-        Spacer(modifier = Modifier.height(19.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         when (state) {
             CertificateUiState.LoadingReference -> LoadingCertificate()
@@ -220,14 +218,14 @@ private fun LockedCertificate(
         style = MaterialTheme.typography.titleMedium,
     )
     state.summary?.let {
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         CertificateSummaryDetails(it)
     }
     state.error?.let {
         Spacer(modifier = Modifier.height(12.dp))
         CertificateError(it)
     }
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(10.dp))
 
     val passwordState = remember(state.reference.uri) { TextFieldState() }
     DisposableEffect(passwordState) {
@@ -242,7 +240,7 @@ private fun LockedCertificate(
             .fillMaxWidth()
             .semantics { contentDescription = passwordLabel },
     )
-    Spacer(modifier = Modifier.height(14.dp))
+    Spacer(modifier = Modifier.height(8.dp))
     JuntaPrimaryButton(
         text = stringResource(R.string.unlock_certificate),
         onClick = {
@@ -254,12 +252,12 @@ private fun LockedCertificate(
         },
         enabled = passwordState.text.isNotEmpty(),
     )
-    Spacer(modifier = Modifier.height(10.dp))
+    Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(
         text = stringResource(R.string.choose_another_certificate),
         onClick = onSelectCertificate,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(
         text = stringResource(R.string.forget_certificate),
         onClick = onForget,
@@ -273,7 +271,7 @@ private fun UnlockingCertificate(state: CertificateUiState.Unlocking) {
         color = JuntaInk,
         style = MaterialTheme.typography.titleMedium,
     )
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(10.dp))
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -300,24 +298,24 @@ private fun UnlockedCertificate(
         color = JuntaTeal,
         style = MaterialTheme.typography.titleMedium,
     )
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(8.dp))
     CertificateSummaryDetails(state.summary)
-    Spacer(modifier = Modifier.height(20.dp))
+    Spacer(modifier = Modifier.height(12.dp))
     JuntaPrimaryButton(
         text = stringResource(R.string.continue_to_portal),
         onClick = onContinue,
     )
-    Spacer(modifier = Modifier.height(10.dp))
+    Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(
         text = stringResource(R.string.choose_another_certificate),
         onClick = onSelectCertificate,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(
         text = stringResource(R.string.lock_certificate),
         onClick = onLock,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(
         text = stringResource(R.string.forget_certificate),
         onClick = onForget,
@@ -339,15 +337,8 @@ private fun CertificateSummaryDetails(summary: CertificateSummary) {
         )
         Text(
             text = stringResource(
-                R.string.certificate_valid_from,
+                R.string.certificate_validity,
                 summary.validFrom.toDisplayDate(),
-            ),
-            color = JuntaInk,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Text(
-            text = stringResource(
-                R.string.certificate_valid_until,
                 summary.validUntil.toDisplayDate(),
             ),
             color = JuntaInk,

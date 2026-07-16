@@ -252,3 +252,32 @@ failures/errors/skips; `lintDebug`, `lintRelease`, `assembleDebug` y
 `dependencyInsight` confirma OkHttp 5.4.0 y Okio 3.17.0. Las pruebas Android de
 API 26, TLS/SNI y `Call.cancel()` durante connect/write/read siguen
 `NOT_RUN_ENVIRONMENTAL`: ADB no enumeró ningún dispositivo.
+
+## Milestone V01 — pantalla principal y launcher — 2026-07-16
+
+La pantalla principal conserva únicamente el brand header, disclosure,
+controles Compose reales del certificado y su banner de estado. Se eliminaron
+por completo las tabs decorativas `Inicio`, `Historial`, `Ajustes` y `Ayuda`,
+sus iconos, strings y el test que exigía su presencia. El control Home real
+del navegador no se modificó. La composición se compactó sin convertir textos,
+botones o estados en imágenes.
+
+El label del launcher es ahora `Junta Firma`; el nombre de producto visible en
+la aplicación sigue siendo `Junta Firma Mobile`. El foreground adaptive se
+redujo de un alpha bbox `55×66` a `42×51` sobre canvas `108×108`, centrado con
+offset `+35,+29`. El monochrome aplica la misma escala óptica; background y las
+variantes legacy/round de cinco densidades se regeneraron con margen exterior.
+Un render determinista de las capas reales confirma margen bajo máscaras round
+y squircle representativa.
+
+Validación local: 214 unit tests, `lintDebug`, `lintRelease`, `assembleDebug` y
+`assembleRelease` PASS; ambos APK verifican firma v2 y `zipalign -c 4`.
+`assembleDebugAndroidTest` compila el test que captura la pantalla real y exige
+ausencia de las cuatro tabs. La instalación y captura en POCO/Xiaomi quedan
+`NOT_RUN_ENVIRONMENTAL`: ADB/mDNS no enumeran dispositivo y el teléfono no
+ofrece root/package-manager autónomo. El render Compose JVM tampoco está
+disponible en Termux; no se presenta un mockup como screenshot real.
+
+El diff V01 no toca `MainActivity`, certificate logic, signing, WebView,
+network, trust, bridge ni protocol. El artefacto sanitizado de máscaras está en
+`/storage/emulated/0/Codex/Outputs/junta-firma-visual-qa-20260716/launcher-mask-preview.png`.

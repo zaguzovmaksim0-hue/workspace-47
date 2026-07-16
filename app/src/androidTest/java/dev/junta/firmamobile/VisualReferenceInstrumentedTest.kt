@@ -26,6 +26,10 @@ class VisualReferenceInstrumentedTest {
             ActivityScenario.launch(MainActivity::class.java).use {
                 rule.onNodeWithText("Junta Firma Mobile").assertIsDisplayed()
                 rule.onNodeWithText("Seleccionar certificado").assertIsDisplayed()
+                rule.onNodeWithText("Inicio").assertDoesNotExist()
+                rule.onNodeWithText("Historial").assertDoesNotExist()
+                rule.onNodeWithText("Ajustes").assertDoesNotExist()
+                rule.onNodeWithText("Ayuda").assertDoesNotExist()
                 rule.waitForIdle()
 
                 val instrumentation = InstrumentationRegistry.getInstrumentation()
