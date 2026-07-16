@@ -2,7 +2,7 @@
 
 - Fecha del snapshot: 2026-07-16
 - `inventory_schema_version`: `2`
-- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-local-enumerators-1`
+- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-insular-d12-local-enumerators-1`
 - Fecha de corte de la matriz de firma de origen: 2026-07-15
 
 Este documento es un **censo de descubrimiento evolutivo**, no una afirmación
@@ -165,8 +165,12 @@ También materializa la lista cerrada D03 de las 17 comunidades autónomas y
 Ceuta/Melilla: las 19 referencias territoriales se resolvieron mediante
 fuentes HTTPS oficiales y produjeron 24 superficies nuevas. Seis son fronteras
 funcionales adicionales con origin o función propios; no son duplicados de la
-sede principal. Los demás enumeradores siguen pendientes y no se cuentan como
-ingeridos por haber abierto su página índice.
+sede principal. Finalmente, ingiere de extremo a extremo D12: sus 11 cabildos
+y consells se resolvieron en 22 superficies insulares, separando en cada caso
+el portal institucional de la sede electrónica por su origin y frontera
+funcional acreditados. Los snapshots D05 y D06 están capturados, pero sus
+colas siguen pendientes de resolución y recorrido secundario y no se cuentan
+como ingeridas.
 
 | Métrica | Resultado |
 | --- | ---: |
@@ -177,13 +181,15 @@ ingeridos por haber abierto su página índice.
 | Registros nuevos creados desde D11 | 72 |
 | Territorios D03 materializados | 19/19 del snapshot 2026-07-16 |
 | Registros nuevos creados desde D03 | 24 |
-| Registros totales del snapshot | 116 |
-| Origins primarios distintos | 115 |
+| Instituciones D12 materializadas | 11/11 del snapshot 2026-07-16 |
+| Registros nuevos creados desde D12 | 22 |
+| Registros totales del snapshot | 138 |
+| Origins primarios distintos | 137 |
 | Fuentes enumeradoras oficiales registradas | 12 |
-| Colas enumeradoras ingeridas de extremo a extremo | 2/12 |
-| Colas enumeradoras pendientes de ingestión | 10/12 |
-| Fuentes oficiales portal-specific registradas | 94 |
-| Fuentes oficiales totales registradas | 106 |
+| Colas enumeradoras ingeridas de extremo a extremo | 3/12 |
+| Colas enumeradoras pendientes de ingestión | 9/12 |
+| Fuentes oficiales portal-specific registradas | 116 |
+| Fuentes oficiales totales registradas | 128 |
 | Entradas `VERIFIED_E2E` | 0 |
 | Evidencia exacta de `ClientCertRequest` | 0 |
 
@@ -194,11 +200,11 @@ Por nivel administrativo:
 | `ESTATAL` | 81 |
 | `AUTONOMICO` | 28 |
 | `PROVINCIAL` | 1 |
-| `INSULAR` | 0 |
+| `INSULAR` | 22 |
 | `MUNICIPAL` | 2 |
 | `UNIVERSIDAD_PUBLICA` | 4 |
 | `OTRA_INSTITUCION_PUBLICA` | 0 |
-| **Total** | **116** |
+| **Total** | **138** |
 
 Por estado del inventario:
 
@@ -208,21 +214,21 @@ Por estado del inventario:
 | `IMPLEMENTED_NOT_E2E` | 1 |
 | `VERIFIED_CONTRACT` | 4 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 109 |
+| `BROWSE_ONLY` | 128 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
-| `INACCESSIBLE` | 0 |
+| `INACCESSIBLE` | 3 |
 | `DEPRECATED` | 0 |
-| **Total** | **116** |
+| **Total** | **138** |
 
 Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 42 |
-| `RECHECK_REQUIRED` | 1 |
+| `REVIEWED` | 61 |
+| `RECHECK_REQUIRED` | 4 |
 | `DISCOVERED` | 73 |
 | `CANDIDATE`, `RETIRED` | 0 |
-| **Total** | **116** |
+| **Total** | **138** |
 
 ## 5. Método de descubrimiento reproducible
 
@@ -366,6 +372,15 @@ evidencia P08 portal-specific. D03 no se añadió a los cuatro registros
 autonómicos preexistentes porque sus enlaces territoriales no coinciden con la
 frontera exacta de Ovorion, SIRAW, la sede de Madrid o gestiona2.
 
+La ola insular usa las familias `I01` a `I11` en el orden de D12. Cada familia
+separa una fuente `A` para el portal institucional y una fuente `B` para la
+sede electrónica; cada ID define una sola URL. D12 se conserva como provenance
+de los portales institucionales y el
+[snapshot JSONL](snapshots/pag-insular-2026-07-16.jsonl) fija la cola cerrada
+capturada. Los 22 origins se acreditan además con sus 22 fuentes HTTPS
+portal-specific; D12 no acredita por sí solo disponibilidad, certificado,
+firma ni contrato técnico.
+
 ### 6.3. Disponibilidad en este snapshot
 
 La comprobación pública del seed obtuvo HTTP 200 mediante `GET` directo en 46
@@ -378,7 +393,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 106 fuentes porque las dos
+47/50; no se publica un cociente agregado para las 128 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -392,6 +407,21 @@ El resultado D03 equivalente queda fijado en el
 HTML ni ejecuta las referencias territoriales. D03 solo acredita la cola
 territorial; cada origin HTTPS de §7.3 exige además su evidencia portal-specific
 y no se añadió como provenance a las cuatro superficies autonómicas preexistentes.
+
+El resultado D12 queda fijado en el
+[snapshot JSONL](snapshots/pag-insular-2026-07-16.jsonl), ya incluido en el
+commit `abfac7516bf9dd7788b15e6e46328c8914af30e6`. Sus 11 referencias se
+resolvieron mediante fuentes HTTPS oficiales sin solicitar los enlaces HTTP
+heredados ni sintetizar equivalentes HTTPS. La revisión mantuvo formularios,
+autenticación, firma, cookies y rutas privadas fuera de alcance. Las sedes de
+El Hierro, La Gomera y Lanzarote se conservan como
+`INACCESSIBLE`/`RECHECK_REQUIRED`: el cliente de revisión detectó un bucle de
+redirección al abrir sus entradas oficiales y no siguió el ciclo.
+
+Los snapshots [D05](snapshots/pag-municipal-queues-2026-07-16.jsonl) y
+[D06](snapshots/pag-diputaciones-2026-07-16.jsonl) también están capturados y
+versionados, pero permanecen pendientes de resolución de HTTPS y recorrido
+secundario; no cuentan entre las tres colas ingeridas de extremo a extremo.
 
 - D09 cerró la conexión del cliente CLI, aunque una lectura HTTPS
   independiente recuperó la página oficial de INVENTE;
@@ -3996,6 +4026,683 @@ records:
 
 ```
 
+### 7.4. Cabildos y consells insulares [D12]
+
+La cola cerrada D12 se materializa con dos superficies por institución:
+primero el portal institucional `PORTAL_SERVICIO` y después la sede `SEDE`.
+La separación se conserva porque cada par tiene origins y fronteras
+funcionales distintos. Los portales incorporan D12 como provenance; todos los
+URL fields se sostienen además en una definición I portal-specific de una sola
+URL. Ninguna mención a certificado de servidor se interpreta como requisito de
+certificado ciudadano, firma o TLS cliente.
+
+```yaml
+records:
+  - inventory_id: "ES-PUB-0117"
+    surface_key: "menorca-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell Insular de Menorca"
+    surface_name: "Portal institucional del Consell Insular de Menorca"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.cime.es"
+    official_site: "https://www.cime.es/"
+    e_sede: "https://seuelectronica.cime.es/"
+    entry_url: "https://www.cime.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I01A", "I01B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0118"
+    surface_key: "menorca-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell Insular de Menorca"
+    surface_name: "Seu electrònica del Consell Insular de Menorca"
+    surface_type: "SEDE"
+    origin: "https://seuelectronica.cime.es"
+    official_site: "https://seuelectronica.cime.es/"
+    e_sede: "https://seuelectronica.cime.es/"
+    entry_url: "https://seuelectronica.cime.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La fuente acredita la sede y sus servicios públicos, no un requisito exacto de certificado o firma ni un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I01B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0119"
+    surface_key: "mallorca-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell de Mallorca"
+    surface_name: "Portal institucional del Consell de Mallorca"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.conselldemallorca.es"
+    official_site: "https://www.conselldemallorca.es/"
+    e_sede: "https://seu.conselldemallorca.net/"
+    entry_url: "https://www.conselldemallorca.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I02A", "I02B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0120"
+    surface_key: "mallorca-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell de Mallorca"
+    surface_name: "Seu electrònica del Consell de Mallorca"
+    surface_type: "SEDE"
+    origin: "https://seu.conselldemallorca.net"
+    official_site: "https://seu.conselldemallorca.net/"
+    e_sede: "https://seu.conselldemallorca.net/"
+    entry_url: "https://seu.conselldemallorca.net/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I02B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0121"
+    surface_key: "eivissa-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell Insular d’Eivissa"
+    surface_name: "Portal institucional del Consell Insular d’Eivissa"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.conselldeivissa.es"
+    official_site: "https://www.conselldeivissa.es/"
+    e_sede: "https://seu.conselldeivissa.es/"
+    entry_url: "https://www.conselldeivissa.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I03A", "I03B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0122"
+    surface_key: "eivissa-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell Insular d’Eivissa"
+    surface_name: "Sede electrónica del Consell Insular d’Eivissa"
+    surface_type: "SEDE"
+    origin: "https://seu.conselldeivissa.es"
+    official_site: "https://seu.conselldeivissa.es/"
+    e_sede: "https://seu.conselldeivissa.es/"
+    entry_url: "https://seu.conselldeivissa.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I03B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0123"
+    surface_key: "formentera-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell Insular de Formentera"
+    surface_name: "Portal institucional del Consell Insular de Formentera"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.consellinsulardeformentera.cat"
+    official_site: "https://www.consellinsulardeformentera.cat/"
+    e_sede: "https://ovac.conselldeformentera.cat/"
+    entry_url: "https://www.consellinsulardeformentera.cat/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I04A", "I04B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0124"
+    surface_key: "formentera-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "Illes Balears"
+    institution_name: "Consell Insular de Formentera"
+    surface_name: "Sede electrónica / OVAC del Consell Insular de Formentera"
+    surface_type: "SEDE"
+    origin: "https://ovac.conselldeformentera.cat"
+    official_site: "https://ovac.conselldeformentera.cat/"
+    e_sede: "https://ovac.conselldeformentera.cat/"
+    entry_url: "https://ovac.conselldeformentera.cat/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I04B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0125"
+    surface_key: "el-hierro-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de El Hierro"
+    surface_name: "Portal institucional del Cabildo Insular de El Hierro"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.elhierro.es"
+    official_site: "https://www.elhierro.es/es"
+    e_sede: "https://elhierro.sedelectronica.es/info.0"
+    entry_url: "https://www.elhierro.es/es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I05A", "I05B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0126"
+    surface_key: "el-hierro-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de El Hierro"
+    surface_name: "Sede electrónica del Cabildo Insular de El Hierro"
+    surface_type: "SEDE"
+    origin: "https://elhierro.sedelectronica.es"
+    official_site: "https://elhierro.sedelectronica.es/info.0"
+    e_sede: "https://elhierro.sedelectronica.es/info.0"
+    entry_url: "https://elhierro.sedelectronica.es/info.0"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "RECHECK_REQUIRED"
+    inventory_status: "INACCESSIBLE"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I05B"]
+    reason: "El transporte de revisión informó 400 Redirect loop detected al abrir https://elhierro.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revalidar la misma entrada HTTPS con un presupuesto cerrado de redirecciones y confirmar una respuesta estable antes de revisar operaciones."
+    notes: "La existencia y titularidad proceden de la fuente oficial I05B; la indisponibilidad corresponde al transporte de revisión de este snapshot."
+
+  - inventory_id: "ES-PUB-0127"
+    surface_key: "tenerife-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de Tenerife"
+    surface_name: "Portal institucional del Cabildo Insular de Tenerife"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.tenerife.es"
+    official_site: "https://www.tenerife.es/"
+    e_sede: "https://sede.tenerife.es/"
+    entry_url: "https://www.tenerife.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I06A", "I06B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0128"
+    surface_key: "tenerife-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de Tenerife"
+    surface_name: "Sede electrónica del Cabildo Insular de Tenerife"
+    surface_type: "SEDE"
+    origin: "https://sede.tenerife.es"
+    official_site: "https://sede.tenerife.es/"
+    e_sede: "https://sede.tenerife.es/"
+    entry_url: "https://sede.tenerife.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La fuente acredita la sede y sus servicios públicos, no un requisito exacto de certificado o firma ni un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I06B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0129"
+    surface_key: "la-palma-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de La Palma"
+    surface_name: "Portal institucional del Cabildo Insular de La Palma"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.cabildodelapalma.es"
+    official_site: "https://www.cabildodelapalma.es/"
+    e_sede: "https://sedeelectronica.cabildodelapalma.es/"
+    entry_url: "https://www.cabildodelapalma.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I07A", "I07B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0130"
+    surface_key: "la-palma-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de La Palma"
+    surface_name: "Sede electrónica del Cabildo Insular de La Palma"
+    surface_type: "SEDE"
+    origin: "https://sedeelectronica.cabildodelapalma.es"
+    official_site: "https://sedeelectronica.cabildodelapalma.es/"
+    e_sede: "https://sedeelectronica.cabildodelapalma.es/"
+    entry_url: "https://sedeelectronica.cabildodelapalma.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I07B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0131"
+    surface_key: "la-gomera-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de La Gomera"
+    surface_name: "Portal institucional del Cabildo Insular de La Gomera"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.lagomera.es"
+    official_site: "https://www.lagomera.es/"
+    e_sede: "https://lagomera.sedelectronica.es/info.0"
+    entry_url: "https://www.lagomera.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I08A", "I08B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0132"
+    surface_key: "la-gomera-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Santa Cruz de Tenerife"
+    institution_name: "Cabildo Insular de La Gomera"
+    surface_name: "Sede electrónica del Cabildo Insular de La Gomera"
+    surface_type: "SEDE"
+    origin: "https://lagomera.sedelectronica.es"
+    official_site: "https://lagomera.sedelectronica.es/info.0"
+    e_sede: "https://lagomera.sedelectronica.es/info.0"
+    entry_url: "https://lagomera.sedelectronica.es/info.0"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "RECHECK_REQUIRED"
+    inventory_status: "INACCESSIBLE"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I08B"]
+    reason: "El transporte de revisión informó 400 Redirect loop detected al abrir https://lagomera.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revalidar la misma entrada HTTPS con un presupuesto cerrado de redirecciones y confirmar una respuesta estable antes de revisar operaciones."
+    notes: "La existencia y titularidad proceden de la fuente oficial I08B; la indisponibilidad corresponde al transporte de revisión de este snapshot."
+
+  - inventory_id: "ES-PUB-0133"
+    surface_key: "fuerteventura-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Las Palmas"
+    institution_name: "Cabildo Insular de Fuerteventura"
+    surface_name: "Portal institucional del Cabildo Insular de Fuerteventura"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.cabildofuer.es"
+    official_site: "https://www.cabildofuer.es/cabildo/"
+    e_sede: "https://sede.cabildofuer.es/eAdmin/Sede.do"
+    entry_url: "https://www.cabildofuer.es/cabildo/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I09A", "I09B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0134"
+    surface_key: "fuerteventura-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Las Palmas"
+    institution_name: "Cabildo Insular de Fuerteventura"
+    surface_name: "Sede electrónica del Cabildo Insular de Fuerteventura"
+    surface_type: "SEDE"
+    origin: "https://sede.cabildofuer.es"
+    official_site: "https://sede.cabildofuer.es/eAdmin/Sede.do"
+    e_sede: "https://sede.cabildofuer.es/eAdmin/Sede.do"
+    entry_url: "https://sede.cabildofuer.es/eAdmin/Sede.do"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La fuente acredita la sede y sus servicios públicos, no un requisito exacto de certificado o firma ni un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I09B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0135"
+    surface_key: "lanzarote-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Las Palmas"
+    institution_name: "Cabildo Insular de Lanzarote"
+    surface_name: "Portal institucional del Cabildo Insular de Lanzarote"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.cabildodelanzarote.com"
+    official_site: "https://www.cabildodelanzarote.com/"
+    e_sede: "https://cabildodelanzarote.sedelectronica.es/info.0"
+    entry_url: "https://www.cabildodelanzarote.com/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I10A", "I10B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0136"
+    surface_key: "lanzarote-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Las Palmas"
+    institution_name: "Cabildo Insular de Lanzarote"
+    surface_name: "Sede electrónica del Cabildo Insular de Lanzarote"
+    surface_type: "SEDE"
+    origin: "https://cabildodelanzarote.sedelectronica.es"
+    official_site: "https://cabildodelanzarote.sedelectronica.es/info.0"
+    e_sede: "https://cabildodelanzarote.sedelectronica.es/info.0"
+    entry_url: "https://cabildodelanzarote.sedelectronica.es/info.0"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "RECHECK_REQUIRED"
+    inventory_status: "INACCESSIBLE"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I10B"]
+    reason: "El transporte de revisión informó 400 Redirect loop detected al abrir https://cabildodelanzarote.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revalidar la misma entrada HTTPS con un presupuesto cerrado de redirecciones y confirmar una respuesta estable antes de revisar operaciones."
+    notes: "La existencia y titularidad proceden de la fuente oficial I10B; la indisponibilidad corresponde al transporte de revisión de este snapshot."
+
+  - inventory_id: "ES-PUB-0137"
+    surface_key: "gran-canaria-portal-institucional"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Las Palmas"
+    institution_name: "Cabildo Insular de Gran Canaria"
+    surface_name: "Portal institucional del Cabildo Insular de Gran Canaria"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://cabildo.grancanaria.com"
+    official_site: "https://cabildo.grancanaria.com/"
+    e_sede: "https://sede.grancanaria.com/"
+    entry_url: "https://cabildo.grancanaria.com/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
+    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D12", "I11A", "I11B"]
+    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+
+  - inventory_id: "ES-PUB-0138"
+    surface_key: "gran-canaria-sede-electronica"
+    administrative_level: "INSULAR"
+    autonomous_community: "Canarias"
+    province_or_municipality: "Las Palmas"
+    institution_name: "Cabildo Insular de Gran Canaria"
+    surface_name: "Sede electrónica del Cabildo Insular de Gran Canaria"
+    surface_type: "SEDE"
+    origin: "https://sede.grancanaria.com"
+    official_site: "https://sede.grancanaria.com/"
+    e_sede: "https://sede.grancanaria.com/"
+    entry_url: "https://sede.grancanaria.com/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
+    protocol_evidence: "La fuente acredita la sede y sus servicios públicos, no un requisito exacto de certificado o firma ni un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["I11B"]
+    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+```
+
+
 ## 8. Relación con el catálogo de producto
 
 Este archivo es documentación de investigación, no configuración ejecutable:
@@ -4040,8 +4747,9 @@ grandes y explícitos:
    Ceuta/Melilla, pero sus organismos dependientes, portales sectoriales y
    contratos de firma siguen requiriendo olas específicas. La relación entre
    las dos sedes observadas de Extremadura permanece sin resolver.
-3. Solo hay una diputación y dos ayuntamientos; faltan las colas de
-   diputaciones, cabildos, consejos insulares y miles de entidades locales.
+3. D12 ya está materializado para los 11 cabildos y consells. D05 y D06 están
+   capturados, pero faltan su resolución HTTPS, recorrido secundario e
+   ingestión; siguen faltando además miles de entidades locales.
 4. RUCT aún no se ha convertido en una cola cerrada de universidades públicas;
    el seed contiene tres.
 5. SIA no se ha recorrido para descubrir frontends distintos del portal
@@ -4064,8 +4772,9 @@ Orden de expansión recomendado:
 2. Comunidades y ciudades autónomas: D03 completado; continuar por familias de
    protocolo y organismos dependientes, conservando perfiles separados por
    origin y frontera funcional.
-3. Diputaciones/cabildos/consejos y ayuntamientos: [D04], [D05], [D06] y
-   [D12], contrastados con DIR3.
+3. Diputaciones y ayuntamientos: continuar [D04], [D05] y [D06], cuyos
+   snapshots capturados aún no están ingeridos, y contrastar con DIR3; D12 ya
+   está completado para cabildos y consells.
 4. Universidades públicas: [D10], confirmando cada sede en el dominio
    institucional.
 5. Dependencias técnicas y familias multi-tenant, en un inventario separado
@@ -4187,3 +4896,28 @@ Orden de expansión recomendado:
 [A19A]: https://www.larioja.org/
 [A19B]: https://web.larioja.org/oficina-electronica/
 [A19C]: https://web.larioja.org/oficina-electronica/tramite?n=24697
+
+### Evidencia de cabildos y consells insulares
+
+[I01A]: https://www.cime.es/
+[I01B]: https://seuelectronica.cime.es/
+[I02A]: https://www.conselldemallorca.es/
+[I02B]: https://seu.conselldemallorca.net/
+[I03A]: https://www.conselldeivissa.es/
+[I03B]: https://seu.conselldeivissa.es/
+[I04A]: https://www.consellinsulardeformentera.cat/
+[I04B]: https://ovac.conselldeformentera.cat/
+[I05A]: https://www.elhierro.es/es
+[I05B]: https://elhierro.sedelectronica.es/info.0
+[I06A]: https://www.tenerife.es/
+[I06B]: https://sede.tenerife.es/
+[I07A]: https://www.cabildodelapalma.es/
+[I07B]: https://sedeelectronica.cabildodelapalma.es/
+[I08A]: https://www.lagomera.es/
+[I08B]: https://lagomera.sedelectronica.es/info.0
+[I09A]: https://www.cabildofuer.es/cabildo/
+[I09B]: https://sede.cabildofuer.es/eAdmin/Sede.do
+[I10A]: https://www.cabildodelanzarote.com/
+[I10B]: https://cabildodelanzarote.sedelectronica.es/info.0
+[I11A]: https://cabildo.grancanaria.com/
+[I11B]: https://sede.grancanaria.com/
