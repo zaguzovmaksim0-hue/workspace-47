@@ -1,6 +1,8 @@
 package dev.junta.firmamobile.network
 
 import android.net.Uri
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
 import java.net.IDN
 import java.util.Locale
 
@@ -26,14 +28,14 @@ object JuntaOriginPolicy {
     const val START_URL =
         "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
 
-    val allowedHosts: Set<String> = linkedSetOf(
-        "www.juntadeandalucia.es",
-        "sede.juntadeandalucia.es",
-        "ssoweb.juntadeandalucia.es",
-        "pfirma.juntadeandalucia.es",
-        "ws024.juntadeandalucia.es",
-        "ws050.juntadeandalucia.es",
-    )
+    private val profile by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        checkNotNull(BuiltInSiteProfiles.releaseRegistry.profile(ProfileId("junta-andalucia")))
+    }
+
+    val allowedHosts: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        (profile.initiatorOrigins + profile.redirectOrigins + profile.trustedBrowseOrigins)
+            .mapTo(linkedSetOf()) { it.host }
+    }
 
     val webMessageOriginRules: Set<String> = allowedHosts.mapTo(linkedSetOf()) { host ->
         "https://$host"

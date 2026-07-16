@@ -133,3 +133,44 @@ automatizar credenciales:
 
 No se solicitará ni almacenará la contraseña en terminal, chat, ADB,
 UIAutomator o shell.
+
+## Milestone P04 — catálogo, registry y trust model — 2026-07-16
+
+Se añadió un catálogo local estricto con un único profile production estable,
+`junta-andalucia`, que conserva la URL inicial, los seis hosts de la fachada
+legacy, el endpoint tri-phase exacto y el estado `EXPERIMENTAL`. El cambio no
+promueve Junta a `VERIFIED_CONTRACT` ni a `VERIFIED_E2E`.
+
+Controles nuevos:
+
+- parser JSON cerrado con rechazo de keys duplicadas/desconocidas, schema o
+  enum no soportado, origins ambiguos, IDs repetidos y policies incoherentes;
+- origins HTTPS exactos, sin wildcard, userinfo, path, IP, localhost, trailing
+  dot ni puerto no documentado;
+- endpoint tipado con method, MIME, límites de cuerpo y redirects denegados;
+- `serverUrl` y `mode=explicit` fijos por profile, sin properties abiertas;
+- `LEGACY_SHA1` obligatorio y limitado a la policy Junta;
+- `QA_ONLY` no se resuelve como profile activo en release;
+- redirect directo queda `BROWSE_ONLY` y solo pasa a `TRUSTED_BROWSE`, sin
+  acceso sensible, como transición del mismo profile activo;
+- navegación, reload, Back, Forward y cambio de profile invalidan el estado
+  sensible antes de avanzar el epoch del trust controller.
+
+Validación ejecutada:
+
+- focused profile/trust/Junta tests: PASS;
+- suite unit completa: 201 tests, 0 failures, 0 errors, 0 skipped;
+- `lintDebug`, `lintRelease`, clean debug/release build: PASS;
+- APK debug/release: firma v2 y `zipalign -c 4` PASS;
+- manifest release: `allowBackup=false`, `usesCleartextTraffic=false`, sin
+  `ProtocolProbeActivity`/`ProtocolObservationRecorder` en manifest o DEX;
+- recurso release contiene solo Junta `EXPERIMENTAL`; no contiene profile
+  `QA_ONLY`, `VERIFIED_CONTRACT` ni `VERIFIED_E2E`;
+- scan del diff: sin PKCS#12, password, private key, cookies ni datos personales;
+- `git diff --check`: PASS.
+
+El device gate de este milestone queda `NOT_RUN_ENVIRONMENTAL`: ADB no tenía
+dispositivo conectado y mDNS no anunció wireless debugging. No se interpreta
+como PASS. El `zipalign` Termux sigue sin soportar `-P 16`; release continúa
+firmado con debug key para QA local. Los riesgos preexistentes de shim/epoch y
+verificación CMS permanecen hasta sus milestones específicos.

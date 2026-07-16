@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": 1,
+  "profiles": [
+    {
+      "profileId": "junta-andalucia",
+      "profileVersion": 1,
+      "displayName": "Junta de Andalucía",
+      "compatibilityStatus": "EXPERIMENTAL",
+      "activation": "ENABLED",
+      "startUrl": "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
+      "initiatorOrigins": ["https://www.juntadeandalucia.es"],
+      "redirectOrigins": ["https://sede.juntadeandalucia.es", "https://ssoweb.juntadeandalucia.es", "https://pfirma.juntadeandalucia.es", "https://ws050.juntadeandalucia.es"],
+      "trustedBrowseOrigins": ["https://ws024.juntadeandalucia.es"],
+      "endpoints": [{"endpointId":"junta-triphase","purpose":"TRIPHASE","url":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService","method":"POST","requestContentTypes":["application/x-www-form-urlencoded; charset=UTF-8"],"responseContentTypes":["text/plain"],"maxRequestBytes":2097152,"maxResponseBytes":2097152,"redirects":"DENY"}],
+      "operationPolicies": [{"operation":"SIGN","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":"junta-triphase","algorithms":["SHA1_WITH_RSA","SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"serverUrl":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService","mode":"explicit"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [{"url":"https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs","reviewedOn":"2026-07-15"}]
+    }
+  ]
+}
