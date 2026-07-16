@@ -101,7 +101,8 @@ Primero se valida siempre en modo fixture, sin red:
 python -m unittest discover -s tools/tests -p 'test_*.py' -v
 python -m py_compile \
   tools/public_portal_inventory.py \
-  tools/age_sede_directory.py
+  tools/age_sede_directory.py \
+  tools/ccaa_directory.py
 python tools/public_portal_inventory.py \
   --input "$HOME/.local/state/portal-inventory/seeds.json" \
   --offline-fixtures "$HOME/.local/state/portal-inventory/fixtures.json" \
@@ -135,6 +136,26 @@ La ejecución live exige el baseline estructural revisado del snapshot
 delta detiene la materialización para que se revise la nueva estructura y se
 actualice el baseline de forma explícita; no se absorben altas o cambios a
 ciegas.
+
+El índice PAG de comunidades y ciudades autónomas tiene otro enumerador
+dedicado. Ejecuta un único `GET` de la fuente D03 y lee exclusivamente los
+anchors del bloque `div#pie_comunidad`; no abre ninguno de los destinos ni
+interpreta los enlaces duplicados del mapa de la página:
+
+```bash
+python tools/ccaa_directory.py \
+  --live \
+  --snapshot-date 2026-07-16 \
+  --output "$HOME/.local/state/portal-inventory/ccaa-2026-07-16.jsonl"
+```
+
+El baseline revisado exige las 17 comunidades más Ceuta y Melilla, en el orden
+cerrado de la fuente, y exactamente tres referencias HTTPS frente a dieciséis
+referencias HTTP heredadas. Las referencias HTTP se conservan solo como
+componentes no ejecutables y requieren resolver y revisar una sede HTTPS antes
+de convertirse en seed. Incluso para las tres referencias HTTPS la salida solo
+declara elegibilidad como candidato: `target_fetch_performed` permanece en
+`false` y el estado de compatibilidad es siempre `BROWSE_ONLY`.
 
 Los defaults limitan un body a 2 MiB, cuatro redirects, dos niveles de imports
 JS, 32 intentos de script, 15 segundos por petición y un intervalo mínimo de
@@ -237,12 +258,12 @@ snapshot de cada enumerador añade el resultado de validación de schema. Las al
 cambios y desapariciones se revisan; una desaparición produce tombstone, no
 borrado inmediato. Ningún delta activa código automáticamente.
 
-Este milestone implementa el scanner estático, su formato de seeds y el
-generador específico del directorio de sedes AGE. Los generadores de DIR3, SIA,
-los demás índices PAG, INE, BDGEL y RUCT se añaden y fijan a snapshots en las
-olas de §6; hasta entonces las URLs se preparan desde la fuente oficial y se
-revisan antes de ejecutar `--live`. La existencia de esta especificación no se
-cuenta como una cola enumeradora materializada.
+Este milestone implementa el scanner estático, su formato de seeds y los
+generadores específicos del directorio de sedes AGE y del índice CCAA de PAG.
+Los generadores de DIR3, SIA, los demás índices PAG, INE, BDGEL y RUCT se añaden
+y fijan a snapshots en las olas de §6; hasta entonces las URLs se preparan desde
+la fuente oficial y se revisan antes de ejecutar `--live`. La existencia de
+esta especificación no se cuenta como una cola enumeradora materializada.
 
 ## 8. Promoción al producto
 
