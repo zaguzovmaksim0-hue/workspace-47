@@ -121,6 +121,7 @@ object BuiltInSiteProfiles {
       "operationPolicies": [
         {
           "operation": "SIGN",
+          "safeDescription": "Autenticación con certificado",
           "inputAdapterId": "miniapplet-autoscript-v1",
           "callbackContractId": "miniapplet-sign-callback-v1",
           "capabilities": ["SIGN", "LEGACY_SHA1"],

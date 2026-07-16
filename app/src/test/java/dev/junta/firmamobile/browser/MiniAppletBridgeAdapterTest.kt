@@ -61,6 +61,8 @@ class MiniAppletBridgeAdapterTest {
         assertRejected(message(), TRUSTED_ORIGIN, false)
         assertRejected(message().replace("SHA1withRSA", "MD5withRSA"), TRUSTED_ORIGIN, true)
         assertRejected(message().replace("CAdES", "XAdES"), TRUSTED_ORIGIN, true)
+        assertRejected(message().replace("mode=explicit", "mode=implicit"), TRUSTED_ORIGIN, true)
+        assertRejected(message().replace("mode=explicit", "mode=explicit\nnote=unexpected"), TRUSTED_ORIGIN, true)
         assertRejected(
             message().replace(
                 "\"requestId\":\"$REQUEST_ID\"",
@@ -178,8 +180,8 @@ class MiniAppletBridgeAdapterTest {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
         const val EXTRA_PROPERTIES =
-            "serverUrl=https://ws024.juntadeandalucia.es/afirma-server-triphase-signer/" +
-                "SignatureService\nmode=explicit"
+            "serverUrl=https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/" +
+                "sign/TriPhaseSignatureService\nmode=explicit"
         val TRUSTED_ORIGIN: Uri = Uri.parse("https://www.juntadeandalucia.es")
         val DATA = "synthetic-miniapplet-data".encodeToByteArray()
         val SIGNATURE = byteArrayOf(1, 2, 3, 4)

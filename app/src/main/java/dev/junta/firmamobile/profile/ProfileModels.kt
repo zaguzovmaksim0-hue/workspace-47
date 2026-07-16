@@ -93,6 +93,7 @@ data class ProfileEndpoint(
 
 data class OperationPolicy(
     val operation: ProtocolOperation,
+    val safeDescription: String,
     val inputAdapterId: ProtocolInputAdapterId,
     val callbackContractId: CallbackContractId,
     val capabilities: Set<Capability>,

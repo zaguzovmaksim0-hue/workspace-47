@@ -72,12 +72,15 @@ object SiteProfileCatalogParser {
     private fun operation(value: JValue): OperationPolicy {
         val o = value.obj("operationPolicy")
         o.exact(
-            "operation", "inputAdapterId", "callbackContractId", "capabilities", "endpointId",
+            "operation", "safeDescription", "inputAdapterId", "callbackContractId", "capabilities", "endpointId",
             "algorithms", "format", "packaging", "mode", "fixedExtraProperties",
             "allowedExtraProperties",
         )
         return OperationPolicy(
             operation = enum(o.string("operation")),
+            safeDescription = o.string("safeDescription").also {
+                require(it.isNotBlank() && it.length <= 160 && it.all { character -> !character.isISOControl() })
+            },
             inputAdapterId = ProtocolInputAdapterId(o.string("inputAdapterId")).also {
                 require(it.value in REGISTERED_ADAPTERS)
             },

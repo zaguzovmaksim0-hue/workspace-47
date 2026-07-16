@@ -3,16 +3,23 @@ package dev.junta.firmamobile.browser
 import android.net.Uri
 import android.util.JsonReader
 import android.util.JsonToken
-import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProtocolOperation
+import dev.junta.firmamobile.profile.SignatureAlgorithm
+import dev.junta.firmamobile.profile.SignatureFormat
+import dev.junta.firmamobile.profile.TrustMode
+import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.LocalSignature
+import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.NormalizedSignRequest
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.SigningContext
 import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningFormat
-import dev.junta.firmamobile.signing.SigningProtocolId
 import dev.junta.firmamobile.signing.SigningReplySink
+import dev.junta.firmamobile.signing.ProtocolAdapterRegistry
+import dev.junta.firmamobile.signing.ProtocolInputAdapter
 import java.io.StringReader
 import java.time.Clock
 import java.util.Base64
@@ -41,8 +48,32 @@ sealed interface MiniAppletBridgeRouteResult {
 }
 
 class MiniAppletBridgeAdapter(
-    private val clock: Clock = Clock.systemUTC(),
+    clock: Clock = Clock.systemUTC(),
 ) {
+    private val delegate = ProfileMiniAppletBridgeAdapter(clock = clock)
+
+    fun route(
+        rawMessage: String,
+        sourceOrigin: Uri,
+        isMainFrame: Boolean,
+    ): MiniAppletBridgeRouteResult = delegate.route(rawMessage, sourceOrigin, isMainFrame)
+
+    companion object {
+        const val MAX_DECODED_DATA_BYTES = ProfileMiniAppletBridgeAdapter.MAX_DECODED_DATA_BYTES
+        const val MAX_DATA_BASE64_CHARS = ProfileMiniAppletBridgeAdapter.MAX_DATA_BASE64_CHARS
+        const val MAX_EXTRA_PROPERTIES_CHARS = ProfileMiniAppletBridgeAdapter.MAX_EXTRA_PROPERTIES_CHARS
+        const val MAX_MESSAGE_CHARS = ProfileMiniAppletBridgeAdapter.MAX_MESSAGE_CHARS
+    }
+}
+
+internal class ProfileMiniAppletBridgeAdapter(
+    private val clock: Clock = Clock.systemUTC(),
+    private val profileRegistry: dev.junta.firmamobile.profile.SiteProfileRegistry =
+        BuiltInSiteProfiles.releaseRegistry,
+    private val adapterRegistry: ProtocolAdapterRegistry = BuiltInProtocolAdapterRegistry.registry,
+) : ProtocolInputAdapter {
+    override val id = dev.junta.firmamobile.profile.ProtocolInputAdapterId("miniapplet-autoscript-v1")
+
     fun route(
         rawMessage: String,
         sourceOrigin: Uri,
@@ -81,11 +112,22 @@ class MiniAppletBridgeAdapter(
                 SigningErrorCode.NAVIGATION_CHANGED,
             )
         }
-        val origin = JuntaOriginPolicy.originFor(sourceOrigin)
+        val resolved = profileRegistry.resolve(sourceOrigin)
+            ?.takeIf { it.trustMode == TrustMode.TRUSTED_SIGNING }
             ?: return MiniAppletBridgeRouteResult.Rejected(
                 requestId,
                 SigningErrorCode.ORIGIN_NOT_ALLOWED,
             )
+        val profile = resolved.profile
+        val operation = profile.operationPolicies[ProtocolOperation.SIGN]
+            ?: return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        val binding = adapterRegistry.resolve(profile.profileId, ProtocolOperation.SIGN)
+            ?.takeIf {
+                it.inputAdapterId == id &&
+                it.inputAdapterId == operation.inputAdapterId &&
+                    it.callbackContractId == operation.callbackContractId
+            }
+            ?: return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -98,14 +140,17 @@ class MiniAppletBridgeAdapter(
             return MiniAppletBridgeRouteResult.Cancelled(canonicalRequestId, navigationId)
         }
         val algorithm = when (json.strictString(ALGORITHM_FIELD)) {
-            ALGORITHM_SHA1_RSA -> SigningAlgorithm.SHA1_WITH_RSA
-            ALGORITHM_SHA256_RSA -> SigningAlgorithm.SHA256_WITH_RSA
+            ALGORITHM_SHA1_RSA -> SigningAlgorithm.SHA1_WITH_RSA to SignatureAlgorithm.SHA1_WITH_RSA
+            ALGORITHM_SHA256_RSA -> SigningAlgorithm.SHA256_WITH_RSA to SignatureAlgorithm.SHA256_WITH_RSA
             else -> return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        if (json.strictString(FORMAT_FIELD) != FORMAT_CADES) {
+        if (algorithm.second !in operation.algorithms ||
+            json.strictString(FORMAT_FIELD) != FORMAT_CADES ||
+            operation.format != SignatureFormat.CADES
+        ) {
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
                 SigningErrorCode.INVALID_REQUEST,
@@ -123,7 +168,7 @@ class MiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val extraProperties = json.strictString(EXTRA_PROPERTIES_FIELD)
+        val rawExtraProperties = json.strictString(EXTRA_PROPERTIES_FIELD)
             ?.takeIf { it.length <= MAX_EXTRA_PROPERTIES_CHARS && it.hasSafeControls() }
             ?: return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
@@ -144,6 +189,11 @@ class MiniAppletBridgeAdapter(
                 SigningErrorCode.REQUEST_TOO_LARGE,
             )
         }
+        val extraProperties = canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
+            ?: run {
+                decodedData.fill(0)
+                return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
+            }
         val payload = try {
             MiniAppletPayloadCodec.encode(decodedData, extraProperties)
         } catch (_: IllegalArgumentException) {
@@ -158,17 +208,17 @@ class MiniAppletBridgeAdapter(
             MiniAppletBridgeRequest(
                 normalized = NormalizedSignRequest(
                     requestId = canonicalRequestId,
-                    protocolId = PROTOCOL_ID,
+                    protocolId = binding.signingProtocolId,
                     context = SigningContext(
-                        profileId = PROFILE_ID,
-                        profileVersion = PROFILE_VERSION,
-                        origin = origin,
+                        profileId = profile.profileId.value,
+                        profileVersion = profile.profileVersion,
+                        origin = resolved.origin.toTrustedOrigin(),
                         navigationId = navigationId,
                         observedAt = clock.instant(),
                     ),
-                    algorithm = algorithm,
+                    algorithm = algorithm.first,
                     format = SigningFormat.CADES,
-                    safeDescription = SAFE_DESCRIPTION,
+                    safeDescription = operation.safeDescription,
                     payload = payload,
                 ),
             ),
@@ -213,6 +263,25 @@ class MiniAppletBridgeAdapter(
         !character.isISOControl() || character == '\n' || character == '\r' || character == '\t'
     }
 
+    private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
+        val observed = linkedMapOf<String, String>()
+        val lines = raw.split('\n')
+        if (lines.isEmpty() || lines.size > MAX_EXTRA_PROPERTY_COUNT) return null
+        for (rawLine in lines) {
+            val line = rawLine.removeSuffix("\r")
+            if (line.isEmpty()) return null
+            val separator = line.indexOf('=')
+            if (separator <= 0) return null
+            val key = line.substring(0, separator)
+            val value = line.substring(separator + 1)
+            if (!PROPERTY_KEY.matches(key) || value.length > MAX_EXTRA_PROPERTY_VALUE_CHARS ||
+                observed.put(key, value) != null
+            ) return null
+        }
+        if (observed != fixed) return null
+        return fixed.entries.joinToString("\n") { (key, value) -> "$key=$value" }
+    }
+
     companion object {
         const val MAX_DECODED_DATA_BYTES = 524_288
         const val MAX_DATA_BASE64_CHARS = 699_052
@@ -230,10 +299,9 @@ class MiniAppletBridgeAdapter(
         private const val ALGORITHM_SHA1_RSA = "SHA1withRSA"
         private const val ALGORITHM_SHA256_RSA = "SHA256withRSA"
         private const val FORMAT_CADES = "CAdES"
-        private const val PROFILE_ID = "junta-andalucia"
-        private const val PROFILE_VERSION = 1
-        private const val SAFE_DESCRIPTION = "Autenticación con certificado"
-        private val PROTOCOL_ID = SigningProtocolId("junta-miniapplet-triphase-cades-v1")
+        private const val MAX_EXTRA_PROPERTY_COUNT = 32
+        private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
+        private val PROPERTY_KEY = Regex("[A-Za-z][A-Za-z0-9._-]{0,63}")
         private val UUID_PATTERN = Regex(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-" +
                 "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
@@ -262,6 +330,8 @@ class MiniAppletReplyChannel internal constructor(
     override val requestId: UUID,
     private val postMessage: (String) -> Unit,
     private val onTerminal: () -> Unit = {},
+    private val encoder: dev.junta.firmamobile.signing.SigningResultEncoder =
+        MiniAppletCallbackAdapter(),
 ) : SigningReplySink {
     private val terminal = AtomicBoolean(false)
 
@@ -280,15 +350,7 @@ class MiniAppletReplyChannel internal constructor(
             }
             require(certificateDer.size <= MAX_CERTIFICATE_BYTES)
             val certificateBase64 = Base64.getEncoder().encodeToString(certificateDer)
-            postMessage(
-                JSONObject()
-                    .put("type", "MINIAPPLET_RESULT")
-                    .put("requestId", requestId.toString())
-                    .put("status", "success")
-                    .put("signature", signatureBase64)
-                    .put("certificate", certificateBase64)
-                    .toString(),
-            )
+            postMessage(encoder.encodeSuccess(requestId, signatureBase64, certificateBase64))
             true
         } catch (_: Exception) {
             false
@@ -302,14 +364,7 @@ class MiniAppletReplyChannel internal constructor(
     override fun failure(code: SigningErrorCode): Boolean {
         if (!terminal.compareAndSet(false, true)) return false
         return try {
-            postMessage(
-                JSONObject()
-                    .put("type", "MINIAPPLET_RESULT")
-                    .put("requestId", requestId.toString())
-                    .put("status", "error")
-                    .put("errorCode", code.name)
-                    .toString(),
-            )
+            postMessage(encoder.encodeError(requestId, code))
             true
         } catch (_: Exception) {
             false

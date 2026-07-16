@@ -48,6 +48,7 @@ class SiteProfileCatalogParserTest {
                 .mapTo(linkedSetOf()) { it.host },
         )
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals("Autenticación con certificado", operation.safeDescription)
         assertEquals(setOf(SignatureAlgorithm.SHA1_WITH_RSA, SignatureAlgorithm.SHA256_WITH_RSA), operation.algorithms)
         assertEquals(SignatureFormat.CADES, operation.format)
         assertEquals(SignaturePackaging.DETACHED, operation.packaging)

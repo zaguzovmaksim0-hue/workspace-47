@@ -174,3 +174,26 @@ dispositivo conectado y mDNS no anunció wireless debugging. No se interpreta
 como PASS. El `zipalign` Termux sigue sin soportar `-P 16`; release continúa
 firmado con debug key para QA local. Los riesgos preexistentes de shim/epoch y
 verificación CMS permanecen hasta sus milestones específicos.
+
+## Milestone P05 — AutoScript/MiniApplet input y callback — 2026-07-16
+
+La fachada `MiniAppletBridgeAdapter` conserva su API y el JSON externo Junta,
+pero delega normalización a un adapter gobernado por profile y a un registry de
+bindings exactos `(profile, operation, input adapter, callback, protocol)`.
+No existe fallback a otro profile o adapter.
+
+El input adapter ahora exige origin iniciador `TRUSTED_SIGNING`, capability y
+policy `SIGN`, algoritmo/formato declarados y el contrato callback exacto. Las
+`extraProperties` de página solo confirman el mapa fijo del profile;
+`serverUrl` y `mode=explicit` se reconstruyen canónicamente, y keys duplicadas,
+desconocidas o con otro valor se rechazan antes de crear el request.
+
+`MiniAppletCallbackAdapter` codifica los envelopes success/error comunes. El
+canal legacy Junta sigue siendo one-shot, limpia firma/certificado y conserva
+los mismos campos y aridad de callback. Ninguna API nueva contiene
+`PrivateKey`, password, `CertificateSession`, cookies o URI PKCS#12.
+
+Validación: focused PASS; suite completa 203 tests, 0 failures/errors/skips;
+debug/release lint, assemble y artifact boundaries PASS. Device gate sigue
+`NOT_RUN_ENVIRONMENTAL` por ausencia de conexión ADB; status Junta permanece
+`EXPERIMENTAL` y no hay claim E2E.
