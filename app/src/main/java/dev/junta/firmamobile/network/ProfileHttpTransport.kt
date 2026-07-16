@@ -2,13 +2,32 @@ package dev.junta.firmamobile.network
 
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
+import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.Inet6Address
 import java.net.InetAddress
+import java.net.Proxy
 import java.net.URI
+import java.net.UnknownHostException
+import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.net.ssl.HttpsURLConnection
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import okhttp3.Authenticator
+import okhttp3.ConnectionPool
+import okhttp3.CookieJar
+import okhttp3.Dns
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okio.BufferedSink
 
 class ProfileHttpRequest internal constructor(
     val url: ValidatedNetworkUrl,
@@ -120,6 +139,7 @@ internal data class RawProfileHttpResponse(
 internal fun interface ProfileHttpExecutor {
     fun post(
         url: URI,
+        resolvedAddresses: List<InetAddress>,
         body: ByteArray,
         connectTimeoutMillis: Int,
         readTimeoutMillis: Int,
@@ -135,8 +155,13 @@ class HttpsProfileHttpTransport internal constructor(
     private val dnsResolver: DnsResolver = DnsResolver { host ->
         InetAddress.getAllByName(host).toList()
     },
-    private val executor: ProfileHttpExecutor = UrlConnectionProfileHttpExecutor(),
+    private val executor: ProfileHttpExecutor = OkHttpProfileHttpExecutor(),
+    private val dnsTimeoutMillis: Long = DNS_TIMEOUT_MILLIS,
 ) : ProfileHttpTransport {
+    init {
+        require(dnsTimeoutMillis > 0)
+    }
+
     override fun post(
         request: ProfileHttpRequest,
         cancellation: ProfileHttpCancellation,
@@ -145,12 +170,12 @@ class HttpsProfileHttpTransport internal constructor(
         if (validated !is NetworkUrlValidation.Allowed) {
             return ProfileHttpResult.Failure(ProfileHttpFailure.INVALID_ENDPOINT)
         }
-        val addresses = try {
-            dnsResolver.resolve(request.url.uri.host)
-        } catch (_: Exception) {
+        val addresses = resolveWithDeadline(request.url.uri.host, cancellation)
+        if (addresses == null) {
             return ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)
         }
-        if (addresses.isEmpty() || addresses.any { !it.isPublicAddress() }) {
+        val approvedAddresses = addresses.filter { it.isPublicAddress() }
+        if (approvedAddresses.isEmpty()) {
             return ProfileHttpResult.Failure(ProfileHttpFailure.PRIVATE_ADDRESS)
         }
 
@@ -160,14 +185,15 @@ class HttpsProfileHttpTransport internal constructor(
             return ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)
         }
         val raw = try {
-                executor.post(
-                    url = request.url.uri,
-                    body = bodyCopy,
-                    connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS,
-                    readTimeoutMillis = READ_TIMEOUT_MILLIS,
-                    maxResponseBytes = MAX_RESPONSE_BYTES,
-                    cancellation = cancellation,
-                )
+            executor.post(
+                url = request.url.uri,
+                resolvedAddresses = approvedAddresses,
+                body = bodyCopy,
+                connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS,
+                readTimeoutMillis = READ_TIMEOUT_MILLIS,
+                maxResponseBytes = MAX_RESPONSE_BYTES,
+                cancellation = cancellation,
+            )
         } catch (_: ProfileResponseTooLargeException) {
             return ProfileHttpResult.Failure(ProfileHttpFailure.RESPONSE_TOO_LARGE)
         } catch (_: Exception) {
@@ -209,22 +235,37 @@ class HttpsProfileHttpTransport internal constructor(
         val raw = address
         if (raw.size == 4 && !raw.isGlobalIpv4()) return false
         if (this is Inet6Address) {
-            val first = raw.first().toInt() and 0xff
-            if (first == 0xfc || first == 0xfd) return false
-            if (raw.size == 16 &&
-                (0 until 10).all { raw[it] == 0.toByte() } &&
-                raw[10] == 0xff.toByte() && raw[11] == 0xff.toByte()
-            ) {
-                return raw.copyOfRange(12, 16).isGlobalIpv4()
-            }
-            if (raw.size == 16 &&
-                raw[0] == 0x20.toByte() && raw[1] == 0x01.toByte() &&
-                raw[2] == 0x0d.toByte() && raw[3] == 0xb8.toByte()
-            ) {
-                return false
-            }
+            // Fail closed until the full IANA IPv6 special-purpose registry is modeled.
+            return false
         }
         return true
+    }
+
+    private fun resolveWithDeadline(
+        host: String,
+        cancellation: ProfileHttpCancellation,
+    ): List<InetAddress>? {
+        val future = try {
+            DNS_EXECUTOR.submit(Callable { dnsResolver.resolve(host) })
+        } catch (_: RejectedExecutionException) {
+            return null
+        }
+        return cancellation.register { future.cancel(true) }.use {
+            try {
+                future.get(dnsTimeoutMillis, TimeUnit.MILLISECONDS)
+            } catch (_: TimeoutException) {
+                future.cancel(true)
+                null
+            } catch (_: CancellationException) {
+                null
+            } catch (_: ExecutionException) {
+                null
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                future.cancel(true)
+                null
+            }
+        }
     }
 
     private fun ByteArray.isGlobalIpv4(): Boolean {
@@ -239,6 +280,7 @@ class HttpsProfileHttpTransport internal constructor(
             first == 192 && second == 168 -> false
             first == 192 && second == 0 && third == 0 -> false
             first == 192 && second == 0 && third == 2 -> false
+            first == 192 && second == 88 && third == 99 -> false
             first == 198 && second in 18..19 -> false
             first == 198 && second == 51 && third == 100 -> false
             first == 203 && second == 0 && third == 113 -> false
@@ -269,72 +311,105 @@ class HttpsProfileHttpTransport internal constructor(
         const val CONNECT_TIMEOUT_MILLIS = 15_000
         const val READ_TIMEOUT_MILLIS = 15_000
         const val MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+        private const val DNS_TIMEOUT_MILLIS = 5_000L
         private const val TEXT_HTML = "text/html"
         private const val TEXT_PLAIN = "text/plain"
+        private val DNS_EXECUTOR = ThreadPoolExecutor(
+            0,
+            2,
+            30,
+            TimeUnit.SECONDS,
+            SynchronousQueue(),
+            { task -> Thread(task, "profile-dns").apply { isDaemon = true } },
+            ThreadPoolExecutor.AbortPolicy(),
+        ).apply { allowCoreThreadTimeOut(true) }
     }
 }
 
-internal fun interface HttpsConnectionFactory {
-    fun open(url: URI): HttpsURLConnection
-}
-
-internal class UrlConnectionProfileHttpExecutor(
-    private val connectionFactory: HttpsConnectionFactory = HttpsConnectionFactory { url ->
-        url.toURL().openConnection() as HttpsURLConnection
-    },
+internal class OkHttpProfileHttpExecutor(
+    private val clientBuilderFactory: () -> OkHttpClient.Builder = { OkHttpClient.Builder() },
 ) : ProfileHttpExecutor {
     override fun post(
         url: URI,
+        resolvedAddresses: List<InetAddress>,
         body: ByteArray,
         connectTimeoutMillis: Int,
         readTimeoutMillis: Int,
         maxResponseBytes: Int,
         cancellation: ProfileHttpCancellation,
     ): RawProfileHttpResponse {
-        val connection = connectionFactory.open(url)
-        val cancellationRegistration = cancellation.register(connection::disconnect)
-        var responseBody: ByteArray? = null
-        var bodyTransferred = false
-        return try {
-            connection.instanceFollowRedirects = false
-            connection.requestMethod = "POST"
-            connection.useCaches = false
-            connection.defaultUseCaches = false
-            connection.doInput = true
-            connection.doOutput = true
-            connection.connectTimeout = connectTimeoutMillis
-            connection.readTimeout = readTimeoutMillis
-            connection.setFixedLengthStreamingMode(body.size)
-            connection.setRequestProperty("Accept", "text/plain")
-            connection.setRequestProperty(
-                "Content-Type",
-                "application/x-www-form-urlencoded; charset=UTF-8",
-            )
-            connection.setRequestProperty("Origin", "https://${url.host}")
-            connection.setRequestProperty("Cache-Control", "no-store")
-            connection.outputStream.use { output -> output.write(body) }
-
-            val status = connection.responseCode
-            val contentType = connection.contentType
-            val location = connection.getHeaderField("Location")
-            responseBody = if (status == HttpURLConnection.HTTP_OK) {
-                connection.inputStream.use { it.readBounded(maxResponseBytes) }
-            } else {
-                ByteArray(0)
+        val approvedAddresses = resolvedAddresses.distinct()
+        if (approvedAddresses.isEmpty()) throw UnknownHostException("No approved address")
+        val client = buildClient(
+            expectedHost = url.host,
+            approvedAddresses = approvedAddresses,
+            connectTimeoutMillis = connectTimeoutMillis,
+            readTimeoutMillis = readTimeoutMillis,
+        )
+        val request = buildRequest(url, body)
+        val call = client.newCall(request)
+        return cancellation.register(call::cancel).use {
+            call.execute().use { response ->
+                RawProfileHttpResponse(
+                    statusCode = response.code,
+                    contentType = response.header("Content-Type"),
+                    location = response.header("Location"),
+                    body = if (response.code == HttpURLConnection.HTTP_OK) {
+                        response.body.byteStream().use { it.readBounded(maxResponseBytes) }
+                    } else {
+                        ByteArray(0)
+                    },
+                )
             }
-            val response = RawProfileHttpResponse(
-                statusCode = status,
-                contentType = contentType,
-                location = location,
-                body = checkNotNull(responseBody),
-            )
-            bodyTransferred = true
-            response
-        } finally {
-            if (!bodyTransferred) responseBody?.fill(0)
-            cancellationRegistration.close()
-            connection.disconnect()
         }
+    }
+
+    internal fun buildRequest(url: URI, body: ByteArray): Request = Request.Builder()
+        .url(url.toASCIIString())
+        .header("Accept", "text/plain")
+        .header("Origin", "https://${url.host}")
+        .header("Cache-Control", "no-store")
+        .post(OneShotFormRequestBody(body))
+        .build()
+
+    internal fun buildClient(
+        expectedHost: String,
+        approvedAddresses: List<InetAddress>,
+        connectTimeoutMillis: Int,
+        readTimeoutMillis: Int,
+    ): OkHttpClient {
+        val approved = approvedAddresses.distinct()
+        require(expectedHost.isNotBlank() && approved.isNotEmpty())
+        return clientBuilderFactory()
+            .dns(
+                Dns { hostname ->
+                    if (hostname != expectedHost) {
+                        throw UnknownHostException("Hostname is outside the endpoint contract")
+                    }
+                    approved
+                },
+            )
+            .proxy(Proxy.NO_PROXY)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .retryOnConnectionFailure(false)
+            .cookieJar(CookieJar.NO_COOKIES)
+            .authenticator(Authenticator.NONE)
+            .proxyAuthenticator(Authenticator.NONE)
+            .cache(null)
+            .connectionPool(ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
+            .connectTimeout(connectTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+            .readTimeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+            .writeTimeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+            .callTimeout((connectTimeoutMillis + readTimeoutMillis).toLong(), TimeUnit.MILLISECONDS)
+            .addNetworkInterceptor { chain ->
+                val connectedAddress = chain.connection()?.route()?.socketAddress?.address
+                if (connectedAddress !in approved) {
+                    throw IOException("Connected address is outside the approved DNS set")
+                }
+                chain.proceed(chain.request())
+            }
+            .build()
     }
 
     private fun InputStream.readBounded(maxBytes: Int): ByteArray {
@@ -361,5 +436,23 @@ internal class UrlConnectionProfileHttpExecutor(
             buf.fill(0)
             reset()
         }
+    }
+
+    private class OneShotFormRequestBody(
+        private val bytes: ByteArray,
+    ) : RequestBody() {
+        override fun contentType() = FORM_CONTENT_TYPE
+
+        override fun contentLength(): Long = bytes.size.toLong()
+
+        override fun isOneShot(): Boolean = true
+
+        override fun writeTo(sink: BufferedSink) {
+            sink.write(bytes)
+        }
+    }
+
+    private companion object {
+        val FORM_CONTENT_TYPE = "application/x-www-form-urlencoded; charset=UTF-8".toMediaType()
     }
 }

@@ -223,3 +223,32 @@ Validación: 210 unit tests, 0 failures/errors/skips; `lintDebug`,
 firma v2 y `zipalign -c 4`. Device gate permanece `NOT_RUN_ENVIRONMENTAL`: ADB
 no enumeró ningún dispositivo. Junta continúa `EXPERIMENTAL` /
 `IMPLEMENTED_NOT_E2E`; este milestone no prueba aceptación por el portal.
+
+## Milestone P06A — transporte HTTP vinculado al profile y DNS — 2026-07-16
+
+El transporte tri-phase acepta ahora únicamente el conjunto exacto de
+endpoints HTTPS del profile activo. La resolución DNS se ejecuta con deadline
+y un pool global acotado a dos tareas; saturación, cancelación, resolución
+vacía o direcciones no globales fallan cerradas antes de iniciar HTTP.
+
+OkHttp 5.4.0 recibe exclusivamente las direcciones IPv4 públicas previamente
+aprobadas, conserva el hostname original para SNI y hostname verification,
+deshabilita proxy, redirects, cookies, autenticadores, cache y retry. Un
+network interceptor verifica además la dirección realmente conectada. El POST
+usa un body one-shot para impedir reenvíos automáticos, incluido
+`503 Retry-After`, y mantiene límites de tiempo y tamaño de respuesta.
+
+La deny-policy IPv4 se contrastó con el registro IANA actualizado el
+2025-10-09, incluido el prefijo deprecated `192.88.99.0/24`. IPv6 permanece
+temporalmente bloqueado por completo: respuestas dual-stack pueden usar solo
+una IPv4 global aprobada; portales IPv6-only y redes DNS64 fallan cerradas.
+Esta limitación no se interpreta como compatibilidad.
+
+Validación local: tests focused de policy/transport PASS, incluido intercambio
+TLS real HTTP/2 con SNI, route pinning y ausencia de segundo POST; timeout,
+cancelación y saturación DNS PASS. La suite completa suma 214 tests sin
+failures/errors/skips; `lintDebug`, `lintRelease`, `assembleDebug` y
+`assembleRelease` PASS. Ambos APK verifican firma v2 y `zipalign -c 4`.
+`dependencyInsight` confirma OkHttp 5.4.0 y Okio 3.17.0. Las pruebas Android de
+API 26, TLS/SNI y `Call.cancel()` durante connect/write/read siguen
+`NOT_RUN_ENVIRONMENTAL`: ADB no enumeró ningún dispositivo.

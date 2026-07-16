@@ -2,6 +2,7 @@ package dev.junta.firmamobile.network
 
 import java.net.URI
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -52,5 +53,25 @@ class SafeNetworkUrlPolicyTest {
         assertTrue(accepted is NetworkUrlValidation.Allowed)
         assertTrue(queryOnWire is NetworkUrlValidation.Blocked)
         assertTrue(wrongPath is NetworkUrlValidation.Blocked)
+    }
+
+    @Test
+    fun profilePolicyAllowsOnlyItsExactCanonicalEndpoints() {
+        val second = URI("https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService")
+        val profilePolicy = SafeNetworkUrlPolicy(
+            setOf(URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT), second),
+        )
+
+        assertTrue(profilePolicy.validateRequest(second) is NetworkUrlValidation.Allowed)
+        assertTrue(
+            profilePolicy.validateRequest(URI("https://tramita.unizar.es/other")) is NetworkUrlValidation.Blocked,
+        )
+        assertTrue(
+            profilePolicy.validateRequest(URI("https://TRAMITA.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"))
+                is NetworkUrlValidation.Blocked,
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            SafeNetworkUrlPolicy(setOf(URI("https://tramita.unizar.es/SignatureService?unsafe=true")))
+        }
     }
 }

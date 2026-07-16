@@ -1,20 +1,22 @@
 package dev.junta.firmamobile.network
 
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import java.net.InetAddress
+import java.net.Proxy
 import java.net.URI
-import java.net.URL
-import java.security.cert.Certificate
 import java.util.ArrayDeque
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.HttpsURLConnection
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
+import okhttp3.Authenticator
+import okhttp3.CookieJar
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import okio.Buffer
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -55,6 +57,44 @@ class ProfileHttpTransportTest {
         assertTrue(body.all { it == 0.toByte() })
         assertTrue(requestBody.all { it == 0.toByte() })
         assertEquals("op=pre&cop=sign", executor.bodies.single().decodeToString())
+        assertEquals(listOf(InetAddress.getByName("217.12.21.226")), executor.resolvedAddresses.single())
+        assertEquals(1, executor.calls.get())
+    }
+
+    @Test
+    fun transportUsesTheExactEndpointSetInjectedByTheActiveProfile() {
+        val secondEndpoint = URI(
+            "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService",
+        )
+        val secondPolicy = SafeNetworkUrlPolicy(setOf(secondEndpoint))
+        val secondUrl = (secondPolicy.validateRequest(secondEndpoint) as NetworkUrlValidation.Allowed).url
+        val executor = QueueExecutor(RawProfileHttpResponse(200, "text/plain", null, "ok".encodeToByteArray()))
+        val transport = HttpsProfileHttpTransport(
+            urlPolicy = secondPolicy,
+            dnsResolver = DnsResolver { listOf(InetAddress.getByName("93.184.216.34")) },
+            executor = executor,
+        )
+
+        val allowed = ProfileHttpRequest(secondUrl, "op=pre".encodeToByteArray()).use {
+            transport.post(it, ProfileHttpCancellation())
+        }
+
+        (allowed as ProfileHttpResult.Success).response.close()
+        assertEquals(1, executor.calls.get())
+
+        var dnsCalled = false
+        val defaultTransport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver {
+                dnsCalled = true
+                emptyList()
+            },
+            executor = executor,
+        )
+        val blocked = ProfileHttpRequest(secondUrl, "op=pre".encodeToByteArray()).use {
+            defaultTransport.post(it, ProfileHttpCancellation())
+        }
+        assertEquals(ProfileHttpFailure.INVALID_ENDPOINT, (blocked as ProfileHttpResult.Failure).code)
+        assertTrue(!dnsCalled)
         assertEquals(1, executor.calls.get())
     }
 
@@ -94,7 +134,7 @@ class ProfileHttpTransportTest {
         val privateExecutorCalled = AtomicBoolean(false)
         val privateTransport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("127.0.0.1")) },
-            executor = ProfileHttpExecutor { _, _, _, _, _, _ ->
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
                 privateExecutorCalled.set(true)
                 error("must not connect")
             },
@@ -113,7 +153,7 @@ class ProfileHttpTransportTest {
 
         val oversizedTransport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
-            executor = ProfileHttpExecutor { _, _, _, _, _, _ -> throw ProfileResponseTooLargeException() },
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ -> throw ProfileResponseTooLargeException() },
         )
         assertEquals(ProfileHttpFailure.RESPONSE_TOO_LARGE, (post(oversizedTransport) as ProfileHttpResult.Failure).code)
 
@@ -142,6 +182,7 @@ class ProfileHttpTransportTest {
             "172.16.0.1",
             "192.0.0.1",
             "192.0.2.1",
+            "192.88.99.2",
             "192.168.0.1",
             "198.18.0.1",
             "198.51.100.1",
@@ -149,12 +190,17 @@ class ProfileHttpTransportTest {
             "240.0.0.1",
             "2001:db8::1",
             "fc00::1",
+            "64:ff9b:1::7f00:1",
+            "100::1",
+            "2001:2::1",
+            "2001:10::1",
+            "2606:4700:4700::1111",
         )
         blockedAddresses.forEach { address ->
             val executorCalled = AtomicBoolean(false)
             val transport = HttpsProfileHttpTransport(
                 dnsResolver = DnsResolver { listOf(InetAddress.getByName(address)) },
-                executor = ProfileHttpExecutor { _, _, _, _, _, _ ->
+                executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
                     executorCalled.set(true)
                     error("must not connect")
                 },
@@ -169,98 +215,231 @@ class ProfileHttpTransportTest {
     }
 
     @Test
-    fun productionExecutorUsesQueryFreeBoundedPostAndLeavesTlsAndCookiesAlone() {
-        val endpoint = URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT)
-        val fake = FakeHttpsConnection(
-            endpoint.toURL(),
-            responseBody = "synthetic-response".encodeToByteArray(),
-        )
-        val originalSocketFactory = fake.sslSocketFactory
-        val originalHostnameVerifier = fake.hostnameVerifier
-        var openedUri: URI? = null
-        val executor = UrlConnectionProfileHttpExecutor(
-            HttpsConnectionFactory { uri ->
-                openedUri = uri
-                fake
+    fun dnsResolutionIsBoundedAndCancellationReturnsWithoutCallingHttp() {
+        val timeoutStarted = CountDownLatch(1)
+        val timeoutInterrupted = CountDownLatch(1)
+        val executorCalled = AtomicBoolean(false)
+        val timeoutTransport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver {
+                timeoutStarted.countDown()
+                try {
+                    Thread.sleep(10_000)
+                } catch (_: InterruptedException) {
+                    timeoutInterrupted.countDown()
+                }
+                emptyList()
             },
-        )
-        val body = "op=pre&cop=sign".encodeToByteArray()
-
-        val response = executor.post(
-            endpoint,
-            body,
-            1_234,
-            2_345,
-            1_024,
-            ProfileHttpCancellation(),
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
+                executorCalled.set(true)
+                error("HTTP must not start")
+            },
+            dnsTimeoutMillis = 100,
         )
 
-        assertEquals(endpoint, openedUri)
-        assertEquals(null, openedUri?.rawQuery)
-        assertEquals("POST", fake.requestMethod)
-        assertTrue(!fake.instanceFollowRedirects)
-        assertTrue(fake.doOutput)
-        assertEquals(1_234, fake.connectTimeout)
-        assertEquals(2_345, fake.readTimeout)
-        assertEquals(body.size, fake.fixedLength)
-        assertEquals("application/x-www-form-urlencoded; charset=UTF-8", fake.getRequestProperty("Content-Type"))
-        assertEquals("text/plain", fake.getRequestProperty("Accept"))
-        assertEquals(null, fake.getRequestProperty("Cookie"))
-        assertEquals(null, fake.getRequestProperty("Authorization"))
-        assertTrue(fake.sslSocketFactory === originalSocketFactory)
-        assertTrue(fake.hostnameVerifier === originalHostnameVerifier)
-        assertArrayEquals(body, fake.posted.toByteArray())
-        assertArrayEquals("synthetic-response".encodeToByteArray(), response.body)
-        assertTrue(fake.disconnected)
-        response.body.fill(0)
+        val timedOut = post(timeoutTransport)
 
-        val oversized = FakeHttpsConnection(
-            endpoint.toURL(),
-            responseBody = ByteArray(5) { 7 },
+        assertTrue(timeoutStarted.await(1, TimeUnit.SECONDS))
+        assertEquals(ProfileHttpFailure.NETWORK_ERROR, (timedOut as ProfileHttpResult.Failure).code)
+        assertTrue(timeoutInterrupted.await(1, TimeUnit.SECONDS))
+        assertTrue(!executorCalled.get())
+
+        val cancelStarted = CountDownLatch(1)
+        val cancelInterrupted = CountDownLatch(1)
+        val cancellation = ProfileHttpCancellation()
+        val cancelledResult = AtomicReference<ProfileHttpResult>()
+        val cancelTransport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver {
+                cancelStarted.countDown()
+                try {
+                    Thread.sleep(10_000)
+                } catch (_: InterruptedException) {
+                    cancelInterrupted.countDown()
+                }
+                emptyList()
+            },
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ -> error("HTTP must not start") },
+            dnsTimeoutMillis = 10_000,
         )
-        val boundedExecutor = UrlConnectionProfileHttpExecutor(HttpsConnectionFactory { oversized })
-        assertThrows(ProfileResponseTooLargeException::class.java) {
-            boundedExecutor.post(
-                endpoint,
-                "op=pre".encodeToByteArray(),
-                100,
-                100,
-                4,
-                ProfileHttpCancellation(),
+        val worker = Thread {
+            cancelledResult.set(
+                ProfileHttpRequest(requestUrl, "op=pre".encodeToByteArray()).use {
+                    cancelTransport.post(it, cancellation)
+                },
             )
         }
-        assertTrue(oversized.disconnected)
+        worker.start()
+        assertTrue(cancelStarted.await(1, TimeUnit.SECONDS))
+        cancellation.cancel()
+        worker.join(1_000)
+
+        assertTrue(!worker.isAlive)
+        assertTrue(cancelInterrupted.await(1, TimeUnit.SECONDS))
+        assertEquals(
+            ProfileHttpFailure.NETWORK_ERROR,
+            (cancelledResult.get() as ProfileHttpResult.Failure).code,
+        )
     }
 
     @Test
-    fun cancellationDisconnectsConnectionsBlockedInWriteAndRead() {
-        listOf(true, false).forEach { blockOnWrite ->
-            val endpoint = URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT)
-            val connection = BlockingHttpsConnection(endpoint.toURL(), blockOnWrite)
-            val cancellation = ProfileHttpCancellation()
-            val executor = UrlConnectionProfileHttpExecutor(HttpsConnectionFactory { connection })
-            val worker = Thread {
-                try {
-                    executor.post(
-                        endpoint,
-                        "op=pre".encodeToByteArray(),
-                        10_000,
-                        10_000,
-                        1_024,
-                        cancellation,
-                    )
-                } catch (_: Exception) {
-                    // Expected after disconnecting the blocked call.
+    fun dnsResolverSaturationFailsClosedWithoutGrowingTheWorkerPool() {
+        val started = CountDownLatch(2)
+        val release = CountDownLatch(1)
+        val cancellations = List(2) { ProfileHttpCancellation() }
+        val workers = cancellations.map { cancellation ->
+            Thread {
+                val transport = HttpsProfileHttpTransport(
+                    dnsResolver = DnsResolver {
+                        started.countDown()
+                        while (release.count > 0) {
+                            try {
+                                release.await()
+                            } catch (_: InterruptedException) {
+                                // Simulate a platform resolver that ignores interruption.
+                            }
+                        }
+                        emptyList()
+                    },
+                    executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
+                        error("HTTP must not start")
+                    },
+                    dnsTimeoutMillis = 10_000,
+                )
+                ProfileHttpRequest(requestUrl, "op=pre".encodeToByteArray()).use {
+                    transport.post(it, cancellation)
                 }
+            }.apply { start() }
+        }
+
+        try {
+            assertTrue(started.await(1, TimeUnit.SECONDS))
+            val saturated = HttpsProfileHttpTransport(
+                dnsResolver = DnsResolver { error("A third resolver task must be rejected") },
+                executor = ProfileHttpExecutor { _, _, _, _, _, _, _ -> error("HTTP must not start") },
+                dnsTimeoutMillis = 10_000,
+            )
+
+            assertEquals(
+                ProfileHttpFailure.NETWORK_ERROR,
+                (post(saturated) as ProfileHttpResult.Failure).code,
+            )
+        } finally {
+            cancellations.forEach(ProfileHttpCancellation::cancel)
+            release.countDown()
+            workers.forEach { it.join(1_000) }
+        }
+        assertTrue(workers.none(Thread::isAlive))
+    }
+
+    @Test
+    fun productionClientUsesOnlyApprovedDnsWithoutRedirectsCookiesAuthRetriesOrProxy() {
+        val approved = listOf(
+            InetAddress.getByName("217.12.21.226"),
+            InetAddress.getByName("93.184.216.34"),
+        )
+        val client = OkHttpProfileHttpExecutor().buildClient(
+            expectedHost = "ws024.juntadeandalucia.es",
+            approvedAddresses = approved,
+            connectTimeoutMillis = 1_234,
+            readTimeoutMillis = 2_345,
+        )
+
+        assertEquals(approved, client.dns.lookup("ws024.juntadeandalucia.es"))
+        assertThrows(IOException::class.java) { client.dns.lookup("evil.example") }
+        assertTrue(!client.followRedirects)
+        assertTrue(!client.followSslRedirects)
+        assertTrue(!client.retryOnConnectionFailure)
+        assertTrue(client.cookieJar === CookieJar.NO_COOKIES)
+        assertTrue(client.authenticator === Authenticator.NONE)
+        assertTrue(client.proxyAuthenticator === Authenticator.NONE)
+        assertTrue(client.proxy === Proxy.NO_PROXY)
+        assertEquals(null, client.cache)
+        assertEquals(1, client.networkInterceptors.size)
+        assertEquals(1_234, client.connectTimeoutMillis)
+        assertEquals(2_345, client.readTimeoutMillis)
+        assertEquals(2_345, client.writeTimeoutMillis)
+
+        val body = "op=pre&cop=sign".encodeToByteArray()
+        val request = OkHttpProfileHttpExecutor().buildRequest(
+            URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT),
+            body,
+        )
+        val wireBody = Buffer()
+        val requestBody = checkNotNull(request.body)
+        requestBody.writeTo(wireBody)
+        assertTrue(requestBody.isOneShot())
+        assertEquals("POST", request.method)
+        assertEquals("text/plain", request.header("Accept"))
+        assertEquals("https://ws024.juntadeandalucia.es", request.header("Origin"))
+        assertEquals("no-store", request.header("Cache-Control"))
+        assertEquals(null, request.header("Cookie"))
+        assertEquals(null, request.header("Authorization"))
+        assertEquals(
+            "application/x-www-form-urlencoded; charset=UTF-8",
+            requestBody.contentType().toString(),
+        )
+        assertArrayEquals(body, wireBody.readByteArray())
+    }
+
+    @Test
+    fun realTlsExchangeUsesApprovedRouteSniAndNeverReplaysOneShotPostOn503() {
+        val certificate = HeldCertificate.Builder()
+            .commonName("portal.example")
+            .addSubjectAlternativeName("portal.example")
+            .build()
+        val serverCertificates = HandshakeCertificates.Builder()
+            .heldCertificate(certificate)
+            .build()
+        val clientCertificates = HandshakeCertificates.Builder()
+            .addTrustedCertificate(certificate.certificate)
+            .build()
+        val server = MockWebServer()
+        server.useHttps(serverCertificates.sslSocketFactory())
+        val loopback = InetAddress.getByName("127.0.0.1")
+        server.start(loopback, 0)
+        try {
+            server.enqueue(
+                MockResponse.Builder()
+                    .code(503)
+                    .addHeader("Content-Type", "text/plain")
+                    .addHeader("Retry-After", "0")
+                    .body("do-not-retry")
+                    .build(),
+            )
+            server.enqueue(
+                MockResponse.Builder()
+                    .code(200)
+                    .addHeader("Content-Type", "text/plain")
+                    .body("unexpected-retry")
+                    .build(),
+            )
+            val executor = OkHttpProfileHttpExecutor {
+                okhttp3.OkHttpClient.Builder().sslSocketFactory(
+                    clientCertificates.sslSocketFactory(),
+                    clientCertificates.trustManager,
+                )
             }
+            val body = "op=pre&cop=sign".encodeToByteArray()
+            val response = executor.post(
+                url = URI("https://portal.example:${server.port}/SignatureService"),
+                resolvedAddresses = listOf(loopback),
+                body = body,
+                connectTimeoutMillis = 2_000,
+                readTimeoutMillis = 2_000,
+                maxResponseBytes = 1_024,
+                cancellation = ProfileHttpCancellation(),
+            )
 
-            worker.start()
-            assertTrue(connection.blockStarted.await(2, TimeUnit.SECONDS))
-            cancellation.cancel()
-            worker.join(2_000)
-
-            assertTrue(connection.disconnected)
-            assertTrue(!worker.isAlive)
+            assertEquals(503, response.statusCode)
+            val request = checkNotNull(server.takeRequest(1, TimeUnit.SECONDS))
+            assertEquals("POST", request.method)
+            // HTTP/2 carries the authority as :authority instead of a Host header.
+            assertEquals("portal.example", request.url.host)
+            assertTrue("portal.example" in request.handshakeServerNames)
+            assertArrayEquals(body, checkNotNull(request.body).toByteArray())
+            assertEquals(null, server.takeRequest(250, TimeUnit.MILLISECONDS))
+            response.body.fill(0)
+        } finally {
+            server.close()
         }
     }
 
@@ -275,9 +454,11 @@ class ProfileHttpTransportTest {
         private val responses = ArrayDeque(responses.toList())
         val calls = AtomicInteger()
         val bodies = mutableListOf<ByteArray>()
+        val resolvedAddresses = mutableListOf<List<InetAddress>>()
 
         override fun post(
             url: java.net.URI,
+            resolvedAddresses: List<InetAddress>,
             body: ByteArray,
             connectTimeoutMillis: Int,
             readTimeoutMillis: Int,
@@ -286,107 +467,8 @@ class ProfileHttpTransportTest {
         ): RawProfileHttpResponse {
             calls.incrementAndGet()
             bodies += body.copyOf()
+            this.resolvedAddresses += resolvedAddresses.toList()
             return responses.removeFirst()
         }
-    }
-
-    private class FakeHttpsConnection(
-        url: URL,
-        private val responseBody: ByteArray,
-    ) : HttpsURLConnection(url) {
-        val posted = ByteArrayOutputStream()
-        var disconnected = false
-        var fixedLength = -1
-
-        override fun setFixedLengthStreamingMode(contentLength: Int) {
-            fixedLength = contentLength
-            super.setFixedLengthStreamingMode(contentLength)
-        }
-
-        override fun getOutputStream(): ByteArrayOutputStream = posted
-
-        override fun getInputStream(): ByteArrayInputStream = ByteArrayInputStream(responseBody)
-
-        override fun getResponseCode(): Int = 200
-
-        override fun getContentType(): String = "text/plain;charset=UTF-8"
-
-        override fun getHeaderField(name: String?): String? = when (name) {
-            "Set-Cookie" -> "ignored=synthetic"
-            else -> null
-        }
-
-        override fun disconnect() {
-            disconnected = true
-        }
-
-        override fun usingProxy(): Boolean = false
-
-        override fun connect() = Unit
-
-        override fun getCipherSuite(): String = "TLS_FAKE"
-
-        override fun getLocalCertificates(): Array<Certificate>? = null
-
-        override fun getServerCertificates(): Array<Certificate> = emptyArray()
-    }
-
-    private class BlockingHttpsConnection(
-        url: URL,
-        private val blockOnWrite: Boolean,
-    ) : HttpsURLConnection(url) {
-        private val release = CountDownLatch(1)
-        val blockStarted = CountDownLatch(1)
-        @Volatile
-        var disconnected = false
-
-        override fun getOutputStream(): OutputStream = if (blockOnWrite) {
-            object : OutputStream() {
-                override fun write(value: Int) = blockUntilDisconnected()
-
-                override fun write(bytes: ByteArray, offset: Int, length: Int) =
-                    blockUntilDisconnected()
-            }
-        } else {
-            ByteArrayOutputStream()
-        }
-
-        override fun getInputStream(): InputStream = if (!blockOnWrite) {
-            object : InputStream() {
-                override fun read(): Int {
-                    blockUntilDisconnected()
-                    return -1
-                }
-            }
-        } else {
-            ByteArrayInputStream(ByteArray(0))
-        }
-
-        private fun blockUntilDisconnected() {
-            blockStarted.countDown()
-            release.await()
-            throw IOException("synthetic disconnect")
-        }
-
-        override fun getResponseCode(): Int = 200
-
-        override fun getContentType(): String = "text/plain"
-
-        override fun getHeaderField(name: String?): String? = null
-
-        override fun disconnect() {
-            disconnected = true
-            release.countDown()
-        }
-
-        override fun usingProxy(): Boolean = false
-
-        override fun connect() = Unit
-
-        override fun getCipherSuite(): String = "TLS_FAKE"
-
-        override fun getLocalCertificates(): Array<Certificate>? = null
-
-        override fun getServerCertificates(): Array<Certificate> = emptyArray()
     }
 }
