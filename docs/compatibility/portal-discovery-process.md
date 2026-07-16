@@ -98,23 +98,43 @@ detiene antes del siguiente request.
 Primero se valida siempre en modo fixture, sin red:
 
 ```bash
-python -m unittest discover -s tools/tests \
-  -p 'test_public_portal_inventory.py' -v
-python -m py_compile tools/public_portal_inventory.py
+python -m unittest discover -s tools/tests -p 'test_*.py' -v
+python -m py_compile \
+  tools/public_portal_inventory.py \
+  tools/age_sede_directory.py
 python tools/public_portal_inventory.py \
-  --input /storage/emulated/0/Codex/Work/portal-inventory/seeds.json \
-  --offline-fixtures /storage/emulated/0/Codex/Work/portal-inventory/fixtures.json \
-  --output /storage/emulated/0/Codex/Work/portal-inventory/candidates.jsonl
+  --input "$HOME/.local/state/portal-inventory/seeds.json" \
+  --offline-fixtures "$HOME/.local/state/portal-inventory/fixtures.json" \
+  --output "$HOME/.local/state/portal-inventory/candidates.jsonl"
 ```
 
 Una ola pública se habilita de forma explícita con `--live`:
 
 ```bash
 python tools/public_portal_inventory.py \
-  --input /storage/emulated/0/Codex/Work/portal-inventory/seeds.json \
+  --input "$HOME/.local/state/portal-inventory/seeds.json" \
   --live \
-  --output /storage/emulated/0/Codex/Work/portal-inventory/candidates.jsonl
+  --output "$HOME/.local/state/portal-inventory/candidates.jsonl"
 ```
+
+El directorio AGE tiene un enumerador dedicado. Este realiza un único `GET`
+del índice, no abre las sedes enlazadas, colapsa anchors repetidos dentro de una
+ficha y duplicados interministeriales, y conserva una URL solo después de
+aplicar la política HTTPS exacta. La URL sessionizada publicada para CIEMAT se
+reduce a su origin cerrado; ni path, query ni valores remotos llegan al JSONL:
+
+```bash
+python tools/age_sede_directory.py \
+  --live \
+  --snapshot-date 2026-07-16 \
+  --output "$HOME/.local/state/portal-inventory/age-sedes-2026-07-16.jsonl"
+```
+
+La ejecución live exige el baseline estructural revisado del snapshot
+2026-07-16: 22 ministerios, 81 fichas, 84 anchors y 79 pares únicos. Cualquier
+delta detiene la materialización para que se revise la nueva estructura y se
+actualice el baseline de forma explícita; no se absorben altas o cambios a
+ciegas.
 
 Los defaults limitan un body a 2 MiB, cuatro redirects, dos niveles de imports
 JS, 32 intentos de script, 15 segundos por petición y un intervalo mínimo de
@@ -129,7 +149,9 @@ para `Host`, SNI y hostname verification con el trust store TLS del sistema. No
 se realiza una segunda resolución entre check y conexión. Este transporte sigue
 sin ser apto para secretos y el proceso no tiene acceso a ninguno.
 
-El JSONL se escribe de forma atómica con modo `0600`. El contenido es
+El JSONL se escribe de forma atómica y se solicita modo `0600`. Debe mantenerse
+en almacenamiento privado de Termux: el almacenamiento compartido de Android
+puede imponer permisos más amplios y no preservar bits POSIX. El contenido es
 determinista para el mismo input y fixtures: no incorpora reloj de ejecución,
 orden de red ni mensajes remotos.
 
@@ -215,11 +237,12 @@ snapshot de cada enumerador añade el resultado de validación de schema. Las al
 cambios y desapariciones se revisan; una desaparición produce tombstone, no
 borrado inmediato. Ningún delta activa código automáticamente.
 
-Este milestone implementa el scanner estático y su formato de seeds. Los
-generadores específicos de DIR3, SIA, PAG, INE, BDGEL y RUCT se añaden y fijan a
-snapshots en las olas de §6; hasta entonces las URLs se preparan desde la fuente
-oficial y se revisan antes de ejecutar `--live`. La existencia de esta
-especificación no se cuenta como una cola enumeradora materializada.
+Este milestone implementa el scanner estático, su formato de seeds y el
+generador específico del directorio de sedes AGE. Los generadores de DIR3, SIA,
+los demás índices PAG, INE, BDGEL y RUCT se añaden y fijan a snapshots en las
+olas de §6; hasta entonces las URLs se preparan desde la fuente oficial y se
+revisan antes de ejecutar `--live`. La existencia de esta especificación no se
+cuenta como una cola enumeradora materializada.
 
 ## 8. Promoción al producto
 
