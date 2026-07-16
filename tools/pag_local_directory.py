@@ -26,6 +26,8 @@ import public_portal_inventory as inventory
 
 OUTPUT_SCHEMA_VERSION = 1
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
+MAP_ALT_PREFIX = "Acceso al servicio de "
+MAP_ALT_SUFFIX = " (Abre en ventana nueva)"
 SOURCE_PREFIX = (
     "https://administracion.gob.es/pag_Home/atencionCiudadana/"
     "SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/"
@@ -181,6 +183,21 @@ def _attribute(
     return value if preserve else value.strip()
 
 
+def _map_alt_label(value: str) -> str:
+    if not value or len(value) > 160:
+        raise PagLocalDirectoryError("map accessibility-label template drift")
+    if any(ord(character) < 0x20 or ord(character) == 0x7F for character in value):
+        raise PagLocalDirectoryError("map accessibility-label template drift")
+    if unicodedata.normalize("NFKC", value) != value:
+        raise PagLocalDirectoryError("map accessibility-label template drift")
+    if not value.startswith(MAP_ALT_PREFIX) or not value.endswith(MAP_ALT_SUFFIX):
+        raise PagLocalDirectoryError("map accessibility-label template drift")
+    label = value[len(MAP_ALT_PREFIX) : -len(MAP_ALT_SUFFIX)]
+    if not label or _normalize_text(label, "map territory label") != label:
+        raise PagLocalDirectoryError("map accessibility-label template drift")
+    return label
+
+
 def _classes(element: _Element) -> frozenset[str]:
     value = _attribute(element.attributes, "class") or ""
     return frozenset(value.split())
@@ -246,7 +263,7 @@ class _DirectoryParser(HTMLParser):
                     label = _attribute(attrs, "alt", required=True, preserve=True)
                     href = _attribute(attrs, "href", required=True, preserve=True)
                     assert label is not None and href is not None
-                    self.map_anchors.append(DirectoryAnchor(_normalize_text(label, "map label"), href))
+                    self.map_anchors.append(DirectoryAnchor(_map_alt_label(label), href))
         elif lowered == "ul" and self.stack:
             parent = self.stack[-1]
             if parent.tag == "div" and "title_mb_30" in _classes(parent) and "lista1" in _classes(element):

@@ -68,7 +68,7 @@ def fixture_html(
             for label, href in links
         )
         areas = "".join(
-            f'<area alt="{html.escape(label, quote=True)}" href="{html.escape(href, quote=True)}">'
+            f'<area alt="{html.escape(pag.MAP_ALT_PREFIX + label + pag.MAP_ALT_SUFFIX, quote=True)}" href="{html.escape(href, quote=True)}">'
             for label, href in map_links
         )
         canonical = (
@@ -200,6 +200,24 @@ class ParsingTest(unittest.TestCase):
         )
         with self.assertRaises(pag.PagLocalDirectoryError):
             pag.parse_directory_html(html_body, "diputaciones")
+
+    def test_map_accessibility_label_template_is_exact(self) -> None:
+        valid = fixture_html("diputaciones")
+        mutations = (
+            (pag.MAP_ALT_PREFIX, "Ir al servicio de "),
+            (f'alt="{pag.MAP_ALT_PREFIX}', f'alt=" {pag.MAP_ALT_PREFIX}'),
+            (pag.MAP_ALT_SUFFIX + '"', pag.MAP_ALT_SUFFIX + ' "'),
+            ("Acceso al servicio", "Acceso  al servicio"),
+            ("Acceso al servicio", "Acceso\tal servicio"),
+            ("Acceso", "Ａcceso"),
+            (pag.MAP_ALT_PREFIX + "Alacant", pag.MAP_ALT_PREFIX + " Alacant"),
+        )
+        for old, new in mutations:
+            with self.subTest(mutation=(old, new)):
+                html_body = valid.replace(old, new, 1)
+                with self.assertRaises(pag.PagLocalDirectoryError) as captured:
+                    pag.parse_directory_html(html_body, "diputaciones")
+                self.assertIn("accessibility-label template drift", str(captured.exception))
 
     def test_only_closed_cli_kinds_are_accepted(self) -> None:
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):

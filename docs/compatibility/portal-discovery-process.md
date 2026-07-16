@@ -175,7 +175,9 @@ cabildos/consells (3 HTTPS/8 HTTP) y 52 colas territoriales municipales (32
 HTTPS/20 HTTP). En las páginas con mapa, el orden y cada `href` del mapa y del
 pie deben coincidir después de una única decodificación de entidades HTML y
 antes de recortar, normalizar como URL o interpretar query/fragment. Las colas
-municipales no son registros de portales municipales. Sus conflictos, fragmentos, whitespace,
+etiquetas `area@alt` deben conservar exactamente el wrapper accesible revisado
+alrededor de la etiqueta territorial. Las colas municipales no son registros de
+portales municipales. Sus conflictos, fragmentos, whitespace,
 marcadores de query vacíos y selectores que no pasan el alfabeto público seguro
 quedan en cuarentena, sin URL ejecutable y con
 `candidate_seed_eligible=false`. Las referencias HTTP siguen siendo componentes
