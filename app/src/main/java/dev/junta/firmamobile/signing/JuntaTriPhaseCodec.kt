@@ -23,22 +23,10 @@ import org.xml.sax.SAXException
 import org.xml.sax.SAXParseException
 import org.xml.sax.helpers.DefaultHandler
 
-enum class TriPhaseCodecError {
-    INVALID_REQUEST,
-    ORIGIN_NOT_ALLOWED,
-    REQUEST_TOO_LARGE,
-    RESPONSE_TOO_LARGE,
-    RESPONSE_FORMAT_INVALID,
-}
-
-class TriPhaseCodecException internal constructor(
-    val code: TriPhaseCodecError,
-) : Exception(code.name)
-
-class JuntaTriPhaseCodec internal constructor(
+internal class JuntaTriPhaseCodec(
     private val urlPolicy: SafeNetworkUrlPolicy = SafeNetworkUrlPolicy(),
-) {
-    internal fun decodeRequest(
+) : TriPhaseProtocolCodec {
+    override fun decodeRequest(
         request: NormalizedSignRequest,
         certificateChain: List<X509Certificate>,
     ): JuntaTriPhaseRequestData {
@@ -90,7 +78,10 @@ class JuntaTriPhaseCodec internal constructor(
         }
     }
 
-    internal fun buildPreRequest(data: JuntaTriPhaseRequestData): ProfileHttpRequest =
+    override fun buildPreRequest(data: TriPhaseDecodedRequest): ProfileHttpRequest =
+        buildPreRequest(data as? JuntaTriPhaseRequestData ?: fail(TriPhaseCodecError.INVALID_REQUEST))
+
+    private fun buildPreRequest(data: JuntaTriPhaseRequestData): ProfileHttpRequest =
         ProfileHttpRequest(
             url = data.endpoint,
             body = buildBody { body ->
@@ -104,7 +95,15 @@ class JuntaTriPhaseCodec internal constructor(
             },
         )
 
-    internal fun parsePreResponse(
+    override fun parsePreResponse(
+        data: TriPhaseDecodedRequest,
+        response: ByteArray,
+    ): PreSignResult = parsePreResponse(
+        data as? JuntaTriPhaseRequestData ?: fail(TriPhaseCodecError.INVALID_REQUEST),
+        response,
+    )
+
+    private fun parsePreResponse(
         data: JuntaTriPhaseRequestData,
         response: ByteArray,
     ): PreSignResult {
@@ -226,41 +225,41 @@ class JuntaTriPhaseCodec internal constructor(
         }
     }
 
-    internal fun buildPostRequest(
-        preSignState: PreSignState,
+    override fun buildPostRequest(
+        state: PreSignState,
         localSignature: LocalSignature,
     ): ProfileHttpRequest {
-        val state = preSignState as? JuntaPreSignState
+        val juntaState = state as? JuntaPreSignState
             ?: run {
                 localSignature.close()
                 fail(TriPhaseCodecError.INVALID_REQUEST)
             }
         val pk1 = try {
             localSignature.withBytes { signature ->
-                if (!state.verify(signature)) fail(TriPhaseCodecError.INVALID_REQUEST)
+                if (!juntaState.verify(signature)) fail(TriPhaseCodecError.INVALID_REQUEST)
                 Base64.getEncoder().encode(signature)
             }
         } finally {
             localSignature.close()
         }
         val sessionXml = try {
-            state.serializeSession(pk1)
+            juntaState.serializeSession(pk1)
         } finally {
             pk1.fill(0)
         }
         return try {
             ProfileHttpRequest(
-                url = state.requestData.endpoint,
+                url = juntaState.requestData.endpoint,
                 body = buildBody { body ->
                     body.literal("op=post&cop=sign&format=CAdES&algo=")
-                    body.literal(state.requestData.algorithm.wireName())
+                    body.literal(juntaState.requestData.algorithm.wireName())
                     body.literal("&cert=")
-                    state.requestData.writeCertificateParameter(body)
-                    state.requestData.writePropertiesParameter(body)
+                    juntaState.requestData.writeCertificateParameter(body)
+                    juntaState.requestData.writePropertiesParameter(body)
                     body.literal("&session=")
                     body.urlBase64(sessionXml)
                     body.literal("&doc=")
-                    state.requestData.withDocument { body.urlBase64(it) }
+                    juntaState.requestData.withDocument { body.urlBase64(it) }
                 },
             )
         } finally {
@@ -268,7 +267,7 @@ class JuntaTriPhaseCodec internal constructor(
         }
     }
 
-    fun parsePostResponse(response: ByteArray): LocalSignature {
+    override fun parsePostResponse(response: ByteArray): LocalSignature {
         if (response.size > MAX_WIRE_RESPONSE_BYTES) fail(TriPhaseCodecError.RESPONSE_TOO_LARGE)
         if (response.size <= MIN_PROTOCOL_RESPONSE_BYTES || response.hasErrorPrefix()) {
             fail(TriPhaseCodecError.RESPONSE_FORMAT_INVALID)
@@ -614,7 +613,7 @@ class JuntaTriPhaseCodec internal constructor(
         val signingPublicKey: PublicKey,
         private val properties: Properties,
         val algorithm: SigningAlgorithm,
-    ) : Closeable {
+    ) : TriPhaseDecodedRequest {
         private var ownedDocument: ByteArray? = document
         private var ownedCertificates: List<ByteArray>? = certificateDer
         private var closed = false

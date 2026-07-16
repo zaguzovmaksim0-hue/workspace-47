@@ -197,3 +197,29 @@ Validación: focused PASS; suite completa 203 tests, 0 failures/errors/skips;
 debug/release lint, assemble y artifact boundaries PASS. Device gate sigue
 `NOT_RUN_ENVIRONMENTAL` por ausencia de conexión ADB; status Junta permanece
 `EXPERIMENTAL` y no hay claim E2E.
+
+## Milestone P06 — adaptador tri-phase común — 2026-07-16
+
+`JuntaTriPhaseAdapter` conserva la misma interfaz y el mismo codec/wire
+contract, pero ahora delega la coordinación PRE → firma local → POST a
+`AutoFirmaTriPhaseExecutionAdapter`. El adapter común no recibe clave privada,
+password, sesión de certificado, WebView ni cookies.
+
+El execution contract se deriva del profile Junta empaquetado y vincula de
+forma exacta protocol ID, profile/version, origin iniciador, algoritmo,
+formato y endpoint. Cada request PRE y POST se compara con el endpoint del
+profile antes del transport; no existe redirect ni fallback. El profile
+también debe seguir declarando CAdES detached/explicit, POST y los valores
+fijos `serverUrl`/`mode` observados.
+
+La ejecución usa structured cancellation: el deadline propio se convierte en
+error de protocolo, mientras que una cancelación externa se propaga y cancela
+el transport. Rechazo del executor, excepción inesperada del codec, cambio de
+contract o reutilización de state fallan cerrados y liberan cuerpos, firma
+local y state sensible. La fachada Junta pasa flujos SHA-1 legacy y SHA-256.
+
+Validación: 210 unit tests, 0 failures/errors/skips; `lintDebug`,
+`lintRelease`, `assembleDebug` y `assembleRelease` PASS; ambos APK verifican
+firma v2 y `zipalign -c 4`. Device gate permanece `NOT_RUN_ENVIRONMENTAL`: ADB
+no enumeró ningún dispositivo. Junta continúa `EXPERIMENTAL` /
+`IMPLEMENTED_NOT_E2E`; este milestone no prueba aceptación por el portal.

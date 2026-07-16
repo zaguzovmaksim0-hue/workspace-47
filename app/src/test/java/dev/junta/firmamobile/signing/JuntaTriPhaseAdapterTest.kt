@@ -84,6 +84,26 @@ class JuntaTriPhaseAdapterTest {
     }
 
     @Test
+    fun adapterCompletesProfileAllowedSha256Flow() = runBlocking {
+        val identity = syntheticIdentity()
+        val transport = QueueTransport(preResponse(), postResponse())
+        val adapter = JuntaTriPhaseAdapter(transport = transport)
+        val request = request(algorithm = SigningAlgorithm.SHA256_WITH_RSA)
+        val prepared = adapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
+
+        val completion = adapter.complete(
+            request,
+            prepared.preSign,
+            sign(prepared.preSign, identity, SigningAlgorithm.SHA256_WITH_RSA),
+        )
+
+        (completion as ProtocolCompletionResult.Success).signature.close()
+        assertTrue(transport.bodies[0].decodeToString().contains("algo=SHA256withRSA"))
+        assertTrue(transport.bodies[1].decodeToString().contains("algo=SHA256withRSA"))
+        request.close()
+    }
+
+    @Test
     fun preSignCanReachPostExactlyOnceEvenUnderConcurrentCompletion() = runBlocking {
         val identity = syntheticIdentity()
         val transport = QueueTransport(preResponse(), postResponse())

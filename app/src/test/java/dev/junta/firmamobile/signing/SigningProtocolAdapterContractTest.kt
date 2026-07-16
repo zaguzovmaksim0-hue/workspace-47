@@ -8,6 +8,9 @@ class SigningProtocolAdapterContractTest {
     fun adapterContractExposesNoCertificateSessionPrivateKeyPasswordOrWebView() {
         val surfaces = listOf(
             SigningProtocolAdapter::class.java,
+            TriPhaseExecutionAdapter::class.java,
+            TriPhaseProtocolCodec::class.java,
+            TriPhaseDecodedRequest::class.java,
             InterceptedSigningInput::class.java,
             NormalizedSignRequest::class.java,
             ProtocolCompletionResult::class.java,
