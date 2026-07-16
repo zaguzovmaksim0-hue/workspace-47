@@ -2,7 +2,7 @@
 
 - Fecha del snapshot: 2026-07-16
 - `inventory_schema_version`: `2`
-- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-insular-d12-diputaciones-d06-local-enumerators-1`
+- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-insular-d12-diputaciones-d06-local-enumerators-2`
 - Fecha de corte de la matriz de firma de origen: 2026-07-15
 
 Este documento es un **censo de descubrimiento evolutivo**, no una afirmación
@@ -187,13 +187,13 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Entradas D06 materializadas | 41/41 del snapshot 2026-07-16 |
 | Entradas D06 ya presentes por exact origin | 1 |
 | Registros nuevos creados desde D06 | 40 |
-| Registros totales del snapshot | 178 |
-| Origins primarios distintos | 177 |
+| Registros totales del snapshot | 179 |
+| Origins primarios distintos | 178 |
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 183 |
-| Fuentes oficiales totales registradas | 195 |
+| Fuentes oficiales portal-specific registradas | 190 |
+| Fuentes oficiales totales registradas | 202 |
 | Entradas `VERIFIED_E2E` | 0 |
 | Evidencia exacta de `ClientCertRequest` | 0 |
 
@@ -202,13 +202,13 @@ Por nivel administrativo:
 | Nivel | Registros |
 | --- | ---: |
 | `ESTATAL` | 81 |
-| `AUTONOMICO` | 28 |
+| `AUTONOMICO` | 29 |
 | `PROVINCIAL` | 41 |
 | `INSULAR` | 22 |
 | `MUNICIPAL` | 2 |
 | `UNIVERSIDAD_PUBLICA` | 4 |
 | `OTRA_INSTITUCION_PUBLICA` | 0 |
-| **Total** | **178** |
+| **Total** | **179** |
 
 Por estado del inventario:
 
@@ -218,21 +218,21 @@ Por estado del inventario:
 | `IMPLEMENTED_NOT_E2E` | 1 |
 | `VERIFIED_CONTRACT` | 4 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 167 |
+| `BROWSE_ONLY` | 168 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
-| **Total** | **178** |
+| **Total** | **179** |
 
 Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 100 |
+| `REVIEWED` | 101 |
 | `RECHECK_REQUIRED` | 5 |
 | `DISCOVERED` | 73 |
 | `CANDIDATE`, `RETIRED` | 0 |
-| **Total** | **178** |
+| **Total** | **179** |
 
 ## 5. Método de descubrimiento reproducible
 
@@ -363,6 +363,7 @@ requiera traducción manual.
 | `P15` | ACCEDA | [P15][P15A][P15B] | Entrada y helper/AutoScript públicos; uso runtime del helper no observado. |
 | `P16` | Gobierno de Aragón / SIRAW | [P16][P16B][P16C] | Entrada y JS público con MiniApplet y Storage/Retrieve. |
 | `P17` | Universidad de Zaragoza | [P17][P17A][P17B] | Entrada e integration JS con firma de challenge y tri-phase móvil. |
+| `P18` | Comunidad de Madrid / Cuenta Digital — Carné Joven 53F1 | [P18][P18A][P18B][P18C][P18D][P18E][P18F] | Ficha oficial, métodos de identificación/firma, entrada 53F1 y cadena JS de lookup/redirect autenticado; sin contrato de presentación. |
 
 D11 se añadió además como provenance a los siete registros seed cuyo exact
 origin coincide con el directorio. Esta relación de existencia no modifica ni
@@ -404,7 +405,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 195 fuentes porque las
+47/50; no se publica un cociente agregado para las 202 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -5936,6 +5937,46 @@ records:
     next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
 ```
 
+### 7.6. Superficie sectorial autonómica — Carné Joven Madrid
+
+Este registro delimita la entrada oficial 53F1 de Cuenta Digital. La ficha
+publica la acción «Firmar y enviar» y permite identificación sin certificado;
+la SPA pública solo acredita lookup y redirect autenticado. No se infieren
+cliente, protocolo, formato, algoritmo ni endpoint de presentación.
+
+```yaml
+records:
+  - inventory_id: "ES-PUB-0179"
+    surface_key: "comunidad-madrid-cuenta-digital-carne-joven"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Comunidad de Madrid"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Comunidad de Madrid"
+    surface_name: "Cuenta Digital — Carné Joven 53F1"
+    surface_type: "FRONTEND_TRAMITE"
+    origin: "https://digital.comunidad.madrid"
+    official_site: "https://digital.comunidad.madrid/ext/53F1"
+    e_sede: "https://sede.comunidad.madrid/"
+    entry_url: "https://digital.comunidad.madrid/ext/53F1"
+    procedure_page: "https://sede.comunidad.madrid/autorizaciones-licencias-permisos-carnes/carne-joven"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Solicitud electrónica y obtención de la versión digital del Carné Joven de la Comunidad de Madrid mediante Cuenta Digital."
+    protocol_evidence: "P18C-P18F acreditan una SPA requireAuth, lookup tramites/{id} y redirect mediante data.url_tramitacion; no acreditan el contrato de firma o presentación de 53F1."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["P18", "P18A", "P18B", "P18C", "P18D", "P18E", "P18F"]
+    reason: "La ficha acredita «Firmar y enviar» y certificado/DNIe solo como opción; el lookup autenticado de 53F1 no revela el endpoint de presentación, payload, callback, formato ni algoritmo. La cadena JS revisada solo acredita lookup/redirect."
+    reviewed_at: "2026-07-16"
+    next_gate: "Observar de forma controlada el flujo autenticado 53F1 y conservar evidencia sanitizada de endpoint, payload y callback exactos antes de evaluar cualquier promoción."
+```
+
 ## 8. Relación con el catálogo de producto
 
 Este archivo es documentación de investigación, no configuración ejecutable:
@@ -6072,6 +6113,13 @@ Orden de expansión recomendado:
 [P17]: https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent
 [P17A]: https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js
 [P17B]: https://tramita.unizar.es/tramitador/js/miniAppletFirma/autoscript.js
+[P18]: https://sede.comunidad.madrid/autorizaciones-licencias-permisos-carnes/carne-joven
+[P18A]: https://carnejovenmadrid.com/ventajas/carne-joven-digital
+[P18B]: https://digital.comunidad.madrid/ext/53F1
+[P18C]: https://gestiona.comunidad.madrid/mova_configuraciones_mova3/cudc_webapp_cuentadigital2/v3/app-config.json
+[P18D]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/remoteEntry.js
+[P18E]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/2395.e31f7440c3b55405.js
+[P18F]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/9536.885f46529d1fae07.js
 
 ### Evidencia de comunidades y ciudades autónomas
 
