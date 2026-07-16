@@ -2,7 +2,7 @@
 
 - Fecha del snapshot: 2026-07-16
 - `inventory_schema_version`: `2`
-- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-insular-d12-local-enumerators-1`
+- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-insular-d12-diputaciones-d06-local-enumerators-1`
 - Fecha de corte de la matriz de firma de origen: 2026-07-15
 
 Este documento es un **censo de descubrimiento evolutivo**, no una afirmación
@@ -165,12 +165,13 @@ También materializa la lista cerrada D03 de las 17 comunidades autónomas y
 Ceuta/Melilla: las 19 referencias territoriales se resolvieron mediante
 fuentes HTTPS oficiales y produjeron 24 superficies nuevas. Seis son fronteras
 funcionales adicionales con origin o función propios; no son duplicados de la
-sede principal. Finalmente, ingiere de extremo a extremo D12: sus 11 cabildos
-y consells se resolvieron en 22 superficies insulares, separando en cada caso
-el portal institucional de la sede electrónica por su origin y frontera
-funcional acreditados. Los snapshots D05 y D06 están capturados, pero sus
-colas siguen pendientes de resolución y recorrido secundario y no se cuentan
-como ingeridas.
+sede principal. También ingiere de extremo a extremo D12: sus 11 cabildos y
+consells se resolvieron en 22 superficies insulares, separando en cada caso el
+portal institucional de la sede electrónica por su origin y frontera funcional
+acreditados. Finalmente, materializa las 41 etiquetas provinciales de D06 con
+una superficie primaria por etiqueta: Valladolid ya estaba presente por exact
+origin y las otras 40 crean registros nuevos. Las superficies provinciales
+secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 
 | Métrica | Resultado |
 | --- | ---: |
@@ -183,13 +184,16 @@ como ingeridas.
 | Registros nuevos creados desde D03 | 24 |
 | Instituciones D12 materializadas | 11/11 del snapshot 2026-07-16 |
 | Registros nuevos creados desde D12 | 22 |
-| Registros totales del snapshot | 138 |
-| Origins primarios distintos | 137 |
+| Entradas D06 materializadas | 41/41 del snapshot 2026-07-16 |
+| Entradas D06 ya presentes por exact origin | 1 |
+| Registros nuevos creados desde D06 | 40 |
+| Registros totales del snapshot | 178 |
+| Origins primarios distintos | 177 |
 | Fuentes enumeradoras oficiales registradas | 12 |
-| Colas enumeradoras ingeridas de extremo a extremo | 3/12 |
-| Colas enumeradoras pendientes de ingestión | 9/12 |
-| Fuentes oficiales portal-specific registradas | 116 |
-| Fuentes oficiales totales registradas | 128 |
+| Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
+| Colas enumeradoras pendientes de ingestión | 8/12 |
+| Fuentes oficiales portal-specific registradas | 183 |
+| Fuentes oficiales totales registradas | 195 |
 | Entradas `VERIFIED_E2E` | 0 |
 | Evidencia exacta de `ClientCertRequest` | 0 |
 
@@ -199,12 +203,12 @@ Por nivel administrativo:
 | --- | ---: |
 | `ESTATAL` | 81 |
 | `AUTONOMICO` | 28 |
-| `PROVINCIAL` | 1 |
+| `PROVINCIAL` | 41 |
 | `INSULAR` | 22 |
 | `MUNICIPAL` | 2 |
 | `UNIVERSIDAD_PUBLICA` | 4 |
 | `OTRA_INSTITUCION_PUBLICA` | 0 |
-| **Total** | **138** |
+| **Total** | **178** |
 
 Por estado del inventario:
 
@@ -214,21 +218,21 @@ Por estado del inventario:
 | `IMPLEMENTED_NOT_E2E` | 1 |
 | `VERIFIED_CONTRACT` | 4 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 128 |
+| `BROWSE_ONLY` | 167 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
-| `INACCESSIBLE` | 3 |
+| `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
-| **Total** | **138** |
+| **Total** | **178** |
 
 Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 61 |
-| `RECHECK_REQUIRED` | 4 |
+| `REVIEWED` | 100 |
+| `RECHECK_REQUIRED` | 5 |
 | `DISCOVERED` | 73 |
 | `CANDIDATE`, `RETIRED` | 0 |
-| **Total** | **138** |
+| **Total** | **178** |
 
 ## 5. Método de descubrimiento reproducible
 
@@ -324,7 +328,7 @@ implementarlo y antes de una release que dependa de él.
 | [D03] | Punto de Acceso General | Las 17 comunidades autónomas y Ceuta/Melilla; cola cerrada materializada en este snapshot, sin abrir destinos. |
 | [D04] | Punto de Acceso General | Índice de entidades locales. |
 | [D05] | Punto de Acceso General | Cola territorial de ayuntamientos. |
-| [D06] | Punto de Acceso General | Cola de diputaciones provinciales. |
+| [D06] | Punto de Acceso General | Cola cerrada de 41 diputaciones provinciales, materializada en este snapshot con una superficie primaria por etiqueta. |
 | [D07] | Punto de Acceso General / SIA | Catálogo oficial de procedimientos y servicios. |
 | [D08] | Secretaría General de Administración Digital | DIR3: unidades, organismos y oficinas; identidad/deduplicación. |
 | [D09] | IGAE | INVENTE: entidades del sector público estatal, autonómico y local. |
@@ -381,6 +385,13 @@ capturada. Los 22 origins se acreditan además con sus 22 fuentes HTTPS
 portal-specific; D12 no acredita por sí solo disponibilidad, certificado,
 firma ni contrato técnico.
 
+La ola provincial usa las familias `DP01` a `DP41` en el orden exacto de D06.
+Sus 67 fuentes portal-specific definen una sola URL por ID: `A` acredita la
+superficie primaria y `B`, cuando existe, una evidencia oficial adicional
+delimitada. D06 aporta provenance a las 41 etiquetas; Valladolid conserva
+`ES-PUB-0015` por exact origin y las otras 40 crean registros nuevos. Las sedes
+o portales secundarios observados quedan expresamente fuera de esta ola.
+
 ### 6.3. Disponibilidad en este snapshot
 
 La comprobación pública del seed obtuvo HTTP 200 mediante `GET` directo en 46
@@ -393,7 +404,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 128 fuentes porque las
+47/50; no se publica un cociente agregado para las 195 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -418,10 +429,19 @@ El Hierro, La Gomera y Lanzarote se conservan como
 `INACCESSIBLE`/`RECHECK_REQUIRED`: el cliente de revisión detectó un bucle de
 redirección al abrir sus entradas oficiales y no siguió el ciclo.
 
-Los snapshots [D05](snapshots/pag-municipal-queues-2026-07-16.jsonl) y
-[D06](snapshots/pag-diputaciones-2026-07-16.jsonl) también están capturados y
-versionados, pero permanecen pendientes de resolución de HTTPS y recorrido
-secundario; no cuentan entre las tres colas ingeridas de extremo a extremo.
+El resultado D06 queda fijado en el
+[snapshot JSONL](snapshots/pag-diputaciones-2026-07-16.jsonl). Sus 41 etiquetas
+se resolvieron mediante evidencia HTTPS oficial sin solicitar las referencias
+HTTP heredadas ni sintetizar cambios de esquema. Valladolid coincidió con el
+origin existente; 40 origins son nuevos. Soria se conserva como
+`INACCESSIBLE`/`RECHECK_REQUIRED` porque la revalidación normal encontró un
+certificado TLS expirado el 2026-06-21; no se usó `--insecure`. Formularios,
+autenticación, firma, cookies y rutas privadas quedaron fuera de alcance.
+
+El snapshot [D05](snapshots/pag-municipal-queues-2026-07-16.jsonl) también está
+capturado y versionado, pero permanece pendiente de resolución HTTPS e
+ingestión. Las superficies provinciales secundarias descubiertas durante D06
+quedan para una ola posterior y no alteran el cierre primario 41/41.
 
 - D09 cerró la conexión del cliente CLI, aunque una lectura HTTPS
   independiente recuperó la página oficial de INVENTE;
@@ -894,7 +914,7 @@ records:
     operation_summary: "Identificación/firma con DNIe y certificados admitidos por @firma."
     protocol_evidence: "La validación por @firma y una explicación de multifirma no prueban el transporte de un trámite."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P09", "P09A"]
+    evidence_ids: ["P09", "P09A", "D06", "DP38A", "DP38B"]
     reason: "Procedimiento, JS cliente, protocolo, formato, endpoint, cofirma y contrafirma no verificados."
     reviewed_at: "2026-07-15"
     next_gate: "Identificar una operación real sin habilitar multifirma."
@@ -4703,6 +4723,1219 @@ records:
 ```
 
 
+### 7.5. Diputaciones provinciales [D06]
+
+La cola cerrada D06 se materializa con una única superficie primaria por cada
+una de sus 41 etiquetas, en el orden exacto del snapshot. Valladolid coincide
+por exact origin con `ES-PUB-0015`; por ello conserva ese registro y recibe
+solo provenance y evidencia provincial adicionales. Las otras 40 etiquetas
+crean `ES-PUB-0139` a `ES-PUB-0178`. Los origins secundarios descubiertos
+durante la revisión se conservan únicamente como evidencia y quedan diferidos
+para una ola provincial secundaria; no crean registros en este snapshot.
+
+```yaml
+records:
+  - inventory_id: "ES-PUB-0139"
+    surface_key: "diputacion-alicante-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Comunidad Valenciana"
+    province_or_municipality: "Alicante (provincia)"
+    institution_name: "Diputación Provincial de Alicante"
+    surface_name: "Portal oficial de Diputación Provincial de Alicante"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.diputacionalicante.es"
+    official_site: "https://www.diputacionalicante.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.diputacionalicante.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
+    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP01A", "DP01B"]
+    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0140"
+    surface_key: "diputacion-alava-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "País Vasco"
+    province_or_municipality: "Álava (provincia)"
+    institution_name: "Diputación Foral de Álava"
+    surface_name: "Portal oficial de Diputación Foral de Álava"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://web.araba.eus"
+    official_site: "https://web.araba.eus/es/home"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://web.araba.eus/es/home"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP02A"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0141"
+    surface_key: "diputacion-albacete-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla-La Mancha"
+    province_or_municipality: "Albacete (provincia)"
+    institution_name: "Diputación Provincial de Albacete"
+    surface_name: "Portal oficial de Diputación Provincial de Albacete"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipualba.es"
+    official_site: "https://www.dipualba.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipualba.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP03A", "DP03B"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0142"
+    surface_key: "diputacion-almeria-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Almería (provincia)"
+    institution_name: "Diputación Provincial de Almería"
+    surface_name: "Portal oficial de Diputación Provincial de Almería"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipalme.org"
+    official_site: "https://www.dipalme.org"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipalme.org"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP04A"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0143"
+    surface_key: "diputacion-avila-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "Ávila (provincia)"
+    institution_name: "Diputación Provincial de Ávila"
+    surface_name: "Portal oficial de Diputación Provincial de Ávila"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.diputacionavila.es"
+    official_site: "https://www.diputacionavila.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.diputacionavila.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
+    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP05A", "DP05B"]
+    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0144"
+    surface_key: "diputacion-badajoz-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Extremadura"
+    province_or_municipality: "Badajoz (provincia)"
+    institution_name: "Diputación Provincial de Badajoz"
+    surface_name: "Portal oficial de Diputación Provincial de Badajoz"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dip-badajoz.es"
+    official_site: "https://www.dip-badajoz.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dip-badajoz.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
+    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP06A", "DP06B"]
+    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0145"
+    surface_key: "diputacion-barcelona-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Cataluña"
+    province_or_municipality: "Barcelona (provincia)"
+    institution_name: "Diputació de Barcelona"
+    surface_name: "Portal oficial de Diputació de Barcelona"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.diba.cat"
+    official_site: "https://www.diba.cat/es/"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.diba.cat/es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
+    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP07A", "DP07B"]
+    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0146"
+    surface_key: "diputacion-burgos-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "Burgos (provincia)"
+    institution_name: "Diputación Provincial de Burgos"
+    surface_name: "Portal oficial de Diputación Provincial de Burgos"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://burgos.es"
+    official_site: "https://burgos.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://burgos.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP08A"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0147"
+    surface_key: "diputacion-caceres-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Extremadura"
+    province_or_municipality: "Cáceres (provincia)"
+    institution_name: "Diputación Provincial de Cáceres"
+    surface_name: "Portal oficial de Diputación Provincial de Cáceres"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dip-caceres.es"
+    official_site: "https://www.dip-caceres.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dip-caceres.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP09A"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0148"
+    surface_key: "diputacion-cadiz-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Cádiz (provincia)"
+    institution_name: "Diputación Provincial de Cádiz"
+    surface_name: "Portal oficial de Diputación Provincial de Cádiz"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipucadiz.es"
+    official_site: "https://www.dipucadiz.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipucadiz.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
+    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP10A", "DP10B"]
+    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0149"
+    surface_key: "diputacion-castellon-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Comunidad Valenciana"
+    province_or_municipality: "Castellón (provincia)"
+    institution_name: "Diputació de Castelló"
+    surface_name: "Portal oficial de Diputació de Castelló"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipcas.es"
+    official_site: "https://www.dipcas.es/es/"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipcas.es/es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP11A"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0150"
+    surface_key: "diputacion-ciudad-real-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla-La Mancha"
+    province_or_municipality: "Ciudad Real (provincia)"
+    institution_name: "Diputación Provincial de Ciudad Real"
+    surface_name: "Portal oficial de Diputación Provincial de Ciudad Real"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipucr.es"
+    official_site: "https://www.dipucr.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipucr.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP12A"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0151"
+    surface_key: "diputacion-cordoba-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Córdoba (provincia)"
+    institution_name: "Diputación Provincial de Córdoba"
+    surface_name: "Portal oficial de Diputación Provincial de Córdoba"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipucordoba.es"
+    official_site: "https://www.dipucordoba.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipucordoba.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP13A"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0152"
+    surface_key: "diputacion-a-coruna-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Galicia"
+    province_or_municipality: "A Coruña (provincia)"
+    institution_name: "Deputación da Coruña"
+    surface_name: "Portal oficial de Deputación da Coruña"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dacoruna.gal"
+    official_site: "https://www.dacoruna.gal/portada"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dacoruna.gal/portada"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Un recurso tributario oficial documenta certificado y firma en ese flujo limitado; no se generaliza al portal."
+    protocol_evidence: "La evidencia se limita al recurso tributario documentado y no publica contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP14A", "DP14B"]
+    reason: "Certificado y firma son condicionales solo para el flujo citado; procedimiento general y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0153"
+    surface_key: "diputacion-cuenca-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla-La Mancha"
+    province_or_municipality: "Cuenca (provincia)"
+    institution_name: "Diputación Provincial de Cuenca"
+    surface_name: "Portal oficial de Diputación Provincial de Cuenca"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipucuenca.es"
+    official_site: "https://www.dipucuenca.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipucuenca.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
+    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP15A", "DP15B"]
+    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0154"
+    surface_key: "diputacion-girona-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Cataluña"
+    province_or_municipality: "Girona (provincia)"
+    institution_name: "Diputació de Girona"
+    surface_name: "Portal oficial de Diputació de Girona"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.ddgi.cat"
+    official_site: "https://www.ddgi.cat/web/"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.ddgi.cat/web/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
+    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP16A", "DP16B"]
+    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0155"
+    surface_key: "diputacion-granada-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Granada (provincia)"
+    institution_name: "Diputación Provincial de Granada"
+    surface_name: "Portal oficial de Diputación Provincial de Granada"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dipgra.es"
+    official_site: "https://www.dipgra.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dipgra.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
+    protocol_evidence: "NO_VERIFICADO"
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP17A"]
+    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0156"
+    surface_key: "diputacion-guadalajara-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla-La Mancha"
+    province_or_municipality: "Guadalajara (provincia)"
+    institution_name: "Diputación Provincial de Guadalajara"
+    surface_name: "Sede electrónica de Diputación Provincial de Guadalajara"
+    surface_type: "SEDE"
+    origin: "https://dguadalajara.sedelectronica.es"
+    official_site: "https://dguadalajara.sedelectronica.es"
+    e_sede: "https://dguadalajara.sedelectronica.es"
+    entry_url: "https://dguadalajara.sedelectronica.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La sede documenta identificación condicionada con certificado; no acredita firma obligatoria en un trámite concreto."
+    protocol_evidence: "La evidencia delimita identificación electrónica, no un contrato de firma."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP18A", "DP18B"]
+    reason: "La identificación con certificado no permite inferir firma, formato, algoritmo, endpoint, cliente JS ni TLS cliente."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0157"
+    surface_key: "diputacion-gipuzkoa-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "País Vasco"
+    province_or_municipality: "Gipuzkoa (provincia)"
+    institution_name: "Diputación Foral de Gipuzkoa"
+    surface_name: "Sede electrónica de Diputación Foral de Gipuzkoa"
+    surface_type: "SEDE"
+    origin: "https://egoitza.gipuzkoa.eus"
+    official_site: "https://egoitza.gipuzkoa.eus/es/"
+    e_sede: "https://egoitza.gipuzkoa.eus"
+    entry_url: "https://egoitza.gipuzkoa.eus/es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP19A", "DP19B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0158"
+    surface_key: "diputacion-huelva-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Huelva (provincia)"
+    institution_name: "Diputación Provincial de Huelva"
+    surface_name: "Portal oficial de Diputación Provincial de Huelva"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.diphuelva.es"
+    official_site: "https://www.diphuelva.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.diphuelva.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "El portal oficial enlaza verificación de firma; no acredita que un trámite exija certificado o firma."
+    protocol_evidence: "La referencia a verificación de firma no prueba un requisito de operación ni un contrato técnico."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP20A"]
+    reason: "No se generaliza el enlace de verificación a certificado o firma obligatorios; seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0159"
+    surface_key: "diputacion-huesca-portal"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Aragón"
+    province_or_municipality: "Huesca (provincia)"
+    institution_name: "Diputación Provincial de Huesca"
+    surface_name: "Portal oficial de Diputación Provincial de Huesca"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://www.dphuesca.es"
+    official_site: "https://www.dphuesca.es"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://www.dphuesca.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP21A", "DP21B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0160"
+    surface_key: "diputacion-jaen-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Jaén (provincia)"
+    institution_name: "Diputación Provincial de Jaén"
+    surface_name: "Sede electrónica de Diputación Provincial de Jaén"
+    surface_type: "SEDE"
+    origin: "https://sede.dipujaen.es"
+    official_site: "https://sede.dipujaen.es"
+    e_sede: "https://sede.dipujaen.es"
+    entry_url: "https://sede.dipujaen.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP22A", "DP22B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0161"
+    surface_key: "diputacion-leon-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "León (provincia)"
+    institution_name: "Diputación Provincial de León"
+    surface_name: "Sede electrónica de Diputación Provincial de León"
+    surface_type: "SEDE"
+    origin: "https://sede.dipuleon.es"
+    official_site: "https://sede.dipuleon.es"
+    e_sede: "https://sede.dipuleon.es"
+    entry_url: "https://sede.dipuleon.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP23A"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0162"
+    surface_key: "diputacion-lleida-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Cataluña"
+    province_or_municipality: "Lleida (provincia)"
+    institution_name: "Diputació de Lleida"
+    surface_name: "Sede electrónica de Diputació de Lleida"
+    surface_type: "SEDE"
+    origin: "https://seu.diputaciolleida.cat"
+    official_site: "https://seu.diputaciolleida.cat"
+    e_sede: "https://seu.diputaciolleida.cat"
+    entry_url: "https://seu.diputaciolleida.cat"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP24A", "DP24B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0163"
+    surface_key: "diputacion-lugo-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Galicia"
+    province_or_municipality: "Lugo (provincia)"
+    institution_name: "Deputación de Lugo"
+    surface_name: "Sede electrónica de Deputación de Lugo"
+    surface_type: "SEDE"
+    origin: "https://sede.deputacionlugo.org"
+    official_site: "https://sede.deputacionlugo.org"
+    e_sede: "https://sede.deputacionlugo.org"
+    entry_url: "https://sede.deputacionlugo.org"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP25A", "DP25B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0164"
+    surface_key: "diputacion-malaga-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Málaga (provincia)"
+    institution_name: "Diputación Provincial de Málaga"
+    surface_name: "Sede electrónica de Diputación Provincial de Málaga"
+    surface_type: "SEDE"
+    origin: "https://sede.malaga.es"
+    official_site: "https://sede.malaga.es"
+    e_sede: "https://sede.malaga.es"
+    entry_url: "https://sede.malaga.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP26A", "DP26B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0165"
+    surface_key: "diputacion-ourense-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Galicia"
+    province_or_municipality: "Ourense (provincia)"
+    institution_name: "Deputación de Ourense"
+    surface_name: "Sede electrónica de Deputación de Ourense"
+    surface_type: "SEDE"
+    origin: "https://sede.depourense.es"
+    official_site: "https://sede.depourense.es"
+    e_sede: "https://sede.depourense.es"
+    entry_url: "https://sede.depourense.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP27A", "DP27B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0166"
+    surface_key: "diputacion-palencia-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "Palencia (provincia)"
+    institution_name: "Diputación Provincial de Palencia"
+    surface_name: "Sede electrónica de Diputación Provincial de Palencia"
+    surface_type: "SEDE"
+    origin: "https://sede.diputaciondepalencia.es"
+    official_site: "https://sede.diputaciondepalencia.es"
+    e_sede: "https://sede.diputaciondepalencia.es"
+    entry_url: "https://sede.diputaciondepalencia.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP28A", "DP28B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0167"
+    surface_key: "diputacion-pontevedra-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Galicia"
+    province_or_municipality: "Pontevedra (provincia)"
+    institution_name: "Deputación de Pontevedra"
+    surface_name: "Sede electrónica de Deputación de Pontevedra"
+    surface_type: "SEDE"
+    origin: "https://sede.depo.gal"
+    official_site: "https://sede.depo.gal"
+    e_sede: "https://sede.depo.gal"
+    entry_url: "https://sede.depo.gal"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP29A", "DP29B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0168"
+    surface_key: "diputacion-salamanca-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "Salamanca (provincia)"
+    institution_name: "Diputación de Salamanca"
+    surface_name: "Sede electrónica de Diputación de Salamanca"
+    surface_type: "SEDE"
+    origin: "https://sede.diputaciondesalamanca.gob.es"
+    official_site: "https://sede.diputaciondesalamanca.gob.es"
+    e_sede: "https://sede.diputaciondesalamanca.gob.es"
+    entry_url: "https://sede.diputaciondesalamanca.gob.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP30A", "DP30B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0169"
+    surface_key: "diputacion-segovia-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "Segovia (provincia)"
+    institution_name: "Diputación de Segovia"
+    surface_name: "Sede electrónica de Diputación de Segovia"
+    surface_type: "SEDE"
+    origin: "https://sede.dipsegovia.es"
+    official_site: "https://sede.dipsegovia.es"
+    e_sede: "https://sede.dipsegovia.es"
+    entry_url: "https://sede.dipsegovia.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP31A"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0170"
+    surface_key: "diputacion-sevilla-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Sevilla (provincia)"
+    institution_name: "Diputación de Sevilla"
+    surface_name: "Sede electrónica de Diputación de Sevilla"
+    surface_type: "SEDE"
+    origin: "https://sedeelectronicadipusevilla.es"
+    official_site: "https://sedeelectronicadipusevilla.es"
+    e_sede: "https://sedeelectronicadipusevilla.es"
+    entry_url: "https://sedeelectronicadipusevilla.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP32A"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0171"
+    surface_key: "diputacion-soria-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "Soria (provincia)"
+    institution_name: "Diputación de Soria"
+    surface_name: "Sede electrónica de Diputación de Soria"
+    surface_type: "SEDE"
+    origin: "https://sede.dipsoria.es"
+    official_site: "https://sede.dipsoria.es"
+    e_sede: "https://sede.dipsoria.es"
+    entry_url: "https://sede.dipsoria.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "RECHECK_REQUIRED"
+    inventory_status: "INACCESSIBLE"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP33A", "DP33B"]
+    reason: "La revalidación HTTPS directa falla por certificado TLS de validez normal expirado el 2026-06-21; la evidencia documental se conserva sin afirmar accesibilidad actual ni contrato técnico."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revalidar la cadena TLS normal sin --insecure; después revisar un procedimiento vigente y su contrato exacto."
+
+  - inventory_id: "ES-PUB-0172"
+    surface_key: "diputacion-tarragona-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Cataluña"
+    province_or_municipality: "Tarragona (provincia)"
+    institution_name: "Diputació de Tarragona"
+    surface_name: "Sede electrónica de Diputació de Tarragona"
+    surface_type: "SEDE"
+    origin: "https://seuelectronica.dipta.cat"
+    official_site: "https://seuelectronica.dipta.cat"
+    e_sede: "https://seuelectronica.dipta.cat"
+    entry_url: "https://seuelectronica.dipta.cat"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP34A", "DP34B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0173"
+    surface_key: "diputacion-teruel-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Aragón"
+    province_or_municipality: "Teruel (provincia)"
+    institution_name: "Diputación Provincial de Teruel"
+    surface_name: "Sede electrónica de Diputación Provincial de Teruel"
+    surface_type: "SEDE"
+    origin: "https://dpteruel.sedelectronica.es"
+    official_site: "https://dpteruel.sedelectronica.es"
+    e_sede: "https://dpteruel.sedelectronica.es"
+    entry_url: "https://dpteruel.sedelectronica.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP35A"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0174"
+    surface_key: "diputacion-toledo-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla-La Mancha"
+    province_or_municipality: "Toledo (provincia)"
+    institution_name: "Diputación Provincial de Toledo"
+    surface_name: "Sede electrónica de Diputación Provincial de Toledo"
+    surface_type: "SEDE"
+    origin: "https://diputacion.toledo.gob.es"
+    official_site: "https://diputacion.toledo.gob.es"
+    e_sede: "https://diputacion.toledo.gob.es"
+    entry_url: "https://diputacion.toledo.gob.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP36A", "DP36B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0175"
+    surface_key: "diputacion-valencia-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Comunidad Valenciana"
+    province_or_municipality: "Valencia (provincia)"
+    institution_name: "Diputació de València"
+    surface_name: "Sede electrónica de Diputació de València"
+    surface_type: "SEDE"
+    origin: "https://www.sede.dival.es"
+    official_site: "https://www.sede.dival.es"
+    e_sede: "https://www.sede.dival.es"
+    entry_url: "https://www.sede.dival.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP37A", "DP37B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0176"
+    surface_key: "diputacion-bizkaia-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "País Vasco"
+    province_or_municipality: "Bizkaia (provincia)"
+    institution_name: "Diputación Foral de Bizkaia"
+    surface_name: "Sede electrónica de Diputación Foral de Bizkaia"
+    surface_type: "SEDE"
+    origin: "https://www.ebizkaia.eus"
+    official_site: "https://www.ebizkaia.eus"
+    e_sede: "https://www.ebizkaia.eus"
+    entry_url: "https://www.ebizkaia.eus"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP39A", "DP39B"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0177"
+    surface_key: "diputacion-zamora-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "Zamora (provincia)"
+    institution_name: "Diputación Provincial de Zamora"
+    surface_name: "Sede electrónica de Diputación Provincial de Zamora"
+    surface_type: "SEDE"
+    origin: "https://diputaciondezamora.sedelectronica.es"
+    official_site: "https://diputaciondezamora.sedelectronica.es"
+    e_sede: "https://diputaciondezamora.sedelectronica.es"
+    entry_url: "https://diputaciondezamora.sedelectronica.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP40A"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+
+  - inventory_id: "ES-PUB-0178"
+    surface_key: "diputacion-zaragoza-sede"
+    administrative_level: "PROVINCIAL"
+    autonomous_community: "Aragón"
+    province_or_municipality: "Zaragoza (provincia)"
+    institution_name: "Diputación Provincial de Zaragoza"
+    surface_name: "Sede electrónica de Diputación Provincial de Zaragoza"
+    surface_type: "SEDE"
+    origin: "https://dpz.sedelectronica.es"
+    official_site: "https://dpz.sedelectronica.es"
+    e_sede: "https://dpz.sedelectronica.es"
+    entry_url: "https://dpz.sedelectronica.es"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
+    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D06", "DP41A"]
+    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+```
+
 ## 8. Relación con el catálogo de producto
 
 Este archivo es documentación de investigación, no configuración ejecutable:
@@ -4747,9 +5980,10 @@ grandes y explícitos:
    Ceuta/Melilla, pero sus organismos dependientes, portales sectoriales y
    contratos de firma siguen requiriendo olas específicas. La relación entre
    las dos sedes observadas de Extremadura permanece sin resolver.
-3. D12 ya está materializado para los 11 cabildos y consells. D05 y D06 están
-   capturados, pero faltan su resolución HTTPS, recorrido secundario e
-   ingestión; siguen faltando además miles de entidades locales.
+3. D12 ya está materializado para los 11 cabildos y consells y D06 para sus 41
+   etiquetas provinciales primarias. D05 sigue capturado pero pendiente de
+   resolución e ingestión; también quedan diferidas las superficies
+   provinciales secundarias y miles de entidades locales.
 4. RUCT aún no se ha convertido en una cola cerrada de universidades públicas;
    el seed contiene tres.
 5. SIA no se ha recorrido para descubrir frontends distintos del portal
@@ -4772,9 +6006,9 @@ Orden de expansión recomendado:
 2. Comunidades y ciudades autónomas: D03 completado; continuar por familias de
    protocolo y organismos dependientes, conservando perfiles separados por
    origin y frontera funcional.
-3. Diputaciones y ayuntamientos: continuar [D04], [D05] y [D06], cuyos
-   snapshots capturados aún no están ingeridos, y contrastar con DIR3; D12 ya
-   está completado para cabildos y consells.
+3. Diputaciones y ayuntamientos: D06 primario completado; continuar su ola
+   secundaria y [D04]/[D05], cuyo snapshot municipal aún no está ingerido, y
+   contrastar con DIR3. D12 ya está completado para cabildos y consells.
 4. Universidades públicas: [D10], confirmando cada sede en el dominio
    institucional.
 5. Dependencias técnicas y familias multi-tenant, en un inventario separado
@@ -4921,3 +6155,79 @@ Orden de expansión recomendado:
 [I10B]: https://cabildodelanzarote.sedelectronica.es/info.0
 [I11A]: https://cabildo.grancanaria.com/
 [I11B]: https://sede.grancanaria.com/
+
+### Evidencia de diputaciones provinciales
+
+Cada familia `DP01` a `DP41` sigue el orden cerrado de D06. El sufijo `A`
+define exactamente la URL de la superficie primaria; `B`, cuando existe,
+define una única URL oficial adicional para propietario, certificado o firma.
+D06 se conserva como provenance de cada registro, pero no acredita por sí solo
+availability, certificado, firma ni contrato técnico.
+
+[DP01A]: https://www.diputacionalicante.es
+[DP01B]: https://sede.diputacionalicante.es/
+[DP02A]: https://web.araba.eus/es/home
+[DP03A]: https://www.dipualba.es
+[DP03B]: https://sede.dipualba.es/transparencia/Home/Details/20
+[DP04A]: https://www.dipalme.org
+[DP05A]: https://www.diputacionavila.es
+[DP05B]: https://diputacionavila.sedelectronica.es/
+[DP06A]: https://www.dip-badajoz.es
+[DP06B]: https://sede.dip-badajoz.es/
+[DP07A]: https://www.diba.cat/es/
+[DP07B]: https://seuelectronica.diba.cat/es/suport-a-la-tramitaci%C3%B3
+[DP08A]: https://burgos.es
+[DP09A]: https://www.dip-caceres.es
+[DP10A]: https://www.dipucadiz.es
+[DP10B]: https://sede.dipucadiz.es/web/sede/inicio
+[DP11A]: https://www.dipcas.es/es/
+[DP12A]: https://www.dipucr.es
+[DP13A]: https://www.dipucordoba.es
+[DP14A]: https://www.dacoruna.gal/portada
+[DP14B]: https://www.dacoruna.gal/servizos-tributarios/preguntas-frecuentes/recursos/
+[DP15A]: https://www.dipucuenca.es
+[DP15B]: https://sede.dipucuenca.es/aviso-legal.aspx?entidad=16000
+[DP16A]: https://www.ddgi.cat/web/
+[DP16B]: https://seu.ddgi.cat/web/nivell/658/s-1/sistemes-de-signatura-electronica
+[DP17A]: https://www.dipgra.es
+[DP18A]: https://dguadalajara.sedelectronica.es
+[DP18B]: https://www.dguadalajara.es/web/guest/sede-electronica
+[DP19A]: https://egoitza.gipuzkoa.eus/es/
+[DP19B]: https://egoitza.gipuzkoa.eus/es/identificacion-y-autenticacion/certificado-electronico-cualificado
+[DP20A]: https://www.diphuelva.es
+[DP21A]: https://www.dphuesca.es
+[DP21B]: https://diputaciondehuesca.transparencialocal.gob.es/es_ES/media/49636
+[DP22A]: https://sede.dipujaen.es
+[DP22B]: https://sede.dipujaen.es/CertificadoElectronico
+[DP23A]: https://sede.dipuleon.es
+[DP24A]: https://seu.diputaciolleida.cat
+[DP24B]: https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2
+[DP25A]: https://sede.deputacionlugo.org
+[DP25B]: https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/footer/requisitos
+[DP26A]: https://sede.malaga.es
+[DP26B]: https://sede.malaga.es/politica-de-firma-electronica/
+[DP27A]: https://sede.depourense.es
+[DP27B]: https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMASELEC
+[DP28A]: https://sede.diputaciondepalencia.es
+[DP28B]: https://sede.diputaciondepalencia.es/siac/Tramites/CertificadosElectronicosAdmitidos.aspx
+[DP29A]: https://sede.depo.gal
+[DP29B]: https://sede.depo.gal/web/public/dynamic/description/esignature/
+[DP30A]: https://sede.diputaciondesalamanca.gob.es
+[DP30B]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/contenido/requisitos.jsp
+[DP31A]: https://sede.dipsegovia.es
+[DP32A]: https://sedeelectronicadipusevilla.es
+[DP33A]: https://sede.dipsoria.es
+[DP33B]: https://www.dipsoria.es/
+[DP34A]: https://seuelectronica.dipta.cat
+[DP34B]: https://seuelectronica.dipta.cat/normativa
+[DP35A]: https://dpteruel.sedelectronica.es
+[DP36A]: https://diputacion.toledo.gob.es
+[DP36B]: https://diputacion.toledo.gob.es/sede/2
+[DP37A]: https://www.sede.dival.es
+[DP37B]: https://www.sede.dival.es/opencms/opencms/sede/paginas/index.jsp?opcion=detalle&agrupacion=DatosInstitucionales&servicio=ListaSistemasFirmaElectronica
+[DP38A]: https://www.sede.diputaciondevalladolid.es/
+[DP38B]: https://www.sede.diputaciondevalladolid.es/web/guest/requisitos-tecnicos
+[DP39A]: https://www.ebizkaia.eus
+[DP39B]: https://www.ebizkaia.eus/es/medios-de-identificacion
+[DP40A]: https://diputaciondezamora.sedelectronica.es
+[DP41A]: https://dpz.sedelectronica.es
