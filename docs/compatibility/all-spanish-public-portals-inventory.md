@@ -2,7 +2,7 @@
 
 - Fecha del snapshot: 2026-07-16
 - `inventory_schema_version`: `2`
-- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-1`
+- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-local-enumerators-1`
 - Fecha de corte de la matriz de firma de origen: 2026-07-15
 
 Este documento es un **censo de descubrimiento evolutivo**, no una afirmación
@@ -179,11 +179,11 @@ ingeridos por haber abierto su página índice.
 | Registros nuevos creados desde D03 | 24 |
 | Registros totales del snapshot | 116 |
 | Origins primarios distintos | 115 |
-| Fuentes enumeradoras oficiales registradas | 11 |
-| Colas enumeradoras ingeridas de extremo a extremo | 2/11 |
-| Colas enumeradoras pendientes de ingestión | 9/11 |
+| Fuentes enumeradoras oficiales registradas | 12 |
+| Colas enumeradoras ingeridas de extremo a extremo | 2/12 |
+| Colas enumeradoras pendientes de ingestión | 10/12 |
 | Fuentes oficiales portal-specific registradas | 94 |
-| Fuentes oficiales totales registradas | 105 |
+| Fuentes oficiales totales registradas | 106 |
 | Entradas `VERIFIED_E2E` | 0 |
 | Evidencia exacta de `ClientCertRequest` | 0 |
 
@@ -232,8 +232,9 @@ Cada ola comienza con un snapshot fechado de enumeradores oficiales:
 
 1. El Punto de Acceso General lista categorías de portales públicos [D01],
    ministerios de la AGE [D02], comunidades y ciudades autónomas [D03] y
-   entidades locales [D04]. Sus índices de ayuntamientos [D05] y diputaciones
-   [D06] sirven como colas territoriales, no como prueba de un protocolo.
+   entidades locales [D04]. Sus índices de ayuntamientos [D05], diputaciones
+   [D06] y cabildos/consells [D12] sirven como colas territoriales, no como
+   prueba de un protocolo.
 2. SIA se usa como catálogo oficial de procedimientos y servicios [D07]. Una
    ficha SIA puede descubrir un frontend de trámite, pero su URL debe
    confirmarse en la institución responsable.
@@ -317,12 +318,13 @@ implementarlo y antes de una release que dependa de él.
 | [D03] | Punto de Acceso General | Las 17 comunidades autónomas y Ceuta/Melilla; cola cerrada materializada en este snapshot, sin abrir destinos. |
 | [D04] | Punto de Acceso General | Índice de entidades locales. |
 | [D05] | Punto de Acceso General | Cola territorial de ayuntamientos. |
-| [D06] | Punto de Acceso General | Cola de diputaciones provinciales; remite a cabildos/consejos donde corresponda. |
+| [D06] | Punto de Acceso General | Cola de diputaciones provinciales. |
 | [D07] | Punto de Acceso General / SIA | Catálogo oficial de procedimientos y servicios. |
 | [D08] | Secretaría General de Administración Digital | DIR3: unidades, organismos y oficinas; identidad/deduplicación. |
 | [D09] | IGAE | INVENTE: entidades del sector público estatal, autonómico y local. |
 | [D10] | Ministerio de Ciencia, Innovación y Universidades | RUCT: universidades oficiales; se filtran solo las públicas. |
 | [D11] | Punto de Acceso General / Sede PAG | Directorio oficial de sedes electrónicas de la AGE; acredita nombre y enlace publicados, no disponibilidad, procedimiento ni contrato técnico. |
+| [D12] | Punto de Acceso General | Cola independiente de cabildos y consells insulares. |
 
 Ningún enumerador anterior es por sí solo un catálogo completo de origins.
 Se cruzan porque cada uno cubre una dimensión distinta.
@@ -376,7 +378,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 105 fuentes porque las dos
+47/50; no se publica un cociente agregado para las 106 fuentes porque las dos
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -4062,8 +4064,8 @@ Orden de expansión recomendado:
 2. Comunidades y ciudades autónomas: D03 completado; continuar por familias de
    protocolo y organismos dependientes, conservando perfiles separados por
    origin y frontera funcional.
-3. Diputaciones/cabildos/consejos y ayuntamientos: [D04], [D05], [D06],
-   contrastados con DIR3.
+3. Diputaciones/cabildos/consejos y ayuntamientos: [D04], [D05], [D06] y
+   [D12], contrastados con DIR3.
 4. Universidades públicas: [D10], confirmando cada sede en el dominio
    institucional.
 5. Dependencias técnicas y familias multi-tenant, en un inventario separado
@@ -4078,12 +4080,13 @@ Orden de expansión recomendado:
 [D03]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_CCAA.html
 [D04]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL.html
 [D05]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/WP_Ayuntamientos.html
-[D06]: https://administracion.gob.es/pag_Home/es/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/WP_Diputaciones.html
+[D06]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/WP_Diputaciones.html
 [D07]: https://administracion.gob.es/pag_Home/espanaAdmon/SIA.html
 [D08]: https://administracionelectronica.gob.es/ctt/dir3
 [D09]: https://www.igae.pap.hacienda.gob.es/sitios/igae/es-ES/BasesDatos/invente/paginas/inicio.aspx
 [D10]: https://www.ciencia.gob.es/Universidades/RUCT.html
 [D11]: https://sede.administracion.gob.es/sedes-electronicas
+[D12]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/WP_CabildosConsejos.html
 
 ### Evidencia portal-specific
 

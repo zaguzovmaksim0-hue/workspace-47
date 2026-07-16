@@ -102,7 +102,8 @@ python -m unittest discover -s tools/tests -p 'test_*.py' -v
 python -m py_compile \
   tools/public_portal_inventory.py \
   tools/age_sede_directory.py \
-  tools/ccaa_directory.py
+  tools/ccaa_directory.py \
+  tools/pag_local_directory.py
 python tools/public_portal_inventory.py \
   --input "$HOME/.local/state/portal-inventory/seeds.json" \
   --offline-fixtures "$HOME/.local/state/portal-inventory/fixtures.json" \
@@ -156,6 +157,36 @@ componentes no ejecutables y requieren resolver y revisar una sede HTTPS antes
 de convertirse en seed. Incluso para las tres referencias HTTPS la salida solo
 declara elegibilidad como candidato: `target_fetch_performed` permanece en
 `false` y el estado de compatibilidad es siempre `BROWSE_ONLY`.
+
+Los tres índices locales PAG cerrados comparten un enumerador. `--kind` acepta
+solo `diputaciones`, `insular` o `municipal_queues`; cada ejecución hace un
+único `GET` del índice exacto, con cero redirects, y nunca abre un destino:
+
+```bash
+python tools/pag_local_directory.py \
+  --kind diputaciones \
+  --live \
+  --snapshot-date 2026-07-16 \
+  --output "$HOME/.local/state/portal-inventory/pag-diputaciones-2026-07-16.jsonl"
+```
+
+Los baselines revisados fijan 41 diputaciones (7 HTTPS/34 HTTP), 11
+cabildos/consells (3 HTTPS/8 HTTP) y 52 colas territoriales municipales (32
+HTTPS/20 HTTP). En las páginas con mapa, el orden y cada `href` del mapa y del
+pie deben coincidir después de una única decodificación de entidades HTML y
+antes de recortar, normalizar como URL o interpretar query/fragment. Las colas
+municipales no son registros de portales municipales. Sus conflictos, fragmentos, whitespace,
+marcadores de query vacíos y selectores que no pasan el alfabeto público seguro
+quedan en cuarentena, sin URL ejecutable y con
+`candidate_seed_eligible=false`. Las referencias HTTP siguen siendo componentes
+no ejecutables pendientes de resolución HTTPS.
+
+Diputaciones conserva el identificador enumerador D06, ayuntamientos D05 y el
+índice independiente de cabildos/consells usa D12. Salvo el conflicto exacto
+Coruña/Girona ya puesto en cuarentena por la fuente municipal, cualquier target
+duplicado nuevo detiene la materialización. El espacio ASCII final de la
+referencia León y los marcadores de query vacíos son también baselines cerrados:
+su desaparición o aparición fuera de las excepciones revisadas detiene la ola.
 
 Los defaults limitan un body a 2 MiB, cuatro redirects, dos niveles de imports
 JS, 32 intentos de script, 15 segundos por petición y un intervalo mínimo de
@@ -259,11 +290,12 @@ cambios y desapariciones se revisan; una desaparición produce tombstone, no
 borrado inmediato. Ningún delta activa código automáticamente.
 
 Este milestone implementa el scanner estático, su formato de seeds y los
-generadores específicos del directorio de sedes AGE y del índice CCAA de PAG.
-Los generadores de DIR3, SIA, los demás índices PAG, INE, BDGEL y RUCT se añaden
-y fijan a snapshots en las olas de §6; hasta entonces las URLs se preparan desde
-la fuente oficial y se revisan antes de ejecutar `--live`. La existencia de
-esta especificación no se cuenta como una cola enumeradora materializada.
+generadores específicos del directorio de sedes AGE, del índice CCAA y de los
+tres índices locales PAG anteriores. Los generadores de DIR3, SIA, los índices
+PAG restantes, INE, BDGEL y RUCT se añaden y fijan a snapshots en las olas de
+§6; hasta entonces las URLs se preparan desde la fuente oficial y se revisan
+antes de ejecutar `--live`. La existencia de esta especificación no se cuenta
+como una cola enumeradora materializada.
 
 ## 8. Promoción al producto
 
