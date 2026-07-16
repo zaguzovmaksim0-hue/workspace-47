@@ -2,7 +2,7 @@
 
 - Fecha del snapshot: 2026-07-16
 - `inventory_schema_version`: `2`
-- `snapshot_id`: `2026-07-16-age-d11-1`
+- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-1`
 - Fecha de corte de la matriz de firma de origen: 2026-07-15
 
 Este documento es un **censo de descubrimiento evolutivo**, no una afirmación
@@ -161,8 +161,12 @@ El denominador nacional todavía es desconocido. Por tanto, no se publica un
 porcentaje «de España». Este snapshot conserva las 20 superficies del seed e
 ingiere de extremo a extremo el directorio oficial de sedes AGE [D11]: 79
 entradas únicas, siete ya presentes por exact origin y 72 superficies nuevas.
-Los demás enumeradores siguen pendientes y no se cuentan como ingeridos por
-haber abierto su página índice.
+También materializa la lista cerrada D03 de las 17 comunidades autónomas y
+Ceuta/Melilla: las 19 referencias territoriales se resolvieron mediante
+fuentes HTTPS oficiales y produjeron 24 superficies nuevas. Seis son fronteras
+funcionales adicionales con origin o función propios; no son duplicados de la
+sede principal. Los demás enumeradores siguen pendientes y no se cuentan como
+ingeridos por haber abierto su página índice.
 
 | Métrica | Resultado |
 | --- | ---: |
@@ -171,13 +175,15 @@ haber abierto su página índice.
 | Entradas únicas materializadas desde D11 | 79/79 del snapshot 2026-07-16 |
 | Entradas D11 ya presentes por exact origin | 7 |
 | Registros nuevos creados desde D11 | 72 |
-| Registros totales del snapshot | 92 |
-| Origins primarios distintos | 92 |
+| Territorios D03 materializados | 19/19 del snapshot 2026-07-16 |
+| Registros nuevos creados desde D03 | 24 |
+| Registros totales del snapshot | 116 |
+| Origins primarios distintos | 115 |
 | Fuentes enumeradoras oficiales registradas | 11 |
-| Colas enumeradoras ingeridas de extremo a extremo | 1/11 |
-| Colas enumeradoras pendientes de ingestión | 10/11 |
-| Fuentes oficiales portal-specific registradas | 39 |
-| Fuentes oficiales totales registradas | 50 |
+| Colas enumeradoras ingeridas de extremo a extremo | 2/11 |
+| Colas enumeradoras pendientes de ingestión | 9/11 |
+| Fuentes oficiales portal-specific registradas | 94 |
+| Fuentes oficiales totales registradas | 105 |
 | Entradas `VERIFIED_E2E` | 0 |
 | Evidencia exacta de `ClientCertRequest` | 0 |
 
@@ -186,13 +192,13 @@ Por nivel administrativo:
 | Nivel | Registros |
 | --- | ---: |
 | `ESTATAL` | 81 |
-| `AUTONOMICO` | 4 |
+| `AUTONOMICO` | 28 |
 | `PROVINCIAL` | 1 |
 | `INSULAR` | 0 |
 | `MUNICIPAL` | 2 |
 | `UNIVERSIDAD_PUBLICA` | 4 |
 | `OTRA_INSTITUCION_PUBLICA` | 0 |
-| **Total** | **92** |
+| **Total** | **116** |
 
 Por estado del inventario:
 
@@ -202,21 +208,21 @@ Por estado del inventario:
 | `IMPLEMENTED_NOT_E2E` | 1 |
 | `VERIFIED_CONTRACT` | 4 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 85 |
+| `BROWSE_ONLY` | 109 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 0 |
 | `DEPRECATED` | 0 |
-| **Total** | **92** |
+| **Total** | **116** |
 
 Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 19 |
+| `REVIEWED` | 42 |
 | `RECHECK_REQUIRED` | 1 |
-| `DISCOVERED` | 72 |
+| `DISCOVERED` | 73 |
 | `CANDIDATE`, `RETIRED` | 0 |
-| **Total** | **92** |
+| **Total** | **116** |
 
 ## 5. Método de descubrimiento reproducible
 
@@ -308,7 +314,7 @@ implementarlo y antes de una release que dependa de él.
 | --- | --- | --- |
 | [D01] | Punto de Acceso General | Índice raíz de portales públicos estatales, autonómicos, locales, judiciales y otros organismos. |
 | [D02] | Punto de Acceso General | Ministerios y portales de la AGE. |
-| [D03] | Punto de Acceso General | Las 17 comunidades autónomas y Ceuta/Melilla. |
+| [D03] | Punto de Acceso General | Las 17 comunidades autónomas y Ceuta/Melilla; cola cerrada materializada en este snapshot, sin abrir destinos. |
 | [D04] | Punto de Acceso General | Índice de entidades locales. |
 | [D05] | Punto de Acceso General | Cola territorial de ayuntamientos. |
 | [D06] | Punto de Acceso General | Cola de diputaciones provinciales; remite a cabildos/consejos donde corresponda. |
@@ -350,20 +356,40 @@ D11 se añadió además como provenance a los siete registros seed cuyo exact
 origin coincide con el directorio. Esta relación de existencia no modifica ni
 promociona su evidencia técnica portal-specific.
 
+La ola autonómica usa los IDs `A01` a `A19` en el mismo orden cerrado de D03.
+Sus 55 fuentes portal-specific acreditan propietario, entrada HTTPS y, cuando
+se declara, una mención delimitada a certificado o firma. `A15` corresponde a
+Madrid y no crea definiciones nuevas: sus dos superficies ya conservan la
+evidencia P08 portal-specific. D03 no se añadió a los cuatro registros
+autonómicos preexistentes porque sus enlaces territoriales no coinciden con la
+frontera exacta de Ovorion, SIRAW, la sede de Madrid o gestiona2.
+
 ### 6.3. Disponibilidad en este snapshot
 
 La comprobación pública del seed obtuvo HTTP 200 mediante `GET` directo en 46
 de sus 49 URLs, después de un único retry de P07. D11 se materializó después
 mediante un `GET` HTTPS público con presupuesto de cero redirects, HTTP 200 y
 baseline revisado de 22 ministerios, 81 fichas, 84 anchors y 79 entradas
-únicas. Por tanto, 47 de las 50 fuentes registradas respondieron en sus
-comprobaciones delimitadas. Las tres excepciones del seed se conservan con la
-limitación exacta:
+únicas. La fuente D03 se materializó mediante otro único `GET` HTTPS público,
+sin redirects ni apertura de destinos, y cumplió el baseline cerrado de 19
+territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
+Estas últimas se conservaron como componentes no ejecutables; las superficies
+de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
+El cociente histórico de disponibilidad del primer conjunto sigue siendo
+47/50; no se publica un cociente agregado para las 105 fuentes porque las dos
+olas usaron transportes y alcances distintos. Las tres excepciones del seed se
+conservan con la limitación exacta:
 
 El resultado D11 sanitizado y determinista queda fijado en el
 [snapshot JSONL](snapshots/age-sede-directory-2026-07-16.jsonl). Incluye solo
 metadatos públicos, hashes/tamaños de la fuente y URLs ya sanitizadas; no
 incluye el cuerpo HTML ni valores sessionizados.
+
+El resultado D03 equivalente queda fijado en el
+[snapshot JSONL](snapshots/ccaa-directory-2026-07-16.jsonl). No contiene cuerpos
+HTML ni ejecuta las referencias territoriales. D03 solo acredita la cola
+territorial; cada origin HTTPS de §7.3 exige además su evidencia portal-specific
+y no se añadió como provenance a las cuatro superficies autonómicas preexistentes.
 
 - D09 cerró la conexión del cliente CLI, aunque una lectura HTTPS
   independiente recuperó la página oficial de INVENTE;
@@ -3237,6 +3263,737 @@ records:
 
 ```
 
+### 7.3. Comunidades y ciudades autónomas [D03]
+
+Esta ola conserva las cuatro superficies autonómicas del seed sin modificar su
+evidencia ni su estado. D03 enumera territorios, no contratos ni origins HTTPS
+de sede. Por ello, cada registro nuevo combina D03 con evidencia oficial
+portal-specific y permanece `BROWSE_ONLY`.
+
+```yaml
+records:
+  - inventory_id: "ES-PUB-0093"
+    surface_key: "junta-andalucia-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Andalucía"
+    surface_name: "Sede electrónica de la Junta de Andalucía"
+    surface_type: "SEDE"
+    origin: "https://www.juntadeandalucia.es"
+    official_site: "https://www.juntadeandalucia.es/servicios/sede"
+    e_sede: "https://www.juntadeandalucia.es/servicios/sede"
+    entry_url: "https://www.juntadeandalucia.es/servicios/sede"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso público a información y servicios de la sede autonómica."
+    protocol_evidence: "Las fuentes acreditan titularidad y entrada oficial, no un flujo de certificado o firma."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A01A", "A01B"]
+    reason: "Certificado, firma, ABI, formato, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Identificar un procedimiento vigente y su contrato técnico exacto."
+
+  - inventory_id: "ES-PUB-0094"
+    surface_key: "aragon-tramites-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Aragón"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de Aragón"
+    surface_name: "Trámites del Gobierno de Aragón"
+    surface_type: "SEDE"
+    origin: "https://www.aragon.es"
+    official_site: "https://www.aragon.es/tramites"
+    e_sede: "https://www.aragon.es/tramites"
+    entry_url: "https://www.aragon.es/tramites"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación con medios de identificación y firma según el procedimiento."
+    protocol_evidence: "La ayuda oficial describe identificación y firma electrónica, pero no publica ABI ni transporte."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A02A", "A02B"]
+    reason: "La mención general de firma no acredita cliente JS, formato, callback, endpoint ni TLS cliente."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un trámite concreto y su JavaScript vigente sin enviar formulario."
+
+  - inventory_id: "ES-PUB-0095"
+    surface_key: "asturias-miprincipado-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Principado de Asturias"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Principado de Asturias"
+    surface_name: "MiPrincipado"
+    surface_type: "SEDE"
+    origin: "https://miprincipado.asturias.es"
+    official_site: "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica"
+    e_sede: "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica"
+    entry_url: "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Información de sede y acceso con sistemas de identificación admitidos."
+    protocol_evidence: "La fuente de sistemas acredita certificado como opción, no firma ni contrato portal-specific."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A03A", "A03C"]
+    reason: "Firma, transporte del certificado, ABI, formato y endpoint no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Delimitar una operación autenticada concreta sin seleccionar certificado."
+
+  - inventory_id: "ES-PUB-0096"
+    surface_key: "asturias-sede-tramite-autofirma"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Principado de Asturias"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Principado de Asturias"
+    surface_name: "Frontend de trámite de la Sede de Asturias"
+    surface_type: "FRONTEND_TRAMITE"
+    origin: "https://sede.asturias.es"
+    official_site: "https://sede.asturias.es/ast/-/dboid-6269000011903512107573"
+    e_sede: "https://sede.asturias.es/ast/-/dboid-6269000011903512107573"
+    entry_url: "https://sede.asturias.es/ast/-/dboid-6269000011903512107573"
+    procedure_page: "https://sede.asturias.es/ast/-/dboid-6269000011903512107573"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "SI"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación pública cuya ficha indica firma con AutoFirma."
+    protocol_evidence: "La ficha acredita el requisito de AutoFirma, pero no versión, ABI, callback ni endpoint."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A03B"]
+    reason: "AutoFirma como producto no basta para autorizar bridge ni inferir el transporte."
+    reviewed_at: "2026-07-16"
+    next_gate: "Inspeccionar el JavaScript vigente y la entrega exacta del resultado."
+
+  - inventory_id: "ES-PUB-0097"
+    surface_key: "caib-seu-electronica"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de las Illes Balears"
+    surface_name: "Seu Electrònica de les Illes Balears"
+    surface_type: "SEDE"
+    origin: "https://www.caib.es"
+    official_site: "https://www.caib.es/seucaib/ca/"
+    e_sede: "https://www.caib.es/seucaib/ca/"
+    entry_url: "https://www.caib.es/seucaib/ca/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso y firma mediante los sistemas admitidos según el trámite."
+    protocol_evidence: "La información oficial cita certificado, AutoFirma, Cl@veFirma y Firma àgil sin contrato runtime."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A04A", "A04B"]
+    reason: "No se verificaron cliente JS, operación, formato, algoritmo, callback ni endpoint concretos."
+    reviewed_at: "2026-07-16"
+    next_gate: "Capturar un trámite vigente y separar identificación de firma."
+
+  - inventory_id: "ES-PUB-0098"
+    surface_key: "caib-registre-electronic"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Illes Balears"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de las Illes Balears"
+    surface_name: "Registre Electrònic"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://apps.caib.es"
+    official_site: "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/"
+    e_sede: "https://www.caib.es/seucaib/ca/"
+    entry_url: "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/"
+    procedure_page: "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Información y acceso al registro electrónico autonómico."
+    protocol_evidence: "La entrada oficial acredita la función de registro, no un contrato de autenticación o firma."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A04B", "A04C"]
+    reason: "No se verificaron entrada operativa final, certificado, firma, ABI ni endpoint."
+    reviewed_at: "2026-07-16"
+    next_gate: "Resolver el frontend operativo exacto sin iniciar una presentación."
+
+  - inventory_id: "ES-PUB-0099"
+    surface_key: "canarias-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Canarias"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de Canarias"
+    surface_name: "Sede electrónica del Gobierno de Canarias"
+    surface_type: "SEDE"
+    origin: "https://sede.gobiernodecanarias.org"
+    official_site: "https://sede.gobiernodecanarias.org/sede/la_sede"
+    e_sede: "https://sede.gobiernodecanarias.org/sede/la_sede"
+    entry_url: "https://sede.gobiernodecanarias.org/sede/la_sede"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación con certificado y AutoFirma cuando el procedimiento lo requiere."
+    protocol_evidence: "Los requisitos citan AutoFirma y AutoFirma Móvil, pero no publican el ABI portal-specific."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A05A", "A05B"]
+    reason: "Producto, formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar un procedimiento concreto y su invocación de firma."
+
+  - inventory_id: "ES-PUB-0100"
+    surface_key: "cantabria-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Cantabria"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de Cantabria"
+    surface_name: "Sede electrónica del Gobierno de Cantabria"
+    surface_type: "SEDE"
+    origin: "https://sede.cantabria.es"
+    official_site: "https://sede.cantabria.es/sede/"
+    e_sede: "https://sede.cantabria.es/sede/"
+    entry_url: "https://sede.cantabria.es/sede/"
+    procedure_page: "https://sede.cantabria.es/sede/catalogo-de-tramites/tramite/emision-de-certificados-de-los-datos-que-consten-en-los-registros-de-asociaciones/2645"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Catálogo y tramitación con sistemas de firma admitidos según el procedimiento."
+    protocol_evidence: "La sede publica sistemas de firma admitidos, sin ABI ni contrato de entrega."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A06A", "A06B", "A06C", "A06D"]
+    reason: "Certificado y firma son condicionales; cliente JS, formato y endpoint siguen sin verificar."
+    reviewed_at: "2026-07-16"
+    next_gate: "Inspeccionar un procedimiento que invoque firma sin presentar solicitud."
+
+  - inventory_id: "ES-PUB-0101"
+    surface_key: "cantabria-registro-electronico-comun"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Cantabria"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de Cantabria"
+    surface_name: "Registro Electrónico Común"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://rec.cantabria.es"
+    official_site: "https://rec.cantabria.es/rec/bienvenida.htm"
+    e_sede: "https://sede.cantabria.es/sede/"
+    entry_url: "https://rec.cantabria.es/rec/bienvenida.htm"
+    procedure_page: "https://rec.cantabria.es/rec/bienvenida.htm"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Entrada pública al Registro Electrónico Común de Cantabria."
+    protocol_evidence: "La entrada acredita una frontera funcional distinta, no su contrato de firma."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A06A", "A06B", "A06E"]
+    reason: "Identificación, firma, transporte, formato y endpoint no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Delimitar el flujo público hasta antes de la identificación."
+
+  - inventory_id: "ES-PUB-0102"
+    surface_key: "castilla-leon-tramita"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Castilla y León"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Castilla y León"
+    surface_name: "Tramitacastillayleon"
+    surface_type: "SEDE"
+    origin: "https://www.tramitacastillayleon.jcyl.es"
+    official_site: "https://www.tramitacastillayleon.jcyl.es/"
+    e_sede: "https://www.tramitacastillayleon.jcyl.es/"
+    entry_url: "https://www.tramitacastillayleon.jcyl.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso a trámites y firma electrónica cuando la actuación la exige."
+    protocol_evidence: "Los requisitos citan certificado y AutoFirma, pero no prueban el contrato runtime vigente."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A07A", "A07B"]
+    reason: "La documentación de requisitos no acredita ABI, formato, callback ni endpoint concretos."
+    reviewed_at: "2026-07-16"
+    next_gate: "Localizar un trámite actual y su JavaScript servido por el portal."
+
+  - inventory_id: "ES-PUB-0103"
+    surface_key: "castilla-la-mancha-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Castilla-La Mancha"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Comunidades de Castilla-La Mancha"
+    surface_name: "Sede electrónica de Castilla-La Mancha"
+    surface_type: "SEDE"
+    origin: "https://www.jccm.es"
+    official_site: "https://www.jccm.es/"
+    e_sede: "https://www.jccm.es/"
+    entry_url: "https://www.jccm.es/"
+    procedure_page: "https://www.jccm.es/tramites/1001243"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación con los sistemas de identificación y firma admitidos."
+    protocol_evidence: "La sede y su ayuda acreditan certificado y firma condicionales, no contrato técnico exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A08A", "A08B", "A08C"]
+    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Inspeccionar el flujo y los assets de un trámite que requiera firma."
+
+  - inventory_id: "ES-PUB-0104"
+    surface_key: "catalunya-seu-electronica"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Cataluña"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Generalitat de Catalunya"
+    surface_name: "Seu electrònica de la Generalitat de Catalunya"
+    surface_type: "SEDE"
+    origin: "https://web.gencat.cat"
+    official_site: "https://web.gencat.cat/ca/seu-electronica"
+    e_sede: "https://web.gencat.cat/ca/seu-electronica"
+    entry_url: "https://web.gencat.cat/ca/seu-electronica"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Relación digital mediante sistemas de identificación y firma según el servicio."
+    protocol_evidence: "El catálogo oficial acredita sistemas admitidos, no el contrato de un trámite concreto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A09A", "A09B", "A09D"]
+    reason: "Operación, cliente JS, formato, algoritmo, callback y endpoint no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar un trámite firmado y observar su transporte público."
+
+  - inventory_id: "ES-PUB-0105"
+    surface_key: "catalunya-tramits-peticio-generica"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Cataluña"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Generalitat de Catalunya"
+    surface_name: "Tràmits gencat — Petició genèrica"
+    surface_type: "FRONTEND_TRAMITE"
+    origin: "https://tramits.gencat.cat"
+    official_site: "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c"
+    e_sede: "https://web.gencat.cat/ca/seu-electronica"
+    entry_url: "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c"
+    procedure_page: "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Presentación de una petición genérica con identificación y firma cuando corresponda."
+    protocol_evidence: "La ficha y el catálogo de sistemas no revelan un ABI ni endpoint portal-specific."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A09B", "A09C", "A09D"]
+    reason: "La condición de firma no acredita cliente JS, formato, algoritmo ni callback exactos."
+    reviewed_at: "2026-07-16"
+    next_gate: "Recorrer el flujo seguro hasta antes de la identificación o envío."
+
+  - inventory_id: "ES-PUB-0106"
+    surface_key: "ceuta-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Ciudad Autónoma de Ceuta"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Ciudad Autónoma de Ceuta"
+    surface_name: "Sede electrónica de Ceuta"
+    surface_type: "SEDE"
+    origin: "https://sede.ceuta.es"
+    official_site: "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info"
+    e_sede: "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info"
+    entry_url: "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info"
+    procedure_page: "https://sede.ceuta.es/controlador/controlador?cmd=tramite&modulo=tramites&tramite=ANI"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación con certificado, Cl@ve o AutoFirma según el procedimiento."
+    protocol_evidence: "Los requisitos citan certificado y AutoFirma sin publicar ABI, formato o endpoint."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A10A", "A10B", "A10C"]
+    reason: "La mención de certificado no prueba TLS cliente ni un contrato de firma."
+    reviewed_at: "2026-07-16"
+    next_gate: "Inspeccionar un trámite firmado sin iniciar presentación."
+
+  - inventory_id: "ES-PUB-0107"
+    surface_key: "melilla-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Ciudad Autónoma de Melilla"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Ciudad Autónoma de Melilla"
+    surface_name: "Sede electrónica de Melilla"
+    surface_type: "SEDE"
+    origin: "https://sede.melilla.es"
+    official_site: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO"
+    e_sede: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_TITULARSEDE"
+    entry_url: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Acceso al catálogo y firma electrónica en los trámites que la requieren."
+    protocol_evidence: "La sede documenta certificado, @firma y AutoFirma sin contrato runtime delimitado."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A11A", "A11B", "A11C"]
+    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Localizar un trámite concreto y revisar sus assets públicos."
+
+  - inventory_id: "ES-PUB-0108"
+    surface_key: "gva-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Comunitat Valenciana"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Generalitat Valenciana"
+    surface_name: "Sede electrónica de la Generalitat Valenciana"
+    surface_type: "SEDE"
+    origin: "https://sede.gva.es"
+    official_site: "https://sede.gva.es/es/"
+    e_sede: "https://sede.gva.es/es/"
+    entry_url: "https://sede.gva.es/es/"
+    procedure_page: "https://sede.gva.es/es/detall-tramit?id_proc=15602"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación mediante los sistemas de identificación y firma admitidos."
+    protocol_evidence: "Las fuentes acreditan certificado y firma condicionales, no un ABI exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A12A", "A12B", "A12C", "A12D"]
+    reason: "El término ClientCert de la ayuda no prueba ClientCertRequest TLS; formato y endpoint tampoco están verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Observar la entrada de certificado sin seleccionar una identidad."
+
+  - inventory_id: "ES-PUB-0109"
+    surface_key: "extremadura-tramites"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Extremadura"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Extremadura"
+    surface_name: "Trámites de la Junta de Extremadura"
+    surface_type: "SEDE"
+    origin: "https://tramites.juntaex.es"
+    official_site: "https://tramites.juntaex.es/"
+    e_sede: "https://tramites.juntaex.es/"
+    entry_url: "https://tramites.juntaex.es/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación con certificado o DNIe y firma cuando el servicio la exige."
+    protocol_evidence: "La sede publica sistemas de firma, pero no cliente JS ni contrato de un trámite concreto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A13A", "A13B"]
+    reason: "Formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Capturar un trámite actual y su transporte de firma."
+
+  - inventory_id: "ES-PUB-0110"
+    surface_key: "extremadura-sede-anterior"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Extremadura"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Extremadura"
+    surface_name: "Sede electrónica anterior de la Junta de Extremadura"
+    surface_type: "SEDE"
+    origin: "https://sede.juntaex.es"
+    official_site: "https://sede.juntaex.es/SEDE/"
+    e_sede: "https://sede.juntaex.es/SEDE/"
+    entry_url: "https://sede.juntaex.es/SEDE/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "DISCOVERED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Entrada histórica de sede cuya relación con el portal de trámites actual no está resuelta."
+    protocol_evidence: "La entrada contiene referencias a AutoFirma, pero no se verificó su vigencia ni contrato."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A13C"]
+    reason: "No se ha acreditado retirada, sustitución, operación vigente ni contrato técnico; se conserva sin promoción."
+    reviewed_at: "2026-07-16"
+    next_gate: "Resolver oficialmente su relación con tramites.juntaex.es y revisar una operación vigente."
+
+  - inventory_id: "ES-PUB-0111"
+    surface_key: "extremadura-portal-tributario"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Extremadura"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Extremadura"
+    surface_name: "Portal Tributario de la Junta de Extremadura"
+    surface_type: "PORTAL_SERVICIO"
+    origin: "https://portaltributario.juntaex.es"
+    official_site: "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación tributaria con certificado y AutoFirma según los requisitos publicados."
+    protocol_evidence: "Los requisitos acreditan certificado y AutoFirma, no ABI, callback ni formato exactos."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A13D"]
+    reason: "La exigencia del producto no identifica cliente JS, algoritmo, endpoint ni TLS cliente."
+    reviewed_at: "2026-07-16"
+    next_gate: "Localizar un trámite tributario público y revisar su invocación sin enviar datos."
+
+  - inventory_id: "ES-PUB-0112"
+    surface_key: "galicia-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Galicia"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Xunta de Galicia"
+    surface_name: "Sede electrónica de la Xunta de Galicia"
+    surface_type: "SEDE"
+    origin: "https://sede.xunta.gal"
+    official_site: "https://sede.xunta.gal/a-sede/identificacion-e-titularidade"
+    e_sede: "https://sede.xunta.gal/a-sede/identificacion-e-titularidade"
+    entry_url: "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
+    procedure_page: "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Presentación de solicitud genérica mediante sistemas de identificación y firma admitidos."
+    protocol_evidence: "La sede documenta AutoFirma y cliente móvil, sin publicar el ABI ni transporte del trámite."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A14A", "A14B", "A14C"]
+    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar los assets vigentes de la solicitud genérica sin iniciar presentación."
+
+  - inventory_id: "ES-PUB-0113"
+    surface_key: "murcia-sede"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Región de Murcia"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Comunidad Autónoma de la Región de Murcia"
+    surface_name: "Sede electrónica de la CARM"
+    surface_type: "SEDE"
+    origin: "https://sede.carm.es"
+    official_site: "https://sede.carm.es/web/pagina?IDCONTENIDO=40291&IDTIPO=100"
+    e_sede: "https://sede.carm.es/web/pagina?IDCONTENIDO=40291&IDTIPO=100"
+    entry_url: "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"
+    procedure_page: "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación con certificado, Cl@ve y AutoFirma según el procedimiento."
+    protocol_evidence: "La ayuda y la prueba de AutoFirma no publican el contrato runtime de la sede."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A16A", "A16B", "A16C"]
+    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Inspeccionar un trámite actual y su JavaScript sin enviar formulario."
+
+  - inventory_id: "ES-PUB-0114"
+    surface_key: "navarra-sede-registro-general"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Comunidad Foral de Navarra"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de Navarra"
+    surface_name: "Sede electrónica y Registro General Electrónico de Navarra"
+    surface_type: "SEDE"
+    origin: "https://www.navarra.es"
+    official_site: "https://www.navarra.es/es/tramites/titularidad-de-la-sede-electronica"
+    e_sede: "https://www.navarra.es/es/tramites/titularidad-de-la-sede-electronica"
+    entry_url: "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
+    procedure_page: "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Presentación en el Registro General con certificado y firma cuando corresponda."
+    protocol_evidence: "La ayuda documenta certificado y firma de documentos, sin contrato de integración exacto."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A17A", "A17B", "A17C"]
+    reason: "La documentación no acredita cliente JS, formato aceptado, callback ni endpoint."
+    reviewed_at: "2026-07-16"
+    next_gate: "Revisar el flujo público del registro hasta antes de la autenticación."
+
+  - inventory_id: "ES-PUB-0115"
+    surface_key: "euskadi-sede-electronica"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "País Vasco"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno Vasco"
+    surface_name: "Sede electrónica de Euskadi"
+    surface_type: "SEDE"
+    origin: "https://www.euskadi.eus"
+    official_site: "https://www.euskadi.eus/sede-electronica/"
+    e_sede: "https://www.euskadi.eus/sede-electronica/"
+    entry_url: "https://www.euskadi.eus/sede-electronica/"
+    procedure_page: "NO_VERIFICADO"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación mediante medios de identificación y firma admitidos."
+    protocol_evidence: "La ayuda general de firma no acredita que un formato o contrato se aplique a toda la sede."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A18A", "A18B", "A18C"]
+    reason: "Las menciones documentales, incluida XAdES en escenarios delimitados, no prueban el flujo de esta superficie."
+    reviewed_at: "2026-07-16"
+    next_gate: "Seleccionar un procedimiento firmado y verificar su contrato específico."
+
+  - inventory_id: "ES-PUB-0116"
+    surface_key: "la-rioja-oficina-electronica"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "La Rioja"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Gobierno de La Rioja"
+    surface_name: "Oficina electrónica del Gobierno de La Rioja"
+    surface_type: "SEDE"
+    origin: "https://web.larioja.org"
+    official_site: "https://web.larioja.org/oficina-electronica/"
+    e_sede: "https://web.larioja.org/oficina-electronica/"
+    entry_url: "https://web.larioja.org/oficina-electronica/"
+    procedure_page: "https://web.larioja.org/oficina-electronica/tramite?n=24697"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "NO_VERIFICADO"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Tramitación electrónica con certificado y AutoFirma cuando el trámite lo requiere."
+    protocol_evidence: "Las páginas oficiales citan certificado y AutoFirma sin ABI ni endpoint portal-specific."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["D03", "A19A", "A19B", "A19C"]
+    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    reviewed_at: "2026-07-16"
+    next_gate: "Inspeccionar el trámite publicado y sus assets sin presentar datos."
+
+```
+
 ## 8. Relación con el catálogo de producto
 
 Este archivo es documentación de investigación, no configuración ejecutable:
@@ -3277,8 +4034,10 @@ grandes y explícitos:
 
 1. El directorio AGE D11 ya está materializado; faltan DIR3, SIA, INVENTE y la
    resolución de superficies estatales adicionales o no incluidas por D11.
-2. De las 17 comunidades autónomas y Ceuta/Melilla solo hay superficies de
-   Andalucía, Aragón y Madrid.
+2. La cola territorial D03 ya está materializada para las 17 comunidades y
+   Ceuta/Melilla, pero sus organismos dependientes, portales sectoriales y
+   contratos de firma siguen requiriendo olas específicas. La relación entre
+   las dos sedes observadas de Extremadura permanece sin resolver.
 3. Solo hay una diputación y dos ayuntamientos; faltan las colas de
    diputaciones, cabildos, consejos insulares y miles de entidades locales.
 4. RUCT aún no se ha convertido en una cola cerrada de universidades públicas;
@@ -3288,8 +4047,11 @@ grandes y explícitos:
 6. No existe inventario separado de proveedores compartidos, plataformas
    multi-tenant, SSO, Storage/Retrieve o endpoints tri-phase.
 7. No hay evidencia E2E ni un `ClientCertRequest` exacto para ningún registro.
-8. Variantes lingüísticas, dominios históricos y redirects no se cuentan hasta
-   completar una ola de deduplicación.
+8. Las variantes lingüísticas no crean registros; los dominios históricos y
+   redirects solo se separan cuando existe una frontera funcional acreditada.
+   Los candidatos INAGA de Aragón, el checker técnico de Castilla y León, el
+   portal de convenios de Castilla-La Mancha y un trámite archivado de CAIB no
+   se promovieron a superficies actuales sin una entrada ciudadana vigente.
 9. El Ayuntamiento de Madrid permanece `RECHECK_REQUIRED` por la limitación de
    revalidación ya documentada.
 
@@ -3297,7 +4059,9 @@ Orden de expansión recomendado:
 
 1. AGE y sector público estatal: D11 completado; continuar con [D02], [D07],
    [D08] y [D09].
-2. Comunidades y ciudades autónomas: [D03], con una ola por territorio.
+2. Comunidades y ciudades autónomas: D03 completado; continuar por familias de
+   protocolo y organismos dependientes, conservando perfiles separados por
+   origin y frontera funcional.
 3. Diputaciones/cabildos/consejos y ayuntamientos: [D04], [D05], [D06],
    contrastados con DIR3.
 4. Universidades públicas: [D10], confirmando cada sede en el dominio
@@ -3362,3 +4126,61 @@ Orden de expansión recomendado:
 [P17]: https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent
 [P17A]: https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js
 [P17B]: https://tramita.unizar.es/tramitador/js/miniAppletFirma/autoscript.js
+
+### Evidencia de comunidades y ciudades autónomas
+
+[A01A]: https://www.juntadeandalucia.es/servicios/sede/sobre-sede/titularidad.html
+[A01B]: https://www.juntadeandalucia.es/servicios/sede
+[A02A]: https://www.aragon.es/tramites
+[A02B]: https://www.aragon.es/tramites/identificacion-y-firma-electronica
+[A03A]: https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica
+[A03B]: https://sede.asturias.es/ast/-/dboid-6269000011903512107573
+[A03C]: https://miprincipado.asturias.es/sobre-miprincipado/sistemas-de-identificacion
+[A04A]: https://caib.es/seucaib/ca/fichainformativa/3392758
+[A04B]: https://www.caib.es/seucaib/ca/
+[A04C]: https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/
+[A05A]: https://sede.gobiernodecanarias.org/sede/la_sede
+[A05B]: https://sede.gobiernodecanarias.org/sede/la_sede/requisitos_tecnicos
+[A06A]: https://sede.cantabria.es/sede/informacion/identificacion-de-la-sede
+[A06B]: https://sede.cantabria.es/sede/
+[A06C]: https://sede.cantabria.es/sede/catalogo-de-tramites/tramite/emision-de-certificados-de-los-datos-que-consten-en-los-registros-de-asociaciones/2645
+[A06D]: https://sede.cantabria.es/sede/informacion/sistemas-de-e-firma-admitidos
+[A06E]: https://rec.cantabria.es/rec/bienvenida.htm
+[A07A]: https://www.tramitacastillayleon.jcyl.es/
+[A07B]: https://www.tramitacastillayleon.jcyl.es/web/es/ayuda-sobre-administracion-electronica/requisitos-tecnicos.html
+[A08A]: https://www.jccm.es/
+[A08B]: https://www.jccm.es/web/la-sede/sistemas-de-identificacion-y-firma
+[A08C]: https://www.jccm.es/tramites/1001243
+[A09A]: https://web.gencat.cat/ca/seu-electronica/informacio/sobre-la-seu
+[A09B]: https://web.gencat.cat/ca/seu-electronica
+[A09C]: https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c
+[A09D]: https://web.gencat.cat/ca/seu-electronica/relacio-digital/cataleg-sistemes-identificacio-i-signatura-electronica
+[A10A]: https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info
+[A10B]: https://sede.ceuta.es/controlador/controlador?cmd=tramite&modulo=tramites&tramite=ANI
+[A10C]: https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info
+[A11A]: https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_TITULARSEDE
+[A11B]: https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO
+[A11C]: https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMA
+[A12A]: https://sede.gva.es/es/normativa-reguladora
+[A12B]: https://sede.gva.es/es/
+[A12C]: https://sede.gva.es/es/detall-tramit?id_proc=15602
+[A12D]: https://sede.gva.es/es/sistemes-d-identificacio-i-signatura-acceptats
+[A13A]: https://tramites.juntaex.es/
+[A13B]: https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMA
+[A13C]: https://sede.juntaex.es/SEDE/
+[A13D]: https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos
+[A14A]: https://sede.xunta.gal/a-sede/identificacion-e-titularidade
+[A14B]: https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica
+[A14C]: https://sede.xunta.gal/a-sede/sistemas-de-identificacion-e-sinatura
+[A16A]: https://sede.carm.es/web/pagina?IDCONTENIDO=40291&IDTIPO=100
+[A16B]: https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288
+[A16C]: https://sede.carm.es/web/pagina?IDCONTENIDO=56864&IDTIPO=100&RASTRO=c%24m40248
+[A17A]: https://www.navarra.es/es/tramites/titularidad-de-la-sede-electronica
+[A17B]: https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico
+[A17C]: https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/firmar-documentos
+[A18A]: https://www.euskadi.eus/sede-electronica/
+[A18B]: https://www.euskadi.eus/medios-de-identificacion-electronica-admitidos/web01-sede/eu/
+[A18C]: https://www.euskadi.eus/faqs/firma-electronica-preguntas-mas-frecuentes/web01-tramite/es/
+[A19A]: https://www.larioja.org/
+[A19B]: https://web.larioja.org/oficina-electronica/
+[A19C]: https://web.larioja.org/oficina-electronica/tramite?n=24697
