@@ -505,6 +505,7 @@ internal class JuntaTriPhaseCodec(
     private fun SigningAlgorithm.wireName(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
         SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+        SigningAlgorithm.SHA512_WITH_RSA -> fail(TriPhaseCodecError.INVALID_REQUEST)
     }
 
     private fun fail(code: TriPhaseCodecError): Nothing = throw TriPhaseCodecException(code)

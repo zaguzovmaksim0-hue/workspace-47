@@ -18,7 +18,7 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class JuntaOriginPolicyTest {
     @Test
-    fun allowsOnlyTheSixExactHttpsHostsOnTheDefaultPort() {
+    fun allowsOnlyCataloguedExactHttpsHostsOnTheDefaultPort() {
         val expectedHosts = setOf(
             "www.juntadeandalucia.es",
             "sede.juntadeandalucia.es",
@@ -26,6 +26,7 @@ class JuntaOriginPolicyTest {
             "pfirma.juntadeandalucia.es",
             "ws024.juntadeandalucia.es",
             "ws050.juntadeandalucia.es",
+            "reg.redsara.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -34,7 +35,7 @@ class JuntaOriginPolicyTest {
             assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://$host:443/path")))
         }
         assertEquals(
-            expectedHosts.mapTo(linkedSetOf()) { "https://$it" },
+            setOf("https://www.juntadeandalucia.es", "https://reg.redsara.es"),
             JuntaOriginPolicy.webMessageOriginRules,
         )
     }

@@ -56,6 +56,56 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactRedSaraAutoScriptCallNormalizesOnlyTheObservedXadesTuple() {
+        val result = adapter.route(
+            rawMessage = JSONObject()
+                .put("type", "MINIAPPLET_SIGN")
+                .put("documentId", DOCUMENT_ID)
+                .put("requestId", REQUEST_ID)
+                .put("dataB64", Base64.getEncoder().encodeToString("<r/>".encodeToByteArray()))
+                .put("algorithm", "SHA512withRSA")
+                .put("format", "XAdES Detached")
+                .put("extraProperties", JSONObject.NULL)
+                .toString(),
+            sourceOrigin = Uri.parse("https://reg.redsara.es"),
+            isMainFrame = true,
+            navigationEpoch = 9,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals("reg-age-redsara", request.context.profileId)
+            assertEquals("reg.redsara.es", request.context.origin.host)
+            assertEquals(9, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA512_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.XADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals("<r/>".encodeToByteArray(), data)
+                    assertEquals("", properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun redSaraLookalikeIframeWrongTupleAndPropertiesFailClosed() {
+        val valid = JSONObject()
+            .put("type", "MINIAPPLET_SIGN")
+            .put("documentId", DOCUMENT_ID)
+            .put("requestId", REQUEST_ID)
+            .put("dataB64", Base64.getEncoder().encodeToString("<r/>".encodeToByteArray()))
+            .put("algorithm", "SHA512withRSA")
+            .put("format", "XAdES Detached")
+            .put("extraProperties", JSONObject.NULL)
+            .toString()
+        assertRejected(valid, Uri.parse("https://reg.redsara.es.evil.example"), true)
+        assertRejected(valid, Uri.parse("https://reg.redsara.es"), false)
+        assertRejected(valid.replace("SHA512withRSA", "SHA256withRSA"), Uri.parse("https://reg.redsara.es"), true)
+        assertRejected(valid.replace("XAdES Detached", "CAdES"), Uri.parse("https://reg.redsara.es"), true)
+        assertRejected(valid.replace("null", "\"mode=explicit\""), Uri.parse("https://reg.redsara.es"), true)
+    }
+
+    @Test
     fun unknownOriginSubframeWrongAlgorithmFormatDuplicateAndOversizeFailClosed() {
         assertRejected(message(), Uri.parse("https://evil.example"), true)
         assertRejected(message(), TRUSTED_ORIGIN, false)

@@ -50,6 +50,7 @@ class AfirmaJavascriptShimTest {
 
         assertTrue(script.contains("window.JuntaFirmaProbe"))
         assertTrue(script.contains("MiniApplet"))
+        assertTrue(script.contains("window.AutoScript"))
         assertTrue(script.contains("cargarMiniApplet"))
         assertTrue(script.contains("MINIAPPLET_OBSERVATION"))
         assertTrue(script.contains("RUNTIME_BRANCH_OBSERVATION"))
@@ -89,6 +90,9 @@ class AfirmaJavascriptShimTest {
         assertTrue(functional.contains("MINIAPPLET_CANCEL"))
         assertTrue(functional.contains("pendingCallbacks"))
         assertTrue(functional.contains("pendingCallbacks.delete"))
+        assertTrue(functional.contains("SHA512withRSA"))
+        assertTrue(functional.contains("XAdES Detached"))
+        assertTrue(functional.contains("args[3] === null"))
         assertTrue(functional.contains("successCallback(signatureB64, certificateB64)"))
         assertTrue(functional.contains("errorCallback(errorCode"))
         assertTrue(functional.contains("pagehide"))

@@ -38,6 +38,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = JuntaTriPhaseAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId("reg-age-redsara"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                signingProtocolId = LocalXadesDetachedAdapter.ID,
+            ),
         ),
     )
 }

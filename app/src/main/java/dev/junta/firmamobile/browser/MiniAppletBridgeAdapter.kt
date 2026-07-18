@@ -56,7 +56,13 @@ class MiniAppletBridgeAdapter(
         rawMessage: String,
         sourceOrigin: Uri,
         isMainFrame: Boolean,
-    ): MiniAppletBridgeRouteResult = delegate.route(rawMessage, sourceOrigin, isMainFrame)
+        navigationEpoch: Long = 0L,
+    ): MiniAppletBridgeRouteResult = delegate.route(
+        rawMessage,
+        sourceOrigin,
+        isMainFrame,
+        navigationEpoch,
+    )
 
     companion object {
         const val MAX_DECODED_DATA_BYTES = ProfileMiniAppletBridgeAdapter.MAX_DECODED_DATA_BYTES
@@ -78,7 +84,9 @@ internal class ProfileMiniAppletBridgeAdapter(
         rawMessage: String,
         sourceOrigin: Uri,
         isMainFrame: Boolean,
+        navigationEpoch: Long = 0L,
     ): MiniAppletBridgeRouteResult {
+        if (navigationEpoch < 0L) return MiniAppletBridgeRouteResult.NotApplicable
         if (rawMessage.length > WebMessageProtocol.MAX_MESSAGE_CHARS) {
             return MiniAppletBridgeRouteResult.NotApplicable
         }
@@ -142,14 +150,19 @@ internal class ProfileMiniAppletBridgeAdapter(
         val algorithm = when (json.strictString(ALGORITHM_FIELD)) {
             ALGORITHM_SHA1_RSA -> SigningAlgorithm.SHA1_WITH_RSA to SignatureAlgorithm.SHA1_WITH_RSA
             ALGORITHM_SHA256_RSA -> SigningAlgorithm.SHA256_WITH_RSA to SignatureAlgorithm.SHA256_WITH_RSA
+            ALGORITHM_SHA512_RSA -> SigningAlgorithm.SHA512_WITH_RSA to SignatureAlgorithm.SHA512_WITH_RSA
             else -> return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        if (algorithm.second !in operation.algorithms ||
-            json.strictString(FORMAT_FIELD) != FORMAT_CADES ||
-            operation.format != SignatureFormat.CADES
+        val format = when (json.strictString(FORMAT_FIELD)) {
+            FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
+            FORMAT_XADES_DETACHED -> SigningFormat.XADES to SignatureFormat.XADES
+            else -> null
+        }
+        if (algorithm.second !in operation.algorithms || format == null ||
+            format.second != operation.format
         ) {
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
@@ -168,12 +181,22 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val rawExtraProperties = json.strictString(EXTRA_PROPERTIES_FIELD)
-            ?.takeIf { it.length <= MAX_EXTRA_PROPERTIES_CHARS && it.hasSafeControls() }
-            ?: return MiniAppletBridgeRouteResult.Rejected(
-                canonicalRequestId,
-                SigningErrorCode.INVALID_REQUEST,
-            )
+        val rawExtraProperties = if (operation.fixedExtraProperties.isEmpty()) {
+            if (json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
+                return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+            }
+            ""
+        } else {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it.length <= MAX_EXTRA_PROPERTIES_CHARS && it.hasSafeControls() }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        }
         val decodedData = try {
             Base64.getDecoder().decode(dataBase64)
         } catch (_: IllegalArgumentException) {
@@ -189,7 +212,9 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.REQUEST_TOO_LARGE,
             )
         }
-        val extraProperties = canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
+        val extraProperties = if (operation.fixedExtraProperties.isEmpty()) {
+            ""
+        } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
             ?: run {
                 decodedData.fill(0)
                 return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
@@ -214,10 +239,11 @@ internal class ProfileMiniAppletBridgeAdapter(
                         profileVersion = profile.profileVersion,
                         origin = resolved.origin.toTrustedOrigin(),
                         navigationId = navigationId,
+                        navigationEpoch = navigationEpoch,
                         observedAt = clock.instant(),
                     ),
                     algorithm = algorithm.first,
-                    format = SigningFormat.CADES,
+                    format = format.first,
                     safeDescription = operation.safeDescription,
                     payload = payload,
                 ),
@@ -298,7 +324,9 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val TYPE_MINIAPPLET_CANCEL = "MINIAPPLET_CANCEL"
         private const val ALGORITHM_SHA1_RSA = "SHA1withRSA"
         private const val ALGORITHM_SHA256_RSA = "SHA256withRSA"
+        private const val ALGORITHM_SHA512_RSA = "SHA512withRSA"
         private const val FORMAT_CADES = "CAdES"
+        private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val MAX_EXTRA_PROPERTY_COUNT = 32
         private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
         private val PROPERTY_KEY = Regex("[A-Za-z][A-Za-z0-9._-]{0,63}")
@@ -330,6 +358,7 @@ class MiniAppletReplyChannel internal constructor(
     override val requestId: UUID,
     private val postMessage: (String) -> Unit,
     private val onTerminal: () -> Unit = {},
+    private val canDeliver: () -> Boolean = { true },
     private val encoder: dev.junta.firmamobile.signing.SigningResultEncoder =
         MiniAppletCallbackAdapter(),
 ) : SigningReplySink {
@@ -339,6 +368,12 @@ class MiniAppletReplyChannel internal constructor(
         if (!terminal.compareAndSet(false, true)) {
             signature.close()
             certificateDer.fill(0)
+            return false
+        }
+        if (!runCatching(canDeliver).getOrDefault(false)) {
+            signature.close()
+            certificateDer.fill(0)
+            onTerminal()
             return false
         }
         return try {
@@ -363,6 +398,10 @@ class MiniAppletReplyChannel internal constructor(
 
     override fun failure(code: SigningErrorCode): Boolean {
         if (!terminal.compareAndSet(false, true)) return false
+        if (!runCatching(canDeliver).getOrDefault(false)) {
+            onTerminal()
+            return false
+        }
         return try {
             postMessage(encoder.encodeError(requestId, code))
             true

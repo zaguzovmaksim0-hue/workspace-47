@@ -99,6 +99,17 @@ class WebMessageProtocolTest {
         )
     }
 
+    @Test
+    fun redSaraCannotRouteUndeclaredAfirmaUriMessages() {
+        assertFailure(
+            WebMessageProtocol.parse(
+                validMessage(),
+                Uri.parse("https://reg.redsara.es"),
+            ),
+            WebMessageErrorCode.UNTRUSTED_ORIGIN,
+        )
+    }
+
     private fun validMessage() =
         """{"type":"AFIRMA_URI","requestId":"$REQUEST_ID","uri":"afirma://selectcert"}"""
 

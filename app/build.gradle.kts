@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.bouncycastle.provider)
     implementation(libs.bouncycastle.pkix)
     implementation(libs.okhttp)
+    implementation(libs.xmlsec)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

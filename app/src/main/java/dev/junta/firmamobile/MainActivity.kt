@@ -26,6 +26,7 @@ import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
 import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
+import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningReplySink
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
     private var currentWebView: WebView? = null
     private var showBrowser by mutableStateOf(false)
     private lateinit var signingCoordinator: SigningCoordinator
+    private var currentNavigationEpoch: Long = 0L
     private val signingJobs = SigningJobRegistry()
 
     private val certificateViewModel: CertificateViewModel by viewModels {
@@ -63,16 +65,26 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         webViewStateHolder = WebViewStateHolder(savedInstanceState)
         val app = application as JuntaFirmaApplication
+        val juntaAdapter = JuntaTriPhaseAdapter()
+        val redsaraAdapter = LocalXadesDetachedAdapter()
         signingCoordinator = SigningCoordinator(
             certificateSession = app.certificateSession,
-            adapter = JuntaTriPhaseAdapter(),
+            adapter = juntaAdapter,
             localSignatureEngine = JcaLocalSignatureEngine(),
             currentOrigin = {
                 currentWebView?.url?.let { url ->
                     runCatching { JuntaOriginPolicy.originFor(Uri.parse(url)) }.getOrNull()
                 }
             },
+            currentNavigationEpoch = { currentNavigationEpoch },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
+            adapterResolver = { id ->
+                when (id) {
+                    juntaAdapter.id -> juntaAdapter
+                    redsaraAdapter.id -> redsaraAdapter
+                    else -> null
+                }
+            },
         )
         val paperSystemBar = getColor(R.color.jfm_paper)
         enableEdgeToEdge(
@@ -142,6 +154,7 @@ class MainActivity : ComponentActivity() {
                             certificateViewModel.lock()
                         },
                         onWebViewChanged = { currentWebView = it },
+                        onNavigationEpochChanged = { currentNavigationEpoch = it },
                     )
                 } else {
                     AppRoot(

@@ -22,7 +22,9 @@ class BrowserTrustControllerTest {
 
     @Test
     fun resolvesInitiatorAndOnlyElevatesRedirectFromActiveProfile() {
-        val start = controller.navigate(BuiltInSiteProfiles.catalog.profiles.single().startUrl.toString())
+        val start = controller.navigate(BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("junta-andalucia")
+        }.startUrl.toString())
         assertEquals(TrustMode.TRUSTED_SIGNING, start.resolution.trustMode)
         assertEquals(ProfileId("junta-andalucia"), start.activeProfileId)
 
@@ -46,7 +48,9 @@ class BrowserTrustControllerTest {
 
     @Test
     fun resolvesAllSixTrustModesWithoutCapabilityInheritance() {
-        val base = BuiltInSiteProfiles.catalog.profiles.single()
+        val base = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("junta-andalucia")
+        }
         val clientAuthProfile = base.copy(
             profileId = ProfileId("client-auth-fixture"),
             startUrl = java.net.URI("https://start.client-auth.example/"),

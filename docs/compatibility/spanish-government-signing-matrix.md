@@ -32,8 +32,9 @@ Los estados significan:
 No hay perfiles `VERIFIED_E2E` en esta edición. Además de los contratos
 genéricos, cuatro integraciones publican JavaScript suficiente para marcar su
 contrato estático como `VERIFIED_CONTRACT`: REG/RedSARA, ACCEDA, Gobierno de
-Aragón y Universidad de Zaragoza. Ese estado no significa que estén
-implementadas en la app ni aceptadas por el portal. Junta de Andalucía
+Aragón y Universidad de Zaragoza. REG/RedSARA ya dispone de profile y adapter
+local, pero ese estado no significa aceptación por el portal. Las otras tres
+integraciones no están implementadas. Junta de Andalucía
 permanece `EXPERIMENTAL`.
 
 ## 2. Contratos oficiales del motor común
@@ -62,7 +63,7 @@ rama heredada y no el API general del producto. [C0]
 | Ámbito | Organización / origin exacto investigado | Operación acreditada | TLS cliente | Estado del producto |
 | --- | --- | --- | --- | --- |
 | AGE / PAG | Punto de Acceso General — `https://sede.administracion.gob.es` | Acceso al catálogo y al Registro General | No verificado | `BROWSE_ONLY` |
-| AGE / RedSARA | Registro Electrónico General — `https://reg.redsara.es` | Firma de XML de resumen mediante AutoScript | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
+| AGE / RedSARA | Registro Electrónico General — `https://reg.redsara.es` | Firma de XML de resumen mediante AutoScript | No verificado | `VERIFIED_CONTRACT`; profile/adapter implementados, sin E2E |
 | AGE / ACCEDA | Sede Administraciones Públicas — `https://sede.administracionespublicas.gob.es` | Firma PAdES de solicitud; rama genérica XAdES | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
 | Estatal | AEAT — `https://sede.agenciatributaria.gob.es` | Identificación con certificado instalado en el navegador/dispositivo | No verificado como `ClientCertRequest` | `BROWSE_ONLY` |
 | Estatal | Sede Seguridad Social — `https://sede.seg-social.gob.es` | Firma con AutoFirma | No verificado | `UNSUPPORTED` en móvil para ese flujo |
@@ -319,10 +320,13 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
   flujo como fallo. El certificado no se consume en ese wrapper.
 - **TLS client auth:** no verificado; la evidencia de firma no demuestra ni
   descarta un handshake distinto.
-- **Estado:** `VERIFIED_CONTRACT` estático; no implementado y sin E2E.
+- **Estado:** `VERIFIED_CONTRACT`; profile exacto y adapter XAdES local
+  implementados, sin aceptación E2E del portal.
 - **Evidencia reproducible:** el `main` actual referencia el chunk lazy
-  `chunk-64DWZJJG.js`, cuyo SHA-256 observado el 2026-07-15 fue
+  `chunk-64DWZJJG.js`, cuyo SHA-256 revalidado el 2026-07-18 es
   `980d6d49f4d2c660d3f0375fdcd50dcb8743e866403213f759a1c83dcd5382d9`.
+  `scripts-IIDJLUBL.js` fue revalidado con SHA-256
+  `bd8c89df046876ef6e746f129457bfa37cf2fe45dab9098bcbc86c66d32eb2fe`.
   Un nombre/hash nuevo obliga a revalidar el contrato.
 
 ### P15 — Sede Administraciones Públicas / ACCEDA

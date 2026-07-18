@@ -3,11 +3,15 @@ package dev.junta.firmamobile.afirma
 import android.net.Uri
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.profile.SiteProfile
 import java.util.Locale
 
 class AfirmaUriParser {
     fun parse(rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
-        if (!JuntaOriginPolicy.isAllowed(origin)) {
+        val profile = BuiltInSiteProfiles.releaseRegistry.resolve(origin)?.profile
+        if (profile == null || Capability.AFIRMA_URI !in profile.capabilities) {
             return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNTRUSTED_ORIGIN)
         }
         if (rawUri.length > MAX_URI_CHARS) {
@@ -52,7 +56,7 @@ class AfirmaUriParser {
         }
         CALLBACK_PARAMETERS.forEach { callbackName ->
             parameters[callbackName].orEmpty().forEach { parameter ->
-                if (!isSafeCallbackUrl(parameter.decodedValue)) {
+                if (!isSafeCallbackUrl(parameter.decodedValue, profile)) {
                     return AfirmaParseResult.Failure(
                         AfirmaParseErrorCode.UNSAFE_CALLBACK_URL,
                     )
@@ -111,13 +115,16 @@ class AfirmaUriParser {
         )
     }
 
-    private fun isSafeCallbackUrl(rawUrl: String): Boolean {
+    private fun isSafeCallbackUrl(rawUrl: String, profile: SiteProfile): Boolean {
         val uri = try {
             Uri.parse(rawUrl)
         } catch (_: Exception) {
             return false
         }
-        return uri.fragment == null && JuntaOriginPolicy.isAllowed(uri)
+        if (uri.fragment != null) return false
+        val callbackOrigin = JuntaOriginPolicy.originFor(uri) ?: return false
+        val resolved = BuiltInSiteProfiles.releaseRegistry.resolve(callbackOrigin) ?: return false
+        return resolved.profile.profileId == profile.profileId
     }
 
     private fun hasValidPercentEncoding(value: String): Boolean {

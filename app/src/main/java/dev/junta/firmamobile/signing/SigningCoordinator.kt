@@ -4,6 +4,11 @@ import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.CertificateSigningSnapshot
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.ProtocolOperation
+import dev.junta.firmamobile.profile.SignatureAlgorithm as ProfileSignatureAlgorithm
+import dev.junta.firmamobile.profile.SignatureFormat as ProfileSignatureFormat
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Duration
@@ -65,12 +70,19 @@ enum class SigningCancelReason(
 
 class SigningCoordinator internal constructor(
     private val certificateSession: CertificateSession,
-    private val adapter: SigningProtocolAdapter,
+    adapter: SigningProtocolAdapter,
     private val localSignatureEngine: LocalSignatureEngine,
     private val currentOrigin: () -> TrustedOrigin?,
+    private val currentNavigationEpoch: () -> Long = { 0L },
     private val clock: Clock = Clock.systemUTC(),
     private val pendingStore: PendingSignRequestStore = PendingSignRequestStore(clock),
     private val expiryScheduler: SigningExpiryScheduler,
+    private val adapterResolver: (SigningProtocolId) -> SigningProtocolAdapter? = { id ->
+        adapter.takeIf { it.id == id }
+    },
+    private val profileRegistry: dev.junta.firmamobile.profile.SiteProfileRegistry =
+        BuiltInSiteProfiles.releaseRegistry,
+    private val bindingRegistry: ProtocolAdapterRegistry = BuiltInProtocolAdapterRegistry.registry,
 ) : AutoCloseable {
     private val mutableState = MutableStateFlow<SigningUiState>(SigningUiState.Idle)
     val state: StateFlow<SigningUiState> = mutableState.asStateFlow()
@@ -85,6 +97,10 @@ class SigningCoordinator internal constructor(
     ): SigningPreparationResult {
         val boundaryError = validateBoundary(request, reply)
         if (boundaryError != null) return reject(request, reply, boundaryError)
+        val profile = profileRegistry.profile(ProfileId(request.context.profileId))
+            ?: return reject(request, reply, SigningErrorCode.PROFILE_NOT_ACTIVE)
+        val operationAdapter = adapterResolver(request.protocolId)
+            ?: return reject(request, reply, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         if (pending != null || active != null) {
             return reject(request, reply, SigningErrorCode.PROTOCOL_FAILED)
         }
@@ -108,6 +124,7 @@ class SigningCoordinator internal constructor(
             payloadFingerprint = payloadFingerprint,
             certificateSnapshot = certificateSnapshot,
             reply = reply,
+            adapter = operationAdapter,
         )
         pending = operation
         try {
@@ -126,8 +143,8 @@ class SigningCoordinator internal constructor(
         mutableState.value = SigningUiState.AwaitingConfirmation(
             requestId = summary.requestId,
             siteHost = summary.context.origin.host,
-            profileName = PROFILE_NAME,
-            supportLevel = SUPPORT_LEVEL,
+            profileName = profile.displayName,
+            supportLevel = profile.compatibilityStatus.name,
             safeDescription = summary.safeDescription,
             format = summary.format.displayName(),
             algorithm = summary.algorithm.displayName(),
@@ -173,7 +190,7 @@ class SigningCoordinator internal constructor(
             }
             val identity = certificateSession.identityForSigning(operation.certificateSnapshot)
                 ?: return fail(operation, SigningErrorCode.CERTIFICATE_LOCKED)
-            val preSign = when (val prepared = adapter.prepare(request, identity.chain)) {
+            val preSign = when (val prepared = operation.adapter.prepare(request, identity.chain)) {
                 is ProtocolPrepareResult.Failure -> return fail(operation, prepared.code)
                 is ProtocolPrepareResult.Success -> prepared.preSign
             }
@@ -195,7 +212,7 @@ class SigningCoordinator internal constructor(
                     operationValidationError(operation, identity)?.let { code ->
                         return fail(operation, code)
                     }
-                    adapter.complete(request, ownedPreSign, localSignature)
+                    operation.adapter.complete(request, ownedPreSign, localSignature)
                 } finally {
                     localSignature.close()
                 }
@@ -315,25 +332,39 @@ class SigningCoordinator internal constructor(
         reply: SigningReplySink,
     ): SigningErrorCode? {
         if (reply.requestId != request.requestId) return SigningErrorCode.INVALID_REQUEST
-        if (request.protocolId != adapter.id) return SigningErrorCode.UNSUPPORTED_PROTOCOL
-        if (request.context.profileId != PROFILE_ID ||
-            request.context.profileVersion != PROFILE_VERSION
-        ) {
-            return SigningErrorCode.PROFILE_NOT_ACTIVE
-        }
-        if (request.context.origin.serialized != PORTAL_ORIGIN) {
+        val profileId = runCatching { ProfileId(request.context.profileId) }.getOrNull()
+            ?: return SigningErrorCode.PROFILE_NOT_ACTIVE
+        val profile = profileRegistry.profile(profileId)
+            ?: return SigningErrorCode.PROFILE_NOT_ACTIVE
+        if (request.context.profileVersion != profile.profileVersion) return SigningErrorCode.PROFILE_NOT_ACTIVE
+        if (profile.initiatorOrigins.none { it.toTrustedOrigin() == request.context.origin }) {
             return SigningErrorCode.ORIGIN_NOT_ALLOWED
+        }
+        val operation = profile.operationPolicies[ProtocolOperation.SIGN]
+            ?: return SigningErrorCode.UNSUPPORTED_PROTOCOL
+        val binding = bindingRegistry.resolve(profileId, ProtocolOperation.SIGN)
+            ?: return SigningErrorCode.UNSUPPORTED_PROTOCOL
+        if (binding.signingProtocolId != request.protocolId ||
+            adapterResolver(request.protocolId)?.id != request.protocolId
+        ) return SigningErrorCode.UNSUPPORTED_PROTOCOL
+        val expectedAlgorithm = when (request.algorithm) {
+            SigningAlgorithm.SHA1_WITH_RSA -> ProfileSignatureAlgorithm.SHA1_WITH_RSA
+            SigningAlgorithm.SHA256_WITH_RSA -> ProfileSignatureAlgorithm.SHA256_WITH_RSA
+            SigningAlgorithm.SHA512_WITH_RSA -> ProfileSignatureAlgorithm.SHA512_WITH_RSA
+        }
+        val expectedFormat = when (request.format) {
+            SigningFormat.CADES -> ProfileSignatureFormat.CADES
+            SigningFormat.XADES -> ProfileSignatureFormat.XADES
+        }
+        if (expectedAlgorithm !in operation.algorithms || expectedFormat != operation.format) {
+            return SigningErrorCode.UNSUPPORTED_PROTOCOL
         }
         val age = Duration.between(request.context.observedAt, clock.instant())
         if (age.isNegative) return SigningErrorCode.INVALID_REQUEST
         if (age >= REQUEST_LIFETIME) return SigningErrorCode.REQUEST_EXPIRED
-        if (request.format != SigningFormat.CADES) return SigningErrorCode.UNSUPPORTED_PROTOCOL
-        if (request.algorithm != SigningAlgorithm.SHA1_WITH_RSA &&
-            request.algorithm != SigningAlgorithm.SHA256_WITH_RSA
+        return if (currentOriginSafely() == request.context.origin &&
+            currentNavigationEpochSafely() == request.context.navigationEpoch
         ) {
-            return SigningErrorCode.UNSUPPORTED_PROTOCOL
-        }
-        return if (currentOriginSafely() == request.context.origin) {
             null
         } else {
             SigningErrorCode.ORIGIN_NOT_ALLOWED
@@ -405,12 +436,19 @@ class SigningCoordinator internal constructor(
     }
 
     private fun originStillMatches(operation: Operation): Boolean =
-        currentOriginSafely() == operation.summary.context.origin
+        currentOriginSafely() == operation.summary.context.origin &&
+            currentNavigationEpochSafely() == operation.summary.context.navigationEpoch
 
     private fun currentOriginSafely(): TrustedOrigin? = try {
         currentOrigin()
     } catch (_: Exception) {
         null
+    }
+
+    private fun currentNavigationEpochSafely(): Long = try {
+        currentNavigationEpoch().takeIf { it >= 0L } ?: Long.MIN_VALUE
+    } catch (_: Exception) {
+        Long.MIN_VALUE
     }
 
     private fun sha256(payload: ByteArray): ByteArray =
@@ -430,11 +468,13 @@ class SigningCoordinator internal constructor(
 
     private fun SigningFormat.displayName(): String = when (this) {
         SigningFormat.CADES -> "CAdES"
+        SigningFormat.XADES -> "XAdES Detached"
     }
 
     private fun SigningAlgorithm.displayName(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
         SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+        SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
     }
 
     private class Operation(
@@ -442,6 +482,7 @@ class SigningCoordinator internal constructor(
         val payloadFingerprint: ByteArray,
         val certificateSnapshot: CertificateSigningSnapshot,
         val reply: SigningReplySink,
+        val adapter: SigningProtocolAdapter,
     ) {
         private val terminalClaim = AtomicReference<TerminalClaim?>(null)
         private var expiryHandle: SigningExpiryHandle? = null
@@ -489,11 +530,6 @@ class SigningCoordinator internal constructor(
     }
 
     private companion object {
-        const val PROFILE_ID = "junta-andalucia"
-        const val PROFILE_VERSION = 1
-        const val PROFILE_NAME = "Junta de Andalucía"
-        const val SUPPORT_LEVEL = "EXPERIMENTAL"
-        const val PORTAL_ORIGIN = "https://www.juntadeandalucia.es"
         const val SHA_256 = "SHA-256"
         val REQUEST_LIFETIME: Duration = Duration.ofMinutes(2)
     }

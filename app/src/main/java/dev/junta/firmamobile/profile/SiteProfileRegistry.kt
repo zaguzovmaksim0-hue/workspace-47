@@ -88,7 +88,7 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 1,
+  "catalogVersion": 2,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -137,7 +137,7 @@ object BuiltInSiteProfiles {
           "allowedExtraProperties": []
         }
       ],
-      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "capabilities": ["SIGN", "LEGACY_SHA1", "AFIRMA_URI"],
       "clientAuthPolicy": null,
       "certificateRules": {
         "allowedKeyAlgorithms": ["RSA"],
@@ -147,6 +147,50 @@ object BuiltInSiteProfiles {
         {
           "url": "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
           "reviewedOn": "2026-07-15"
+        }
+      ]
+    },
+    {
+      "profileId": "reg-age-redsara",
+      "profileVersion": 1,
+      "displayName": "Registro Electrónico General (REG-AGE)",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "ENABLED",
+      "startUrl": "https://reg.redsara.es/es/",
+      "initiatorOrigins": ["https://reg.redsara.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma del resumen XML del registro",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "autoscript-sign-callback-v1",
+          "capabilities": ["SIGN"],
+          "endpointId": null,
+          "algorithms": ["SHA512_WITH_RSA"],
+          "format": "XADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {},
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": ["RSA"],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://reg.redsara.es/es/chunk-64DWZJJG.js",
+          "reviewedOn": "2026-07-18"
+        },
+        {
+          "url": "https://reg.redsara.es/es/scripts-IIDJLUBL.js",
+          "reviewedOn": "2026-07-18"
         }
       ]
     }

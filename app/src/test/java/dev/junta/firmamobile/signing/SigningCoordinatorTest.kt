@@ -104,6 +104,70 @@ class SigningCoordinatorTest {
     }
 
     @Test
+    fun changedNavigationEpochAfterConfirmationFailsBeforeNetworkOrPrivateKeyUse() = runTest {
+        var epoch = 4L
+        val localAdapter = RecordingAdapter()
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = localAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            currentNavigationEpoch = { epoch },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(request(navigationEpoch = epoch), reply)
+
+        epoch++
+        val result = localCoordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.ORIGIN_NOT_ALLOWED),
+            result,
+        )
+        assertTrue(localAdapter.events.isEmpty())
+        assertTrue(localEngine.events.isEmpty())
+        assertEquals(listOf("failure:ORIGIN_NOT_ALLOWED"), reply.events)
+    }
+
+    @Test
+    fun regAgeProfileRoutesThroughLocalXadesAdapterAndDeliversVerifiableResult() = runTest {
+        val redOrigin = TrustedOrigin("https", "reg.redsara.es", 443)
+        val redAdapter = LocalXadesDetachedAdapter(clock)
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = RecordingAdapter(),
+            localSignatureEngine = JcaLocalSignatureEngine(),
+            currentOrigin = { redOrigin },
+            currentNavigationEpoch = { 9L },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+            adapterResolver = { id -> redAdapter.takeIf { it.id == id } },
+        )
+        val request = redRequest(redOrigin, navigationEpoch = 9L)
+        val reply = RecordingReply(REQUEST_ID)
+
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request, reply))
+        val state = localCoordinator.state.value as SigningUiState.AwaitingConfirmation
+        assertEquals("Registro Electrónico General (REG-AGE)", state.profileName)
+        assertEquals("XAdES Detached", state.format)
+        assertEquals("SHA512withRSA", state.algorithm)
+
+        assertEquals(
+            SigningExecutionResult.Delivered(REQUEST_ID),
+            localCoordinator.confirm(REQUEST_ID),
+        )
+        val result = checkNotNull(reply.deliveredSignature)
+        val fingerprint = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(identity.certificate.encoded)
+        assertTrue(XadesDetachedCodec.validate(result, fingerprint))
+        result.fill(0)
+        fingerprint.fill(0)
+    }
+
+    @Test
     fun changedOrLockedCertificateAfterConfirmationFailsBeforeNetwork() = runTest {
         val reply = RecordingReply(REQUEST_ID)
         coordinator.prepare(request(), reply)
@@ -363,6 +427,7 @@ class SigningCoordinatorTest {
 
     private fun request(
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA,
+        navigationEpoch: Long = 0L,
     ) = NormalizedSignRequest(
         requestId = REQUEST_ID,
         protocolId = JuntaTriPhaseAdapter.ID,
@@ -371,12 +436,36 @@ class SigningCoordinatorTest {
             profileVersion = 1,
             origin = PORTAL_ORIGIN,
             navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),
+            navigationEpoch = navigationEpoch,
             observedAt = NOW,
         ),
         algorithm = algorithm,
         format = SigningFormat.CADES,
         safeDescription = "Autenticación con certificado",
         payload = PAYLOAD.copyOf(),
+    )
+
+    private fun redRequest(
+        origin: TrustedOrigin,
+        navigationEpoch: Long,
+    ) = NormalizedSignRequest(
+        requestId = REQUEST_ID,
+        protocolId = LocalXadesDetachedAdapter.ID,
+        context = SigningContext(
+            profileId = "reg-age-redsara",
+            profileVersion = 1,
+            origin = origin,
+            navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),
+            navigationEpoch = navigationEpoch,
+            observedAt = NOW,
+        ),
+        algorithm = SigningAlgorithm.SHA512_WITH_RSA,
+        format = SigningFormat.XADES,
+        safeDescription = "Firma del resumen XML del registro",
+        payload = MiniAppletPayloadCodec.encode(
+            "<resumen><dato>synthetic-registry</dato></resumen>".encodeToByteArray(),
+            "",
+        ),
     )
 
     private class RecordingAdapter : SigningProtocolAdapter {

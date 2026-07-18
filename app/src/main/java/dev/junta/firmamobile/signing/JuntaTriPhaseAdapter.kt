@@ -65,6 +65,7 @@ class JuntaTriPhaseAdapter internal constructor(
                     when (algorithm) {
                         ProfileSignatureAlgorithm.SHA1_WITH_RSA -> SigningAlgorithm.SHA1_WITH_RSA
                         ProfileSignatureAlgorithm.SHA256_WITH_RSA -> SigningAlgorithm.SHA256_WITH_RSA
+                        ProfileSignatureAlgorithm.SHA512_WITH_RSA -> error("unsupported Junta algorithm")
                     }
                 },
             )

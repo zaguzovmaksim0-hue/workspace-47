@@ -21,10 +21,12 @@ value class SigningProtocolId(val value: String) {
 enum class SigningAlgorithm {
     SHA1_WITH_RSA,
     SHA256_WITH_RSA,
+    SHA512_WITH_RSA,
 }
 
 enum class SigningFormat {
     CADES,
+    XADES,
 }
 
 enum class SigningErrorCode {
@@ -50,8 +52,11 @@ data class SigningContext(
     val profileVersion: Int,
     val origin: TrustedOrigin,
     val navigationId: NavigationId,
+    val navigationEpoch: Long = 0L,
     val observedAt: Instant,
-)
+) {
+    init { require(navigationEpoch >= 0L) }
+}
 
 class NormalizedSignRequest internal constructor(
     val requestId: UUID,

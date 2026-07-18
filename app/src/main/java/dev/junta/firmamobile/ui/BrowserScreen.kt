@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -84,17 +85,26 @@ fun BrowserScreen(
     onLockCertificate: () -> Unit,
     onClearSession: () -> Unit,
     onWebViewChanged: (WebView?) -> Unit,
+    onNavigationEpochChanged: (Long) -> Unit = {},
 ) {
     val context = LocalContext.current
     val webViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
     val bridgeRef = remember { AtomicReference<WebMessageBridgeAttachment?>() }
     val discardHistory = remember { AtomicBoolean(false) }
+    val navigationEpoch = remember { mutableLongStateOf(0L) }
     val navigationPolicy = remember { JuntaNavigationPolicy() }
     var pendingRequest by remember { mutableStateOf<AfirmaRequest?>(null) }
     var blockedReason by remember { mutableStateOf<NavigationBlockReason?>(null) }
     var browserError by remember { mutableStateOf<BrowserErrorCode?>(null) }
     var compatibilityError by remember { mutableStateOf(false) }
     var currentUrl by remember { mutableStateOf(JuntaOriginPolicy.START_URL) }
+
+    fun advanceNavigationEpoch() {
+        bridgeRef.get()?.abandonMiniAppletRequests()
+        check(navigationEpoch.longValue != Long.MAX_VALUE)
+        navigationEpoch.longValue++
+        onNavigationEpochChanged(navigationEpoch.longValue)
+    }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
         pendingRequest = request
@@ -119,6 +129,7 @@ fun BrowserScreen(
             }
 
             override fun onTopLevelNavigationStarted(url: String) {
+                advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
             }
 
@@ -129,6 +140,7 @@ fun BrowserScreen(
     }
 
     fun goBack() {
+        advanceNavigationEpoch()
         onCancelSigning(SigningCancelReason.NAVIGATION, null)
         val webView = webViewRef.get()
         if (webView?.canGoBack() == true) webView.goBack() else onExitBrowser()
@@ -150,6 +162,7 @@ fun BrowserScreen(
         }
         when (val decision = navigationPolicy.decide(candidate, currentUrl)) {
             NavigationDecision.AllowInWebView -> {
+                advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
                 browserError = null
                 blockedReason = null
@@ -185,6 +198,7 @@ fun BrowserScreen(
         onAddressSubmitted = ::submitAddress,
         onBack = ::goBack,
         onHome = {
+            advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.NAVIGATION, null)
             browserError = null
             blockedReason = null
@@ -192,6 +206,7 @@ fun BrowserScreen(
             webViewRef.get()?.loadUrl(JuntaOriginPolicy.START_URL)
         },
         onReload = {
+            advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.RELOAD, null)
             browserError = null
             webViewRef.get()?.reload()
@@ -276,6 +291,14 @@ fun BrowserScreen(
                             },
                             onMiniAppletCancel = onMiniAppletCancel,
                             miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
+                            currentNavigationEpoch = { navigationEpoch.longValue },
+                            currentOrigin = {
+                                webView.url?.let { url ->
+                                    runCatching {
+                                        JuntaOriginPolicy.originFor(Uri.parse(url))
+                                    }.getOrNull()
+                                }
+                            },
                         ).attach(webView)
                         bridgeRef.set(attachment)
                         if (!attachment.listenerAttached ||

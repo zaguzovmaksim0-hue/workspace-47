@@ -135,7 +135,8 @@ object SiteProfileCatalogParser {
             ) {
                 require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
                 require(p.capabilities.none {
-                    it == Capability.SIGN || it == Capability.SELECT_CERTIFICATE || it == Capability.CLIENT_TLS_AUTH
+                    it == Capability.SIGN || it == Capability.SELECT_CERTIFICATE ||
+                        it == Capability.CLIENT_TLS_AUTH || it == Capability.AFIRMA_URI
                 })
             }
             require(p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED || p.activation == ProfileActivation.DISABLED)
@@ -149,19 +150,29 @@ object SiteProfileCatalogParser {
                     require(Capability.LEGACY_SHA1 in p.capabilities && Capability.LEGACY_SHA1 in op.capabilities)
                 }
                 if (op.operation == ProtocolOperation.SIGN) {
-                    require(op.endpointId != null && op.algorithms.isNotEmpty() && op.format != null)
-                    require(op.packaging != null && op.mode != null && Capability.SIGN in op.capabilities)
+                    require(op.algorithms.isNotEmpty() && op.format != null)
+                    require(op.packaging != null && Capability.SIGN in op.capabilities)
                 }
                 if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
                     require(op.operation == ProtocolOperation.SIGN)
-                    require(op.format == SignatureFormat.CADES)
                     require(op.packaging == SignaturePackaging.DETACHED)
-                    require(op.mode == SignatureMode.EXPLICIT)
-                    require(op.fixedExtraProperties["serverUrl"] ==
-                        op.endpointId?.let(p.endpoints::get)?.url?.toString())
-                    require(op.fixedExtraProperties.keys == setOf("serverUrl", "mode"))
-                    require(op.fixedExtraProperties["mode"] == "explicit")
                     require(op.allowedExtraProperties.isEmpty())
+                    when (op.format) {
+                        SignatureFormat.CADES -> {
+                            require(op.endpointId != null && op.mode == SignatureMode.EXPLICIT)
+                            require(op.fixedExtraProperties["serverUrl"] ==
+                                op.endpointId.let(p.endpoints::get)?.url?.toString())
+                            require(op.fixedExtraProperties.keys == setOf("serverUrl", "mode"))
+                            require(op.fixedExtraProperties["mode"] == "explicit")
+                        }
+                        SignatureFormat.XADES -> {
+                            require(op.endpointId == null && op.mode == null)
+                            require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                            require(op.fixedExtraProperties.isEmpty())
+                        }
+                        SignatureFormat.PADES, SignatureFormat.FACTURAE -> error("unsupported adapter format")
+                        null -> error("signing format required")
+                    }
                 }
             }
             p.endpoints.values.forEach { endpoint ->
@@ -203,7 +214,10 @@ object SiteProfileCatalogParser {
         value.length <= 128 && CONTENT_TYPE.matches(value)
 
     private val REGISTERED_ADAPTERS = setOf("miniapplet-autoscript-v1")
-    private val REGISTERED_CALLBACKS = setOf("miniapplet-sign-callback-v1")
+    private val REGISTERED_CALLBACKS = setOf(
+        "miniapplet-sign-callback-v1",
+        "autoscript-sign-callback-v1",
+    )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
 }

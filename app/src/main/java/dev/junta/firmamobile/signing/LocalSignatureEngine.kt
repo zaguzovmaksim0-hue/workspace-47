@@ -101,4 +101,5 @@ class JcaLocalSignatureEngine internal constructor(
 internal fun SigningAlgorithm.jcaName(): String = when (this) {
     SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
     SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+    SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
 }

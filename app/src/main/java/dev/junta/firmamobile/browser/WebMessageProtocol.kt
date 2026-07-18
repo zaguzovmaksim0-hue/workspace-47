@@ -4,6 +4,8 @@ import android.net.Uri
 import dev.junta.firmamobile.afirma.AfirmaUriParser
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.Capability
 import org.json.JSONObject
 
 data class WebBridgeMessage(
@@ -44,6 +46,10 @@ object WebMessageProtocol {
         }
         val trustedOrigin = JuntaOriginPolicy.originFor(sourceOrigin)
             ?: return WebMessageParseResult.Failure(WebMessageErrorCode.UNTRUSTED_ORIGIN)
+        val profile = BuiltInSiteProfiles.releaseRegistry.resolve(trustedOrigin)?.profile
+        if (profile == null || Capability.AFIRMA_URI !in profile.capabilities) {
+            return WebMessageParseResult.Failure(WebMessageErrorCode.UNTRUSTED_ORIGIN)
+        }
         val json = try {
             JSONObject(rawMessage)
         } catch (_: Exception) {

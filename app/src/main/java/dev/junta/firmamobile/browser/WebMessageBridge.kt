@@ -8,9 +8,14 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningErrorCode
+import dev.junta.firmamobile.signing.SigningContext
+import java.time.Clock
+import java.time.Duration
 import java.util.UUID
 
 class WebMessageBridge(
@@ -22,8 +27,15 @@ class WebMessageBridge(
     private val router: WebMessageRouter = WebMessageRouter(),
     private val miniAppletAdapter: MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(),
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
+    private val currentNavigationEpoch: () -> Long = { 0L },
+    private val currentOrigin: () -> TrustedOrigin? = { null },
+    clock: Clock = Clock.systemUTC(),
 ) {
-    private val replyRegistry = MiniAppletReplyRegistry()
+    private val replyRegistry = MiniAppletReplyRegistry(
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentOrigin = currentOrigin,
+        clock = clock,
+    )
 
     fun attach(webView: WebView): WebMessageBridgeAttachment {
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
@@ -77,6 +89,7 @@ class WebMessageBridge(
                 rawMessage = rawMessage,
                 sourceOrigin = sourceOrigin,
                 isMainFrame = isMainFrame,
+                navigationEpoch = currentNavigationEpoch(),
             )
         ) {
             is MiniAppletBridgeRouteResult.Accepted -> {
@@ -160,7 +173,7 @@ class WebMessageBridge(
         }
         val reply = replyRegistry.create(
             requestId = request.normalized.requestId,
-            navigationId = request.normalized.context.navigationId,
+            context = request.normalized.context,
             postMessage = replyProxy::postMessage,
         )
         if (reply == null) {
@@ -241,26 +254,39 @@ class WebMessageBridgeAttachment internal constructor(
     }
 }
 
-internal class MiniAppletReplyRegistry {
+internal class MiniAppletReplyRegistry(
+    private val currentNavigationEpoch: () -> Long = { 0L },
+    private val currentOrigin: () -> TrustedOrigin? = { null },
+    private val clock: Clock = Clock.systemUTC(),
+) {
     private val pending = linkedMapOf<UUID, PendingReply>()
     private val seen = linkedSetOf<UUID>()
 
     @Synchronized
     fun create(
         requestId: UUID,
-        navigationId: NavigationId,
+        context: SigningContext,
         postMessage: (String) -> Unit,
     ): MiniAppletReplyChannel? {
         if (requestId in seen || pending.isNotEmpty() || seen.size >= MAX_SEEN_REQUESTS) {
             return null
         }
+        val binding = PendingBinding(
+            profileId = context.profileId,
+            origin = context.origin,
+            navigationId = context.navigationId,
+            navigationEpoch = context.navigationEpoch,
+            expiresAtMillis = clock.millis() + REPLY_TTL.toMillis(),
+        )
+        if (!isCurrent(binding)) return null
         lateinit var channel: MiniAppletReplyChannel
         channel = MiniAppletReplyChannel(
             requestId = requestId,
             postMessage = postMessage,
             onTerminal = { remove(requestId, channel) },
+            canDeliver = { isCurrent(binding) },
         )
-        pending[requestId] = PendingReply(navigationId, channel)
+        pending[requestId] = PendingReply(binding, channel)
         seen += requestId
         return channel
     }
@@ -268,7 +294,7 @@ internal class MiniAppletReplyRegistry {
     @Synchronized
     fun abandon(requestId: UUID, navigationId: NavigationId): Boolean {
         val pendingReply = pending[requestId]
-            ?.takeIf { it.navigationId == navigationId }
+            ?.takeIf { it.binding.navigationId == navigationId }
             ?: return false
         return pendingReply.channel.abandon()
     }
@@ -285,12 +311,30 @@ internal class MiniAppletReplyRegistry {
         if (pending[requestId]?.channel === channel) pending.remove(requestId)
     }
 
+    private fun isCurrent(binding: PendingBinding): Boolean = runCatching {
+        if (clock.millis() >= binding.expiresAtMillis ||
+            currentNavigationEpoch() != binding.navigationEpoch ||
+            currentOrigin() != binding.origin
+        ) return@runCatching false
+        BuiltInSiteProfiles.releaseRegistry.resolve(binding.origin)
+            ?.profile?.profileId?.value == binding.profileId
+    }.getOrDefault(false)
+
     private companion object {
         const val MAX_SEEN_REQUESTS = 64
+        val REPLY_TTL: Duration = Duration.ofMinutes(2)
     }
 
     private data class PendingReply(
-        val navigationId: NavigationId,
+        val binding: PendingBinding,
         val channel: MiniAppletReplyChannel,
+    )
+
+    private data class PendingBinding(
+        val profileId: String,
+        val origin: TrustedOrigin,
+        val navigationId: NavigationId,
+        val navigationEpoch: Long,
+        val expiresAtMillis: Long,
     )
 }

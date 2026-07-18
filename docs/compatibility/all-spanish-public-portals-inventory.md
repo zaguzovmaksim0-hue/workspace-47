@@ -524,9 +524,9 @@ records:
     protocol_evidence: "AutoScript.sign estático; el wrapper consume signatureB64 y llama a saveXMLAutoSign."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["P14", "P14B", "P14C", "P14D"]
-    reason: "Contrato JS estático probado; endpoint servidor runtime, implementación y aceptación E2E no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Fixture sanitizada, adapter limitado y E2E propio."
+    reason: "Contrato JS estático probado y profile/adapter local implementados; endpoint servidor runtime y aceptación E2E no verificados."
+    reviewed_at: "2026-07-18"
+    next_gate: "E2E seguro hasta la aceptación de firma, sin envío administrativo final."
 
   - inventory_id: "ES-PUB-0003"
     surface_key: "age-acceda"

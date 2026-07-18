@@ -114,13 +114,16 @@
     }
     const successCallback = args[4];
     const errorCallback = args[5];
+    const isJuntaCades =
+      (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
+      args[2] === "CAdES" && typeof args[3] === "string" &&
+      args[3].length <= maxExtraPropertiesChars;
+    const isRegXades = args[1] === "SHA512withRSA" &&
+      args[2] === "XAdES Detached" && args[3] === null;
     if (args.length !== 6 || typeof successCallback !== "function" ||
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
-        !base64Pattern.test(args[0]) ||
-        (args[1] !== "SHA1withRSA" && args[1] !== "SHA256withRSA") ||
-        args[2] !== "CAdES" || typeof args[3] !== "string" ||
-        args[3].length > maxExtraPropertiesChars) {
+        !base64Pattern.test(args[0]) || (!isJuntaCades && !isRegXades)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -388,6 +391,26 @@
     }, { once: true });
   } else {
     wrapMiniApplet(window.MiniApplet);
+  }
+
+  const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
+  if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
+    let autoScript = wrapMiniApplet(window.AutoScript);
+    Object.defineProperty(window, "AutoScript", {
+      enumerable: true,
+      configurable: true,
+      get() {
+        return autoScript;
+      },
+      set(value) {
+        autoScript = wrapMiniApplet(value);
+      }
+    });
+    window.addEventListener("DOMContentLoaded", () => {
+      autoScript = wrapMiniApplet(autoScript);
+    }, { once: true });
+  } else {
+    wrapMiniApplet(window.AutoScript);
   }
 
   if (document.readyState === "loading") {

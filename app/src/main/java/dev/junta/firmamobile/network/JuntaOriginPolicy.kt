@@ -28,17 +28,21 @@ object JuntaOriginPolicy {
     const val START_URL =
         "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
 
-    private val profile by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        checkNotNull(BuiltInSiteProfiles.releaseRegistry.profile(ProfileId("junta-andalucia")))
-    }
-
     val allowedHosts: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        (profile.initiatorOrigins + profile.redirectOrigins + profile.trustedBrowseOrigins)
+        BuiltInSiteProfiles.catalog.profiles.asSequence()
+            .mapNotNull { BuiltInSiteProfiles.releaseRegistry.profile(it.profileId) }
+            .flatMap { profile ->
+                (profile.initiatorOrigins + profile.redirectOrigins + profile.trustedBrowseOrigins)
+                    .asSequence()
+            }
             .mapTo(linkedSetOf()) { it.host }
     }
 
-    val webMessageOriginRules: Set<String> = allowedHosts.mapTo(linkedSetOf()) { host ->
-        "https://$host"
+    val webMessageOriginRules: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        BuiltInSiteProfiles.catalog.profiles.asSequence()
+            .mapNotNull { BuiltInSiteProfiles.releaseRegistry.profile(it.profileId) }
+            .flatMap { it.initiatorOrigins.asSequence() }
+            .mapTo(linkedSetOf()) { it.serialized }
     }
 
     fun isAllowed(uri: Uri): Boolean = originFor(uri) != null

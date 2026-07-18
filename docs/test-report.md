@@ -281,3 +281,43 @@ disponible en Termux; no se presenta un mockup como screenshot real.
 El diff V01 no toca `MainActivity`, certificate logic, signing, WebView,
 network, trust, bridge ni protocol. El artefacto sanitizado de máscaras está en
 `/storage/emulated/0/Codex/Outputs/junta-firma-visual-qa-20260716/launcher-mask-preview.png`.
+
+## Milestone P07 — REG-AGE / RedSARA — 2026-07-18
+
+El catálogo release incorpora un segundo profile `TRUSTED_SIGNING` limitado al
+origin exacto `https://reg.redsara.es`. Su contrato se revalidó contra el
+JavaScript oficial: `AutoScript.sign(xml, "SHA512withRSA", "XAdES Detached",
+null, success, error)`. No se permite redirect, endpoint servidor inferido,
+algoritmo alternativo ni `extraProperties` no nulas.
+
+El adapter local genera XAdES-BES 1.3.2 detached en contenedor `AFIRMA`, firma
+`SignedInfo` con SHA512withRSA y valida antes de devolver el resultado las tres
+referencias SHA-512, el fingerprint del certificado y la firma RSA. El parser
+XML deshabilita DTD, entidades externas y XInclude. Junta conserva su adapter
+tri-phase y sus tuples anteriores sin fallback entre perfiles.
+
+El callback AutoScript/MiniApplet es one-shot y queda vinculado a profile,
+origin exacto, navigation ID, navigation epoch, request ID y TTL de dos
+minutos. Replay, iframe, origin incorrecto, navegación, reload, cancelación y
+expiración fallan cerrados; firma y certificado temporales se limpian.
+
+El estado de producto permanece `VERIFIED_CONTRACT` / `IMPLEMENTED_NOT_E2E`:
+los contract tests no demuestran aceptación por RedSARA y no se publica como
+`VERIFIED_E2E` hasta completar un escenario seguro real.
+
+Validación final: 228 unit tests, 0 failures/errors/skips; `lintDebug`,
+`lintRelease`, `assembleDebug`, `assembleRelease` y
+`assembleDebugAndroidTest` PASS. En Android real pasan cuatro pruebas focused:
+creación XAdES y verificación mediante el validador XMLDSig estándar de
+Santuario, instalación document-start, interceptación exacta AutoScript
+RedSARA y regresión MiniApplet Junta. Los APK debug/release verifican firma v2
+y `zipalign -c 4`; el manifest release mantiene `allowBackup=false` y
+`usesCleartextTraffic=false`.
+
+La build debug se instaló mediante Shizuku/rish con `pm install -r -t`, salida
+exacta `Success`, código interno 0 y SHA-256 idéntico entre el artefacto, la
+copia temporal y `base.apk`. Se lanzó la `MainActivity` normal y se eliminaron
+el APK temporal y el paquete de instrumentación. El E2E real del portal no se
+ejecutó: no existe todavía un escenario público seguro que confirme aceptación
+sin avanzar hacia una presentación administrativa, por lo que no se eleva el
+estado.

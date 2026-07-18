@@ -109,6 +109,7 @@ class AfirmaUriParserTest {
             "https%3A%2F%2Fevil.example%2Fsign",
             "https%3A%2F%2F127.0.0.1%2Fsign",
             "javascript%3Aalert%281%29",
+            "https%3A%2F%2Freg.redsara.es%2Fcallback",
             "https%3A%2F%2Fuser%40ws024.juntadeandalucia.es%2Fsign",
             "https%3A%2F%2Fws024.juntadeandalucia.es%3A8443%2Fsign",
         )
@@ -122,6 +123,17 @@ class AfirmaUriParserTest {
                 AfirmaParseErrorCode.UNSAFE_CALLBACK_URL,
             )
         }
+    }
+
+    @Test
+    fun redSaraOriginCannotOpenUndeclaredAfirmaUriProtocol() {
+        assertFailure(
+            parser.parse(
+                "afirma://sign?algorithm=SHA512withRSA&format=XAdES",
+                TrustedOrigin("https", "reg.redsara.es", 443),
+            ),
+            AfirmaParseErrorCode.UNTRUSTED_ORIGIN,
+        )
     }
 
     @Test

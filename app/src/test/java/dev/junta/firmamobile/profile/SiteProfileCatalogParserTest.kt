@@ -30,7 +30,9 @@ class SiteProfileCatalogParserTest {
 
     @Test
     fun preservesTheJuntaGoldenContract() {
-        val profile = BuiltInSiteProfiles.catalog.profiles.single()
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("junta-andalucia")
+        }
         assertEquals(ProfileId("junta-andalucia"), profile.profileId)
         assertEquals(CompatibilityStatus.EXPERIMENTAL, profile.compatibilityStatus)
         assertEquals(ProfileActivation.ENABLED, profile.activation)
@@ -68,13 +70,35 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactRegAgeRedSaraContract() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("reg-age-redsara")
+        }
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.ENABLED, profile.activation)
+        assertEquals("https://reg.redsara.es/es/", profile.startUrl.toString())
+        assertEquals(setOf("https://reg.redsara.es"), profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized })
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(setOf(SignatureAlgorithm.SHA512_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.XADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertNull(operation.mode)
+        assertNull(operation.endpointId)
+        assertTrue(operation.fixedExtraProperties.isEmpty())
+        assertEquals(CallbackContractId("autoscript-sign-callback-v1"), operation.callbackContractId)
+    }
+
+    @Test
     fun rejectsDuplicateUnknownAndUnsupportedSchemaKeys() {
         val json = BuiltInSiteProfiles.JSON
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 1", "\"unknown\": true, \"catalogVersion\": 1"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 2", "\"unknown\": true, \"catalogVersion\": 2"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))
