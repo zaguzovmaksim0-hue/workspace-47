@@ -1063,15 +1063,15 @@ records:
       - "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"
       - "https://tramita.unizar.es/afirma-signature-storage/StorageService"
       - "https://tramita.unizar.es/afirma-signature-retriever/RetrieveService"
-    discovery_state: "REVIEWED"
+    discovery_state: "PROFILE_IMPLEMENTED"
     inventory_status: "VERIFIED_CONTRACT"
     operation_summary: "Firma de challenge de sesión precalculado; tri-phase en móvil."
     protocol_evidence: "Integration JS y AutoScript públicos fijan formato, algoritmo, serverUrl y Storage/Retrieve."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["P17", "P17A", "P17B"]
-    reason: "Contrato JS estático probado; no existe implementación habilitada ni aceptación E2E."
-    reviewed_at: "2026-07-15"
-    next_gate: "Fixture sanitizada, advertencia legacy, adapter limitado y E2E propio."
+    reason: "Profile y adapter tri-phase limitados implementados; falta aceptación E2E real del portal."
+    reviewed_at: "2026-07-18"
+    next_gate: "E2E seguro de autenticación sin iniciar una presentación administrativa."
 ```
 
 ### 7.2. Directorio oficial de sedes AGE [D11]

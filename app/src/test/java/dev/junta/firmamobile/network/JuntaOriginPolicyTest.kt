@@ -27,6 +27,7 @@ class JuntaOriginPolicyTest {
             "ws024.juntadeandalucia.es",
             "ws050.juntadeandalucia.es",
             "reg.redsara.es",
+            "tramita.unizar.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -35,7 +36,11 @@ class JuntaOriginPolicyTest {
             assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://$host:443/path")))
         }
         assertEquals(
-            setOf("https://www.juntadeandalucia.es", "https://reg.redsara.es"),
+            setOf(
+                "https://www.juntadeandalucia.es",
+                "https://reg.redsara.es",
+                "https://tramita.unizar.es",
+            ),
             JuntaOriginPolicy.webMessageOriginRules,
         )
     }

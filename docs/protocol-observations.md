@@ -223,6 +223,23 @@ permanece experimental hasta el E2E real. La observación inicial de
 `SHA1withRSA` se trata como compatibilidad legacy que requiere advertencia y
 revalidación, nunca como algoritmo general.
 
+## Observación 2026-07-18 — UniZAR, autenticación AutoScript tri-phase
+
+La entrada pública exacta `https://tramita.unizar.es` y su integration JS fijan
+`AutoScript.sign(webSessionHash, "SHA1withRSA", "CAdES", properties, success,
+error)`. El challenge decodificado tiene 20 bytes y rota con la sesión; ningún
+valor fue retenido. Las propiedades observadas son únicamente
+`precalculatedHashAlgorithm=SHA1` y el `serverUrl` exacto
+`/afirma-server-triphase-signer-2.7.3/SignatureService`.
+
+El profile implementado restringe origin, profile, navigation epoch, request
+ID, TTL, tuple, tamaño del challenge, propiedades y endpoint antes de red. SHA-1
+solo existe detrás de `LEGACY_SHA1`, sin fallback. Aunque AutoScript configura
+Storage/Retrieve, esos endpoints no se habilitan: la interceptación directa de
+`sign` no prueba que deban exponerse como capabilities separadas. El estado
+permanece `VERIFIED_CONTRACT` / `IMPLEMENTED_NOT_E2E` hasta una autenticación
+real segura aceptada por el portal.
+
 ## Política para nuevas observaciones
 
 - Verificar que el host pertenece a la Junta mediante fuente oficial y TLS

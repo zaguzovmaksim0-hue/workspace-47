@@ -23,9 +23,16 @@ import org.xml.sax.SAXException
 import org.xml.sax.SAXParseException
 import org.xml.sax.helpers.DefaultHandler
 
-internal class JuntaTriPhaseCodec(
+internal class AutoFirmaCadesTriPhaseCodec(
     private val urlPolicy: SafeNetworkUrlPolicy = SafeNetworkUrlPolicy(),
+    private val expectedDocumentBytes: Int? = null,
+    private val expectedExtraProperties: Map<String, String>? = null,
 ) : TriPhaseProtocolCodec {
+    init {
+        require(expectedDocumentBytes == null || expectedDocumentBytes > 0)
+        require(expectedExtraProperties == null || SERVER_URL_PROPERTY in expectedExtraProperties)
+    }
+
     override fun decodeRequest(
         request: NormalizedSignRequest,
         certificateChain: List<X509Certificate>,
@@ -38,6 +45,9 @@ internal class JuntaTriPhaseCodec(
         return try {
             request.withPayload { payload ->
                 MiniAppletPayloadCodec.withDecoded(payload) { document, rawProperties ->
+                    if (expectedDocumentBytes != null && document.size != expectedDocumentBytes) {
+                        fail(TriPhaseCodecError.INVALID_REQUEST)
+                    }
                     val properties = parseProperties(rawProperties)
                     val endpointValue = properties.remove(SERVER_URL_PROPERTY) as? String
                         ?: fail(TriPhaseCodecError.INVALID_REQUEST)
@@ -45,6 +55,13 @@ internal class JuntaTriPhaseCodec(
                     val endpoint = when (val validation = urlPolicy.validateEndpoint(endpointValue)) {
                         is NetworkUrlValidation.Allowed -> validation.url
                         is NetworkUrlValidation.Blocked -> fail(TriPhaseCodecError.ORIGIN_NOT_ALLOWED)
+                    }
+                    expectedExtraProperties?.let { expected ->
+                        val expectedRemaining = expected - SERVER_URL_PROPERTY
+                        val actual = properties.stringPropertyNames().associateWith(properties::getProperty)
+                        if (endpointValue != expected.getValue(SERVER_URL_PROPERTY) || actual != expectedRemaining) {
+                            fail(TriPhaseCodecError.INVALID_REQUEST)
+                        }
                     }
                     val certificateDer = mutableListOf<ByteArray>()
                     try {
@@ -794,4 +811,7 @@ internal class JuntaTriPhaseCodec(
     }
 }
 
-internal typealias JuntaTriPhaseRequestData = JuntaTriPhaseCodec.JuntaTriPhaseRequestData
+internal typealias JuntaTriPhaseCodec = AutoFirmaCadesTriPhaseCodec
+
+internal typealias JuntaTriPhaseRequestData =
+    AutoFirmaCadesTriPhaseCodec.JuntaTriPhaseRequestData

@@ -106,6 +106,56 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactUnizarChallengeNormalizesOnlyTheObservedLegacyTuple() {
+        val hash = ByteArray(20) { index -> (index + 1).toByte() }
+        val properties =
+            "precalculatedHashAlgorithm=SHA1\nserverUrl=${dev.junta.firmamobile.signing.UnizarTriPhaseAdapter.ENDPOINT}"
+        val result = adapter.route(
+            rawMessage = JSONObject()
+                .put("type", "MINIAPPLET_SIGN")
+                .put("documentId", DOCUMENT_ID)
+                .put("requestId", REQUEST_ID)
+                .put("dataB64", Base64.getEncoder().encodeToString(hash))
+                .put("algorithm", "SHA1withRSA")
+                .put("format", "CAdES")
+                .put("extraProperties", properties)
+                .toString(),
+            sourceOrigin = Uri.parse("https://tramita.unizar.es"),
+            isMainFrame = true,
+            navigationEpoch = 11,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals("unizar-tramitador", request.context.profileId)
+            assertEquals(11, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, normalizedProperties ->
+                    assertArrayEquals(hash, data)
+                    assertEquals(properties, normalizedProperties)
+                }
+            }
+        }
+
+        val wrongProperties = properties.replace("precalculatedHashAlgorithm=SHA1", "mode=explicit")
+        assertRejected(
+            JSONObject()
+                .put("type", "MINIAPPLET_SIGN")
+                .put("documentId", DOCUMENT_ID)
+                .put("requestId", REQUEST_ID)
+                .put("dataB64", Base64.getEncoder().encodeToString(hash))
+                .put("algorithm", "SHA1withRSA")
+                .put("format", "CAdES")
+                .put("extraProperties", wrongProperties)
+                .toString(),
+            Uri.parse("https://tramita.unizar.es"),
+            true,
+        )
+        hash.fill(0)
+    }
+
+    @Test
     fun unknownOriginSubframeWrongAlgorithmFormatDuplicateAndOversizeFailClosed() {
         assertRejected(message(), Uri.parse("https://evil.example"), true)
         assertRejected(message(), TRUSTED_ORIGIN, false)

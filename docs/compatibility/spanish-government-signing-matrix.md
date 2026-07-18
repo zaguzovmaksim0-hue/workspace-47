@@ -32,9 +32,9 @@ Los estados significan:
 No hay perfiles `VERIFIED_E2E` en esta edición. Además de los contratos
 genéricos, cuatro integraciones publican JavaScript suficiente para marcar su
 contrato estático como `VERIFIED_CONTRACT`: REG/RedSARA, ACCEDA, Gobierno de
-Aragón y Universidad de Zaragoza. REG/RedSARA ya dispone de profile y adapter
-local, pero ese estado no significa aceptación por el portal. Las otras tres
-integraciones no están implementadas. Junta de Andalucía
+Aragón y Universidad de Zaragoza. REG/RedSARA y UniZAR ya disponen de profiles
+y adapters limitados, pero ese estado no significa aceptación por los portales.
+ACCEDA y Aragón no están implementados. Junta de Andalucía
 permanece `EXPERIMENTAL`.
 
 ## 2. Contratos oficiales del motor común
@@ -81,7 +81,7 @@ rama heredada y no el API general del producto. [C0]
 | Ayuntamiento | Ayuntamiento de Madrid — `https://sede.madrid.es` | Trámites con certificado en navegador/móvil según el procedimiento | No verificado | `BROWSE_ONLY` |
 | Universidad pública | Universidad de Granada — `https://sede.ugr.es` | Apertura de AutoFirma y elección de certificado para acceder/firmar | No verificado | `BROWSE_ONLY` |
 | Universidad pública | Universidad de Sevilla — `https://sede.us.es` | Autenticación y firma con AutoFirma de escritorio | No verificado | `BROWSE_ONLY` |
-| Universidad pública | Universidad de Zaragoza — `https://tramita.unizar.es` | Firma de challenge de sesión CAdES; tri-phase en móvil | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
+| Universidad pública | Universidad de Zaragoza — `https://tramita.unizar.es` | Firma de challenge de sesión CAdES; tri-phase en móvil | No verificado | `VERIFIED_CONTRACT`; profile/adapter implementados, sin E2E |
 
 ## 4. Fichas de evidencia por portal
 
@@ -404,20 +404,24 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
   error recibe `(tipo, mensaje)`.
 - **TLS client auth:** no verificado; el flow observado es firma de challenge,
   no una captura de autenticación TLS.
-- **Estado:** `VERIFIED_CONTRACT` estático; no implementado y sin E2E.
+- **Estado:** `VERIFIED_CONTRACT`; profile y adapter tri-phase implementados,
+  sin aceptación E2E del portal. El profile solo admite el origin exacto, el
+  challenge precalculado de 20 bytes, `CAdES`, `SHA1withRSA`, las dos
+  propiedades observadas y el endpoint `SignatureService` exacto. No habilita
+  `afirma://`, Storage/Retrieve, co-sign ni counter-sign.
 - **Privacidad de la comprobación:** la entrada pública genera un challenge
   efímero. Se verificaron únicamente nombres de campos, formato y algoritmo;
   el valor no se conservó ni se copia en este documento.
 
 ## 5. Decisiones derivadas para el catálogo
 
-1. La edición inicial del catálogo conserva el ID production existente
-   `junta-andalucia` para el único profile con firma, todavía `EXPERIMENTAL`.
+1. El catálogo conserva el ID production inicial `junta-andalucia`, todavía
+   `EXPERIMENTAL`, junto a los perfiles contractuales más recientes.
 2. Las fichas `BROWSE_ONLY` no contienen endpoints, callbacks ni capabilities
    de certificado. Pueden aportar accesos HTTPS visibles, nunca confianza.
-3. REG, ACCEDA, Aragón y UniZar son contratos candidatos, no entradas activas
-   del catálogo. Cada uno requiere fixture redactada, adapter limitado,
-   revisión del JS vigente y E2E propio antes de habilitar confianza.
+3. REG y UniZAR son entradas activas limitadas por contrato; siguen sin E2E y
+   no se anuncian como aceptadas por el portal. ACCEDA y Aragón permanecen como
+   candidatos estáticos hasta disponer de un runtime contract suficiente.
 4. AEAT es candidata a la primera investigación de `CLIENT_TLS_AUTH`, pero no
    entra como profile confiable hasta observar host, puerto, key types, issuer
    constraints, frame/origin y resultado real.

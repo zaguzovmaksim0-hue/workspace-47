@@ -321,3 +321,39 @@ el APK temporal y el paquete de instrumentación. El E2E real del portal no se
 ejecutó: no existe todavía un escenario público seguro que confirme aceptación
 sin avanzar hacia una presentación administrativa, por lo que no se eleva el
 estado.
+
+## Milestone P08 — UniZAR authentication — 2026-07-18
+
+El catálogo incorpora `unizar-tramitador` para el origin exacto
+`https://tramita.unizar.es`. El contrato observado se limita a autenticación:
+challenge precalculado de 20 bytes, `SHA1withRSA`, `CAdES`, propiedades exactas
+`precalculatedHashAlgorithm=SHA1` y `serverUrl`, y PRE/POST contra el único
+`SignatureService` permitido. La rama legacy requiere `LEGACY_SHA1`; no existe
+fallback ni capability `AFIRMA_URI`.
+
+El codec común AutoFirma CAdES valida además el tamaño del challenge y el mapa
+exacto de propiedades antes de cualquier llamada de red. Los tests de contrato
+cubren PRE/local PKCS#1/POST, origin/protocol/algorithm/properties incorrectos,
+challenges de 19 y 21 bytes y resolución exacta del profile. Storage/Retrieve,
+co-sign y counter-sign permanecen deshabilitados. El estado sigue siendo
+`VERIFIED_CONTRACT` / `IMPLEMENTED_NOT_E2E` hasta que el portal acepte una
+autenticación real segura.
+
+Validación: los focused tests UniZAR/Junta/bridge/catalog/registry pasan. El
+suite completo ejecutó 232 tests: tras corregir una expectativa de catálogo,
+231 pasaron y un test DNS preexistente sufrió una saturación transitoria del
+resolver (`2001:2::1` se cerró como `NETWORK_ERROR` en vez de
+`PRIVATE_ADDRESS`); la misma prueba pasó aislada sin cambiar código de red.
+`lintDebug`, `lintRelease`, debug/release y androidTest builds pasan; ambos APK
+verifican firma v2 y `zipalign -c 4`, y el manifest release conserva
+`allowBackup=false` y `usesCleartextTraffic=false`.
+
+El debug APK se instaló mediante Shizuku/rish con salida exacta `Success` y
+código interno 0. Su SHA-256 coincide con la copia de `/data/local/tmp` y con
+el `base.apk` instalado; `pm path`, `dumpsys package` y el cold start de la
+`MainActivity` normal fueron correctos. MIUI rechazó la instalación separada
+del APK de instrumentation con `INSTALL_FAILED_USER_RESTRICTED`, incluso usando
+una package session, por lo que el WebView test UniZAR quedó compilado pero no
+ejecutado en este device gate. No se rebaja ninguna política para sortear esa
+restricción. El E2E real no se declara: no se dispuso de un desbloqueo secreto
+completo y seguro en este turno, y no se simuló aceptación del portal.

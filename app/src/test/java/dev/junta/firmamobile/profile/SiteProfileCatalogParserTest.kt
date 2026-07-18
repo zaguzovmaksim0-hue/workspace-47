@@ -92,13 +92,38 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactUnizarAuthenticationContract() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("unizar-tramitador")
+        }
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(setOf("https://tramita.unizar.es"), profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized })
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(setOf(SignatureAlgorithm.SHA1_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.CADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertNull(operation.mode)
+        assertEquals(EndpointId("unizar-triphase"), operation.endpointId)
+        assertEquals(
+            mapOf(
+                "precalculatedHashAlgorithm" to "SHA1",
+                "serverUrl" to "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService",
+            ),
+            operation.fixedExtraProperties,
+        )
+        assertEquals(CallbackContractId("autoscript-sign-callback-v1"), operation.callbackContractId)
+    }
+
+    @Test
     fun rejectsDuplicateUnknownAndUnsupportedSchemaKeys() {
         val json = BuiltInSiteProfiles.JSON
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 2", "\"unknown\": true, \"catalogVersion\": 2"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 3", "\"unknown\": true, \"catalogVersion\": 3"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))

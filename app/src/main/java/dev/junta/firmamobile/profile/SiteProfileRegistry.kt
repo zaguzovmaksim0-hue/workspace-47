@@ -88,7 +88,7 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 2,
+  "catalogVersion": 3,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -190,6 +190,65 @@ object BuiltInSiteProfiles {
         },
         {
           "url": "https://reg.redsara.es/es/scripts-IIDJLUBL.js",
+          "reviewedOn": "2026-07-18"
+        }
+      ]
+    },
+    {
+      "profileId": "unizar-tramitador",
+      "profileVersion": 1,
+      "displayName": "Universidad de Zaragoza — Oficina Virtual",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "ENABLED",
+      "startUrl": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
+      "initiatorOrigins": ["https://tramita.unizar.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [
+        {
+          "endpointId": "unizar-triphase",
+          "purpose": "TRIPHASE",
+          "url": "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService",
+          "method": "POST",
+          "requestContentTypes": ["application/x-www-form-urlencoded; charset=UTF-8"],
+          "responseContentTypes": ["text/plain"],
+          "maxRequestBytes": 2097152,
+          "maxResponseBytes": 2097152,
+          "redirects": "DENY"
+        }
+      ],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Acceso con certificado a la Oficina Virtual",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "autoscript-sign-callback-v1",
+          "capabilities": ["SIGN", "LEGACY_SHA1"],
+          "endpointId": "unizar-triphase",
+          "algorithms": ["SHA1_WITH_RSA"],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {
+            "precalculatedHashAlgorithm": "SHA1",
+            "serverUrl": "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": ["RSA"],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
+          "reviewedOn": "2026-07-18"
+        },
+        {
+          "url": "https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js",
           "reviewedOn": "2026-07-18"
         }
       ]

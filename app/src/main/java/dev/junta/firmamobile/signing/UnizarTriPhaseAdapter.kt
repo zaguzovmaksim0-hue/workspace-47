@@ -2,26 +2,24 @@ package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.ProfileHttpTransport
+import dev.junta.firmamobile.network.SafeNetworkUrlPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.EndpointPurpose
 import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.ProtocolOperation
-import dev.junta.firmamobile.profile.SignatureMode
 import dev.junta.firmamobile.profile.SignaturePackaging
-import dev.junta.firmamobile.profile.SignatureAlgorithm as ProfileSignatureAlgorithm
-import dev.junta.firmamobile.profile.SignatureFormat as ProfileSignatureFormat
+import java.net.URI
 import java.security.cert.X509Certificate
 
-class JuntaTriPhaseAdapter internal constructor(
-    private val transport: ProfileHttpTransport = HttpsProfileHttpTransport(),
-    private val codec: JuntaTriPhaseCodec = JuntaTriPhaseCodec(
-        expectedExtraProperties = mapOf(
-            "serverUrl" to dev.junta.firmamobile.network.SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT,
-            "mode" to "explicit",
-        ),
+class UnizarTriPhaseAdapter internal constructor(
+    transport: ProfileHttpTransport = HttpsProfileHttpTransport(URL_POLICY),
+    codec: TriPhaseProtocolCodec = AutoFirmaCadesTriPhaseCodec(
+        urlPolicy = URL_POLICY,
+        expectedDocumentBytes = SHA1_DIGEST_BYTES,
+        expectedExtraProperties = FIXED_EXTRA_PROPERTIES,
     ),
-    private val callTimeoutMillis: Long = DEFAULT_CALL_TIMEOUT_MILLIS,
+    callTimeoutMillis: Long = DEFAULT_CALL_TIMEOUT_MILLIS,
 ) : SigningProtocolAdapter {
     private val delegate = AutoFirmaTriPhaseExecutionAdapter(
         contract = CONTRACT,
@@ -44,21 +42,27 @@ class JuntaTriPhaseAdapter internal constructor(
     ): ProtocolCompletionResult = delegate.complete(request, preSign, localSignature)
 
     companion object {
-        val ID = SigningProtocolId("junta-miniapplet-triphase-cades-v1")
+        val ID = SigningProtocolId("unizar-autoscript-triphase-cades-v1")
+        const val ENDPOINT =
+            "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"
+        private val URL_POLICY = SafeNetworkUrlPolicy(setOf(URI(ENDPOINT)))
+        private const val SHA1_DIGEST_BYTES = 20
+        private val FIXED_EXTRA_PROPERTIES = mapOf(
+            "precalculatedHashAlgorithm" to "SHA1",
+            "serverUrl" to ENDPOINT,
+        )
         private val CONTRACT by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
             val profile = checkNotNull(
                 BuiltInSiteProfiles.catalog.profiles.singleOrNull {
-                    it.profileId == ProfileId("junta-andalucia")
+                    it.profileId == ProfileId("unizar-tramitador")
                 },
             )
             val operation = checkNotNull(profile.operationPolicies[ProtocolOperation.SIGN])
             val endpoint = checkNotNull(operation.endpointId?.let(profile.endpoints::get))
-            check(operation.format == ProfileSignatureFormat.CADES)
             check(operation.packaging == SignaturePackaging.DETACHED)
-            check(operation.mode == SignatureMode.EXPLICIT)
             check(endpoint.purpose == EndpointPurpose.TRIPHASE && endpoint.method == HttpMethod.POST)
-            check(operation.fixedExtraProperties["serverUrl"] == endpoint.url.toASCIIString())
-            check(operation.fixedExtraProperties["mode"] == "explicit")
+            check(endpoint.url.toASCIIString() == ENDPOINT)
+            check(operation.fixedExtraProperties == FIXED_EXTRA_PROPERTIES)
             TriPhaseExecutionContract(
                 protocolId = ID,
                 profileId = profile.profileId.value,
@@ -66,13 +70,7 @@ class JuntaTriPhaseAdapter internal constructor(
                 initiatorOrigins = profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized },
                 endpoint = endpoint.url,
                 format = SigningFormat.CADES,
-                algorithms = operation.algorithms.mapTo(linkedSetOf()) { algorithm ->
-                    when (algorithm) {
-                        ProfileSignatureAlgorithm.SHA1_WITH_RSA -> SigningAlgorithm.SHA1_WITH_RSA
-                        ProfileSignatureAlgorithm.SHA256_WITH_RSA -> SigningAlgorithm.SHA256_WITH_RSA
-                        ProfileSignatureAlgorithm.SHA512_WITH_RSA -> error("unsupported Junta algorithm")
-                    }
-                },
+                algorithms = setOf(SigningAlgorithm.SHA1_WITH_RSA),
             )
         }
         private const val DEFAULT_CALL_TIMEOUT_MILLIS = 20_000L
