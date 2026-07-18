@@ -6,6 +6,7 @@ import android.net.http.SslError
 import android.os.Build
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.SafeBrowsingResponse
+import android.webkit.ClientCertRequest
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -16,6 +17,7 @@ import androidx.annotation.RequiresApi
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
+import dev.junta.firmamobile.profile.ProfileId
 
 enum class BrowserErrorCode {
     NETWORK_ERROR,
@@ -44,18 +46,33 @@ class JuntaWebViewClient(
     private val logger: SanitizedLogger,
     private val navigationPolicy: JuntaNavigationPolicy = JuntaNavigationPolicy(),
     private val currentPageUrl: (WebView) -> String? = { webView -> webView.url },
+    private val clientAuthAuthorizer: ClientAuthNavigationAuthorizer? = null,
+    private val activeProfileId: () -> ProfileId? = { null },
+    private val currentNavigationEpoch: () -> Long = { 0L },
+    private val onClientAuthTarget: (AuthorizedClientAuthTarget) -> Unit = {},
 ) : WebViewClient() {
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
-    ): Boolean = handleNavigation(view, request.url.toString())
+    ): Boolean = handleNavigation(view, request.url.toString(), request.isForMainFrame)
 
     @Deprecated("Legacy callback retained for old WebView implementations")
     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =
-        handleNavigation(view, url)
+        handleNavigation(view, url, false)
 
-    private fun handleNavigation(view: WebView, targetUrl: String): Boolean =
-        when (val decision = navigationPolicy.decide(targetUrl, currentPageUrl(view))) {
+    private fun handleNavigation(view: WebView, targetUrl: String, isModernMainFrame: Boolean): Boolean {
+        val currentUrl = currentPageUrl(view)
+        clientAuthAuthorizer?.observeTopLevelNavigation(
+            activeProfileId = activeProfileId(),
+            currentUrl = currentUrl,
+            targetUrl = targetUrl,
+            currentEpoch = currentNavigationEpoch(),
+            isModernMainFrameRequest = isModernMainFrame,
+        )?.let { authorized ->
+            onClientAuthTarget(authorized)
+            return true
+        }
+        return when (val decision = navigationPolicy.decide(targetUrl, currentUrl)) {
             NavigationDecision.AllowInWebView -> false
             is NavigationDecision.OpenExternal -> {
                 logger.recordBrowserEvent(
@@ -81,10 +98,16 @@ class JuntaWebViewClient(
                 true
             }
         }
+    }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         callbacks.onTopLevelNavigationStarted(url)
         callbacks.onTopLevelUrlChanged(url)
+        clientAuthAuthorizer?.onTopLevelPageStarted(url, currentNavigationEpoch())
+    }
+
+    override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
+        request.ignore()
     }
 
     override fun onPageFinished(view: WebView, url: String) {

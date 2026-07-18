@@ -117,13 +117,54 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactCarneJovenClientTlsContract() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("carne-joven-andalucia")
+        }
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://ws235.juntadeandalucia.es")),
+            policy.requestOrigins,
+        )
+        assertEquals(
+            setOf(URI("https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet")),
+            policy.sourceUrls,
+        )
+        assertEquals("/authenticationFacade", policy.requestPath)
+        assertEquals(setOf("ticketId", "webSessionId"), policy.requiredEphemeralQueryParameters)
+        assertTrue(policy.allowEmptyIssuerList)
+        assertEquals(15, policy.grantTtlSeconds)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.releaseRegistry.resolve(
+                URI("https://ws235.juntadeandalucia.es/authenticationFacade"),
+            )?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replace(
+                    "[\"https://ws235.juntadeandalucia.es\"]",
+                    "[\"https://ws235.juntadeandalucia.es\", \"https://ws236.juntadeandalucia.es\"]",
+                ),
+            )
+        }
+    }
+
+    @Test
     fun rejectsDuplicateUnknownAndUnsupportedSchemaKeys() {
         val json = BuiltInSiteProfiles.JSON
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 3", "\"unknown\": true, \"catalogVersion\": 3"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 4", "\"unknown\": true, \"catalogVersion\": 4"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))

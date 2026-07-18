@@ -5,6 +5,7 @@ import android.net.Uri
 import android.net.http.SslError
 import android.webkit.SslErrorHandler
 import android.webkit.SafeBrowsingResponse
+import android.webkit.ClientCertRequest
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
@@ -13,6 +14,9 @@ import dev.junta.firmamobile.security.SanitizedLogger
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.security.Principal
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -100,6 +104,17 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun normalWebViewAlwaysIgnoresClientCertificateRequests() {
+        val request = RecordingClientCertRequest()
+
+        client.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(1, request.ignores)
+        assertEquals(0, request.proceeds)
+        assertEquals(0, request.cancels)
+    }
+
+    @Test
     fun safeBrowsingHitsAlwaysReturnToSafety() {
         val response = RecordingSafeBrowsingResponse()
 
@@ -184,6 +199,25 @@ class JuntaWebViewClientTest {
 
         override fun showInterstitial(allowReporting: Boolean) {
             interstitialCalled = true
+        }
+    }
+
+    private class RecordingClientCertRequest : ClientCertRequest() {
+        var ignores = 0
+        var proceeds = 0
+        var cancels = 0
+        override fun getHost(): String = "ws235.juntadeandalucia.es"
+        override fun getPort(): Int = 443
+        override fun getKeyTypes(): Array<String> = arrayOf("RSA")
+        override fun getPrincipals(): Array<Principal> = emptyArray()
+        override fun proceed(privateKey: PrivateKey, chain: Array<X509Certificate>) {
+            proceeds++
+        }
+        override fun ignore() {
+            ignores++
+        }
+        override fun cancel() {
+            cancels++
         }
     }
 

@@ -73,6 +73,7 @@ rama heredada y no el API general del producto. [C0]
 | Justicia | Sede Judicial — `https://sedejudicial.justicia.es` | Acceso con certificado/Cl@ve y firma de escritos con AutoFirma | No verificado | `BROWSE_ONLY` |
 | Ministerio | Sede Ministerio de Justicia — `https://sede.mjusticia.gob.es` | Firma local con AutoFirma en determinados trámites | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Junta de Andalucía — `https://www.juntadeandalucia.es` | `MiniApplet.sign` para autenticación, tri-phase CAdES | No en el contorno observado | `EXPERIMENTAL` |
+| Comunidad autónoma | IAJ / Carné Joven Andalucía — `https://ws104.juntadeandalucia.es` | Entrada con certificado mediante facade TLS exacta en `ws235` | Sí, `CertificateRequest` observado | `VERIFIED_CONTRACT`; profile CLIENT_TLS_AUTH implementado, sin E2E |
 | Comunidad autónoma | Comunidad de Madrid — `https://sede.comunidad.madrid` | Descargar PDF, firmarlo localmente con AutoFirma y adjuntarlo al registro | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Comunidad de Madrid / gestiona2 — `https://gestiona2.comunidad.madrid` | Acceso con certificado y firma AutoFirma del trámite observado | No verificado | `UNSUPPORTED` en móvil para ese flujo |
 | Comunidad autónoma | Gobierno de Aragón — `https://aplicaciones.aragon.es` | `MiniApplet.sign` CAdES y Storage/Retrieve | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
@@ -413,6 +414,24 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
   efímero. Se verificaron únicamente nombres de campos, formato y algoritmo;
   el valor no se conservó ni se copia en este documento.
 
+### P19 — Carné Joven Europeo de Andalucía
+
+- **Organización:** Instituto Andaluz de la Juventud.
+- **Entrada:** [aplicación oficial][P19B], enlazada desde el
+  [procedimiento 24721][P19].
+- **Contrato de acceso:** el [CallAuthenticationServlet][P19C] redirige a
+  `https://ws235.juntadeandalucia.es/authenticationFacade` con
+  `action=validateCert`, `appId=IAJ.CARNETJOVEN`, callback exacto a ws104 y dos
+  identificadores efímeros no retenidos. El handshake TLS 1.2 de la
+  [facade][P19D] emite `CertificateRequest` sin lista de CA.
+- **Profile:** `CLIENT_TLS_AUTH` solamente. La facade compartida requiere grant
+  one-shot ligado al profile, transición top-level exacta, navigation epoch y
+  TTL. Navegación directa a ws235 queda `BROWSE_ONLY` y no entrega certificado.
+- **Firma posterior:** la documentación menciona AutoFirma, pero el runtime
+  tuple, payload, algoritmo, endpoint y callback están detrás del login; no se
+  habilita `SIGN`, MiniApplet ni `AFIRMA_URI` por semejanza.
+- **Estado:** `VERIFIED_CONTRACT`; implementación de autenticación TLS, sin E2E.
+
 ## 5. Decisiones derivadas para el catálogo
 
 1. El catálogo conserva el ID production inicial `junta-andalucia`, todavía
@@ -516,3 +535,7 @@ de protocolo y por eso continúa `BROWSE_ONLY`.
 [P17]: https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent
 [P17A]: https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js
 [P17B]: https://tramita.unizar.es/tramitador/js/miniAppletFirma/autoscript.js
+[P19]: https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html
+[P19B]: https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp
+[P19C]: https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet
+[P19D]: https://ws235.juntadeandalucia.es/authenticationFacade

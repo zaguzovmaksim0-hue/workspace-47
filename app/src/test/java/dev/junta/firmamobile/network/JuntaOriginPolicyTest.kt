@@ -28,6 +28,8 @@ class JuntaOriginPolicyTest {
             "ws050.juntadeandalucia.es",
             "reg.redsara.es",
             "tramita.unizar.es",
+            "ws104.juntadeandalucia.es",
+            "ws235.juntadeandalucia.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)

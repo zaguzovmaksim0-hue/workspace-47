@@ -1,8 +1,8 @@
 # Inventario evolutivo de portales públicos españoles
 
-- Fecha del snapshot: 2026-07-16
+- Fecha del snapshot: 2026-07-18
 - `inventory_schema_version`: `2`
-- `snapshot_id`: `2026-07-16-age-d11-ccaa-d03-insular-d12-diputaciones-d06-local-enumerators-2`
+- `snapshot_id`: `2026-07-18-age-d11-ccaa-d03-insular-d12-diputaciones-d06-profile-expansion-3`
 - Fecha de corte de la matriz de firma de origen: 2026-07-15
 
 Este documento es un **censo de descubrimiento evolutivo**, no una afirmación
@@ -187,52 +187,52 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Entradas D06 materializadas | 41/41 del snapshot 2026-07-16 |
 | Entradas D06 ya presentes por exact origin | 1 |
 | Registros nuevos creados desde D06 | 40 |
-| Registros totales del snapshot | 179 |
-| Origins primarios distintos | 178 |
+| Registros totales del snapshot | 180 |
+| Origins primarios distintos | 179 |
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 190 |
-| Fuentes oficiales totales registradas | 202 |
+| Fuentes oficiales portal-specific registradas | 195 |
+| Fuentes oficiales totales registradas | 207 |
 | Entradas `VERIFIED_E2E` | 0 |
-| Evidencia exacta de `ClientCertRequest` | 0 |
+| Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
 
 | Nivel | Registros |
 | --- | ---: |
 | `ESTATAL` | 81 |
-| `AUTONOMICO` | 29 |
+| `AUTONOMICO` | 30 |
 | `PROVINCIAL` | 41 |
 | `INSULAR` | 22 |
 | `MUNICIPAL` | 2 |
 | `UNIVERSIDAD_PUBLICA` | 4 |
 | `OTRA_INSTITUCION_PUBLICA` | 0 |
-| **Total** | **179** |
+| **Total** | **180** |
 
 Por estado del inventario:
 
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 0 |
-| `IMPLEMENTED_NOT_E2E` | 1 |
-| `VERIFIED_CONTRACT` | 4 |
+| `IMPLEMENTED_NOT_E2E` | 4 |
+| `VERIFIED_CONTRACT` | 2 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 168 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
-| **Total** | **179** |
+| **Total** | **180** |
 
 Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 101 |
+| `REVIEWED` | 102 |
 | `RECHECK_REQUIRED` | 5 |
 | `DISCOVERED` | 73 |
 | `CANDIDATE`, `RETIRED` | 0 |
-| **Total** | **179** |
+| **Total** | **180** |
 
 ## 5. Método de descubrimiento reproducible
 
@@ -364,6 +364,7 @@ requiera traducción manual.
 | `P16` | Gobierno de Aragón / SIRAW | [P16][P16B][P16C] | Entrada y JS público con MiniApplet y Storage/Retrieve. |
 | `P17` | Universidad de Zaragoza | [P17][P17A][P17B] | Entrada e integration JS con firma de challenge y tri-phase móvil. |
 | `P18` | Comunidad de Madrid / Cuenta Digital — Carné Joven 53F1 | [P18][P18A][P18B][P18C][P18D][P18E][P18F] | Ficha oficial, métodos de identificación/firma, entrada 53F1 y cadena JS de lookup/redirect autenticado; sin contrato de presentación. |
+| `P19` | IAJ / Carné Joven Europeo de Andalucía | [P19][P19A][P19B][P19C][P19D] | Procedimiento, aplicación, redirect exacto y `CertificateRequest` TLS observados; firma posterior aún autenticada. |
 
 D11 se añadió además como provenance a los siete registros seed cuyo exact
 origin coincide con el directorio. Esta relación de existencia no modifica ni
@@ -519,7 +520,7 @@ records:
     signature_algorithm: "SHA512withRSA"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "VERIFIED_CONTRACT"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Firma del XML de resumen antes de guardarlo en el expediente."
     protocol_evidence: "AutoScript.sign estático; el wrapper consume signatureB64 y llama a saveXMLAutoSign."
     client_tls_auth: "NO_VERIFICADO"
@@ -1063,8 +1064,8 @@ records:
       - "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"
       - "https://tramita.unizar.es/afirma-signature-storage/StorageService"
       - "https://tramita.unizar.es/afirma-signature-retriever/RetrieveService"
-    discovery_state: "PROFILE_IMPLEMENTED"
-    inventory_status: "VERIFIED_CONTRACT"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Firma de challenge de sesión precalculado; tri-phase en móvil."
     protocol_evidence: "Integration JS y AutoScript públicos fijan formato, algoritmo, serverUrl y Storage/Retrieve."
     client_tls_auth: "NO_VERIFICADO"
@@ -5977,6 +5978,46 @@ records:
     next_gate: "Observar de forma controlada el flujo autenticado 53F1 y conservar evidencia sanitizada de endpoint, payload y callback exactos antes de evaluar cualquier promoción."
 ```
 
+### 7.7. Carné Joven Europeo de Andalucía — autenticación TLS
+
+El contrato verificado se limita al acceso con certificado. La facade ws235 es
+compartida, por lo que el profile no confía en el host de forma aislada: exige
+la transición top-level exacta desde `CallAuthenticationServlet`, valida los
+parámetros fijos de Carné Joven y concede una autorización one-shot con TTL.
+
+```yaml
+records:
+  - inventory_id: "ES-PUB-0180"
+    surface_key: "junta-andalucia-carne-joven"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Instituto Andaluz de la Juventud"
+    surface_name: "Carné Joven Europeo de Andalucía"
+    surface_type: "PORTAL_AUTENTICACION"
+    origin: "https://ws104.juntadeandalucia.es"
+    official_site: "https://ws101.juntadeandalucia.es/portalcj/"
+    e_sede: "https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html"
+    entry_url: "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+    procedure_page: "https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html"
+    certificate_required: "SI"
+    signature_required: "NO_VERIFICADO"
+    js_client: "No aplica al login TLS; AutoFirma posterior no verificado en runtime"
+    protocol_family: "TLS_CLIENT_CERTIFICATE_AUTHENTICATION"
+    signature_format: "NO_APLICA_AL_LOGIN; firma posterior NO_VERIFICADO"
+    signature_algorithm: "Negociado por TLS; firma posterior NO_VERIFICADO"
+    endpoint: "https://ws235.juntadeandalucia.es/authenticationFacade"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada con certificado mediante facade TLS compartida y retorno exacto a ws104."
+    protocol_evidence: "Redirect sanitizado y handshake TLS 1.2 observados; el servidor solicita certificado cliente y no publica lista de CA."
+    client_tls_auth: "VERIFIED"
+    evidence_ids: ["P19", "P19A", "P19B", "P19C", "P19D"]
+    reason: "CLIENT_TLS_AUTH implementado; el contrato de firma o presentación posterior sigue detrás de autenticación."
+    reviewed_at: "2026-07-18"
+    next_gate: "E2E seguro del login y research autenticado hasta antes de una presentación jurídica."
+```
+
 ## 8. Relación con el catálogo de producto
 
 Este archivo es documentación de investigación, no configuración ejecutable:
@@ -5986,8 +6027,8 @@ Este archivo es documentación de investigación, no configuración ejecutable:
 - no concede origins de inicio, redirect o browse confiable;
 - no concede endpoint, adapter, capability ni filtro de certificado;
 - no convierte `VERIFIED_CONTRACT` en soporte real;
-- no modifica el único profile de firma existente, `junta-andalucia`, que
-  continúa gobernado por su catálogo de producto sin promoción E2E.
+- no concede por sí mismo profiles o capabilities; el catálogo de producto
+  versionado sigue siendo la única fuente runtime de confianza.
 
 Un origin inventariado sin profile activo sigue el comportamiento de sitio
 desconocido: navegación HTTPS `BROWSE_ONLY`, bridge ausente, URI AutoFirma
@@ -6120,6 +6161,11 @@ Orden de expansión recomendado:
 [P18D]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/remoteEntry.js
 [P18E]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/2395.e31f7440c3b55405.js
 [P18F]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/9536.885f46529d1fae07.js
+[P19]: https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html
+[P19A]: https://ws101.juntadeandalucia.es/portalcj/
+[P19B]: https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp
+[P19C]: https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet
+[P19D]: https://ws235.juntadeandalucia.es/authenticationFacade
 
 ### Evidencia de comunidades y ciudades autónomas
 

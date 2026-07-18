@@ -99,8 +99,25 @@ object SiteProfileCatalogParser {
     }
 
     private fun clientAuth(o: JObject): ClientAuthPolicy {
-        o.exact("requestOrigins")
-        return ClientAuthPolicy(origins(o.array("requestOrigins")))
+        o.exact(
+            "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
+            "requiredEphemeralQueryParameters", "allowEmptyIssuerList", "grantTtlSeconds",
+        )
+        val fixed = stringMap(o.objValue("fixedQueryParameters"))
+        val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
+        require((fixed.keys intersect ephemeral).isEmpty())
+        return ClientAuthPolicy(
+            requestOrigins = origins(o.array("requestOrigins")).also { require(it.size == 1) },
+            sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
+                .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) },
+            requestPath = o.string("requestPath").also {
+                require(it.startsWith('/') && URI(null, null, it, null).rawPath == it)
+            },
+            fixedQueryParameters = fixed,
+            requiredEphemeralQueryParameters = ephemeral.also { require(it.isNotEmpty()) },
+            allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
+            grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
+        )
     }
 
     private fun certificateRules(value: JValue): CertificateFilterRules {
@@ -142,6 +159,16 @@ object SiteProfileCatalogParser {
             require(p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED || p.activation == ProfileActivation.DISABLED)
             require(p.activation != ProfileActivation.ENABLED || p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED)
             require(Capability.CLIENT_TLS_AUTH in p.capabilities == (p.clientAuthPolicy != null))
+            p.clientAuthPolicy?.let { policy ->
+                require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
+                require(p.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+                require(policy.sourceUrls.all { it.origin() in p.initiatorOrigins })
+                require(policy.fixedQueryParameters.keys.all(PARAMETER_NAME::matches))
+                require(policy.fixedQueryParameters.values.all { value ->
+                    value.length <= 2_048 && value.none(Char::isISOControl)
+                })
+                require(policy.requiredEphemeralQueryParameters.all(PARAMETER_NAME::matches))
+            }
             p.operationPolicies.values.forEach { op ->
                 require(op.capabilities.all { it in p.capabilities })
                 require(op.endpointId == null || op.endpointId in p.endpoints)
@@ -230,6 +257,7 @@ object SiteProfileCatalogParser {
         "autoscript-sign-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
+    private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
 }
 

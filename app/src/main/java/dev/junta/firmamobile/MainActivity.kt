@@ -156,6 +156,9 @@ class MainActivity : ComponentActivity() {
                             showBrowser = false
                             certificateViewModel.lock()
                         },
+                        clientCertificateIdentityProvider = {
+                            app.certificateSession.identityForSigning()
+                        },
                         onWebViewChanged = { currentWebView = it },
                         onNavigationEpochChanged = { currentNavigationEpoch = it },
                     )

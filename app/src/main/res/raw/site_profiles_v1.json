@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 3,
+  "catalogVersion": 4,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -52,6 +52,23 @@
       "clientAuthPolicy": null,
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [{"url":"https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent","reviewedOn":"2026-07-18"},{"url":"https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js","reviewedOn":"2026-07-18"}]
+    },
+    {
+      "profileId": "carne-joven-andalucia",
+      "profileVersion": 1,
+      "displayName": "Carné Joven Europeo de Andalucía",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "ENABLED",
+      "startUrl": "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp",
+      "initiatorOrigins": ["https://ws104.juntadeandalucia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"requestOrigins":["https://ws235.juntadeandalucia.es"],"sourceUrls":["https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"],"requestPath":"/authenticationFacade","fixedQueryParameters":{"action":"validateCert","appId":"IAJ.CARNETJOVEN","comeBackURL":"https://ws104.juntadeandalucia.es/carneJoven/servlet/ReturnAuthenticationServlet"},"requiredEphemeralQueryParameters":["ticketId","webSessionId"],"allowEmptyIssuerList":true,"grantTtlSeconds":15},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [{"url":"https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html","reviewedOn":"2026-07-18"},{"url":"https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet","reviewedOn":"2026-07-18"}]
     }
   ]
 }

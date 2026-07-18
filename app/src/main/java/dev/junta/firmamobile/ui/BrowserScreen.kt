@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,10 @@ import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
+import dev.junta.firmamobile.browser.ClientAuthGrant
+import dev.junta.firmamobile.browser.ClientAuthNavigationAuthorizer
+import dev.junta.firmamobile.browser.ClientAuthRequestHandler
+import dev.junta.firmamobile.browser.ClientAuthWebViewClient
 import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.JuntaWebViewClient
 import dev.junta.firmamobile.browser.MiniAppletBridgeMode
@@ -60,6 +65,10 @@ import dev.junta.firmamobile.browser.WebMessageBridge
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
 import dev.junta.firmamobile.browser.WebViewStateHolder
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.certificate.UnlockedIdentity
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningReplySink
@@ -84,15 +93,25 @@ fun BrowserScreen(
     onChangeCertificate: () -> Unit,
     onLockCertificate: () -> Unit,
     onClearSession: () -> Unit,
+    clientCertificateIdentityProvider: () -> UnlockedIdentity?,
     onWebViewChanged: (WebView?) -> Unit,
     onNavigationEpochChanged: (Long) -> Unit = {},
 ) {
     val context = LocalContext.current
     val webViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
     val bridgeRef = remember { AtomicReference<WebMessageBridgeAttachment?>() }
+    val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
+    val dedicatedWebViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
+    val dedicatedClientActive = remember { AtomicBoolean(false) }
+    val pendingNormalUrl = remember { AtomicReference<String?>() }
     val discardHistory = remember { AtomicBoolean(false) }
     val navigationEpoch = remember { mutableLongStateOf(0L) }
     val navigationPolicy = remember { JuntaNavigationPolicy() }
+    val clientAuthAuthorizer = remember {
+        ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.releaseRegistry)
+    }
+    var activeProfileId by remember { mutableStateOf(ProfileId("junta-andalucia")) }
+    var clientAuthGrant by remember { mutableStateOf<ClientAuthGrant?>(null) }
     var pendingRequest by remember { mutableStateOf<AfirmaRequest?>(null) }
     var blockedReason by remember { mutableStateOf<NavigationBlockReason?>(null) }
     var browserError by remember { mutableStateOf<BrowserErrorCode?>(null) }
@@ -104,6 +123,13 @@ fun BrowserScreen(
         check(navigationEpoch.longValue != Long.MAX_VALUE)
         navigationEpoch.longValue++
         onNavigationEpochChanged(navigationEpoch.longValue)
+    }
+
+    fun abandonClientAuth() {
+        dedicatedClientRef.getAndSet(null)?.abandon()
+        dedicatedWebViewRef.set(null)
+        clientAuthAuthorizer.invalidate()
+        WebView.clearClientCertPreferences(null)
     }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
@@ -134,12 +160,25 @@ fun BrowserScreen(
             }
 
             override fun onTopLevelUrlChanged(url: String) {
-                currentUrl = url
+                currentUrl = safeBrowserDisplayUrl(url)
+                initiatorProfileForUrl(url)?.let { activeProfileId = it }
             }
         }
     }
 
     fun goBack() {
+        if (clientAuthGrant != null) {
+            val activeStartUrl = BuiltInSiteProfiles.releaseRegistry.profile(activeProfileId)
+                ?.startUrl
+                ?.toASCIIString()
+                ?: JuntaOriginPolicy.START_URL
+            pendingNormalUrl.set(activeStartUrl)
+            clientAuthGrant = null
+            abandonClientAuth()
+            advanceNavigationEpoch()
+            onCancelSigning(SigningCancelReason.NAVIGATION, null)
+            return
+        }
         advanceNavigationEpoch()
         onCancelSigning(SigningCancelReason.NAVIGATION, null)
         val webView = webViewRef.get()
@@ -162,11 +201,16 @@ fun BrowserScreen(
         }
         when (val decision = navigationPolicy.decide(candidate, currentUrl)) {
             NavigationDecision.AllowInWebView -> {
+                initiatorProfileForUrl(candidate)?.let { activeProfileId = it }
+                val leavingClientAuth = clientAuthGrant != null
+                if (leavingClientAuth) pendingNormalUrl.set(candidate)
+                clientAuthGrant = null
+                abandonClientAuth()
                 advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
                 browserError = null
                 blockedReason = null
-                webViewRef.get()?.loadUrl(candidate)
+                if (!leavingClientAuth) webViewRef.get()?.loadUrl(candidate)
             }
             is NavigationDecision.OpenExternal -> callbacks.openExternal(decision.uri)
             is NavigationDecision.HandleAfirma -> {
@@ -184,11 +228,14 @@ fun BrowserScreen(
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeRef.getAndSet(null)?.close()
             webViewRef.getAndSet(null)?.let { webView ->
-                if (!discardHistory.get()) stateHolder.capture(webView)
+                if (shouldCaptureBrowserState(discardHistory.get(), dedicatedClientActive.get())) {
+                    stateHolder.capture(webView)
+                }
                 onWebViewChanged(null)
                 webView.stopLoading()
                 webView.destroy()
             }
+            abandonClientAuth()
         }
     }
 
@@ -198,28 +245,49 @@ fun BrowserScreen(
         onAddressSubmitted = ::submitAddress,
         onBack = ::goBack,
         onHome = {
+            val leavingClientAuth = clientAuthGrant != null
+            if (leavingClientAuth) pendingNormalUrl.set(JuntaOriginPolicy.START_URL)
+            clientAuthGrant = null
+            activeProfileId = ProfileId("junta-andalucia")
+            abandonClientAuth()
             advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.NAVIGATION, null)
             browserError = null
             blockedReason = null
             currentUrl = JuntaOriginPolicy.START_URL
-            webViewRef.get()?.loadUrl(JuntaOriginPolicy.START_URL)
+            if (!leavingClientAuth) webViewRef.get()?.loadUrl(JuntaOriginPolicy.START_URL)
         },
         onReload = {
+            val activeStartUrl = BuiltInSiteProfiles.releaseRegistry.profile(activeProfileId)
+                ?.startUrl
+                ?.toASCIIString()
+                ?: JuntaOriginPolicy.START_URL
+            val leavingClientAuth = clientAuthGrant != null
+            if (leavingClientAuth) {
+                pendingNormalUrl.set(activeStartUrl)
+                clientAuthGrant = null
+                abandonClientAuth()
+            }
             advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.RELOAD, null)
             browserError = null
-            webViewRef.get()?.reload()
+            if (!leavingClientAuth) webViewRef.get()?.reload()
         },
         onChangeCertificate = {
+            clientAuthGrant = null
+            abandonClientAuth()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             onChangeCertificate()
         },
         onLockCertificate = {
+            clientAuthGrant = null
+            abandonClientAuth()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             onLockCertificate()
         },
         onClearSession = {
+            clientAuthGrant = null
+            abandonClientAuth()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             discardHistory.set(true)
             stateHolder.clear()
@@ -270,53 +338,116 @@ fun BrowserScreen(
                     }
                 }
             }
-            AndroidView(
-                factory = {
+            key(clientAuthGrant != null) {
+                AndroidView(
+                    factory = {
                     TrustedJuntaWebView(context).also { webView ->
                         webView.layoutParams = ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
-                        val client = JuntaWebViewClient(
-                            callbacks = callbacks,
-                            logger = logger,
-                            navigationPolicy = navigationPolicy,
-                        )
-                        webView.webViewClient = client
-                        val attachment = WebMessageBridge(
-                            logger = logger,
-                            onAfirmaRequest = handleAfirmaRequest,
-                            onMiniAppletRequest = { request, reply ->
-                                onMiniAppletRequest(request, reply)
-                            },
-                            onMiniAppletCancel = onMiniAppletCancel,
-                            miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
-                            currentNavigationEpoch = { navigationEpoch.longValue },
-                            currentOrigin = {
-                                webView.url?.let { url ->
-                                    runCatching {
-                                        JuntaOriginPolicy.originFor(Uri.parse(url))
-                                    }.getOrNull()
-                                }
-                            },
-                        ).attach(webView)
-                        bridgeRef.set(attachment)
-                        if (!attachment.listenerAttached ||
-                            !attachment.documentStartScriptAttached
-                        ) {
-                            webView.post { compatibilityError = true }
-                        }
                         webViewRef.set(webView)
-                        onWebViewChanged(webView)
-                        stateHolder.restoreOrLoad(webView) { restoredUrl ->
-                            currentUrl = restoredUrl
+                        val tlsGrant = clientAuthGrant
+                        if (tlsGrant == null) {
+                            dedicatedClientActive.set(false)
+                            onWebViewChanged(browserWebViewForPersistence(webView, dedicated = false))
+                            val client = JuntaWebViewClient(
+                                callbacks = callbacks,
+                                logger = logger,
+                                navigationPolicy = navigationPolicy,
+                                clientAuthAuthorizer = clientAuthAuthorizer,
+                                activeProfileId = { activeProfileId },
+                                currentNavigationEpoch = { navigationEpoch.longValue },
+                                onClientAuthTarget = { authorized ->
+                                    advanceNavigationEpoch()
+                                    onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                                    bridgeRef.getAndSet(null)?.close()
+                                    dedicatedClientActive.set(true)
+                                    onWebViewChanged(browserWebViewForPersistence(webView, dedicated = true))
+                                    activeProfileId = authorized.profileId
+                                    clientAuthGrant = ClientAuthGrant(
+                                        authorized = authorized,
+                                        navigationEpoch = navigationEpoch.longValue,
+                                    )
+                                },
+                            )
+                            webView.webViewClient = client
+                            val attachment = WebMessageBridge(
+                                logger = logger,
+                                onAfirmaRequest = handleAfirmaRequest,
+                                onMiniAppletRequest = { request, reply ->
+                                    onMiniAppletRequest(request, reply)
+                                },
+                                onMiniAppletCancel = onMiniAppletCancel,
+                                miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
+                                currentNavigationEpoch = { navigationEpoch.longValue },
+                                currentOrigin = {
+                                    webView.url?.let { url ->
+                                        runCatching {
+                                            JuntaOriginPolicy.originFor(Uri.parse(url))
+                                        }.getOrNull()
+                                    }
+                                },
+                            ).attach(webView)
+                            bridgeRef.set(attachment)
+                            if (!attachment.listenerAttached ||
+                                !attachment.documentStartScriptAttached
+                            ) {
+                                webView.post { compatibilityError = true }
+                            }
+                        } else {
+                            dedicatedClientActive.set(true)
+                            onWebViewChanged(browserWebViewForPersistence(webView, dedicated = true))
+                            val handler = ClientAuthRequestHandler(
+                                grant = tlsGrant,
+                                identityProvider = clientCertificateIdentityProvider,
+                                currentNavigationEpoch = { navigationEpoch.longValue },
+                                clearClientCertPreferences = {
+                                    webView.post { WebView.clearClientCertPreferences(null) }
+                                },
+                            )
+                            val client = ClientAuthWebViewClient(
+                                grant = tlsGrant,
+                                requestHandler = handler,
+                                callbacks = callbacks,
+                            )
+                            dedicatedClientRef.set(client)
+                            dedicatedWebViewRef.set(webView)
+                            webView.webViewClient = client
+                            WebView.clearClientCertPreferences {
+                                webView.post {
+                                    if (webViewRef.get() === webView) {
+                                        webView.loadUrl(tlsGrant.authorized.target.toASCIIString())
+                                    }
+                                }
+                            }
+                        }
+                        if (tlsGrant == null) {
+                            val requestedUrl = pendingNormalUrl.getAndSet(null)
+                            if (requestedUrl != null) {
+                                webView.loadUrl(requestedUrl)
+                            } else {
+                                stateHolder.restoreOrLoad(webView) { restoredUrl ->
+                                    currentUrl = safeBrowserDisplayUrl(restoredUrl)
+                                    initiatorProfileForUrl(restoredUrl)?.let { activeProfileId = it }
+                                }
+                            }
                         }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    onRelease = { webView ->
+                        if (dedicatedWebViewRef.compareAndSet(webView, null)) {
+                            dedicatedClientRef.getAndSet(null)?.abandon()
+                        }
+                        if (webViewRef.compareAndSet(webView, null)) onWebViewChanged(null)
+                        webView.stopLoading()
+                        webView.destroy()
+                    },
+                )
+            }
         }
     }
 
@@ -527,6 +658,33 @@ private fun browserNotice(
     blockedReason != null -> stringResource(R.string.browser_navigation_blocked)
     else -> null
 }
+
+internal fun safeBrowserDisplayUrl(rawUrl: String): String = runCatching {
+    val uri = Uri.parse(rawUrl)
+    require(
+        uri.scheme.equals("https", ignoreCase = true) &&
+            !uri.host.isNullOrBlank() &&
+            uri.encodedUserInfo == null &&
+            uri.port in setOf(-1, 443),
+    )
+    uri.buildUpon().clearQuery().fragment(null).build().toString()
+}.getOrDefault("https://")
+
+internal fun browserWebViewForPersistence(webView: WebView?, dedicated: Boolean): WebView? =
+    webView.takeUnless { dedicated }
+
+internal fun shouldCaptureBrowserState(discardHistory: Boolean, dedicated: Boolean): Boolean =
+    !discardHistory && !dedicated
+
+internal fun initiatorProfileForUrl(rawUrl: String): ProfileId? = runCatching {
+    BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(rawUrl))
+}.getOrNull()?.takeIf { resolution ->
+    resolution.origin in resolution.profile.initiatorOrigins &&
+        resolution.trustMode in setOf(
+            TrustMode.TRUSTED_SIGNING,
+            TrustMode.TRUSTED_CLIENT_AUTH,
+        )
+}?.profile?.profileId
 
 @Composable
 private fun AfirmaObservationDialog(

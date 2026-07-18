@@ -63,12 +63,13 @@ class SiteProfileRegistry(
     }
 
     private fun SiteProfile.trustMode(origin: ExactOrigin): TrustMode? {
-        if (origin in (clientAuthPolicy?.requestOrigins ?: emptySet())) return TrustMode.TRUSTED_CLIENT_AUTH
+        if (origin in (clientAuthPolicy?.requestOrigins ?: emptySet())) return TrustMode.BROWSE_ONLY
         if (origin in initiatorOrigins) {
-            return if (Capability.SIGN in capabilities || Capability.SELECT_CERTIFICATE in capabilities) {
-                TrustMode.TRUSTED_SIGNING
-            } else {
-                TrustMode.TRUSTED_BROWSE
+            return when {
+                Capability.SIGN in capabilities || Capability.SELECT_CERTIFICATE in capabilities ->
+                    TrustMode.TRUSTED_SIGNING
+                Capability.CLIENT_TLS_AUTH in capabilities -> TrustMode.TRUSTED_CLIENT_AUTH
+                else -> TrustMode.TRUSTED_BROWSE
             }
         }
         if (origin in redirectOrigins) return TrustMode.BROWSE_ONLY
@@ -88,7 +89,7 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 3,
+  "catalogVersion": 4,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -249,6 +250,47 @@ object BuiltInSiteProfiles {
         },
         {
           "url": "https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js",
+          "reviewedOn": "2026-07-18"
+        }
+      ]
+    },
+    {
+      "profileId": "carne-joven-andalucia",
+      "profileVersion": 1,
+      "displayName": "Carné Joven Europeo de Andalucía",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "ENABLED",
+      "startUrl": "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp",
+      "initiatorOrigins": ["https://ws104.juntadeandalucia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "requestOrigins": ["https://ws235.juntadeandalucia.es"],
+        "sourceUrls": ["https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"],
+        "requestPath": "/authenticationFacade",
+        "fixedQueryParameters": {
+          "action": "validateCert",
+          "appId": "IAJ.CARNETJOVEN",
+          "comeBackURL": "https://ws104.juntadeandalucia.es/carneJoven/servlet/ReturnAuthenticationServlet"
+        },
+        "requiredEphemeralQueryParameters": ["ticketId", "webSessionId"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": ["RSA"],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html",
+          "reviewedOn": "2026-07-18"
+        },
+        {
+          "url": "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet",
           "reviewedOn": "2026-07-18"
         }
       ]

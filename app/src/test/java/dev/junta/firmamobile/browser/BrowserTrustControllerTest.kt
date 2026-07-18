@@ -61,7 +61,13 @@ class BrowserTrustControllerTest {
             operationPolicies = emptyMap(),
             capabilities = setOf(Capability.CLIENT_TLS_AUTH),
             clientAuthPolicy = ClientAuthPolicy(
-                setOf(ExactOrigin.parse("https://tls.client-auth.example")),
+                requestOrigins = setOf(ExactOrigin.parse("https://tls.client-auth.example")),
+                sourceUrls = setOf(java.net.URI("https://start.client-auth.example/auth")),
+                requestPath = "/facade",
+                fixedQueryParameters = mapOf("app" to "test"),
+                requiredEphemeralQueryParameters = setOf("ticket"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
             ),
         )
         val clientRegistry = SiteProfileRegistry(
@@ -69,9 +75,15 @@ class BrowserTrustControllerTest {
             BuildTrustPolicy.RELEASE,
         )
         assertEquals(
-            TrustMode.TRUSTED_CLIENT_AUTH,
+            TrustMode.BROWSE_ONLY,
             BrowserUrlPolicy(clientRegistry).resolve("https://tls.client-auth.example/").trustMode,
         )
+        val clientStart = BrowserTrustController(
+            BrowserUrlPolicy(clientRegistry),
+            SensitiveFlowInvalidator {},
+        ).navigate("https://start.client-auth.example/")
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, clientStart.resolution.trustMode)
+        assertEquals(ProfileId("client-auth-fixture"), clientStart.activeProfileId)
 
         val policy = BrowserUrlPolicy(
             registry,

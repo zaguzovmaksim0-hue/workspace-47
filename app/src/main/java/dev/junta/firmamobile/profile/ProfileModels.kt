@@ -108,6 +108,12 @@ data class OperationPolicy(
 
 data class ClientAuthPolicy(
     val requestOrigins: Set<ExactOrigin>,
+    val sourceUrls: Set<URI>,
+    val requestPath: String,
+    val fixedQueryParameters: Map<String, String>,
+    val requiredEphemeralQueryParameters: Set<String>,
+    val allowEmptyIssuerList: Boolean,
+    val grantTtlSeconds: Int,
 )
 
 data class CertificateFilterRules(
