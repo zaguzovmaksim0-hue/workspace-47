@@ -12,7 +12,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
@@ -78,14 +77,13 @@ class BrowserScreenTest {
     }
 
     @Test
-    fun longAddressUsesOneLineHostAndFullUrlOnlyWhileEditing() {
+    fun longAddressUsesOneLineReadOnlyHost() {
         rule.setContent {
             JuntaFirmaTheme {
                 BrowserLayout(
                     currentUrl = LONG_URL,
                     certificateOwner = "Persona de Prueba",
                     browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
-                    onAddressSubmitted = {},
                     onBack = {},
                     onHome = {},
                     onReload = {},
@@ -105,9 +103,8 @@ class BrowserScreenTest {
         rule.onNodeWithText(LONG_URL).assertDoesNotExist()
         rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
 
-        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
-
-        rule.onNodeWithText(LONG_URL).assertIsDisplayed()
+        rule.onNodeWithText(LONG_URL).assertDoesNotExist()
+        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
         rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
     }
 
@@ -119,7 +116,6 @@ class BrowserScreenTest {
                     currentUrl = LONG_URL,
                     certificateOwner = "Persona de Prueba",
                     browserInsets = WindowInsets(bottom = 96.dp),
-                    onAddressSubmitted = {},
                     onBack = {},
                     onHome = {},
                     onReload = {},
@@ -152,7 +148,6 @@ class BrowserScreenTest {
                     currentUrl = LONG_URL,
                     certificateOwner = "Persona de Prueba",
                     browserInsets = WindowInsets(top = 24.dp),
-                    onAddressSubmitted = {},
                     onBack = {},
                     onHome = {},
                     onReload = {},
@@ -166,19 +161,17 @@ class BrowserScreenTest {
         }
 
         rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(96.dp)
-        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
         rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(96.dp)
     }
 
     @Test
-    fun toolbarActionLeavesEditModeAndReturnsToHostOnlyDisplay() {
+    fun toolbarIdentityCannotOpenManualUrlEditor() {
         rule.setContent {
             JuntaFirmaTheme {
                 BrowserLayout(
                     currentUrl = LONG_URL,
                     certificateOwner = "Persona de Prueba",
                     browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
-                    onAddressSubmitted = {},
                     onBack = {},
                     onHome = {},
                     onReload = {},
@@ -191,8 +184,7 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
-        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertIsDisplayed()
+        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
         rule.onNodeWithContentDescription("Inicio de la aplicación").performClick()
 
         rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
@@ -200,7 +192,7 @@ class BrowserScreenTest {
     }
 
     @Test
-    fun pageLifecycleUpdateDoesNotReplaceTheUsersEditBuffer() {
+    fun pageLifecycleUpdatesTheReadOnlyHost() {
         val currentUrl = mutableStateOf(LONG_URL)
         rule.setContent {
             JuntaFirmaTheme {
@@ -208,7 +200,6 @@ class BrowserScreenTest {
                     currentUrl = currentUrl.value,
                     certificateOwner = "Persona de Prueba",
                     browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
-                    onAddressSubmitted = {},
                     onBack = {},
                     onHome = {},
                     onReload = {},
@@ -221,12 +212,9 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
-        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG)
-            .performTextReplacement(EDITED_URL)
         rule.runOnIdle { currentUrl.value = REDIRECT_URL }
 
-        rule.onNodeWithText(EDITED_URL).assertIsDisplayed()
+        rule.onNodeWithText("ssoweb.juntadeandalucia.es", substring = true).assertIsDisplayed()
         rule.onNodeWithText(REDIRECT_URL).assertDoesNotExist()
     }
 
@@ -234,7 +222,6 @@ class BrowserScreenTest {
         const val LONG_URL =
             "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/" +
                 "ovorion/auth/signInAutcertjs?redacted=not-logged#fragment"
-        const val EDITED_URL = "https://sede.juntadeandalucia.es/user-entry"
         const val REDIRECT_URL = "https://ssoweb.juntadeandalucia.es/redirected"
     }
 }

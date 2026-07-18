@@ -79,6 +79,15 @@ class WebViewStateHolderTest {
     }
 
     @Test
+    fun catalogEntryUrlIsUsedAsTheFailClosedFallback() {
+        val target = FakeTarget()
+        val entryUrl = "https://reg.redsara.es/es/"
+
+        assertFalse(WebViewStateHolder(null).restoreOrLoad(target, entryUrl))
+        assertEquals(listOf(entryUrl), target.loadedUrls)
+    }
+
+    @Test
     fun savesHistoryOnlyWhenWebViewReportsUsableState() {
         val successfulOutState = Bundle()
         WebViewStateHolder(null).save(FakeTarget(saveResult = true), successfulOutState)

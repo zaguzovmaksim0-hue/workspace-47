@@ -70,6 +70,8 @@ class SigningConfirmationInstrumentedTest {
                         .performClick()
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    waitForText("SERVICIOS PÚBLICOS")
+                    rule.onAllNodesWithText("Abrir sede")[0].performScrollTo().performClick()
 
                     waitForWebView(scenario)
                     scenario.onActivity { activity ->
@@ -139,6 +141,8 @@ class SigningConfirmationInstrumentedTest {
                         .performClick()
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    waitForText("SERVICIOS PÚBLICOS")
+                    rule.onAllNodesWithText("Abrir sede")[0].performScrollTo().performClick()
                     waitForWebView(scenario)
 
                     scenario.onActivity { activity ->

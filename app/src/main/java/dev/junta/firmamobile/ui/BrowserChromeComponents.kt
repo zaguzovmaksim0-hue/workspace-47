@@ -73,7 +73,7 @@ internal fun IndustrialBrowserTopBar(
     onChangeCertificate: () -> Unit,
     onLockCertificate: () -> Unit,
     onClearSessionRequested: () -> Unit,
-    onIdentityClick: () -> Unit,
+    onIdentityClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
     editingContent: (@Composable () -> Unit)? = null,
@@ -116,7 +116,13 @@ internal fun IndustrialBrowserTopBar(
                             host = host,
                             trustLabel = trustLabel,
                             modifier = Modifier
-                                .clickable(onClick = onIdentityClick)
+                                .then(
+                                    if (onIdentityClick != null) {
+                                        Modifier.clickable(onClick = onIdentityClick)
+                                    } else {
+                                        Modifier
+                                    },
+                                )
                                 .testTag(BROWSER_ADDRESS_LABEL_TAG),
                         )
                     } else {

@@ -106,6 +106,30 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun catalogSelectedProfileCannotBeChangedByAnotherTrustedOrigin() {
+        val selectedJunta = MiniAppletBridgeAdapter(
+            activeProfileId = { dev.junta.firmamobile.profile.ProfileId("junta-andalucia") },
+        )
+        val redSaraMessage = JSONObject()
+            .put("type", "MINIAPPLET_SIGN")
+            .put("documentId", DOCUMENT_ID)
+            .put("requestId", REQUEST_ID)
+            .put("dataB64", Base64.getEncoder().encodeToString("<r/>".encodeToByteArray()))
+            .put("algorithm", "SHA512withRSA")
+            .put("format", "XAdES Detached")
+            .put("extraProperties", JSONObject.NULL)
+            .toString()
+
+        val rejected = selectedJunta.route(
+            rawMessage = redSaraMessage,
+            sourceOrigin = Uri.parse("https://reg.redsara.es"),
+            isMainFrame = true,
+        ) as MiniAppletBridgeRouteResult.Rejected
+
+        assertEquals(SigningErrorCode.ORIGIN_NOT_ALLOWED, rejected.code)
+    }
+
+    @Test
     fun exactUnizarChallengeNormalizesOnlyTheObservedLegacyTuple() {
         val hash = ByteArray(20) { index -> (index + 1).toByte() }
         val properties =

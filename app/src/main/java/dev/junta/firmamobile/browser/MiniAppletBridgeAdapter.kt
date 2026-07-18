@@ -49,8 +49,12 @@ sealed interface MiniAppletBridgeRouteResult {
 
 class MiniAppletBridgeAdapter(
     clock: Clock = Clock.systemUTC(),
+    activeProfileId: () -> dev.junta.firmamobile.profile.ProfileId? = { null },
 ) {
-    private val delegate = ProfileMiniAppletBridgeAdapter(clock = clock)
+    private val delegate = ProfileMiniAppletBridgeAdapter(
+        clock = clock,
+        activeProfileId = activeProfileId,
+    )
 
     fun route(
         rawMessage: String,
@@ -77,6 +81,7 @@ internal class ProfileMiniAppletBridgeAdapter(
     private val profileRegistry: dev.junta.firmamobile.profile.SiteProfileRegistry =
         BuiltInSiteProfiles.releaseRegistry,
     private val adapterRegistry: ProtocolAdapterRegistry = BuiltInProtocolAdapterRegistry.registry,
+    private val activeProfileId: () -> dev.junta.firmamobile.profile.ProfileId? = { null },
 ) : ProtocolInputAdapter {
     override val id = dev.junta.firmamobile.profile.ProtocolInputAdapterId("miniapplet-autoscript-v1")
 
@@ -127,6 +132,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.ORIGIN_NOT_ALLOWED,
             )
         val profile = resolved.profile
+        val selectedProfile = activeProfileId()
+        if (selectedProfile != null && profile.profileId != selectedProfile) {
+            return MiniAppletBridgeRouteResult.Rejected(
+                requestId,
+                SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            )
+        }
         val operation = profile.operationPolicies[ProtocolOperation.SIGN]
             ?: return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         val binding = adapterRegistry.resolve(profile.profileId, ProtocolOperation.SIGN)

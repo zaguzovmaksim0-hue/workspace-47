@@ -14,15 +14,21 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.browser.WebViewStateHolder
+import dev.junta.firmamobile.catalog.PortalCatalogRepository
+import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
 import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
@@ -40,13 +46,14 @@ import dev.junta.firmamobile.ui.SensitiveWindowProtection
 import dev.junta.firmamobile.ui.WindowSecureFlagPolicy
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
+import java.net.URI
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var webViewStateHolder: WebViewStateHolder
     private var currentWebView: WebView? = null
-    private var showBrowser by mutableStateOf(false)
+    private var destination by mutableStateOf<AppDestination>(AppDestination.Certificate)
     private lateinit var signingCoordinator: SigningCoordinator
     private var currentNavigationEpoch: Long = 0L
     private val signingJobs = SigningJobRegistry()
@@ -110,14 +117,29 @@ class MainActivity : ComponentActivity() {
             )
             LaunchedEffect(certificateState.value) {
                 if (certificateState.value !is CertificateUiState.Unlocked) {
-                    showBrowser = false
+                    destination = AppDestination.Certificate
                 }
             }
             JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
-                if (showBrowser && unlocked != null) {
+                val catalogRepository = remember {
+                    PortalCatalogRepository(
+                        registry = BuiltInSiteProfiles.releaseRegistry,
+                        profileCatalog = BuiltInSiteProfiles.catalog,
+                    )
+                }
+                val recentProfiles = remember { mutableStateListOf<ProfileId>() }
+                val favoriteProfiles = remember { mutableStateListOf<ProfileId>() }
+                val browserDestination = destination as? AppDestination.Browser
+                if (browserDestination != null && unlocked != null) {
                     val app = application as JuntaFirmaApplication
-                    BrowserScreen(
+                    key(
+                        browserDestination.profileId.value,
+                        browserDestination.entryUrl.toASCIIString(),
+                    ) {
+                        BrowserScreen(
+                        profileId = browserDestination.profileId,
+                        entryUrl = browserDestination.entryUrl,
                         certificateState = unlocked,
                         stateHolder = webViewStateHolder,
                         logger = app.sanitizedLogger,
@@ -131,7 +153,7 @@ class MainActivity : ComponentActivity() {
                         onDismissSigningState = signingCoordinator::dismissTerminalState,
                         onExitBrowser = {
                             cancelSigning(SigningCancelReason.NAVIGATION)
-                            showBrowser = false
+                            destination = AppDestination.Catalog
                         },
                         onOpenExternal = { uri ->
                             cancelSigning(SigningCancelReason.NAVIGATION)
@@ -143,24 +165,53 @@ class MainActivity : ComponentActivity() {
                         },
                         onChangeCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            showBrowser = false
+                            destination = AppDestination.Certificate
                             launchCertificatePicker()
                         },
                         onLockCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            showBrowser = false
+                            destination = AppDestination.Certificate
                             certificateViewModel.lock()
                         },
                         onClearSession = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            showBrowser = false
+                            destination = AppDestination.Certificate
                             certificateViewModel.lock()
                         },
                         clientCertificateIdentityProvider = {
                             app.certificateSession.identityForSigning()
                         },
                         onWebViewChanged = { currentWebView = it },
-                        onNavigationEpochChanged = { currentNavigationEpoch = it },
+                            onNavigationEpochChanged = { currentNavigationEpoch = it },
+                        )
+                    }
+                } else if (destination == AppDestination.Catalog && unlocked != null) {
+                    PortalCatalogScreen(
+                        repository = catalogRepository,
+                        favoriteProfileIds = favoriteProfiles.toSet(),
+                        recentProfileIds = recentProfiles,
+                        onToggleFavorite = { profileId ->
+                            if (!favoriteProfiles.remove(profileId)) {
+                                favoriteProfiles.add(profileId)
+                            }
+                        },
+                        onOpenPortal = { item ->
+                            val launch = catalogRepository.resolveLaunch(item)
+                            if (launch != null) {
+                                cancelSigning(SigningCancelReason.NAVIGATION)
+                                currentWebView = null
+                                webViewStateHolder.clear()
+                                recentProfiles.remove(launch.profileId)
+                                recentProfiles.add(0, launch.profileId)
+                                while (recentProfiles.size > MAX_RECENT_PROFILES) {
+                                    recentProfiles.removeAt(recentProfiles.lastIndex)
+                                }
+                                destination = AppDestination.Browser(
+                                    profileId = launch.profileId,
+                                    entryUrl = launch.entryUrl,
+                                )
+                            }
+                        },
                     )
                 } else {
                     AppRoot(
@@ -169,7 +220,7 @@ class MainActivity : ComponentActivity() {
                         onUnlock = certificateViewModel::unlock,
                         onLock = certificateViewModel::lock,
                         onForget = certificateViewModel::forget,
-                        onContinue = { showBrowser = true },
+                        onContinue = { destination = AppDestination.Catalog },
                     )
                 }
             }
@@ -235,6 +286,7 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val MAX_RECENT_PROFILES = 8
         private object OpenableDocumentContract : ActivityResultContracts.OpenDocument() {
             override fun createIntent(context: Context, input: Array<String>): Intent =
                 super.createIntent(context, input).addCategory(Intent.CATEGORY_OPENABLE)
@@ -246,4 +298,15 @@ class MainActivity : ComponentActivity() {
             CertificateRepository.MIME_OCTET_STREAM,
         )
     }
+}
+
+private sealed interface AppDestination {
+    data object Certificate : AppDestination
+
+    data object Catalog : AppDestination
+
+    data class Browser(
+        val profileId: ProfileId,
+        val entryUrl: URI,
+    ) : AppDestination
 }

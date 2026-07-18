@@ -19,11 +19,13 @@ class WebViewStateHolder(savedInstanceState: Bundle?) {
 
     fun restoreOrLoad(
         webView: WebView,
+        fallbackUrl: String = JuntaOriginPolicy.START_URL,
         onRestoredUrl: (String) -> Unit = {},
-    ): Boolean = restoreOrLoad(AndroidTarget(webView), onRestoredUrl)
+    ): Boolean = restoreOrLoad(AndroidTarget(webView), fallbackUrl, onRestoredUrl)
 
     internal fun restoreOrLoad(
         target: WebViewStateTarget,
+        fallbackUrl: String = JuntaOriginPolicy.START_URL,
         onRestoredUrl: (String) -> Unit = {},
     ): Boolean {
         val history = pendingHistory.also { pendingHistory = null }
@@ -32,7 +34,7 @@ class WebViewStateHolder(savedInstanceState: Bundle?) {
             return true
         }
 
-        target.loadUrl(JuntaOriginPolicy.START_URL)
+        target.loadUrl(fallbackUrl)
         return false
     }
 

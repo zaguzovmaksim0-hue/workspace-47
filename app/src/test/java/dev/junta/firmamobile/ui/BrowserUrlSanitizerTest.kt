@@ -8,6 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -61,5 +62,22 @@ class BrowserUrlSanitizerTest {
         assertNull(
             initiatorProfileForUrl("https://ws235.juntadeandalucia.es/authenticationFacade"),
         )
+    }
+
+    @Test
+    fun selectedProfileContourNeverAdoptsAnotherImplementedOrigin() {
+        val junta = ProfileId("junta-andalucia")
+
+        assertTrue(
+            urlBelongsToSelectedProfile(
+                "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/",
+                junta,
+            ),
+        )
+        assertTrue(
+            urlBelongsToSelectedProfile("https://ssoweb.juntadeandalucia.es/redirect", junta),
+        )
+        assertFalse(urlBelongsToSelectedProfile("https://reg.redsara.es/es/", junta))
+        assertFalse(urlBelongsToSelectedProfile("https://unknown.example/", junta))
     }
 }

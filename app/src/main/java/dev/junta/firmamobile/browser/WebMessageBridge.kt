@@ -25,7 +25,10 @@ class WebMessageBridge(
         null,
     private val onMiniAppletCancel: (UUID) -> Unit = {},
     private val router: WebMessageRouter = WebMessageRouter(),
-    private val miniAppletAdapter: MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(),
+    activeProfileId: () -> dev.junta.firmamobile.profile.ProfileId? = { null },
+    private val miniAppletAdapter: MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(
+        activeProfileId = activeProfileId,
+    ),
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
