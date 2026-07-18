@@ -19,6 +19,10 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
         setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
     }
 
+    fun setPageProgressListener(listener: (Int) -> Unit) {
+        webChromeClient = JuntaWebChromeClient(listener)
+    }
+
     @Suppress("DEPRECATION")
     private fun configureSettings() {
         settings.apply {

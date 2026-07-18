@@ -5,6 +5,7 @@ import android.webkit.CookieManager
 import android.webkit.WebSettings
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +45,19 @@ class TrustedJuntaWebViewTest {
         assertFalse(cookieManager.acceptThirdPartyCookies(webView))
         assertTrue(webView.webChromeClient is JuntaWebChromeClient)
 
+        webView.destroy()
+    }
+
+    @Test
+    fun reportsBoundedPageProgressWithoutReplacingTheHardenedChromeClient() {
+        val webView = TrustedJuntaWebView(ApplicationProvider.getApplicationContext<Context>())
+        var progress = -1
+        webView.setPageProgressListener { progress = it }
+
+        checkNotNull(webView.webChromeClient).onProgressChanged(webView, 42)
+
+        assertEquals(42, progress)
+        assertTrue(webView.webChromeClient is JuntaWebChromeClient)
         webView.destroy()
     }
 }

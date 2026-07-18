@@ -7,9 +7,7 @@ import android.webkit.WebStorage
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -19,21 +17,14 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.junta.firmamobile.R
@@ -117,6 +106,7 @@ fun BrowserScreen(
     var browserError by remember { mutableStateOf<BrowserErrorCode?>(null) }
     var compatibilityError by remember { mutableStateOf(false) }
     var currentUrl by remember { mutableStateOf(JuntaOriginPolicy.START_URL) }
+    var pageProgress by remember { mutableIntStateOf(100) }
 
     fun advanceNavigationEpoch() {
         bridgeRef.get()?.abandonMiniAppletRequests()
@@ -152,9 +142,11 @@ fun BrowserScreen(
 
             override fun onBrowserError(error: BrowserErrorCode) {
                 browserError = error
+                pageProgress = 100
             }
 
             override fun onTopLevelNavigationStarted(url: String) {
+                pageProgress = 0
                 advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
             }
@@ -239,8 +231,25 @@ fun BrowserScreen(
         }
     }
 
+    val activeProfile = BuiltInSiteProfiles.releaseRegistry.profile(activeProfileId)
+    val currentResolution = runCatching {
+        BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(currentUrl))
+    }.getOrNull()
+    val isActiveProfileOrigin = currentResolution?.profile?.profileId == activeProfileId
+    val trustLabel = when {
+        clientAuthGrant != null || (isActiveProfileOrigin && activeProfile?.clientAuthPolicy != null) ->
+            stringResource(R.string.browser_trust_client_auth)
+        isActiveProfileOrigin &&
+            currentResolution.origin in (activeProfile?.initiatorOrigins ?: emptySet()) &&
+            activeProfile?.capabilities?.contains(dev.junta.firmamobile.profile.Capability.SIGN) == true ->
+            stringResource(R.string.browser_trust_signing)
+        isActiveProfileOrigin -> stringResource(R.string.browser_trust_browse)
+        else -> stringResource(R.string.browser_trust_browse_only)
+    }
     BrowserLayout(
         currentUrl = currentUrl,
+        profileName = activeProfile?.displayName ?: stringResource(R.string.app_name),
+        trustLabel = trustLabel,
         certificateOwner = certificateState.summary.ownerName,
         onAddressSubmitted = ::submitAddress,
         onBack = ::goBack,
@@ -312,32 +321,34 @@ fun BrowserScreen(
                 blockedReason = blockedReason,
                 browserError = browserError,
             )
-            notice?.let {
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Text(
-                            text = it,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (browserError != null) {
-                            Button(onClick = {
-                                onCancelSigning(SigningCancelReason.RELOAD, null)
-                                browserError = null
+            notice?.let { message ->
+                BrowserNoticeBanner(
+                    message = message,
+                    onRetry = if (browserError != null) {
+                        {
+                            onCancelSigning(SigningCancelReason.RELOAD, null)
+                            browserError = null
+                            pageProgress = 0
+                            if (clientAuthGrant != null) {
+                                val activeStartUrl = BuiltInSiteProfiles.releaseRegistry
+                                    .profile(activeProfileId)
+                                    ?.startUrl
+                                    ?.toASCIIString()
+                                    ?: JuntaOriginPolicy.START_URL
+                                pendingNormalUrl.set(activeStartUrl)
+                                clientAuthGrant = null
+                                abandonClientAuth()
+                                advanceNavigationEpoch()
+                            } else {
                                 webViewRef.get()?.reload()
-                            }) {
-                                Text(stringResource(R.string.browser_retry))
                             }
                         }
-                    }
-                }
+                    } else {
+                        null
+                    },
+                )
             }
+            BrowserLoadingIndicator(visible = pageProgress in 0..99)
             key(clientAuthGrant != null) {
                 AndroidView(
                     factory = {
@@ -347,6 +358,11 @@ fun BrowserScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                         webViewRef.set(webView)
+                        webView.setPageProgressListener { progress ->
+                            webView.post {
+                                if (webViewRef.get() === webView) pageProgress = progress
+                            }
+                        }
                         val tlsGrant = clientAuthGrant
                         if (tlsGrant == null) {
                             dedicatedClientActive.set(false)
@@ -484,11 +500,12 @@ fun BrowserScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BrowserLayout(
     certificateOwner: String,
     currentUrl: String = JuntaOriginPolicy.START_URL,
+    profileName: String = "Junta de Andalucía",
+    trustLabel: String = "Firma protegida",
     browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(),
     onAddressSubmitted: (String) -> Unit = {},
     onBack: () -> Unit,
@@ -499,117 +516,58 @@ internal fun BrowserLayout(
     onClearSession: () -> Unit,
     content: @Composable (Modifier) -> Unit,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
     var confirmClearSession by remember { mutableStateOf(false) }
     var addressEditing by remember { mutableStateOf(false) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
-                title = {
-                    BrowserAddressBar(
-                        currentUrl = currentUrl,
-                        editing = addressEditing,
-                        onEditingChange = { addressEditing = it },
-                        onSubmit = onAddressSubmitted,
-                    )
+            IndustrialBrowserTopBar(
+                profileName = profileName,
+                host = BrowserAddressPresentation.hostOf(currentUrl),
+                trustLabel = trustLabel,
+                onBack = {
+                    if (addressEditing) addressEditing = false else onBack()
                 },
-                expandedHeight = BrowserToolbarHeight,
+                onHome = {
+                    addressEditing = false
+                    onHome()
+                },
+                onReload = {
+                    addressEditing = false
+                    onReload()
+                },
+                onChangeCertificate = onChangeCertificate,
+                onLockCertificate = onLockCertificate,
+                onClearSessionRequested = { confirmClearSession = true },
+                onIdentityClick = { addressEditing = true },
                 windowInsets = browserInsets.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                 ),
                 modifier = Modifier.testTag(BROWSER_TOOLBAR_TAG),
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            if (addressEditing) addressEditing = false else onBack()
-                        },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Atrás"
-                        },
-                    ) {
-                        Text("‹", style = MaterialTheme.typography.headlineMedium)
+                editingContent = if (addressEditing) {
+                    {
+                        BrowserAddressBar(
+                            currentUrl = currentUrl,
+                            editing = true,
+                            onEditingChange = { addressEditing = it },
+                            onSubmit = onAddressSubmitted,
+                        )
                     }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            addressEditing = false
-                            onHome()
-                        },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Inicio"
-                        },
-                    ) { Text("⌂") }
-                    IconButton(
-                        onClick = {
-                            addressEditing = false
-                            onReload()
-                        },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Recargar"
-                        },
-                    ) { Text("↻") }
-                    Box {
-                        IconButton(
-                            onClick = {
-                                addressEditing = false
-                                menuExpanded = true
-                            },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Más opciones"
-                            },
-                        ) { Text("⋮", style = MaterialTheme.typography.headlineSmall) }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.browser_change_certificate)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onChangeCertificate()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.browser_lock_certificate)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onLockCertificate()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.browser_clear_session)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    confirmClearSession = true
-                                },
-                            )
-                        }
-                    }
+                } else {
+                    null
                 },
             )
         },
         bottomBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainer,
+            BrowserCertificateStrip(
+                certificateOwner = certificateOwner,
                 modifier = Modifier
-                    .testTag(BROWSER_BOTTOM_BAR_TAG)
-                    .windowInsetsPadding(
-                        browserInsets.only(
-                            WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
-                        ),
-                    ),
-            ) {
-                Text(
-                    text = stringResource(R.string.browser_certificate_status, certificateOwner),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                )
-            }
+                    .testTag(BROWSER_BOTTOM_BAR_TAG),
+                windowInsets = browserInsets.only(
+                    WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
+                ),
+            )
         },
     ) { padding ->
         content(

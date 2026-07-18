@@ -50,6 +50,16 @@
     <string name="error_not_usable">El archivo contiene una identidad que no se puede usar.</string>
     <string name="browser_address_current_description">Dirección actual: %1$s</string>
     <string name="browser_address_edit_description">Editar dirección web</string>
+    <string name="browser_action_back">Atrás</string>
+    <string name="browser_action_home">Inicio de la aplicación</string>
+    <string name="browser_action_reload">Recargar</string>
+    <string name="browser_action_more">Más opciones</string>
+    <string name="browser_host_and_trust">%1$s · %2$s</string>
+    <string name="browser_certificate_active">Certificado activo</string>
+    <string name="browser_trust_signing">Firma protegida</string>
+    <string name="browser_trust_client_auth">Acceso con certificado</string>
+    <string name="browser_trust_browse">Navegación protegida</string>
+    <string name="browser_trust_browse_only">Solo navegación</string>
     <string name="browser_certificate_status">Certificado: %1$s</string>
     <string name="browser_change_certificate">Cambiar certificado</string>
     <string name="browser_lock_certificate">Bloquear certificado</string>

@@ -52,12 +52,14 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithText("www.juntadeandalucia.es").assertIsDisplayed()
-        rule.onNodeWithText("Certificado: Persona de Prueba").assertIsDisplayed()
+        rule.onNodeWithText("Junta de Andalucía").assertIsDisplayed()
+        rule.onNodeWithText("www.juntadeandalucia.es", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("Certificado activo").assertIsDisplayed()
+        rule.onNodeWithText("Persona de Prueba").assertIsDisplayed()
         rule.onNodeWithText("contenido-web").assertIsDisplayed()
 
         rule.onNodeWithContentDescription("Atrás").performClick()
-        rule.onNodeWithContentDescription("Inicio").performClick()
+        rule.onNodeWithContentDescription("Inicio de la aplicación").performClick()
         rule.onNodeWithContentDescription("Recargar").performClick()
         rule.runOnIdle { check(events == listOf("back", "home", "reload")) }
 
@@ -99,14 +101,14 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithText("www.juntadeandalucia.es").assertIsDisplayed()
+        rule.onNodeWithText("www.juntadeandalucia.es", substring = true).assertIsDisplayed()
         rule.onNodeWithText(LONG_URL).assertDoesNotExist()
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(64.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
 
         rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
 
         rule.onNodeWithText(LONG_URL).assertIsDisplayed()
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(64.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
     }
 
     @Test
@@ -163,9 +165,9 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(88.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(96.dp)
         rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(88.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(96.dp)
     }
 
     @Test
@@ -191,10 +193,10 @@ class BrowserScreenTest {
 
         rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).performClick()
         rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertIsDisplayed()
-        rule.onNodeWithContentDescription("Inicio").performClick()
+        rule.onNodeWithContentDescription("Inicio de la aplicación").performClick()
 
         rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
-        rule.onNodeWithText("www.juntadeandalucia.es").assertIsDisplayed()
+        rule.onNodeWithText("www.juntadeandalucia.es", substring = true).assertIsDisplayed()
     }
 
     @Test

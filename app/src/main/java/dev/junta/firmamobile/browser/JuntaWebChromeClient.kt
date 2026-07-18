@@ -5,7 +5,13 @@ import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 
-class JuntaWebChromeClient : WebChromeClient() {
+class JuntaWebChromeClient(
+    private val onProgressChanged: (Int) -> Unit = {},
+) : WebChromeClient() {
+    override fun onProgressChanged(view: WebView, newProgress: Int) {
+        onProgressChanged(newProgress.coerceIn(0, 100))
+    }
+
     override fun onCreateWindow(
         view: WebView,
         isDialog: Boolean,

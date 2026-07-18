@@ -36,7 +36,7 @@ import dev.junta.firmamobile.R
 import java.net.IDN
 import java.util.Locale
 
-internal val BrowserToolbarHeight = 64.dp
+internal val BrowserToolbarHeight = BrowserIndustrialToolbarHeight
 internal const val BROWSER_TOOLBAR_TAG = "browser_toolbar"
 internal const val BROWSER_ADDRESS_LABEL_TAG = "browser_address_label"
 internal const val BROWSER_ADDRESS_FIELD_TAG = "browser_address_field"
