@@ -129,6 +129,7 @@ fun BrowserScreen(
         mutableStateOf(entryUrl.toASCIIString())
     }
     var pageProgress by remember { mutableIntStateOf(100) }
+    var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
 
     fun advanceNavigationEpoch() {
         bridgeRef.get()?.abandonMiniAppletRequests()
@@ -182,6 +183,7 @@ fun BrowserScreen(
                     abandonClientAuth()
                     advanceNavigationEpoch()
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                    webViewRecreationEpoch++
                 }
                 browserError = error
                 pageProgress = 100
@@ -256,8 +258,11 @@ fun BrowserScreen(
     val currentResolution = runCatching {
         BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(currentUrl))
     }.getOrNull()
+    val resolvedProfileId = currentResolution?.profile?.profileId
     val isEffectiveProfileOrigin =
-        currentResolution?.profile?.profileId == effectiveTopLevelProfileId
+        resolvedProfileId != null &&
+            effectiveTopLevelProfileId != null &&
+            resolvedProfileId == effectiveTopLevelProfileId
     val trustLabel = when {
         clientAuthGrant != null ||
             (isEffectiveProfileOrigin && effectiveProfile?.clientAuthPolicy != null) ->
@@ -371,7 +376,7 @@ fun BrowserScreen(
                 )
             }
             BrowserLoadingIndicator(visible = pageProgress in 0..99)
-            key(clientAuthGrant != null) {
+            key(clientAuthGrant != null, webViewRecreationEpoch) {
                 AndroidView(
                     factory = {
                     TrustedJuntaWebView(context).also { webView ->

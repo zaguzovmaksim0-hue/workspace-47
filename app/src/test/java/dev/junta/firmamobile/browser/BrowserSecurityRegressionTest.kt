@@ -144,6 +144,26 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun unresolvedOriginCannotMatchMissingEffectiveProfile() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+
+        assertTrue(
+            "Resolved profile must be non-null before matching",
+            "resolvedProfileId != null" in screenSource,
+        )
+        assertTrue(
+            "Effective profile must be non-null before matching",
+            "effectiveTopLevelProfileId != null" in screenSource,
+        )
+        assertTrue(
+            "Only equal non-null profile identifiers may match",
+            "resolvedProfileId == effectiveTopLevelProfileId" in screenSource,
+        )
+    }
+
+    @Test
     fun rendererDeathInvalidatesBridgeAndSigningState() {
         val clientSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt",
@@ -159,11 +179,18 @@ class BrowserSecurityRegressionTest {
         ).containsMatchIn(screenSource)
         val clientInvalidatesDirectly =
             "invalidate" in rendererBody || "onRendererProcessGone" in rendererBody
+        val screenRecreatesWebView =
+            "webViewRecreationEpoch++" in screenSource &&
+                "key(clientAuthGrant != null, webViewRecreationEpoch)" in screenSource
 
         assertTrue("The renderer-death callback must exist", rendererBody.isNotBlank())
         assertTrue(
             "Renderer death must invalidate the bridge/signing binding before recovery",
             clientInvalidatesDirectly || screenHandlesRendererDeath,
+        )
+        assertTrue(
+            "Renderer death must force creation of a fresh WebView",
+            screenRecreatesWebView,
         )
     }
 
