@@ -191,8 +191,13 @@ object SiteProfileCatalogParser {
                                 op.endpointId.let(p.endpoints::get)?.url?.toString())
                             when (op.mode) {
                                 SignatureMode.EXPLICIT -> {
-                                    require(op.fixedExtraProperties.keys == setOf("serverUrl", "mode"))
-                                    require(op.fixedExtraProperties["mode"] == "explicit")
+                                    val exactKeys = op.fixedExtraProperties.keys
+                                    val explicitMode = exactKeys == setOf("serverUrl", "mode") &&
+                                        op.fixedExtraProperties["mode"] == "explicit"
+                                    val fixedCertificateFilter =
+                                        exactKeys == setOf("serverUrl", "filters") &&
+                                            !op.fixedExtraProperties["filters"].isNullOrBlank()
+                                    require(explicitMode || fixedCertificateFilter)
                                 }
                                 null -> {
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))

@@ -133,7 +133,7 @@ object BuiltInSiteProfiles {
           "mode": "EXPLICIT",
           "fixedExtraProperties": {
             "serverUrl": "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService",
-            "mode": "explicit"
+            "filters": "keyusage.digitalsignature:true;nonexpired:"
           },
           "allowedExtraProperties": []
         }

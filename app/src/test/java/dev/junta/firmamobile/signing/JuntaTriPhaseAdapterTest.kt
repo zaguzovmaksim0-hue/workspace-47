@@ -175,7 +175,7 @@ class JuntaTriPhaseAdapterTest {
     }
 
     private fun request(
-        properties: String = "mode=explicit\nserverUrl=${SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT}\n",
+        properties: String = "filters=keyusage.digitalsignature:true;nonexpired:\nserverUrl=${SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT}\n",
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
         navigationId: String = "00000000-0000-4000-8000-000000000012",
     ): NormalizedSignRequest {

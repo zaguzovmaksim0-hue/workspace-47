@@ -22,7 +22,7 @@ class JuntaTriPhaseCodecTest {
     @Test
     fun observedSinglePreAndPostWireContractRoundTrips() {
         val request = request(
-            extraProperties = "mode=explicit\nserverUrl=${SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT}\n",
+            extraProperties = "filters=keyusage.digitalsignature:true;nonexpired:\nserverUrl=${SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT}\n",
         )
         val decoded = codec.decodeRequest(request, identity.chain)
         val preRequest = codec.buildPreRequest(decoded)
@@ -35,9 +35,19 @@ class JuntaTriPhaseCodecTest {
         assertEquals("SHA1withRSA", preParams.getValue("algo"))
         assertArrayEquals("synthetic-document".encodeToByteArray(), Base64.getUrlDecoder().decode(preParams.getValue("doc")))
         assertTrue(preParams.getValue("cert").isNotBlank())
-        val serializedProperties = String(Base64.getUrlDecoder().decode(preParams.getValue("params")), StandardCharsets.UTF_8)
-        assertTrue(serializedProperties.contains("mode=explicit"))
-        assertFalse(serializedProperties.contains("serverUrl"))
+        val serializedProperties = Properties().apply {
+            load(
+                String(
+                    Base64.getUrlDecoder().decode(preParams.getValue("params")),
+                    StandardCharsets.UTF_8,
+                ).reader(),
+            )
+        }
+        assertEquals(
+            "keyusage.digitalsignature:true;nonexpired:",
+            serializedProperties.getProperty("filters"),
+        )
+        assertFalse(serializedProperties.containsKey("serverUrl"))
 
         val preResponse = urlBase64(
             """
