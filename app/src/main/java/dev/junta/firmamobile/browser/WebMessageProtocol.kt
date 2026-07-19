@@ -46,7 +46,7 @@ object WebMessageProtocol {
         }
         val trustedOrigin = JuntaOriginPolicy.originFor(sourceOrigin)
             ?: return WebMessageParseResult.Failure(WebMessageErrorCode.UNTRUSTED_ORIGIN)
-        val profile = BuiltInSiteProfiles.releaseRegistry.resolve(trustedOrigin)?.profile
+        val profile = BuiltInSiteProfiles.runtimeRegistry.resolve(trustedOrigin)?.profile
         if (profile == null || Capability.AFIRMA_URI !in profile.capabilities) {
             return WebMessageParseResult.Failure(WebMessageErrorCode.UNTRUSTED_ORIGIN)
         }

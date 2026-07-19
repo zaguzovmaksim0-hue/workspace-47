@@ -15,14 +15,21 @@ import org.junit.Test
 
 class PortalCatalogRepositoryTest {
     private val catalog = BuiltInSiteProfiles.catalog
-    private val registry = SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE)
-    private val repository = PortalCatalogRepository(registry, catalog)
+    private val releaseRepository = PortalCatalogRepository(
+        SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE),
+        catalog,
+    )
+    private val qaRepository = PortalCatalogRepository(
+        SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+        catalog,
+    )
 
     @Test
-    fun `publishes only the four typed portal entries backed by profiles`() {
-        val portals = repository.portals()
+    fun `qa publishes all typed portal entries but release opens only verified Junta`() {
+        val qaPortals = qaRepository.portals()
+        val releasePortals = releaseRepository.portals()
 
-        assertEquals(1, repository.bundledCatalogVersion)
+        assertEquals(1, qaRepository.bundledCatalogVersion)
         assertEquals(
             setOf(
                 "junta-andalucia",
@@ -30,20 +37,29 @@ class PortalCatalogRepositoryTest {
                 "unizar-tramitador",
                 "carne-joven-andalucia",
             ),
-            portals.map { it.profileId.value }.toSet(),
+            qaPortals.map { it.profileId.value }.toSet(),
         )
-        portals.forEach { portal ->
-            val profile = catalog.profiles.single { it.profileId == portal.profileId }
-            assertEquals(profile.displayName, portal.displayName)
-            assertEquals(profile.startUrl, portal.entryUrl)
+        assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single {
+            it.profileId == ProfileId("junta-andalucia")
+        }.supportStatus)
+        qaPortals.filterNot { it.profileId == ProfileId("junta-andalucia") }.forEach { portal ->
             assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
             assertTrue(portal.isEnabled)
+        }
+
+        val releaseJunta = releasePortals.single { it.profileId == ProfileId("junta-andalucia") }
+        assertEquals(PortalSupportStatus.VERIFIED_E2E, releaseJunta.supportStatus)
+        assertTrue(releaseJunta.isEnabled)
+        releasePortals.filterNot { it.profileId == ProfileId("junta-andalucia") }.forEach { portal ->
+            assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, portal.supportStatus)
+            assertFalse(portal.isEnabled)
+            assertEquals(null, releaseRepository.resolveLaunch(portal))
         }
     }
 
     @Test
     fun `does not elevate capabilities or signature formats beyond the profile`() {
-        repository.portals().forEach { portal ->
+        qaRepository.portals().forEach { portal ->
             val profile = catalog.profiles.single { it.profileId == portal.profileId }
             assertEquals(
                 Capability.SIGN in profile.capabilities,
@@ -60,7 +76,7 @@ class PortalCatalogRepositoryTest {
             )
         }
 
-        val carneJoven = repository.portals().single {
+        val carneJoven = qaRepository.portals().single {
             it.profileId == ProfileId("carne-joven-andalucia")
         }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, carneJoven.supportStatus)
@@ -68,7 +84,7 @@ class PortalCatalogRepositoryTest {
         assertFalse(PortalServiceCapability.ELECTRONIC_SIGNATURE in carneJoven.capabilities)
         assertTrue(carneJoven.signatureFormats.isEmpty())
 
-        val redSara = repository.portals().single { it.profileId == ProfileId("reg-age-redsara") }
+        val redSara = qaRepository.portals().single { it.profileId == ProfileId("reg-age-redsara") }
         assertEquals(setOf(SignatureFormat.XADES), redSara.signatureFormats)
     }
 
@@ -76,18 +92,18 @@ class PortalCatalogRepositoryTest {
     fun `supports accent insensitive search and public filters`() {
         assertEquals(
             listOf("junta-andalucia", "carne-joven-andalucia"),
-            repository.portals(
+            qaRepository.portals(
                 PortalCatalogQuery(filter = PortalCatalogFilter.AUTONOMOUS_COMMUNITIES),
             ).map { it.profileId.value },
         )
         assertEquals(
             listOf("unizar-tramitador"),
-            repository.portals(PortalCatalogQuery(searchText = "zaragoza"))
+            qaRepository.portals(PortalCatalogQuery(searchText = "zaragoza"))
                 .map { it.profileId.value },
         )
         assertEquals(
             listOf("carne-joven-andalucia"),
-            repository.portals(
+            qaRepository.portals(
                 PortalCatalogQuery(
                     searchText = "carne joven",
                     filter = PortalCatalogFilter.CERTIFICATE_ACCESS,
@@ -100,7 +116,7 @@ class PortalCatalogRepositoryTest {
     fun `favorites and recents are caller supplied and recent order is preserved`() {
         assertEquals(
             listOf("reg-age-redsara"),
-            repository.portals(
+            qaRepository.portals(
                 PortalCatalogQuery(
                     filter = PortalCatalogFilter.FAVORITES,
                     favoriteProfileIds = setOf(ProfileId("reg-age-redsara")),
@@ -111,7 +127,7 @@ class PortalCatalogRepositoryTest {
         val recentIds = listOf(ProfileId("unizar-tramitador"), ProfileId("junta-andalucia"))
         assertEquals(
             recentIds,
-            repository.portals(
+            qaRepository.portals(
                 PortalCatalogQuery(
                     filter = PortalCatalogFilter.RECENT,
                     recentProfileIds = recentIds,
@@ -127,23 +143,23 @@ class PortalCatalogRepositoryTest {
             catalogVersion = catalog.catalogVersion,
             profiles = emptyList(),
         )
-        val mismatched = PortalCatalogRepository(registry, emptyCatalog)
+        val mismatched = PortalCatalogRepository(SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE), emptyCatalog)
 
         assertTrue(mismatched.portals().isEmpty())
     }
 
     @Test
     fun `launch resolution accepts only canonical active profile and exact entry URL`() {
-        val item = repository.portals().single { it.profileId == ProfileId("reg-age-redsara") }
+        val item = qaRepository.portals().single { it.profileId == ProfileId("reg-age-redsara") }
 
         assertEquals(
             PortalLaunchTarget(item.profileId, item.entryUrl),
-            repository.resolveLaunch(item),
+            qaRepository.resolveLaunch(item),
         )
-        assertEquals(null, repository.resolveLaunch(item.profileId, java.net.URI("https://reg.redsara.es/")))
+        assertEquals(null, qaRepository.resolveLaunch(item.profileId, java.net.URI("https://reg.redsara.es/")))
         assertEquals(
             null,
-            repository.resolveLaunch(ProfileId("unknown-profile"), item.entryUrl),
+            qaRepository.resolveLaunch(ProfileId("unknown-profile"), item.entryUrl),
         )
     }
 

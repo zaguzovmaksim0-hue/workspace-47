@@ -121,7 +121,7 @@ class ClientAuthRequestHandlerTest {
     )
 
     private fun authorized(): AuthorizedClientAuthTarget {
-        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.releaseRegistry, clock)
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, clock)
         authorizer.observeTopLevelNavigation(PROFILE, INDEX, SOURCE, 4, true)
         authorizer.onTopLevelPageStarted(SOURCE, 5)
         return checkNotNull(

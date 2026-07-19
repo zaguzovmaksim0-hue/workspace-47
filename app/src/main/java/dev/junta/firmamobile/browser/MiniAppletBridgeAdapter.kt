@@ -79,7 +79,7 @@ class MiniAppletBridgeAdapter(
 internal class ProfileMiniAppletBridgeAdapter(
     private val clock: Clock = Clock.systemUTC(),
     private val profileRegistry: dev.junta.firmamobile.profile.SiteProfileRegistry =
-        BuiltInSiteProfiles.releaseRegistry,
+        BuiltInSiteProfiles.runtimeRegistry,
     private val adapterRegistry: ProtocolAdapterRegistry = BuiltInProtocolAdapterRegistry.registry,
     private val activeProfileId: () -> dev.junta.firmamobile.profile.ProfileId? = { null },
 ) : ProtocolInputAdapter {

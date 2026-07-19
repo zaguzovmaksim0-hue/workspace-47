@@ -96,7 +96,7 @@ fun BrowserScreen(
     val selectedServiceId = profileId
     val trustController = remember(selectedServiceId, entryUrl) {
         BrowserTrustController(
-            urlPolicy = BrowserUrlPolicy(BuiltInSiteProfiles.releaseRegistry),
+            urlPolicy = BrowserUrlPolicy(BuiltInSiteProfiles.runtimeRegistry),
             invalidator = SensitiveFlowInvalidator {},
         )
     }
@@ -115,7 +115,7 @@ fun BrowserScreen(
     val navigationEpoch = remember { mutableLongStateOf(0L) }
     val navigationPolicy = remember { JuntaNavigationPolicy() }
     val clientAuthAuthorizer = remember {
-        ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.releaseRegistry)
+        ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.runtimeRegistry)
     }
     var clientAuthGrant by remember { mutableStateOf<ClientAuthGrant?>(null) }
     var pendingClientAuthTarget by remember {
@@ -251,12 +251,12 @@ fun BrowserScreen(
         }
     }
 
-    val selectedProfile = BuiltInSiteProfiles.releaseRegistry.profile(selectedServiceId)
+    val selectedProfile = BuiltInSiteProfiles.runtimeRegistry.profile(selectedServiceId)
     val effectiveProfile = effectiveTopLevelProfileId?.let(
-        BuiltInSiteProfiles.releaseRegistry::profile,
+        BuiltInSiteProfiles.runtimeRegistry::profile,
     )
     val currentResolution = runCatching {
-        BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(currentUrl))
+        BuiltInSiteProfiles.runtimeRegistry.resolve(java.net.URI(currentUrl))
     }.getOrNull()
     val resolvedProfileId = currentResolution?.profile?.profileId
     val isEffectiveProfileOrigin =
@@ -268,9 +268,8 @@ fun BrowserScreen(
             (isEffectiveProfileOrigin && effectiveProfile?.clientAuthPolicy != null) ->
             stringResource(R.string.browser_trust_client_auth)
         isEffectiveProfileOrigin &&
-            currentResolution?.let { resolution ->
-                resolution.origin in (effectiveProfile?.initiatorOrigins ?: emptySet())
-            } == true &&
+            currentResolution.origin in
+                (effectiveProfile?.initiatorOrigins ?: emptySet()) &&
             effectiveProfile?.capabilities?.contains(
                 dev.junta.firmamobile.profile.Capability.SIGN,
             ) == true ->
@@ -357,7 +356,7 @@ fun BrowserScreen(
                             browserError = null
                             pageProgress = 0
                             if (clientAuthGrant != null) {
-                                val activeStartUrl = BuiltInSiteProfiles.releaseRegistry
+                                val activeStartUrl = BuiltInSiteProfiles.runtimeRegistry
                                     .profile(selectedServiceId)
                                     ?.startUrl
                                     ?.toASCIIString()
@@ -673,7 +672,7 @@ internal fun shouldCaptureBrowserState(discardHistory: Boolean, dedicated: Boole
     !discardHistory && !dedicated
 
 internal fun initiatorProfileForUrl(rawUrl: String): ProfileId? = runCatching {
-    BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(rawUrl))
+    BuiltInSiteProfiles.runtimeRegistry.resolve(java.net.URI(rawUrl))
 }.getOrNull()?.takeIf { resolution ->
     resolution.origin in resolution.profile.initiatorOrigins &&
         resolution.trustMode in setOf(
@@ -685,7 +684,7 @@ internal fun initiatorProfileForUrl(rawUrl: String): ProfileId? = runCatching {
 internal fun urlBelongsToSelectedProfile(rawUrl: String, profileId: ProfileId): Boolean =
     runCatching {
         val uri = URI(rawUrl)
-        val registry = BuiltInSiteProfiles.releaseRegistry
+        val registry = BuiltInSiteProfiles.runtimeRegistry
         registry.resolve(uri)?.profile?.profileId == profileId ||
             registry.resolveRedirect(profileId, uri)?.profile?.profileId == profileId
     }.getOrDefault(false)

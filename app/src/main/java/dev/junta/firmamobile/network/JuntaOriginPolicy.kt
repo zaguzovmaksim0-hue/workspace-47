@@ -30,7 +30,7 @@ object JuntaOriginPolicy {
 
     val allowedHosts: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         BuiltInSiteProfiles.catalog.profiles.asSequence()
-            .mapNotNull { BuiltInSiteProfiles.releaseRegistry.profile(it.profileId) }
+            .mapNotNull { BuiltInSiteProfiles.runtimeRegistry.profile(it.profileId) }
             .flatMap { profile ->
                 (profile.initiatorOrigins + profile.redirectOrigins + profile.trustedBrowseOrigins +
                     (profile.clientAuthPolicy?.requestOrigins ?: emptySet()))
@@ -41,7 +41,7 @@ object JuntaOriginPolicy {
 
     val webMessageOriginRules: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         BuiltInSiteProfiles.catalog.profiles.asSequence()
-            .mapNotNull { BuiltInSiteProfiles.releaseRegistry.profile(it.profileId) }
+            .mapNotNull { BuiltInSiteProfiles.runtimeRegistry.profile(it.profileId) }
             .filter { profile ->
                 dev.junta.firmamobile.profile.Capability.SIGN in profile.capabilities ||
                     dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE in profile.capabilities

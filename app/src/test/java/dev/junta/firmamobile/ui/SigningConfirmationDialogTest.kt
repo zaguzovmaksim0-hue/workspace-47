@@ -41,7 +41,7 @@ class SigningConfirmationDialogTest {
         rule.onNodeWithText("Solicitud de firma").assertIsDisplayed()
         rule.onNodeWithText("Sitio: www.juntadeandalucia.es").assertIsDisplayed()
         rule.onNodeWithText("Perfil: Junta de Andalucía").assertIsDisplayed()
-        rule.onNodeWithText("Nivel de soporte: EXPERIMENTAL").assertIsDisplayed()
+        rule.onNodeWithText("Nivel de soporte: VERIFIED_E2E").assertIsDisplayed()
         rule.onNodeWithText("Operación: Autenticación con certificado").assertIsDisplayed()
         rule.onNodeWithText("Certificado: Persona de Prueba").assertIsDisplayed()
         rule.onNodeWithText("Formato: CAdES").assertIsDisplayed()
@@ -78,7 +78,7 @@ class SigningConfirmationDialogTest {
             requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174000"),
             siteHost = "www.juntadeandalucia.es",
             profileName = "Junta de Andalucía",
-            supportLevel = "EXPERIMENTAL",
+            supportLevel = "VERIFIED_E2E",
             safeDescription = "Autenticación con certificado",
             format = "CAdES",
             algorithm = if (requiresLegacySha1Warning) "SHA1withRSA" else "SHA256withRSA",

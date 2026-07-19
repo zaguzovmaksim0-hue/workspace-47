@@ -53,7 +53,7 @@ class SigningCoordinatorTest {
         assertEquals(REQUEST_ID, state.requestId)
         assertEquals("www.juntadeandalucia.es", state.siteHost)
         assertEquals("Junta de Andalucía", state.profileName)
-        assertEquals("EXPERIMENTAL", state.supportLevel)
+        assertEquals("VERIFIED_E2E", state.supportLevel)
         assertEquals("Autenticación con certificado", state.safeDescription)
         assertEquals("CAdES", state.format)
         assertEquals("SHA256withRSA", state.algorithm)

@@ -34,7 +34,7 @@ class SiteProfileCatalogParserTest {
             it.profileId == ProfileId("junta-andalucia")
         }
         assertEquals(ProfileId("junta-andalucia"), profile.profileId)
-        assertEquals(CompatibilityStatus.EXPERIMENTAL, profile.compatibilityStatus)
+        assertEquals(CompatibilityStatus.VERIFIED_E2E, profile.compatibilityStatus)
         assertEquals(ProfileActivation.ENABLED, profile.activation)
         assertEquals(
             "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
@@ -75,7 +75,7 @@ class SiteProfileCatalogParserTest {
             it.profileId == ProfileId("reg-age-redsara")
         }
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
-        assertEquals(ProfileActivation.ENABLED, profile.activation)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals("https://reg.redsara.es/es/", profile.startUrl.toString())
         assertEquals(setOf("https://reg.redsara.es"), profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized })
         assertTrue(profile.redirectOrigins.isEmpty())
@@ -97,6 +97,7 @@ class SiteProfileCatalogParserTest {
             it.profileId == ProfileId("unizar-tramitador")
         }
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(setOf("https://tramita.unizar.es"), profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized })
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
@@ -121,6 +122,7 @@ class SiteProfileCatalogParserTest {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("carne-joven-andalucia")
         }
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
@@ -139,13 +141,19 @@ class SiteProfileCatalogParserTest {
         assertEquals(15, policy.grantTtlSeconds)
         assertEquals(
             TrustMode.BROWSE_ONLY,
-            BuiltInSiteProfiles.releaseRegistry.resolve(
+            BuiltInSiteProfiles.qaRegistry.resolve(
                 URI("https://ws235.juntadeandalucia.es/authenticationFacade"),
             )?.trustMode,
         )
         assertEquals(
             TrustMode.TRUSTED_CLIENT_AUTH,
-            BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl)?.trustMode,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertNull(
+            BuiltInSiteProfiles.releaseRegistry.resolve(
+                URI("https://ws235.juntadeandalucia.es/authenticationFacade"),
+            ),
         )
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(
@@ -155,6 +163,46 @@ class SiteProfileCatalogParserTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun releaseEnablesOnlyVerifiedJuntaWhileQaKeepsExperimentalPortalsAvailable() {
+        val junta = ProfileId("junta-andalucia")
+        val qaOnly = setOf(
+            ProfileId("reg-age-redsara"),
+            ProfileId("unizar-tramitador"),
+            ProfileId("carne-joven-andalucia"),
+        )
+
+        assertEquals(setOf(junta), BuiltInSiteProfiles.catalog.profiles
+            .mapNotNull { profile ->
+                profile.profileId.takeIf { BuiltInSiteProfiles.releaseRegistry.profile(it) != null }
+            }
+            .toSet())
+        qaOnly.forEach { profileId ->
+            assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+            assertTrue(BuiltInSiteProfiles.qaRegistry.profile(profileId) != null)
+        }
+        assertEquals(
+            CompatibilityStatus.VERIFIED_E2E,
+            BuiltInSiteProfiles.releaseRegistry.profile(junta)?.compatibilityStatus,
+        )
+    }
+
+    @Test
+    fun releaseRejectsSensitiveEnabledProfileWithoutVerifiedE2eEvidence() {
+        val downgradedCatalog = SiteProfileCatalogParser.parse(
+            BuiltInSiteProfiles.JSON.replaceFirst(
+                "\"compatibilityStatus\": \"VERIFIED_E2E\"",
+                "\"compatibilityStatus\": \"VERIFIED_CONTRACT\"",
+            ),
+        )
+        val release = SiteProfileRegistry(downgradedCatalog, BuildTrustPolicy.RELEASE)
+        val qa = SiteProfileRegistry(downgradedCatalog, BuildTrustPolicy.QA)
+        val junta = ProfileId("junta-andalucia")
+
+        assertNull(release.profile(junta))
+        assertTrue(qa.profile(junta) != null)
     }
 
     @Test
