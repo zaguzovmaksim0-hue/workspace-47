@@ -132,8 +132,12 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.ORIGIN_NOT_ALLOWED,
             )
         val profile = resolved.profile
-        val selectedProfile = activeProfileId()
-        if (selectedProfile != null && profile.profileId != selectedProfile) {
+        val activeProfile = activeProfileId()
+            ?: return MiniAppletBridgeRouteResult.Rejected(
+                requestId,
+                SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            )
+        if (profile.profileId != activeProfile) {
             return MiniAppletBridgeRouteResult.Rejected(
                 requestId,
                 SigningErrorCode.ORIGIN_NOT_ALLOWED,
