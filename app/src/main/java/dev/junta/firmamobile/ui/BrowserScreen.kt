@@ -39,6 +39,8 @@ import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
+import dev.junta.firmamobile.browser.BrowserTrustController
+import dev.junta.firmamobile.browser.BrowserUrlPolicy
 import dev.junta.firmamobile.browser.AuthorizedClientAuthTarget
 import dev.junta.firmamobile.browser.ClientAuthGrant
 import dev.junta.firmamobile.browser.ClientAuthNavigationAuthorizer
@@ -49,6 +51,7 @@ import dev.junta.firmamobile.browser.JuntaWebViewClient
 import dev.junta.firmamobile.browser.MiniAppletBridgeMode
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.browser.NavigationBlockReason
+import dev.junta.firmamobile.browser.SensitiveFlowInvalidator
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
@@ -90,6 +93,18 @@ fun BrowserScreen(
     onNavigationEpochChanged: (Long) -> Unit = {},
 ) {
     val context = LocalContext.current
+    val selectedServiceId = profileId
+    val trustController = remember(selectedServiceId, entryUrl) {
+        BrowserTrustController(
+            urlPolicy = BrowserUrlPolicy(BuiltInSiteProfiles.releaseRegistry),
+            invalidator = SensitiveFlowInvalidator {},
+        )
+    }
+    var effectiveTopLevelProfileId by remember(selectedServiceId, entryUrl) {
+        mutableStateOf(
+            trustController.navigate(entryUrl.toASCIIString()).activeProfileId,
+        )
+    }
     val webViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
     val bridgeRef = remember { AtomicReference<WebMessageBridgeAttachment?>() }
     val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
@@ -132,7 +147,12 @@ fun BrowserScreen(
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
         pendingRequest = request
     }
-    val callbacks = remember(profileId, entryUrl, onOpenExternal, onCancelSigning) {
+    val callbacks = remember(
+        selectedServiceId,
+        entryUrl,
+        onOpenExternal,
+        onCancelSigning,
+    ) {
         object : BrowserNavigationCallbacks {
             override fun openExternal(uri: Uri) {
                 pendingClientAuthTarget = null
@@ -153,6 +173,16 @@ fun BrowserScreen(
             }
 
             override fun onBrowserError(error: BrowserErrorCode) {
+                if (error == BrowserErrorCode.RENDER_PROCESS_GONE) {
+                    effectiveTopLevelProfileId = null
+                    pendingClientAuthTarget = null
+                    clientAuthGrant = null
+                    pendingRequest = null
+                    bridgeRef.getAndSet(null)?.close()
+                    abandonClientAuth()
+                    advanceNavigationEpoch()
+                    onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                }
                 browserError = error
                 pageProgress = 100
             }
@@ -162,7 +192,9 @@ fun BrowserScreen(
                 browserError = null
                 blockedReason = null
                 pendingClientAuthTarget = null
-                if (!urlBelongsToSelectedProfile(url, profileId)) {
+                val previousEffectiveProfileId = effectiveTopLevelProfileId
+                effectiveTopLevelProfileId = trustController.navigate(url).activeProfileId
+                if (previousEffectiveProfileId != effectiveTopLevelProfileId) {
                     clientAuthGrant = null
                     pendingRequest = null
                     abandonClientAuth()
@@ -217,24 +249,35 @@ fun BrowserScreen(
         }
     }
 
-    val activeProfile = BuiltInSiteProfiles.releaseRegistry.profile(profileId)
+    val selectedProfile = BuiltInSiteProfiles.releaseRegistry.profile(selectedServiceId)
+    val effectiveProfile = effectiveTopLevelProfileId?.let(
+        BuiltInSiteProfiles.releaseRegistry::profile,
+    )
     val currentResolution = runCatching {
         BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(currentUrl))
     }.getOrNull()
-    val isActiveProfileOrigin = currentResolution?.profile?.profileId == profileId
+    val isEffectiveProfileOrigin =
+        currentResolution?.profile?.profileId == effectiveTopLevelProfileId
     val trustLabel = when {
-        clientAuthGrant != null || (isActiveProfileOrigin && activeProfile?.clientAuthPolicy != null) ->
+        clientAuthGrant != null ||
+            (isEffectiveProfileOrigin && effectiveProfile?.clientAuthPolicy != null) ->
             stringResource(R.string.browser_trust_client_auth)
-        isActiveProfileOrigin &&
-            currentResolution.origin in (activeProfile?.initiatorOrigins ?: emptySet()) &&
-            activeProfile?.capabilities?.contains(dev.junta.firmamobile.profile.Capability.SIGN) == true ->
+        isEffectiveProfileOrigin &&
+            currentResolution?.let { resolution ->
+                resolution.origin in (effectiveProfile?.initiatorOrigins ?: emptySet())
+            } == true &&
+            effectiveProfile?.capabilities?.contains(
+                dev.junta.firmamobile.profile.Capability.SIGN,
+            ) == true ->
             stringResource(R.string.browser_trust_signing)
-        isActiveProfileOrigin -> stringResource(R.string.browser_trust_browse)
+        isEffectiveProfileOrigin -> stringResource(R.string.browser_trust_browse)
         else -> stringResource(R.string.browser_trust_browse_only)
     }
     BrowserLayout(
         currentUrl = currentUrl,
-        profileName = activeProfile?.displayName ?: stringResource(R.string.app_name),
+        profileName = effectiveProfile?.displayName
+            ?: selectedProfile?.displayName
+            ?: stringResource(R.string.app_name),
         trustLabel = trustLabel,
         certificateOwner = certificateState.summary.ownerName,
         onBack = ::goBack,
@@ -310,7 +353,7 @@ fun BrowserScreen(
                             pageProgress = 0
                             if (clientAuthGrant != null) {
                                 val activeStartUrl = BuiltInSiteProfiles.releaseRegistry
-                                    .profile(profileId)
+                                    .profile(selectedServiceId)
                                     ?.startUrl
                                     ?.toASCIIString()
                                     ?: entryUrl.toASCIIString()
@@ -351,10 +394,10 @@ fun BrowserScreen(
                                 logger = logger,
                                 navigationPolicy = navigationPolicy,
                                 clientAuthAuthorizer = clientAuthAuthorizer,
-                                activeProfileId = { profileId },
+                                activeProfileId = { effectiveTopLevelProfileId },
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 onClientAuthTarget = { authorized ->
-                                    if (authorized.profileId == profileId) {
+                                    if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthTarget = authorized
                                     } else {
                                         clientAuthAuthorizer.invalidate()
@@ -369,7 +412,7 @@ fun BrowserScreen(
                                     onMiniAppletRequest(request, reply)
                                 },
                                 onMiniAppletCancel = onMiniAppletCancel,
-                                activeProfileId = { profileId },
+                                activeProfileId = { effectiveTopLevelProfileId },
                                 miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 currentOrigin = {
@@ -422,6 +465,8 @@ fun BrowserScreen(
                                     webView,
                                     entryUrl.toASCIIString(),
                                 ) { restoredUrl ->
+                                    effectiveTopLevelProfileId =
+                                        trustController.navigate(restoredUrl).activeProfileId
                                     currentUrl = safeBrowserDisplayUrl(restoredUrl)
                                 }
                             }
@@ -454,11 +499,13 @@ fun BrowserScreen(
 
     pendingClientAuthTarget?.let { authorized ->
         ClientAuthConfirmationDialog(
-            organization = activeProfile?.displayName ?: stringResource(R.string.app_name),
+            organization = effectiveProfile?.displayName
+                ?: selectedProfile?.displayName
+                ?: stringResource(R.string.app_name),
             host = authorized.target.host,
             certificateOwner = certificateState.summary.ownerName,
             onContinue = {
-                if (authorized.profileId != profileId) {
+                if (authorized.profileId != effectiveTopLevelProfileId) {
                     pendingClientAuthTarget = null
                     abandonClientAuth()
                 } else {
