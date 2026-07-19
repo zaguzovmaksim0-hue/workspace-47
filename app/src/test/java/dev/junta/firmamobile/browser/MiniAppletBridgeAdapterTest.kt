@@ -28,9 +28,7 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class MiniAppletBridgeAdapterTest {
-    private val adapter = MiniAppletBridgeAdapter(
-        clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
-    )
+    private val adapter = adapterFor("junta-andalucia")
 
     @Test
     fun exactTrustedJuntaMiniAppletCallNormalizesToOneOwnedRequest() {
@@ -57,7 +55,7 @@ class MiniAppletBridgeAdapterTest {
 
     @Test
     fun exactRedSaraAutoScriptCallNormalizesOnlyTheObservedXadesTuple() {
-        val result = adapter.route(
+        val result = adapterFor("reg-age-redsara").route(
             rawMessage = JSONObject()
                 .put("type", "MINIAPPLET_SIGN")
                 .put("documentId", DOCUMENT_ID)
@@ -89,6 +87,7 @@ class MiniAppletBridgeAdapterTest {
 
     @Test
     fun redSaraLookalikeIframeWrongTupleAndPropertiesFailClosed() {
+        val redSaraAdapter = adapterFor("reg-age-redsara")
         val valid = JSONObject()
             .put("type", "MINIAPPLET_SIGN")
             .put("documentId", DOCUMENT_ID)
@@ -98,11 +97,42 @@ class MiniAppletBridgeAdapterTest {
             .put("format", "XAdES Detached")
             .put("extraProperties", JSONObject.NULL)
             .toString()
-        assertRejected(valid, Uri.parse("https://reg.redsara.es.evil.example"), true)
-        assertRejected(valid, Uri.parse("https://reg.redsara.es"), false)
-        assertRejected(valid.replace("SHA512withRSA", "SHA256withRSA"), Uri.parse("https://reg.redsara.es"), true)
-        assertRejected(valid.replace("XAdES Detached", "CAdES"), Uri.parse("https://reg.redsara.es"), true)
-        assertRejected(valid.replace("null", "\"mode=explicit\""), Uri.parse("https://reg.redsara.es"), true)
+        assertRejected(valid, Uri.parse("https://reg.redsara.es.evil.example"), true, redSaraAdapter)
+        assertRejected(valid, Uri.parse("https://reg.redsara.es"), false, redSaraAdapter)
+        assertRejected(
+            valid.replace("SHA512withRSA", "SHA256withRSA"),
+            Uri.parse("https://reg.redsara.es"),
+            true,
+            redSaraAdapter,
+        )
+        assertRejected(
+            valid.replace("XAdES Detached", "CAdES"),
+            Uri.parse("https://reg.redsara.es"),
+            true,
+            redSaraAdapter,
+        )
+        assertRejected(
+            valid.replace("null", "\"mode=explicit\""),
+            Uri.parse("https://reg.redsara.es"),
+            true,
+            redSaraAdapter,
+        )
+    }
+
+    @Test
+    fun trustedOriginIsRejectedWhenEffectiveProfileIsMissing() {
+        val adapterWithoutEffectiveProfile = MiniAppletBridgeAdapter(
+            clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+            activeProfileId = { null },
+        )
+
+        val rejected = adapterWithoutEffectiveProfile.route(
+            rawMessage = message(),
+            sourceOrigin = TRUSTED_ORIGIN,
+            isMainFrame = true,
+        ) as MiniAppletBridgeRouteResult.Rejected
+
+        assertEquals(SigningErrorCode.ORIGIN_NOT_ALLOWED, rejected.code)
     }
 
     @Test
@@ -134,7 +164,8 @@ class MiniAppletBridgeAdapterTest {
         val hash = ByteArray(20) { index -> (index + 1).toByte() }
         val properties =
             "precalculatedHashAlgorithm=SHA1\nserverUrl=${dev.junta.firmamobile.signing.UnizarTriPhaseAdapter.ENDPOINT}"
-        val result = adapter.route(
+        val unizarAdapter = adapterFor("unizar-tramitador")
+        val result = unizarAdapter.route(
             rawMessage = JSONObject()
                 .put("type", "MINIAPPLET_SIGN")
                 .put("documentId", DOCUMENT_ID)
@@ -175,6 +206,7 @@ class MiniAppletBridgeAdapterTest {
                 .toString(),
             Uri.parse("https://tramita.unizar.es"),
             true,
+            unizarAdapter,
         )
         hash.fill(0)
     }
@@ -300,9 +332,19 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
-    private fun assertRejected(rawMessage: String, origin: Uri, isMainFrame: Boolean) {
+    private fun adapterFor(profileId: String): MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(
+        clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        activeProfileId = { dev.junta.firmamobile.profile.ProfileId(profileId) },
+    )
+
+    private fun assertRejected(
+        rawMessage: String,
+        origin: Uri,
+        isMainFrame: Boolean,
+        bridgeAdapter: MiniAppletBridgeAdapter = adapter,
+    ) {
         assertTrue(
-            adapter.route(rawMessage, origin, isMainFrame) is
+            bridgeAdapter.route(rawMessage, origin, isMainFrame) is
                 MiniAppletBridgeRouteResult.Rejected,
         )
     }
