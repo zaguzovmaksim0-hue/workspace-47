@@ -1,0 +1,207 @@
+package dev.junta.firmamobile.browser
+
+import android.net.Uri
+import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.BuildTrustPolicy
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.SiteProfileRegistry
+import dev.junta.firmamobile.signing.LocalSignature
+import dev.junta.firmamobile.signing.SigningContext
+import dev.junta.firmamobile.signing.SigningErrorCode
+import java.io.File
+import java.time.Instant
+import java.util.Base64
+import java.util.UUID
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
+import org.robolectric.annotation.GraphicsMode
+import org.robolectric.annotation.SQLiteMode
+
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
+@SQLiteMode(SQLiteMode.Mode.LEGACY)
+class BrowserSecurityRegressionTest {
+    private val registry = SiteProfileRegistry(
+        BuiltInSiteProfiles.catalog,
+        BuildTrustPolicy.RELEASE,
+    )
+
+    @Test
+    fun selectedServiceIsNotUsedAsTheEffectiveTopLevelSecurityProfile() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+
+        assertTrue(
+            "BrowserScreen must keep catalog selection separate from effective trust state",
+            "selectedServiceId" in source && "effectiveTopLevelProfileId" in source,
+        )
+        assertFalse(
+            "The catalog-selected profile must not be injected directly into the bridge/client",
+            "activeProfileId = { profileId }" in source,
+        )
+    }
+
+    @Test
+    fun redirectBetweenProfilesRebindsTheEffectiveTopLevelProfile() {
+        val invalidations = mutableListOf<BrowserTransitionReason>()
+        val controller = BrowserTrustController(
+            BrowserUrlPolicy(registry),
+            SensitiveFlowInvalidator(invalidations::add),
+        )
+        val junta = profile("junta-andalucia")
+        val redSara = profile("reg-age-redsara")
+
+        val initial = controller.navigate(junta.startUrl.toASCIIString())
+        val redirected = controller.navigate(redSara.startUrl.toASCIIString())
+
+        assertEquals(junta.profileId, initial.activeProfileId)
+        assertEquals(redSara.profileId, redirected.activeProfileId)
+        assertEquals(2L, redirected.epoch)
+        assertEquals(
+            listOf(BrowserTransitionReason.NAVIGATE, BrowserTransitionReason.NAVIGATE),
+            invalidations,
+        )
+    }
+
+    @Test
+    fun restoredUrlIsReResolvedBeforeTheBridgeCanBeUsed() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val restoreBlock = Regex(
+            """stateHolder\.restoreOrLoad\([\s\S]{0,1000}?\{ restoredUrl ->([\s\S]{0,700}?)\n\s*}""",
+        ).find(source)?.groupValues?.get(1).orEmpty()
+
+        assertTrue("The restore callback must exist", restoreBlock.isNotBlank())
+        assertTrue(
+            "A restored URL must be resolved into the effective top-level profile",
+            ("navigate(restoredUrl)" in restoreBlock || "resolve(restoredUrl)" in restoreBlock) &&
+                "effectiveTopLevelProfileId" in restoreBlock,
+        )
+    }
+
+    @Test
+    fun foreignIframeCannotChangeTheEffectiveTopLevelProfile() {
+        val controller = BrowserTrustController(
+            BrowserUrlPolicy(registry),
+            SensitiveFlowInvalidator {},
+        )
+        val redSara = profile("reg-age-redsara")
+        val current = controller.navigate(redSara.startUrl.toASCIIString())
+        val epochBefore = current.epoch
+        val adapter = MiniAppletBridgeAdapter(
+            activeProfileId = { controller.current().activeProfileId },
+        )
+
+        val result = adapter.route(
+            rawMessage = juntaMessage(),
+            sourceOrigin = Uri.parse("https://www.juntadeandalucia.es"),
+            isMainFrame = false,
+            navigationEpoch = epochBefore,
+        )
+
+        assertTrue(result is MiniAppletBridgeRouteResult.Rejected)
+        assertEquals(
+            SigningErrorCode.NAVIGATION_CHANGED,
+            (result as MiniAppletBridgeRouteResult.Rejected).code,
+        )
+        assertEquals(redSara.profileId, controller.current().activeProfileId)
+        assertEquals(epochBefore, controller.current().epoch)
+    }
+
+    @Test
+    fun staleBridgeBindingIsRejectedAfterNavigationEpochAdvances() {
+        val origin = TrustedOrigin("https", "reg.redsara.es", 443)
+        var epoch = 11L
+        val posted = mutableListOf<String>()
+        val registry = MiniAppletReplyRegistry(
+            currentNavigationEpoch = { epoch },
+            currentOrigin = { origin },
+        )
+        val requestId = UUID.fromString(REQUEST_ID)
+        val channel = checkNotNull(
+            registry.create(
+                requestId = requestId,
+                context = signingContext(origin, epoch),
+                postMessage = posted::add,
+            ),
+        )
+
+        epoch++
+
+        assertFalse(channel.success(LocalSignature(byteArrayOf(1)), byteArrayOf(2)))
+        assertTrue(posted.isEmpty())
+        assertTrue(registry.abandonAll().isEmpty())
+    }
+
+    @Test
+    fun rendererDeathInvalidatesBridgeAndSigningState() {
+        val clientSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt",
+        )
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val rendererBody = Regex(
+            """override fun onRenderProcessGone\([\s\S]{0,500}?\n\s*}""",
+        ).find(clientSource)?.value.orEmpty()
+        val screenHandlesRendererDeath = Regex(
+            """RENDER_PROCESS_GONE[\s\S]{0,700}?(advanceNavigationEpoch|bridgeRef\.[\s\S]{0,80}?(close|abandon))""",
+        ).containsMatchIn(screenSource)
+        val clientInvalidatesDirectly =
+            "invalidate" in rendererBody || "onRendererProcessGone" in rendererBody
+
+        assertTrue("The renderer-death callback must exist", rendererBody.isNotBlank())
+        assertTrue(
+            "Renderer death must invalidate the bridge/signing binding before recovery",
+            clientInvalidatesDirectly || screenHandlesRendererDeath,
+        )
+    }
+
+    private fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {
+        it.profileId == ProfileId(id)
+    }
+
+    private fun juntaMessage(): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", Base64.getEncoder().encodeToString("payload".encodeToByteArray()))
+        .put("algorithm", "SHA1withRSA")
+        .put("format", "CAdES")
+        .put("extraProperties", "mode=explicit")
+        .toString()
+
+    private fun signingContext(origin: TrustedOrigin, epoch: Long) = SigningContext(
+        profileId = "reg-age-redsara",
+        profileVersion = 1,
+        origin = origin,
+        navigationId = NavigationId(DOCUMENT_ID),
+        navigationEpoch = epoch,
+        observedAt = Instant.parse("2030-01-01T00:00:00Z"),
+    )
+
+    private fun projectSource(relativePath: String): String {
+        var directory = File(System.getProperty("user.dir")).canonicalFile
+        repeat(8) {
+            val candidate = File(directory, relativePath)
+            if (candidate.isFile) return candidate.readText()
+            directory = directory.parentFile ?: return@repeat
+        }
+        error("Project source not found: $relativePath")
+    }
+
+    private companion object {
+        const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174111"
+        const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
+    }
+}
