@@ -10,7 +10,7 @@ import java.util.Locale
 
 class AfirmaUriParser {
     fun parse(rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
-        val profile = BuiltInSiteProfiles.releaseRegistry.resolve(origin)?.profile
+        val profile = BuiltInSiteProfiles.runtimeRegistry.resolve(origin)?.profile
         if (profile == null || Capability.AFIRMA_URI !in profile.capabilities) {
             return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNTRUSTED_ORIGIN)
         }
@@ -123,7 +123,7 @@ class AfirmaUriParser {
         }
         if (uri.fragment != null) return false
         val callbackOrigin = JuntaOriginPolicy.originFor(uri) ?: return false
-        val resolved = BuiltInSiteProfiles.releaseRegistry.resolve(callbackOrigin) ?: return false
+        val resolved = BuiltInSiteProfiles.runtimeRegistry.resolve(callbackOrigin) ?: return false
         return resolved.profile.profileId == profile.profileId
     }
 

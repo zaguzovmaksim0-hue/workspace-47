@@ -124,7 +124,7 @@ class MainActivity : ComponentActivity() {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val catalogRepository = remember {
                     PortalCatalogRepository(
-                        registry = BuiltInSiteProfiles.releaseRegistry,
+                        registry = BuiltInSiteProfiles.runtimeRegistry,
                         profileCatalog = BuiltInSiteProfiles.catalog,
                     )
                 }

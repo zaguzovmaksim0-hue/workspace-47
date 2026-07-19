@@ -3,6 +3,42 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+fun org.gradle.api.provider.ProviderFactory.secretValue(name: String): String? =
+    gradleProperty(name)
+        .orElse(environmentVariable(name))
+        .orNull
+        ?.takeIf(String::isNotEmpty)
+
+val releaseStoreFilePath = providers.secretValue("JFM_RELEASE_STORE_FILE")
+val releaseStorePassword = providers.secretValue("JFM_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = providers.secretValue("JFM_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = providers.secretValue("JFM_RELEASE_KEY_PASSWORD")
+val releaseSigningConfigured = listOf(
+    releaseStoreFilePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { it != null }
+
+val verifyReleaseSigning by tasks.registering {
+    group = "verification"
+    description = "Fails unless a private release signing configuration is available."
+
+    doLast {
+        if (!releaseSigningConfigured) {
+            throw GradleException(
+                "Private release signing is required. Set JFM_RELEASE_STORE_FILE, " +
+                    "JFM_RELEASE_STORE_PASSWORD, JFM_RELEASE_KEY_ALIAS and " +
+                    "JFM_RELEASE_KEY_PASSWORD as Gradle properties or environment variables.",
+            )
+        }
+        val storeFile = rootProject.file(requireNotNull(releaseStoreFilePath))
+        if (!storeFile.isFile) {
+            throw GradleException("Release keystore does not exist: ${storeFile.absolutePath}")
+        }
+    }
+}
+
 android {
     namespace = "dev.junta.firmamobile"
     compileSdk = 36
@@ -15,6 +51,7 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
     }
 
     buildFeatures {
@@ -22,20 +59,47 @@ android {
         compose = true
     }
 
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            create("privateRelease") {
+                storeFile = rootProject.file(requireNotNull(releaseStoreFilePath))
+                storePassword = requireNotNull(releaseStorePassword)
+                keyAlias = requireNotNull(releaseKeyAlias)
+                keyPassword = requireNotNull(releaseKeyPassword)
+            }
+        }
+    }
+
     buildTypes {
         debug {
             isDebuggable = true
+            buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
+        }
+        create("qa") {
+            initWith(getByName("debug"))
+            matchingFallbacks += listOf("debug")
+            isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
+            versionNameSuffix = "-qa"
+            buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
         }
         release {
             isDebuggable = false
-            // On-device QA builds are installable without repository secrets.
-            // Task 15 replaces this with the external private release key before export.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("privateRelease")
+            buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+        }
+    }
+
+    sourceSets {
+        getByName("qa") {
+            manifest.srcFile("src/debug/AndroidManifest.xml")
+            kotlin.directories.add("src/debug/java")
+            res.directories.add("src/debug/res")
         }
     }
 
@@ -57,6 +121,20 @@ android {
             "GradleDependency",
             "NewerVersionAvailable",
         )
+    }
+}
+
+androidComponents {
+    beforeVariants(selector().withBuildType("qa")) { variantBuilder ->
+        variantBuilder.hostTests[
+            com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE
+        ]?.enable = true
+    }
+}
+
+tasks.configureEach {
+    if (name == "preReleaseBuild") {
+        dependsOn(verifyReleaseSigning)
     }
 }
 
@@ -88,6 +166,8 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    "qaImplementation"(libs.androidx.compose.ui.tooling)
+    "qaImplementation"(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

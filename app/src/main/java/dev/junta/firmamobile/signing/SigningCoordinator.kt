@@ -81,7 +81,7 @@ class SigningCoordinator internal constructor(
         adapter.takeIf { it.id == id }
     },
     private val profileRegistry: dev.junta.firmamobile.profile.SiteProfileRegistry =
-        BuiltInSiteProfiles.releaseRegistry,
+        BuiltInSiteProfiles.runtimeRegistry,
     private val bindingRegistry: ProtocolAdapterRegistry = BuiltInProtocolAdapterRegistry.registry,
 ) : AutoCloseable {
     private val mutableState = MutableStateFlow<SigningUiState>(SigningUiState.Idle)

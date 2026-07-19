@@ -14,7 +14,7 @@ import org.junit.Test
 class ClientAuthNavigationAuthorizerTest {
     private val clock = MutableClock(Instant.parse("2030-01-01T00:00:00Z"))
     private val authorizer = ClientAuthNavigationAuthorizer(
-        BuiltInSiteProfiles.releaseRegistry,
+        BuiltInSiteProfiles.qaRegistry,
         clock,
     )
 

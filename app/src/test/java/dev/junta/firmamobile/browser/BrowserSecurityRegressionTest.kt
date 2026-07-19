@@ -29,9 +29,9 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class BrowserSecurityRegressionTest {
-    private val registry = SiteProfileRegistry(
+    private val qaRegistry = SiteProfileRegistry(
         BuiltInSiteProfiles.catalog,
-        BuildTrustPolicy.RELEASE,
+        BuildTrustPolicy.QA,
     )
 
     @Test
@@ -54,7 +54,7 @@ class BrowserSecurityRegressionTest {
     fun redirectBetweenProfilesRebindsTheEffectiveTopLevelProfile() {
         val invalidations = mutableListOf<BrowserTransitionReason>()
         val controller = BrowserTrustController(
-            BrowserUrlPolicy(registry),
+            BrowserUrlPolicy(qaRegistry),
             SensitiveFlowInvalidator(invalidations::add),
         )
         val junta = profile("junta-andalucia")
@@ -92,7 +92,7 @@ class BrowserSecurityRegressionTest {
     @Test
     fun foreignIframeCannotChangeTheEffectiveTopLevelProfile() {
         val controller = BrowserTrustController(
-            BrowserUrlPolicy(registry),
+            BrowserUrlPolicy(qaRegistry),
             SensitiveFlowInvalidator {},
         )
         val redSara = profile("reg-age-redsara")
@@ -218,7 +218,10 @@ class BrowserSecurityRegressionTest {
     )
 
     private fun projectSource(relativePath: String): String {
-        var directory = File(System.getProperty("user.dir")).canonicalFile
+        val userDirectory = requireNotNull(System.getProperty("user.dir")) {
+            "user.dir system property is unavailable"
+        }
+        var directory = File(userDirectory).canonicalFile
         repeat(8) {
             val candidate = File(directory, relativePath)
             if (candidate.isFile) return candidate.readText()

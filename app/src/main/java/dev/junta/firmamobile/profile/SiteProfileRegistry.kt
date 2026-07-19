@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.profile
 
 import android.net.Uri
+import dev.junta.firmamobile.BuildConfig
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.net.URI
 
@@ -59,7 +60,16 @@ class SiteProfileRegistry(
     private fun isActive(profile: SiteProfile): Boolean = when (profile.activation) {
         ProfileActivation.DISABLED -> false
         ProfileActivation.QA_ONLY -> buildPolicy == BuildTrustPolicy.QA
-        ProfileActivation.ENABLED -> true
+        ProfileActivation.ENABLED -> buildPolicy == BuildTrustPolicy.QA || profile.isReleaseEligible()
+    }
+
+    private fun SiteProfile.isReleaseEligible(): Boolean {
+        val hasSensitiveCapability = capabilities.any {
+            it == Capability.SIGN ||
+                it == Capability.SELECT_CERTIFICATE ||
+                it == Capability.CLIENT_TLS_AUTH
+        }
+        return !hasSensitiveCapability || compatibilityStatus == CompatibilityStatus.VERIFIED_E2E
     }
 
     private fun SiteProfile.trustMode(origin: ExactOrigin): TrustMode? {
@@ -85,6 +95,12 @@ object BuiltInSiteProfiles {
     val releaseRegistry: SiteProfileRegistry by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE)
     }
+    val qaRegistry: SiteProfileRegistry by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        SiteProfileRegistry(catalog, BuildTrustPolicy.QA)
+    }
+    val runtimeRegistry: SiteProfileRegistry by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        if (BuildConfig.ALLOW_QA_PROFILES) qaRegistry else releaseRegistry
+    }
 
     const val JSON = """
 {
@@ -95,7 +111,7 @@ object BuiltInSiteProfiles {
       "profileId": "junta-andalucia",
       "profileVersion": 1,
       "displayName": "Junta de Andalucía",
-      "compatibilityStatus": "EXPERIMENTAL",
+      "compatibilityStatus": "VERIFIED_E2E",
       "activation": "ENABLED",
       "startUrl": "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
       "initiatorOrigins": ["https://www.juntadeandalucia.es"],
@@ -156,7 +172,7 @@ object BuiltInSiteProfiles {
       "profileVersion": 1,
       "displayName": "Registro Electrónico General (REG-AGE)",
       "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "ENABLED",
+      "activation": "QA_ONLY",
       "startUrl": "https://reg.redsara.es/es/",
       "initiatorOrigins": ["https://reg.redsara.es"],
       "redirectOrigins": [],
@@ -200,7 +216,7 @@ object BuiltInSiteProfiles {
       "profileVersion": 1,
       "displayName": "Universidad de Zaragoza — Oficina Virtual",
       "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "ENABLED",
+      "activation": "QA_ONLY",
       "startUrl": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
       "initiatorOrigins": ["https://tramita.unizar.es"],
       "redirectOrigins": [],
@@ -259,7 +275,7 @@ object BuiltInSiteProfiles {
       "profileVersion": 1,
       "displayName": "Carné Joven Europeo de Andalucía",
       "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "ENABLED",
+      "activation": "QA_ONLY",
       "startUrl": "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp",
       "initiatorOrigins": ["https://ws104.juntadeandalucia.es"],
       "redirectOrigins": [],

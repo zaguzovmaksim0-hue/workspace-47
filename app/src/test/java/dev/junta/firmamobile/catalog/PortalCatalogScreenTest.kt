@@ -31,7 +31,7 @@ class PortalCatalogScreenTest {
 
     private val catalog = BuiltInSiteProfiles.catalog
     private val repository = PortalCatalogRepository(
-        registry = SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE),
+        registry = SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
         profileCatalog = catalog,
     )
 
@@ -41,7 +41,14 @@ class PortalCatalogScreenTest {
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
         assertEquals(4, compatible.items.size)
-        assertTrue(compatible.items.all { it.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E })
+        assertEquals(
+            PortalSupportStatus.VERIFIED_E2E,
+            compatible.items.single { it.profileId.value == "junta-andalucia" }.supportStatus,
+        )
+        assertTrue(
+            compatible.items.filterNot { it.profileId.value == "junta-andalucia" }
+                .all { it.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E },
+        )
         assertFalse(sections.any { it.kind == PortalCatalogSectionKind.CONTRACT_PENDING })
     }
 

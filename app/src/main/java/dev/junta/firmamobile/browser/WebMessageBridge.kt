@@ -319,7 +319,7 @@ internal class MiniAppletReplyRegistry(
             currentNavigationEpoch() != binding.navigationEpoch ||
             currentOrigin() != binding.origin
         ) return@runCatching false
-        BuiltInSiteProfiles.releaseRegistry.resolve(binding.origin)
+        BuiltInSiteProfiles.runtimeRegistry.resolve(binding.origin)
             ?.profile?.profileId?.value == binding.profileId
     }.getOrDefault(false)
 
