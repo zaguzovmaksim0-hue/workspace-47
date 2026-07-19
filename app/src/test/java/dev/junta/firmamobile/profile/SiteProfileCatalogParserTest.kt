@@ -62,7 +62,7 @@ class SiteProfileCatalogParserTest {
             "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService",
             operation.fixedExtraProperties.getValue("serverUrl"),
         )
-        assertEquals("explicit", operation.fixedExtraProperties.getValue("mode"))
+        assertEquals("keyusage.digitalsignature:true;nonexpired:", operation.fixedExtraProperties.getValue("filters"))
         assertEquals(
             "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService",
             profile.endpoints.getValue(EndpointId("junta-triphase")).url.toString(),

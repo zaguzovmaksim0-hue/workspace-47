@@ -18,7 +18,7 @@ class JuntaTriPhaseAdapter internal constructor(
     private val codec: JuntaTriPhaseCodec = JuntaTriPhaseCodec(
         expectedExtraProperties = mapOf(
             "serverUrl" to dev.junta.firmamobile.network.SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT,
-            "mode" to "explicit",
+            "filters" to "keyusage.digitalsignature:true;nonexpired:",
         ),
     ),
     private val callTimeoutMillis: Long = DEFAULT_CALL_TIMEOUT_MILLIS,
@@ -58,7 +58,7 @@ class JuntaTriPhaseAdapter internal constructor(
             check(operation.mode == SignatureMode.EXPLICIT)
             check(endpoint.purpose == EndpointPurpose.TRIPHASE && endpoint.method == HttpMethod.POST)
             check(operation.fixedExtraProperties["serverUrl"] == endpoint.url.toASCIIString())
-            check(operation.fixedExtraProperties["mode"] == "explicit")
+            check(operation.fixedExtraProperties["filters"] == "keyusage.digitalsignature:true;nonexpired:")
             TriPhaseExecutionContract(
                 protocolId = ID,
                 profileId = profile.profileId.value,
