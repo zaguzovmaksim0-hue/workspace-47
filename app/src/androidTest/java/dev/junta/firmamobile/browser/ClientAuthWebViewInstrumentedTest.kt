@@ -41,6 +41,7 @@ class ClientAuthWebViewInstrumentedTest {
             val client = JuntaWebViewClient(
                 callbacks = RecordingCallbacks(),
                 logger = SanitizedLogger(clock),
+                navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
             )
 
             client.onReceivedClientCertRequest(webView, request)

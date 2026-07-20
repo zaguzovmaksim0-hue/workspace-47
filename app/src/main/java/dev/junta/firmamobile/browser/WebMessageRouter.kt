@@ -2,6 +2,7 @@ package dev.junta.firmamobile.browser
 
 import android.net.Uri
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.profile.ProfileId
 
 sealed interface WebMessageRouteResult {
     data class Accepted(
@@ -16,14 +17,21 @@ sealed interface WebMessageRouteResult {
 }
 
 class WebMessageRouter(
-    private val navigationPolicy: JuntaNavigationPolicy = JuntaNavigationPolicy(),
+    private val profileId: ProfileId,
+    private val navigationPolicy: JuntaNavigationPolicy = JuntaNavigationPolicy(profileId),
 ) {
     fun route(
         rawMessage: String,
         sourceOrigin: Uri,
         isMainFrame: Boolean,
     ): WebMessageRouteResult {
-        val parsed = when (val result = WebMessageProtocol.parse(rawMessage, sourceOrigin)) {
+        val parsed = when (
+            val result = WebMessageProtocol.parse(
+                rawMessage = rawMessage,
+                sourceOrigin = sourceOrigin,
+                expectedProfileId = profileId,
+            )
+        ) {
             is WebMessageParseResult.Success -> result.message
             is WebMessageParseResult.Failure -> {
                 return WebMessageRouteResult.Rejected(

@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import dev.junta.firmamobile.profile.ProfileId
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,15 +19,16 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class WebMessageProtocolTest {
     @Test
-    fun acceptsBoundedAfirmaEnvelopeAndUsesActualSourceOrigin() {
+    fun acceptsBoundedAfirmaEnvelopeForTheExpectedProfileAndActualSourceOrigin() {
         val result = WebMessageProtocol.parse(
-            """{
+            rawMessage = """{
                 "type":"AFIRMA_URI",
                 "requestId":"$REQUEST_ID",
                 "uri":"afirma://sign?algorithm=SHA256withRSA&format=CAdES",
                 "origin":"https://evil.example"
             }""".trimIndent(),
-            Uri.parse("https://www.juntadeandalucia.es"),
+            sourceOrigin = TRUSTED_ORIGIN,
+            expectedProfileId = JUNTA_PROFILE,
         ) as WebMessageParseResult.Success
 
         assertEquals(REQUEST_ID, result.message.requestId)
@@ -38,15 +40,20 @@ class WebMessageProtocolTest {
     }
 
     @Test
-    fun rejectsUntrustedOriginsUnknownTypesBadIdsAndOversizedMessages() {
+    fun rejectsUntrustedOrForeignProfileOriginsUnknownTypesBadIdsAndOversizedMessages() {
         assertFailure(
-            WebMessageProtocol.parse(validMessage(), Uri.parse("https://evil.example")),
+            WebMessageProtocol.parse(validMessage(), Uri.parse("https://evil.example"), JUNTA_PROFILE),
+            WebMessageErrorCode.UNTRUSTED_ORIGIN,
+        )
+        assertFailure(
+            WebMessageProtocol.parse(validMessage(), RED_SARA_ORIGIN, JUNTA_PROFILE),
             WebMessageErrorCode.UNTRUSTED_ORIGIN,
         )
         assertFailure(
             WebMessageProtocol.parse(
                 validMessage().replace("AFIRMA_URI", "READ_FILE"),
                 TRUSTED_ORIGIN,
+                JUNTA_PROFILE,
             ),
             WebMessageErrorCode.UNSUPPORTED_TYPE,
         )
@@ -54,6 +61,7 @@ class WebMessageProtocolTest {
             WebMessageProtocol.parse(
                 validMessage().replace(REQUEST_ID, "not-a-uuid"),
                 TRUSTED_ORIGIN,
+                JUNTA_PROFILE,
             ),
             WebMessageErrorCode.INVALID_REQUEST_ID,
         )
@@ -61,6 +69,7 @@ class WebMessageProtocolTest {
             WebMessageProtocol.parse(
                 " ".repeat(WebMessageProtocol.MAX_MESSAGE_CHARS + 1),
                 TRUSTED_ORIGIN,
+                JUNTA_PROFILE,
             ),
             WebMessageErrorCode.MESSAGE_TOO_LARGE,
         )
@@ -85,12 +94,13 @@ class WebMessageProtocolTest {
     @Test
     fun malformedJsonAndNonAfirmaUrisFailClosed() {
         assertFailure(
-            WebMessageProtocol.parse("{", TRUSTED_ORIGIN),
+            WebMessageProtocol.parse("{", TRUSTED_ORIGIN, JUNTA_PROFILE),
             WebMessageErrorCode.MALFORMED_JSON,
         )
         val result = WebMessageProtocol.parse(
             validMessage().replace("afirma://", "https://"),
             TRUSTED_ORIGIN,
+            JUNTA_PROFILE,
         )
         assertTrue(result is WebMessageParseResult.Failure)
         assertEquals(
@@ -100,11 +110,12 @@ class WebMessageProtocolTest {
     }
 
     @Test
-    fun redSaraCannotRouteUndeclaredAfirmaUriMessages() {
+    fun profileWithoutAfirmaCapabilityCannotRouteAfirmaMessages() {
         assertFailure(
             WebMessageProtocol.parse(
                 validMessage(),
-                Uri.parse("https://reg.redsara.es"),
+                RED_SARA_ORIGIN,
+                ProfileId("reg-age-redsara"),
             ),
             WebMessageErrorCode.UNTRUSTED_ORIGIN,
         )
@@ -119,6 +130,8 @@ class WebMessageProtocolTest {
 
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-12d3-a456-426614174000"
+        val JUNTA_PROFILE = ProfileId("junta-andalucia")
         val TRUSTED_ORIGIN: Uri = Uri.parse("https://www.juntadeandalucia.es")
+        val RED_SARA_ORIGIN: Uri = Uri.parse("https://reg.redsara.es")
     }
 }

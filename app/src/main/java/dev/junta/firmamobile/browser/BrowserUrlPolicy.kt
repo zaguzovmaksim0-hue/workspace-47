@@ -15,8 +15,15 @@ data class BrowserUrlResolution(
 
 class BrowserUrlPolicy(
     private val registry: SiteProfileRegistry,
+    private val selectedProfileId: ProfileId,
     private val externalOnlyOrigins: Set<ExactOrigin> = emptySet(),
 ) {
+    init {
+        require(registry.profile(selectedProfileId) != null) {
+            "Selected browser profile is not active: ${selectedProfileId.value}"
+        }
+    }
+
     fun isActiveProfile(profileId: ProfileId): Boolean = registry.profile(profileId) != null
 
     fun resolve(rawUrl: String, activeProfileId: ProfileId? = null): BrowserUrlResolution {
@@ -30,12 +37,19 @@ class BrowserUrlPolicy(
             return blocked()
         }
         if (runCatching { ExactOrigin.parse("https://${uri.host}") }.isFailure) return blocked()
+
         val direct = registry.resolve(uri)
+        if (direct != null && direct.profile.profileId != selectedProfileId) {
+            return blocked()
+        }
         if (direct != null) {
-            val transitioned = activeProfileId?.let { registry.resolveRedirect(it, uri) }
+            val transitioned = activeProfileId
+                ?.takeIf { it == selectedProfileId }
+                ?.let { registry.resolveRedirect(it, uri) }
             val resolved = transitioned ?: direct
             return BrowserUrlResolution(uri, resolved, resolved.trustMode)
         }
+
         val origin = ExactOrigin.parse("https://${uri.host}")
         return BrowserUrlResolution(
             uri,
@@ -46,5 +60,7 @@ class BrowserUrlPolicy(
 
     private fun blocked() = BrowserUrlResolution(null, null, TrustMode.BLOCKED)
 
-    private companion object { const val MAX_URL_CHARS = 8_192 }
+    private companion object {
+        const val MAX_URL_CHARS = 8_192
+    }
 }

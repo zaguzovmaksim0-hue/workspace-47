@@ -44,7 +44,7 @@ interface BrowserNavigationCallbacks {
 class JuntaWebViewClient(
     private val callbacks: BrowserNavigationCallbacks,
     private val logger: SanitizedLogger,
-    private val navigationPolicy: JuntaNavigationPolicy = JuntaNavigationPolicy(),
+    private val navigationPolicy: JuntaNavigationPolicy,
     private val currentPageUrl: (WebView) -> String? = { webView -> webView.url },
     private val clientAuthAuthorizer: ClientAuthNavigationAuthorizer? = null,
     private val activeProfileId: () -> ProfileId? = { null },

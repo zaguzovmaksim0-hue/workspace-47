@@ -96,7 +96,10 @@ fun BrowserScreen(
     val selectedServiceId = profileId
     val trustController = remember(selectedServiceId, entryUrl) {
         BrowserTrustController(
-            urlPolicy = BrowserUrlPolicy(BuiltInSiteProfiles.runtimeRegistry),
+            urlPolicy = BrowserUrlPolicy(
+                registry = BuiltInSiteProfiles.runtimeRegistry,
+                selectedProfileId = selectedServiceId,
+            ),
             invalidator = SensitiveFlowInvalidator {},
         )
     }
@@ -113,7 +116,9 @@ fun BrowserScreen(
     val pendingNormalUrl = remember { AtomicReference<String?>() }
     val discardHistory = remember { AtomicBoolean(false) }
     val navigationEpoch = remember { mutableLongStateOf(0L) }
-    val navigationPolicy = remember { JuntaNavigationPolicy() }
+    val navigationPolicy = remember(selectedServiceId) {
+        JuntaNavigationPolicy(selectedServiceId)
+    }
     val clientAuthAuthorizer = remember {
         ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.runtimeRegistry)
     }
@@ -409,29 +414,37 @@ fun BrowserScreen(
                                 },
                             )
                             webView.webViewClient = client
-                            val attachment = WebMessageBridge(
-                                logger = logger,
-                                onAfirmaRequest = handleAfirmaRequest,
-                                onMiniAppletRequest = { request, reply ->
-                                    onMiniAppletRequest(request, reply)
-                                },
-                                onMiniAppletCancel = onMiniAppletCancel,
-                                activeProfileId = { effectiveTopLevelProfileId },
-                                miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
-                                currentNavigationEpoch = { navigationEpoch.longValue },
-                                currentOrigin = {
-                                    webView.url?.let { url ->
-                                        runCatching {
-                                            JuntaOriginPolicy.originFor(Uri.parse(url))
-                                        }.getOrNull()
-                                    }
-                                },
-                            ).attach(webView)
-                            bridgeRef.set(attachment)
-                            if (!attachment.listenerAttached ||
-                                !attachment.documentStartScriptAttached
-                            ) {
-                                webView.post { compatibilityError = true }
+                            if (profileRequiresWebMessageBridge(selectedProfile)) {
+                                val attachment = WebMessageBridge(
+                                    profileId = selectedServiceId,
+                                    logger = logger,
+                                    onAfirmaRequest = handleAfirmaRequest,
+                                    onMiniAppletRequest = { request, reply ->
+                                        onMiniAppletRequest(request, reply)
+                                    },
+                                    onMiniAppletCancel = onMiniAppletCancel,
+                                    activeProfileId = { effectiveTopLevelProfileId },
+                                    miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
+                                    currentNavigationEpoch = { navigationEpoch.longValue },
+                                    currentOrigin = {
+                                        webView.url?.let { url ->
+                                            runCatching {
+                                                JuntaOriginPolicy.signingOriginFor(
+                                                    Uri.parse(url),
+                                                    selectedServiceId,
+                                                )
+                                            }.getOrNull()
+                                        }
+                                    },
+                                ).attach(webView)
+                                bridgeRef.set(attachment)
+                                if (!attachment.listenerAttached ||
+                                    !attachment.documentStartScriptAttached
+                                ) {
+                                    webView.post { compatibilityError = true }
+                                }
+                            } else {
+                                bridgeRef.set(null)
                             }
                         } else {
                             dedicatedClientActive.set(true)
@@ -688,6 +701,14 @@ internal fun urlBelongsToSelectedProfile(rawUrl: String, profileId: ProfileId): 
         registry.resolve(uri)?.profile?.profileId == profileId ||
             registry.resolveRedirect(profileId, uri)?.profile?.profileId == profileId
     }.getOrDefault(false)
+
+internal fun profileRequiresWebMessageBridge(
+    profile: dev.junta.firmamobile.profile.SiteProfile?,
+): Boolean = profile?.capabilities?.any { capability ->
+    capability == dev.junta.firmamobile.profile.Capability.SIGN ||
+        capability == dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE ||
+        capability == dev.junta.firmamobile.profile.Capability.AFIRMA_URI
+} == true
 
 @Composable
 private fun ClientAuthConfirmationDialog(

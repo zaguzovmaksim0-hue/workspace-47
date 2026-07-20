@@ -43,6 +43,10 @@ android {
     namespace = "dev.junta.firmamobile"
     compileSdk = 36
 
+    // Instrumented security tests must exercise the installable QA variant,
+    // not the default debug variant.
+    testBuildType = "qa"
+
     defaultConfig {
         applicationId = "dev.junta.firmamobile"
         minSdk = 26
@@ -125,6 +129,13 @@ android {
 }
 
 androidComponents {
+    // testBuildType selects QA for device tests. Explicitly keep both JVM
+    // security-test variants available.
+    beforeVariants(selector().withBuildType("debug")) { variantBuilder ->
+        variantBuilder.hostTests[
+            com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE
+        ]?.enable = true
+    }
     beforeVariants(selector().withBuildType("qa")) { variantBuilder ->
         variantBuilder.hostTests[
             com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE

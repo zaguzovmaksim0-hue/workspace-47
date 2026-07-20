@@ -15,6 +15,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
 import org.junit.Rule
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,6 +33,18 @@ import org.robolectric.annotation.SQLiteMode
 class BrowserScreenTest {
     @get:Rule
     val rule = createComposeRule()
+
+    @Test
+    fun webMessageBridgeIsRequiredOnlyForProfilesWithNativeSigningCapabilities() {
+        fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId(id)
+        }
+
+        assertTrue(profileRequiresWebMessageBridge(profile("junta-andalucia")))
+        assertTrue(profileRequiresWebMessageBridge(profile("reg-age-redsara")))
+        assertTrue(profileRequiresWebMessageBridge(profile("unizar-tramitador")))
+        assertTrue(!profileRequiresWebMessageBridge(profile("carne-joven-andalucia")))
+    }
 
     @Test
     fun browserChromeExposesNavigationCertificateAndConfirmedSessionActions() {

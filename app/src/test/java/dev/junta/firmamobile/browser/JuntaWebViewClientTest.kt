@@ -10,6 +10,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.SanitizedLogger
 import java.time.Clock
 import java.time.Instant
@@ -43,6 +44,7 @@ class JuntaWebViewClientTest {
     private val client = JuntaWebViewClient(
         callbacks = callbacks,
         logger = logger,
+        navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
         currentPageUrl = { TRUSTED_PAGE },
     )
 
@@ -56,6 +58,30 @@ class JuntaWebViewClientTest {
         assertFalse(overridden)
         assertTrue(callbacks.events.isEmpty())
         assertTrue(shadowOf(webView).lastLoadedUrl.isNullOrEmpty())
+    }
+
+    @Test
+    fun crossProfileAndHttpNavigationAreBlocked() {
+        assertTrue(
+            client.shouldOverrideUrlLoading(
+                webView,
+                request("https://reg.redsara.es/es/"),
+            ),
+        )
+        assertTrue(
+            client.shouldOverrideUrlLoading(
+                webView,
+                request("http://example.org/help"),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                "blocked:CROSS_PROFILE_NAVIGATION",
+                "blocked:INSECURE_HTTP",
+            ),
+            callbacks.events,
+        )
     }
 
     @Test

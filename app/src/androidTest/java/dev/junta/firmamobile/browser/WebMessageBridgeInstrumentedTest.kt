@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.LocalSignature
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -26,6 +27,7 @@ class WebMessageBridgeInstrumentedTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             val webView = TrustedJuntaWebView(context)
             val attachment = WebMessageBridge(
+                profileId = JUNTA_PROFILE,
                 logger = SanitizedLogger(),
                 onAfirmaRequest = {},
             ).attach(webView)
@@ -55,6 +57,7 @@ class WebMessageBridgeInstrumentedTest {
                 }
             }
             attachment = WebMessageBridge(
+                profileId = JUNTA_PROFILE,
                 logger = SanitizedLogger(),
                 onAfirmaRequest = {},
                 onMiniAppletRequest = { request, reply ->
@@ -65,6 +68,7 @@ class WebMessageBridgeInstrumentedTest {
                         certificateDer = byteArrayOf(4, 5, 6),
                     )
                 },
+                activeProfileId = { JUNTA_PROFILE },
                 miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                 currentOrigin = {
                     TrustedOrigin("https", "www.juntadeandalucia.es", 443)
@@ -105,6 +109,7 @@ class WebMessageBridgeInstrumentedTest {
                 }
             }
             attachment = WebMessageBridge(
+                profileId = RED_SARA_PROFILE,
                 logger = SanitizedLogger(),
                 onAfirmaRequest = {},
                 onMiniAppletRequest = { request, reply ->
@@ -116,6 +121,7 @@ class WebMessageBridgeInstrumentedTest {
                         certificateDer = byteArrayOf(4, 5, 6),
                     )
                 },
+                activeProfileId = { RED_SARA_PROFILE },
                 miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                 currentOrigin = { TrustedOrigin("https", "reg.redsara.es", 443) },
             ).attach(webView)
@@ -154,6 +160,7 @@ class WebMessageBridgeInstrumentedTest {
                 }
             }
             attachment = WebMessageBridge(
+                profileId = UNIZAR_PROFILE,
                 logger = SanitizedLogger(),
                 onAfirmaRequest = {},
                 onMiniAppletRequest = { request, reply ->
@@ -165,6 +172,7 @@ class WebMessageBridgeInstrumentedTest {
                         certificateDer = byteArrayOf(4, 5, 6),
                     )
                 },
+                activeProfileId = { UNIZAR_PROFILE },
                 miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                 currentOrigin = { TrustedOrigin("https", "tramita.unizar.es", 443) },
             ).attach(webView)
@@ -186,7 +194,59 @@ class WebMessageBridgeInstrumentedTest {
         }
     }
 
+    @Test
+    fun foreignSigningOriginCannotUseAJuntaScopedBridge() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val completed = CountDownLatch(1)
+        val nativeCalls = AtomicInteger()
+        lateinit var webView: TrustedJuntaWebView
+        lateinit var attachment: WebMessageBridgeAttachment
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            webView = TrustedJuntaWebView(context).apply {
+                webChromeClient = object : WebChromeClient() {
+                    override fun onReceivedTitle(view: WebView, title: String) {
+                        if (title == "ORIGINAL") completed.countDown()
+                    }
+                }
+            }
+            attachment = WebMessageBridge(
+                profileId = JUNTA_PROFILE,
+                logger = SanitizedLogger(),
+                onAfirmaRequest = {},
+                onMiniAppletRequest = { request, _ ->
+                    nativeCalls.incrementAndGet()
+                    request.normalized.close()
+                },
+                activeProfileId = { JUNTA_PROFILE },
+                miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
+                currentOrigin = {
+                    TrustedOrigin("https", "www.juntadeandalucia.es", 443)
+                },
+            ).attach(webView)
+            webView.loadDataWithBaseURL(
+                "https://reg.redsara.es/",
+                SYNTHETIC_AUTOSCRIPT_PAGE,
+                "text/html",
+                "UTF-8",
+                null,
+            )
+        }
+
+        assertTrue("Foreign origin executed the native bridge", completed.await(15, TimeUnit.SECONDS))
+        assertEquals(0, nativeCalls.get())
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            attachment.close()
+            webView.destroy()
+        }
+    }
+
     private companion object {
+        val JUNTA_PROFILE = ProfileId("junta-andalucia")
+        val RED_SARA_PROFILE = ProfileId("reg-age-redsara")
+        val UNIZAR_PROFILE = ProfileId("unizar-tramitador")
+
         const val SYNTHETIC_MINIAPPLET_PAGE = """
             <!doctype html><html><head><title>START</title><script>
             let originalCalls = 0;
@@ -198,7 +258,7 @@ class WebMessageBridgeInstrumentedTest {
                 btoa('synthetic-data'),
                 'SHA1withRSA',
                 'CAdES',
-                'serverUrl=https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService\nmode=explicit',
+                'serverUrl=https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService\nfilters=keyusage.digitalsignature:true;nonexpired:',
                 function(signatureB64, certificateB64) {
                   document.title = signatureB64 === 'AQID' &&
                     certificateB64 === 'BAUG' && originalCalls === 0 ? 'PASS' : 'FAIL';
