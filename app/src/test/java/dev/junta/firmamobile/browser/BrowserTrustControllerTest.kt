@@ -16,7 +16,7 @@ class BrowserTrustControllerTest {
     private val invalidations = mutableListOf<BrowserTransitionReason>()
     private val registry = SiteProfileRegistry(BuiltInSiteProfiles.catalog, BuildTrustPolicy.RELEASE)
     private val controller = BrowserTrustController(
-        BrowserUrlPolicy(registry),
+        BrowserUrlPolicy(registry, ProfileId("junta-andalucia")),
         SensitiveFlowInvalidator(invalidations::add),
     )
 
@@ -35,6 +35,26 @@ class BrowserTrustControllerTest {
         val direct = controller.navigate("https://sede.juntadeandalucia.es/path")
         assertEquals(TrustMode.BROWSE_ONLY, direct.resolution.trustMode)
         assertNull(direct.activeProfileId)
+    }
+
+    @Test
+    fun directNavigationToAnotherActiveCatalogProfileFailsClosed() {
+        val qaRegistry = SiteProfileRegistry(
+            BuiltInSiteProfiles.catalog,
+            BuildTrustPolicy.QA,
+        )
+        val isolatedController = BrowserTrustController(
+            BrowserUrlPolicy(qaRegistry, ProfileId("junta-andalucia")),
+            SensitiveFlowInvalidator {},
+        )
+        val redSara = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("reg-age-redsara")
+        }
+
+        val result = isolatedController.navigate(redSara.startUrl.toASCIIString())
+
+        assertEquals(TrustMode.BLOCKED, result.resolution.trustMode)
+        assertNull(result.activeProfileId)
     }
 
     @Test
@@ -76,17 +96,18 @@ class BrowserTrustControllerTest {
         )
         assertEquals(
             TrustMode.BROWSE_ONLY,
-            BrowserUrlPolicy(clientRegistry).resolve("https://tls.client-auth.example/").trustMode,
+            BrowserUrlPolicy(clientRegistry, clientAuthProfile.profileId).resolve("https://tls.client-auth.example/").trustMode,
         )
         val clientStart = BrowserTrustController(
-            BrowserUrlPolicy(clientRegistry),
+            BrowserUrlPolicy(clientRegistry, clientAuthProfile.profileId),
             SensitiveFlowInvalidator {},
         ).navigate("https://start.client-auth.example/")
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, clientStart.resolution.trustMode)
         assertEquals(ProfileId("client-auth-fixture"), clientStart.activeProfileId)
 
         val policy = BrowserUrlPolicy(
-            registry,
+            registry = registry,
+            selectedProfileId = ProfileId("junta-andalucia"),
             externalOnlyOrigins = setOf(ExactOrigin.parse("https://external.example")),
         )
         assertEquals(TrustMode.TRUSTED_SIGNING, policy.resolve("https://www.juntadeandalucia.es/").trustMode)

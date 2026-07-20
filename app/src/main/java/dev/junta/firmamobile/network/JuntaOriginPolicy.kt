@@ -2,6 +2,8 @@ package dev.junta.firmamobile.network
 
 import android.net.Uri
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import java.net.IDN
 import java.util.Locale
@@ -32,25 +34,36 @@ object JuntaOriginPolicy {
         BuiltInSiteProfiles.catalog.profiles.asSequence()
             .mapNotNull { BuiltInSiteProfiles.runtimeRegistry.profile(it.profileId) }
             .flatMap { profile ->
-                (profile.initiatorOrigins + profile.redirectOrigins + profile.trustedBrowseOrigins +
+                (browserOrigins(profile.profileId) +
                     (profile.clientAuthPolicy?.requestOrigins ?: emptySet()))
                     .asSequence()
             }
             .mapTo(linkedSetOf()) { it.host }
     }
 
-    val webMessageOriginRules: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        BuiltInSiteProfiles.catalog.profiles.asSequence()
-            .mapNotNull { BuiltInSiteProfiles.runtimeRegistry.profile(it.profileId) }
-            .filter { profile ->
-                dev.junta.firmamobile.profile.Capability.SIGN in profile.capabilities ||
-                    dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE in profile.capabilities
-            }
-            .flatMap { it.initiatorOrigins.asSequence() }
-            .mapTo(linkedSetOf()) { it.serialized }
+    fun browserOrigins(profileId: ProfileId): Set<ExactOrigin> {
+        val profile = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) ?: return emptySet()
+        return profile.initiatorOrigins + profile.redirectOrigins + profile.trustedBrowseOrigins
+    }
+
+    fun browserAllowedHosts(profileId: ProfileId): Set<String> =
+        browserOrigins(profileId).mapTo(linkedSetOf()) { it.host }
+
+    fun webMessageOriginRules(profileId: ProfileId): Set<String> {
+        val profile = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) ?: return emptySet()
+        val exposesNativeBridge = profile.capabilities.any { capability ->
+            capability == Capability.SIGN ||
+                capability == Capability.SELECT_CERTIFICATE ||
+                capability == Capability.AFIRMA_URI
+        }
+        if (!exposesNativeBridge) return emptySet()
+        return profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized }
     }
 
     fun isAllowed(uri: Uri): Boolean = originFor(uri) != null
+
+    fun isAllowed(uri: Uri, profileId: ProfileId): Boolean =
+        originFor(uri, profileId) != null
 
     fun isAllowed(origin: TrustedOrigin): Boolean =
         origin.scheme.equals(HTTPS_SCHEME, ignoreCase = true) &&
@@ -58,10 +71,33 @@ object JuntaOriginPolicy {
             normalizeHost(origin.host) in allowedHosts
 
     fun originFor(uri: Uri): TrustedOrigin? {
+        val origin = canonicalOrigin(uri) ?: return null
+        return origin.takeIf { it.host in allowedHosts }
+    }
+
+    fun originFor(uri: Uri, profileId: ProfileId): TrustedOrigin? {
+        val origin = canonicalOrigin(uri) ?: return null
+        val exact = ExactOrigin.fromTrusted(origin) ?: return null
+        return origin.takeIf { exact in browserOrigins(profileId) }
+    }
+
+    fun signingOriginFor(uri: Uri, profileId: ProfileId): TrustedOrigin? {
+        val profile = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) ?: return null
+        val exposesSigningProtocol = profile.capabilities.any { capability ->
+            capability == Capability.SIGN ||
+                capability == Capability.SELECT_CERTIFICATE ||
+                capability == Capability.AFIRMA_URI
+        }
+        if (!exposesSigningProtocol) return null
+        val origin = canonicalOrigin(uri) ?: return null
+        val exact = ExactOrigin.fromTrusted(origin) ?: return null
+        return origin.takeIf { exact in profile.initiatorOrigins }
+    }
+
+    private fun canonicalOrigin(uri: Uri): TrustedOrigin? {
         if (uri.isOpaque || !uri.scheme.equals(HTTPS_SCHEME, ignoreCase = true)) return null
         if (uri.encodedUserInfo != null) return null
         val host = normalizeHost(uri.host ?: return null) ?: return null
-        if (host !in allowedHosts) return null
         val port = try {
             uri.port.takeIf { it != -1 } ?: HTTPS_PORT
         } catch (_: Exception) {

@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import dev.junta.firmamobile.afirma.AfirmaOperation
+import dev.junta.firmamobile.profile.ProfileId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -15,12 +16,12 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class JuntaNavigationPolicyTest {
-    private val policy = JuntaNavigationPolicy()
+    private val policy = JuntaNavigationPolicy(ProfileId("junta-andalucia"))
     private val trustedPage =
         "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/"
 
     @Test
-    fun keepsAllowedHttpsNavigationInsideWebView() {
+    fun keepsOnlySelectedProfileHttpsNavigationInsideWebView() {
         val decision = policy.decide(
             "https://ssoweb.juntadeandalucia.es/login?continue=1",
             trustedPage,
@@ -30,21 +31,40 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
-    fun routesThirdPartyHttpAndHttpsToExternalBrowser() {
-        listOf("https://example.org/help", "http://example.org/help").forEach { url ->
-            val decision = policy.decide(url, trustedPage) as NavigationDecision.OpenExternal
-            assertEquals(url, decision.uri.toString())
-        }
+    fun blocksCrossProfileNavigationInsteadOfRebindingTheWebView() {
+        val decision = policy.decide("https://reg.redsara.es/es/", trustedPage)
+
+        assertEquals(
+            NavigationBlockReason.CROSS_PROFILE_NAVIGATION,
+            (decision as NavigationDecision.Block).reason,
+        )
     }
 
     @Test
-    fun interceptsAfirmaOnlyFromATrustedCurrentPage() {
+    fun routesThirdPartyHttpsExternallyButBlocksHttpDowngrades() {
+        val https = policy.decide("https://example.org/help", trustedPage)
+            as NavigationDecision.OpenExternal
+        assertEquals("https://example.org/help", https.uri.toString())
+
+        val http = policy.decide("http://example.org/help", trustedPage)
+            as NavigationDecision.Block
+        assertEquals(NavigationBlockReason.INSECURE_HTTP, http.reason)
+    }
+
+    @Test
+    fun interceptsAfirmaOnlyFromTheSelectedProfilesSigningOrigin() {
         val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc"
         val accepted = policy.decide(raw, trustedPage) as NavigationDecision.HandleAfirma
         assertEquals(AfirmaOperation.SIGN, accepted.request.operation)
 
-        val blocked = policy.decide(raw, "https://evil.example/") as NavigationDecision.Block
-        assertEquals(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN, blocked.reason)
+        listOf(
+            "https://evil.example/",
+            "https://reg.redsara.es/es/",
+            "https://sede.juntadeandalucia.es/path",
+        ).forEach { page ->
+            val blocked = policy.decide(raw, page) as NavigationDecision.Block
+            assertEquals(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN, blocked.reason)
+        }
     }
 
     @Test

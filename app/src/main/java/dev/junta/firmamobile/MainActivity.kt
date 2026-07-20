@@ -80,9 +80,16 @@ class MainActivity : ComponentActivity() {
             certificateSession = app.certificateSession,
             adapter = juntaAdapter,
             localSignatureEngine = JcaLocalSignatureEngine(),
-            currentOrigin = {
+            currentOrigin = originProvider@{
+                val selectedProfileId = (destination as? AppDestination.Browser)?.profileId
+                    ?: return@originProvider null
                 currentWebView?.url?.let { url ->
-                    runCatching { JuntaOriginPolicy.originFor(Uri.parse(url)) }.getOrNull()
+                    runCatching {
+                        JuntaOriginPolicy.signingOriginFor(
+                            Uri.parse(url),
+                            selectedProfileId,
+                        )
+                    }.getOrNull()
                 }
             },
             currentNavigationEpoch = { currentNavigationEpoch },

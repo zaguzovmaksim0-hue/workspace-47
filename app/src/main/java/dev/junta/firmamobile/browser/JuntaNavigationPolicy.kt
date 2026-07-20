@@ -6,6 +6,9 @@ import dev.junta.firmamobile.afirma.AfirmaParseResult
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.afirma.AfirmaUriParser
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.SiteProfileRegistry
 import java.util.Locale
 
 enum class NavigationBlockReason {
@@ -15,6 +18,8 @@ enum class NavigationBlockReason {
     PLAY_STORE_FALLBACK,
     UNSUPPORTED_SCHEME,
     UNSUPPORTED_EXTERNAL_INTENT,
+    CROSS_PROFILE_NAVIGATION,
+    INSECURE_HTTP,
 }
 
 sealed interface NavigationDecision {
@@ -28,8 +33,16 @@ sealed interface NavigationDecision {
 }
 
 class JuntaNavigationPolicy(
+    private val selectedProfileId: ProfileId,
+    private val registry: SiteProfileRegistry = BuiltInSiteProfiles.runtimeRegistry,
     private val afirmaUriParser: AfirmaUriParser = AfirmaUriParser(),
 ) {
+    init {
+        require(registry.profile(selectedProfileId) != null) {
+            "Selected navigation profile is not active: ${selectedProfileId.value}"
+        }
+    }
+
     fun decide(targetUrl: String, currentPageUrl: String?): NavigationDecision {
         if (targetUrl.length > AfirmaUriParser.MAX_URI_CHARS) {
             return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
@@ -40,7 +53,8 @@ class JuntaNavigationPolicy(
             return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
         return when (target.scheme?.lowercase(Locale.ROOT)) {
-            "https", "http" -> decideWebUrl(target, targetUrl)
+            "https" -> decideHttpsUrl(target, targetUrl)
+            "http" -> NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
             "afirma" -> decideAfirma(targetUrl, currentPageUrl)
             "intent" -> decideIntent(targetUrl, currentPageUrl)
             "market" -> if (isAutoFirmaPlayStoreUrl(target, targetUrl)) {
@@ -52,12 +66,18 @@ class JuntaNavigationPolicy(
         }
     }
 
-    private fun decideWebUrl(target: Uri, rawUrl: String): NavigationDecision {
+    private fun decideHttpsUrl(target: Uri, rawUrl: String): NavigationDecision {
         if (isAutoFirmaPlayStoreUrl(target, rawUrl)) {
             return NavigationDecision.Block(NavigationBlockReason.PLAY_STORE_FALLBACK)
         }
-        if (JuntaOriginPolicy.isAllowed(target)) return NavigationDecision.AllowInWebView
-        return if (isSafeExternalWebUrl(target)) {
+        if (JuntaOriginPolicy.isAllowed(target, selectedProfileId)) {
+            return NavigationDecision.AllowInWebView
+        }
+        val otherProfile = registry.resolve(target)?.profile?.profileId
+        if (otherProfile != null && otherProfile != selectedProfileId) {
+            return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
+        }
+        return if (isSafeExternalHttpsUrl(target)) {
             NavigationDecision.OpenExternal(target)
         } else {
             NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
@@ -67,7 +87,7 @@ class JuntaNavigationPolicy(
     private fun decideAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
         val origin = currentPageUrl?.let { current ->
             try {
-                JuntaOriginPolicy.originFor(Uri.parse(current))
+                JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
             } catch (_: Exception) {
                 null
             }
@@ -85,7 +105,7 @@ class JuntaNavigationPolicy(
     private fun decideIntent(rawUrl: String, currentPageUrl: String?): NavigationDecision {
         val trustedOrigin = currentPageUrl?.let { current ->
             try {
-                JuntaOriginPolicy.originFor(Uri.parse(current))
+                JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
             } catch (_: Exception) {
                 null
             }
@@ -130,19 +150,19 @@ class JuntaNavigationPolicy(
             } catch (_: Exception) {
                 null
             }
-            if (fallbackUri != null && isSafeExternalWebUrl(fallbackUri)) {
+            if (fallbackUri != null && isSafeExternalHttpsUrl(fallbackUri)) {
                 return NavigationDecision.OpenExternal(fallbackUri)
             }
         }
         return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)
     }
 
-    private fun isSafeExternalWebUrl(uri: Uri): Boolean =
+    private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =
         !uri.isOpaque &&
             uri.encodedUserInfo == null &&
             !uri.host.isNullOrBlank() &&
-            (uri.scheme.equals("https", ignoreCase = true) ||
-                uri.scheme.equals("http", ignoreCase = true))
+            uri.scheme.equals("https", ignoreCase = true) &&
+            uri.port in setOf(-1, 443)
 
     private fun isAutoFirmaPlayStoreUrl(uri: Uri, rawUrl: String): Boolean {
         val scheme = uri.scheme?.lowercase(Locale.ROOT)

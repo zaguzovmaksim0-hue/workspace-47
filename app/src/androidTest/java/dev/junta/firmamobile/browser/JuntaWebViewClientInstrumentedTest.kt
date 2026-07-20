@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.SanitizedLogger
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -26,6 +27,7 @@ class JuntaWebViewClientInstrumentedTest {
             val client = JuntaWebViewClient(
                 callbacks = callbacks,
                 logger = SanitizedLogger(),
+                navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
                 currentPageUrl = {
                     "https://www.juntadeandalucia.es/portal"
                 },

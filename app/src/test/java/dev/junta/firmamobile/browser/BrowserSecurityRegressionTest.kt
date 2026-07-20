@@ -6,6 +6,7 @@ import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
+import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.SigningContext
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -51,21 +52,43 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
-    fun redirectBetweenProfilesRebindsTheEffectiveTopLevelProfile() {
-        val invalidations = mutableListOf<BrowserTransitionReason>()
-        val controller = BrowserTrustController(
-            BrowserUrlPolicy(qaRegistry),
-            SensitiveFlowInvalidator(invalidations::add),
+    fun browserAndBridgePoliciesAreConstructedWithTheSelectedProfile() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
         )
+        val bridgeSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/WebMessageBridge.kt",
+        )
+        val activitySource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+
+        assertTrue("Browser URL policy must be profile-scoped", "selectedProfileId = selectedServiceId" in screenSource)
+        assertTrue("Navigation policy must be profile-scoped", "JuntaNavigationPolicy(selectedServiceId)" in screenSource)
+        assertTrue("WebView client must receive the scoped policy", "navigationPolicy = navigationPolicy" in screenSource)
+        assertTrue("Bridge must receive the selected profile", "profileId = selectedServiceId" in screenSource)
+        assertTrue("Bridge origin rules must be profile-scoped", "webMessageOriginRules(profileId)" in bridgeSource)
+        assertFalse("Bridge must not use the global origin-rule union", "JuntaOriginPolicy.webMessageOriginRules," in bridgeSource)
+        assertTrue("Signing coordinator origin must be selected-profile scoped", "signingOriginFor(" in activitySource)
+    }
+
+    @Test
+    fun crossProfileNavigationCannotRebindTheSelectedSecurityProfile() {
+        val invalidations = mutableListOf<BrowserTransitionReason>()
         val junta = profile("junta-andalucia")
         val redSara = profile("reg-age-redsara")
+        val controller = BrowserTrustController(
+            BrowserUrlPolicy(qaRegistry, junta.profileId),
+            SensitiveFlowInvalidator(invalidations::add),
+        )
 
         val initial = controller.navigate(junta.startUrl.toASCIIString())
-        val redirected = controller.navigate(redSara.startUrl.toASCIIString())
+        val crossProfile = controller.navigate(redSara.startUrl.toASCIIString())
 
         assertEquals(junta.profileId, initial.activeProfileId)
-        assertEquals(redSara.profileId, redirected.activeProfileId)
-        assertEquals(2L, redirected.epoch)
+        assertEquals(TrustMode.BLOCKED, crossProfile.resolution.trustMode)
+        assertEquals(null, crossProfile.activeProfileId)
+        assertEquals(2L, crossProfile.epoch)
         assertEquals(
             listOf(BrowserTransitionReason.NAVIGATE, BrowserTransitionReason.NAVIGATE),
             invalidations,
@@ -91,11 +114,11 @@ class BrowserSecurityRegressionTest {
 
     @Test
     fun foreignIframeCannotChangeTheEffectiveTopLevelProfile() {
+        val redSara = profile("reg-age-redsara")
         val controller = BrowserTrustController(
-            BrowserUrlPolicy(qaRegistry),
+            BrowserUrlPolicy(qaRegistry, redSara.profileId),
             SensitiveFlowInvalidator {},
         )
-        val redSara = profile("reg-age-redsara")
         val current = controller.navigate(redSara.startUrl.toASCIIString())
         val epochBefore = current.epoch
         val adapter = MiniAppletBridgeAdapter(

@@ -6,6 +6,7 @@ import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.profile.ProfileId
 import org.json.JSONObject
 
 data class WebBridgeMessage(
@@ -40,13 +41,19 @@ object WebMessageProtocol {
     private const val MESSAGE_TYPE = "AFIRMA_URI"
     private const val REPLY_TYPE = "AFIRMA_ACK"
 
-    fun parse(rawMessage: String, sourceOrigin: Uri): WebMessageParseResult {
+    fun parse(
+        rawMessage: String,
+        sourceOrigin: Uri,
+        expectedProfileId: ProfileId,
+    ): WebMessageParseResult {
         if (rawMessage.length > MAX_MESSAGE_CHARS) {
             return WebMessageParseResult.Failure(WebMessageErrorCode.MESSAGE_TOO_LARGE)
         }
-        val trustedOrigin = JuntaOriginPolicy.originFor(sourceOrigin)
-            ?: return WebMessageParseResult.Failure(WebMessageErrorCode.UNTRUSTED_ORIGIN)
-        val profile = BuiltInSiteProfiles.runtimeRegistry.resolve(trustedOrigin)?.profile
+        val trustedOrigin = JuntaOriginPolicy.signingOriginFor(
+            sourceOrigin,
+            expectedProfileId,
+        ) ?: return WebMessageParseResult.Failure(WebMessageErrorCode.UNTRUSTED_ORIGIN)
+        val profile = BuiltInSiteProfiles.runtimeRegistry.profile(expectedProfileId)
         if (profile == null || Capability.AFIRMA_URI !in profile.capabilities) {
             return WebMessageParseResult.Failure(WebMessageErrorCode.UNTRUSTED_ORIGIN)
         }

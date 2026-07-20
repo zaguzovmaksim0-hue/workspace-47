@@ -2,6 +2,7 @@ package dev.junta.firmamobile.browser
 
 import android.net.Uri
 import dev.junta.firmamobile.afirma.AfirmaOperation
+import dev.junta.firmamobile.profile.ProfileId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -16,7 +17,7 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class WebMessageRouterTest {
-    private val router = WebMessageRouter()
+    private val router = WebMessageRouter(ProfileId("junta-andalucia"))
 
     @Test
     fun routesTrustedMainFrameAfirmaMessageUsingTheActualSourceOrigin() {
@@ -46,15 +47,20 @@ class WebMessageRouterTest {
     }
 
     @Test
-    fun rejectsUntrustedOriginsWithoutReflectingAnUnvalidatedRequestId() {
-        val result = router.route(
-            rawMessage = message("afirma://selectcert"),
-            sourceOrigin = Uri.parse("https://evil.example"),
-            isMainFrame = true,
-        ) as WebMessageRouteResult.Rejected
+    fun rejectsUntrustedAndForeignProfileOriginsWithoutReflectingAnUnvalidatedId() {
+        listOf(
+            Uri.parse("https://evil.example"),
+            Uri.parse("https://reg.redsara.es"),
+        ).forEach { sourceOrigin ->
+            val result = router.route(
+                rawMessage = message("afirma://selectcert"),
+                sourceOrigin = sourceOrigin,
+                isMainFrame = true,
+            ) as WebMessageRouteResult.Rejected
 
-        assertNull(result.requestId)
-        assertEquals("UNTRUSTED_ORIGIN", result.errorCode)
+            assertNull(result.requestId)
+            assertEquals("UNTRUSTED_ORIGIN", result.errorCode)
+        }
     }
 
     @Test

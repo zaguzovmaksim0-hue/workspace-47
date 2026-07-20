@@ -10,6 +10,7 @@ import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -19,13 +20,14 @@ import java.time.Duration
 import java.util.UUID
 
 class WebMessageBridge(
+    private val profileId: ProfileId,
     private val logger: SanitizedLogger,
     private val onAfirmaRequest: (AfirmaRequest) -> Unit,
     private val onMiniAppletRequest: ((MiniAppletBridgeRequest, MiniAppletReplyChannel) -> Unit)? =
         null,
     private val onMiniAppletCancel: (UUID) -> Unit = {},
-    private val router: WebMessageRouter = WebMessageRouter(),
-    activeProfileId: () -> dev.junta.firmamobile.profile.ProfileId? = { null },
+    private val router: WebMessageRouter = WebMessageRouter(profileId),
+    activeProfileId: () -> ProfileId? = { null },
     private val miniAppletAdapter: MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(
         activeProfileId = activeProfileId,
     ),
@@ -41,6 +43,10 @@ class WebMessageBridge(
     )
 
     fun attach(webView: WebView): WebMessageBridgeAttachment {
+        val originRules = JuntaOriginPolicy.webMessageOriginRules(profileId)
+        if (originRules.isEmpty()) {
+            return WebMessageBridgeAttachment(webView = webView)
+        }
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_FEATURE_UNAVAILABLE)
             return WebMessageBridgeAttachment(webView = webView)
@@ -49,7 +55,7 @@ class WebMessageBridge(
         WebViewCompat.addWebMessageListener(
             webView,
             BRIDGE_NAME,
-            JuntaOriginPolicy.webMessageOriginRules,
+            originRules,
         ) { _, message, sourceOrigin, isMainFrame, replyProxy ->
             receive(message, sourceOrigin, isMainFrame, replyProxy)
         }
@@ -60,7 +66,7 @@ class WebMessageBridge(
             WebViewCompat.addDocumentStartJavaScript(
                 webView,
                 AfirmaJavascriptShim.load(webView.context, miniAppletMode),
-                JuntaOriginPolicy.webMessageOriginRules,
+                originRules,
             )
         } else {
             logger.recordBrowserEvent(DiagnosticEventCode.DOCUMENT_START_SCRIPT_UNAVAILABLE)

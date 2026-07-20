@@ -26,6 +26,7 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
@@ -149,6 +150,7 @@ class ProtocolProbeActivity : ComponentActivity() {
             onUrlChanged = ::updatePageUrl,
         )
         bridgeAttachment = WebMessageBridge(
+            profileId = JUNTA_PROFILE,
             logger = logger,
             onAfirmaRequest = {},
             miniAppletMode = MiniAppletBridgeMode.OBSERVATION,
@@ -192,7 +194,7 @@ class ProtocolProbeActivity : ComponentActivity() {
         WebViewCompat.addWebMessageListener(
             webView,
             PROBE_BRIDGE_NAME,
-            JuntaOriginPolicy.webMessageOriginRules,
+            JuntaOriginPolicy.webMessageOriginRules(JUNTA_PROFILE),
         ) { _, message, sourceOrigin, isMainFrame, _ ->
             if (message.type == WebMessageCompat.TYPE_STRING) {
                 val rawMessage = message.data
@@ -230,6 +232,7 @@ class ProtocolProbeActivity : ComponentActivity() {
         private const val STATUS_STARTING = "Preparando observación segura…"
         private const val STATUS_WAITING = "Esperando una llamada MiniApplet…"
         private const val STATUS_INCOMPATIBLE = "WebView incompatible con observación segura."
+        private val JUNTA_PROFILE = ProfileId("junta-andalucia")
         private const val PROBE_STATUS_MAX_HEIGHT_DP = 144
     }
 }
@@ -239,7 +242,9 @@ private class ProtocolProbeWebViewClient(
     private val logger: SanitizedLogger,
     private val onSafeStatus: (String) -> Unit,
     private val onUrlChanged: (String) -> Unit,
-    private val navigationPolicy: JuntaNavigationPolicy = JuntaNavigationPolicy(),
+    private val navigationPolicy: JuntaNavigationPolicy = JuntaNavigationPolicy(
+        ProfileId("junta-andalucia"),
+    ),
 ) : WebViewClient() {
     @Volatile
     private var topLevelOriginHost: String = INVALID_HOST

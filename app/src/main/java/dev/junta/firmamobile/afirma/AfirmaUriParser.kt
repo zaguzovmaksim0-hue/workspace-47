@@ -122,9 +122,7 @@ class AfirmaUriParser {
             return false
         }
         if (uri.fragment != null) return false
-        val callbackOrigin = JuntaOriginPolicy.originFor(uri) ?: return false
-        val resolved = BuiltInSiteProfiles.runtimeRegistry.resolve(callbackOrigin) ?: return false
-        return resolved.profile.profileId == profile.profileId
+        return JuntaOriginPolicy.originFor(uri, profile.profileId) != null
     }
 
     private fun hasValidPercentEncoding(value: String): Boolean {
