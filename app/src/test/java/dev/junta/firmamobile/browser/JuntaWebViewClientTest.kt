@@ -5,6 +5,7 @@ import android.net.Uri
 import android.net.http.SslError
 import android.webkit.SslErrorHandler
 import android.webkit.SafeBrowsingResponse
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.ClientCertRequest
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -20,6 +21,7 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -159,6 +161,16 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun rendererDeathIsAcknowledgedForTheExactAffectedWebView() {
+        val detail = RecordingRenderProcessGoneDetail(didCrashValue = true)
+
+        assertTrue(client.onRenderProcessGone(webView, detail))
+
+        assertSame(webView, callbacks.rendererView)
+        assertEquals(listOf("renderer"), callbacks.events)
+    }
+
+    @Test
     fun topLevelPageLifecycleUpdatesAddressWithoutLoggingTheUrl() {
         val rawUrl =
             "https://www.juntadeandalucia.es/path?secret-canary=value#fragment"
@@ -184,6 +196,7 @@ class JuntaWebViewClientTest {
 
     private class RecordingBrowserCallbacks : BrowserNavigationCallbacks {
         val events = mutableListOf<String>()
+        var rendererView: WebView? = null
 
         override fun openExternal(uri: Uri) {
             events += "external:${uri.host}"
@@ -201,6 +214,11 @@ class JuntaWebViewClientTest {
             events += "error:${error.name}"
         }
 
+        override fun onRenderProcessGone(view: WebView) {
+            rendererView = view
+            events += "renderer"
+        }
+
         override fun onTopLevelUrlChanged(url: String) {
             events += "url:$url"
         }
@@ -208,6 +226,14 @@ class JuntaWebViewClientTest {
         override fun onTopLevelNavigationStarted(url: String) {
             events += "start:$url"
         }
+    }
+
+    private class RecordingRenderProcessGoneDetail(
+        private val didCrashValue: Boolean,
+    ) : RenderProcessGoneDetail() {
+        override fun didCrash(): Boolean = didCrashValue
+
+        override fun rendererPriorityAtExit(): Int = 0
     }
 
     private class RecordingSafeBrowsingResponse : SafeBrowsingResponse() {

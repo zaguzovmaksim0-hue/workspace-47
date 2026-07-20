@@ -38,6 +38,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.browser.BrowserErrorCode
+import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
 import dev.junta.firmamobile.browser.BrowserTrustController
 import dev.junta.firmamobile.browser.BrowserUrlPolicy
@@ -55,7 +56,6 @@ import dev.junta.firmamobile.browser.SensitiveFlowInvalidator
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
-import dev.junta.firmamobile.browser.WebViewStateHolder
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
@@ -67,7 +67,6 @@ import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
 import java.util.UUID
 import java.net.URI
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 @Composable
@@ -75,7 +74,6 @@ fun BrowserScreen(
     profileId: ProfileId,
     entryUrl: URI,
     certificateState: CertificateUiState.Unlocked,
-    stateHolder: WebViewStateHolder,
     logger: SanitizedLogger,
     signingState: SigningUiState,
     onMiniAppletRequest: (MiniAppletBridgeRequest, SigningReplySink) -> Unit,
@@ -94,7 +92,16 @@ fun BrowserScreen(
 ) {
     val context = LocalContext.current
     val selectedServiceId = profileId
-    val trustController = remember(selectedServiceId, entryUrl) {
+    val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
+        checkNotNull(
+            BrowserSessionStatePolicy.validatedEntryUrl(
+                registry = BuiltInSiteProfiles.runtimeRegistry,
+                profileId = selectedServiceId,
+                entryUrl = entryUrl,
+            ),
+        ) { "Browser entry URL does not belong to the selected profile" }
+    }
+    val trustController = remember(selectedServiceId, validatedEntryUrl) {
         BrowserTrustController(
             urlPolicy = BrowserUrlPolicy(
                 registry = BuiltInSiteProfiles.runtimeRegistry,
@@ -105,16 +112,14 @@ fun BrowserScreen(
     }
     var effectiveTopLevelProfileId by remember(selectedServiceId, entryUrl) {
         mutableStateOf(
-            trustController.navigate(entryUrl.toASCIIString()).activeProfileId,
+            trustController.navigate(validatedEntryUrl).activeProfileId,
         )
     }
-    val webViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
+    val webViewRef = remember { AtomicReference<WebView?>() }
     val bridgeRef = remember { AtomicReference<WebMessageBridgeAttachment?>() }
     val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
     val dedicatedWebViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
-    val dedicatedClientActive = remember { AtomicBoolean(false) }
     val pendingNormalUrl = remember { AtomicReference<String?>() }
-    val discardHistory = remember { AtomicBoolean(false) }
     val navigationEpoch = remember { mutableLongStateOf(0L) }
     val navigationPolicy = remember(selectedServiceId) {
         JuntaNavigationPolicy(selectedServiceId)
@@ -131,7 +136,7 @@ fun BrowserScreen(
     var browserError by remember { mutableStateOf<BrowserErrorCode?>(null) }
     var compatibilityError by remember { mutableStateOf(false) }
     var currentUrl by remember(profileId, entryUrl) {
-        mutableStateOf(entryUrl.toASCIIString())
+        mutableStateOf(validatedEntryUrl)
     }
     var pageProgress by remember { mutableIntStateOf(100) }
     var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
@@ -158,6 +163,7 @@ fun BrowserScreen(
         entryUrl,
         onOpenExternal,
         onCancelSigning,
+        onWebViewChanged,
     ) {
         object : BrowserNavigationCallbacks {
             override fun openExternal(uri: Uri) {
@@ -179,19 +185,24 @@ fun BrowserScreen(
             }
 
             override fun onBrowserError(error: BrowserErrorCode) {
-                if (error == BrowserErrorCode.RENDER_PROCESS_GONE) {
-                    effectiveTopLevelProfileId = null
-                    pendingClientAuthTarget = null
-                    clientAuthGrant = null
-                    pendingRequest = null
-                    bridgeRef.getAndSet(null)?.close()
-                    abandonClientAuth()
-                    advanceNavigationEpoch()
-                    onCancelSigning(SigningCancelReason.NAVIGATION, null)
-                    webViewRecreationEpoch++
-                }
                 browserError = error
                 pageProgress = 100
+            }
+
+            override fun onRenderProcessGone(view: WebView) {
+                if (!webViewRef.compareAndSet(view, null)) return
+                onWebViewChanged(null)
+                effectiveTopLevelProfileId = null
+                pendingClientAuthTarget = null
+                clientAuthGrant = null
+                pendingRequest = null
+                bridgeRef.getAndSet(null)?.close()
+                abandonClientAuth()
+                advanceNavigationEpoch()
+                onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                browserError = BrowserErrorCode.RENDER_PROCESS_GONE
+                pageProgress = 100
+                webViewRecreationEpoch++
             }
 
             override fun onTopLevelNavigationStarted(url: String) {
@@ -218,7 +229,7 @@ fun BrowserScreen(
 
     fun goBack() {
         if (clientAuthGrant != null) {
-            pendingNormalUrl.set(entryUrl.toASCIIString())
+            pendingNormalUrl.set(validatedEntryUrl)
             clientAuthGrant = null
             abandonClientAuth()
             advanceNavigationEpoch()
@@ -231,8 +242,6 @@ fun BrowserScreen(
         if (webView?.canGoBack() == true) {
             webView.goBack()
         } else {
-            discardHistory.set(true)
-            stateHolder.clear()
             abandonClientAuth()
             pendingClientAuthTarget = null
             onExitBrowser()
@@ -245,9 +254,6 @@ fun BrowserScreen(
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeRef.getAndSet(null)?.close()
             webViewRef.getAndSet(null)?.let { webView ->
-                if (shouldCaptureBrowserState(discardHistory.get(), dedicatedClientActive.get())) {
-                    stateHolder.capture(webView)
-                }
                 onWebViewChanged(null)
                 webView.stopLoading()
                 webView.destroy()
@@ -296,14 +302,12 @@ fun BrowserScreen(
             abandonClientAuth()
             advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.NAVIGATION, null)
-            discardHistory.set(true)
-            stateHolder.clear()
             onExitBrowser()
         },
         onReload = {
             val leavingClientAuth = clientAuthGrant != null
             if (leavingClientAuth) {
-                pendingNormalUrl.set(entryUrl.toASCIIString())
+                pendingNormalUrl.set(validatedEntryUrl)
                 clientAuthGrant = null
                 abandonClientAuth()
             }
@@ -329,8 +333,6 @@ fun BrowserScreen(
             clientAuthGrant = null
             abandonClientAuth()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
-            discardHistory.set(true)
-            stateHolder.clear()
             pendingRequest = null
             webViewRef.get()?.apply {
                 stopLoading()
@@ -365,7 +367,7 @@ fun BrowserScreen(
                                     .profile(selectedServiceId)
                                     ?.startUrl
                                     ?.toASCIIString()
-                                    ?: entryUrl.toASCIIString()
+                                    ?: validatedEntryUrl
                                 pendingNormalUrl.set(activeStartUrl)
                                 clientAuthGrant = null
                                 abandonClientAuth()
@@ -396,8 +398,7 @@ fun BrowserScreen(
                         }
                         val tlsGrant = clientAuthGrant
                         if (tlsGrant == null) {
-                            dedicatedClientActive.set(false)
-                            onWebViewChanged(browserWebViewForPersistence(webView, dedicated = false))
+                            onWebViewChanged(browserWebViewForSigning(webView, dedicated = false))
                             val client = JuntaWebViewClient(
                                 callbacks = callbacks,
                                 logger = logger,
@@ -447,8 +448,7 @@ fun BrowserScreen(
                                 bridgeRef.set(null)
                             }
                         } else {
-                            dedicatedClientActive.set(true)
-                            onWebViewChanged(browserWebViewForPersistence(webView, dedicated = true))
+                            onWebViewChanged(browserWebViewForSigning(webView, dedicated = true))
                             val handler = ClientAuthRequestHandler(
                                 grant = tlsGrant,
                                 identityProvider = clientCertificateIdentityProvider,
@@ -478,14 +478,7 @@ fun BrowserScreen(
                             if (requestedUrl != null) {
                                 webView.loadUrl(requestedUrl)
                             } else {
-                                stateHolder.restoreOrLoad(
-                                    webView,
-                                    entryUrl.toASCIIString(),
-                                ) { restoredUrl ->
-                                    effectiveTopLevelProfileId =
-                                        trustController.navigate(restoredUrl).activeProfileId
-                                    currentUrl = safeBrowserDisplayUrl(restoredUrl)
-                                }
+                                webView.loadUrl(validatedEntryUrl)
                             }
                         }
                     }
@@ -530,7 +523,6 @@ fun BrowserScreen(
                     advanceNavigationEpoch()
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
                     bridgeRef.getAndSet(null)?.close()
-                    dedicatedClientActive.set(true)
                     clientAuthGrant = ClientAuthGrant(
                         authorized = authorized,
                         navigationEpoch = navigationEpoch.longValue,
@@ -678,11 +670,8 @@ internal fun safeBrowserDisplayUrl(rawUrl: String): String = runCatching {
     uri.buildUpon().clearQuery().fragment(null).build().toString()
 }.getOrDefault("https://")
 
-internal fun browserWebViewForPersistence(webView: WebView?, dedicated: Boolean): WebView? =
+internal fun browserWebViewForSigning(webView: WebView?, dedicated: Boolean): WebView? =
     webView.takeUnless { dedicated }
-
-internal fun shouldCaptureBrowserState(discardHistory: Boolean, dedicated: Boolean): Boolean =
-    !discardHistory && !dedicated
 
 internal fun initiatorProfileForUrl(rawUrl: String): ProfileId? = runCatching {
     BuiltInSiteProfiles.runtimeRegistry.resolve(java.net.URI(rawUrl))

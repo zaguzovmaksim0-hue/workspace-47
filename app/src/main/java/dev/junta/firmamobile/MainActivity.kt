@@ -21,8 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
-import dev.junta.firmamobile.browser.WebViewStateHolder
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.certificate.CertificateRepository
@@ -51,7 +51,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private lateinit var webViewStateHolder: WebViewStateHolder
     private var currentWebView: WebView? = null
     private var destination by mutableStateOf<AppDestination>(AppDestination.Certificate)
     private lateinit var signingCoordinator: SigningCoordinator
@@ -70,8 +69,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        BrowserSessionStatePolicy.discardLegacyWebViewState(savedInstanceState)
         super.onCreate(savedInstanceState)
-        webViewStateHolder = WebViewStateHolder(savedInstanceState)
         val app = application as JuntaFirmaApplication
         val juntaAdapter = JuntaTriPhaseAdapter()
         val redsaraAdapter = LocalXadesDetachedAdapter()
@@ -148,7 +147,6 @@ class MainActivity : ComponentActivity() {
                         profileId = browserDestination.profileId,
                         entryUrl = browserDestination.entryUrl,
                         certificateState = unlocked,
-                        stateHolder = webViewStateHolder,
                         logger = app.sanitizedLogger,
                         signingState = signingState.value,
                         onMiniAppletRequest = ::prepareMiniAppletSigning,
@@ -207,7 +205,6 @@ class MainActivity : ComponentActivity() {
                             if (launch != null) {
                                 cancelSigning(SigningCancelReason.NAVIGATION)
                                 currentWebView = null
-                                webViewStateHolder.clear()
                                 recentProfiles.remove(launch.profileId)
                                 recentProfiles.add(0, launch.profileId)
                                 while (recentProfiles.size > MAX_RECENT_PROFILES) {
@@ -232,12 +229,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        cancelSigning(SigningCancelReason.BACKGROUND)
-        currentWebView?.let { webViewStateHolder.save(it, outState) }
-        super.onSaveInstanceState(outState)
     }
 
     override fun onStop() {

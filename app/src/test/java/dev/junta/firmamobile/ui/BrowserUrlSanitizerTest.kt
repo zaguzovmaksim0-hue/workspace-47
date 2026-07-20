@@ -42,13 +42,11 @@ class BrowserUrlSanitizerTest {
     }
 
     @Test
-    fun dedicatedWebViewIsNeverExposedOrCapturedForPersistence() {
+    fun dedicatedWebViewIsNeverExposedToTheSigningCoordinator() {
         val webView = WebView(ApplicationProvider.getApplicationContext<Context>())
 
-        assertNull(browserWebViewForPersistence(webView, dedicated = true))
-        assertSame(webView, browserWebViewForPersistence(webView, dedicated = false))
-        assertFalse(shouldCaptureBrowserState(discardHistory = false, dedicated = true))
-        assertFalse(shouldCaptureBrowserState(discardHistory = true, dedicated = false))
+        assertNull(browserWebViewForSigning(webView, dedicated = true))
+        assertSame(webView, browserWebViewForSigning(webView, dedicated = false))
     }
 
     @Test

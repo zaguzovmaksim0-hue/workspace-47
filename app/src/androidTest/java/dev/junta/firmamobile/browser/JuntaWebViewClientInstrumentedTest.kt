@@ -2,6 +2,7 @@ package dev.junta.firmamobile.browser
 
 import android.content.Context
 import android.net.Uri
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -10,6 +11,7 @@ import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.SanitizedLogger
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,10 +60,35 @@ class JuntaWebViewClientInstrumentedTest {
         }
     }
 
+    @Test
+    fun rendererDeathIsRoutedWithTheExactWebViewOnDevice() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val webView = WebView(context)
+            val callbacks = RecordingCallbacks()
+            val client = JuntaWebViewClient(
+                callbacks = callbacks,
+                logger = SanitizedLogger(),
+                navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            )
+
+            assertTrue(
+                client.onRenderProcessGone(
+                    webView,
+                    RecordingRenderProcessGoneDetail(),
+                ),
+            )
+            assertSame(webView, callbacks.rendererView)
+            webView.destroy()
+        }
+    }
+
     private class RecordingCallbacks : BrowserNavigationCallbacks {
         var afirmaObserved = false
         var playStoreBlocked = false
         var externalOpened = false
+        var rendererView: WebView? = null
 
         override fun openExternal(uri: Uri) {
             externalOpened = true
@@ -76,5 +103,15 @@ class JuntaWebViewClientInstrumentedTest {
         }
 
         override fun onBrowserError(error: BrowserErrorCode) = Unit
+
+        override fun onRenderProcessGone(view: WebView) {
+            rendererView = view
+        }
+    }
+
+    private class RecordingRenderProcessGoneDetail : RenderProcessGoneDetail() {
+        override fun didCrash(): Boolean = true
+
+        override fun rendererPriorityAtExit(): Int = 0
     }
 }

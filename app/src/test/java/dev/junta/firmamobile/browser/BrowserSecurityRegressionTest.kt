@@ -96,19 +96,35 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
-    fun restoredUrlIsReResolvedBeforeTheBridgeCanBeUsed() {
-        val source = projectSource(
+    fun rawWebViewHistoryIsNeverSavedOrRestored() {
+        val activitySource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+        val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
         )
-        val restoreBlock = Regex(
-            """stateHolder\.restoreOrLoad\([\s\S]{0,1000}?\{ restoredUrl ->([\s\S]{0,700}?)\n\s*}""",
-        ).find(source)?.groupValues?.get(1).orEmpty()
+        val sessionPolicySource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/BrowserSessionStatePolicy.kt",
+        )
 
-        assertTrue("The restore callback must exist", restoreBlock.isNotBlank())
+        assertFalse("Activity must not save a WebView Bundle", "webView.saveState" in activitySource)
+        assertFalse("Browser screen must not restore WebView history", "restoreState(" in screenSource)
+        assertFalse("Browser screen must not capture WebView history", "saveState(" in screenSource)
+        assertFalse(
+            "The legacy raw-history holder must be deleted",
+            projectFileExists(
+                "app/src/main/java/dev/junta/firmamobile/browser/WebViewStateHolder.kt",
+            ),
+        )
         assertTrue(
-            "A restored URL must be resolved into the effective top-level profile",
-            ("navigate(restoredUrl)" in restoreBlock || "resolve(restoredUrl)" in restoreBlock) &&
-                "effectiveTopLevelProfileId" in restoreBlock,
+            "Legacy saved history must be explicitly discarded",
+            "discardLegacyWebViewState(savedInstanceState)" in activitySource &&
+                "LEGACY_WEBVIEW_HISTORY_KEY" in sessionPolicySource,
+        )
+        assertTrue(
+            "Every fresh WebView must load the revalidated catalog entry URL",
+            "validatedEntryUrl" in screenSource &&
+                "webView.loadUrl(validatedEntryUrl)" in screenSource,
         )
     }
 
@@ -187,33 +203,43 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
-    fun rendererDeathInvalidatesBridgeAndSigningState() {
+    fun rendererDeathInvalidatesBothNormalAndClientTlsSessions() {
         val clientSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt",
+        )
+        val clientAuthSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/ClientAuthWebViewClient.kt",
         )
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
         )
-        val rendererBody = Regex(
-            """override fun onRenderProcessGone\([\s\S]{0,500}?\n\s*}""",
-        ).find(clientSource)?.value.orEmpty()
-        val screenHandlesRendererDeath = Regex(
-            """RENDER_PROCESS_GONE[\s\S]{0,700}?(advanceNavigationEpoch|bridgeRef\.[\s\S]{0,80}?(close|abandon))""",
-        ).containsMatchIn(screenSource)
-        val clientInvalidatesDirectly =
-            "invalidate" in rendererBody || "onRendererProcessGone" in rendererBody
-        val screenRecreatesWebView =
-            "webViewRecreationEpoch++" in screenSource &&
-                "key(clientAuthGrant != null, webViewRecreationEpoch)" in screenSource
 
-        assertTrue("The renderer-death callback must exist", rendererBody.isNotBlank())
         assertTrue(
-            "Renderer death must invalidate the bridge/signing binding before recovery",
-            clientInvalidatesDirectly || screenHandlesRendererDeath,
+            "Normal WebView renderer death must identify the exact affected WebView",
+            "callbacks.onRenderProcessGone(view)" in clientSource,
         )
         assertTrue(
-            "Renderer death must force creation of a fresh WebView",
-            screenRecreatesWebView,
+            "Client TLS renderer death must abandon its one-shot grant",
+            "requestHandler.abandon()" in clientAuthSource &&
+                "callbacks.onRenderProcessGone(view)" in clientAuthSource,
+        )
+        assertTrue(
+            "Only the active WebView may trigger renderer recovery",
+            "webViewRef.compareAndSet(view, null)" in screenSource,
+        )
+        assertTrue(
+            "Renderer death must close bridge state and advance the navigation epoch",
+            "bridgeRef.getAndSet(null)?.close()" in screenSource &&
+                "advanceNavigationEpoch()" in screenSource,
+        )
+        assertTrue(
+            "Renderer death must force a fresh WebView",
+            "webViewRecreationEpoch++" in screenSource &&
+                "key(clientAuthGrant != null, webViewRecreationEpoch)" in screenSource,
+        )
+        assertFalse(
+            "A fresh WebView must never restore the dead renderer's history",
+            "restoreOrLoad" in screenSource || "restoreState(" in screenSource,
         )
     }
 
@@ -239,6 +265,18 @@ class BrowserSecurityRegressionTest {
         navigationEpoch = epoch,
         observedAt = Instant.parse("2030-01-01T00:00:00Z"),
     )
+
+    private fun projectFileExists(relativePath: String): Boolean {
+        val userDirectory = requireNotNull(System.getProperty("user.dir")) {
+            "user.dir system property is unavailable"
+        }
+        var directory = File(userDirectory).canonicalFile
+        repeat(8) {
+            if (File(directory, relativePath).isFile) return true
+            directory = directory.parentFile ?: return@repeat
+        }
+        return false
+    }
 
     private fun projectSource(relativePath: String): String {
         val userDirectory = requireNotNull(System.getProperty("user.dir")) {
