@@ -36,6 +36,10 @@ interface BrowserNavigationCallbacks {
 
     fun onBrowserError(error: BrowserErrorCode)
 
+    fun onRenderProcessGone(view: WebView) {
+        onBrowserError(BrowserErrorCode.RENDER_PROCESS_GONE)
+    }
+
     fun onTopLevelNavigationStarted(url: String) = Unit
 
     fun onTopLevelUrlChanged(url: String) = Unit
@@ -161,7 +165,7 @@ class JuntaWebViewClient(
         view: WebView,
         detail: RenderProcessGoneDetail,
     ): Boolean {
-        callbacks.onBrowserError(BrowserErrorCode.RENDER_PROCESS_GONE)
+        callbacks.onRenderProcessGone(view)
         return true
     }
 

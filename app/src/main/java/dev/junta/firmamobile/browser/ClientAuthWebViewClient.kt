@@ -3,6 +3,7 @@ package dev.junta.firmamobile.browser
 import android.graphics.Bitmap
 import android.net.http.SslError
 import android.webkit.ClientCertRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -173,6 +174,15 @@ internal class ClientAuthWebViewClient(
         handler.cancel()
         requestHandler.abandon()
         callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
+    }
+
+    override fun onRenderProcessGone(
+        view: WebView,
+        detail: RenderProcessGoneDetail,
+    ): Boolean {
+        requestHandler.abandon()
+        callbacks.onRenderProcessGone(view)
+        return true
     }
 
     fun abandon() = requestHandler.abandon()

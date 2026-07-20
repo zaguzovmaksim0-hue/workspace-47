@@ -3,6 +3,7 @@ package dev.junta.firmamobile.browser
 import android.content.Context
 import android.net.Uri
 import android.webkit.ClientCertRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
@@ -53,6 +54,26 @@ class ClientAuthWebViewClientTest {
     }
 
     @Test
+    fun rendererDeathAbandonsTheOneShotClientTlsGrant() {
+        val epoch = AtomicInteger(20)
+        val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
+        val client = client(epoch, callbacks)
+        client.onPageStarted(webView, TARGET, null)
+
+        assertTrue(
+            client.onRenderProcessGone(
+                webView,
+                RecordingRenderProcessGoneDetail(),
+            ),
+        )
+
+        val request = RecordingRequest()
+        client.onReceivedClientCertRequest(webView, request)
+        assertEquals(1, request.ignores)
+        assertTrue(callbacks.events.contains("renderer"))
+    }
+
+    @Test
     fun subsequentNavigationAbandonsGrantAndOffOriginMainFrameIsBlocked() {
         val epoch = AtomicInteger(12)
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
@@ -98,6 +119,9 @@ class ClientAuthWebViewClientTest {
             events += "blocked:${reason.name}"
         }
         override fun onBrowserError(error: BrowserErrorCode) = Unit
+        override fun onRenderProcessGone(view: WebView) {
+            events += "renderer"
+        }
         override fun onTopLevelNavigationStarted(url: String) {
             events += "start"
             onStart()
@@ -105,6 +129,12 @@ class ClientAuthWebViewClientTest {
         override fun onTopLevelUrlChanged(url: String) {
             events += "url"
         }
+    }
+
+    private class RecordingRenderProcessGoneDetail : RenderProcessGoneDetail() {
+        override fun didCrash(): Boolean = true
+
+        override fun rendererPriorityAtExit(): Int = 0
     }
 
     private class RecordingRequest : ClientCertRequest() {
