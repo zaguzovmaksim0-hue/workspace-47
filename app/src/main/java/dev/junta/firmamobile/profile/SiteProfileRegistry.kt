@@ -290,7 +290,7 @@ object BuiltInSiteProfiles {
         "fixedQueryParameters": {
           "action": "validateCert",
           "appId": "IAJ.CARNETJOVEN",
-          "comeBackURL": "https://ws104.juntadeandalucia.es/carneJoven/servlet/ReturnAuthenticationServlet"
+          "comeBackURL": "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ="
         },
         "requiredEphemeralQueryParameters": ["ticketId", "webSessionId"],
         "allowEmptyIssuerList": true,

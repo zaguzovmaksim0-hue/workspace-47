@@ -136,6 +136,16 @@ class SiteProfileCatalogParserTest {
             policy.sourceUrls,
         )
         assertEquals("/authenticationFacade", policy.requestPath)
+        assertEquals(
+            mapOf(
+                "action" to "validateCert",
+                "appId" to "IAJ.CARNETJOVEN",
+                "comeBackURL" to
+                    "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4v" +
+                    "c2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ=",
+            ),
+            policy.fixedQueryParameters,
+        )
         assertEquals(setOf("ticketId", "webSessionId"), policy.requiredEphemeralQueryParameters)
         assertTrue(policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)

@@ -65,6 +65,12 @@ class ClientAuthNavigationAuthorizerTest {
         val attacks = listOf(
             TARGET.replace("validateCert", "other"),
             TARGET.replace("ticketId=synthetic-ticket", "ticketId="),
+            TARGET.replace(
+                "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4v" +
+                    "c2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+                "https%3A%2F%2Fws104.juntadeandalucia.es%2FcarneJoven%2Fservlet%2F" +
+                    "ReturnAuthenticationServlet",
+            ),
             "$TARGET&extra=1",
             "$TARGET&ticketId=duplicate",
             TARGET.replace("/authenticationFacade", "/other"),
@@ -148,6 +154,6 @@ class ClientAuthNavigationAuthorizerTest {
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
         const val TARGET =
-            "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&ticketId=synthetic-ticket&appId=IAJ.CARNETJOVEN&webSessionId=synthetic-session&comeBackURL=https%3A%2F%2Fws104.juntadeandalucia.es%2FcarneJoven%2Fservlet%2FReturnAuthenticationServlet"
+            "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&ticketId=synthetic-ticket&appId=IAJ.CARNETJOVEN&webSessionId=synthetic-session&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
     }
 }

@@ -207,7 +207,7 @@ class ClientAuthWebViewInstrumentedTest {
             "https://ws235.juntadeandalucia.es/authenticationFacade" +
                 "?action=validateCert&ticketId=synthetic-ticket" +
                 "&appId=IAJ.CARNETJOVEN&webSessionId=synthetic-session" +
-                "&comeBackURL=https%3A%2F%2Fws104.juntadeandalucia.es%2FcarneJoven" +
-                "%2Fservlet%2FReturnAuthenticationServlet"
+                "&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5l" +
+                "Sm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
     }
 }
