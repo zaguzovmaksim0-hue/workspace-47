@@ -61,7 +61,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             pending = PendingSource(
                 profileId = profile.profileId,
                 source = target,
-                expectedEpoch = currentEpoch + 1,
+                armingEpoch = currentEpoch,
                 expiresAt = now.plusSeconds(policy.grantTtlSeconds.toLong()),
             )
             return null
@@ -69,12 +69,25 @@ class ClientAuthNavigationAuthorizer internal constructor(
 
         val source = pending
         pending = null
-        if (source == null || source.profileId != profile.profileId ||
-            source.expectedEpoch != currentEpoch || !now.isBefore(source.expiresAt) ||
-            source.source !in policy.sourceUrls || !target.matches(policy)
-        ) {
+        if (source == null) {
             return null
         }
+        if (source.profileId != profile.profileId) {
+            return null
+        }
+        if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) {
+            return null
+        }
+        if (!now.isBefore(source.expiresAt)) {
+            return null
+        }
+        if (source.source !in policy.sourceUrls) {
+            return null
+        }
+        if (!target.matches(policy)) {
+            return null
+        }
+
         return AuthorizedClientAuthTarget(
             profileId = profile.profileId,
             target = target,
@@ -88,7 +101,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
     fun onTopLevelPageStarted(url: String, currentEpoch: Long) {
         val source = pending ?: return
         val uri = strictHttpsUri(url)
-        if (uri != source.source || currentEpoch != source.expectedEpoch ||
+        if (uri != source.source || currentEpoch != source.armingEpoch + 1 ||
             !clock.instant().isBefore(source.expiresAt)
         ) {
             pending = null
@@ -172,7 +185,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
     private data class PendingSource(
         val profileId: ProfileId,
         val source: URI,
-        val expectedEpoch: Long,
+        val armingEpoch: Long,
         val expiresAt: Instant,
     )
 

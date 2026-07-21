@@ -8,7 +8,6 @@ import java.time.Instant
 import java.time.ZoneId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClientAuthNavigationAuthorizerTest {
@@ -32,6 +31,18 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun immediateTargetAtArmingEpochNAuthorizesOnce() {
+        assertNull(arm(epoch = 4))
+
+        val result = authorize(TARGET, epoch = 4)
+
+        assertEquals(ProfileId("carne-joven-andalucia"), result?.profileId)
+        assertEquals("ws235.juntadeandalucia.es", result?.target?.host)
+        assertEquals("/authenticationFacade", result?.target?.path)
+        assertNull(authorize(TARGET, epoch = 4))
+    }
+
+    @Test
     fun directLegacyIframeWrongProfileEpochAndExpiredSourceNeverAuthorize() {
         assertNull(authorize(TARGET, epoch = 7))
         assertNull(
@@ -46,7 +57,7 @@ class ClientAuthNavigationAuthorizerTest {
         assertNull(authorize(TARGET, epoch = 8))
 
         arm(epoch = 10)
-        assertNull(authorize(TARGET, epoch = 10))
+        assertNull(authorize(TARGET, epoch = 12))
 
         arm(epoch = 20)
         clock.advance(Duration.ofSeconds(16))
@@ -108,7 +119,7 @@ class ClientAuthNavigationAuthorizerTest {
             val epoch = 310L + index * 2
             arm(epoch)
             authorizer.onTopLevelPageStarted(SOURCE, epoch + 1)
-            assertNull(authorize(attack, epoch + 1))
+            assertNull(attack, authorize(attack, epoch + 1))
         }
 
         assertNull(
@@ -186,6 +197,22 @@ class ClientAuthNavigationAuthorizerTest {
             authorizer.onTopLevelPageStarted(SOURCE, epoch + 1)
             assertNull(attack, authorize(attack, epoch + 1))
         }
+    }
+
+    @Test
+    fun subframeRequestClearsPendingAndFailsClosed() {
+        arm(700)
+        assertNull(
+            authorizer.observeTopLevelNavigation(
+                PROFILE,
+                SOURCE,
+                TARGET,
+                700,
+                isModernMainFrameRequest = false,
+            ),
+        )
+        assertNull(authorize(TARGET, 700))
+        assertNull(authorize(TARGET, 701))
     }
 
     private fun arm(epoch: Long) = authorizer.observeTopLevelNavigation(
