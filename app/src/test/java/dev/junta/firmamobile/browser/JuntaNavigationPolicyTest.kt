@@ -113,4 +113,56 @@ class JuntaNavigationPolicyTest {
             (intent as NavigationDecision.Block).reason,
         )
     }
+
+    @Test
+    fun blocksClientAuthRequestOriginFailClosedInsteadOfOpeningExternalBrowser() {
+        val carneJovenPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia"))
+        val carneJovenPage = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+        val ws235Target = "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=IAJ.CARNETJOVEN&ticketId=123&webSessionId=456&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
+
+        val decision = carneJovenPolicy.decide(ws235Target, carneJovenPage)
+        assertTrue(decision is NavigationDecision.Block)
+        assertEquals(
+            NavigationBlockReason.CROSS_PROFILE_NAVIGATION,
+            (decision as NavigationDecision.Block).reason,
+        )
+    }
+
+    @Test
+    fun exactOriginMatcherRequiresHttpsSchemeCanonicalHostAndEffectivePort() {
+        val carneJovenPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia"))
+        val carneJovenPage = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+
+        val uppercaseTarget = "https://WS235.JUNTADEANDALUCIA.ES:443/authenticationFacade?action=test"
+        val uppercaseDecision = carneJovenPolicy.decide(uppercaseTarget, carneJovenPage)
+        assertTrue(uppercaseDecision is NavigationDecision.Block)
+        assertEquals(
+            NavigationBlockReason.CROSS_PROFILE_NAVIGATION,
+            (uppercaseDecision as NavigationDecision.Block).reason,
+        )
+
+        val httpTarget = "http://ws235.juntadeandalucia.es/authenticationFacade"
+        val httpDecision = carneJovenPolicy.decide(httpTarget, carneJovenPage)
+        assertTrue(httpDecision is NavigationDecision.Block)
+        assertEquals(
+            NavigationBlockReason.INSECURE_HTTP,
+            (httpDecision as NavigationDecision.Block).reason,
+        )
+
+        val portTarget = "https://ws235.juntadeandalucia.es:8443/authenticationFacade"
+        val portDecision = carneJovenPolicy.decide(portTarget, carneJovenPage)
+        assertTrue(portDecision is NavigationDecision.Block)
+        assertEquals(
+            NavigationBlockReason.INVALID_URL,
+            (portDecision as NavigationDecision.Block).reason,
+        )
+
+        val userInfoTarget = "https://user:pass@ws235.juntadeandalucia.es/authenticationFacade"
+        val userInfoDecision = carneJovenPolicy.decide(userInfoTarget, carneJovenPage)
+        assertTrue(userInfoDecision is NavigationDecision.Block)
+        assertEquals(
+            NavigationBlockReason.INVALID_URL,
+            (userInfoDecision as NavigationDecision.Block).reason,
+        )
+    }
 }

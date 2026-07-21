@@ -11,6 +11,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.SanitizedLogger
 import java.time.Clock
@@ -185,9 +186,123 @@ class JuntaWebViewClientTest {
         assertFalse(logger.exportText().contains("secret-canary"))
     }
 
+    @Test
+    fun carneJovenAuthorizedTransitionStaysInWebViewAndUnauthorizedWs235IsBlockedFailClosed() {
+        var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
+        val carneJovenCallbacks = RecordingBrowserCallbacks()
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        val carneJovenClient = JuntaWebViewClient(
+            callbacks = carneJovenCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia")),
+            currentPageUrl = { "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet" },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { ProfileId("carne-joven-andalucia") },
+            currentNavigationEpoch = { 1L },
+            onClientAuthTarget = { capturedAuthorizedTarget = it },
+        )
+
+        authorizer.observeTopLevelNavigation(
+            activeProfileId = ProfileId("carne-joven-andalucia"),
+            currentUrl = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp",
+            targetUrl = "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet",
+            currentEpoch = 0L,
+            isModernMainFrameRequest = true,
+        )
+        authorizer.onTopLevelPageStarted(
+            "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet",
+            1L,
+        )
+
+        val ws235Target =
+            "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=IAJ.CARNETJOVEN&ticketId=synthetic-ticket&webSessionId=synthetic-session&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
+        val authorizedResult = carneJovenClient.shouldOverrideUrlLoading(webView, request(ws235Target))
+
+        assertTrue(authorizedResult)
+        assertEquals("ws235.juntadeandalucia.es", capturedAuthorizedTarget?.target?.host)
+        assertTrue(carneJovenCallbacks.events.isEmpty())
+
+        val unauthorizedCallbacks = RecordingBrowserCallbacks()
+        val unauthorizedClient = JuntaWebViewClient(
+            callbacks = unauthorizedCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia")),
+            currentPageUrl = { "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp" },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { ProfileId("carne-joven-andalucia") },
+            currentNavigationEpoch = { 2L },
+        )
+        val unauthorizedResult = unauthorizedClient.shouldOverrideUrlLoading(webView, request(ws235Target))
+
+        assertTrue(unauthorizedResult)
+        assertEquals(listOf("blocked:CROSS_PROFILE_NAVIGATION"), unauthorizedCallbacks.events)
+    }
+
+    @Test
+    fun subframeAndLegacyRequestsDoNotTriggerClientAuthAndUnauthorizedWs235IsBlockedFailClosed() {
+        var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
+        val carneJovenCallbacks = RecordingBrowserCallbacks()
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        val carneJovenClient = JuntaWebViewClient(
+            callbacks = carneJovenCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia")),
+            currentPageUrl = { "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet" },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { ProfileId("carne-joven-andalucia") },
+            currentNavigationEpoch = { 1L },
+            onClientAuthTarget = { capturedAuthorizedTarget = it },
+        )
+
+        authorizer.observeTopLevelNavigation(
+            activeProfileId = ProfileId("carne-joven-andalucia"),
+            currentUrl = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp",
+            targetUrl = "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet",
+            currentEpoch = 0L,
+            isModernMainFrameRequest = true,
+        )
+        authorizer.onTopLevelPageStarted(
+            "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet",
+            1L,
+        )
+
+        val ws235Target =
+            "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=IAJ.CARNETJOVEN&ticketId=synthetic-ticket&webSessionId=synthetic-session&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
+
+        val subframeResult = carneJovenClient.shouldOverrideUrlLoading(webView, subframeRequest(ws235Target))
+        assertTrue(subframeResult)
+        assertEquals(null, capturedAuthorizedTarget)
+        assertEquals(listOf("blocked:CROSS_PROFILE_NAVIGATION"), carneJovenCallbacks.events)
+
+        val legacyCallbacks = RecordingBrowserCallbacks()
+        val legacyClient = JuntaWebViewClient(
+            callbacks = legacyCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia")),
+            currentPageUrl = { "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp" },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { ProfileId("carne-joven-andalucia") },
+            currentNavigationEpoch = { 2L },
+        )
+
+        @Suppress("DEPRECATION")
+        val legacyResult = legacyClient.shouldOverrideUrlLoading(webView, ws235Target)
+        assertTrue(legacyResult)
+        assertEquals(listOf("blocked:CROSS_PROFILE_NAVIGATION"), legacyCallbacks.events)
+    }
+
     private fun request(rawUrl: String) = object : WebResourceRequest {
         override fun getUrl(): Uri = Uri.parse(rawUrl)
         override fun isForMainFrame(): Boolean = true
+        override fun isRedirect(): Boolean = false
+        override fun hasGesture(): Boolean = true
+        override fun getMethod(): String = "GET"
+        override fun getRequestHeaders(): Map<String, String> = emptyMap()
+    }
+
+    private fun subframeRequest(rawUrl: String) = object : WebResourceRequest {
+        override fun getUrl(): Uri = Uri.parse(rawUrl)
+        override fun isForMainFrame(): Boolean = false
         override fun isRedirect(): Boolean = false
         override fun hasGesture(): Boolean = true
         override fun getMethod(): String = "GET"

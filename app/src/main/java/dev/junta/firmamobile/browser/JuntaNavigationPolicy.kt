@@ -7,6 +7,7 @@ import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.afirma.AfirmaUriParser
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import java.util.Locale
@@ -77,11 +78,41 @@ class JuntaNavigationPolicy(
         if (otherProfile != null && otherProfile != selectedProfileId) {
             return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
         }
+        if (isClientAuthRequestOrigin(target)) {
+            return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
+        }
         return if (isSafeExternalHttpsUrl(target)) {
             NavigationDecision.OpenExternal(target)
         } else {
             NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
+    }
+
+    private fun isClientAuthRequestOrigin(target: Uri): Boolean {
+        val profile = registry.profile(selectedProfileId) ?: return false
+        val requestOrigins = profile.clientAuthPolicy?.requestOrigins ?: return false
+        if (requestOrigins.isEmpty()) return false
+        val targetOrigin = exactOriginOf(target) ?: return false
+        return targetOrigin in requestOrigins
+    }
+
+    private fun exactOriginOf(target: Uri): ExactOrigin? {
+        if (target.isOpaque || !target.scheme.equals("https", ignoreCase = true)) return null
+        if (target.encodedUserInfo != null) return null
+        val rawHost = target.host ?: return null
+        if (rawHost.isBlank()) return null
+        val port = try {
+            target.port.takeIf { it != -1 } ?: 443
+        } catch (_: Exception) {
+            return null
+        }
+        if (port != 443) return null
+        val canonicalHost = try {
+            java.net.IDN.toASCII(rawHost, java.net.IDN.USE_STD3_ASCII_RULES).lowercase(Locale.ROOT)
+        } catch (_: Exception) {
+            return null
+        }
+        return runCatching { ExactOrigin.parse("https://$canonicalHost") }.getOrNull()
     }
 
     private fun decideAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
