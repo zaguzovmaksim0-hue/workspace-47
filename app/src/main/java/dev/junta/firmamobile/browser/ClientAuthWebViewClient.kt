@@ -53,7 +53,6 @@ internal class ClientAuthRequestHandler(
             }
         } catch (_: Exception) {
             if (!proceeded) request.ignore()
-        } finally {
             clearPreferencesOnce()
         }
     }

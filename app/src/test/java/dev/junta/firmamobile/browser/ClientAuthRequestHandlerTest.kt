@@ -35,12 +35,19 @@ class ClientAuthRequestHandlerTest {
         assertNotNull(first.privateKey)
         assertEquals(0, synthetic.encodedReads.get())
         assertEquals(identity.chain.size, first.chain?.size)
+        assertEquals(0, clears.get())
+
+        handler.abandon()
+        assertEquals(1, clears.get())
+
+        handler.abandon()
         assertEquals(1, clears.get())
 
         val replay = RecordingRequest()
         handler.handle(replay)
         assertEquals(0, replay.proceeds)
         assertEquals(1, replay.ignores)
+        assertEquals(1, clears.get())
     }
 
     @Test
@@ -52,19 +59,25 @@ class ClientAuthRequestHandlerTest {
             RecordingRequest(principals = arrayOf(X500Principal("CN=Unexpected CA"))),
         )
         cases.forEach { request ->
-            handler(epoch = 9).handle(request)
+            val clears = AtomicInteger()
+            handler(epoch = 9, clears = clears).handle(request)
             assertEquals(0, request.proceeds)
             assertEquals(1, request.ignores)
+            assertEquals(1, clears.get())
         }
 
         val wrongEpoch = RecordingRequest()
-        handler(epoch = 10, currentEpoch = { 11 }).handle(wrongEpoch)
+        val wrongEpochClears = AtomicInteger()
+        handler(epoch = 10, currentEpoch = { 11 }, clears = wrongEpochClears).handle(wrongEpoch)
         assertEquals(1, wrongEpoch.ignores)
+        assertEquals(1, wrongEpochClears.get())
 
         val expired = RecordingRequest()
+        val expiredClears = AtomicInteger()
         val expiredClock = Clock.fixed(now.plusSeconds(16), ZoneOffset.UTC)
-        handler(epoch = 12, clock = expiredClock).handle(expired)
+        handler(epoch = 12, clock = expiredClock, clears = expiredClears).handle(expired)
         assertEquals(1, expired.ignores)
+        assertEquals(1, expiredClears.get())
     }
 
     @Test
@@ -74,6 +87,8 @@ class ClientAuthRequestHandlerTest {
         val request = RecordingRequest(throwAfterProceed = true)
 
         handler.handle(request)
+        assertEquals(1, clears.get())
+
         handler.abandon()
 
         assertEquals(1, request.proceeds)

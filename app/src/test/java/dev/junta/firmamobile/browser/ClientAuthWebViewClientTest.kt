@@ -39,8 +39,9 @@ class ClientAuthWebViewClientTest {
     @Test
     fun initialAuthorizedPageStartDoesNotInvalidateGrantBeforeClientCertificateRequest() {
         val epoch = AtomicInteger(9)
+        val clears = AtomicInteger()
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
-        val client = client(epoch, callbacks)
+        val client = client(epoch, callbacks, clears)
 
         client.onPageStarted(webView, TARGET, null)
         val request = RecordingRequest()
@@ -51,13 +52,21 @@ class ClientAuthWebViewClientTest {
         assertEquals(1, request.proceeds)
         assertEquals(0, request.ignores)
         assertEquals(0, synthetic.encodedReads.get())
+        assertEquals(0, clears.get())
+
+        client.abandon()
+        assertEquals(1, clears.get())
+
+        client.abandon()
+        assertEquals(1, clears.get())
     }
 
     @Test
     fun rendererDeathAbandonsTheOneShotClientTlsGrant() {
         val epoch = AtomicInteger(20)
+        val clears = AtomicInteger()
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
-        val client = client(epoch, callbacks)
+        val client = client(epoch, callbacks, clears)
         client.onPageStarted(webView, TARGET, null)
 
         assertTrue(
@@ -66,21 +75,26 @@ class ClientAuthWebViewClientTest {
                 RecordingRenderProcessGoneDetail(),
             ),
         )
+        assertEquals(1, clears.get())
 
         val request = RecordingRequest()
         client.onReceivedClientCertRequest(webView, request)
         assertEquals(1, request.ignores)
         assertTrue(callbacks.events.contains("renderer"))
+        assertEquals(1, clears.get())
     }
 
     @Test
     fun subsequentNavigationAbandonsGrantAndOffOriginMainFrameIsBlocked() {
         val epoch = AtomicInteger(12)
+        val clears = AtomicInteger()
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
-        val client = client(epoch, callbacks)
+        val client = client(epoch, callbacks, clears)
         client.onPageStarted(webView, TARGET, null)
 
         client.onPageStarted(webView, RETURN, null)
+        assertEquals(1, clears.get())
+
         val request = RecordingRequest()
         client.onReceivedClientCertRequest(webView, request)
 
@@ -91,14 +105,18 @@ class ClientAuthWebViewClientTest {
         assertTrue(callbacks.events.contains("blocked:INVALID_URL"))
     }
 
-    private fun client(epoch: AtomicInteger, callbacks: BrowserNavigationCallbacks): ClientAuthWebViewClient {
+    private fun client(
+        epoch: AtomicInteger,
+        callbacks: BrowserNavigationCallbacks,
+        clears: AtomicInteger = AtomicInteger(),
+    ): ClientAuthWebViewClient {
         val authorized = authorized()
         val grant = ClientAuthGrant(authorized, epoch.get().toLong())
         val handler = ClientAuthRequestHandler(
             grant = grant,
             identityProvider = { synthetic.identity },
             currentNavigationEpoch = { epoch.get().toLong() },
-            clearClientCertPreferences = {},
+            clearClientCertPreferences = { clears.incrementAndGet() },
             clock = clock,
         )
         return ClientAuthWebViewClient(grant, handler, callbacks)
