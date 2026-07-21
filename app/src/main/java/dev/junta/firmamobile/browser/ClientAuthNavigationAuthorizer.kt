@@ -112,12 +112,39 @@ class ClientAuthNavigationAuthorizer internal constructor(
         val parameters = parseQuery(rawQuery ?: return false) ?: return false
         val expectedNames = policy.fixedQueryParameters.keys + policy.requiredEphemeralQueryParameters
         if (parameters.keys != expectedNames) return false
-        if (policy.fixedQueryParameters.any { (name, value) -> parameters[name] != value }) return false
+        if (policy.fixedQueryParameters.any { (name, value) ->
+            val paramValue = parameters[name] ?: return false
+            !isEquivalentQueryParameter(name, paramValue, value)
+        }) return false
         return policy.requiredEphemeralQueryParameters.all { name ->
             val value = parameters[name]
             value != null && value.isNotEmpty() && value.length <= MAX_EPHEMERAL_CHARS &&
                 value.none(Char::isISOControl)
         }
+    }
+
+    private fun isEquivalentQueryParameter(name: String, paramValue: String, expectedValue: String): Boolean {
+        if (paramValue == expectedValue) return true
+        if (name == "comeBackURL") {
+            val paramDecoded = decodeStrictBase64(paramValue) ?: return false
+            val expectedDecoded = decodeStrictBase64(expectedValue) ?: return false
+            return paramDecoded.contentEquals(expectedDecoded)
+        }
+        return false
+    }
+
+    private fun decodeStrictBase64(input: String): ByteArray? {
+        if (input.any(Char::isWhitespace)) return null
+        if (input.length % 4 == 1) return null
+        val normalized = input.replace('-', '+').replace('_', '/')
+        val padded = when (normalized.length % 4) {
+            2 -> "$normalized=="
+            3 -> "$normalized="
+            else -> normalized
+        }
+        return runCatching {
+            java.util.Base64.getDecoder().decode(padded)
+        }.getOrNull()
     }
 
     private fun parseQuery(rawQuery: String): Map<String, String>? = runCatching {

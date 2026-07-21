@@ -123,6 +123,71 @@ class ClientAuthNavigationAuthorizerTest {
         assertNull(authorize(TARGET, 401))
     }
 
+    @Test
+    fun paddedUnpaddedAndUrlSafeBase64ComeBackUrlAreEquivalent() {
+        val stdPaddedTarget = TARGET
+        val stdUnpaddedTarget = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ",
+        )
+        val urlSafePaddedTarget = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D".replace('/', '_').replace('+', '-'),
+        )
+        val urlSafeUnpaddedTarget = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ".replace('/', '_').replace('+', '-'),
+        )
+
+        listOf(stdPaddedTarget, stdUnpaddedTarget, urlSafePaddedTarget, urlSafeUnpaddedTarget).forEachIndexed { index, target ->
+            val epoch = 500L + index * 2
+            arm(epoch)
+            authorizer.onTopLevelPageStarted(SOURCE, epoch + 1)
+            val result = authorize(target, epoch + 1)
+            assertEquals(PROFILE, result?.profileId)
+            assertEquals("ws235.juntadeandalucia.es", result?.target?.host)
+        }
+    }
+
+    @Test
+    fun nonEquivalentAndInvalidBase64ComeBackUrlFailClosed() {
+        val nonEquivalentTarget = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "aHR0cHM6Ly9ldmlsLmV4YW1wbGUvUmV0dXJuQXV0aGVudGljYXRpb25TZXJ2bGV0",
+        )
+        val invalidBase64Target = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "!!!invalid-base64!!!",
+        )
+        val leadingWhitespaceTarget = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "%20aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+        )
+        val trailingWhitespaceTarget = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D%20",
+        )
+        val invalidMod1LengthTarget = TARGET.replace(
+            "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D",
+            "aHR0c",
+        )
+
+        val invalidTargets = listOf(
+            nonEquivalentTarget,
+            invalidBase64Target,
+            leadingWhitespaceTarget,
+            trailingWhitespaceTarget,
+            invalidMod1LengthTarget,
+        )
+
+        invalidTargets.forEachIndexed { index, attack ->
+            val epoch = 600L + index * 2
+            arm(epoch)
+            authorizer.onTopLevelPageStarted(SOURCE, epoch + 1)
+            assertNull(attack, authorize(attack, epoch + 1))
+        }
+    }
+
     private fun arm(epoch: Long) = authorizer.observeTopLevelNavigation(
         activeProfileId = PROFILE,
         currentUrl = INDEX,
