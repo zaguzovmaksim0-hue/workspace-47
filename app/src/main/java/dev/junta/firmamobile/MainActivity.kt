@@ -30,7 +30,10 @@ import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.ProtocolOperation
+import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
 import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
@@ -41,6 +44,8 @@ import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
+import dev.junta.firmamobile.smoke.CatalogSmokeController
+import dev.junta.firmamobile.smoke.CatalogSmokeHook
 import dev.junta.firmamobile.ui.AppRoot
 import dev.junta.firmamobile.ui.BrowserScreen
 import dev.junta.firmamobile.ui.CertificateUiState
@@ -57,6 +62,8 @@ class MainActivity : ComponentActivity() {
     private var currentWebView: WebView? = null
     private var destination by mutableStateOf<AppDestination>(AppDestination.Certificate)
     private lateinit var signingCoordinator: SigningCoordinator
+    private lateinit var catalogRepository: PortalCatalogRepository
+    private lateinit var catalogSmokeHook: CatalogSmokeHook
     private var currentNavigationEpoch: Long = 0L
     private val signingJobs = SigningJobRegistry()
 
@@ -107,6 +114,32 @@ class MainActivity : ComponentActivity() {
                 }
             },
         )
+        val publicCatalog = resources.openRawResource(R.raw.public_portal_catalog_v1)
+            .bufferedReader().use { PublicPortalCatalogParser.parse(it.readText()) }
+        catalogRepository = PortalCatalogRepository(
+            registry = BuiltInSiteProfiles.runtimeRegistry,
+            profileCatalog = BuiltInSiteProfiles.catalog,
+            publicCatalog = publicCatalog,
+        )
+        catalogSmokeHook = CatalogSmokeHook(
+            activity = this,
+            execute = CatalogSmokeController(
+                repository = catalogRepository,
+                certificateUnlocked = {
+                    certificateViewModel.state.value is CertificateUiState.Unlocked
+                },
+                openProfile = { launch ->
+                    cancelSigning(SigningCancelReason.NAVIGATION)
+                    currentWebView = null
+                    destination = AppDestination.Browser(
+                        profileId = launch.profileId,
+                        entryUrl = launch.entryUrl,
+                    )
+                },
+                activeWebViewMatches = { profileId -> activeWebViewMatches(profileId) },
+                adapterIdForProfile = { profileId -> smokeAdapterId(profileId) },
+            )::execute,
+        )
         val paperSystemBar = getColor(R.color.jfm_paper)
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.light(
@@ -133,15 +166,6 @@ class MainActivity : ComponentActivity() {
             }
             JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
-                val catalogRepository = remember {
-                    val publicCatalog = resources.openRawResource(R.raw.public_portal_catalog_v1)
-                        .bufferedReader().use { PublicPortalCatalogParser.parse(it.readText()) }
-                    PortalCatalogRepository(
-                        registry = BuiltInSiteProfiles.runtimeRegistry,
-                        profileCatalog = BuiltInSiteProfiles.catalog,
-                        publicCatalog = publicCatalog,
-                    )
-                }
                 val recentPortals = remember { mutableStateListOf<PortalId>() }
                 val favoritePortals = remember { mutableStateListOf<PortalId>() }
                 val browserDestination = destination as? AppDestination.Browser
@@ -239,7 +263,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        catalogSmokeHook.start()
+    }
+
     override fun onStop() {
+        catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         certificateViewModel.onAppBackgrounded()
         super.onStop()
@@ -258,6 +288,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         signingCoordinator.close()
         super.onDestroy()
@@ -289,6 +320,26 @@ class MainActivity : ComponentActivity() {
     ) {
         val accepted = signingCoordinator.cancel(reason, requestId)
         signingJobs.takeForCancellation(requestId, accepted)?.cancel()
+    }
+
+    private fun activeWebViewMatches(profileId: ProfileId): Boolean {
+        val browser = destination as? AppDestination.Browser ?: return false
+        if (browser.profileId != profileId) return false
+        val currentUrl = currentWebView?.url ?: return false
+        val uri = runCatching { URI(currentUrl) }.getOrNull() ?: return false
+        return BuiltInSiteProfiles.runtimeRegistry.resolve(uri)?.profile?.profileId == profileId
+    }
+
+    private fun smokeAdapterId(profileId: ProfileId): String? {
+        val profile = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) ?: return null
+        return when {
+            Capability.SIGN in profile.capabilities -> BuiltInProtocolAdapterRegistry.registry
+                .resolve(profileId, ProtocolOperation.SIGN)
+                ?.signingProtocolId
+                ?.value
+            Capability.CLIENT_TLS_AUTH in profile.capabilities -> "client-tls-auth"
+            else -> "browse-only"
+        }
     }
 
     companion object {
