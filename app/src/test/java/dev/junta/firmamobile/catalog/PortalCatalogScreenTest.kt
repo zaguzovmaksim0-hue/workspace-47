@@ -41,12 +41,13 @@ class PortalCatalogScreenTest {
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
         assertEquals(4, compatible.items.size)
-        assertEquals(
-            PortalSupportStatus.VERIFIED_E2E,
-            compatible.items.single { it.profileId.value == "junta-andalucia" }.supportStatus,
+        val verifiedIds = setOf("junta-andalucia", "carne-joven-andalucia")
+        assertTrue(
+            compatible.items.filter { it.profileId.value in verifiedIds }
+                .all { it.supportStatus == PortalSupportStatus.VERIFIED_E2E },
         )
         assertTrue(
-            compatible.items.filterNot { it.profileId.value == "junta-andalucia" }
+            compatible.items.filterNot { it.profileId.value in verifiedIds }
                 .all { it.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E },
         )
         assertFalse(sections.any { it.kind == PortalCatalogSectionKind.CONTRACT_PENDING })

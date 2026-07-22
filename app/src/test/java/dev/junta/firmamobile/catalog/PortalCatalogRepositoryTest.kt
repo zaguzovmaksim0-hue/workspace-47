@@ -25,7 +25,7 @@ class PortalCatalogRepositoryTest {
     )
 
     @Test
-    fun `qa publishes all typed portal entries but release opens only verified Junta`() {
+    fun `qa publishes all typed portal entries but release opens only verified Junta and Carne Joven`() {
         val qaPortals = qaRepository.portals()
         val releasePortals = releaseRepository.portals()
 
@@ -39,18 +39,21 @@ class PortalCatalogRepositoryTest {
             ),
             qaPortals.map { it.profileId.value }.toSet(),
         )
-        assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single {
-            it.profileId == ProfileId("junta-andalucia")
-        }.supportStatus)
-        qaPortals.filterNot { it.profileId == ProfileId("junta-andalucia") }.forEach { portal ->
+        val verifiedIds = setOf(ProfileId("junta-andalucia"), ProfileId("carne-joven-andalucia"))
+        verifiedIds.forEach { profileId ->
+            assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
+        }
+        qaPortals.filterNot { it.profileId in verifiedIds }.forEach { portal ->
             assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
             assertTrue(portal.isEnabled)
         }
 
-        val releaseJunta = releasePortals.single { it.profileId == ProfileId("junta-andalucia") }
-        assertEquals(PortalSupportStatus.VERIFIED_E2E, releaseJunta.supportStatus)
-        assertTrue(releaseJunta.isEnabled)
-        releasePortals.filterNot { it.profileId == ProfileId("junta-andalucia") }.forEach { portal ->
+        verifiedIds.forEach { profileId ->
+            val releasePortal = releasePortals.single { it.profileId == profileId }
+            assertEquals(PortalSupportStatus.VERIFIED_E2E, releasePortal.supportStatus)
+            assertTrue(releasePortal.isEnabled)
+        }
+        releasePortals.filterNot { it.profileId in verifiedIds }.forEach { portal ->
             assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, portal.supportStatus)
             assertFalse(portal.isEnabled)
             assertEquals(null, releaseRepository.resolveLaunch(portal))
@@ -79,7 +82,7 @@ class PortalCatalogRepositoryTest {
         val carneJoven = qaRepository.portals().single {
             it.profileId == ProfileId("carne-joven-andalucia")
         }
-        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, carneJoven.supportStatus)
+        assertEquals(PortalSupportStatus.VERIFIED_E2E, carneJoven.supportStatus)
         assertTrue(PortalServiceCapability.CERTIFICATE_ACCESS in carneJoven.capabilities)
         assertFalse(PortalServiceCapability.ELECTRONIC_SIGNATURE in carneJoven.capabilities)
         assertTrue(carneJoven.signatureFormats.isEmpty())

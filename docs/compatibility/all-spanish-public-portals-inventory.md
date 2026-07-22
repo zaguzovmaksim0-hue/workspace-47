@@ -139,8 +139,8 @@ histórica de la matriz ni constituye una escala automática:
 | `INACCESSIBLE` | No se puede alcanzar o revalidar de forma segura y repetible la superficie oficial; no se hacen afirmaciones técnicas mientras persista. |
 | `DEPRECATED` | Una fuente oficial confirma retirada o sustitución del flujo; se conserva únicamente para trazabilidad. |
 
-No hay ningún `VERIFIED_E2E` en este snapshot. Tests locales, hashes de JS y
-revisión documental nunca producen ese estado. La implementación Junta se
+Únicamente P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). Tests locales, hashes de JS y
+revisión documental nunca producen por sí solos ese estado. La implementación Junta se
 mapea a `IMPLEMENTED_NOT_E2E`; los dos flujos móviles que la matriz marcaba
 como no soportados se mapean a `UNSUPPORTED_PROTOCOL`, con razón específica en
 cada ficha. No se asigna `REQUIRES_AUTHENTICATED_RESEARCH` sin demostrar antes
@@ -194,7 +194,7 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Colas enumeradoras pendientes de ingestión | 8/12 |
 | Fuentes oficiales portal-specific registradas | 195 |
 | Fuentes oficiales totales registradas | 207 |
-| Entradas `VERIFIED_E2E` | 0 |
+| Entradas `VERIFIED_E2E` | 1 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -214,8 +214,8 @@ Por estado del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `VERIFIED_E2E` | 0 |
-| `IMPLEMENTED_NOT_E2E` | 4 |
+| `VERIFIED_E2E` | 1 |
+| `IMPLEMENTED_NOT_E2E` | 3 |
 | `VERIFIED_CONTRACT` | 2 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 168 |
@@ -364,7 +364,7 @@ requiera traducción manual.
 | `P16` | Gobierno de Aragón / SIRAW | [P16][P16B][P16C] | Entrada y JS público con MiniApplet y Storage/Retrieve. |
 | `P17` | Universidad de Zaragoza | [P17][P17A][P17B] | Entrada e integration JS con firma de challenge y tri-phase móvil. |
 | `P18` | Comunidad de Madrid / Cuenta Digital — Carné Joven 53F1 | [P18][P18A][P18B][P18C][P18D][P18E][P18F] | Ficha oficial, métodos de identificación/firma, entrada 53F1 y cadena JS de lookup/redirect autenticado; sin contrato de presentación. |
-| `P19` | IAJ / Carné Joven Europeo de Andalucía | [P19][P19A][P19B][P19C][P19D] | Procedimiento, aplicación, redirect exacto y `CertificateRequest` TLS observados; firma posterior aún autenticada. |
+| `P19` | IAJ / Carné Joven Europeo de Andalucía | [P19][P19A][P19B][P19C][P19D] | Autenticación CLIENT_TLS_AUTH verificada E2E en dispositivo físico (2026-07-21, commit dc3c231); Zona privada y Solicitar Carné Joven alcanzaron entrada nativa autenticada; firma posterior no E2E. |
 
 D11 se añadió además como provenance a los siete registros seed cuyo exact
 origin coincide con el directorio. Esta relación de existencia no modifica ni
@@ -6008,14 +6008,14 @@ records:
     signature_algorithm: "Negociado por TLS; firma posterior NO_VERIFICADO"
     endpoint: "https://ws235.juntadeandalucia.es/authenticationFacade"
     discovery_state: "REVIEWED"
-    inventory_status: "IMPLEMENTED_NOT_E2E"
+    inventory_status: "VERIFIED_E2E"
     operation_summary: "Entrada con certificado mediante facade TLS compartida y retorno exacto a ws104."
-    protocol_evidence: "Redirect sanitizado y handshake TLS 1.2 observados; el servidor solicita certificado cliente y no publica lista de CA."
-    client_tls_auth: "VERIFIED"
+    protocol_evidence: "Autenticación CLIENT_TLS_AUTH verificada E2E en dispositivo físico (2026-07-21, commit dc3c231); Zona privada y Solicitar Carné Joven alcanzaron confirmación nativa y autenticación exitosa."
+    client_tls_auth: "VERIFIED_E2E"
     evidence_ids: ["P19", "P19A", "P19B", "P19C", "P19D"]
-    reason: "CLIENT_TLS_AUTH implementado; el contrato de firma o presentación posterior sigue detrás de autenticación."
-    reviewed_at: "2026-07-18"
-    next_gate: "E2E seguro del login y research autenticado hasta antes de una presentación jurídica."
+    reason: "CLIENT_TLS_AUTH verificado E2E en dispositivo físico para Zona privada y Solicitar Carné Joven; la firma, AutoFirma, presentación jurídica o solicitud completada posterior no se afirman como E2E."
+    reviewed_at: "2026-07-21"
+    next_gate: "Research autenticado post-login deteniéndose antes de cualquier presentación jurídica."
 ```
 
 ## 8. Relación con el catálogo de producto

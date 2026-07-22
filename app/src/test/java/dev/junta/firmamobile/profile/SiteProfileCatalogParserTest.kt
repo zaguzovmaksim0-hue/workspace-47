@@ -122,7 +122,8 @@ class SiteProfileCatalogParserTest {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("carne-joven-andalucia")
         }
-        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(CompatibilityStatus.VERIFIED_E2E, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.ENABLED, profile.activation)
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
@@ -159,11 +160,15 @@ class SiteProfileCatalogParserTest {
             TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
         )
-        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
-        assertNull(
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.releaseRegistry.resolve(
                 URI("https://ws235.juntadeandalucia.es/authenticationFacade"),
-            ),
+            )?.trustMode,
         )
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(
@@ -176,15 +181,16 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun releaseEnablesOnlyVerifiedJuntaWhileQaKeepsExperimentalPortalsAvailable() {
+    fun releaseEnablesOnlyVerifiedJuntaAndCarneWhileQaKeepsExperimentalPortalsAvailable() {
         val junta = ProfileId("junta-andalucia")
+        val carne = ProfileId("carne-joven-andalucia")
+        val releaseProfiles = setOf(junta, carne)
         val qaOnly = setOf(
             ProfileId("reg-age-redsara"),
             ProfileId("unizar-tramitador"),
-            ProfileId("carne-joven-andalucia"),
         )
 
-        assertEquals(setOf(junta), BuiltInSiteProfiles.catalog.profiles
+        assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
             .mapNotNull { profile ->
                 profile.profileId.takeIf { BuiltInSiteProfiles.releaseRegistry.profile(it) != null }
             }
@@ -193,10 +199,12 @@ class SiteProfileCatalogParserTest {
             assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
             assertTrue(BuiltInSiteProfiles.qaRegistry.profile(profileId) != null)
         }
-        assertEquals(
-            CompatibilityStatus.VERIFIED_E2E,
-            BuiltInSiteProfiles.releaseRegistry.profile(junta)?.compatibilityStatus,
-        )
+        releaseProfiles.forEach { profileId ->
+            assertEquals(
+                CompatibilityStatus.VERIFIED_E2E,
+                BuiltInSiteProfiles.releaseRegistry.profile(profileId)?.compatibilityStatus,
+            )
+        }
     }
 
     @Test

@@ -8,7 +8,7 @@ Completed:
 - Private release signing with no debug-key fallback (F-01).
 - `qa` build variant for unverified portal work.
 - Release activation restricted to sensitive `VERIFIED_E2E` profiles (F-04).
-- Junta marked `VERIFIED_E2E`; RedSARA, UniZAR and Carné Joven remain `QA_ONLY`.
+- Junta and Carné Joven marked `VERIFIED_E2E` (Carné Joven: CLIENT_TLS_AUTH verified on physical device 2026-07-21 after commit dc3c231); RedSARA and UniZAR remain `QA_ONLY`.
 - Browser navigation, WebMessage bridge and signing origin bound to the selected profile (F-06).
 - Cross-profile and external HTTP navigation blocked (F-06, F-07).
 - Renderer loss invalidates bridge/signing state and creates a fresh WebView.

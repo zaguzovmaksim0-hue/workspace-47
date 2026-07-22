@@ -29,7 +29,7 @@ Los estados significan:
 - `UNSUPPORTED`: la operación está fuera del alcance o una fuente oficial
   confirma que el flujo móvil no es compatible.
 
-No hay perfiles `VERIFIED_E2E` en esta edición. Además de los contratos
+Únicamente P19 (Carné Joven Europeo de Andalucía) cuenta con verificación `VERIFIED_E2E` delimitada a `CLIENT_TLS_AUTH` en dispositivo físico (2026-07-21, commit dc3c231). Además de los contratos
 genéricos, cuatro integraciones publican JavaScript suficiente para marcar su
 contrato estático como `VERIFIED_CONTRACT`: REG/RedSARA, ACCEDA, Gobierno de
 Aragón y Universidad de Zaragoza. REG/RedSARA y UniZAR ya disponen de profiles
@@ -73,7 +73,7 @@ rama heredada y no el API general del producto. [C0]
 | Justicia | Sede Judicial — `https://sedejudicial.justicia.es` | Acceso con certificado/Cl@ve y firma de escritos con AutoFirma | No verificado | `BROWSE_ONLY` |
 | Ministerio | Sede Ministerio de Justicia — `https://sede.mjusticia.gob.es` | Firma local con AutoFirma en determinados trámites | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Junta de Andalucía — `https://www.juntadeandalucia.es` | `MiniApplet.sign` para autenticación, tri-phase CAdES | No en el contorno observado | `EXPERIMENTAL` |
-| Comunidad autónoma | IAJ / Carné Joven Andalucía — `https://ws104.juntadeandalucia.es` | Entrada con certificado mediante facade TLS exacta en `ws235` | Sí, `CertificateRequest` observado | `VERIFIED_CONTRACT`; profile CLIENT_TLS_AUTH implementado, sin E2E |
+| Comunidad autónoma | IAJ / Carné Joven Andalucía — `https://ws104.juntadeandalucia.es` | Entrada con certificado mediante facade TLS exacta en `ws235` | Sí, `CertificateRequest` verificado | `VERIFIED_E2E` (solamente `CLIENT_TLS_AUTH`; verificado en dispositivo físico 2026-07-21 tras dc3c231; Zona privada y Solicitar Carné Joven autenticados; firma/AutoFirma posterior no E2E) |
 | Comunidad autónoma | Comunidad de Madrid — `https://sede.comunidad.madrid` | Descargar PDF, firmarlo localmente con AutoFirma y adjuntarlo al registro | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Comunidad de Madrid / gestiona2 — `https://gestiona2.comunidad.madrid` | Acceso con certificado y firma AutoFirma del trámite observado | No verificado | `UNSUPPORTED` en móvil para ese flujo |
 | Comunidad autónoma | Gobierno de Aragón — `https://aplicaciones.aragon.es` | `MiniApplet.sign` CAdES y Storage/Retrieve | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
@@ -430,7 +430,7 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
 - **Firma posterior:** la documentación menciona AutoFirma, pero el runtime
   tuple, payload, algoritmo, endpoint y callback están detrás del login; no se
   habilita `SIGN`, MiniApplet ni `AFIRMA_URI` por semejanza.
-- **Estado:** `VERIFIED_CONTRACT`; implementación de autenticación TLS, sin E2E.
+- **Estado:** `VERIFIED_E2E` para `CLIENT_TLS_AUTH` (verificado en dispositivo físico 2026-07-21 tras dc3c231; tanto la Zona privada como el flujo Solicitar Carné Joven alcanzaron confirmación nativa y autenticación exitosa en portal). La firma, AutoFirma, presentación jurídica o solicitud completada posterior no se afirman como E2E.
 
 ## 5. Decisiones derivadas para el catálogo
 
