@@ -2,14 +2,17 @@ package dev.junta.firmamobile.catalog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,7 +40,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
@@ -49,9 +51,9 @@ import dev.junta.firmamobile.ui.theme.JuntaTealDark
 @Composable
 fun PortalCatalogScreen(
     repository: PortalCatalogRepository,
-    favoriteProfileIds: Set<ProfileId> = emptySet(),
-    recentProfileIds: List<ProfileId> = emptyList(),
-    onToggleFavorite: (ProfileId) -> Unit = {},
+    favoritePortalIds: Set<PortalId> = emptySet(),
+    recentPortalIds: List<PortalId> = emptyList(),
+    onToggleFavorite: (PortalId) -> Unit = {},
     onOpenPortal: (PortalCatalogItem) -> Unit,
 ) {
     var searchText by rememberSaveable { mutableStateOf("") }
@@ -60,16 +62,16 @@ fun PortalCatalogScreen(
         repository,
         searchText,
         selectedFilter,
-        favoriteProfileIds,
-        recentProfileIds,
+        favoritePortalIds,
+        recentPortalIds,
     ) {
         buildPortalCatalogSections(
             repository.portals(
                 PortalCatalogQuery(
                     searchText = searchText,
                     filter = selectedFilter,
-                    favoriteProfileIds = favoriteProfileIds,
-                    recentProfileIds = recentProfileIds,
+                    favoritePortalIds = favoritePortalIds,
+                    recentPortalIds = recentPortalIds,
                 ),
             ),
         )
@@ -102,7 +104,7 @@ fun PortalCatalogScreen(
             )
         }
         item(key = "catalog-filters") {
-            PortalFilterGrid(
+            PortalFilterStrip(
                 selected = selectedFilter,
                 onSelected = { selectedFilter = it },
             )
@@ -122,11 +124,11 @@ fun PortalCatalogScreen(
                 }
                 items(
                     items = section.items,
-                    key = { "portal-${it.profileId.value}" },
+                    key = { "portal-${it.portalId.value}" },
                 ) { portal ->
                     PortalCard(
                         portal = portal,
-                        isFavorite = portal.profileId in favoriteProfileIds,
+                        isFavorite = portal.portalId in favoritePortalIds,
                         onToggleFavorite = onToggleFavorite,
                         onOpenPortal = onOpenPortal,
                     )
@@ -146,7 +148,7 @@ private fun CatalogHeader(catalogVersion: Int) {
             modifier = Modifier.semantics { heading() },
         )
         Text(
-            text = "Elija una sede compatible. La confianza técnica siempre procede del perfil activo.",
+            text = "Busque una sede pública. Solo los perfiles implementados pueden abrirse en modo de confianza.",
             color = JuntaMutedInk,
             style = MaterialTheme.typography.bodyMedium,
         )
@@ -160,14 +162,15 @@ private fun CatalogHeader(catalogVersion: Int) {
 }
 
 @Composable
-private fun PortalFilterGrid(
+private fun PortalFilterStrip(
     selected: PortalCatalogFilter,
     onSelected: (PortalCatalogFilter) -> Unit,
 ) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         PortalCatalogFilter.entries.forEach { filter ->
             FilterChip(
@@ -222,104 +225,171 @@ private fun CatalogSectionHeader(section: PortalCatalogSection) {
 private fun PortalCard(
     portal: PortalCatalogItem,
     isFavorite: Boolean,
-    onToggleFavorite: (ProfileId) -> Unit,
+    onToggleFavorite: (PortalId) -> Unit,
     onOpenPortal: (PortalCatalogItem) -> Unit,
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(JuntaPaperElevated, CatalogShape)
-            .border(2.dp, JuntaInk, CatalogShape)
-            .padding(15.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(end = 4.dp, bottom = 5.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(x = 4.dp, y = 5.dp)
+                .background(JuntaInk, CatalogShape),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(JuntaPaperElevated, CatalogShape)
+                .border(2.dp, JuntaInk, CatalogShape)
+                .padding(horizontal = 13.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
                 text = portal.displayName,
                 color = JuntaInk,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            CatalogStatusBadge(portal.supportStatus)
+            Text(
+                text = "${portal.organization} · ${portal.territory}",
+                color = JuntaTealDark,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = portal.supportStatus.shortLabel,
-                color = portal.supportStatus.statusColor,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 10.dp),
+                text = portal.purpose,
+                color = JuntaInk,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
-        }
-        Text(
-            text = "${portal.organization} · ${portal.territory}",
-            color = JuntaTealDark,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = portal.purpose,
-            color = JuntaInk,
-            style = MaterialTheme.typography.bodyMedium,
-        )
 
-        val services = buildList {
-            if (PortalServiceCapability.CERTIFICATE_ACCESS in portal.capabilities) {
-                add("Acceso con certificado")
+            val services = buildList {
+                if (PortalServiceCapability.CERTIFICATE_ACCESS in portal.capabilities) {
+                    add("Acceso con certificado")
+                }
+                if (PortalServiceCapability.ELECTRONIC_SIGNATURE in portal.capabilities) {
+                    add("Firma electrónica")
+                }
             }
-            if (PortalServiceCapability.ELECTRONIC_SIGNATURE in portal.capabilities) {
-                add("Firma electrónica")
+            if (services.isNotEmpty()) {
+                Text(
+                    text = "Compatible: ${services.joinToString(" · ")}",
+                    color = JuntaTeal,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                )
             }
-        }
-        if (services.isNotEmpty()) {
+            val observed = buildList {
+                if (PortalMechanism.CERTIFICATE_ACCESS in portal.observedMechanisms) add("certificado")
+                if (PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms) add("firma")
+                if (PortalMechanism.AUTOFIRMA in portal.observedMechanisms) add("AutoFirma")
+                if (PortalMechanism.AUTOSCRIPT in portal.observedMechanisms) add("AutoScript")
+                if (PortalMechanism.MINIAPPLET in portal.observedMechanisms) add("MiniApplet")
+                if (PortalMechanism.AFIRMA in portal.observedMechanisms) add("@firma")
+                if (PortalMechanism.CLIENT_TLS_AUTH in portal.observedMechanisms) add("TLS cliente")
+            }
+            if (observed.isNotEmpty()) {
+                Text(
+                    text = "Observado: ${observed.distinct().joinToString(" · ")}",
+                    color = JuntaMutedInk,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (portal.signatureFormats.isNotEmpty()) {
+                Text(
+                    text = "Formatos compatibles: ${portal.signatureFormats.joinToString { it.name }}",
+                    color = JuntaMutedInk,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else if (portal.observedSignatureFormats.isNotEmpty()) {
+                Text(
+                    text = "Formatos observados: ${portal.observedSignatureFormats.joinToString { it.name }}",
+                    color = JuntaMutedInk,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             Text(
-                text = services.joinToString(" · "),
-                color = JuntaTeal,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        if (portal.signatureFormats.isNotEmpty()) {
-            Text(
-                text = "Formatos: ${portal.signatureFormats.joinToString { it.name }}",
+                text = portal.entryUrl.toASCIIString(),
                 color = JuntaMutedInk,
                 style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+
+            if (portal.supportStatus == PortalSupportStatus.BROWSE_ONLY) {
+                CatalogInlineWarning("Puede navegar, pero el certificado y la firma están bloqueados.")
+            } else if (portal.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY) {
+                CatalogInlineWarning(
+                    "Sede pública catalogada; la navegación integrada, el certificado y la firma " +
+                        "están bloqueados hasta verificar un perfil técnico.",
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedButton(
+                    onClick = { onToggleFavorite(portal.portalId) },
+                    modifier = Modifier.weight(1f),
+                    shape = CatalogShape,
+                ) {
+                    Text(
+                        text = if (isFavorite) "Guardado" else "Favorito",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                Button(
+                    onClick = { onOpenPortal(portal) },
+                    enabled = portal.isEnabled,
+                    modifier = Modifier.weight(1.15f),
+                    shape = CatalogShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = JuntaTeal,
+                        contentColor = JuntaPaperElevated,
+                        disabledContainerColor = JuntaHairline,
+                        disabledContentColor = JuntaMutedInk,
+                    ),
+                ) {
+                    Text(
+                        text = if (portal.isEnabled) "Abrir sede" else "No disponible",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun CatalogStatusBadge(status: PortalSupportStatus) {
+    Row(
+        modifier = Modifier
+            .background(status.statusColor.copy(alpha = 0.10f), CatalogShape)
+            .border(1.dp, status.statusColor, CatalogShape)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
         Text(
-            text = portal.entryUrl.toASCIIString(),
-            color = JuntaMutedInk,
-            style = MaterialTheme.typography.bodySmall,
+            text = status.shortLabel,
+            color = status.statusColor,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-
-        if (portal.supportStatus == PortalSupportStatus.BROWSE_ONLY) {
-            CatalogInlineWarning("Puede navegar, pero el certificado y la firma están bloqueados.")
-        }
-
-        OutlinedButton(
-            onClick = { onToggleFavorite(portal.profileId) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = CatalogShape,
-        ) {
-            Text(if (isFavorite) "Quitar de favoritos" else "Añadir a favoritos")
-        }
-
-        Button(
-            onClick = { onOpenPortal(portal) },
-            enabled = portal.isEnabled,
-            modifier = Modifier.fillMaxWidth(),
-            shape = CatalogShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = JuntaTeal,
-                contentColor = JuntaPaperElevated,
-                disabledContainerColor = JuntaHairline,
-                disabledContentColor = JuntaMutedInk,
-            ),
-        ) {
-            Text(if (portal.isEnabled) "Abrir sede" else "No disponible")
-        }
     }
 }
 
@@ -374,7 +444,11 @@ internal fun buildPortalCatalogSections(items: List<PortalCatalogItem>): List<Po
     }
     val fullCatalog = items.filter {
         it.supportStatus == PortalSupportStatus.BROWSE_ONLY ||
-            it.supportStatus == PortalSupportStatus.UNSUPPORTED_PROTOCOL
+            it.supportStatus == PortalSupportStatus.UNSUPPORTED_PROTOCOL ||
+            it.supportStatus == PortalSupportStatus.DISCOVERED ||
+            it.supportStatus == PortalSupportStatus.CATALOGED ||
+            it.supportStatus == PortalSupportStatus.INACCESSIBLE ||
+            it.supportStatus == PortalSupportStatus.DEPRECATED
     }
 
     return buildList {
@@ -431,6 +505,10 @@ private val PortalSupportStatus.shortLabel: String
         PortalSupportStatus.VERIFIED_CONTRACT -> "CONTRATO VERIFICADO"
         PortalSupportStatus.BROWSE_ONLY -> "SOLO NAVEGACIÓN"
         PortalSupportStatus.UNSUPPORTED_PROTOCOL -> "PROTOCOLO NO COMPATIBLE"
+        PortalSupportStatus.DISCOVERED -> "DESCUBIERTO"
+        PortalSupportStatus.CATALOGED -> "CATALOGADO"
+        PortalSupportStatus.INACCESSIBLE -> "INACCESIBLE"
+        PortalSupportStatus.DEPRECATED -> "OBSOLETO"
     }
 
 private val PortalSupportStatus.statusColor: Color
@@ -438,7 +516,13 @@ private val PortalSupportStatus.statusColor: Color
         PortalSupportStatus.VERIFIED_E2E -> JuntaTealDark
         PortalSupportStatus.IMPLEMENTED_NOT_E2E -> Color(0xFF7A4D00)
         PortalSupportStatus.VERIFIED_CONTRACT -> JuntaTeal
-        PortalSupportStatus.BROWSE_ONLY, PortalSupportStatus.UNSUPPORTED_PROTOCOL ->
+        PortalSupportStatus.DISCOVERED -> JuntaMutedInk
+        PortalSupportStatus.CATALOGED -> JuntaTeal
+        PortalSupportStatus.BROWSE_ONLY,
+        PortalSupportStatus.UNSUPPORTED_PROTOCOL,
+        PortalSupportStatus.INACCESSIBLE,
+        PortalSupportStatus.DEPRECATED,
+        ->
             MaterialTheme.colorScheme.error
     }
 

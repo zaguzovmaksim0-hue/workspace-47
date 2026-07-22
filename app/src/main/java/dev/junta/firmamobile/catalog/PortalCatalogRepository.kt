@@ -20,16 +20,17 @@ import java.util.Locale
 class PortalCatalogRepository(
     private val registry: SiteProfileRegistry,
     private val profileCatalog: SiteProfileCatalog,
+    private val publicCatalog: PublicPortalCatalog,
 ) {
-    val bundledCatalogVersion: Int = BundledPortalCatalog.VERSION
+    val bundledCatalogVersion: Int = publicCatalog.catalogVersion
 
     fun portals(query: PortalCatalogQuery = PortalCatalogQuery()): List<PortalCatalogItem> {
-        val items = BundledPortalCatalog.entries.mapNotNull(::resolve)
+        val items = publicCatalog.entries.map(::resolve)
         val filtered = items.filter { it.matches(query) }
         if (query.filter != PortalCatalogFilter.RECENT) return filtered
 
-        val recentOrder = query.recentProfileIds.withIndex().associate { (index, id) -> id to index }
-        return filtered.sortedBy { recentOrder.getValue(it.profileId) }
+        val recentOrder = query.recentPortalIds.withIndex().associate { (index, id) -> id to index }
+        return filtered.sortedBy { recentOrder.getValue(it.portalId) }
     }
 
     /**
@@ -37,11 +38,18 @@ class PortalCatalogRepository(
      * Callers must use the returned target rather than constructing a browser destination themselves.
      */
     fun resolveLaunch(profileId: ProfileId, entryUrl: java.net.URI): PortalLaunchTarget? {
-        val metadata = BundledPortalCatalog.entries.singleOrNull { it.profileId == profileId }
-            ?: return null
-        val item = resolve(metadata) ?: return null
+        val portal = publicCatalog.entries.singleOrNull {
+            it.profileId == profileId && it.entryUrl.toASCIIString() == entryUrl.toASCIIString()
+        } ?: return null
+        return resolveLaunch(portal.portalId, entryUrl)
+    }
+
+    fun resolveLaunch(portalId: PortalId, entryUrl: java.net.URI): PortalLaunchTarget? {
+        val metadata = publicCatalog.entries.singleOrNull { it.portalId == portalId } ?: return null
+        val item = resolve(metadata)
         if (!item.isEnabled || item.entryUrl.toASCIIString() != entryUrl.toASCIIString()) return null
 
+        val profileId = metadata.profileId ?: return null
         val activeProfile = registry.profile(profileId) ?: return null
         if (activeProfile.startUrl.toASCIIString() != entryUrl.toASCIIString()) return null
         val resolved = registry.resolve(entryUrl) ?: return null
@@ -51,36 +59,48 @@ class PortalCatalogRepository(
     }
 
     fun resolveLaunch(item: PortalCatalogItem): PortalLaunchTarget? =
-        resolveLaunch(item.profileId, item.entryUrl)
+        resolveLaunch(item.portalId, item.entryUrl)
 
-    private fun resolve(metadata: PortalPresentationMetadata): PortalCatalogItem? {
-        val profile = profileCatalog.profiles.singleOrNull { it.profileId == metadata.profileId }
-            ?: return null
-        // A mismatched registry/catalog pair must never produce a selectable catalog entry.
-        if (registry.profileMetadata(metadata.profileId) != profile) return null
-
-        val isImplemented = profile.isImplementedAndActive()
-        val supportStatus = resolvePortalSupportStatus(
-            profileStatus = profile.compatibilityStatus,
-            isImplemented = isImplemented,
-        )
-        val isOpenable = isImplemented && supportStatus in OPENABLE_SUPPORT_STATUSES
+    private fun resolve(metadata: PublicPortalEntry): PortalCatalogItem {
+        val profile = metadata.profileId?.let { profileId ->
+            profileCatalog.profiles.singleOrNull { it.profileId == profileId }
+        }
+        val bindingMatches = profile != null &&
+            registry.profileMetadata(profile.profileId) == profile &&
+            profile.startUrl.toASCIIString() == metadata.entryUrl.toASCIIString()
+        val isImplemented = bindingMatches && profile.isImplementedAndActive()
+        val supportStatus = if (bindingMatches) {
+            resolvePortalSupportStatus(
+                profileStatus = checkNotNull(profile).compatibilityStatus,
+                isImplemented = isImplemented,
+            )
+        } else {
+            metadata.metadataSupportStatus()
+        }
+        val isOpenable = bindingMatches && isImplemented && supportStatus in OPENABLE_SUPPORT_STATUSES
 
         return PortalCatalogItem(
-            profileId = profile.profileId,
-            displayName = profile.displayName,
+            portalId = metadata.portalId,
+            profileId = metadata.profileId,
+            displayName = profile?.displayName ?: metadata.displayName,
             organization = metadata.organization,
             territory = metadata.territory,
             governmentLevel = metadata.governmentLevel,
             purpose = metadata.purpose,
-            capabilities = profile.toPublicCapabilities(),
-            signatureFormats = profile.operationPolicies.values
+            observedMechanisms = metadata.observedMechanisms,
+            observedSignatureFormats = metadata.observedSignatureFormats,
+            capabilities = profile?.takeIf { bindingMatches }?.toPublicCapabilities().orEmpty(),
+            signatureFormats = profile?.takeIf { bindingMatches }?.operationPolicies?.values
+                .orEmpty()
                 .asSequence()
                 .filter { it.operation == ProtocolOperation.SIGN }
                 .mapNotNull { it.format }
                 .toSet(),
+            catalogStatus = metadata.catalogStatus,
+            inventoryStatus = metadata.inventoryStatus,
+            limitations = metadata.limitations,
             supportStatus = supportStatus,
-            entryUrl = profile.startUrl,
+            entryUrl = metadata.entryUrl,
             isEnabled = isOpenable,
         )
     }
@@ -94,12 +114,12 @@ class PortalCatalogRepository(
             PortalCatalogFilter.LOCAL_ADMINISTRATION ->
                 governmentLevel == PortalGovernmentLevel.LOCAL_ADMINISTRATION
             PortalCatalogFilter.UNIVERSITIES -> governmentLevel == PortalGovernmentLevel.UNIVERSITY
-            PortalCatalogFilter.FAVORITES -> profileId in query.favoriteProfileIds
-            PortalCatalogFilter.RECENT -> profileId in query.recentProfileIds
+            PortalCatalogFilter.FAVORITES -> portalId in query.favoritePortalIds
+            PortalCatalogFilter.RECENT -> portalId in query.recentPortalIds
             PortalCatalogFilter.CERTIFICATE_ACCESS ->
-                PortalServiceCapability.CERTIFICATE_ACCESS in capabilities
+                PortalMechanism.CERTIFICATE_ACCESS in observedMechanisms
             PortalCatalogFilter.ELECTRONIC_SIGNATURE ->
-                PortalServiceCapability.ELECTRONIC_SIGNATURE in capabilities
+                PortalMechanism.ELECTRONIC_SIGNATURE in observedMechanisms
         }
         if (!matchesFilter) return false
 
@@ -148,6 +168,22 @@ class PortalCatalogRepository(
     }
 }
 
+private fun PublicPortalEntry.metadataSupportStatus(): PortalSupportStatus = when (inventoryStatus) {
+    PortalInventoryStatus.VERIFIED_CONTRACT -> PortalSupportStatus.VERIFIED_CONTRACT
+    PortalInventoryStatus.UNSUPPORTED_PROTOCOL -> PortalSupportStatus.UNSUPPORTED_PROTOCOL
+    PortalInventoryStatus.INACCESSIBLE -> PortalSupportStatus.INACCESSIBLE
+    PortalInventoryStatus.DEPRECATED -> PortalSupportStatus.DEPRECATED
+    PortalInventoryStatus.BROWSE_ONLY,
+    PortalInventoryStatus.REQUIRES_AUTHENTICATED_RESEARCH,
+    -> if (catalogStatus == PublicCatalogStatus.DISCOVERED) {
+        PortalSupportStatus.DISCOVERED
+    } else {
+        PortalSupportStatus.CATALOGED
+    }
+    PortalInventoryStatus.IMPLEMENTED_NOT_E2E -> PortalSupportStatus.CATALOGED
+    PortalInventoryStatus.VERIFIED_E2E -> PortalSupportStatus.CATALOGED
+}
+
 internal fun resolvePortalSupportStatus(
     profileStatus: CompatibilityStatus,
     isImplemented: Boolean,
@@ -165,61 +201,4 @@ internal fun resolvePortalSupportStatus(
     }
     CompatibilityStatus.BROWSE_ONLY -> PortalSupportStatus.BROWSE_ONLY
     CompatibilityStatus.UNSUPPORTED -> PortalSupportStatus.UNSUPPORTED_PROTOCOL
-}
-
-private data class PortalPresentationMetadata(
-    val profileId: ProfileId,
-    val organization: String,
-    val territory: String,
-    val governmentLevel: PortalGovernmentLevel,
-    val purpose: String,
-)
-
-private object BundledPortalCatalog {
-    const val VERSION = 1
-
-    val entries = listOf(
-        PortalPresentationMetadata(
-            profileId = ProfileId("junta-andalucia"),
-            organization = "Junta de Andalucía",
-            territory = "Andalucía",
-            governmentLevel = PortalGovernmentLevel.AUTONOMOUS_COMMUNITY,
-            purpose = "Acceso a trámites de la Junta de Andalucía",
-        ),
-        PortalPresentationMetadata(
-            profileId = ProfileId("reg-age-redsara"),
-            organization = "Administración General del Estado",
-            territory = "España",
-            governmentLevel = PortalGovernmentLevel.STATE,
-            purpose = "Presentación en el Registro Electrónico General",
-        ),
-        PortalPresentationMetadata(
-            profileId = ProfileId("unizar-tramitador"),
-            organization = "Universidad de Zaragoza",
-            territory = "Aragón",
-            governmentLevel = PortalGovernmentLevel.UNIVERSITY,
-            purpose = "Acceso a la Oficina Virtual universitaria",
-        ),
-        PortalPresentationMetadata(
-            profileId = ProfileId("carne-joven-andalucia"),
-            organization = "Instituto Andaluz de la Juventud",
-            territory = "Andalucía",
-            governmentLevel = PortalGovernmentLevel.AUTONOMOUS_COMMUNITY,
-            purpose = "Gestión del Carné Joven Europeo de Andalucía",
-        ),
-        PortalPresentationMetadata(
-            profileId = ProfileId("junta-ofvirtual"),
-            organization = "Junta de Andalucía",
-            territory = "Andalucía",
-            governmentLevel = PortalGovernmentLevel.AUTONOMOUS_COMMUNITY,
-            purpose = "Acceso con certificado a la Oficina Virtual",
-        ),
-        PortalPresentationMetadata(
-            profileId = ProfileId("educacion-convocatoria"),
-            organization = "Ministerio de Educación, Formación Profesional y Deportes",
-            territory = "España",
-            governmentLevel = PortalGovernmentLevel.STATE,
-            purpose = "Consulta de una convocatoria en la sede electrónica",
-        ),
-    )
 }

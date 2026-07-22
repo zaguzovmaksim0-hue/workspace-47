@@ -6002,7 +6002,7 @@ records:
     procedure_page: "https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html"
     certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
-    js_client: "No aplica al login TLS; AutoFirma posterior no verificado en runtime"
+    js_client: "No aplica; el acceso verificado usa selección de certificado mediante TLS de cliente"
     protocol_family: "TLS_CLIENT_CERTIFICATE_AUTHENTICATION"
     signature_format: "NO_APLICA_AL_LOGIN; firma posterior NO_VERIFICADO"
     signature_algorithm: "Negociado por TLS; firma posterior NO_VERIFICADO"

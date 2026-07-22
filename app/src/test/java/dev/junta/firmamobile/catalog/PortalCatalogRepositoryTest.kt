@@ -12,24 +12,42 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
+import org.robolectric.annotation.GraphicsMode
+import org.robolectric.annotation.SQLiteMode
 
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
+@SQLiteMode(SQLiteMode.Mode.LEGACY)
 class PortalCatalogRepositoryTest {
     private val catalog = BuiltInSiteProfiles.catalog
-    private val releaseRepository = PortalCatalogRepository(
-        SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE),
-        catalog,
-    )
-    private val qaRepository = PortalCatalogRepository(
-        SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
-        catalog,
-    )
+    private val publicCatalog by lazy(::loadBundledPublicPortalCatalog)
+    private val releaseRepository by lazy {
+        PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE),
+            catalog,
+            publicCatalog,
+        )
+    }
+    private val qaRepository by lazy {
+        PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            publicCatalog,
+        )
+    }
 
     @Test
-    fun `qa publishes all typed portal entries but release opens only verified Junta and Carne Joven`() {
+    fun `public catalog stays complete while release opens only eligible trusted profiles`() {
         val qaPortals = qaRepository.portals()
         val releasePortals = releaseRepository.portals()
 
         assertEquals(1, qaRepository.bundledCatalogVersion)
+        assertEquals(publicCatalog.entries.size, qaPortals.size)
+        assertEquals(publicCatalog.entries.size, releasePortals.size)
         assertEquals(
             setOf(
                 "junta-andalucia",
@@ -39,13 +57,24 @@ class PortalCatalogRepositoryTest {
                 "junta-ofvirtual",
                 "educacion-convocatoria",
             ),
-            qaPortals.map { it.profileId.value }.toSet(),
+            qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
+        val metadataOnly = qaPortals.filter { it.profileId == null }
+        assertEquals(qaPortals.size - 6, metadataOnly.size)
+        assertTrue(metadataOnly.all { !it.isEnabled })
+        assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
+        assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
+        val metadataBrowseOnly = metadataOnly.filter {
+            it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY
+        }
+        assertTrue(metadataBrowseOnly.isNotEmpty())
+        assertTrue(metadataBrowseOnly.all { it.supportStatus in setOf(PortalSupportStatus.DISCOVERED, PortalSupportStatus.CATALOGED) })
+
         val verifiedIds = setOf(ProfileId("junta-andalucia"), ProfileId("carne-joven-andalucia"))
         verifiedIds.forEach { profileId ->
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
-        qaPortals.filterNot { it.profileId in verifiedIds }.forEach { portal ->
+        qaPortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
             val expectedStatus = if (portal.profileId == ProfileId("educacion-convocatoria")) {
                 PortalSupportStatus.BROWSE_ONLY
             } else {
@@ -60,7 +89,7 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalSupportStatus.VERIFIED_E2E, releasePortal.supportStatus)
             assertTrue(releasePortal.isEnabled)
         }
-        releasePortals.filterNot { it.profileId in verifiedIds }.forEach { portal ->
+        releasePortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
             if (portal.profileId == ProfileId("educacion-convocatoria")) {
                 assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                 assertTrue(portal.isEnabled)
@@ -74,7 +103,7 @@ class PortalCatalogRepositoryTest {
 
     @Test
     fun `does not elevate capabilities or signature formats beyond the profile`() {
-        qaRepository.portals().forEach { portal ->
+        qaRepository.portals().filter { it.profileId != null }.forEach { portal ->
             val profile = catalog.profiles.single { it.profileId == portal.profileId }
             assertEquals(
                 Capability.SIGN in profile.capabilities,
@@ -98,6 +127,10 @@ class PortalCatalogRepositoryTest {
         assertTrue(PortalServiceCapability.CERTIFICATE_ACCESS in carneJoven.capabilities)
         assertFalse(PortalServiceCapability.ELECTRONIC_SIGNATURE in carneJoven.capabilities)
         assertTrue(carneJoven.signatureFormats.isEmpty())
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.CLIENT_TLS_AUTH),
+            carneJoven.observedMechanisms,
+        )
 
         val redSara = qaRepository.portals().single { it.profileId == ProfileId("reg-age-redsara") }
         assertEquals(setOf(SignatureFormat.XADES), redSara.signatureFormats)
@@ -105,49 +138,57 @@ class PortalCatalogRepositoryTest {
 
     @Test
     fun `supports accent insensitive search and public filters`() {
-        assertEquals(
-            listOf("junta-andalucia", "carne-joven-andalucia", "junta-ofvirtual"),
-            qaRepository.portals(
-                PortalCatalogQuery(filter = PortalCatalogFilter.AUTONOMOUS_COMMUNITIES),
-            ).map { it.profileId.value },
+        val autonomous = qaRepository.portals(
+            PortalCatalogQuery(filter = PortalCatalogFilter.AUTONOMOUS_COMMUNITIES),
+        )
+        assertTrue(autonomous.size >= 31)
+        assertTrue(autonomous.all { it.governmentLevel == PortalGovernmentLevel.AUTONOMOUS_COMMUNITY })
+        assertTrue(PortalId("junta-andalucia-carne-joven") in autonomous.map { it.portalId })
+
+        val zaragoza = qaRepository.portals(PortalCatalogQuery(searchText = "zaragoza"))
+        assertTrue(
+            zaragoza.map { it.portalId }.toSet().containsAll(
+                setOf(PortalId("unizar-tramitador"), PortalId("diputacion-zaragoza-sede")),
+            ),
+        )
+
+        val certificateResults = qaRepository.portals(
+            PortalCatalogQuery(
+                searchText = "carne joven",
+                filter = PortalCatalogFilter.CERTIFICATE_ACCESS,
+            ),
         )
         assertEquals(
-            listOf("unizar-tramitador"),
-            qaRepository.portals(PortalCatalogQuery(searchText = "zaragoza"))
-                .map { it.profileId.value },
+            setOf(
+                PortalId("comunidad-madrid-cuenta-digital-carne-joven"),
+                PortalId("junta-andalucia-carne-joven"),
+            ),
+            certificateResults.map { it.portalId }.toSet(),
         )
-        assertEquals(
-            listOf("carne-joven-andalucia"),
-            qaRepository.portals(
-                PortalCatalogQuery(
-                    searchText = "carne joven",
-                    filter = PortalCatalogFilter.CERTIFICATE_ACCESS,
-                ),
-            ).map { it.profileId.value },
-        )
+        assertTrue(certificateResults.all { PortalMechanism.CERTIFICATE_ACCESS in it.observedMechanisms })
     }
 
     @Test
     fun `favorites and recents are caller supplied and recent order is preserved`() {
         assertEquals(
-            listOf("reg-age-redsara"),
+            setOf(PortalId("age-reg-redsara"), PortalId("aeat-sede")),
             qaRepository.portals(
                 PortalCatalogQuery(
                     filter = PortalCatalogFilter.FAVORITES,
-                    favoriteProfileIds = setOf(ProfileId("reg-age-redsara")),
+                    favoritePortalIds = setOf(PortalId("age-reg-redsara"), PortalId("aeat-sede")),
                 ),
-            ).map { it.profileId.value },
+            ).map { it.portalId }.toSet(),
         )
 
-        val recentIds = listOf(ProfileId("unizar-tramitador"), ProfileId("junta-andalucia"))
+        val recentIds = listOf(PortalId("aeat-sede"), PortalId("unizar-tramitador"), PortalId("age-reg-redsara"))
         assertEquals(
             recentIds,
             qaRepository.portals(
                 PortalCatalogQuery(
                     filter = PortalCatalogFilter.RECENT,
-                    recentProfileIds = recentIds,
+                    recentPortalIds = recentIds,
                 ),
-            ).map { it.profileId },
+            ).map { it.portalId },
         )
     }
 
@@ -158,9 +199,45 @@ class PortalCatalogRepositoryTest {
             catalogVersion = catalog.catalogVersion,
             profiles = emptyList(),
         )
-        val mismatched = PortalCatalogRepository(SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE), emptyCatalog)
+        val mismatched = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.RELEASE),
+            emptyCatalog,
+            publicCatalog,
+        )
 
-        assertTrue(mismatched.portals().isEmpty())
+        assertEquals(publicCatalog.entries.size, mismatched.portals().size)
+        assertTrue(mismatched.portals().all { !it.isEnabled })
+        assertTrue(mismatched.portals().all { mismatched.resolveLaunch(it) == null })
+    }
+
+    @Test
+    fun `tampered public binding stays visible but cannot inherit profile trust`() {
+        val portalId = PortalId("age-reg-redsara")
+        val wrongEntryUrl = java.net.URI("https://reg.redsara.es/")
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) entry.copy(entryUrl = wrongEntryUrl) else entry
+            },
+        )
+        val repository = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+
+        val tampered = repository.portals().single { it.portalId == portalId }
+        assertFalse(tampered.isEnabled)
+        assertTrue(tampered.capabilities.isEmpty())
+        assertTrue(tampered.signatureFormats.isEmpty())
+        assertEquals(null, repository.resolveLaunch(tampered))
+        assertEquals(null, repository.resolveLaunch(ProfileId("reg-age-redsara"), wrongEntryUrl))
+
+        val unaffected = repository.portals().single { it.portalId == PortalId("junta-andalucia-ovorion") }
+        assertTrue(unaffected.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(checkNotNull(unaffected.profileId), unaffected.entryUrl),
+            repository.resolveLaunch(unaffected),
+        )
     }
 
     @Test
@@ -168,10 +245,13 @@ class PortalCatalogRepositoryTest {
         val item = qaRepository.portals().single { it.profileId == ProfileId("reg-age-redsara") }
 
         assertEquals(
-            PortalLaunchTarget(item.profileId, item.entryUrl),
+            PortalLaunchTarget(checkNotNull(item.profileId), item.entryUrl),
             qaRepository.resolveLaunch(item),
         )
-        assertEquals(null, qaRepository.resolveLaunch(item.profileId, java.net.URI("https://reg.redsara.es/")))
+        assertEquals(
+            null,
+            qaRepository.resolveLaunch(checkNotNull(item.profileId), java.net.URI("https://reg.redsara.es/")),
+        )
         assertEquals(
             null,
             qaRepository.resolveLaunch(ProfileId("unknown-profile"), item.entryUrl),

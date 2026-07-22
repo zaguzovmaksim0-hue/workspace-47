@@ -25,6 +25,8 @@ import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
+import dev.junta.firmamobile.catalog.PortalId
+import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
@@ -132,13 +134,16 @@ class MainActivity : ComponentActivity() {
             JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val catalogRepository = remember {
+                    val publicCatalog = resources.openRawResource(R.raw.public_portal_catalog_v1)
+                        .bufferedReader().use { PublicPortalCatalogParser.parse(it.readText()) }
                     PortalCatalogRepository(
                         registry = BuiltInSiteProfiles.runtimeRegistry,
                         profileCatalog = BuiltInSiteProfiles.catalog,
+                        publicCatalog = publicCatalog,
                     )
                 }
-                val recentProfiles = remember { mutableStateListOf<ProfileId>() }
-                val favoriteProfiles = remember { mutableStateListOf<ProfileId>() }
+                val recentPortals = remember { mutableStateListOf<PortalId>() }
+                val favoritePortals = remember { mutableStateListOf<PortalId>() }
                 val browserDestination = destination as? AppDestination.Browser
                 if (browserDestination != null && unlocked != null) {
                     val app = application as JuntaFirmaApplication
@@ -196,11 +201,11 @@ class MainActivity : ComponentActivity() {
                 } else if (destination == AppDestination.Catalog && unlocked != null) {
                     PortalCatalogScreen(
                         repository = catalogRepository,
-                        favoriteProfileIds = favoriteProfiles.toSet(),
-                        recentProfileIds = recentProfiles,
-                        onToggleFavorite = { profileId ->
-                            if (!favoriteProfiles.remove(profileId)) {
-                                favoriteProfiles.add(profileId)
+                        favoritePortalIds = favoritePortals.toSet(),
+                        recentPortalIds = recentPortals,
+                        onToggleFavorite = { portalId ->
+                            if (!favoritePortals.remove(portalId)) {
+                                favoritePortals.add(portalId)
                             }
                         },
                         onOpenPortal = { item ->
@@ -208,10 +213,10 @@ class MainActivity : ComponentActivity() {
                             if (launch != null) {
                                 cancelSigning(SigningCancelReason.NAVIGATION)
                                 currentWebView = null
-                                recentProfiles.remove(launch.profileId)
-                                recentProfiles.add(0, launch.profileId)
-                                while (recentProfiles.size > MAX_RECENT_PROFILES) {
-                                    recentProfiles.removeAt(recentProfiles.lastIndex)
+                                recentPortals.remove(item.portalId)
+                                recentPortals.add(0, item.portalId)
+                                while (recentPortals.size > MAX_RECENT_PROFILES) {
+                                    recentPortals.removeAt(recentPortals.lastIndex)
                                 }
                                 destination = AppDestination.Browser(
                                     profileId = launch.profileId,
