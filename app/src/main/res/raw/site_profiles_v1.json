@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 4,
+  "catalogVersion": 5,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -69,6 +69,40 @@
       "clientAuthPolicy": {"requestOrigins":["https://ws235.juntadeandalucia.es"],"sourceUrls":["https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"],"requestPath":"/authenticationFacade","fixedQueryParameters":{"action":"validateCert","appId":"IAJ.CARNETJOVEN","comeBackURL":"aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ="},"requiredEphemeralQueryParameters":["ticketId","webSessionId"],"allowEmptyIssuerList":true,"grantTtlSeconds":15},
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [{"url":"https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html","reviewedOn":"2026-07-18"},{"url":"https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet","reviewedOn":"2026-07-18"}]
+    },
+    {
+      "profileId": "junta-ofvirtual",
+      "profileVersion": 1,
+      "displayName": "Junta de Andalucía — Oficina Virtual",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+      "initiatorOrigins": ["https://ws072.juntadeandalucia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [{"endpointId":"junta-ofvirtual-triphase","purpose":"TRIPHASE","url":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService","method":"POST","requestContentTypes":["application/x-www-form-urlencoded; charset=UTF-8"],"responseContentTypes":["text/plain"],"maxRequestBytes":2097152,"maxResponseBytes":2097152,"redirects":"DENY"}],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Oficina Virtual","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":"junta-ofvirtual-triphase","algorithms":["SHA1_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"serverUrl":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService","filters":"keyusage.digitalsignature:true;nonexpired:"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [{"url":"https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs","reviewedOn":"2026-07-22"}]
+    },
+    {
+      "profileId": "educacion-convocatoria",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Educación — Convocatorias",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+      "initiatorOrigins": ["https://sede.educacion.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [{"url":"https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46","reviewedOn":"2026-07-22"}]
     }
   ]
 }

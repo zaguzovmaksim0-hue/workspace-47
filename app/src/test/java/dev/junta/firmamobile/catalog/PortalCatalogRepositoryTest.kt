@@ -36,6 +36,8 @@ class PortalCatalogRepositoryTest {
                 "reg-age-redsara",
                 "unizar-tramitador",
                 "carne-joven-andalucia",
+                "junta-ofvirtual",
+                "educacion-convocatoria",
             ),
             qaPortals.map { it.profileId.value }.toSet(),
         )
@@ -44,7 +46,12 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
         qaPortals.filterNot { it.profileId in verifiedIds }.forEach { portal ->
-            assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+            val expectedStatus = if (portal.profileId == ProfileId("educacion-convocatoria")) {
+                PortalSupportStatus.BROWSE_ONLY
+            } else {
+                PortalSupportStatus.IMPLEMENTED_NOT_E2E
+            }
+            assertEquals(expectedStatus, portal.supportStatus)
             assertTrue(portal.isEnabled)
         }
 
@@ -54,9 +61,14 @@ class PortalCatalogRepositoryTest {
             assertTrue(releasePortal.isEnabled)
         }
         releasePortals.filterNot { it.profileId in verifiedIds }.forEach { portal ->
-            assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, portal.supportStatus)
-            assertFalse(portal.isEnabled)
-            assertEquals(null, releaseRepository.resolveLaunch(portal))
+            if (portal.profileId == ProfileId("educacion-convocatoria")) {
+                assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
+                assertTrue(portal.isEnabled)
+            } else {
+                assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, portal.supportStatus)
+                assertFalse(portal.isEnabled)
+                assertEquals(null, releaseRepository.resolveLaunch(portal))
+            }
         }
     }
 
@@ -94,7 +106,7 @@ class PortalCatalogRepositoryTest {
     @Test
     fun `supports accent insensitive search and public filters`() {
         assertEquals(
-            listOf("junta-andalucia", "carne-joven-andalucia"),
+            listOf("junta-andalucia", "carne-joven-andalucia", "junta-ofvirtual"),
             qaRepository.portals(
                 PortalCatalogQuery(filter = PortalCatalogFilter.AUTONOMOUS_COMMUNITIES),
             ).map { it.profileId.value },
@@ -164,6 +176,36 @@ class PortalCatalogRepositoryTest {
             null,
             qaRepository.resolveLaunch(ProfileId("unknown-profile"), item.entryUrl),
         )
+    }
+
+    @Test
+    fun `education browse-only launch accepts only the exact canonical seed URL`() {
+        val id = ProfileId("educacion-convocatoria")
+        val exact = java.net.URI(
+            "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+        )
+        val item = releaseRepository.portals().single { it.profileId == id }
+
+        assertEquals(PortalSupportStatus.BROWSE_ONLY, item.supportStatus)
+        assertTrue(item.capabilities.isEmpty())
+        assertTrue(item.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(id, exact), releaseRepository.resolveLaunch(id, exact))
+
+        listOf(
+            "http://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+            "https://user@sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+            "https://sede.educacion.gob.es.evil.example/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+            "https://sede.educacion.gob.es/sede/login/loginConv.jjsp",
+            "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=yes&idConvocatoria=46",
+            "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?idConvocatoria=46&iA=no",
+            "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46&idConvocatoria=46",
+            "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46&extra=1",
+        ).forEach { rejected ->
+            assertEquals(rejected, null, releaseRepository.resolveLaunch(id, java.net.URI(rejected)))
+            assertEquals(rejected, null, BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(rejected)))
+        }
+
+        assertEquals(null, BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI("https://www.educacion.gob.es/")))
     }
 
     @Test

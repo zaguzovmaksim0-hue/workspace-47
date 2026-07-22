@@ -135,7 +135,8 @@ object SiteProfileCatalogParser {
     }
 
     private fun validateCatalog(catalog: SiteProfileCatalog) {
-        val originOwners = mutableMapOf<ExactOrigin, ProfileId>()
+        val navigationOriginOwners = mutableMapOf<ExactOrigin, ProfileId>()
+        val endpointUrlOwners = mutableMapOf<URI, ProfileId>()
         val endpointOwners = mutableMapOf<EndpointId, ProfileId>()
         catalog.profiles.forEach { p ->
             require(p.initiatorOrigins.isNotEmpty())
@@ -219,11 +220,13 @@ object SiteProfileCatalogParser {
                 }
             }
             p.endpoints.values.forEach { endpoint ->
-                require(endpoint.url.origin() in p.allOrigins())
                 require(endpoint.redirects == RedirectPolicy.DENY)
                 require(endpointOwners.put(endpoint.endpointId, p.profileId) == null)
+                require(endpointUrlOwners.put(endpoint.url, p.profileId) == null)
             }
-            p.allOrigins().forEach { origin -> require(originOwners.put(origin, p.profileId) == null) }
+            p.allOrigins().forEach { origin ->
+                require(navigationOriginOwners.put(origin, p.profileId) == null)
+            }
         }
     }
 

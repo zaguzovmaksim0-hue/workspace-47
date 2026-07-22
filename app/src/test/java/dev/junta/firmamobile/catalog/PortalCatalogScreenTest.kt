@@ -40,7 +40,7 @@ class PortalCatalogScreenTest {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
-        assertEquals(4, compatible.items.size)
+        assertEquals(5, compatible.items.size)
         val verifiedIds = setOf("junta-andalucia", "carne-joven-andalucia")
         assertTrue(
             compatible.items.filter { it.profileId.value in verifiedIds }
@@ -51,6 +51,9 @@ class PortalCatalogScreenTest {
                 .all { it.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E },
         )
         assertFalse(sections.any { it.kind == PortalCatalogSectionKind.CONTRACT_PENDING })
+        val fullCatalog = sections.single { it.kind == PortalCatalogSectionKind.FULL_CATALOG }
+        assertEquals(listOf("educacion-convocatoria"), fullCatalog.items.map { it.profileId.value })
+        assertEquals(PortalSupportStatus.BROWSE_ONLY, fullCatalog.items.single().supportStatus)
     }
 
     @Test

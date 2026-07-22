@@ -26,6 +26,13 @@ class ProtocolAdapterRegistryTest {
         )
         assertEquals(UnizarTriPhaseAdapter.ID, unizar?.signingProtocolId)
         assertEquals(CallbackContractId("autoscript-sign-callback-v1"), unizar?.callbackContractId)
+        val juntaOfvirtual = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("junta-ofvirtual"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(JuntaOfvirtualTriPhaseAdapter.ID, juntaOfvirtual?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), juntaOfvirtual?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), juntaOfvirtual?.callbackContractId)
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),

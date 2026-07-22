@@ -32,7 +32,13 @@ class SiteProfileRegistry(
         if (!uri.scheme.equals("https", ignoreCase = true) || uri.host == null || uri.userInfo != null) return null
         if (uri.port != -1 && uri.port != 443) return null
         val origin = runCatching { ExactOrigin.parse("https://${uri.host}") }.getOrNull() ?: return null
-        return resolve(origin)
+        val resolved = resolve(origin) ?: return null
+        if (resolved.profile.compatibilityStatus == CompatibilityStatus.BROWSE_ONLY &&
+            uri.toASCIIString() != resolved.profile.startUrl.toASCIIString()
+        ) {
+            return null
+        }
+        return resolved
     }
 
     fun resolve(uri: Uri): ResolvedSiteProfile? = runCatching { URI(uri.toString()) }
@@ -73,6 +79,9 @@ class SiteProfileRegistry(
     }
 
     private fun SiteProfile.trustMode(origin: ExactOrigin): TrustMode? {
+        if (compatibilityStatus == CompatibilityStatus.BROWSE_ONLY && origin in initiatorOrigins) {
+            return TrustMode.BROWSE_ONLY
+        }
         if (origin in (clientAuthPolicy?.requestOrigins ?: emptySet())) return TrustMode.BROWSE_ONLY
         if (origin in initiatorOrigins) {
             return when {
@@ -105,7 +114,7 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 4,
+  "catalogVersion": 5,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -308,6 +317,86 @@ object BuiltInSiteProfiles {
         {
           "url": "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet",
           "reviewedOn": "2026-07-18"
+        }
+      ]
+    },
+    {
+      "profileId": "junta-ofvirtual",
+      "profileVersion": 1,
+      "displayName": "Junta de Andalucía — Oficina Virtual",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+      "initiatorOrigins": ["https://ws072.juntadeandalucia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [
+        {
+          "endpointId": "junta-ofvirtual-triphase",
+          "purpose": "TRIPHASE",
+          "url": "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService",
+          "method": "POST",
+          "requestContentTypes": ["application/x-www-form-urlencoded; charset=UTF-8"],
+          "responseContentTypes": ["text/plain"],
+          "maxRequestBytes": 2097152,
+          "maxResponseBytes": 2097152,
+          "redirects": "DENY"
+        }
+      ],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Acceso con certificado a la Oficina Virtual",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": ["SIGN", "LEGACY_SHA1"],
+          "endpointId": "junta-ofvirtual-triphase",
+          "algorithms": ["SHA1_WITH_RSA"],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": "EXPLICIT",
+          "fixedExtraProperties": {
+            "serverUrl": "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService",
+            "filters": "keyusage.digitalsignature:true;nonexpired:"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": ["RSA"],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+          "reviewedOn": "2026-07-22"
+        }
+      ]
+    },
+    {
+      "profileId": "educacion-convocatoria",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Educación — Convocatorias",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+      "initiatorOrigins": ["https://sede.educacion.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": ["RSA"],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+          "reviewedOn": "2026-07-22"
         }
       ]
     }

@@ -32,6 +32,7 @@ import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
 import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
+import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -73,6 +74,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val app = application as JuntaFirmaApplication
         val juntaAdapter = JuntaTriPhaseAdapter()
+        val juntaOfvirtualAdapter = JuntaOfvirtualTriPhaseAdapter()
         val redsaraAdapter = LocalXadesDetachedAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
         signingCoordinator = SigningCoordinator(
@@ -96,6 +98,7 @@ class MainActivity : ComponentActivity() {
             adapterResolver = { id ->
                 when (id) {
                     juntaAdapter.id -> juntaAdapter
+                    juntaOfvirtualAdapter.id -> juntaOfvirtualAdapter
                     redsaraAdapter.id -> redsaraAdapter
                     unizarAdapter.id -> unizarAdapter
                     else -> null

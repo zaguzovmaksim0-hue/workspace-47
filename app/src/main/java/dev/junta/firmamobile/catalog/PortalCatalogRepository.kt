@@ -207,5 +207,19 @@ private object BundledPortalCatalog {
             governmentLevel = PortalGovernmentLevel.AUTONOMOUS_COMMUNITY,
             purpose = "Gestión del Carné Joven Europeo de Andalucía",
         ),
+        PortalPresentationMetadata(
+            profileId = ProfileId("junta-ofvirtual"),
+            organization = "Junta de Andalucía",
+            territory = "Andalucía",
+            governmentLevel = PortalGovernmentLevel.AUTONOMOUS_COMMUNITY,
+            purpose = "Acceso con certificado a la Oficina Virtual",
+        ),
+        PortalPresentationMetadata(
+            profileId = ProfileId("educacion-convocatoria"),
+            organization = "Ministerio de Educación, Formación Profesional y Deportes",
+            territory = "España",
+            governmentLevel = PortalGovernmentLevel.STATE,
+            purpose = "Consulta de una convocatoria en la sede electrónica",
+        ),
     )
 }

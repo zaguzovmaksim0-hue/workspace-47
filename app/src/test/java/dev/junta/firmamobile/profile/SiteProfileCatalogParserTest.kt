@@ -118,6 +118,59 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactJuntaOfvirtualContract() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("junta-ofvirtual")
+        }
+        assertEquals(ProfileId("junta-ofvirtual"), profile.profileId)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+            profile.startUrl.toString(),
+        )
+        assertEquals(
+            setOf("https://ws072.juntadeandalucia.es"),
+            profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized },
+        )
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals("Acceso con certificado a la Oficina Virtual", operation.safeDescription)
+        assertEquals(setOf(SignatureAlgorithm.SHA1_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.CADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertEquals(SignatureMode.EXPLICIT, operation.mode)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), operation.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), operation.callbackContractId)
+        assertEquals(
+            mapOf(
+                "serverUrl" to "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService",
+                "filters" to "keyusage.digitalsignature:true;nonexpired:",
+            ),
+            operation.fixedExtraProperties,
+        )
+        val endpoint = profile.endpoints.getValue(EndpointId("junta-ofvirtual-triphase"))
+        assertEquals("ws024.juntadeandalucia.es", endpoint.url.host)
+        assertTrue(endpoint.url.originForTest() !in profile.navigationOriginsForTest())
+    }
+
+    @Test
+    fun rejectsCrossProfileExactEndpointCollision() {
+        val existingEndpoint =
+            "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService"
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replace(
+                    "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService",
+                    existingEndpoint,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun preservesTheExactCarneJovenClientTlsContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("carne-joven-andalucia")
@@ -184,10 +237,12 @@ class SiteProfileCatalogParserTest {
     fun releaseEnablesOnlyVerifiedJuntaAndCarneWhileQaKeepsExperimentalPortalsAvailable() {
         val junta = ProfileId("junta-andalucia")
         val carne = ProfileId("carne-joven-andalucia")
-        val releaseProfiles = setOf(junta, carne)
+        val education = ProfileId("educacion-convocatoria")
+        val releaseProfiles = setOf(junta, carne, education)
         val qaOnly = setOf(
             ProfileId("reg-age-redsara"),
             ProfileId("unizar-tramitador"),
+            ProfileId("junta-ofvirtual"),
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
@@ -199,12 +254,16 @@ class SiteProfileCatalogParserTest {
             assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
             assertTrue(BuiltInSiteProfiles.qaRegistry.profile(profileId) != null)
         }
-        releaseProfiles.forEach { profileId ->
+        setOf(junta, carne).forEach { profileId ->
             assertEquals(
                 CompatibilityStatus.VERIFIED_E2E,
                 BuiltInSiteProfiles.releaseRegistry.profile(profileId)?.compatibilityStatus,
             )
         }
+        assertEquals(
+            CompatibilityStatus.BROWSE_ONLY,
+            BuiltInSiteProfiles.releaseRegistry.profile(education)?.compatibilityStatus,
+        )
     }
 
     @Test
@@ -230,7 +289,7 @@ class SiteProfileCatalogParserTest {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 4", "\"unknown\": true, \"catalogVersion\": 4"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 5", "\"unknown\": true, \"catalogVersion\": 5"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))
@@ -306,3 +365,9 @@ class SiteProfileCatalogParserTest {
         assertTrue(qa.profile(ProfileId("junta-andalucia")) != null)
     }
 }
+
+private fun URI.originForTest() = ExactOrigin.parse("https://$host")
+
+private fun SiteProfile.navigationOriginsForTest() =
+    initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
+        (clientAuthPolicy?.requestOrigins ?: emptySet())

@@ -52,6 +52,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
                 signingProtocolId = UnizarTriPhaseAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId("junta-ofvirtual"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = JuntaOfvirtualTriPhaseAdapter.ID,
+            ),
         ),
     )
 }

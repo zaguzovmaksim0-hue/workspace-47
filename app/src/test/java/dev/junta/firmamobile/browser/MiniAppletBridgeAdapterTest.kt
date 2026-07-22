@@ -7,6 +7,8 @@ import dev.junta.firmamobile.signing.SensitiveSignatureCopyObserver
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningFormat
+import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
+import dev.junta.firmamobile.network.TrustedOrigin
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -83,6 +85,77 @@ class MiniAppletBridgeAdapterTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun exactJuntaOfvirtualMiniAppletCallUsesBoundProfileCallbackAndProtocol() {
+        val result = adapterFor("junta-ofvirtual").route(
+            rawMessage = ofvirtualMessage(),
+            sourceOrigin = OFVIRTUAL_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 21,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals("junta-ofvirtual", request.context.profileId)
+            assertEquals("ws072.juntadeandalucia.es", request.context.origin.host)
+            assertEquals(21, request.context.navigationEpoch)
+            assertEquals(JuntaOfvirtualTriPhaseAdapter.ID, request.protocolId)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(DATA, data)
+                    val parsed = java.util.Properties().apply { load(properties.reader()) }
+                    assertEquals(setOf("filters", "serverUrl"), parsed.stringPropertyNames())
+                    assertEquals(
+                        "keyusage.digitalsignature:true;nonexpired:",
+                        parsed.getProperty("filters"),
+                    )
+                    assertEquals(JuntaOfvirtualTriPhaseAdapter.ENDPOINT, parsed.getProperty("serverUrl"))
+                    assertEquals(null, parsed.getProperty("mode"))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun juntaOfvirtualRejectsWrongActiveProfileAndStaleCallbackClearsFailClosed() {
+        val wrongProfile = adapterFor("junta-andalucia").route(
+            rawMessage = ofvirtualMessage(),
+            sourceOrigin = OFVIRTUAL_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 21,
+        ) as MiniAppletBridgeRouteResult.Rejected
+        assertEquals(SigningErrorCode.ORIGIN_NOT_ALLOWED, wrongProfile.code)
+
+        val accepted = adapterFor("junta-ofvirtual").route(
+            rawMessage = ofvirtualMessage(),
+            sourceOrigin = OFVIRTUAL_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 21,
+        ) as MiniAppletBridgeRouteResult.Accepted
+        var epoch = 21L
+        val origin = TrustedOrigin("https", "ws072.juntadeandalucia.es", 443)
+        val posted = mutableListOf<String>()
+        val registry = MiniAppletReplyRegistry(
+            currentNavigationEpoch = { epoch },
+            currentOrigin = { origin },
+        )
+        val channel = checkNotNull(
+            registry.create(
+                accepted.request.normalized.requestId,
+                accepted.request.normalized.context,
+                posted::add,
+            ),
+        )
+
+        epoch++
+
+        assertFalse(channel.success(LocalSignature(byteArrayOf(1)), byteArrayOf(2)))
+        assertTrue(posted.isEmpty())
+        assertTrue(registry.abandonAll().isEmpty())
+        accepted.request.normalized.close()
     }
 
     @Test
@@ -361,6 +434,16 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", EXTRA_PROPERTIES)
         .toString()
 
+    private fun ofvirtualMessage(): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", Base64.getEncoder().encodeToString(DATA))
+        .put("algorithm", "SHA1withRSA")
+        .put("format", "CAdES")
+        .put("extraProperties", OFVIRTUAL_PROPERTIES)
+        .toString()
+
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
@@ -368,6 +451,11 @@ class MiniAppletBridgeAdapterTest {
             "serverUrl=https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/" +
                 "sign/TriPhaseSignatureService\nfilters=keyusage.digitalsignature:true;nonexpired:"
         val TRUSTED_ORIGIN: Uri = Uri.parse("https://www.juntadeandalucia.es")
+        val OFVIRTUAL_ORIGIN: Uri = Uri.parse("https://ws072.juntadeandalucia.es")
+        const val OFVIRTUAL_PROPERTIES =
+            "filters=keyusage.digitalsignature:true;nonexpired:\n" +
+                "serverUrl=https://ws024.juntadeandalucia.es/" +
+                "afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService"
         val DATA = "synthetic-miniapplet-data".encodeToByteArray()
         val SIGNATURE = byteArrayOf(1, 2, 3, 4)
         val CERTIFICATE = byteArrayOf(5, 6, 7, 8)
