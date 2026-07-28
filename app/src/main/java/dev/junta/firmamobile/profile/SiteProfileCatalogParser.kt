@@ -187,26 +187,36 @@ object SiteProfileCatalogParser {
                     require(op.allowedExtraProperties.isEmpty())
                     when (op.format) {
                         SignatureFormat.CADES -> {
-                            require(op.endpointId != null)
-                            require(op.fixedExtraProperties["serverUrl"] ==
-                                op.endpointId.let(p.endpoints::get)?.url?.toString())
-                            when (op.mode) {
-                                SignatureMode.EXPLICIT -> {
-                                    val exactKeys = op.fixedExtraProperties.keys
-                                    val explicitMode = exactKeys == setOf("serverUrl", "mode") &&
-                                        op.fixedExtraProperties["mode"] == "explicit"
-                                    val fixedCertificateFilter =
-                                        exactKeys == setOf("serverUrl", "filters") &&
-                                            !op.fixedExtraProperties["filters"].isNullOrBlank()
-                                    require(explicitMode || fixedCertificateFilter)
+                            if (op.endpointId == null) {
+                                require(op.mode == SignatureMode.EXPLICIT)
+                                require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                require(
+                                    op.fixedExtraProperties == mapOf(
+                                        "mode" to "explicit",
+                                        "filter" to "nonexpired",
+                                    ),
+                                )
+                            } else {
+                                require(op.fixedExtraProperties["serverUrl"] ==
+                                    op.endpointId.let(p.endpoints::get)?.url?.toString())
+                                when (op.mode) {
+                                    SignatureMode.EXPLICIT -> {
+                                        val exactKeys = op.fixedExtraProperties.keys
+                                        val explicitMode = exactKeys == setOf("serverUrl", "mode") &&
+                                            op.fixedExtraProperties["mode"] == "explicit"
+                                        val fixedCertificateFilter =
+                                            exactKeys == setOf("serverUrl", "filters") &&
+                                                !op.fixedExtraProperties["filters"].isNullOrBlank()
+                                        require(explicitMode || fixedCertificateFilter)
+                                    }
+                                    null -> {
+                                        require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                        require(op.fixedExtraProperties.keys ==
+                                            setOf("serverUrl", "precalculatedHashAlgorithm"))
+                                        require(op.fixedExtraProperties["precalculatedHashAlgorithm"] == "SHA1")
+                                    }
+                                    SignatureMode.IMPLICIT -> error("implicit direct-data profile is unsupported")
                                 }
-                                null -> {
-                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
-                                    require(op.fixedExtraProperties.keys ==
-                                        setOf("serverUrl", "precalculatedHashAlgorithm"))
-                                    require(op.fixedExtraProperties["precalculatedHashAlgorithm"] == "SHA1")
-                                }
-                                SignatureMode.IMPLICIT -> error("implicit direct-data profile is unsupported")
                             }
                         }
                         SignatureFormat.XADES -> {

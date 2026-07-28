@@ -118,6 +118,42 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactAragonSirawContract() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("aragon-siraw")
+        }
+        assertEquals(ProfileId("aragon-siraw"), profile.profileId)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
+            profile.startUrl.toString(),
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://aplicaciones.aragon.es")),
+            profile.initiatorOrigins,
+        )
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), profile.capabilities)
+        val policy = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals("Acceso con certificado a SIRAW", policy.safeDescription)
+        assertEquals(setOf(SignatureAlgorithm.SHA1_WITH_RSA), policy.algorithms)
+        assertEquals(SignatureFormat.CADES, policy.format)
+        assertEquals(SignaturePackaging.DETACHED, policy.packaging)
+        assertEquals(SignatureMode.EXPLICIT, policy.mode)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), policy.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), policy.callbackContractId)
+        assertNull(policy.endpointId)
+        assertEquals(
+            mapOf("mode" to "explicit", "filter" to "nonexpired"),
+            policy.fixedExtraProperties,
+        )
+        assertTrue(policy.allowedExtraProperties.isEmpty())
+    }
+
+    @Test
     fun preservesTheExactJuntaOfvirtualContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("junta-ofvirtual")
@@ -243,6 +279,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("reg-age-redsara"),
             ProfileId("unizar-tramitador"),
             ProfileId("junta-ofvirtual"),
+            ProfileId("aragon-siraw"),
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
@@ -289,7 +326,7 @@ class SiteProfileCatalogParserTest {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 5", "\"unknown\": true, \"catalogVersion\": 5"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 6", "\"unknown\": true, \"catalogVersion\": 6"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))

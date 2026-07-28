@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 5,
+  "catalogVersion": 6,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -103,6 +103,65 @@
       "clientAuthPolicy": null,
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [{"url":"https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46","reviewedOn":"2026-07-22"}]
+    },
+    {
+      "profileId": "aragon-siraw",
+      "profileVersion": 1,
+      "displayName": "Gobierno de Aragón — SIRAW",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
+      "initiatorOrigins": [
+        "https://aplicaciones.aragon.es"
+      ],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Acceso con certificado a SIRAW",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": [
+            "SIGN",
+            "LEGACY_SHA1"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA1_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": "EXPLICIT",
+          "fixedExtraProperties": {
+            "mode": "explicit",
+            "filter": "nonexpired"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN",
+        "LEGACY_SHA1"
+      ],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
+          "reviewedOn": "2026-07-28"
+        },
+        {
+          "url": "https://aplicaciones.aragon.es/siraw/javax.faces.resource/js/afirma.js.xhtml",
+          "reviewedOn": "2026-07-28"
+        }
+      ]
     }
   ]
 }
