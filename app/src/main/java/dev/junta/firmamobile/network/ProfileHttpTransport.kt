@@ -17,14 +17,17 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import okhttp3.Authenticator
 import okhttp3.ConnectionPool
 import okhttp3.CookieJar
 import okhttp3.Dns
+import okhttp3.EventListener
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
@@ -84,7 +87,19 @@ enum class ProfileHttpFailure {
 sealed interface ProfileHttpResult {
     data class Success(val response: ProfileHttpResponse) : ProfileHttpResult
 
-    data class Failure(val code: ProfileHttpFailure) : ProfileHttpResult
+    @Suppress("EXPOSED_PARAMETER_TYPE", "EXPOSED_PROPERTY_TYPE")
+    data class Failure(val detail: ProfileHttpFailureDetail) : ProfileHttpResult {
+        val code: ProfileHttpFailure
+            get() = detail.code
+
+        constructor(code: ProfileHttpFailure) : this(
+            ProfileHttpFailureDetail(
+                code = code,
+                phase = ProfileHttpFailurePhase.UNKNOWN,
+                httpWriteStarted = true,
+            ),
+        )
+    }
 }
 
 fun interface ProfileHttpTransport {
@@ -96,6 +111,7 @@ fun interface ProfileHttpTransport {
 
 class ProfileHttpCancellation internal constructor() {
     private val cancelled = AtomicBoolean(false)
+    private val attempt = AtomicReference<ProfileHttpCallPhaseTracker?>(null)
     private var cancelAction: (() -> Unit)? = null
 
     fun register(action: () -> Unit): Closeable {
@@ -123,6 +139,21 @@ class ProfileHttpCancellation internal constructor() {
         }
         action?.invoke()
     }
+
+    fun isCancelled(): Boolean = cancelled.get()
+
+    internal fun beginAttempt(tracker: ProfileHttpCallPhaseTracker): Boolean = synchronized(this) {
+        if (cancelled.get() || !attempt.compareAndSet(null, tracker)) return@synchronized false
+        tracker.beginDns()
+        true
+    }
+
+    internal fun snapshotFailure(code: ProfileHttpFailure): ProfileHttpFailureDetail =
+        attempt.get()?.failure(code) ?: ProfileHttpFailureDetail(
+            code = code,
+            phase = ProfileHttpFailurePhase.UNKNOWN,
+            httpWriteStarted = true,
+        )
 }
 
 internal fun interface DnsResolver {
@@ -145,6 +176,7 @@ internal fun interface ProfileHttpExecutor {
         readTimeoutMillis: Int,
         maxResponseBytes: Int,
         cancellation: ProfileHttpCancellation,
+        tracker: ProfileHttpCallPhaseTracker,
     ): RawProfileHttpResponse
 }
 
@@ -168,21 +200,25 @@ class HttpsProfileHttpTransport internal constructor(
     ): ProfileHttpResult {
         val validated = urlPolicy.validateRequest(request.url.uri)
         if (validated !is NetworkUrlValidation.Allowed) {
-            return ProfileHttpResult.Failure(ProfileHttpFailure.INVALID_ENDPOINT)
+            return ProfileHttpResult.Failure(cancellation.snapshotFailure(ProfileHttpFailure.INVALID_ENDPOINT))
+        }
+        val tracker = ProfileHttpCallPhaseTracker()
+        if (!cancellation.beginAttempt(tracker)) {
+            return ProfileHttpResult.Failure(cancellation.snapshotFailure(ProfileHttpFailure.NETWORK_ERROR))
         }
         val addresses = resolveWithDeadline(request.url.uri.host, cancellation)
         if (addresses == null) {
-            return ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)
+            return ProfileHttpResult.Failure(tracker.dnsFailure(ProfileHttpFailure.NETWORK_ERROR))
         }
         val approvedAddresses = addresses.filter { it.isPublicAddress() }
         if (approvedAddresses.isEmpty()) {
-            return ProfileHttpResult.Failure(ProfileHttpFailure.PRIVATE_ADDRESS)
+            return ProfileHttpResult.Failure(tracker.dnsFailure(ProfileHttpFailure.PRIVATE_ADDRESS))
         }
 
         val bodyCopy = try {
             request.withBody { it.copyOf() }
         } catch (_: Exception) {
-            return ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)
+            return ProfileHttpResult.Failure(tracker.failure(ProfileHttpFailure.NETWORK_ERROR))
         }
         val raw = try {
             executor.post(
@@ -193,18 +229,21 @@ class HttpsProfileHttpTransport internal constructor(
                 readTimeoutMillis = READ_TIMEOUT_MILLIS,
                 maxResponseBytes = MAX_RESPONSE_BYTES,
                 cancellation = cancellation,
+                tracker = tracker,
             )
         } catch (_: ProfileResponseTooLargeException) {
-            return ProfileHttpResult.Failure(ProfileHttpFailure.RESPONSE_TOO_LARGE)
+            tracker.responseHeadersObserved()
+            return ProfileHttpResult.Failure(tracker.failure(ProfileHttpFailure.RESPONSE_TOO_LARGE))
         } catch (_: Exception) {
-            return ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)
+            return ProfileHttpResult.Failure(tracker.failure(ProfileHttpFailure.NETWORK_ERROR))
         } finally {
             bodyCopy.fill(0)
         }
 
         fun fail(code: ProfileHttpFailure): ProfileHttpResult.Failure {
             raw.body.fill(0)
-            return ProfileHttpResult.Failure(code)
+            tracker.responseHeadersObserved()
+            return ProfileHttpResult.Failure(tracker.failure(code))
         }
 
         return when {
@@ -337,6 +376,7 @@ internal class OkHttpProfileHttpExecutor(
         readTimeoutMillis: Int,
         maxResponseBytes: Int,
         cancellation: ProfileHttpCancellation,
+        tracker: ProfileHttpCallPhaseTracker,
     ): RawProfileHttpResponse {
         val approvedAddresses = resolvedAddresses.distinct()
         if (approvedAddresses.isEmpty()) throw UnknownHostException("No approved address")
@@ -345,6 +385,7 @@ internal class OkHttpProfileHttpExecutor(
             approvedAddresses = approvedAddresses,
             connectTimeoutMillis = connectTimeoutMillis,
             readTimeoutMillis = readTimeoutMillis,
+            tracker = tracker,
         )
         val request = buildRequest(url, body)
         val call = client.newCall(request)
@@ -377,6 +418,7 @@ internal class OkHttpProfileHttpExecutor(
         approvedAddresses: List<InetAddress>,
         connectTimeoutMillis: Int,
         readTimeoutMillis: Int,
+        tracker: ProfileHttpCallPhaseTracker = ProfileHttpCallPhaseTracker(),
     ): OkHttpClient {
         val approved = approvedAddresses.distinct()
         require(expectedHost.isNotBlank() && approved.isNotEmpty())
@@ -398,6 +440,8 @@ internal class OkHttpProfileHttpExecutor(
             .proxyAuthenticator(Authenticator.NONE)
             .cache(null)
             .connectionPool(ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .eventListenerFactory(EventListener.Factory { tracker })
             .connectTimeout(connectTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
             .readTimeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
             .writeTimeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)

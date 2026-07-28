@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicInteger
 import okhttp3.Authenticator
 import okhttp3.CookieJar
+import okhttp3.Protocol
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
@@ -134,7 +135,7 @@ class ProfileHttpTransportTest {
         val privateExecutorCalled = AtomicBoolean(false)
         val privateTransport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("127.0.0.1")) },
-            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ ->
                 privateExecutorCalled.set(true)
                 error("must not connect")
             },
@@ -153,7 +154,7 @@ class ProfileHttpTransportTest {
 
         val oversizedTransport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
-            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ -> throw ProfileResponseTooLargeException() },
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> throw ProfileResponseTooLargeException() },
         )
         assertEquals(ProfileHttpFailure.RESPONSE_TOO_LARGE, (post(oversizedTransport) as ProfileHttpResult.Failure).code)
 
@@ -200,7 +201,7 @@ class ProfileHttpTransportTest {
             val executorCalled = AtomicBoolean(false)
             val transport = HttpsProfileHttpTransport(
                 dnsResolver = DnsResolver { listOf(InetAddress.getByName(address)) },
-                executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
+                executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ ->
                     executorCalled.set(true)
                     error("must not connect")
                 },
@@ -229,7 +230,7 @@ class ProfileHttpTransportTest {
                 }
                 emptyList()
             },
-            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ ->
                 executorCalled.set(true)
                 error("HTTP must not start")
             },
@@ -257,7 +258,7 @@ class ProfileHttpTransportTest {
                 }
                 emptyList()
             },
-            executor = ProfileHttpExecutor { _, _, _, _, _, _, _ -> error("HTTP must not start") },
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> error("HTTP must not start") },
             dnsTimeoutMillis = 10_000,
         )
         val worker = Thread {
@@ -299,7 +300,7 @@ class ProfileHttpTransportTest {
                         }
                         emptyList()
                     },
-                    executor = ProfileHttpExecutor { _, _, _, _, _, _, _ ->
+                    executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ ->
                         error("HTTP must not start")
                     },
                     dnsTimeoutMillis = 10_000,
@@ -314,7 +315,7 @@ class ProfileHttpTransportTest {
             assertTrue(started.await(1, TimeUnit.SECONDS))
             val saturated = HttpsProfileHttpTransport(
                 dnsResolver = DnsResolver { error("A third resolver task must be rejected") },
-                executor = ProfileHttpExecutor { _, _, _, _, _, _, _ -> error("HTTP must not start") },
+                executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> error("HTTP must not start") },
                 dnsTimeoutMillis = 10_000,
             )
 
@@ -353,6 +354,7 @@ class ProfileHttpTransportTest {
         assertTrue(client.proxyAuthenticator === Authenticator.NONE)
         assertTrue(client.proxy === Proxy.NO_PROXY)
         assertEquals(null, client.cache)
+        assertEquals(listOf(Protocol.HTTP_1_1), client.protocols)
         assertEquals(1, client.networkInterceptors.size)
         assertEquals(1_234, client.connectTimeoutMillis)
         assertEquals(2_345, client.readTimeoutMillis)
@@ -427,12 +429,12 @@ class ProfileHttpTransportTest {
                 readTimeoutMillis = 2_000,
                 maxResponseBytes = 1_024,
                 cancellation = ProfileHttpCancellation(),
+                tracker = ProfileHttpCallPhaseTracker(),
             )
 
             assertEquals(503, response.statusCode)
             val request = checkNotNull(server.takeRequest(1, TimeUnit.SECONDS))
             assertEquals("POST", request.method)
-            // HTTP/2 carries the authority as :authority instead of a Host header.
             assertEquals("portal.example", request.url.host)
             assertTrue("portal.example" in request.handshakeServerNames)
             assertArrayEquals(body, checkNotNull(request.body).toByteArray())
@@ -464,6 +466,7 @@ class ProfileHttpTransportTest {
             readTimeoutMillis: Int,
             maxResponseBytes: Int,
             cancellation: ProfileHttpCancellation,
+            tracker: ProfileHttpCallPhaseTracker,
         ): RawProfileHttpResponse {
             calls.incrementAndGet()
             bodies += body.copyOf()
