@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.SocketFactory
 import javax.net.ssl.HandshakeCompletedListener
+import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLServerSocket
 import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
@@ -326,6 +327,145 @@ class SecureTunnelSocketFactoryTest {
     }
 
     @Test
+    fun outerTlsProtocolPreferenceEnablesTls13BeforeTls12() {
+        val relayCertificate = heldCertificate("relay.example")
+        val tls = FakeTlsSocket(
+            input = ByteArrayInputStream("HTTP/1.1 200 Connection Established\r\n\r\n".encodeToByteArray()),
+            session = fakeSession(relayCertificate.certificate),
+            supportedProtocols = arrayOf("TLSv1.2", "TLSv1.3"),
+        )
+        withOuterHostnameVerifier(relayCertificate.certificate) {
+            val socket = tunnelSocket(
+                cancellation = ProfileHttpCancellation(),
+                outerSocketFactory = FakeOuterSocketFactory(FakeRawSocket(), tls),
+                pins = setOf(spkiPin(relayCertificate)),
+            )
+
+            socket.connect(logicalEndpoint(), 1_000)
+
+            assertArrayEquals(arrayOf("TLSv1.3", "TLSv1.2"), tls.enabledProtocols)
+            socket.close()
+        }
+    }
+
+    @Test
+    fun outerTlsProtocolPreferenceFallsBackToTls12Only() {
+        val relayCertificate = heldCertificate("relay.example")
+        val tls = FakeTlsSocket(
+            input = ByteArrayInputStream("HTTP/1.1 200 Connection Established\r\n\r\n".encodeToByteArray()),
+            session = fakeSession(relayCertificate.certificate),
+            supportedProtocols = arrayOf("TLSv1.2"),
+        )
+        withOuterHostnameVerifier(relayCertificate.certificate) {
+            val socket = tunnelSocket(
+                cancellation = ProfileHttpCancellation(),
+                outerSocketFactory = FakeOuterSocketFactory(FakeRawSocket(), tls),
+                pins = setOf(spkiPin(relayCertificate)),
+            )
+
+            socket.connect(logicalEndpoint(), 1_000)
+
+            assertArrayEquals(arrayOf("TLSv1.2"), tls.enabledProtocols)
+            socket.close()
+        }
+    }
+
+    @Test
+    fun outerTlsProtocolPreferenceRejectsWhenTls12IsUnavailable() {
+        val relayCertificate = heldCertificate("relay.example")
+        val tls = FakeTlsSocket(
+            session = fakeSession(relayCertificate.certificate),
+            supportedProtocols = arrayOf("TLSv1.3"),
+        )
+        withOuterHostnameVerifier(relayCertificate.certificate) {
+            val socket = tunnelSocket(
+                cancellation = ProfileHttpCancellation(),
+                outerSocketFactory = FakeOuterSocketFactory(FakeRawSocket(), tls),
+                pins = setOf(spkiPin(relayCertificate)),
+            )
+
+            assertThrows(javax.net.ssl.SSLPeerUnverifiedException::class.java) {
+                socket.connect(logicalEndpoint(), 1_000)
+            }
+            assertEquals(0, tls.handshakeCalls.get())
+        }
+    }
+
+    @Test
+    fun realOkHttpDoubleTlsPostsOnlyAfterValidSeparateTrustAndKeepsPlaintextOpaque() {
+        val chains = TestTlsChains.create()
+        InnerTlsHttpServer(chains.validInnerServer).use { inner ->
+            OpaqueTlsRelayServer(chains.outerServer, inner.port).use { relay ->
+                withOuterHostnameVerifier(chains.relay.certificate) {
+                    val result = postThroughRealTunnel(
+                        relay = relay,
+                        chains = chains,
+                        innerClientCertificates = chains.validInnerClient,
+                    )
+
+                    assertTrue(result is ProfileHttpResult.Success)
+                    (result as ProfileHttpResult.Success).response.use { response ->
+                        response.withBody { assertArrayEquals("double-tls-ok".encodeToByteArray(), it) }
+                    }
+                }
+
+                assertTrue(relay.awaitConnect())
+                assertArrayEquals(E2E_EXPECTED_CONNECT, relay.connectRequests.single())
+                assertTrue(relay.awaitBridges())
+                assertEquals(1, inner.postCount.get())
+                assertArrayEquals(E2E_BODY, inner.lastBody.get())
+                assertOpaqueTls(relay.downstreamBytes())
+            }
+        }
+    }
+
+    @Test
+    fun realOkHttpDoubleTlsRejectsInnerEvilSanBeforeHttpPost() {
+        val chains = TestTlsChains.create()
+        InnerTlsHttpServer(chains.evilInnerServer).use { inner ->
+            OpaqueTlsRelayServer(chains.outerServer, inner.port).use { relay ->
+                withOuterHostnameVerifier(chains.relay.certificate) {
+                    val result = postThroughRealTunnel(
+                        relay = relay,
+                        chains = chains,
+                        innerClientCertificates = chains.validInnerClient,
+                    )
+                    assertEquals(ProfileHttpFailure.NETWORK_ERROR, (result as ProfileHttpResult.Failure).code)
+                }
+
+                assertTrue(relay.awaitConnect())
+                assertArrayEquals(E2E_EXPECTED_CONNECT, relay.connectRequests.single())
+                assertTrue(relay.awaitBridges())
+                assertEquals(0, inner.postCount.get())
+                assertOpaqueTls(relay.downstreamBytes())
+            }
+        }
+    }
+
+    @Test
+    fun realOkHttpDoubleTlsDoesNotTrustOuterRelayCaForInnerTls() {
+        val chains = TestTlsChains.create()
+        InnerTlsHttpServer(chains.validInnerServer).use { inner ->
+            OpaqueTlsRelayServer(chains.outerServer, inner.port).use { relay ->
+                withOuterHostnameVerifier(chains.relay.certificate) {
+                    val result = postThroughRealTunnel(
+                        relay = relay,
+                        chains = chains,
+                        innerClientCertificates = chains.outerOnlyClient,
+                    )
+                    assertEquals(ProfileHttpFailure.NETWORK_ERROR, (result as ProfileHttpResult.Failure).code)
+                }
+
+                assertTrue(relay.awaitConnect())
+                assertArrayEquals(E2E_EXPECTED_CONNECT, relay.connectRequests.single())
+                assertTrue(relay.awaitBridges())
+                assertEquals(0, inner.postCount.get())
+                assertOpaqueTls(relay.downstreamBytes())
+            }
+        }
+    }
+
+    @Test
     fun relayPinsAreStrictSha256SpkiValues() {
         assertThrows(IllegalArgumentException::class.java) {
             relay("relay.example", setOf("sha256/not-base64"))
@@ -452,6 +592,92 @@ class SecureTunnelSocketFactoryTest {
         }
     }
 
+    private fun withOuterHostnameVerifier(certificate: X509Certificate, block: () -> Unit) {
+        val previous = HttpsURLConnection.getDefaultHostnameVerifier()
+        HttpsURLConnection.setDefaultHostnameVerifier { hostname, session ->
+            hostname == "relay.example" && session.peerCertificates
+                .filterIsInstance<X509Certificate>()
+                .any { it == certificate }
+        }
+        try {
+            block()
+        } finally {
+            HttpsURLConnection.setDefaultHostnameVerifier(previous)
+        }
+    }
+
+    private fun postThroughRealTunnel(
+        relay: OpaqueTlsRelayServer,
+        chains: TestTlsChains,
+        innerClientCertificates: HandshakeCertificates,
+    ): ProfileHttpResult {
+        val logicalAddress = InetAddress.getByName("8.8.8.8")
+        val outerFactory = object : SecureTunnelOuterSocketFactory {
+            override fun createRawSocket(): Socket = object : Socket() {
+                override fun connect(endpoint: SocketAddress?, timeout: Int) {
+                    assertEquals(InetSocketAddress("relay.example", 443), endpoint)
+                    super.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), relay.port), timeout)
+                }
+            }
+
+            override fun createTlsSocket(rawSocket: Socket, relay: SecureTunnelRelay): SSLSocket =
+                chains.outerClient.sslSocketFactory()
+                    .createSocket(rawSocket, relay.host, relay.port, true) as SSLSocket
+        }
+        val provider = TunnelSocketFactoryProvider { host, approvedAddresses, cancellation ->
+            SecureTunnelSocketFactory(
+                relay = SecureTunnelRelay("relay.example", 443, setOf(spkiPin(chains.relay))),
+                credentialProvider = TunnelCredentialProvider { QATunnelCredential(E2E_TOKEN.toCharArray()) },
+                expectedUpstreamHost = host,
+                approvedUpstreamAddresses = approvedAddresses,
+                cancellation = cancellation,
+                outerSocketFactory = outerFactory,
+            )
+        }
+        val innerVerifier = HostnameVerifier { hostname, session ->
+            hostname == "ws024.juntadeandalucia.es" && session.peerCertificates
+                .filterIsInstance<X509Certificate>()
+                .any { it == chains.validInner.certificate }
+        }
+        val executor = OkHttpProfileHttpExecutor(provider) {
+            OkHttpClient.Builder()
+                .sslSocketFactory(innerClientCertificates.sslSocketFactory(), innerClientCertificates.trustManager)
+                .hostnameVerifier(innerVerifier)
+        }
+        val requestUrl = (SafeNetworkUrlPolicy().validateRequest(
+            java.net.URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT),
+        ) as NetworkUrlValidation.Allowed).url
+        val transport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver { listOf(logicalAddress) },
+            executor = executor,
+        )
+        return ProfileHttpRequest(requestUrl, E2E_BODY.copyOf()).use { request ->
+            transport.post(request, ProfileHttpCancellation())
+        }
+    }
+
+    private fun assertOpaqueTls(bytes: ByteArray) {
+        assertTrue(bytes.isNotEmpty())
+        assertEquals(0x16, bytes.first().toInt() and 0xff)
+        listOf(
+            "POST ".encodeToByteArray(),
+            "/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService".encodeToByteArray(),
+            "Content-Type:".encodeToByteArray(),
+            "canary".encodeToByteArray(),
+            E2E_BODY,
+            E2E_CANARY.encodeToByteArray(),
+        ).forEach { plaintext ->
+            assertFalse(bytes.containsSequence(plaintext))
+        }
+    }
+
+    private fun ByteArray.containsSequence(needle: ByteArray): Boolean {
+        if (needle.isEmpty() || needle.size > size) return false
+        return (0..size - needle.size).any { start ->
+            needle.indices.all { offset -> this[start + offset] == needle[offset] }
+        }
+    }
+
     private class FakeOuterSocketFactory(
         private val raw: Socket,
         private val tls: SSLSocket,
@@ -511,6 +737,7 @@ class SecureTunnelSocketFactoryTest {
     private open class FakeTlsSocket(
         private val input: InputStream = ByteArrayInputStream(ByteArray(0)),
         private val session: SSLSession = fakeSession(null),
+        private val supportedProtocols: Array<String> = arrayOf("TLSv1.3", "TLSv1.2"),
     ) : SSLSocket() {
         val written = ByteArrayOutputStream()
         val handshakeCalls = AtomicInteger()
@@ -527,9 +754,9 @@ class SecureTunnelSocketFactoryTest {
 
         override fun setEnabledCipherSuites(suites: Array<String>) = Unit
 
-        override fun getSupportedProtocols(): Array<String> = arrayOf("TLSv1.3", "TLSv1.2")
+        override fun getSupportedProtocols(): Array<String> = supportedProtocols.copyOf()
 
-        override fun getEnabledProtocols(): Array<String> = enabledProtocols
+        override fun getEnabledProtocols(): Array<String> = enabledProtocols.copyOf()
 
         override fun setEnabledProtocols(protocols: Array<String>) {
             enabledProtocols = protocols
@@ -644,6 +871,193 @@ class SecureTunnelSocketFactoryTest {
         }
     }
 
+    private class TestTlsChains(
+        val relay: HeldCertificate,
+        val validInner: HeldCertificate,
+        val outerServer: HandshakeCertificates,
+        val outerClient: HandshakeCertificates,
+        val validInnerServer: HandshakeCertificates,
+        val evilInnerServer: HandshakeCertificates,
+        val validInnerClient: HandshakeCertificates,
+        val outerOnlyClient: HandshakeCertificates,
+    ) {
+        companion object {
+            fun create(): TestTlsChains {
+                val outerCa = HeldCertificate.Builder().certificateAuthority(0).commonName("outer-ca").build()
+                val innerCa = HeldCertificate.Builder().certificateAuthority(0).commonName("inner-ca").build()
+                val relay = HeldCertificate.Builder()
+                    .commonName("relay.example")
+                    .addSubjectAlternativeName("relay.example")
+                    .signedBy(outerCa)
+                    .build()
+                val validInner = HeldCertificate.Builder()
+                    .commonName("ws024.juntadeandalucia.es")
+                    .addSubjectAlternativeName("ws024.juntadeandalucia.es")
+                    .signedBy(innerCa)
+                    .build()
+                val evilInner = HeldCertificate.Builder()
+                    .commonName("evil.example")
+                    .addSubjectAlternativeName("evil.example")
+                    .signedBy(innerCa)
+                    .build()
+                return TestTlsChains(
+                    relay = relay,
+                    validInner = validInner,
+                    outerServer = HandshakeCertificates.Builder().heldCertificate(relay, outerCa.certificate).build(),
+                    outerClient = HandshakeCertificates.Builder().addTrustedCertificate(outerCa.certificate).build(),
+                    validInnerServer = HandshakeCertificates.Builder().heldCertificate(validInner, innerCa.certificate).build(),
+                    evilInnerServer = HandshakeCertificates.Builder().heldCertificate(evilInner, innerCa.certificate).build(),
+                    validInnerClient = HandshakeCertificates.Builder().addTrustedCertificate(innerCa.certificate).build(),
+                    outerOnlyClient = HandshakeCertificates.Builder().addTrustedCertificate(outerCa.certificate).build(),
+                )
+            }
+        }
+    }
+
+    private class InnerTlsHttpServer(
+        certificates: HandshakeCertificates,
+    ) : AutoCloseable {
+        private val server = certificates.sslContext().serverSocketFactory.createServerSocket(
+            0,
+            1,
+            InetAddress.getLoopbackAddress(),
+        ) as SSLServerSocket
+        val port: Int
+            get() = server.localPort
+        val postCount = AtomicInteger()
+        val lastBody = AtomicReference<ByteArray?>()
+        private val completed = CountDownLatch(1)
+        private val worker = Thread {
+            try {
+                (server.accept() as SSLSocket).use { socket ->
+                    socket.soTimeout = 3_000
+                    socket.startHandshake()
+                    val header = readHeader(socket.inputStream)
+                    val contentLength = header.decodeToString()
+                        .lineSequence()
+                        .first { it.startsWith("Content-Length:", ignoreCase = true) }
+                        .substringAfter(':')
+                        .trim()
+                        .toInt()
+                    val body = socket.inputStream.readExactly(contentLength)
+                    postCount.incrementAndGet()
+                    lastBody.set(body)
+                    socket.outputStream.write(
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\nConnection: close\r\n\r\ndouble-tls-ok"
+                            .encodeToByteArray(),
+                    )
+                    socket.outputStream.flush()
+                }
+            } catch (_: Exception) {
+                // Certificate and hostname rejection deliberately never reach HTTP parsing.
+            } finally {
+                completed.countDown()
+            }
+        }.apply { isDaemon = true; name = "ws024-inner-tls-test" }
+
+        init {
+            worker.start()
+        }
+
+        override fun close() {
+            server.close()
+            completed.await(3, TimeUnit.SECONDS)
+            worker.join(3_000)
+            assertFalse(worker.isAlive)
+        }
+    }
+
+    private class OpaqueTlsRelayServer(
+        certificates: HandshakeCertificates,
+        private val innerPort: Int,
+    ) : AutoCloseable {
+        private val server = certificates.sslContext().serverSocketFactory.createServerSocket(
+            0,
+            1,
+            InetAddress.getLoopbackAddress(),
+        ) as SSLServerSocket
+        val port: Int
+            get() = server.localPort
+        val connectRequests = mutableListOf<ByteArray>()
+        private val downstream = ByteArrayOutputStream()
+        private val connectCompleted = CountDownLatch(1)
+        private val bridgesCompleted = CountDownLatch(1)
+        private val worker = Thread {
+            var inner: Socket? = null
+            try {
+                (server.accept() as SSLSocket).use { outer ->
+                    outer.soTimeout = 3_000
+                    outer.startHandshake()
+                    synchronized(connectRequests) { connectRequests += readHeader(outer.inputStream) }
+                    outer.outputStream.write("HTTP/1.1 200 Connection Established\r\n\r\n".encodeToByteArray())
+                    outer.outputStream.flush()
+                    connectCompleted.countDown()
+                    val upstream = Socket(InetAddress.getLoopbackAddress(), innerPort).apply { soTimeout = 3_000 }
+                    inner = upstream
+                    val downstreamThread = Thread {
+                        copyOpaque(outer.inputStream, upstream.outputStream, downstream)
+                    }.apply { isDaemon = true; name = "ws024-relay-downstream-test" }
+                    val upstreamThread = Thread {
+                        copyOpaque(upstream.inputStream, outer.outputStream, null)
+                    }.apply { isDaemon = true; name = "ws024-relay-upstream-test" }
+                    downstreamThread.start()
+                    upstreamThread.start()
+                    downstreamThread.join(3_000)
+                    upstreamThread.join(3_000)
+                    assertFalse(downstreamThread.isAlive)
+                    assertFalse(upstreamThread.isAlive)
+                }
+            } catch (_: Exception) {
+                // A TLS rejection closes one bridge; cleanup closes the peer deterministically.
+            } finally {
+                connectCompleted.countDown()
+                try {
+                    inner?.close()
+                } finally {
+                    bridgesCompleted.countDown()
+                }
+            }
+        }.apply { isDaemon = true; name = "ws024-outer-relay-test" }
+
+        init {
+            worker.start()
+        }
+
+        fun awaitConnect(): Boolean = connectCompleted.await(3, TimeUnit.SECONDS)
+
+        fun awaitBridges(): Boolean = bridgesCompleted.await(3, TimeUnit.SECONDS)
+
+        fun downstreamBytes(): ByteArray = synchronized(downstream) { downstream.toByteArray() }
+
+        override fun close() {
+            server.close()
+            worker.join(3_000)
+            assertFalse(worker.isAlive)
+        }
+
+        private fun copyOpaque(input: InputStream, output: java.io.OutputStream, capture: ByteArrayOutputStream?) {
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            try {
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read == -1) return
+                    capture?.let { synchronized(it) { it.write(buffer, 0, read) } }
+                    output.write(buffer, 0, read)
+                    output.flush()
+                }
+            } catch (_: Exception) {
+                // Closing either TLS endpoint terminates the opaque bridge.
+            } finally {
+                buffer.fill(0)
+                try {
+                    output.close()
+                } catch (_: Exception) {
+                    // The opposite bridge may have already closed it.
+                }
+            }
+        }
+    }
+
     private companion object {
         fun fakeSession(certificate: X509Certificate?): SSLSession = java.lang.reflect.Proxy.newProxyInstance(
             SSLSession::class.java.classLoader,
@@ -669,5 +1083,44 @@ class SecureTunnelSocketFactoryTest {
                 "Authorization: Bearer synthetic-token\r\n" +
                 "X-WS024-Tunnel-Version: 1\r\n\r\n"
             ).encodeToByteArray()
+        const val E2E_TOKEN = "e2e-token"
+        const val E2E_CANARY = "ws024-double-tls-canary"
+        val E2E_BODY = "op=pre&canary=$E2E_CANARY".encodeToByteArray()
+        val E2E_EXPECTED_CONNECT = (
+            "CONNECT ws024.juntadeandalucia.es:443 HTTP/1.1\r\n" +
+                "Host: ws024.juntadeandalucia.es:443\r\n" +
+                "Authorization: Bearer $E2E_TOKEN\r\n" +
+                "X-WS024-Tunnel-Version: 1\r\n\r\n"
+            ).encodeToByteArray()
+
+        fun readHeader(input: InputStream): ByteArray {
+            val bytes = ByteArrayOutputStream()
+            var state = 0
+            while (state < 4) {
+                val next = input.read()
+                if (next < 0) throw java.io.EOFException()
+                bytes.write(next)
+                state = when {
+                    state == 0 && next == '\r'.code -> 1
+                    state == 1 && next == '\n'.code -> 2
+                    state == 2 && next == '\r'.code -> 3
+                    state == 3 && next == '\n'.code -> 4
+                    next == '\r'.code -> 1
+                    else -> 0
+                }
+            }
+            return bytes.toByteArray()
+        }
+
+        fun InputStream.readExactly(length: Int): ByteArray {
+            val bytes = ByteArray(length)
+            var offset = 0
+            while (offset < length) {
+                val read = read(bytes, offset, length - offset)
+                if (read < 0) throw java.io.EOFException()
+                offset += read
+            }
+            return bytes
+        }
     }
 }

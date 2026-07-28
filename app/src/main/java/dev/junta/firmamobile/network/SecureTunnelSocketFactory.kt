@@ -208,9 +208,12 @@ internal class TunnelBackedSocket(
     }
 
     private fun configureAndVerifyOuterTls(outer: SSLSocket) {
-        val permitted = outer.supportedProtocols.filter { it == TLS_1_3 || it == TLS_1_2 }
-        if (permitted.isEmpty()) throw SSLPeerUnverifiedException("Relay TLS 1.2 is unavailable")
-        outer.enabledProtocols = permitted.toTypedArray()
+        val supported = outer.supportedProtocols.toSet()
+        if (TLS_1_2 !in supported) throw SSLPeerUnverifiedException("Relay TLS 1.2 is unavailable")
+        outer.enabledProtocols = buildList {
+            if (TLS_1_3 in supported) add(TLS_1_3)
+            add(TLS_1_2)
+        }.toTypedArray()
         outer.startHandshake()
         val session = outer.session
         if (!HttpsURLConnection.getDefaultHostnameVerifier().verify(relay.host, session)) {
