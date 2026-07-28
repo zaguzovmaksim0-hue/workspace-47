@@ -24,6 +24,11 @@ class SecureTunnelPolicyTest {
     }
 
     @Test
+    fun qaRejectsUnizarProfileForMiniApplet15() {
+        assertFalse(SecureTunnelPolicy.QA.allows(ProfileId("unizar-tramitador"), OFVIRTUAL_15))
+    }
+
+    @Test
     fun qaRejectsNonExactOfvirtualUrl() {
         assertFalse(
             SecureTunnelPolicy.QA.allows(
