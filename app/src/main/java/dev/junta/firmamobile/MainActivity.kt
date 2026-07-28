@@ -38,6 +38,7 @@ import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
 import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
+import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -85,6 +86,7 @@ class MainActivity : ComponentActivity() {
         val juntaAdapter = JuntaTriPhaseAdapter()
         val juntaOfvirtualAdapter = JuntaOfvirtualTriPhaseAdapter()
         val redsaraAdapter = LocalXadesDetachedAdapter()
+        val aragonAdapter = LocalCadesDetachedAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
         signingCoordinator = SigningCoordinator(
             certificateSession = app.certificateSession,
@@ -109,6 +111,7 @@ class MainActivity : ComponentActivity() {
                     juntaAdapter.id -> juntaAdapter
                     juntaOfvirtualAdapter.id -> juntaOfvirtualAdapter
                     redsaraAdapter.id -> redsaraAdapter
+                    aragonAdapter.id -> aragonAdapter
                     unizarAdapter.id -> unizarAdapter
                     else -> null
                 }

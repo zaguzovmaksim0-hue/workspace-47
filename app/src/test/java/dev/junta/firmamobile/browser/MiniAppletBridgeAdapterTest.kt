@@ -8,6 +8,7 @@ import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningFormat
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
+import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.time.Clock
 import java.time.Instant
@@ -117,6 +118,61 @@ class MiniAppletBridgeAdapterTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun exactAragonSirawLoginRoutesToLocalDetachedCadesOnlyForSelectedProfile() {
+        val challenge = ByteArray(LocalCadesDetachedAdapter.CHALLENGE_BYTES) { index ->
+            (index + 1).toByte()
+        }
+        val rawMessage = JSONObject()
+            .put("type", "MINIAPPLET_SIGN")
+            .put("documentId", DOCUMENT_ID)
+            .put("requestId", REQUEST_ID)
+            .put("dataB64", Base64.getEncoder().encodeToString(challenge))
+            .put("algorithm", "SHA1withRSA")
+            .put("format", "CAdES")
+            .put("extraProperties", ARAGON_PROPERTIES)
+            .toString()
+
+        val accepted = adapterFor("aragon-siraw").route(
+            rawMessage = rawMessage,
+            sourceOrigin = ARAGON_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 31,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        accepted.request.normalized.use { request ->
+            assertEquals("aragon-siraw", request.context.profileId)
+            assertEquals("aplicaciones.aragon.es", request.context.origin.host)
+            assertEquals(31, request.context.navigationEpoch)
+            assertEquals(LocalCadesDetachedAdapter.ID, request.protocolId)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(challenge, data)
+                    assertEquals(ARAGON_PROPERTIES, properties)
+                }
+            }
+        }
+
+        val wrongProfile = adapterFor("junta-andalucia").route(
+            rawMessage = rawMessage,
+            sourceOrigin = ARAGON_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 31,
+        ) as MiniAppletBridgeRouteResult.Rejected
+        assertEquals(SigningErrorCode.ORIGIN_NOT_ALLOWED, wrongProfile.code)
+
+        val wrongProperties = adapterFor("aragon-siraw").route(
+            rawMessage = rawMessage.replace("filter=nonexpired", "filter=qualified:123"),
+            sourceOrigin = ARAGON_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 31,
+        ) as MiniAppletBridgeRouteResult.Rejected
+        assertEquals(SigningErrorCode.INVALID_REQUEST, wrongProperties.code)
+        challenge.fill(0)
     }
 
     @Test
@@ -452,6 +508,8 @@ class MiniAppletBridgeAdapterTest {
                 "sign/TriPhaseSignatureService\nfilters=keyusage.digitalsignature:true;nonexpired:"
         val TRUSTED_ORIGIN: Uri = Uri.parse("https://www.juntadeandalucia.es")
         val OFVIRTUAL_ORIGIN: Uri = Uri.parse("https://ws072.juntadeandalucia.es")
+        val ARAGON_ORIGIN: Uri = Uri.parse("https://aplicaciones.aragon.es")
+        const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =
             "filters=keyusage.digitalsignature:true;nonexpired:\n" +
                 "serverUrl=https://ws024.juntadeandalucia.es/" +

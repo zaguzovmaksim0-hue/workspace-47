@@ -33,6 +33,13 @@ class ProtocolAdapterRegistryTest {
         assertEquals(JuntaOfvirtualTriPhaseAdapter.ID, juntaOfvirtual?.signingProtocolId)
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), juntaOfvirtual?.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), juntaOfvirtual?.callbackContractId)
+        val aragon = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("aragon-siraw"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(LocalCadesDetachedAdapter.ID, aragon?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), aragon?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), aragon?.callbackContractId)
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),
