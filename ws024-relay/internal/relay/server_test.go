@@ -2,6 +2,7 @@ package relay
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -14,6 +15,7 @@ import (
 	"math/big"
 	"net"
 	"net/netip"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -176,6 +178,89 @@ func TestServerSuccessfulSessionUsesStrictOrderAndBufferedBytes(t *testing.T) {
 	}
 	if fixture.upstream.closedCount() != 1 {
 		t.Fatalf("upstream close count = %d, want 1", fixture.upstream.closedCount())
+	}
+}
+
+func TestServerAuditDoesNotExposeOpaquePayloadTokenExactSizeOrCertificate(t *testing.T) {
+	fixture := newServerFixture(t)
+	var auditOutput bytes.Buffer
+	audit, err := NewSafeAudit(&auditOutput)
+	if err != nil {
+		t.Fatalf("NewSafeAudit() error = %v", err)
+	}
+	fixture.config.AuditRecorder = audit
+	token := "qa-token-never-audit"
+	canary := "opaque-inner-canary-never-audit"
+	opaque := append([]byte("\x16\x03\x03"+canary), bytes.Repeat([]byte{0xa5}, 4_321)...)
+	fixture.pump = func(
+		ctx context.Context,
+		downstream net.Conn,
+		downstreamReader io.Reader,
+		upstream net.Conn,
+		limits PumpLimits,
+	) (PumpResult, error) {
+		got := make([]byte, len(opaque))
+		if _, err := io.ReadFull(downstreamReader, got); err != nil {
+			return PumpResult{}, err
+		}
+		if !bytes.Equal(got, opaque) {
+			return PumpResult{}, errors.New("opaque input mismatch")
+		}
+		return PumpResult{
+			DownstreamToUpstreamBytes: int64(len(got)),
+			UpstreamToDownstreamBytes: 7_777,
+		}, nil
+	}
+	server, err := newServer(fixture.config, func(
+		ctx context.Context,
+		downstream net.Conn,
+		downstreamReader io.Reader,
+		upstream net.Conn,
+		limits PumpLimits,
+	) (PumpResult, error) {
+		return fixture.pump(ctx, downstream, downstreamReader, upstream, limits)
+	}, time.Now)
+	if err != nil {
+		t.Fatalf("newServer() error = %v", err)
+	}
+	fixture.server = server
+
+	client, serverDone := fixture.start(t)
+	tlsClient := fixture.handshake(t, client)
+	request := append([]byte(validConnectWithCredential(token)), opaque...)
+	_ = tlsClient.SetDeadline(time.Now().Add(2 * time.Second))
+	writeDone := make(chan error, 1)
+	go func() {
+		_, err := tlsClient.Write(request)
+		writeDone <- err
+	}()
+	if got := readHeader(t, tlsClient); got != successConnectResponse {
+		t.Fatalf("response = %q, want exact 200", got)
+	}
+	if err := <-writeDone; err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+	if err := <-serverDone; err != nil {
+		t.Fatalf("ServeConn() error = %v", err)
+	}
+
+	auditBytes := auditOutput.Bytes()
+	for _, forbidden := range [][]byte{
+		[]byte(token),
+		[]byte(canary),
+		[]byte(strconv.Itoa(len(opaque))),
+		[]byte(FixedAuthority),
+		[]byte("Authorization"),
+		[]byte("POST "),
+		[]byte("Content-Type"),
+		fixture.serverCert.Certificate[0],
+	} {
+		if len(forbidden) != 0 && bytes.Contains(auditBytes, forbidden) {
+			t.Fatalf("audit exposed forbidden material")
+		}
+	}
+	if !bytes.Contains(auditBytes, []byte(`"result":"success"`)) {
+		t.Fatalf("audit result is not the closed success token: %s", auditBytes)
 	}
 }
 

@@ -232,6 +232,22 @@ tasks.configureEach {
     }
 }
 
+val ws024ExternalHarnessActive = listOf(
+    "JFM_TUNNEL_TEST_RELAY_PORT",
+    "JFM_TUNNEL_TEST_OUTER_CA_PEM",
+    "JFM_TUNNEL_TEST_INNER_CA_PEM",
+    "JFM_TUNNEL_TEST_RESULT_FILE",
+).any { providers.environmentVariable(it).isPresent }
+
+if (ws024ExternalHarnessActive) {
+    tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+        if (name == "testDebugUnitTest") {
+            outputs.upToDateWhen { false }
+            outputs.cacheIf("external WS024 harness inputs are ephemeral") { false }
+        }
+    }
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)

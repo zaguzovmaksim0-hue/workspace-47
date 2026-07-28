@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.net.SocketFactory
 import javax.net.ssl.HandshakeCompletedListener
 import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLParameters
 import javax.net.ssl.SSLServerSocket
 import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
@@ -324,6 +325,30 @@ class SecureTunnelSocketFactoryTest {
         } finally {
             HttpsURLConnection.setDefaultHostnameVerifier(previousVerifier)
         }
+    }
+
+    @Test
+    fun outerTlsAdvertisesOnlyHttp11AlpnBeforeHandshake() {
+        val relayCertificate = heldCertificate("relay.example")
+        val tls = AlpnRecordingTlsSocket(
+            input = ByteArrayInputStream(
+                "HTTP/1.1 200 Connection Established\r\n\r\n".encodeToByteArray(),
+            ),
+            session = fakeSession(relayCertificate.certificate),
+        )
+        val raw = FakeRawSocket()
+        withRelayHostnameVerifier {
+            val socket = tunnelSocket(
+                cancellation = ProfileHttpCancellation(),
+                outerSocketFactory = FakeOuterSocketFactory(raw, tls),
+                pins = setOf(spkiPin(relayCertificate)),
+            )
+
+            socket.connect(logicalEndpoint(), 1_000)
+            socket.close()
+        }
+
+        assertArrayEquals(arrayOf("http/1.1"), tls.applicationProtocolsAtHandshake.get())
     }
 
     @Test
@@ -850,6 +875,25 @@ class SecureTunnelSocketFactoryTest {
 
         override fun close() {
             closed.set(true)
+        }
+    }
+
+    private class AlpnRecordingTlsSocket(
+        input: InputStream,
+        session: SSLSession,
+    ) : FakeTlsSocket(input = input, session = session) {
+        val applicationProtocolsAtHandshake = AtomicReference<Array<String>>(emptyArray())
+        private var parameters = SSLParameters()
+
+        override fun getSSLParameters(): SSLParameters = parameters
+
+        override fun setSSLParameters(parameters: SSLParameters) {
+            this.parameters = parameters
+        }
+
+        override fun startHandshake() {
+            applicationProtocolsAtHandshake.set(sslParameters.applicationProtocols.copyOf())
+            super.startHandshake()
         }
     }
 

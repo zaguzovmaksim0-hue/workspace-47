@@ -220,6 +220,7 @@ internal class TunnelBackedSocket(
             if (TLS_1_3 in supported) add(TLS_1_3)
             add(TLS_1_2)
         }.toTypedArray()
+        configureHttp11Alpn(outer)
         outer.startHandshake()
         val session = outer.session
         if (!HttpsURLConnection.getDefaultHostnameVerifier().verify(relay.host, session)) {
@@ -233,6 +234,22 @@ internal class TunnelBackedSocket(
             false
         }
         if (!matchesPinnedSpki) throw SSLPeerUnverifiedException("Relay pin verification failed")
+    }
+
+    private fun configureHttp11Alpn(outer: SSLSocket) {
+        val parameters = outer.sslParameters
+        try {
+            val setter = parameters.javaClass.getMethod(
+                "setApplicationProtocols",
+                Array<String>::class.java,
+            )
+            setter.invoke(parameters, arrayOf<String>(HTTP_1_1_ALPN))
+            outer.sslParameters = parameters
+        } catch (_: ReflectiveOperationException) {
+            throw SSLPeerUnverifiedException("Relay ALPN is unavailable")
+        } catch (_: RuntimeException) {
+            throw SSLPeerUnverifiedException("Relay ALPN is unavailable")
+        }
     }
 
     private fun establishConnect(outer: SSLSocket) {
@@ -372,6 +389,7 @@ internal class TunnelBackedSocket(
         const val HTTPS_PORT = 443
         const val TLS_1_2 = "TLSv1.2"
         const val TLS_1_3 = "TLSv1.3"
+        const val HTTP_1_1_ALPN = "http/1.1"
         const val SPKI_PREFIX = "sha256/"
     }
 }
