@@ -324,9 +324,11 @@ class ProfileHttpTransportTest {
                 (post(saturated) as ProfileHttpResult.Failure).code,
             )
         } finally {
-            cancellations.forEach(ProfileHttpCancellation::cancel)
+            // Release the resolver tasks before joining their callers so the shared bounded
+            // executor has actually regained capacity when this test returns.
             release.countDown()
             workers.forEach { it.join(1_000) }
+            cancellations.forEach(ProfileHttpCancellation::cancel)
         }
         assertTrue(workers.none(Thread::isAlive))
     }
