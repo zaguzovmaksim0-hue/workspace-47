@@ -139,6 +139,7 @@ internal class TunnelBackedSocket(
     private var rawSocket: Socket? = null
     private var cancellationRegistration: Closeable? = null
     private var closed = false
+    private var connecting = false
     private var connected = false
     private var inputShutdown = false
     private var outputShutdown = false
@@ -151,12 +152,16 @@ internal class TunnelBackedSocket(
     override fun connect(endpoint: SocketAddress?, timeout: Int) {
         if (timeout < 0) throw IllegalArgumentException("timeout < 0")
         val accepted = validateEndpoint(endpoint)
+        synchronized(lock) {
+            if (closed) throw SocketException("Socket is closed")
+            if (connected || connecting || outerSocket != null || rawSocket != null) {
+                throw SocketException("Socket is already connected")
+            }
+            connecting = true
+        }
         try {
             val raw = outerSocketFactory.createRawSocket()
             synchronized(lock) {
-                if (connected || outerSocket != null || rawSocket != null) {
-                    throw SocketException("Socket is already connected")
-                }
                 if (closed) {
                     closeQuietly(raw)
                     throw SocketException("Socket is closed")
@@ -191,6 +196,7 @@ internal class TunnelBackedSocket(
                 logicalAddress = accepted.address
                 logicalPort = accepted.port
                 connected = true
+                connecting = false
             }
         } catch (failure: Exception) {
             close()
@@ -324,6 +330,7 @@ internal class TunnelBackedSocket(
         synchronized(lock) {
             if (closed) return
             closed = true
+            connecting = false
             outerToClose = outerSocket
             outerSocket = null
             rawToClose = rawSocket

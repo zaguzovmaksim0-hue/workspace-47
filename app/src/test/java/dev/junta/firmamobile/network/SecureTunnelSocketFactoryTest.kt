@@ -327,6 +327,66 @@ class SecureTunnelSocketFactoryTest {
     }
 
     @Test
+    fun concurrentSecondConnectIsRejectedWithoutCreatingOrClosingAnotherRawSocket() {
+        val cancellation = ProfileHttpCancellation()
+        val raw = BlockingRawSocket()
+        val factory = FakeOuterSocketFactory(raw, FakeTlsSocket())
+        val socket = tunnelSocket(cancellation, factory)
+        val firstFailure = AtomicReference<Throwable?>()
+        val firstConnect = Thread {
+            try {
+                socket.connect(logicalEndpoint(), 30_000)
+            } catch (error: Throwable) {
+                firstFailure.set(error)
+            }
+        }
+
+        firstConnect.start()
+        assertTrue(raw.connectEntered.await(1, TimeUnit.SECONDS))
+
+        assertThrows(SocketException::class.java) {
+            socket.connect(logicalEndpoint(), 1_000)
+        }
+        assertEquals(1, factory.rawSocketCreations.get())
+        assertEquals(0, factory.tlsSocketCreations.get())
+        assertFalse(raw.closed.get())
+
+        socket.close()
+        firstConnect.join(1_000)
+        assertFalse(firstConnect.isAlive)
+        assertTrue(firstFailure.get() is SocketException)
+    }
+
+    @Test
+    fun repeatedConnectDoesNotCreateAnotherRawSocketOrCloseEstablishedTunnel() {
+        val relayCertificate = heldCertificate("relay.example")
+        val tls = FakeTlsSocket(
+            input = ByteArrayInputStream("HTTP/1.1 200 Connection Established\r\n\r\n".encodeToByteArray()),
+            session = fakeSession(relayCertificate.certificate),
+        )
+        val factory = FakeOuterSocketFactory(FakeRawSocket(), tls)
+        withOuterHostnameVerifier(relayCertificate.certificate) {
+            val socket = tunnelSocket(
+                cancellation = ProfileHttpCancellation(),
+                outerSocketFactory = factory,
+                pins = setOf(spkiPin(relayCertificate)),
+            )
+
+            socket.connect(logicalEndpoint(), 1_000)
+
+            assertThrows(SocketException::class.java) {
+                socket.connect(logicalEndpoint(), 1_000)
+            }
+            assertEquals(1, factory.rawSocketCreations.get())
+            assertEquals(1, factory.tlsSocketCreations.get())
+            assertTrue(socket.isConnected)
+            assertFalse(socket.isClosed)
+            assertFalse(tls.closed.get())
+            socket.close()
+        }
+    }
+
+    @Test
     fun outerTlsProtocolPreferenceEnablesTls13BeforeTls12() {
         val relayCertificate = heldCertificate("relay.example")
         val tls = FakeTlsSocket(
