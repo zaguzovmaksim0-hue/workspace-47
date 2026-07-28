@@ -378,7 +378,16 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
   campo controlado y provoca el submit; error recibe tipo y mensaje.
 - **TLS client auth:** no verificado; la integración de firma de token/hash no
   demuestra ni descarta otro flow.
-- **Estado:** `VERIFIED_CONTRACT` estático; no implementado y sin E2E.
+- **Implementación 2026-07-28:** profile `aragon-siraw` `QA_ONLY`, origin y
+  entrada exactos, bridge MiniApplet y adapter CAdES local limitados al login
+  público. El adapter exige challenge de 20 bytes, `SHA1withRSA`, `CAdES`
+  detached y propiedades exactas `mode=explicit` + `filter=nonexpired`; valida
+  el CMS/CAdES y rechaza manipulación antes de devolverlo.
+- **Límite:** Storage/Retrieve y la rama documental con hash precalculado
+  permanecen deshabilitados. Su presencia en el JS no concede endpoint ni
+  capability runtime.
+- **Estado:** `VERIFIED_CONTRACT` / `IMPLEMENTED_NOT_E2E`; falta aceptación
+  real del portal en dispositivo físico.
 
 ### P17 — Universidad de Zaragoza
 

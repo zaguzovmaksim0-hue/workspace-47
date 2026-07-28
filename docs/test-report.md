@@ -357,3 +357,45 @@ una package session, por lo que el WebView test UniZAR quedó compilado pero no
 ejecutado en este device gate. No se rebaja ninguna política para sortear esa
 restricción. El E2E real no se declara: no se dispuso de un desbloqueo secreto
 completo y seguro en este turno, y no se simuló aceptación del portal.
+
+## Milestone P16A — Aragón SIRAW login CAdES — 2026-07-28
+
+Se activó el profile `aragon-siraw` exclusivamente en builds QA. La revisión
+live del portal confirmó el origin exacto `https://aplicaciones.aragon.es`, la
+entrada pública SIRAW y el tuple `MiniApplet.sign` usado para login:
+`SHA1withRSA`, `CAdES`, `mode=explicit` y `filter=nonexpired`. El challenge
+observado se decodifica a 20 bytes.
+
+El nuevo profile no declara endpoints. `ProtocolAdapterRegistry` dirige solo
+`(aragon-siraw, SIGN)` al `LocalCadesDetachedAdapter` existente. El bridge
+requiere origin principal, profile seleccionado, algoritmo, formato y
+properties exactos. El adapter genera CAdES detached local, valida la firma CMS
+y rechaza challenge, origin, profile, properties o firma manipulados. Los
+servlets Storage/Retrieve presentes en el JavaScript público y la rama
+documental con `precalculatedHashAlgorithm=SHA1` permanecen fuera del runtime.
+
+El catálogo público conserva 182 entradas y ahora contiene siete bindings de
+profile. Aragón pasa de `VERIFIED_CONTRACT` sin implementación a
+`IMPLEMENTED_NOT_E2E` / `E2E_PENDING`; continúa deshabilitado en release. El
+snapshot nacional conserva 180 registros: 1 `VERIFIED_E2E`, 4
+`IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 168 `BROWSE_ONLY`, 2
+`UNSUPPORTED_PROTOCOL` y 4 `INACCESSIBLE`.
+
+Validación ejecutada:
+
+- direct Context7 MCP: servidor local 3.2.4, tools `resolve-library-id` y
+  `query-docs`, consulta AndroidX/WebKit completada;
+- tests focused de profile, registry, bridge, adapter CAdES, catálogo y
+  generador: PASS;
+- `testDebugUnitTest`: 319 tests, 0 failures;
+- `testQaUnitTest`: 319 tests, 0 failures;
+- `lintDebug` y `lintQa`: 0 errores, 25 warnings en cada variante;
+- `assembleDebug` y `assembleQa`: PASS;
+- catálogo generado dos veces byte-for-byte idéntico;
+- debug APK SHA-256:
+  `42996105646208835b534813a47069673c72212b2ad3de3eb17a742d1a47538f`;
+- QA APK SHA-256:
+  `b2864a594e032e8a5f2be5be84ac3b34b1a4519383edaee9f50c471942c28830`.
+
+Este milestone no prueba aceptación del portal, no ejecuta una operación
+administrativa y no eleva Aragón a `VERIFIED_E2E`.

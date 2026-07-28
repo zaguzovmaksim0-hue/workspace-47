@@ -24,6 +24,7 @@ class JuntaOriginPolicyTest {
     private val carneJoven = ProfileId("carne-joven-andalucia")
     private val juntaOfvirtual = ProfileId("junta-ofvirtual")
     private val education = ProfileId("educacion-convocatoria")
+    private val aragon = ProfileId("aragon-siraw")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -40,6 +41,7 @@ class JuntaOriginPolicyTest {
             "ws235.juntadeandalucia.es",
             "ws072.juntadeandalucia.es",
             "sede.educacion.gob.es",
+            "aplicaciones.aragon.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -67,6 +69,7 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("ws104.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(carneJoven))
         assertEquals(setOf("ws072.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(juntaOfvirtual))
         assertEquals(setOf("sede.educacion.gob.es"), JuntaOriginPolicy.browserAllowedHosts(education))
+        assertEquals(setOf("aplicaciones.aragon.es"), JuntaOriginPolicy.browserAllowedHosts(aragon))
 
         assertEquals(
             setOf("https://www.juntadeandalucia.es"),
@@ -86,6 +89,10 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.webMessageOriginRules(juntaOfvirtual),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(education).isEmpty())
+        assertEquals(
+            setOf("https://aplicaciones.aragon.es"),
+            JuntaOriginPolicy.webMessageOriginRules(aragon),
+        )
     }
 
     @Test

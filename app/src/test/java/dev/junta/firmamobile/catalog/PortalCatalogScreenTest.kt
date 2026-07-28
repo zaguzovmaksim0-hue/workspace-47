@@ -46,7 +46,7 @@ class PortalCatalogScreenTest {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
-        assertEquals(5, compatible.items.size)
+        assertEquals(6, compatible.items.size)
         val verifiedIds = setOf("junta-andalucia", "carne-joven-andalucia")
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }
@@ -58,7 +58,7 @@ class PortalCatalogScreenTest {
         )
         val contractPending = sections.single { it.kind == PortalCatalogSectionKind.CONTRACT_PENDING }
         assertEquals(
-            setOf(PortalId("age-acceda"), PortalId("aragon-siraw")),
+            setOf(PortalId("age-acceda")),
             contractPending.items.map { it.portalId }.toSet(),
         )
         val fullCatalog = sections.single { it.kind == PortalCatalogSectionKind.FULL_CATALOG }

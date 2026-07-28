@@ -12,6 +12,9 @@ Completed:
 - Browser navigation, WebMessage bridge and signing origin bound to the selected profile (F-06).
 - Cross-profile and external HTTP navigation blocked (F-06, F-07).
 - Renderer loss invalidates bridge/signing state and creates a fresh WebView.
+- Aragón SIRAW login profile implemented as `QA_ONLY`: exact origin, 20-byte
+  challenge, local detached CAdES, `SHA1withRSA`, exact `mode=explicit` and
+  `filter=nonexpired`; Storage/Retrieve and document-signing branches remain blocked.
 
 Current isolated PR — WebView session-state hardening:
 
@@ -28,7 +31,7 @@ Next isolated PRs:
 1. Client TLS state machine and Carné Joven E2E (F-03, F-13).
 2. Profile-scoped cookies/session transport and IPv6 handling (F-08, F-17).
 3. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
-4. Local CAdES/XAdES validation and portal E2E (F-12).
+4. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
 5. CI, lint, secret/dependency scanning and signer verification (F-14).
 6. Catalog single source of truth and remaining maintenance work (F-15).
 
