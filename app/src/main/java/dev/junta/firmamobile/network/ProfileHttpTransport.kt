@@ -10,6 +10,7 @@ import java.net.InetAddress
 import java.net.Proxy
 import java.net.URI
 import java.net.UnknownHostException
+import java.util.IdentityHashMap
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -112,35 +113,34 @@ fun interface ProfileHttpTransport {
 class ProfileHttpCancellation internal constructor() {
     private val cancelled = AtomicBoolean(false)
     private val attempt = AtomicReference<ProfileHttpCallPhaseTracker?>(null)
-    private var cancelAction: (() -> Unit)? = null
+    private val cancelActions = IdentityHashMap<() -> Unit, Unit>()
 
     fun register(action: () -> Unit): Closeable {
         val invokeNow = synchronized(this) {
             if (cancelled.get()) {
                 true
             } else {
-                check(cancelAction == null) { "A network cancellation action is already registered" }
-                cancelAction = action
+                cancelActions[action] = Unit
                 false
             }
         }
         if (invokeNow) action()
         return Closeable {
             synchronized(this) {
-                if (cancelAction === action) cancelAction = null
+                cancelActions.remove(action)
             }
         }
     }
 
     fun cancel() {
-        val action = synchronized(this) {
+        val actions = synchronized(this) {
             if (!cancelled.compareAndSet(false, true)) {
-                null
+                emptyList()
             } else {
-                cancelAction.also { cancelAction = null }
+                cancelActions.keys.toList().also { cancelActions.clear() }
             }
         }
-        action?.invoke()
+        actions.forEach { action -> action() }
     }
 
     fun isCancelled(): Boolean = cancelled.get()
@@ -191,7 +191,8 @@ class HttpsProfileHttpTransport internal constructor(
     private val dnsResolver: DnsResolver = DnsResolver { host ->
         InetAddress.getAllByName(host).toList()
     },
-    private val executor: ProfileHttpExecutor = OkHttpProfileHttpExecutor(),
+    private val tunnelSocketFactoryProvider: TunnelSocketFactoryProvider? = null,
+    private val executor: ProfileHttpExecutor = OkHttpProfileHttpExecutor(tunnelSocketFactoryProvider),
     private val dnsTimeoutMillis: Long = DNS_TIMEOUT_MILLIS,
 ) : ProfileHttpTransport {
     init {
@@ -370,6 +371,7 @@ class HttpsProfileHttpTransport internal constructor(
 }
 
 internal class OkHttpProfileHttpExecutor(
+    private val tunnelSocketFactoryProvider: TunnelSocketFactoryProvider? = null,
     private val clientBuilderFactory: () -> OkHttpClient.Builder = { OkHttpClient.Builder() },
 ) : ProfileHttpExecutor {
     override fun post(
@@ -390,6 +392,7 @@ internal class OkHttpProfileHttpExecutor(
             connectTimeoutMillis = connectTimeoutMillis,
             readTimeoutMillis = readTimeoutMillis,
             tracker = tracker,
+            cancellation = cancellation,
         )
         val request = buildRequest(url, body)
         val call = client.newCall(request)
@@ -423,10 +426,11 @@ internal class OkHttpProfileHttpExecutor(
         connectTimeoutMillis: Int,
         readTimeoutMillis: Int,
         tracker: ProfileHttpCallPhaseTracker,
+        cancellation: ProfileHttpCancellation? = null,
     ): OkHttpClient {
         val approved = approvedAddresses.distinct()
         require(expectedHost.isNotBlank() && approved.isNotEmpty())
-        return clientBuilderFactory()
+        val builder = clientBuilderFactory()
             .dns(
                 Dns { hostname ->
                     if (hostname != expectedHost) {
@@ -457,7 +461,16 @@ internal class OkHttpProfileHttpExecutor(
                 }
                 chain.proceed(chain.request())
             }
-            .build()
+        tunnelSocketFactoryProvider?.let { provider ->
+            builder.socketFactory(
+                provider.create(
+                    expectedUpstreamHost = expectedHost,
+                    approvedUpstreamAddresses = approved.toSet(),
+                    cancellation = requireNotNull(cancellation),
+                ),
+            )
+        }
+        return builder.build()
     }
 
     private fun InputStream.readBounded(maxBytes: Int): ByteArray {
