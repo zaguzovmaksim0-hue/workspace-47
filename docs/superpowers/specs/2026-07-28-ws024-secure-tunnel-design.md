@@ -27,8 +27,10 @@ Añadir a Junta Firma un fallback de red automático y estrechamente limitado pa
 operaciones tri-phase cuyo destino contractual sea `ws024.juntadeandalucia.es:443`.
 
 La aplicación intentará primero la ruta directa. Solo cuando pueda demostrar que el
-fallo ocurrió antes de enviar bytes HTTP al upstream podrá repetir la misma petición por
-un túnel seguro administrado por el proyecto.
+fallo ocurrió antes de enviar **cualquier byte HTTP** —cabeceras o cuerpo— al upstream
+podrá repetir la misma petición por un túnel seguro administrado por el proyecto. El
+transporte tri-phase usará exclusivamente HTTP/1.1 para que esta frontera sea observable
+y verificable; HTTP/2 queda deshabilitado en esta ruta.
 
 El túnel será invisible para el usuario y no se utilizará para WebView, navegación,
 otros portales ni destinos arbitrarios.
@@ -108,20 +110,22 @@ de respuestas.
 ### 5.1. Regla direct-first
 
 La primera operación en una red nueva utilizará la ruta directa. El fallback solo se
-intentará cuando el transporte pueda clasificar el fallo como anterior al envío de la
-petición HTTP:
+intentará cuando el transporte pueda probar que todavía no se escribió ningún byte HTTP:
 
-- DNS no resuelto;
-- conexión TCP no establecida;
-- handshake TLS directo no completado;
-- socket cerrado antes de empezar a escribir el body.
+- `DNS_BEFORE_CONNECT`: DNS no resuelto;
+- `TCP_BEFORE_HTTP_BYTES`: conexión TCP no establecida;
+- `TLS_BEFORE_HTTP_BYTES`: handshake TLS directo no completado.
+
+No se inferirá esta fase por el tipo genérico de excepción, por la duración ni por la
+ausencia de respuesta. Un contador de escritura asociado al socket marcará el primer byte
+HTTP antes de delegarlo al sistema. Desde ese instante el resultado se considera incierto.
 
 ### 5.2. Casos en los que no se permite fallback automático
 
 No se repetirá automáticamente cuando:
 
-- comenzó la escritura del request body;
-- el body se escribió y se perdió la respuesta;
+- comenzó la escritura de cualquier cabecera o byte HTTP;
+- se escribió total o parcialmente la petición y se perdió la respuesta;
 - hubo timeout de lectura;
 - el servidor respondió con cualquier código HTTP;
 - se recibió HTML, content type inválido o respuesta demasiado grande;
@@ -138,12 +142,13 @@ El resultado de red dejará de usar un único `NETWORK_ERROR` para todos los cas
 introducirá una fase segura y sin datos sensibles, por ejemplo:
 
 - `DNS_BEFORE_CONNECT`;
-- `TCP_BEFORE_WRITE`;
-- `TLS_BEFORE_WRITE`;
-- `WRITE_STARTED`;
-- `READ_AFTER_WRITE`.
+- `TCP_BEFORE_HTTP_BYTES`;
+- `TLS_BEFORE_HTTP_BYTES`;
+- `HTTP_WRITE_STARTED`;
+- `READ_AFTER_HTTP_WRITE`.
 
-Solo las tres primeras serán elegibles para fallback.
+Solo las tres primeras serán elegibles para fallback. Cualquier error con fase desconocida
+se mapeará a `NETWORK_RESULT_UNCERTAIN` y nunca activará un segundo envío.
 
 ### 5.4. Preferencia temporal por red
 
@@ -176,25 +181,36 @@ local o CI. La credencial:
 
 ### 6.2. Producción
 
-La activación en release requerirá credenciales de corta duración emitidas por el
-backend tras validar la integridad de la aplicación. El diseño de producción asumirá
-Play Integrity cuando la distribución sea mediante Google Play:
+La activación en release requerirá proof-of-possession y credenciales de un solo uso;
+un bearer token por sí solo no será suficiente. El diseño de producción asumirá Play
+Integrity cuando la distribución sea mediante Google Play:
 
-1. la aplicación solicita un token de integridad para un nonce del backend;
-2. el backend valida package name, certificado de firma, frescura y verdict mínimo;
-3. emite una credencial de túnel de corta duración;
-4. la credencial queda vinculada al nonce y a una instalación pseudónima;
-5. el relay aplica rate limits y rechaza replay o expiración.
+1. la instalación crea una clave de autenticación separada en Android Keystore; nunca es
+   el certificado de firma del usuario;
+2. la aplicación solicita un token de integridad para un nonce del backend e incluye la
+   clave pública de autenticación;
+3. el backend valida package name, certificado de firma de la APK, frescura y verdict
+   mínimo;
+4. emite una credencial firmada de corta duración con `iss`, `aud=ws024-relay`, `nbf`,
+   `exp`, `jti`, installation pseudónima y huella de la clave pública;
+5. cada CONNECT incluye otro nonce, tiempo acotado y una firma de Android Keystore sobre
+   `jti || nonce || CONNECT || ws024.juntadeandalucia.es:443 || versión`;
+6. el relay valida token, firma, audiencia y tiempo, y consume atómicamente `jti+nonce`;
+7. un token consumido, repetido, expirado o asociado a otra clave se rechaza.
 
-Las builds instaladas fuera del canal de producción conservarán ruta directa y no
-recibirán credenciales de producción. Si se decide una distribución sin Google Play,
-la autenticación del relay necesitará un diseño separado basado en clave hardware y
-registro del dispositivo; no se sustituirá por un token global embebido.
+PRE y POST usarán autorizaciones de un solo uso independientes. Las builds instaladas
+fuera del canal de producción conservarán ruta directa y no recibirán credenciales de
+producción. Si se decide una distribución sin Google Play, la autenticación necesitará
+un diseño separado basado en clave hardware y registro del dispositivo; no se sustituirá
+por un token global embebido.
 
 ## 7. Backend
 
 La implementación recomendada del relay es un servicio pequeño en Go por su soporte
-directo de sockets, TLS, timeouts y copia bidireccional con límites claros.
+directo de sockets, TLS, timeouts y copia bidireccional con límites claros. El TLS exterior
+usará TLS 1.2 como mínimo, 0-RTT deshabilitado y pinning SPKI en Android con al menos un pin
+de respaldo y procedimiento probado de rotación. El TLS interior seguirá usando la cadena
+de confianza y hostname `ws024` oficiales.
 
 Componentes:
 
@@ -262,8 +278,9 @@ La traza QA podrá registrar únicamente:
 - duración por bucket;
 - resultado PRE/POST/callback.
 
-No registrará cuerpos, cookies, certificados, firmas, tokens, nombres de titulares ni
-URLs completas.
+No registrará cuerpos, cookies, certificados, firmas, tokens, nombres de titulares,
+URLs completas ni hashes/prefijos estables derivados de parámetros tri-phase. Para estos
+flujos solo se permiten códigos fijos, ruta elegida y buckets gruesos de duración.
 
 ### Relay
 
@@ -304,7 +321,8 @@ restrictivos cuando corresponda.
 - clasificación exacta de fallos antes y después de escribir;
 - fallback solo en fases seguras;
 - ausencia de fallback ante timeout de lectura, HTTP error o parse error;
-- un único envío lógico del PRE y del POST;
+- un único envío lógico del PRE y del POST, incluso si fallan después del primer byte
+  de cabecera HTTP;
 - aislamiento por perfil y endpoint;
 - route cache efímera por `Network`;
 - cierre y borrado de buffers ante cancelación;
@@ -315,6 +333,7 @@ restrictivos cuando corresponda.
 
 - rechazo de métodos, rutas, hosts y puertos no permitidos;
 - rechazo de credencial ausente, expirada, repetida o inválida;
+- consumo atómico de `jti+nonce` y verificación de proof-of-possession;
 - bloqueo de DNS privado/especial;
 - conexión exclusiva a `ws024:443`;
 - límites de bytes, tiempo, concurrencia e inactividad;
@@ -386,7 +405,7 @@ El primer milestone se considera completo cuando:
 - nunca se reintenta después de empezar a escribir el request;
 - debug y QA pasan unit tests, lint y build;
 - los tests demuestran que el relay no ve ni registra el contenido interior;
-- el fallback sigue desactivado en release;
+- el fallback sigue desactivado en release y no existe token global en la APK;
 - la documentación identifica claramente que un E2E real requiere un servidor externo
   administrado por el proyecto.
 
