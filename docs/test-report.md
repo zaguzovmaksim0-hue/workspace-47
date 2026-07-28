@@ -444,3 +444,47 @@ Validación posterior a la promoción:
 worktree no las contiene y no se habilitó fallback a la clave debug. La política
 release del profile sí queda cubierta por los tests exactos de registry y por la
 igualdad entre el recurso y el catálogo compilado.
+
+## Oficina Virtual — duplicate MiniApplet request fix — 2026-07-28
+
+El flujo real de `junta-ofvirtual` mostró `PROTOCOL_FAILED` y provocó que la
+página enviara su formulario de error. La investigación separó las capas antes
+de modificar producción: el contrato público de `ws072`, el orden del callback,
+el Base64 estándar, DNS, TLS, PRE, firma RSA local y POST contra el endpoint
+`afirma-validator-miniapplet-1_5` fueron verificados. Un probe efímero dentro de
+Android completó PRE y POST con una identidad de prueba generada en memoria; no
+se utilizó ni conservó el certificado personal.
+
+La reproducción determinista encontró la regresión en el shim: un segundo
+`MiniApplet.sign` idéntico mientras la primera operación seguía en curso era
+respondido con `PROTOCOL_FAILED`. El callback de error de Oficina Virtual enviaba
+inmediatamente `msjerror`, anulando la operación original. El test WebView pasó
+de `DUPLICATE_ERROR` antes del cambio a `PASS` después del cambio.
+
+El shim ahora coalesce únicamente una repetición byte-for-byte idéntica, con los
+mismos callbacks, mientras la primera solicitud permanece activa. No se genera
+un segundo mensaje nativo ni se llama al callback de error. Una solicitud
+con datos, algoritmo, formato, properties o callbacks distintos continúa
+rechazándose de forma fail-closed con `PROTOCOL_FAILED`.
+
+Validación:
+
+- `testDebugUnitTest`: 319 tests, 0 failures/errors/skips;
+- `testQaUnitTest`: 319 tests, 0 failures/errors/skips;
+- `lintDebug` y `lintQa`: 0 errores, 25 warnings por variante;
+- `assembleDebug`, `assembleQa` y `assembleQaAndroidTest`: PASS;
+- `WebMessageBridgeInstrumentedTest` en dispositivo físico: 7/7;
+- prueba RED previa: `expected PASS but was DUPLICATE_ERROR`;
+- prueba GREEN posterior: caso idéntico PASS y caso conflictivo PASS;
+- firma APK v2 y `zipalign -c -p 4`: PASS;
+- debug APK SHA-256:
+  `ee6ea8a77ca8499d99e43e3231b3fbc92fe56437c1d4c2d48f9de9af0937cbce`;
+- QA APK SHA-256 e instalado `base.apk`:
+  `632e1f79f5e5ddf2aaa676857e0147e888a46d0e74ebd675a25b8eeee2daa9cf`;
+- androidTest APK SHA-256:
+  `b49f56812af4ca97c147529338fb580a7cea1bef380614b9afd051a8d57ee0d2`.
+
+El profile `junta-ofvirtual` permanece `VERIFIED_CONTRACT` / `QA_ONLY`. La
+corrección elimina el fallo reproducido, pero la aceptación E2E con el
+certificado real debe confirmarse mediante un nuevo acceso manual antes de
+promover el estado del profile.

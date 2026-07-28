@@ -16,6 +16,8 @@ Completed:
   origin, 20-byte challenge, local detached CAdES, `SHA1withRSA`, exact
   `mode=explicit` and `filter=nonexpired`; Storage/Retrieve and document-signing
   branches remain blocked.
+- Identical in-flight MiniApplet signing calls are coalesced without invoking the
+  portal error callback; any differing concurrent request remains fail-closed.
 
 Current isolated PR — WebView session-state hardening:
 

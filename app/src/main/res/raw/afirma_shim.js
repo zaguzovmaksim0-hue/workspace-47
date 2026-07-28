@@ -108,6 +108,16 @@
     }
   }
 
+  function isIdenticalInFlightCall(pending, args) {
+    return pending !== undefined &&
+      pending.dataB64 === args[0] &&
+      pending.algorithm === args[1] &&
+      pending.format === args[2] &&
+      pending.extraProperties === args[3] &&
+      pending.successCallback === args[4] &&
+      pending.errorCallback === args[5];
+  }
+
   function interceptMiniAppletSign(args) {
     if (!functionalSigningEnabled) {
       return false;
@@ -132,6 +142,12 @@
       return true;
     }
     if (pendingCallbacks.size !== 0) {
+      const pending = pendingCallbacks.values().next().value;
+      if (isIdenticalInFlightCall(pending, args)) {
+        // A repeated tap must not submit the portal's error form while the
+        // original, byte-identical operation is still completing.
+        return true;
+      }
       rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
       return true;
     }
@@ -148,6 +164,10 @@
       }
     }, signTimeoutMillis);
     pendingCallbacks.set(directRequestId, {
+      dataB64: args[0],
+      algorithm: args[1],
+      format: args[2],
+      extraProperties: args[3],
       successCallback,
       errorCallback,
       timeoutId
