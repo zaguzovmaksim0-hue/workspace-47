@@ -71,6 +71,9 @@ func (d *fixedUpstreamDialer) DialContext(ctx context.Context) (net.Conn, netip.
 	normalized := make([]netip.Addr, 0, len(addresses))
 	seen := make(map[netip.Addr]struct{}, len(addresses))
 	for _, address := range addresses {
+		if address.Zone() != "" {
+			return nil, netip.Addr{}, errUpstreamAddress
+		}
 		address = address.Unmap()
 		if !IsPublicRoutable(address) {
 			return nil, netip.Addr{}, errUpstreamAddress
@@ -94,6 +97,10 @@ func (d *fixedUpstreamDialer) DialContext(ctx context.Context) (net.Conn, netip.
 	if conn == nil {
 		return nil, netip.Addr{}, errUpstreamDial
 	}
+	if err := ctx.Err(); err != nil {
+		_ = conn.Close()
+		return nil, netip.Addr{}, err
+	}
 	if !matchesChosenPeer(conn.RemoteAddr(), chosen) {
 		_ = conn.Close()
 		return nil, netip.Addr{}, errUpstreamPeer
@@ -103,7 +110,7 @@ func (d *fixedUpstreamDialer) DialContext(ctx context.Context) (net.Conn, netip.
 
 func matchesChosenPeer(remote net.Addr, chosen netip.Addr) bool {
 	tcpAddr, ok := remote.(*net.TCPAddr)
-	if !ok || tcpAddr.Port != 443 {
+	if !ok || tcpAddr.Zone != "" || tcpAddr.Port != 443 {
 		return false
 	}
 	remoteIP, ok := netip.AddrFromSlice(tcpAddr.IP)
@@ -133,7 +140,7 @@ var nonPublicPrefixes = func() []netip.Prefix {
 		"192.31.196.0/24", "192.52.193.0/24", "192.88.99.0/24", "192.168.0.0/16",
 		"192.175.48.0/24", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24",
 		"224.0.0.0/4", "240.0.0.0/4",
-		"::/96", "64:ff9b::/96", "64:ff9b:1::/48", "100::/64", "2001::/23",
+		"::/96", "64:ff9b::/96", "64:ff9b:1::/48", "100::/64", "100:0:0:1::/64", "2001::/23",
 		"2001:db8::/32", "2002::/16", "2620:4f:8000::/48", "3fff::/20", "5f00::/16", "fc00::/7",
 		"fe80::/10", "ff00::/8",
 	}

@@ -24,6 +24,8 @@ func TestIsPublicRoutable(t *testing.T) {
 		{"224.0.0.1", false}, {"240.0.0.1", false}, {"255.255.255.255", false},
 		{"::", false}, {"::1", false}, {"::ffff:192.0.2.1", false},
 		{"64:ff9b::192.0.2.1", false}, {"64:ff9b:1::1", false}, {"100::1", false},
+		{"100:0:0:1::", false}, {"100:0:0:1:ffff:ffff:ffff:ffff", false},
+		{"100:0:0:2::1", true},
 		{"2001:2::1", false}, {"2001:db8::1", false}, {"2002::1", false},
 		{"3fff::1", false}, {"5f00::1", false},
 		{"fc00::1", false}, {"fe80::1", false}, {"ff02::1", false},
@@ -34,6 +36,19 @@ func TestIsPublicRoutable(t *testing.T) {
 				t.Fatalf("IsPublicRoutable(%v) = %v, want %v", ip, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestFixedUpstreamDialerRejectsZonedDNSAddressWithoutDial(t *testing.T) {
+	resolver := &fakeResolver{addrs: []netip.Addr{netip.MustParseAddr("2606:4700:4700::1111%resolver-zone")}}
+	dialer := &fakeTCPDialer{}
+
+	conn, ip, err := NewFixedUpstreamDialer(resolver, dialer).DialContext(context.Background())
+	if !errors.Is(err, errUpstreamAddress) || conn != nil || ip.IsValid() {
+		t.Fatalf("DialContext() = (%v, %v, %v), want rejected zoned DNS address", conn, ip, err)
+	}
+	if resolver.calls != 1 || dialer.calls != 0 {
+		t.Fatalf("calls = lookup:%d dial:%d, want 1 and 0", resolver.calls, dialer.calls)
 	}
 }
 
@@ -94,6 +109,20 @@ func TestFixedUpstreamDialerClosesMismatchedPeer(t *testing.T) {
 	}
 }
 
+func TestFixedUpstreamDialerClosesZonedPeer(t *testing.T) {
+	resolver := &fakeResolver{addrs: []netip.Addr{netip.MustParseAddr("8.8.8.8")}}
+	conn := &fakeConn{remote: &net.TCPAddr{IP: net.ParseIP("8.8.8.8"), Port: 443, Zone: "peer-zone"}}
+	dialer := &fakeTCPDialer{conn: conn}
+
+	gotConn, ip, err := NewFixedUpstreamDialer(resolver, dialer).DialContext(context.Background())
+	if !errors.Is(err, errUpstreamPeer) || gotConn != nil || ip.IsValid() {
+		t.Fatalf("DialContext() = (%v, %v, %v), want rejected zoned peer", gotConn, ip, err)
+	}
+	if !conn.closed {
+		t.Fatal("zoned connection was not closed")
+	}
+}
+
 func TestFixedUpstreamDialerRespectsCanceledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -105,6 +134,22 @@ func TestFixedUpstreamDialerRespectsCanceledContext(t *testing.T) {
 	}
 	if resolver.calls != 0 || dialer.calls != 0 {
 		t.Fatalf("calls = lookup:%d dial:%d, want 0 and 0", resolver.calls, dialer.calls)
+	}
+}
+
+func TestFixedUpstreamDialerClosesConnectionWhenCanceledDuringDial(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	resolver := &fakeResolver{addrs: []netip.Addr{netip.MustParseAddr("8.8.8.8")}}
+	conn := &fakeConn{remote: &net.TCPAddr{IP: net.ParseIP("8.8.8.8"), Port: 443}}
+	dialer := &fakeTCPDialer{conn: conn, afterDial: cancel}
+
+	gotConn, ip, err := NewFixedUpstreamDialer(resolver, dialer).DialContext(ctx)
+	if !errors.Is(err, context.Canceled) || gotConn != nil || ip.IsValid() {
+		t.Fatalf("DialContext() = (%v, %v, %v), want cancellation", gotConn, ip, err)
+	}
+	if !conn.closed {
+		t.Fatal("connection returned after cancellation was not closed")
 	}
 }
 
@@ -124,6 +169,7 @@ func (r *fakeResolver) LookupNetIP(_ context.Context, network, host string) ([]n
 type fakeTCPDialer struct {
 	conn             net.Conn
 	err              error
+	afterDial        func()
 	calls            int
 	network, address string
 }
@@ -131,6 +177,9 @@ type fakeTCPDialer struct {
 func (d *fakeTCPDialer) DialContext(_ context.Context, network, address string) (net.Conn, error) {
 	d.calls++
 	d.network, d.address = network, address
+	if d.afterDial != nil {
+		d.afterDial()
+	}
 	return d.conn, d.err
 }
 
