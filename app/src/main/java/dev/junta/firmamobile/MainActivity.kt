@@ -28,7 +28,10 @@ import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
 import dev.junta.firmamobile.certificate.CertificateRepository
+import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.network.TunnelRouteEvent
+import dev.junta.firmamobile.network.TunnelRouteObserver
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.profile.ProfileId
@@ -83,8 +86,15 @@ class MainActivity : ComponentActivity() {
         BrowserSessionStatePolicy.discardLegacyWebViewState(savedInstanceState)
         super.onCreate(savedInstanceState)
         val app = application as JuntaFirmaApplication
-        val juntaAdapter = JuntaTriPhaseAdapter()
-        val juntaOfvirtualAdapter = JuntaOfvirtualTriPhaseAdapter()
+        val routeObserver = TunnelRouteObserver(::onTunnelRouteEvent)
+        val directJuntaTransport = HttpsProfileHttpTransport()
+        val ofvirtualTransport = app.secureTunnelRuntime.transportFor(
+            profileId = ProfileId("junta-ofvirtual"),
+            endpoint = URI(JuntaOfvirtualTriPhaseAdapter.ENDPOINT),
+            observer = routeObserver,
+        )
+        val juntaAdapter = JuntaTriPhaseAdapter(transport = directJuntaTransport)
+        val juntaOfvirtualAdapter = JuntaOfvirtualTriPhaseAdapter(transport = ofvirtualTransport)
         val redsaraAdapter = LocalXadesDetachedAdapter()
         val aragonAdapter = LocalCadesDetachedAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
@@ -324,6 +334,8 @@ class MainActivity : ComponentActivity() {
         val accepted = signingCoordinator.cancel(reason, requestId)
         signingJobs.takeForCancellation(requestId, accepted)?.cancel()
     }
+
+    private fun onTunnelRouteEvent(@Suppress("UNUSED_PARAMETER") event: TunnelRouteEvent) = Unit
 
     private fun activeWebViewMatches(profileId: ProfileId): Boolean {
         val browser = destination as? AppDestination.Browser ?: return false

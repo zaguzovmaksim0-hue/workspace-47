@@ -1,3 +1,7 @@
+import java.net.IDN
+import java.util.Base64
+import java.util.Locale
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -8,6 +12,69 @@ fun org.gradle.api.provider.ProviderFactory.secretValue(name: String): String? =
         .orElse(environmentVariable(name))
         .orNull
         ?.takeIf(String::isNotEmpty)
+
+fun quotedBuildConfigString(value: String): String {
+    require(value.none(Char::isISOControl)) { "Control characters are not allowed in BuildConfig strings." }
+    return buildString(value.length + 2) {
+        append('"')
+        value.forEach { character ->
+            when (character) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                else -> append(character)
+            }
+        }
+        append('"')
+    }
+}
+
+fun validRelayHost(value: String): Boolean {
+    if (value.isBlank() || value.length > 253 || value.any(Char::isISOControl)) return false
+    if (value != value.lowercase(Locale.ROOT) || value.endsWith('.') || value == "localhost") return false
+    if (value.contains(':') || value.matches(Regex("[0-9.]+"))) return false
+    val ascii = runCatching { IDN.toASCII(value, IDN.USE_STD3_ASCII_RULES) }.getOrNull()
+        ?: return false
+    if (ascii != value || '.' !in ascii) return false
+    return ascii.split('.').all { label ->
+        label.isNotEmpty() && label.length <= 63 &&
+            label.first().isLetterOrDigit() && label.last().isLetterOrDigit()
+    }
+}
+
+fun parseRelayPins(value: String): List<String>? {
+    if (value.any(Char::isISOControl)) return null
+    val pins = value.split(',').map(String::trim).filter(String::isNotEmpty).distinct()
+    if (pins.size < 2) return null
+    val valid = pins.all { pin ->
+        if (!pin.startsWith("sha256/")) return@all false
+        val encoded = pin.removePrefix("sha256/")
+        val decoded = runCatching { Base64.getDecoder().decode(encoded) }.getOrNull()
+            ?: return@all false
+        decoded.size == 32 && Base64.getEncoder().encodeToString(decoded) == encoded
+    }
+    return pins.takeIf { valid }
+}
+
+val qaRelayHostInput = providers.secretValue("JFM_WS024_QA_RELAY_HOST")
+val qaRelayPortInput = providers.secretValue("JFM_WS024_QA_RELAY_PORT")
+val qaRelayPinsInput = providers.secretValue("JFM_WS024_QA_RELAY_SPKI_PINS")
+val qaTunnelTupleSupplied = listOf(qaRelayHostInput, qaRelayPortInput, qaRelayPinsInput).any { it != null }
+val qaRelayPortParsed = qaRelayPortInput?.toIntOrNull()
+val qaRelayPort = qaRelayPortParsed ?: 443
+val qaRelayPins = qaRelayPinsInput?.let(::parseRelayPins)
+val qaRelayPortValid = qaRelayPortInput == null || qaRelayPortParsed != null
+val qaTunnelConfigured = qaRelayHostInput?.let(::validRelayHost) == true &&
+    qaRelayPortValid &&
+    qaRelayPort in 1..65535 &&
+    qaRelayPins != null
+if (qaTunnelTupleSupplied && !qaTunnelConfigured) {
+    throw GradleException(
+        "Invalid WS024 QA relay configuration. Supply a canonical host, a port in 1..65535 " +
+            "and at least two distinct canonical SHA-256 SPKI pins.",
+    )
+}
+val qaRelayHost = qaRelayHostInput.takeIf { qaTunnelConfigured }.orEmpty()
+val qaRelayPinsValue = qaRelayPins.takeIf { qaTunnelConfigured }.orEmpty().joinToString(",")
 
 val releaseStoreFilePath = providers.secretValue("JFM_RELEASE_STORE_FILE")
 val releaseStorePassword = providers.secretValue("JFM_RELEASE_STORE_PASSWORD")
@@ -56,6 +123,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
+        buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
+        buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
+        buildConfigField("int", "WS024_QA_RELAY_PORT", "443")
+        buildConfigField("String", "WS024_QA_RELAY_SPKI_PINS", quotedBuildConfigString(""))
     }
 
     buildFeatures {
@@ -78,6 +149,10 @@ android {
         debug {
             isDebuggable = true
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
+            buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
+            buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
+            buildConfigField("int", "WS024_QA_RELAY_PORT", "443")
+            buildConfigField("String", "WS024_QA_RELAY_SPKI_PINS", quotedBuildConfigString(""))
         }
         create("qa") {
             initWith(getByName("debug"))
@@ -86,11 +161,19 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             versionNameSuffix = "-qa"
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
+            buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", qaTunnelConfigured.toString())
+            buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(qaRelayHost))
+            buildConfigField("int", "WS024_QA_RELAY_PORT", qaRelayPort.toString())
+            buildConfigField("String", "WS024_QA_RELAY_SPKI_PINS", quotedBuildConfigString(qaRelayPinsValue))
         }
         release {
             isDebuggable = false
             signingConfig = signingConfigs.findByName("privateRelease")
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
+            buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
+            buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
+            buildConfigField("int", "WS024_QA_RELAY_PORT", "443")
+            buildConfigField("String", "WS024_QA_RELAY_SPKI_PINS", quotedBuildConfigString(""))
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
