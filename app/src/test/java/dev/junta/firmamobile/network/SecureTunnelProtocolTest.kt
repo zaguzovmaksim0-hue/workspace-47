@@ -99,6 +99,21 @@ class SecureTunnelProtocolTest {
     }
 
     @Test
+    fun readResponseAcceptsAHeaderWhoseTerminatorEndsAt8191Bytes() {
+        val prefix = "HTTP/1.1 200 OK\r\nX: "
+        val suffix = "\r\n\r\n"
+        val response = prefix + "a".repeat(
+            SecureTunnelProtocol.MAX_RESPONSE_HEADER_BYTES - 1 - prefix.length - suffix.length,
+        ) + suffix
+
+        assertEquals(SecureTunnelProtocol.MAX_RESPONSE_HEADER_BYTES - 1, response.encodeToByteArray().size)
+        assertEquals(
+            SecureTunnelConnectResult.Established,
+            SecureTunnelProtocol.readResponse(ByteArrayInputStream(response.encodeToByteArray())),
+        )
+    }
+
+    @Test
     fun readResponseRejectsUnfinishedOrOversizedHeadersAtTheLimit() {
         val prefix = "HTTP/1.1 200 OK\r\nX: "
         val suffix = "\r\n\r\n"
@@ -111,11 +126,26 @@ class SecureTunnelProtocolTest {
     }
 
     @Test
+    fun readResponseRejectsEofIncompleteHeaderExactlyAt8192Bytes() {
+        val prefix = "HTTP/1.1 200 OK\r\nX: "
+        val incompleteAtLimit = prefix + "a".repeat(
+            SecureTunnelProtocol.MAX_RESPONSE_HEADER_BYTES - prefix.length,
+        )
+        assertEquals(SecureTunnelProtocol.MAX_RESPONSE_HEADER_BYTES, incompleteAtLimit.encodeToByteArray().size)
+        assertRejected(SecureTunnelRejectCode.HEADER_TOO_LARGE, incompleteAtLimit)
+    }
+
+    @Test
     fun readResponseRejectsInvalidLineEndingsAndStatusLines() {
         assertRejected(SecureTunnelRejectCode.MALFORMED_LINE_ENDING, "HTTP/1.1 200 OK\n\n")
         assertRejected(SecureTunnelRejectCode.MALFORMED_LINE_ENDING, "HTTP/1.1 200 OK\rX: y\r\n\r\n")
         assertRejected(SecureTunnelRejectCode.UNSUPPORTED_HTTP_VERSION, "HTTP/1.0 200 OK\r\n\r\n")
         assertRejected(SecureTunnelRejectCode.MALFORMED_STATUS_LINE, "HTTP/1.1 200OK\r\n\r\n")
+        assertRejected(SecureTunnelRejectCode.MALFORMED_STATUS_LINE, "HTTP/1.1 200\r\n\r\n")
+        assertEquals(
+            SecureTunnelConnectResult.Established,
+            SecureTunnelProtocol.readResponse(ByteArrayInputStream("HTTP/1.1 200 \r\n\r\n".encodeToByteArray())),
+        )
         assertRejected(SecureTunnelRejectCode.STATUS_NOT_OK, "HTTP/1.1 204 No Content\r\n\r\n")
     }
 
@@ -149,6 +179,14 @@ class SecureTunnelProtocolTest {
         assertRejected(
             SecureTunnelRejectCode.BODY_FRAMING_DECLARED,
             "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n",
+        )
+        assertRejected(
+            SecureTunnelRejectCode.BODY_FRAMING_DECLARED,
+            "HTTP/1.1 200 OK\r\ncOnTeNt-LeNgTh: 4\r\n\r\n",
+        )
+        assertRejected(
+            SecureTunnelRejectCode.BODY_FRAMING_DECLARED,
+            "HTTP/1.1 200 OK\r\ntRaNsFeR-EnCoDiNg: chunked\r\n\r\n",
         )
     }
 

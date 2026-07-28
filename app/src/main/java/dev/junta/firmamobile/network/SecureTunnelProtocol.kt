@@ -188,7 +188,7 @@ internal object SecureTunnelProtocol {
             return STATUS_NOT_OK
         }
         val afterCode = codeStart + STATUS_CODE_SIZE
-        if (afterCode < endExclusive && bytes[afterCode].unsigned() != Space) {
+        if (afterCode >= endExclusive || bytes[afterCode].unsigned() != Space) {
             return MALFORMED_STATUS_LINE
         }
         if ((afterCode + 1 until endExclusive).any { !bytes[it].unsigned().isReasonPhraseByte() }) {
