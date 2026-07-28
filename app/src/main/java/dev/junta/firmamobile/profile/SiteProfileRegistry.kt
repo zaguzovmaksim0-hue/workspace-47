@@ -114,7 +114,7 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 6,
+  "catalogVersion": 7,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -402,10 +402,10 @@ object BuiltInSiteProfiles {
     },
     {
       "profileId": "aragon-siraw",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Gobierno de Aragón — SIRAW",
-      "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "QA_ONLY",
+      "compatibilityStatus": "VERIFIED_E2E",
+      "activation": "ENABLED",
       "startUrl": "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
       "initiatorOrigins": [
         "https://aplicaciones.aragon.es"

@@ -42,8 +42,8 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         )
         aragon = next(entry for entry in catalog["entries"] if entry["portalId"] == "aragon-siraw")
         self.assertEqual("aragon-siraw", aragon["profileId"])
-        self.assertEqual("E2E_PENDING", aragon["catalogStatus"])
-        self.assertEqual("IMPLEMENTED_NOT_E2E", aragon["inventoryStatus"])
+        self.assertEqual("E2E_VERIFIED", aragon["catalogStatus"])
+        self.assertEqual("VERIFIED_E2E", aragon["inventoryStatus"])
         self.assertEqual(
             hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
             catalog["sourceRevision"],

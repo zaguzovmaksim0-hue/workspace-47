@@ -47,7 +47,7 @@ class PortalCatalogScreenTest {
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
         assertEquals(6, compatible.items.size)
-        val verifiedIds = setOf("junta-andalucia", "carne-joven-andalucia")
+        val verifiedIds = setOf("junta-andalucia", "carne-joven-andalucia", "aragon-siraw")
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }
                 .all { it.supportStatus == PortalSupportStatus.VERIFIED_E2E },

@@ -71,7 +71,11 @@ class PortalCatalogRepositoryTest {
         assertTrue(metadataBrowseOnly.isNotEmpty())
         assertTrue(metadataBrowseOnly.all { it.supportStatus in setOf(PortalSupportStatus.DISCOVERED, PortalSupportStatus.CATALOGED) })
 
-        val verifiedIds = setOf(ProfileId("junta-andalucia"), ProfileId("carne-joven-andalucia"))
+        val verifiedIds = setOf(
+            ProfileId("junta-andalucia"),
+            ProfileId("carne-joven-andalucia"),
+            ProfileId("aragon-siraw"),
+        )
         verifiedIds.forEach { profileId ->
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
@@ -103,14 +107,14 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `aragon siraw is openable only in qa and remains e2e pending`() {
+    fun `aragon siraw verified login is enabled in qa and release`() {
         val profileId = ProfileId("aragon-siraw")
         val expectedUrl = java.net.URI(
             "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
         )
         val qaPortal = qaRepository.portals().single { it.profileId == profileId }
 
-        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
         assertEquals(setOf(SignatureFormat.CADES), qaPortal.signatureFormats)
         assertEquals(
@@ -121,9 +125,9 @@ class PortalCatalogRepositoryTest {
         assertEquals(PortalLaunchTarget(profileId, expectedUrl), qaRepository.resolveLaunch(qaPortal))
 
         val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
-        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
-        assertFalse(releasePortal.isEnabled)
-        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+        assertEquals(PortalSupportStatus.VERIFIED_E2E, releasePortal.supportStatus)
+        assertTrue(releasePortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, expectedUrl), releaseRepository.resolveLaunch(releasePortal))
     }
 
     @Test

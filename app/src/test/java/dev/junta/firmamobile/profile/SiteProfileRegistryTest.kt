@@ -38,18 +38,17 @@ class SiteProfileRegistryTest {
         assertEquals(TrustMode.BROWSE_ONLY, facadeResolved?.trustMode)
     }
     @Test
-    fun `qa resolves aragon siraw while release excludes it`() {
+    fun `release and qa resolve verified aragon siraw login`() {
         val profileId = ProfileId("aragon-siraw")
         val startUri = URI("https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw")
 
-        val qaProfile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
-        assertNotNull(qaProfile)
-        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, qaProfile?.compatibilityStatus)
-        assertEquals(ProfileActivation.QA_ONLY, qaProfile?.activation)
-        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolve(startUri)?.trustMode)
-
-        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
-        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUri))
+        listOf(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.qaRegistry).forEach { registry ->
+            val profile = registry.profile(profileId)
+            assertNotNull(profile)
+            assertEquals(CompatibilityStatus.VERIFIED_E2E, profile?.compatibilityStatus)
+            assertEquals(ProfileActivation.ENABLED, profile?.activation)
+            assertEquals(TrustMode.TRUSTED_SIGNING, registry.resolve(startUri)?.trustMode)
+        }
     }
 
 }

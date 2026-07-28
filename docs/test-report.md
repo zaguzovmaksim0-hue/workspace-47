@@ -406,3 +406,41 @@ abrió porque el certificado permanecía bloqueado, por diseño.
 
 Este milestone no prueba aceptación del portal, no ejecuta una operación
 administrativa y no eleva Aragón a `VERIFIED_E2E`.
+
+## Milestone P16B — Aragón SIRAW login VERIFIED_E2E — 2026-07-28
+
+El usuario ejecutó manualmente el flujo real en el dispositivo físico con el
+profile exacto `aragon-siraw`. La página pública solicitó el certificado, la
+aplicación presentó la confirmación nativa con `CAdES` y `SHA1withRSA`, y tras
+confirmar la firma el portal continuó al área interna observada. Esto prueba la
+aceptación portal-side del resultado de autenticación para ese login.
+
+La evidencia se registra de forma sanitizada. Las capturas originales no se
+incorporan al repositorio porque muestran datos identificativos del certificado.
+No se conservaron contraseña, clave privada, PKCS#12, firma, certificado, cookies,
+query sensible ni datos del formulario interno.
+
+El profile pasa a `VERIFIED_E2E` / `ENABLED`, versión 2, sin ampliar origin,
+capabilities, algoritmos, formato ni properties. La promoción se limita al login
+CAdES observado. Storage/Retrieve, la rama documental con hash precalculado,
+cofirma, contrafirma y cualquier presentación administrativa siguen bloqueados.
+
+Validación posterior a la promoción:
+
+- `testDebugUnitTest`: 319 tests, 0 failures/errors/skips;
+- `testQaUnitTest`: 319 tests, 0 failures/errors/skips;
+- `lintDebug` y `lintQa`: 0 errores y 25 warnings por variante;
+- `assembleDebug` y `assembleQa`: PASS;
+- catálogo público reproducible byte-for-byte y profile resource idéntico al
+  catálogo fail-safe compilado;
+- APK debug y QA: firma v2 y `zipalign -c -p 4` PASS;
+- debug APK SHA-256:
+  `b8fea4506fac55e3d0c506e81aa35d2d5cc07d8c1edf1b0f3d32acd6de41b495`;
+- QA APK SHA-256:
+  `13293fe42f409311543fb8fa6e6e1523216f8d0d91d2476bf5d15f1541ca72e7`.
+
+`lintRelease` y `assembleRelease` no se ejecutaron: ambos alcanzan el gate
+`verifyReleaseSigning`, que exige las cuatro credenciales privadas de firma. La
+worktree no las contiene y no se habilitó fallback a la clave debug. La política
+release del profile sí queda cubierta por los tests exactos de registry y por la
+igualdad entre el recurso y el catálogo compilado.

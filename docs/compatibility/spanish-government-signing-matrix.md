@@ -29,7 +29,7 @@ Los estados significan:
 - `UNSUPPORTED`: la operación está fuera del alcance o una fuente oficial
   confirma que el flujo móvil no es compatible.
 
-Únicamente P19 (Carné Joven Europeo de Andalucía) cuenta con verificación `VERIFIED_E2E` delimitada a `CLIENT_TLS_AUTH` en dispositivo físico (2026-07-21, commit dc3c231). Además de los contratos
+P19 (Carné Joven Europeo de Andalucía) cuenta con verificación `VERIFIED_E2E` delimitada a `CLIENT_TLS_AUTH` en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW) cuenta con `VERIFIED_E2E` limitado al login CAdES aceptado por el portal en dispositivo físico el 2026-07-28. Además de los contratos
 genéricos, cuatro integraciones publican JavaScript suficiente para marcar su
 contrato estático como `VERIFIED_CONTRACT`: REG/RedSARA, ACCEDA, Gobierno de
 Aragón y Universidad de Zaragoza. REG/RedSARA y UniZAR ya disponen de profiles
@@ -386,8 +386,12 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
 - **Límite:** Storage/Retrieve y la rama documental con hash precalculado
   permanecen deshabilitados. Su presencia en el JS no concede endpoint ni
   capability runtime.
-- **Estado:** `VERIFIED_CONTRACT` / `IMPLEMENTED_NOT_E2E`; falta aceptación
-  real del portal en dispositivo físico.
+- **E2E 2026-07-28:** el portal real aceptó la firma CAdES de autenticación y
+  continuó al área interna observada. La confirmación fue manual y el resultado
+  se documentó sin conservar certificado, firma, cookies ni credenciales.
+- **Estado:** `VERIFIED_E2E` exclusivamente para el login CAdES observado.
+  Storage/Retrieve, firma documental y cualquier presentación administrativa
+  permanecen fuera del alcance.
 
 ### P17 — Universidad de Zaragoza
 

@@ -123,8 +123,8 @@ class SiteProfileCatalogParserTest {
             it.profileId == ProfileId("aragon-siraw")
         }
         assertEquals(ProfileId("aragon-siraw"), profile.profileId)
-        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
-        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(CompatibilityStatus.VERIFIED_E2E, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.ENABLED, profile.activation)
         assertEquals(
             "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
             profile.startUrl.toString(),
@@ -270,16 +270,16 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun releaseEnablesOnlyVerifiedJuntaAndCarneWhileQaKeepsExperimentalPortalsAvailable() {
+    fun releaseEnablesVerifiedProfilesWhileQaKeepsExperimentalPortalsAvailable() {
         val junta = ProfileId("junta-andalucia")
         val carne = ProfileId("carne-joven-andalucia")
         val education = ProfileId("educacion-convocatoria")
-        val releaseProfiles = setOf(junta, carne, education)
+        val aragon = ProfileId("aragon-siraw")
+        val releaseProfiles = setOf(junta, carne, education, aragon)
         val qaOnly = setOf(
             ProfileId("reg-age-redsara"),
             ProfileId("unizar-tramitador"),
             ProfileId("junta-ofvirtual"),
-            ProfileId("aragon-siraw"),
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
@@ -291,7 +291,7 @@ class SiteProfileCatalogParserTest {
             assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
             assertTrue(BuiltInSiteProfiles.qaRegistry.profile(profileId) != null)
         }
-        setOf(junta, carne).forEach { profileId ->
+        setOf(junta, carne, aragon).forEach { profileId ->
             assertEquals(
                 CompatibilityStatus.VERIFIED_E2E,
                 BuiltInSiteProfiles.releaseRegistry.profile(profileId)?.compatibilityStatus,
@@ -326,7 +326,7 @@ class SiteProfileCatalogParserTest {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 6", "\"unknown\": true, \"catalogVersion\": 6"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 7", "\"unknown\": true, \"catalogVersion\": 7"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))

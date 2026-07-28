@@ -8,13 +8,14 @@ Completed:
 - Private release signing with no debug-key fallback (F-01).
 - `qa` build variant for unverified portal work.
 - Release activation restricted to sensitive `VERIFIED_E2E` profiles (F-04).
-- Junta and Carné Joven marked `VERIFIED_E2E` (Carné Joven: CLIENT_TLS_AUTH verified on physical device 2026-07-21 after commit dc3c231); RedSARA and UniZAR remain `QA_ONLY`.
+- Junta, Carné Joven and Aragón SIRAW login marked `VERIFIED_E2E` (Carné Joven: CLIENT_TLS_AUTH verified on physical device 2026-07-21 after commit dc3c231; Aragón: login CAdES accepted on physical device 2026-07-28); RedSARA and UniZAR remain `QA_ONLY`.
 - Browser navigation, WebMessage bridge and signing origin bound to the selected profile (F-06).
 - Cross-profile and external HTTP navigation blocked (F-06, F-07).
 - Renderer loss invalidates bridge/signing state and creates a fresh WebView.
-- Aragón SIRAW login profile implemented as `QA_ONLY`: exact origin, 20-byte
-  challenge, local detached CAdES, `SHA1withRSA`, exact `mode=explicit` and
-  `filter=nonexpired`; Storage/Retrieve and document-signing branches remain blocked.
+- Aragón SIRAW login profile enabled after physical-device E2E acceptance: exact
+  origin, 20-byte challenge, local detached CAdES, `SHA1withRSA`, exact
+  `mode=explicit` and `filter=nonexpired`; Storage/Retrieve and document-signing
+  branches remain blocked.
 
 Current isolated PR — WebView session-state hardening:
 

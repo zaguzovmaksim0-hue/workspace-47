@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "c59e580ba0695ce130bb97e59fdb2c1f2fa439fd34111782f41585e058698bb1",
+  "sourceRevision": "de02e2ed8092ae2dc1effa548f79c105c502b1d9519534a43e3dd811c6538e52",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -372,8 +372,8 @@
         "CADES"
       ],
       "protocolFamily": "MINIAPPLET_CON_STORAGE_RETRIEVE",
-      "catalogStatus": "E2E_PENDING",
-      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P16",
@@ -381,7 +381,7 @@
         "P16C"
       ],
       "reviewedOn": "2026-07-28",
-      "limitations": "Contrato MiniApplet exacto y adaptador CAdES local implementados; aceptación E2E del portal pendiente."
+      "limitations": "El portal real aceptó la firma CAdES de autenticación y abrió la sesión interna; verificación limitada al login observado."
     },
     {
       "portalId": "diputacion-valladolid-sede",
