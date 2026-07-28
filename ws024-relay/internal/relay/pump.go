@@ -231,8 +231,12 @@ func validPumpParameters(
 	limits PumpLimits,
 	bufferFactory func() []byte,
 ) bool {
-	return ctx != nil && downstream != nil && downstreamReader != nil && upstream != nil && bufferFactory != nil &&
-		limits.IdleTimeout > 0 && limits.IdleTimeout <= maxPumpIdleTimeout &&
+	return ctx != nil && downstream != nil && downstreamReader != nil && upstream != nil &&
+		bufferFactory != nil && validPumpLimits(limits)
+}
+
+func validPumpLimits(limits PumpLimits) bool {
+	return limits.IdleTimeout > 0 && limits.IdleTimeout <= maxPumpIdleTimeout &&
 		limits.MaxSessionDuration > 0 && limits.MaxSessionDuration <= maxPumpSessionDuration &&
 		limits.MaxBytesPerDirection > 0 && limits.MaxBytesPerDirection <= maxPumpBytesPerDirection
 }
