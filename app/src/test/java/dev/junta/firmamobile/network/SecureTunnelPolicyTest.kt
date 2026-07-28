@@ -9,16 +9,28 @@ import org.junit.Test
 
 class SecureTunnelPolicyTest {
     @Test
-    fun qaAllowsOnlyOfvirtualMiniApplet15ExactTuple() {
+    fun qaAllowsOfvirtualMiniApplet15ExactTuple() {
         assertTrue(SecureTunnelPolicy.QA.allows(ProfileId("junta-ofvirtual"), OFVIRTUAL_15))
-        assertFalse(SecureTunnelPolicy.QA.allows(ProfileId("junta-andalucia"), JUNTA_14))
+    }
+
+    @Test
+    fun qaRejectsOfvirtualMiniApplet14Tuple() {
+        assertFalse(SecureTunnelPolicy.QA.allows(ProfileId("junta-ofvirtual"), JUNTA_14))
+    }
+
+    @Test
+    fun qaRejectsWrongProfileForMiniApplet15() {
+        assertFalse(SecureTunnelPolicy.QA.allows(ProfileId("junta-andalucia"), OFVIRTUAL_15))
+    }
+
+    @Test
+    fun qaRejectsNonExactOfvirtualUrl() {
         assertFalse(
             SecureTunnelPolicy.QA.allows(
                 ProfileId("junta-ofvirtual"),
                 URI("https://ws024.juntadeandalucia.es/"),
             ),
         )
-        assertFalse(SecureTunnelPolicy.QA.allows(ProfileId("unizar-tramitador"), OFVIRTUAL_15))
     }
 
     @Test
