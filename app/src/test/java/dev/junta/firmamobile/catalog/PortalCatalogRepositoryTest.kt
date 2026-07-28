@@ -56,11 +56,12 @@ class PortalCatalogRepositoryTest {
                 "carne-joven-andalucia",
                 "junta-ofvirtual",
                 "educacion-convocatoria",
+                "aragon-siraw",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 6, metadataOnly.size)
+        assertEquals(qaPortals.size - 7, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -99,6 +100,30 @@ class PortalCatalogRepositoryTest {
                 assertEquals(null, releaseRepository.resolveLaunch(portal))
             }
         }
+    }
+
+    @Test
+    fun `aragon siraw is openable only in qa and remains e2e pending`() {
+        val profileId = ProfileId("aragon-siraw")
+        val expectedUrl = java.net.URI(
+            "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
+        )
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(setOf(SignatureFormat.CADES), qaPortal.signatureFormats)
+        assertEquals(
+            setOf(PortalServiceCapability.ELECTRONIC_SIGNATURE),
+            qaPortal.capabilities,
+        )
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in qaPortal.observedMechanisms)
+        assertEquals(PortalLaunchTarget(profileId, expectedUrl), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
     }
 
     @Test

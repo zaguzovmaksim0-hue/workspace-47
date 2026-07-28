@@ -37,9 +37,13 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertGreaterEqual(inventory_count, GENERATOR.MIN_INVENTORY_RECORDS)
         self.assertEqual(inventory_count + 2, len(catalog["entries"]))
         self.assertEqual(
-            6,
+            7,
             sum(entry["profileId"] is not None for entry in catalog["entries"]),
         )
+        aragon = next(entry for entry in catalog["entries"] if entry["portalId"] == "aragon-siraw")
+        self.assertEqual("aragon-siraw", aragon["profileId"])
+        self.assertEqual("E2E_PENDING", aragon["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", aragon["inventoryStatus"])
         self.assertEqual(
             hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
             catalog["sourceRevision"],

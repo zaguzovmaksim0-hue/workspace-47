@@ -22,6 +22,7 @@ PROFILE_BINDINGS = {
     "junta-andalucia-ovorion": "junta-andalucia",
     "unizar-tramitador": "unizar-tramitador",
     "junta-andalucia-carne-joven": "carne-joven-andalucia",
+    "aragon-siraw": "aragon-siraw",
 }
 
 LEVELS = {

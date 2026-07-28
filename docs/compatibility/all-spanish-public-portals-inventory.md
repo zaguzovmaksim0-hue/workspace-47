@@ -140,8 +140,8 @@ histórica de la matriz ni constituye una escala automática:
 | `DEPRECATED` | Una fuente oficial confirma retirada o sustitución del flujo; se conserva únicamente para trazabilidad. |
 
 Únicamente P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). Tests locales, hashes de JS y
-revisión documental nunca producen por sí solos ese estado. La implementación Junta se
-mapea a `IMPLEMENTED_NOT_E2E`; los dos flujos móviles que la matriz marcaba
+revisión documental nunca producen por sí solos ese estado. Las implementaciones Junta y Aragón SIRAW se
+mapean a `IMPLEMENTED_NOT_E2E`; los dos flujos móviles que la matriz marcaba
 como no soportados se mapean a `UNSUPPORTED_PROTOCOL`, con razón específica en
 cada ficha. No se asigna `REQUIRES_AUTHENTICATED_RESEARCH` sin demostrar antes
 que la investigación pública segura se agotó.
@@ -215,8 +215,8 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 1 |
-| `IMPLEMENTED_NOT_E2E` | 3 |
-| `VERIFIED_CONTRACT` | 2 |
+| `IMPLEMENTED_NOT_E2E` | 4 |
+| `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 168 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
@@ -882,14 +882,14 @@ records:
       - "https://aplicaciones.aragon.es/siraw/resources/js-signature-storage/StorageService"
       - "https://aplicaciones.aragon.es/siraw/resources/js-signature-retriever/RetrieveService"
     discovery_state: "REVIEWED"
-    inventory_status: "VERIFIED_CONTRACT"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Firma de token de acceso y hash precalculado mediante MiniApplet.sign."
     protocol_evidence: "La integración pública configura MiniApplet y los dos servlets exactos."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["P16", "P16B", "P16C"]
-    reason: "Contrato JS estático probado; implementación y aceptación E2E no verificadas."
-    reviewed_at: "2026-07-15"
-    next_gate: "Fixture sanitizada, advertencia legacy, adapter limitado y E2E propio."
+    reason: "Contrato MiniApplet exacto y adaptador CAdES local implementados; aceptación E2E del portal pendiente."
+    reviewed_at: "2026-07-28"
+    next_gate: "E2E seguro de autenticación en dispositivo físico, sin operación administrativa posterior."
 
   - inventory_id: "ES-PUB-0015"
     surface_key: "diputacion-valladolid-sede"

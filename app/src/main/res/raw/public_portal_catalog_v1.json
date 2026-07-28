@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "cf9b005b14f7a218c67411b053966abf7bf62a2550c263e8eb9ab88fecdc99b0",
+  "sourceRevision": "c59e580ba0695ce130bb97e59fdb2c1f2fa439fd34111782f41585e058698bb1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -356,7 +356,7 @@
     {
       "portalId": "aragon-siraw",
       "inventoryId": "ES-PUB-0014",
-      "profileId": null,
+      "profileId": "aragon-siraw",
       "displayName": "SIRAW",
       "organization": "Gobierno de Aragón",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
@@ -372,16 +372,16 @@
         "CADES"
       ],
       "protocolFamily": "MINIAPPLET_CON_STORAGE_RETRIEVE",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "VERIFIED_CONTRACT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P16",
         "P16B",
         "P16C"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Contrato JS estático probado; implementación y aceptación E2E no verificadas."
+      "reviewedOn": "2026-07-28",
+      "limitations": "Contrato MiniApplet exacto y adaptador CAdES local implementados; aceptación E2E del portal pendiente."
     },
     {
       "portalId": "diputacion-valladolid-sede",
