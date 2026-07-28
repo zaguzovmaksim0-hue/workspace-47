@@ -208,5 +208,10 @@ internal fun ProfileHttpFailure.toSigningError(): SigningErrorCode = when (this)
     ProfileHttpFailure.CONTENT_TYPE_INVALID,
     ProfileHttpFailure.HTTP_ERROR,
     ProfileHttpFailure.NETWORK_ERROR,
+    ProfileHttpFailure.DIRECT_CONNECT_UNAVAILABLE,
+    ProfileHttpFailure.TUNNEL_AUTH_UNAVAILABLE,
+    ProfileHttpFailure.TUNNEL_CONNECT_UNAVAILABLE,
+    ProfileHttpFailure.UPSTREAM_CONNECT_UNAVAILABLE,
+    ProfileHttpFailure.NETWORK_RESULT_UNCERTAIN,
     -> SigningErrorCode.PROTOCOL_FAILED
 }

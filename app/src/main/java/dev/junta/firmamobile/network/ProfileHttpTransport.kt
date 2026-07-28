@@ -11,6 +11,7 @@ import java.net.Proxy
 import java.net.URI
 import java.net.UnknownHostException
 import java.util.IdentityHashMap
+import java.util.UUID
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -36,6 +37,7 @@ import okio.BufferedSink
 class ProfileHttpRequest internal constructor(
     val url: ValidatedNetworkUrl,
     body: ByteArray,
+    internal val requestId: UUID = UUID.randomUUID(),
 ) : Closeable {
     private var ownedBody: ByteArray? = body
 
@@ -46,6 +48,13 @@ class ProfileHttpRequest internal constructor(
     @Synchronized
     internal fun <T> withBody(block: (ByteArray) -> T): T =
         block(checkNotNull(ownedBody) { "HTTP request body is closed" })
+
+    @Synchronized
+    internal fun duplicateForRetry(): ProfileHttpRequest = ProfileHttpRequest(
+        url = url,
+        body = checkNotNull(ownedBody) { "HTTP request body is closed" }.copyOf(),
+        requestId = requestId,
+    )
 
     @Synchronized
     override fun close() {
@@ -83,6 +92,11 @@ enum class ProfileHttpFailure {
     RESPONSE_TOO_LARGE,
     HTTP_ERROR,
     NETWORK_ERROR,
+    DIRECT_CONNECT_UNAVAILABLE,
+    TUNNEL_AUTH_UNAVAILABLE,
+    TUNNEL_CONNECT_UNAVAILABLE,
+    UPSTREAM_CONNECT_UNAVAILABLE,
+    NETWORK_RESULT_UNCERTAIN,
 }
 
 sealed interface ProfileHttpResult {
@@ -113,6 +127,7 @@ fun interface ProfileHttpTransport {
 class ProfileHttpCancellation internal constructor() {
     private val cancelled = AtomicBoolean(false)
     private val attempt = AtomicReference<ProfileHttpCallPhaseTracker?>(null)
+    private var routeFallbackBound = false
     private val cancelActions = IdentityHashMap<() -> Unit, Unit>()
 
     fun register(action: () -> Unit): Closeable {
@@ -144,6 +159,12 @@ class ProfileHttpCancellation internal constructor() {
     }
 
     fun isCancelled(): Boolean = cancelled.get()
+
+    internal fun bindRouteFallback(): Boolean = synchronized(this) {
+        if (cancelled.get() || routeFallbackBound) return@synchronized false
+        routeFallbackBound = true
+        true
+    }
 
     internal fun beginAttempt(tracker: ProfileHttpCallPhaseTracker): Boolean = synchronized(this) {
         if (cancelled.get()) return@synchronized false
