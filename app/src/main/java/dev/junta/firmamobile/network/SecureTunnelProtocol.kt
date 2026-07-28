@@ -70,6 +70,10 @@ internal object SecureTunnelProtocol {
     private val http11Prefix = "HTTP/1.1".encodeToByteArray()
     private val successfulStatus = "200".encodeToByteArray()
 
+    /** Test-only post-cleanup signal. It exposes no response bytes and runs only after parsing. */
+    @Volatile
+    internal var responseBufferClearedObserverForTest: ((Boolean) -> Unit)? = null
+
     /**
      * Encodes the fixed CONNECT request. The returned array is caller-owned and must be cleared
      * by that caller after it has been written to the outer TLS stream.
@@ -105,48 +109,53 @@ internal object SecureTunnelProtocol {
      */
     fun readResponse(input: InputStream): SecureTunnelConnectResult {
         val header = ByteArray(MAX_RESPONSE_HEADER_BYTES)
-        var count = 0
-        var lineEndingState = ReadingLine
+        try {
+            var count = 0
+            var lineEndingState = ReadingLine
 
-        while (count < MAX_RESPONSE_HEADER_BYTES) {
-            val byte = try {
-                input.read()
-            } catch (_: IOException) {
-                return rejected(INPUT_FAILURE)
+            while (count < MAX_RESPONSE_HEADER_BYTES) {
+                val byte = try {
+                    input.read()
+                } catch (_: IOException) {
+                    return rejected(INPUT_FAILURE)
+                }
+                if (byte == -1) return rejected(INCOMPLETE_HEADER)
+
+                header[count++] = byte.toByte()
+                lineEndingState = when (lineEndingState) {
+                    ReadingLine -> when (byte) {
+                        CarriageReturn -> AfterLineCarriageReturn
+                        LineFeed -> return rejected(MALFORMED_LINE_ENDING)
+                        else -> ReadingLine
+                    }
+
+                    AfterLineCarriageReturn -> if (byte == LineFeed) {
+                        AtLineStart
+                    } else {
+                        return rejected(MALFORMED_LINE_ENDING)
+                    }
+
+                    AtLineStart -> when (byte) {
+                        CarriageReturn -> AfterTerminalCarriageReturn
+                        LineFeed -> return rejected(MALFORMED_LINE_ENDING)
+                        else -> ReadingLine
+                    }
+
+                    AfterTerminalCarriageReturn -> if (byte == LineFeed) {
+                        return parseResponseHeader(header, count)
+                    } else {
+                        return rejected(MALFORMED_LINE_ENDING)
+                    }
+
+                    else -> error("Unknown header parser state")
+                }
             }
-            if (byte == -1) return rejected(INCOMPLETE_HEADER)
 
-            header[count++] = byte.toByte()
-            lineEndingState = when (lineEndingState) {
-                ReadingLine -> when (byte) {
-                    CarriageReturn -> AfterLineCarriageReturn
-                    LineFeed -> return rejected(MALFORMED_LINE_ENDING)
-                    else -> ReadingLine
-                }
-
-                AfterLineCarriageReturn -> if (byte == LineFeed) {
-                    AtLineStart
-                } else {
-                    return rejected(MALFORMED_LINE_ENDING)
-                }
-
-                AtLineStart -> when (byte) {
-                    CarriageReturn -> AfterTerminalCarriageReturn
-                    LineFeed -> return rejected(MALFORMED_LINE_ENDING)
-                    else -> ReadingLine
-                }
-
-                AfterTerminalCarriageReturn -> if (byte == LineFeed) {
-                    return parseResponseHeader(header, count)
-                } else {
-                    return rejected(MALFORMED_LINE_ENDING)
-                }
-
-                else -> error("Unknown header parser state")
-            }
+            return rejected(HEADER_TOO_LARGE)
+        } finally {
+            header.fill(0)
+            responseBufferClearedObserverForTest?.invoke(header.all { it == 0.toByte() })
         }
-
-        return rejected(HEADER_TOO_LARGE)
     }
 
     private fun parseResponseHeader(header: ByteArray, headerSize: Int): SecureTunnelConnectResult {

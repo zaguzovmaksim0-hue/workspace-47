@@ -84,6 +84,25 @@ class SecureTunnelProtocolTest {
     }
 
     @Test
+    fun readResponseClearsItsAllocatedBufferAfterEstablishedAndRejectedResponses() {
+        val cleanupObservations = mutableListOf<Boolean>()
+        SecureTunnelProtocol.responseBufferClearedObserverForTest = { cleanupObservations += it }
+        try {
+            assertEquals(
+                SecureTunnelConnectResult.Established,
+                SecureTunnelProtocol.readResponse(ByteArrayInputStream("HTTP/1.1 200 OK\r\n\r\n".encodeToByteArray())),
+            )
+            assertEquals(
+                SecureTunnelConnectResult.Rejected(SecureTunnelRejectCode.STATUS_NOT_OK),
+                SecureTunnelProtocol.readResponse(ByteArrayInputStream("HTTP/1.1 403 Forbidden\r\n\r\n".encodeToByteArray())),
+            )
+            assertEquals(listOf(true, true), cleanupObservations)
+        } finally {
+            SecureTunnelProtocol.responseBufferClearedObserverForTest = null
+        }
+    }
+
+    @Test
     fun readResponseAcceptsAHeaderWhoseTerminatorEndsAtTheInclusiveLimit() {
         val prefix = "HTTP/1.1 200 OK\r\nX: "
         val suffix = "\r\n\r\n"
