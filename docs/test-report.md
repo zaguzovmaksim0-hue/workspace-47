@@ -397,5 +397,12 @@ Validación ejecutada:
 - QA APK SHA-256:
   `b2864a594e032e8a5f2be5be84ac3b34b1a4519383edaee9f50c471942c28830`.
 
+La build QA se instaló en el dispositivo mediante Shizuku/rish con `pm install
+-r -t`: salida `Success`, código 0 y SHA-256 idéntico entre artefacto, staging y
+`base.apk` instalado. Con la Activity realmente `RESUMED`, el smoke protegido
+por permiso `DUMP` devolvió `PROFILE_RESOLVED` para `aragon-siraw` y el adapter
+exacto `aragon-siraw-local-cades-v1`; no hubo crash ni ANR. El WebView no se
+abrió porque el certificado permanecía bloqueado, por diseño.
+
 Este milestone no prueba aceptación del portal, no ejecuta una operación
 administrativa y no eleva Aragón a `VERIFIED_E2E`.
