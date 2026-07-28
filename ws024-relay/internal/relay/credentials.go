@@ -50,9 +50,18 @@ type credentialRecord struct {
 	revoked   bool
 }
 
+// credentialVerificationObservation contains only operation markers for
+// package-internal tests. It never carries credential material or metadata.
+type credentialVerificationObservation struct {
+	Compared            bool
+	RevocationEvaluated bool
+	ExpiryEvaluated     bool
+	Aggregated          bool
+}
+
 type credentialVerifier struct {
-	records        []credentialRecord
-	comparisonHook func()
+	records         []credentialRecord
+	observationHook func(credentialVerificationObservation)
 }
 
 // NewCredentialVerifier copies and validates digest-only records so callers
@@ -61,16 +70,17 @@ func NewCredentialVerifier(records []CredentialRecord) (CredentialVerifier, erro
 	return newCredentialVerifier(records, nil)
 }
 
-// newCredentialVerifier permits a test-only comparison counter. Digest
+// newCredentialVerifier permits a test-only operation observer. Digest
 // comparison itself remains pinned to crypto/subtle.ConstantTimeCompare.
-func newCredentialVerifier(records []CredentialRecord, comparisonHook func()) (CredentialVerifier, error) {
+func newCredentialVerifier(records []CredentialRecord, observationHook func(credentialVerificationObservation)) (CredentialVerifier, error) {
 	if len(records) == 0 {
 		return nil, ErrCredentialConfiguration
 	}
 
 	immutable := make([]credentialRecord, len(records))
+	emptyDigest := sha256.Sum256(nil)
 	for i, record := range records {
-		if !validCredentialID(record.ID) || record.ExpiresAt.IsZero() || zeroDigest(record.Digest) {
+		if !validCredentialID(record.ID) || record.ExpiresAt.IsZero() || zeroDigest(record.Digest) || record.Digest == emptyDigest {
 			return nil, ErrCredentialConfiguration
 		}
 		for j := 0; j < i; j++ {
@@ -85,7 +95,7 @@ func newCredentialVerifier(records []CredentialRecord, comparisonHook func()) (C
 			revoked:   record.Revoked,
 		}
 	}
-	return &credentialVerifier{records: immutable, comparisonHook: comparisonHook}, nil
+	return &credentialVerifier{records: immutable, observationHook: observationHook}, nil
 }
 
 func (v *credentialVerifier) Verify(ctx context.Context, raw []byte, peer netip.Addr) (CredentialGrant, error) {
@@ -96,22 +106,55 @@ func (v *credentialVerifier) Verify(ctx context.Context, raw []byte, peer netip.
 
 	digest := sha256.Sum256(raw)
 	now := time.Now()
-	var grant CredentialGrant
-	accepted := false
-	for _, record := range v.records {
-		if v.comparisonHook != nil {
-			v.comparisonHook()
-		}
-		matches := subtle.ConstantTimeCompare(digest[:], record.digest[:])
-		if matches == 1 && !record.revoked && now.Before(record.expiresAt) {
-			grant = CredentialGrant{ID: record.id, ExpiresAt: record.expiresAt}
-			accepted = true
-		}
+	accepted := 0
+	acceptedIndex := 0
+	for i, record := range v.records {
+		matches := v.compare(digest, record)
+		revoked := v.revocationState(record)
+		expired := v.expiryState(now, record)
+		candidate := v.aggregate(matches, revoked, expired, len(raw) == 0)
+
+		accepted |= candidate
+		acceptedIndex = subtle.ConstantTimeSelect(candidate, i, acceptedIndex)
 	}
-	if ctx.Err() != nil || !accepted {
+	if ctx.Err() != nil || accepted != 1 {
 		return CredentialGrant{}, ErrCredentialRejected
 	}
-	return grant, nil
+	record := v.records[acceptedIndex]
+	return CredentialGrant{ID: record.id, ExpiresAt: record.expiresAt}, nil
+}
+
+func (v *credentialVerifier) compare(digest [sha256.Size]byte, record credentialRecord) int {
+	matches := subtle.ConstantTimeCompare(digest[:], record.digest[:])
+	v.observe(credentialVerificationObservation{Compared: true})
+	return matches
+}
+
+func (v *credentialVerifier) revocationState(record credentialRecord) bool {
+	revoked := record.revoked
+	v.observe(credentialVerificationObservation{RevocationEvaluated: true})
+	return revoked
+}
+
+func (v *credentialVerifier) expiryState(now time.Time, record credentialRecord) bool {
+	expired := !now.Before(record.expiresAt)
+	v.observe(credentialVerificationObservation{ExpiryEvaluated: true})
+	return expired
+}
+
+func (v *credentialVerifier) aggregate(matches int, revoked, expired, emptyRaw bool) int {
+	candidate := 0
+	if matches == 1 && !revoked && !expired && !emptyRaw {
+		candidate = 1
+	}
+	v.observe(credentialVerificationObservation{Aggregated: true})
+	return candidate
+}
+
+func (v *credentialVerifier) observe(observation credentialVerificationObservation) {
+	if v.observationHook != nil {
+		v.observationHook(observation)
+	}
 }
 
 func validCredentialID(id string) bool {

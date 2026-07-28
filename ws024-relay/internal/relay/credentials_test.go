@@ -87,6 +87,22 @@ func TestCredentialVerifierRejectsAllInvalidCredentialsWithOneError(t *testing.T
 	}
 }
 
+func TestCredentialVerifierRejectsEmptyRawAgainstEmptyDigestTestSeam(t *testing.T) {
+	verifier := &credentialVerifier{records: []credentialRecord{{
+		id:        "empty-token-test-seam",
+		digest:    sha256.Sum256(nil),
+		expiresAt: time.Now().Add(time.Hour),
+	}}}
+
+	grant, err := verifier.Verify(context.Background(), []byte{}, netip.Addr{})
+	if err != ErrCredentialRejected {
+		t.Fatalf("Verify() error = %v, want ErrCredentialRejected", err)
+	}
+	if grant != (CredentialGrant{}) {
+		t.Fatalf("Verify() grant = %#v, want zero grant on rejection", grant)
+	}
+}
+
 func TestCredentialVerifierCopiesRecordConfiguration(t *testing.T) {
 	expiresAt := time.Now().Add(time.Hour)
 	records := []CredentialRecord{credentialRecordFor("credential-1", "correct-token", expiresAt, false)}
@@ -113,8 +129,10 @@ func TestCredentialVerifierScansEveryRecordAfterMatch(t *testing.T) {
 		credentialRecordFor("third", "other-token-2", now.Add(time.Hour), false),
 	}
 	var comparisons atomic.Int32
-	verifier, err := newCredentialVerifier(records, func() {
-		comparisons.Add(1)
+	verifier, err := newCredentialVerifier(records, func(observation credentialVerificationObservation) {
+		if observation.Compared {
+			comparisons.Add(1)
+		}
 	})
 	if err != nil {
 		t.Fatalf("newCredentialVerifier() error = %v", err)
@@ -125,6 +143,59 @@ func TestCredentialVerifierScansEveryRecordAfterMatch(t *testing.T) {
 	}
 	if got, want := comparisons.Load(), int32(len(records)); got != want {
 		t.Fatalf("digest comparisons = %d, want full scan of %d records", got, want)
+	}
+}
+
+func TestCredentialVerifierEvaluatesEveryRecordPolicyStateOnRejection(t *testing.T) {
+	now := time.Now()
+	records := []CredentialRecord{
+		credentialRecordFor("active", "active-token", now.Add(time.Hour), false),
+		credentialRecordFor("revoked", "revoked-token", now.Add(time.Hour), true),
+		credentialRecordFor("expired", "expired-token", now.Add(-time.Hour), false),
+	}
+
+	for _, tc := range []struct {
+		name string
+		raw  []byte
+	}{
+		{"wrong", []byte("wrong-token")},
+		{"revoked", []byte("revoked-token")},
+		{"expired", []byte("expired-token")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var comparisons, revocations, expiries, aggregations atomic.Int32
+			verifier, err := newCredentialVerifier(records, func(observation credentialVerificationObservation) {
+				if observation.Compared {
+					comparisons.Add(1)
+				}
+				if observation.RevocationEvaluated {
+					revocations.Add(1)
+				}
+				if observation.ExpiryEvaluated {
+					expiries.Add(1)
+				}
+				if observation.Aggregated {
+					aggregations.Add(1)
+				}
+			})
+			if err != nil {
+				t.Fatalf("newCredentialVerifier() error = %v", err)
+			}
+
+			if _, err := verifier.Verify(context.Background(), tc.raw, netip.Addr{}); err != ErrCredentialRejected {
+				t.Fatalf("Verify() error = %v, want ErrCredentialRejected", err)
+			}
+			for name, got := range map[string]int32{
+				"comparisons":  comparisons.Load(),
+				"revocations":  revocations.Load(),
+				"expiries":     expiries.Load(),
+				"aggregations": aggregations.Load(),
+			} {
+				if want := int32(len(records)); got != want {
+					t.Fatalf("%s = %d, want %d per-record evaluations", name, got, want)
+				}
+			}
+		})
 	}
 }
 
@@ -159,6 +230,7 @@ func TestCredentialVerifierRejectsUnsafeConfigurationWithoutSecrets(t *testing.T
 	duplicateID := credentialRecordFor("credential-1", "second-secret", now, false)
 	duplicateDigest := credentialRecordFor("credential-2", "first-secret", now, false)
 	zeroDigest := CredentialRecord{ID: "credential-3", ExpiresAt: now}
+	emptyDigest := credentialRecordFor("credential-4", "", now, false)
 	for _, tc := range []struct {
 		name    string
 		records []CredentialRecord
@@ -167,6 +239,7 @@ func TestCredentialVerifierRejectsUnsafeConfigurationWithoutSecrets(t *testing.T
 		{"unsafe id", []CredentialRecord{credentialRecordFor("unsafe id", "token", now, false)}},
 		{"zero expiry", []CredentialRecord{{ID: "credential-4", Digest: sha256.Sum256([]byte("token"))}}},
 		{"zero digest", []CredentialRecord{zeroDigest}},
+		{"empty digest", []CredentialRecord{emptyDigest}},
 		{"duplicate id", []CredentialRecord{valid, duplicateID}},
 		{"duplicate digest", []CredentialRecord{valid, duplicateDigest}},
 	} {
