@@ -43,6 +43,23 @@ class ProfileHttpCallPhaseTrackerTest {
     }
 
     @Test
+    fun safeFirstAttemptCanRebindAndSnapshotsFollowTheSecondTracker() {
+        val cancellation = ProfileHttpCancellation()
+        val firstTracker = ProfileHttpCallPhaseTracker()
+        assertTrue(cancellation.beginAttempt(firstTracker))
+        firstTracker.connectStart(call, address, Proxy.NO_PROXY)
+        assertTrue(cancellation.snapshotFailure(ProfileHttpFailure.NETWORK_ERROR).safeForRouteFallback)
+
+        val secondTracker = ProfileHttpCallPhaseTracker()
+        assertTrue(cancellation.beginAttempt(secondTracker))
+        secondTracker.requestHeadersStart(call)
+
+        val failure = cancellation.snapshotFailure(ProfileHttpFailure.NETWORK_ERROR)
+        assertEquals(ProfileHttpFailurePhase.HTTP_WRITE_STARTED, failure.phase)
+        assertFalse(failure.safeForRouteFallback)
+    }
+
+    @Test
     fun cancellationDuringDnsTcpOrTlsPreservesTheExactPreHeaderPhase() {
         val dns = ProfileHttpCancellation()
         assertTrue(dns.beginAttempt(ProfileHttpCallPhaseTracker()))

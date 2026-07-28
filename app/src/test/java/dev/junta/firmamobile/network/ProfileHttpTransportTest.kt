@@ -342,6 +342,7 @@ class ProfileHttpTransportTest {
             approvedAddresses = approved,
             connectTimeoutMillis = 1_234,
             readTimeoutMillis = 2_345,
+            tracker = ProfileHttpCallPhaseTracker(),
         )
 
         assertEquals(approved, client.dns.lookup("ws024.juntadeandalucia.es"))

@@ -133,9 +133,12 @@ class ProfileHttpCancellation internal constructor() {
     }
 
     fun cancel() {
-        if (!cancelled.compareAndSet(false, true)) return
         val action = synchronized(this) {
-            cancelAction.also { cancelAction = null }
+            if (!cancelled.compareAndSet(false, true)) {
+                null
+            } else {
+                cancelAction.also { cancelAction = null }
+            }
         }
         action?.invoke()
     }
@@ -143,7 +146,8 @@ class ProfileHttpCancellation internal constructor() {
     fun isCancelled(): Boolean = cancelled.get()
 
     internal fun beginAttempt(tracker: ProfileHttpCallPhaseTracker): Boolean = synchronized(this) {
-        if (cancelled.get() || !attempt.compareAndSet(null, tracker)) return@synchronized false
+        if (cancelled.get()) return@synchronized false
+        attempt.set(tracker)
         tracker.beginDns()
         true
     }
@@ -418,7 +422,7 @@ internal class OkHttpProfileHttpExecutor(
         approvedAddresses: List<InetAddress>,
         connectTimeoutMillis: Int,
         readTimeoutMillis: Int,
-        tracker: ProfileHttpCallPhaseTracker = ProfileHttpCallPhaseTracker(),
+        tracker: ProfileHttpCallPhaseTracker,
     ): OkHttpClient {
         val approved = approvedAddresses.distinct()
         require(expectedHost.isNotBlank() && approved.isNotEmpty())
