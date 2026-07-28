@@ -86,11 +86,13 @@ internal class AutoFirmaTriPhaseExecutionAdapter(
         }
         var transferred = false
         return try {
-            val preRequest = codec.buildPreRequest(decoded)
+            val preRequest = codec.buildPreRequest(decoded).use { generatedRequest ->
+                generatedRequest.duplicateWithRequestId(request.requestId)
+            }
             val networkResult = preRequest.use { ownedRequest -> postWithDeadline(ownedRequest) }
             when (networkResult) {
                 is ProfileHttpResult.Failure ->
-                    ProtocolPrepareResult.Failure(networkResult.code.toSigningError())
+                    ProtocolPrepareResult.Failure(networkResult.toSigningError())
                 is ProfileHttpResult.Success -> networkResult.response.use { response ->
                     try {
                         val preSign = response.withBody { body -> codec.parsePreResponse(decoded, body) }
@@ -128,14 +130,16 @@ internal class AutoFirmaTriPhaseExecutionAdapter(
         }
         return try {
             val postRequest = try {
-                codec.buildPostRequest(state, localSignature)
+                codec.buildPostRequest(state, localSignature).use { generatedRequest ->
+                    generatedRequest.duplicateWithRequestId(request.requestId)
+                }
             } finally {
                 state.close()
             }
             val networkResult = postRequest.use { ownedRequest -> postWithDeadline(ownedRequest) }
             when (networkResult) {
                 is ProfileHttpResult.Failure ->
-                    ProtocolCompletionResult.Failure(networkResult.code.toSigningError())
+                    ProtocolCompletionResult.Failure(networkResult.toSigningError())
                 is ProfileHttpResult.Success -> networkResult.response.use { response ->
                     try {
                         ProtocolCompletionResult.Success(response.withBody(codec::parsePostResponse))
@@ -154,31 +158,45 @@ internal class AutoFirmaTriPhaseExecutionAdapter(
         }
     }
 
-    private suspend fun postWithDeadline(request: ProfileHttpRequest): ProfileHttpResult =
+    private suspend fun postWithDeadline(request: ProfileHttpRequest): ProfileHttpResult {
         if (request.url.uri != contract.endpoint) {
-            ProfileHttpResult.Failure(ProfileHttpFailure.INVALID_ENDPOINT)
-        } else withTimeoutOrNull(callTimeoutMillis) {
+            return ProfileHttpResult.Failure(ProfileHttpFailure.INVALID_ENDPOINT)
+        }
+        val cancellation = ProfileHttpCancellation()
+        val result = withTimeoutOrNull(callTimeoutMillis) {
             suspendCancellableCoroutine<ProfileHttpResult> { continuation ->
-                val cancellation = ProfileHttpCancellation()
                 continuation.invokeOnCancellation { cancellation.cancel() }
                 try {
                     executor.execute {
-                        val result = try {
+                        val networkResult = try {
                             transport.post(request, cancellation)
                         } catch (_: Exception) {
-                            ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)
+                            ProfileHttpResult.Failure(
+                                cancellation.snapshotFailure(ProfileHttpFailure.NETWORK_ERROR),
+                            )
                         }
-                        continuation.resume(result) { _, cancelledResult, _ ->
+                        continuation.resume(networkResult) { _, cancelledResult, _ ->
                             if (cancelledResult is ProfileHttpResult.Success) {
                                 cancelledResult.response.close()
                             }
                         }
                     }
                 } catch (_: RuntimeException) {
-                    continuation.resume(ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)) { _, _, _ -> }
+                    continuation.resume(
+                        ProfileHttpResult.Failure(
+                            cancellation.snapshotFailure(ProfileHttpFailure.NETWORK_ERROR),
+                        ),
+                    ) { _, _, _ -> }
                 }
             }
-        } ?: ProfileHttpResult.Failure(ProfileHttpFailure.NETWORK_ERROR)
+        }
+        if (result != null) return result
+
+        cancellation.cancel()
+        return ProfileHttpResult.Failure(
+            cancellation.snapshotFailure(ProfileHttpFailure.NETWORK_ERROR),
+        )
+    }
 
     private fun NormalizedSignRequest.matches(expected: TriPhaseExecutionContract): Boolean =
         protocolId == expected.protocolId &&
@@ -198,7 +216,7 @@ internal fun TriPhaseCodecException.toSigningError(): SigningErrorCode = when (c
     TriPhaseCodecError.RESPONSE_FORMAT_INVALID -> SigningErrorCode.PROTOCOL_FAILED
 }
 
-internal fun ProfileHttpFailure.toSigningError(): SigningErrorCode = when (this) {
+internal fun ProfileHttpResult.Failure.toSigningError(): SigningErrorCode = when (code) {
     ProfileHttpFailure.SESSION_EXPIRED -> SigningErrorCode.SESSION_EXPIRED
     ProfileHttpFailure.INVALID_ENDPOINT,
     ProfileHttpFailure.PRIVATE_ADDRESS,
@@ -207,11 +225,19 @@ internal fun ProfileHttpFailure.toSigningError(): SigningErrorCode = when (this)
     ProfileHttpFailure.RESPONSE_TOO_LARGE -> SigningErrorCode.REQUEST_TOO_LARGE
     ProfileHttpFailure.CONTENT_TYPE_INVALID,
     ProfileHttpFailure.HTTP_ERROR,
+    -> SigningErrorCode.PROTOCOL_FAILED
+    ProfileHttpFailure.NETWORK_RESULT_UNCERTAIN -> SigningErrorCode.NETWORK_RESULT_UNCERTAIN
     ProfileHttpFailure.NETWORK_ERROR,
     ProfileHttpFailure.DIRECT_CONNECT_UNAVAILABLE,
     ProfileHttpFailure.TUNNEL_AUTH_UNAVAILABLE,
     ProfileHttpFailure.TUNNEL_CONNECT_UNAVAILABLE,
     ProfileHttpFailure.UPSTREAM_CONNECT_UNAVAILABLE,
-    ProfileHttpFailure.NETWORK_RESULT_UNCERTAIN,
-    -> SigningErrorCode.PROTOCOL_FAILED
+    -> if (detail.safeForRouteFallback) {
+        SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE
+    } else {
+        SigningErrorCode.NETWORK_RESULT_UNCERTAIN
+    }
 }
+
+internal fun ProfileHttpFailure.toSigningError(): SigningErrorCode =
+    ProfileHttpResult.Failure(this).toSigningError()

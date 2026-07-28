@@ -3,6 +3,12 @@ package dev.junta.firmamobile.security
 import dev.junta.firmamobile.afirma.AfirmaOperation
 import dev.junta.firmamobile.afirma.AfirmaParameter
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.network.ProfileHttpFailure
+import dev.junta.firmamobile.network.ProfileHttpFailurePhase
+import dev.junta.firmamobile.network.ProfileHttpRoute
+import dev.junta.firmamobile.network.TunnelRouteDurationBucket
+import dev.junta.firmamobile.network.TunnelRouteEvent
+import dev.junta.firmamobile.network.TunnelRouteStage
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.time.Clock
 import java.time.Instant
@@ -13,6 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SanitizedLoggerTest {
+    private val fixedClockText = "2030-01-01T00:00:00Z"
     private val clock = Clock.fixed(
         Instant.parse("2030-01-01T00:00:00Z"),
         ZoneOffset.UTC,
@@ -65,6 +72,38 @@ class SanitizedLoggerTest {
         assertFalse(records.joinToString().contains("secret=canary"))
         assertTrue(records.first().contains("host=invalid"))
         assertTrue(records.last().contains("event=SSL_ERROR_CANCELLED"))
+    }
+
+    @Test
+    fun tunnelRecordContainsOnlyClosedTokensAndCoarseDuration() {
+        val logger = SanitizedLogger(clock = clock)
+        val uuid = "123e4567-e89b-42d3-a456-426614174000"
+        val token = "qa-secret-token-canary"
+        val relay = "relay.private.example"
+        logger.recordTunnelRouteEvent(
+            TunnelRouteEvent(
+                route = ProfileHttpRoute.SECURE_TUNNEL,
+                stage = TunnelRouteStage.TUNNEL_FAILED,
+                phase = ProfileHttpFailurePhase.TCP_BEFORE_HTTP_BYTES,
+                resultCode = ProfileHttpFailure.TUNNEL_CONNECT_UNAVAILABLE,
+                durationBucket = TunnelRouteDurationBucket.ONE_TO_THREE_SECONDS,
+            ),
+        )
+
+        val exported = logger.exportText()
+        assertTrue(exported.contains("event=TUNNEL_ROUTE"))
+        assertTrue(exported.contains("route=SECURE_TUNNEL"))
+        assertTrue(exported.contains("stage=TUNNEL_FAILED"))
+        assertTrue(exported.contains("phase=TCP_BEFORE_HTTP_BYTES"))
+        assertTrue(exported.contains("result=TUNNEL_CONNECT_UNAVAILABLE"))
+        assertTrue(exported.contains("duration_bucket=ONE_TO_THREE_SECONDS"))
+        for (forbidden in listOf(
+            uuid, token, relay, "sha256_8", ".length=", "bytes=", "size=",
+            "Authorization", "Bearer", "Exception", "https://", fixedClockText,
+        )) {
+            assertFalse("forbidden=$forbidden record=$exported", exported.contains(forbidden))
+        }
+        assertEquals(1, logger.snapshot().size)
     }
 
     @Test

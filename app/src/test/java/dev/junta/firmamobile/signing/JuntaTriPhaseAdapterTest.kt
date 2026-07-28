@@ -168,7 +168,7 @@ class JuntaTriPhaseAdapterTest {
 
         val result = adapter.complete(request, preSign, signature)
 
-        assertEquals(SigningErrorCode.PROTOCOL_FAILED, (result as ProtocolCompletionResult.Failure).code)
+        assertEquals(SigningErrorCode.NETWORK_RESULT_UNCERTAIN, (result as ProtocolCompletionResult.Failure).code)
         assertEquals(2, transport.calls.get())
         assertTrue(transport.interrupted.get())
         request.close()

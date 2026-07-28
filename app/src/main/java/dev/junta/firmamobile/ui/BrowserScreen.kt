@@ -551,6 +551,7 @@ fun BrowserScreen(
 
     when (signingState) {
         is SigningUiState.Signing,
+        is SigningUiState.ConnectingSecurely,
         is SigningUiState.Completed,
         is SigningUiState.Failed,
         -> SigningStatusDialog(

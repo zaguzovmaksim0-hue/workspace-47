@@ -4,6 +4,10 @@ import dev.junta.firmamobile.browser.NavigationId
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.SensitiveCertificateFingerprintObserver
 import dev.junta.firmamobile.certificate.UnlockedIdentity
+import dev.junta.firmamobile.network.ProfileHttpRoute
+import dev.junta.firmamobile.network.TunnelRouteDurationBucket
+import dev.junta.firmamobile.network.TunnelRouteEvent
+import dev.junta.firmamobile.network.TunnelRouteStage
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.security.cert.X509Certificate
 import java.time.Clock
@@ -63,6 +67,79 @@ class SigningCoordinatorTest {
         assertTrue(engine.events.isEmpty())
         assertTrue(reply.events.isEmpty())
         assertFalse(state.toString().contains(PAYLOAD.decodeToString()))
+    }
+
+    @Test
+    fun onlyMatchingActiveRequestReceivesSecureTunnelProgress() {
+        val blockingAdapter = BlockingPrepareAdapter()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = blockingAdapter,
+            localSignatureEngine = RecordingEngine(),
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request(), reply))
+
+        val result = AtomicReference<SigningExecutionResult>()
+        val confirmThread = thread(start = true) {
+            result.set(runBlocking { localCoordinator.confirm(REQUEST_ID) })
+        }
+        assertTrue(blockingAdapter.prepareEntered.await(5, TimeUnit.SECONDS))
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        val connecting = TunnelRouteEvent(
+            route = ProfileHttpRoute.SECURE_TUNNEL,
+            stage = TunnelRouteStage.TUNNEL_CONNECTING,
+            durationBucket = TunnelRouteDurationBucket.NOT_AVAILABLE,
+        )
+        localCoordinator.onTunnelRouteEvent(WRONG_REQUEST_ID, connecting)
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting)
+        assertEquals(SigningUiState.ConnectingSecurely(REQUEST_ID), localCoordinator.state.value)
+
+        localCoordinator.onTunnelRouteEvent(
+            WRONG_REQUEST_ID,
+            connecting.copy(stage = TunnelRouteStage.TUNNEL_ESTABLISHED),
+        )
+        assertEquals(SigningUiState.ConnectingSecurely(REQUEST_ID), localCoordinator.state.value)
+
+        localCoordinator.onTunnelRouteEvent(
+            REQUEST_ID,
+            connecting.copy(
+                stage = TunnelRouteStage.TUNNEL_ESTABLISHED,
+                durationBucket = TunnelRouteDurationBucket.UNDER_ONE_SECOND,
+            ),
+        )
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        blockingAdapter.releasePrepare.countDown()
+        confirmThread.join(5_000)
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), result.get())
+        assertEquals(SigningUiState.Completed(REQUEST_ID), localCoordinator.state.value)
+
+        localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting)
+        assertEquals(SigningUiState.Completed(REQUEST_ID), localCoordinator.state.value)
+    }
+
+    @Test
+    fun tunnelProgressIsIgnoredBeforeConfirmation() {
+        val reply = RecordingReply(REQUEST_ID)
+        coordinator.prepare(request(), reply)
+        val before = coordinator.state.value
+
+        coordinator.onTunnelRouteEvent(
+            REQUEST_ID,
+            TunnelRouteEvent(
+                route = ProfileHttpRoute.SECURE_TUNNEL,
+                stage = TunnelRouteStage.TUNNEL_CONNECTING,
+            ),
+        )
+
+        assertEquals(before, coordinator.state.value)
     }
 
     @Test
@@ -468,6 +545,32 @@ class SigningCoordinatorTest {
         ),
     )
 
+    private class BlockingPrepareAdapter : SigningProtocolAdapter {
+        override val id = JuntaTriPhaseAdapter.ID
+        val prepareEntered = CountDownLatch(1)
+        val releasePrepare = CountDownLatch(1)
+
+        override suspend fun prepare(
+            request: NormalizedSignRequest,
+            certificateChain: List<X509Certificate>,
+        ): ProtocolPrepareResult {
+            prepareEntered.countDown()
+            check(releasePrepare.await(5, TimeUnit.SECONDS))
+            return ProtocolPrepareResult.Success(
+                PreSignResult(request, PRE_SIGN_INPUT.copyOf(), TestPreSignState()),
+            )
+        }
+
+        override suspend fun complete(
+            request: NormalizedSignRequest,
+            preSign: PreSignResult,
+            localSignature: LocalSignature,
+        ): ProtocolCompletionResult {
+            checkNotNull(preSign.consumeState(request)).close()
+            return ProtocolCompletionResult.Success(LocalSignature(FINAL_SIGNATURE.copyOf()))
+        }
+    }
+
     private class RecordingAdapter : SigningProtocolAdapter {
         override val id = JuntaTriPhaseAdapter.ID
         val events = mutableListOf<String>()
@@ -676,6 +779,7 @@ class SigningCoordinatorTest {
     private companion object {
         val NOW: Instant = Instant.parse("2030-01-01T00:00:00Z")
         val REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174000")
+        val WRONG_REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174099")
         val PORTAL_ORIGIN = TrustedOrigin("https", "www.juntadeandalucia.es", 443)
         val PAYLOAD = "synthetic-coordinator-payload".encodeToByteArray()
         val PRE_SIGN_INPUT = "synthetic-pre-sign".encodeToByteArray()

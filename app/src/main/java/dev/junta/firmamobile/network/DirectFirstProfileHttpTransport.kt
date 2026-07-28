@@ -16,6 +16,7 @@ internal class DirectFirstProfileHttpTransport(
     private val direct: ProfileHttpTransport,
     private val tunnel: ProfileHttpTransport?,
     private val observer: TunnelRouteObserver,
+    private val monotonicNanos: () -> Long = System::nanoTime,
 ) : ProfileHttpTransport {
     override fun post(
         request: ProfileHttpRequest,
@@ -43,6 +44,7 @@ internal class DirectFirstProfileHttpTransport(
             }
 
             emit(
+                request.requestId,
                 TunnelRouteEvent(
                     route = ProfileHttpRoute.DIRECT,
                     stage = TunnelRouteStage.DIRECT_FAILED_PRE_HTTP,
@@ -54,7 +56,9 @@ internal class DirectFirstProfileHttpTransport(
                 return@use normalizedDirect
             }
 
+            val tunnelStartedAt = monotonicNanosOrNull()
             emit(
+                request.requestId,
                 TunnelRouteEvent(
                     route = ProfileHttpRoute.SECURE_TUNNEL,
                     stage = TunnelRouteStage.TUNNEL_CONNECTING,
@@ -69,9 +73,11 @@ internal class DirectFirstProfileHttpTransport(
             when (tunnelResult) {
                 is ProfileHttpResult.Success -> {
                     emit(
+                        request.requestId,
                         TunnelRouteEvent(
                             route = ProfileHttpRoute.SECURE_TUNNEL,
                             stage = TunnelRouteStage.TUNNEL_ESTABLISHED,
+                            durationBucket = durationBucketSince(tunnelStartedAt),
                         ),
                     )
                     tunnelResult
@@ -79,11 +85,13 @@ internal class DirectFirstProfileHttpTransport(
                 is ProfileHttpResult.Failure -> {
                     val normalizedTunnel = normalizeTunnelFailure(tunnelResult)
                     emit(
+                        request.requestId,
                         TunnelRouteEvent(
                             route = ProfileHttpRoute.SECURE_TUNNEL,
                             stage = TunnelRouteStage.TUNNEL_FAILED,
                             phase = normalizedTunnel.detail.phase,
                             resultCode = normalizedTunnel.code,
+                            durationBucket = durationBucketSince(tunnelStartedAt),
                         ),
                     )
                     normalizedTunnel
@@ -131,8 +139,18 @@ internal class DirectFirstProfileHttpTransport(
         ),
     )
 
-    private fun emit(event: TunnelRouteEvent) {
-        runCatching { observer.onEvent(event) }
+    private fun monotonicNanosOrNull(): Long? = runCatching(monotonicNanos).getOrNull()
+
+    private fun durationBucketSince(startedAt: Long?): TunnelRouteDurationBucket {
+        val finishedAt = monotonicNanosOrNull()
+        if (startedAt == null || finishedAt == null || finishedAt < startedAt) {
+            return TunnelRouteDurationBucket.NOT_AVAILABLE
+        }
+        return TunnelRouteDurationBucket.fromElapsedNanos(finishedAt - startedAt)
+    }
+
+    private fun emit(requestId: java.util.UUID, event: TunnelRouteEvent) {
+        runCatching { observer.onEvent(requestId, event) }
     }
 
     private companion object {

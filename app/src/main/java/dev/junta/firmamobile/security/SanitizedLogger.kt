@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.security
 
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.network.TunnelRouteEvent
 import java.security.MessageDigest
 import java.time.Clock
 import java.util.ArrayDeque
@@ -19,6 +20,7 @@ enum class DiagnosticEventCode {
     AFIRMA_REQUEST_OBSERVED,
     MINIAPPLET_OBSERVED,
     PROTOCOL_CORRELATION_REJECTED,
+    TUNNEL_ROUTE,
 }
 
 class SanitizedLogger(
@@ -95,6 +97,20 @@ class SanitizedLogger(
     }
 
     @Synchronized
+    internal fun recordTunnelRouteEvent(event: TunnelRouteEvent) {
+        append(
+            listOf(
+                "event=${DiagnosticEventCode.TUNNEL_ROUTE.name}",
+                "route=${event.route.name}",
+                "stage=${event.stage.name}",
+                "phase=${event.phase?.name ?: NOT_AVAILABLE}",
+                "result=${event.resultCode?.name ?: NOT_AVAILABLE}",
+                "duration_bucket=${event.durationBucket.name}",
+            ).joinToString(separator = " "),
+        )
+    }
+
+    @Synchronized
     fun snapshot(): List<String> = records.toList()
 
     @Synchronized
@@ -145,6 +161,7 @@ class SanitizedLogger(
         const val MAX_CAPACITY = 1000
         const val SHA256_PREFIX_BYTES = 4
         const val INVALID_VALUE = "invalid"
+        const val NOT_AVAILABLE = "NOT_AVAILABLE"
         const val INVALID_LENGTH = -1
         const val MAX_OBSERVED_ARGUMENTS = 32
         const val MAX_OBSERVED_ARGUMENT_LENGTH = 1_048_576

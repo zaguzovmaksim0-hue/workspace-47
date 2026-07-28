@@ -50,7 +50,10 @@ class ProfileHttpRequest internal constructor(
         block(checkNotNull(ownedBody) { "HTTP request body is closed" })
 
     @Synchronized
-    internal fun duplicateForRetry(): ProfileHttpRequest = ProfileHttpRequest(
+    internal fun duplicateForRetry(): ProfileHttpRequest = duplicateWithRequestId(requestId)
+
+    @Synchronized
+    internal fun duplicateWithRequestId(requestId: UUID): ProfileHttpRequest = ProfileHttpRequest(
         url = url,
         body = checkNotNull(ownedBody) { "HTTP request body is closed" }.copyOf(),
         requestId = requestId,

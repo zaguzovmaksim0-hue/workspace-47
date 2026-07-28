@@ -21,7 +21,7 @@ class DirectFirstProfileHttpTransportTest {
             val direct = RecordingTransport(failure(ProfileHttpFailure.NETWORK_ERROR, phase, false))
             val tunnel = RecordingTransport(success("tunnel-$phase"))
             val events = mutableListOf<TunnelRouteEvent>()
-            val transport = transport(direct, tunnel, observer = events::add)
+            val transport = transport(direct, tunnel, observer = TunnelRouteObserver { _, event -> events += event })
 
             val result = request().use { transport.post(it, ProfileHttpCancellation()) }
 
@@ -44,6 +44,7 @@ class DirectFirstProfileHttpTransportTest {
                     TunnelRouteEvent(
                         route = ProfileHttpRoute.SECURE_TUNNEL,
                         stage = TunnelRouteStage.TUNNEL_ESTABLISHED,
+                        durationBucket = TunnelRouteDurationBucket.UNDER_ONE_SECOND,
                     ),
                 ),
                 events,
@@ -86,7 +87,7 @@ class DirectFirstProfileHttpTransportTest {
         val direct = RecordingTransport(failure(ProfileHttpFailure.NETWORK_ERROR, ProfileHttpFailurePhase.TCP_BEFORE_HTTP_BYTES, false))
         val tunnel = RecordingTransport(success("must-not-run"))
         val events = mutableListOf<TunnelRouteEvent>()
-        val observer = TunnelRouteObserver { event ->
+        val observer = TunnelRouteObserver { _, event ->
             events += event
             if (event.stage == TunnelRouteStage.DIRECT_FAILED_PRE_HTTP) cancellation.cancel()
         }
@@ -106,7 +107,7 @@ class DirectFirstProfileHttpTransportTest {
         val tunnel = RecordingTransport(success("must-not-run"))
         val events = mutableListOf<TunnelRouteEvent>()
 
-        val result = request().use { transport(direct, tunnel, observer = events::add).post(it, ProfileHttpCancellation()) }
+        val result = request().use { transport(direct, tunnel, observer = TunnelRouteObserver { _, event -> events += event }).post(it, ProfileHttpCancellation()) }
 
         assertEquals("direct", result.successBody())
         assertEquals(1, direct.calls.get())
@@ -131,7 +132,7 @@ class DirectFirstProfileHttpTransportTest {
                 policy = case.policy,
                 direct = direct,
                 tunnel = tunnel,
-                observer = TunnelRouteObserver { },
+                observer = TunnelRouteObserver { _, _ -> },
             )
 
             val result = request(case.requestUrl).use { transport.post(it, ProfileHttpCancellation()) }
@@ -159,7 +160,7 @@ class DirectFirstProfileHttpTransportTest {
         val tunnel = RecordingTransport(failure(ProfileHttpFailure.NETWORK_ERROR, ProfileHttpFailurePhase.TLS_BEFORE_HTTP_BYTES, false))
         val events = mutableListOf<TunnelRouteEvent>()
 
-        val result = request().use { transport(direct, tunnel, observer = events::add).post(it, ProfileHttpCancellation()) }
+        val result = request().use { transport(direct, tunnel, observer = TunnelRouteObserver { _, event -> events += event }).post(it, ProfileHttpCancellation()) }
 
         assertEquals(1, direct.calls.get())
         assertEquals(1, tunnel.calls.get())
@@ -288,13 +289,35 @@ class DirectFirstProfileHttpTransportTest {
     fun observerFailureCannotChangeTheNetworkResultOrCreateDuplicateAttempts() {
         val direct = RecordingTransport(failure(ProfileHttpFailure.NETWORK_ERROR, ProfileHttpFailurePhase.DNS_BEFORE_CONNECT, false))
         val tunnel = RecordingTransport(success("ok"))
-        val observer = TunnelRouteObserver { throw IllegalStateException("observer failure") }
+        val observer = TunnelRouteObserver { _, _ -> throw IllegalStateException("observer failure") }
 
         val result = request().use { transport(direct, tunnel, observer = observer).post(it, ProfileHttpCancellation()) }
 
         assertEquals("ok", result.successBody())
         assertEquals(1, direct.calls.get())
         assertEquals(1, tunnel.calls.get())
+    }
+
+    @Test
+    fun observerReceivesRequestIdSeparatelyWhileEventRemainsEnumOnly() {
+        val direct = RecordingTransport(
+            failure(ProfileHttpFailure.NETWORK_ERROR, ProfileHttpFailurePhase.DNS_BEFORE_CONNECT, false),
+        )
+        val tunnel = RecordingTransport(success("ok"))
+        val observations = mutableListOf<Pair<UUID, TunnelRouteEvent>>()
+        val observer = TunnelRouteObserver { requestId, event -> observations += requestId to event }
+        val request = request()
+        val expectedId = request.requestId
+
+        request.use { transport(direct, tunnel, observer).post(it, ProfileHttpCancellation()) }
+
+        assertEquals(3, observations.size)
+        assertTrue(observations.all { it.first == expectedId })
+        assertTrue(
+            TunnelRouteEvent::class.java.declaredFields.none { field ->
+                field.name.contains("request", ignoreCase = true) || field.type == UUID::class.java
+            },
+        )
     }
 
     @Test
@@ -312,7 +335,7 @@ class DirectFirstProfileHttpTransportTest {
     private fun transport(
         direct: ProfileHttpTransport,
         tunnel: ProfileHttpTransport?,
-        observer: TunnelRouteObserver = TunnelRouteObserver { },
+        observer: TunnelRouteObserver = TunnelRouteObserver { _, _ -> },
     ) = DirectFirstProfileHttpTransport(
         profileId = ProfileId("junta-ofvirtual"),
         endpoint = OFVIRTUAL_ENDPOINT,
@@ -320,6 +343,7 @@ class DirectFirstProfileHttpTransportTest {
         direct = direct,
         tunnel = tunnel,
         observer = observer,
+        monotonicNanos = { 0L },
     )
 
     private fun request(

@@ -46,6 +46,54 @@ class SigningStatusDialogTest {
     }
 
     @Test
+    fun secureConnectionProgressUsesExactSafeSpanishCopy() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                SigningStatusDialog(
+                    state = SigningUiState.ConnectingSecurely(REQUEST_ID),
+                    onDismiss = {},
+                )
+            }
+        }
+
+        val copy = "Conectando de forma segura con el servicio de firma…"
+        rule.onNodeWithText(copy).assertIsDisplayed()
+        rule.onNodeWithText("Cerrar").assertDoesNotExist()
+        for (forbidden in FORBIDDEN_UI_TERMS) {
+            rule.onNodeWithText(forbidden, substring = true, ignoreCase = true).assertDoesNotExist()
+        }
+        rule.onNodeWithText(REQUEST_ID.toString(), substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun closedNetworkErrorsUseExactActionableSpanishCopy() {
+        var state by mutableStateOf<SigningUiState>(
+            SigningUiState.Failed(REQUEST_ID, SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE),
+        )
+        rule.setContent {
+            JuntaFirmaTheme {
+                SigningStatusDialog(state = state, onDismiss = {})
+            }
+        }
+
+        rule.onNodeWithText(
+            "No se pudo conectar con el servicio de firma de la Junta. Inténtalo de nuevo más tarde.",
+        ).assertIsDisplayed()
+        rule.onNodeWithText("Código: SIGNING_SERVICE_UNAVAILABLE").assertDoesNotExist()
+
+        rule.runOnIdle {
+            state = SigningUiState.Failed(REQUEST_ID, SigningErrorCode.NETWORK_RESULT_UNCERTAIN)
+        }
+        rule.onNodeWithText(
+            "El resultado de red no es seguro. Vuelve al portal e inicia la operación de nuevo.",
+        ).assertIsDisplayed()
+        rule.onNodeWithText("Código: NETWORK_RESULT_UNCERTAIN").assertDoesNotExist()
+        for (forbidden in FORBIDDEN_UI_TERMS) {
+            rule.onNodeWithText(forbidden, substring = true, ignoreCase = true).assertDoesNotExist()
+        }
+    }
+
+    @Test
     fun terminalStatesExposeOnlySuccessOrClosedErrorAndDismiss() {
         val events = mutableListOf<String>()
         var state by mutableStateOf<SigningUiState>(
@@ -82,5 +130,9 @@ class SigningStatusDialogTest {
     private companion object {
         val REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174000")
         const val RAW_PAYLOAD = "synthetic-secret-payload-base64"
+        val FORBIDDEN_UI_TERMS = listOf(
+            "proxy", "CONNECT", "Tor", "relay.example", "Authorization",
+            "Bearer", "certificado: María", RAW_PAYLOAD,
+        )
     }
 }

@@ -1,13 +1,21 @@
 package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.browser.NavigationId
+import dev.junta.firmamobile.network.DirectFirstProfileHttpTransport
 import dev.junta.firmamobile.network.NetworkUrlValidation
+import dev.junta.firmamobile.network.ProfileHttpCallPhaseTracker
+import dev.junta.firmamobile.network.ProfileHttpFailure
+import dev.junta.firmamobile.network.ProfileHttpFailureDetail
+import dev.junta.firmamobile.network.ProfileHttpFailurePhase
 import dev.junta.firmamobile.network.ProfileHttpCancellation
 import dev.junta.firmamobile.network.ProfileHttpRequest
 import dev.junta.firmamobile.network.ProfileHttpResponse
 import dev.junta.firmamobile.network.ProfileHttpResult
 import dev.junta.firmamobile.network.ProfileHttpTransport
 import dev.junta.firmamobile.network.SafeNetworkUrlPolicy
+import dev.junta.firmamobile.network.SecureTunnelPolicy
+import dev.junta.firmamobile.network.TunnelRouteObserver
+import dev.junta.firmamobile.network.ValidatedNetworkUrl
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.security.cert.X509Certificate
 import java.net.URI
@@ -19,7 +27,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertArrayEquals
@@ -71,7 +82,7 @@ class TriPhaseExecutionAdapterTest {
 
         val result = adapter.prepare(request, emptyList()) as ProtocolPrepareResult.Failure
 
-        assertEquals(SigningErrorCode.PROTOCOL_FAILED, result.code)
+        assertEquals(SigningErrorCode.NETWORK_RESULT_UNCERTAIN, result.code)
         assertEquals(1, codec.decoded.closeCount)
         request.close()
     }
@@ -147,6 +158,62 @@ class TriPhaseExecutionAdapterTest {
     }
 
     @Test
+    fun internalDeadlineUsesCancellationSnapshotForSafePreWriteFailure() = runBlocking {
+        val direct = DeadlinePhaseTransport(markHttpWriteStarted = false)
+        val tunnelCalls = AtomicInteger()
+        val adapter = deadlineAdapter(direct, tunnelCalls)
+        val request = deadlineRequest()
+
+        val result = adapter.prepare(request, emptyList()) as ProtocolPrepareResult.Failure
+
+        assertEquals(SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE, result.code)
+        assertTrue(direct.cancelled.await(1, TimeUnit.SECONDS))
+        assertEquals(1, direct.calls.get())
+        assertEquals(0, tunnelCalls.get())
+        request.close()
+    }
+
+    @Test
+    fun deadlineAfterHttpWriteIsUncertainAndNeverStartsTunnel() = runBlocking {
+        val direct = DeadlinePhaseTransport(markHttpWriteStarted = true)
+        val tunnelCalls = AtomicInteger()
+        val adapter = deadlineAdapter(direct, tunnelCalls)
+        val request = deadlineRequest()
+
+        val result = adapter.prepare(request, emptyList()) as ProtocolPrepareResult.Failure
+
+        assertEquals(SigningErrorCode.NETWORK_RESULT_UNCERTAIN, result.code)
+        assertTrue(direct.cancelled.await(1, TimeUnit.SECONDS))
+        assertEquals(1, direct.calls.get())
+        assertEquals(0, tunnelCalls.get())
+        request.close()
+    }
+
+    @Test
+    fun networkRequestsInheritNormalizedSigningRequestId() = runBlocking {
+        val transport = RecordingTransport("pre-response", "post-response")
+        val adapter = AutoFirmaTriPhaseExecutionAdapter(
+            contract = contract(),
+            transport = transport,
+            codec = FixedWireCodec(),
+            callTimeoutMillis = 1_000,
+            executor = Executor { it.run() },
+        )
+        val request = request()
+
+        val prepared = adapter.prepare(request, emptyList()) as ProtocolPrepareResult.Success
+        val completed = adapter.complete(
+            request,
+            prepared.preSign,
+            LocalSignature("local-signature".encodeToByteArray()),
+        ) as ProtocolCompletionResult.Success
+        completed.signature.close()
+
+        assertEquals(listOf(request.requestId, request.requestId), transport.requestIds)
+        request.close()
+    }
+
+    @Test
     fun codecCannotRedirectPreRequestOutsideContractEndpoint() = runBlocking {
         val transport = RecordingTransport("unused")
         val adapter = AutoFirmaTriPhaseExecutionAdapter(
@@ -199,12 +266,45 @@ class TriPhaseExecutionAdapterTest {
         request.close()
     }
 
-    private fun contract() = TriPhaseExecutionContract(
+    private fun deadlineAdapter(
+        direct: ProfileHttpTransport,
+        tunnelCalls: AtomicInteger,
+    ): AutoFirmaTriPhaseExecutionAdapter {
+        val tunnel = ProfileHttpTransport { _, _ ->
+            tunnelCalls.incrementAndGet()
+            ProfileHttpResult.Success(ProfileHttpResponse("must-not-run".encodeToByteArray()))
+        }
+        val transport = DirectFirstProfileHttpTransport(
+            profileId = dev.junta.firmamobile.profile.ProfileId("junta-ofvirtual"),
+            endpoint = OFVIRTUAL_ENDPOINT,
+            policy = SecureTunnelPolicy.QA,
+            direct = direct,
+            tunnel = tunnel,
+            observer = TunnelRouteObserver { _, _ -> },
+        )
+        return AutoFirmaTriPhaseExecutionAdapter(
+            contract = contract(
+                profileId = "junta-ofvirtual",
+                endpoint = OFVIRTUAL_ENDPOINT,
+            ),
+            transport = transport,
+            codec = FixedWireCodec(OFVIRTUAL_ENDPOINT),
+            callTimeoutMillis = 50,
+            executor = Executor { command -> Thread(command, "tri-phase-deadline-test").start() },
+        )
+    }
+
+    private fun deadlineRequest() = request(profileId = "junta-ofvirtual")
+
+    private fun contract(
+        profileId: String = "test-profile",
+        endpoint: URI = URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT),
+    ) = TriPhaseExecutionContract(
         protocolId = PROTOCOL_ID,
-        profileId = "test-profile",
+        profileId = profileId,
         profileVersion = 1,
         initiatorOrigins = setOf("https://service.example"),
-        endpoint = URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT),
+        endpoint = endpoint,
         format = SigningFormat.CADES,
         algorithms = setOf(SigningAlgorithm.SHA256_WITH_RSA),
     )
@@ -293,17 +393,48 @@ class TriPhaseExecutionAdapterTest {
     private class RecordingTransport(vararg responses: String) : ProfileHttpTransport {
         private val responses = ArrayDeque(responses.map { it.encodeToByteArray() })
         val bodies = mutableListOf<ByteArray>()
+        val requestIds = mutableListOf<UUID>()
 
         override fun post(
             request: ProfileHttpRequest,
             cancellation: ProfileHttpCancellation,
         ): ProfileHttpResult {
+            requestIds += request.requestId
             bodies += request.withBody { it.copyOf() }
             return ProfileHttpResult.Success(ProfileHttpResponse(responses.removeFirst()))
         }
     }
 
+    private class DeadlinePhaseTransport(
+        private val markHttpWriteStarted: Boolean,
+    ) : ProfileHttpTransport {
+        val calls = AtomicInteger()
+        val cancelled = CountDownLatch(1)
+
+        override fun post(
+            request: ProfileHttpRequest,
+            cancellation: ProfileHttpCancellation,
+        ): ProfileHttpResult {
+            calls.incrementAndGet()
+            val tracker = ProfileHttpCallPhaseTracker()
+            check(cancellation.beginAttempt(tracker))
+            if (markHttpWriteStarted) {
+                tracker.requestHeadersStart(TEST_CALL)
+            }
+            cancellation.register { cancelled.countDown() }.use {
+                check(cancelled.await(5, TimeUnit.SECONDS))
+            }
+            return ProfileHttpResult.Failure(
+                cancellation.snapshotFailure(ProfileHttpFailure.NETWORK_ERROR),
+            )
+        }
+    }
+
     private companion object {
         val PROTOCOL_ID = SigningProtocolId("test-triphase-v1")
+        val OFVIRTUAL_ENDPOINT = URI(dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter.ENDPOINT)
+        val TEST_CALL = OkHttpClient().newCall(
+            Request.Builder().url("https://example.com/").build(),
+        )
     }
 }

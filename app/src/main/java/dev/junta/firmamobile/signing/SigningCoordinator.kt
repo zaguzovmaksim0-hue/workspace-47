@@ -3,6 +3,9 @@ package dev.junta.firmamobile.signing
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.CertificateSigningSnapshot
 import dev.junta.firmamobile.certificate.UnlockedIdentity
+import dev.junta.firmamobile.network.ProfileHttpRoute
+import dev.junta.firmamobile.network.TunnelRouteEvent
+import dev.junta.firmamobile.network.TunnelRouteStage
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
@@ -35,6 +38,8 @@ sealed interface SigningUiState {
     ) : SigningUiState
 
     data class Signing(val requestId: UUID) : SigningUiState
+
+    data class ConnectingSecurely(val requestId: UUID) : SigningUiState
 
     data class Completed(val requestId: UUID) : SigningUiState
 
@@ -280,6 +285,35 @@ class SigningCoordinator internal constructor(
             synchronized(this) {
                 if (active === operation) active = null
             }
+        }
+    }
+
+    @Synchronized
+    internal fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent) {
+        val operation = active ?: return
+        if (operation.summary.requestId != requestId || operation.cancellationCode() != null) return
+        if (event.route != ProfileHttpRoute.SECURE_TUNNEL) return
+
+        mutableState.value = when (event.stage) {
+            TunnelRouteStage.TUNNEL_CONNECTING -> when (val current = mutableState.value) {
+                is SigningUiState.Signing -> if (current.requestId == requestId) {
+                    SigningUiState.ConnectingSecurely(requestId)
+                } else {
+                    current
+                }
+                else -> current
+            }
+            TunnelRouteStage.TUNNEL_ESTABLISHED,
+            TunnelRouteStage.TUNNEL_FAILED,
+            -> when (val current = mutableState.value) {
+                is SigningUiState.ConnectingSecurely -> if (current.requestId == requestId) {
+                    SigningUiState.Signing(requestId)
+                } else {
+                    current
+                }
+                else -> current
+            }
+            TunnelRouteStage.DIRECT_FAILED_PRE_HTTP -> mutableState.value
         }
     }
 

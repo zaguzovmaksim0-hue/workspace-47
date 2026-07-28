@@ -30,7 +30,7 @@ class SecureTunnelRuntimeTest {
         val transport = runtime.transportFor(
             profileId = OFVIRTUAL_PROFILE,
             endpoint = OFVIRTUAL_ENDPOINT,
-            observer = TunnelRouteObserver { },
+            observer = TunnelRouteObserver { _, _ -> },
         )
 
         assertTrue(runtime is QaSecureTunnelRuntime)
@@ -55,7 +55,7 @@ class SecureTunnelRuntimeTest {
                 directTransportFactory = ProfileHttpTransportFactory { _, _ -> direct },
             )
 
-            val transport = runtime.transportFor(profileId, endpoint, TunnelRouteObserver { })
+            val transport = runtime.transportFor(profileId, endpoint, TunnelRouteObserver { _, _ -> })
 
             assertSame("case=$profileId/$endpoint", direct, transport)
         }
@@ -91,7 +91,7 @@ class SecureTunnelRuntimeTest {
             val transport = runtime.transportFor(
                 OFVIRTUAL_PROFILE,
                 OFVIRTUAL_ENDPOINT,
-                TunnelRouteObserver { },
+                TunnelRouteObserver { _, _ -> },
             )
 
             assertTrue("config=$config", runtime is DirectOnlyTunnelRuntime)
@@ -111,7 +111,7 @@ class SecureTunnelRuntimeTest {
         assertTrue(runtime is DirectOnlyTunnelRuntime)
         assertSame(
             direct,
-            runtime.transportFor(OFVIRTUAL_PROFILE, OFVIRTUAL_ENDPOINT, TunnelRouteObserver { }),
+            runtime.transportFor(OFVIRTUAL_PROFILE, OFVIRTUAL_ENDPOINT, TunnelRouteObserver { _, _ -> }),
         )
     }
 
@@ -124,7 +124,7 @@ class SecureTunnelRuntimeTest {
 
         assertSame(
             direct,
-            runtime.transportFor(OFVIRTUAL_PROFILE, OFVIRTUAL_ENDPOINT, TunnelRouteObserver { }),
+            runtime.transportFor(OFVIRTUAL_PROFILE, OFVIRTUAL_ENDPOINT, TunnelRouteObserver { _, _ -> }),
         )
     }
 
@@ -141,7 +141,7 @@ class SecureTunnelRuntimeTest {
 
         assertTrue(runtime is QaSecureTunnelRuntime)
         assertTrue(
-            runtime.transportFor(OFVIRTUAL_PROFILE, OFVIRTUAL_ENDPOINT, TunnelRouteObserver { })
+            runtime.transportFor(OFVIRTUAL_PROFILE, OFVIRTUAL_ENDPOINT, TunnelRouteObserver { _, _ -> })
                 is DirectFirstProfileHttpTransport,
         )
     }

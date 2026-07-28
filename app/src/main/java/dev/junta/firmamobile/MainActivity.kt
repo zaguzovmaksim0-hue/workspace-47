@@ -60,6 +60,7 @@ import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
 import java.net.URI
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -335,7 +336,14 @@ class MainActivity : ComponentActivity() {
         signingJobs.takeForCancellation(requestId, accepted)?.cancel()
     }
 
-    private fun onTunnelRouteEvent(@Suppress("UNUSED_PARAMETER") event: TunnelRouteEvent) = Unit
+    private fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent) {
+        lifecycleScope.launch(Dispatchers.Main.immediate) {
+            if (::signingCoordinator.isInitialized) {
+                signingCoordinator.onTunnelRouteEvent(requestId, event)
+            }
+            (application as JuntaFirmaApplication).sanitizedLogger.recordTunnelRouteEvent(event)
+        }
+    }
 
     private fun activeWebViewMatches(profileId: ProfileId): Boolean {
         val browser = destination as? AppDestination.Browser ?: return false
