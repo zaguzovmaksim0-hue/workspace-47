@@ -1,9 +1,15 @@
 package dev.junta.firmamobile.network
 
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.net.SocketAddress
+import java.net.SocketException
 import java.security.MessageDigest
+import java.security.cert.X509Certificate
 import java.util.Base64
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -11,7 +17,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.SocketFactory
+import javax.net.ssl.HandshakeCompletedListener
 import javax.net.ssl.SSLServerSocket
+import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.HttpsURLConnection
 import okhttp3.OkHttpClient
@@ -40,9 +48,13 @@ class SecureTunnelSocketFactoryTest {
             expectedUpstreamHost = "ws024.juntadeandalucia.es",
             approvedUpstreamAddresses = setOf(approved),
             cancellation = ProfileHttpCancellation(),
-            outerClientFactory = { _, _ ->
-                outerTlsOpened = true
-                error("must not open outer TLS") as SSLSocket
+            outerSocketFactory = object : SecureTunnelOuterSocketFactory {
+                override fun createRawSocket(): Socket = error("must not open a raw socket")
+
+                override fun createTlsSocket(rawSocket: Socket, relay: SecureTunnelRelay): SSLSocket {
+                    outerTlsOpened = true
+                    error("must not open outer TLS")
+                }
             },
         )
 
@@ -156,63 +168,6 @@ class SecureTunnelSocketFactoryTest {
 
     @Test
     fun cancellationIsLinearizableBeforeAndDuringOuterSocketRegistration() {
-        val logicalAddress = InetAddress.getByName("203.0.113.40")
-        val cancellation = ProfileHttpCancellation()
-        var opened = false
-        val preCancelled = SecureTunnelSocketFactory(
-            relay = relay("relay.example", setOf(unrelatedPin())),
-            credentialProvider = TunnelCredentialProvider { QATunnelCredential("synthetic-token".toCharArray()) },
-            expectedUpstreamHost = "ws024.juntadeandalucia.es",
-            approvedUpstreamAddresses = setOf(logicalAddress),
-            cancellation = cancellation,
-            outerClientFactory = { _, _ ->
-                opened = true
-                error("cancelled sockets must not open") as SSLSocket
-            },
-        ).createSocket()
-        cancellation.cancel()
-        assertThrows(java.io.IOException::class.java) {
-            preCancelled.connect(InetSocketAddress(logicalAddress, 443), 1_000)
-        }
-        assertFalse(opened)
-
-        val relayCertificate = heldCertificate("relay.example")
-        RelayServer(serverCertificates(relayCertificate)).use { relayServer ->
-            val registered = CountDownLatch(1)
-            val releaseFactory = CountDownLatch(1)
-            val outer = AtomicReference<SSLSocket>()
-            val racingCancellation = ProfileHttpCancellation()
-            val socket = SecureTunnelSocketFactory(
-                relay = relay("relay.example", setOf(spkiPin(relayCertificate))),
-                credentialProvider = TunnelCredentialProvider { QATunnelCredential("synthetic-token".toCharArray()) },
-                expectedUpstreamHost = "ws024.juntadeandalucia.es",
-                approvedUpstreamAddresses = setOf(logicalAddress),
-                cancellation = racingCancellation,
-                outerClientFactory = { relay, timeout ->
-                    val value = clientSocket(serverCertificates(relayCertificate), relay.host, relayServer.port, timeout)
-                    outer.set(value)
-                    registered.countDown()
-                    assertTrue(releaseFactory.await(2, TimeUnit.SECONDS))
-                    value
-                },
-            ).createSocket()
-            val completed = AtomicBoolean(false)
-            val connecting = Thread {
-                try {
-                    socket.connect(InetSocketAddress(logicalAddress, 443), 1_000)
-                } catch (_: java.io.IOException) {
-                    completed.set(true)
-                }
-            }
-            connecting.start()
-            assertTrue(registered.await(2, TimeUnit.SECONDS))
-            racingCancellation.cancel()
-            releaseFactory.countDown()
-            connecting.join(2_000)
-            assertTrue(completed.get())
-            assertTrue(checkNotNull(outer.get()).isClosed)
-        }
-
         var invoked = false
         val unregisteredCancellation = ProfileHttpCancellation()
         val handle = unregisteredCancellation.register { invoked = true }
@@ -229,6 +184,145 @@ class SecureTunnelSocketFactoryTest {
         multiHookCancellation.cancel()
         assertTrue(firstHookInvoked)
         assertTrue(secondHookInvoked)
+    }
+
+    @Test
+    fun cancellationBeforeRawConnectClosesTheCreatedSocketWithoutConnecting() {
+        val cancellation = ProfileHttpCancellation()
+        val raw = FakeRawSocket()
+        val tls = FakeTlsSocket()
+        val factory = FakeOuterSocketFactory(raw, tls)
+        cancellation.cancel()
+
+        val socket = tunnelSocket(cancellation, factory)
+
+        assertThrows(java.io.IOException::class.java) {
+            socket.connect(logicalEndpoint(), 1_000)
+        }
+        assertEquals(1, factory.rawSocketCreations.get())
+        assertEquals(0, raw.connectCalls.get())
+        assertTrue(raw.closed.get())
+        assertEquals(0, factory.tlsSocketCreations.get())
+    }
+
+    @Test
+    fun cancellationClosesTheExactRawSocketAndInterruptsBlockedConnect() {
+        val cancellation = ProfileHttpCancellation()
+        val raw = BlockingRawSocket()
+        val factory = FakeOuterSocketFactory(raw, FakeTlsSocket())
+        val socket = tunnelSocket(cancellation, factory)
+        val failure = AtomicReference<Throwable?>()
+        val worker = Thread {
+            try {
+                socket.connect(logicalEndpoint(), 30_000)
+            } catch (error: Throwable) {
+                failure.set(error)
+            }
+        }
+
+        worker.start()
+        assertTrue(raw.connectEntered.await(1, TimeUnit.SECONDS))
+        cancellation.cancel()
+        worker.join(1_000)
+
+        assertFalse(worker.isAlive)
+        assertTrue(raw.closed.get())
+        assertTrue(failure.get() is SocketException)
+        assertEquals(0, factory.tlsSocketCreations.get())
+    }
+
+    @Test
+    fun cancellationClosesTheExactTlsSocketAndInterruptsBlockedHandshake() {
+        val cancellation = ProfileHttpCancellation()
+        val raw = FakeRawSocket()
+        val tls = BlockingHandshakeTlsSocket()
+        val socket = tunnelSocket(cancellation, FakeOuterSocketFactory(raw, tls))
+        val failure = AtomicReference<Throwable?>()
+        val worker = Thread {
+            try {
+                socket.connect(logicalEndpoint(), 30_000)
+            } catch (error: Throwable) {
+                failure.set(error)
+            }
+        }
+
+        worker.start()
+        assertTrue(tls.handshakeEntered.await(1, TimeUnit.SECONDS))
+        cancellation.cancel()
+        worker.join(1_000)
+
+        assertFalse(worker.isAlive)
+        assertTrue(tls.closed.get())
+        assertTrue(failure.get() is SocketException)
+    }
+
+    @Test
+    fun cancellationDuringRawToTlsHandoffClosesBothSocketLayers() {
+        val cancellation = ProfileHttpCancellation()
+        val raw = FakeRawSocket()
+        val tls = FakeTlsSocket()
+        val tlsCreated = CountDownLatch(1)
+        val releaseTlsFactory = CountDownLatch(1)
+        val factory = FakeOuterSocketFactory(raw, tls) {
+            tlsCreated.countDown()
+            assertTrue(releaseTlsFactory.await(1, TimeUnit.SECONDS))
+        }
+        val socket = tunnelSocket(cancellation, factory)
+        val worker = Thread {
+            try {
+                socket.connect(logicalEndpoint(), 30_000)
+            } catch (_: Throwable) {
+                // Cancellation is the expected terminal path.
+            }
+        }
+
+        worker.start()
+        assertTrue(tlsCreated.await(1, TimeUnit.SECONDS))
+        cancellation.cancel()
+        releaseTlsFactory.countDown()
+        worker.join(1_000)
+
+        assertFalse(worker.isAlive)
+        assertTrue(raw.closed.get())
+        assertTrue(tls.closed.get())
+        assertEquals(0, tls.handshakeCalls.get())
+    }
+
+    @Test
+    fun splitOuterFactoryStillConnectsHandshakesVerifiesAndSendsConnectOnce() {
+        val relayCertificate = heldCertificate("relay.example")
+        val session = fakeSession(relayCertificate.certificate)
+        val raw = FakeRawSocket()
+        val tls = FakeTlsSocket(
+            input = ByteArrayInputStream("HTTP/1.1 200 Connection Established\r\n\r\n".encodeToByteArray()),
+            session = session,
+        )
+        val cancellation = ProfileHttpCancellation()
+        val hostnameVerifications = AtomicInteger()
+        val previousVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
+        HttpsURLConnection.setDefaultHostnameVerifier { hostname, observedSession ->
+            hostnameVerifications.incrementAndGet()
+            hostname == "relay.example" && observedSession === session
+        }
+        try {
+            val socket = tunnelSocket(
+                cancellation = cancellation,
+                outerSocketFactory = FakeOuterSocketFactory(raw, tls),
+                pins = setOf(spkiPin(relayCertificate)),
+            )
+
+            socket.connect(logicalEndpoint(), 1_234)
+
+            assertEquals(1, raw.connectCalls.get())
+            assertEquals(InetSocketAddress("relay.example", 443), raw.lastEndpoint.get())
+            assertEquals(1_234, raw.lastTimeout.get())
+            assertEquals(1, tls.handshakeCalls.get())
+            assertEquals(1, hostnameVerifications.get())
+            assertArrayEquals(EXPECTED_CONNECT, tls.written.toByteArray())
+            socket.close()
+        } finally {
+            HttpsURLConnection.setDefaultHostnameVerifier(previousVerifier)
+        }
     }
 
     @Test
@@ -281,6 +375,23 @@ class SecureTunnelSocketFactoryTest {
         assertFalse(relayCertificate.certificate == upstreamCertificate.certificate)
     }
 
+    private fun tunnelSocket(
+        cancellation: ProfileHttpCancellation,
+        outerSocketFactory: SecureTunnelOuterSocketFactory,
+        pins: Set<String> = setOf(unrelatedPin()),
+    ): Socket = SecureTunnelSocketFactory(
+        relay = relay("relay.example", pins),
+        credentialProvider = TunnelCredentialProvider { QATunnelCredential("synthetic-token".toCharArray()) },
+        expectedUpstreamHost = "ws024.juntadeandalucia.es",
+        approvedUpstreamAddresses = setOf(logicalAddress()),
+        cancellation = cancellation,
+        outerSocketFactory = outerSocketFactory,
+    ).createSocket()
+
+    private fun logicalAddress(): InetAddress = InetAddress.getByName("203.0.113.40")
+
+    private fun logicalEndpoint(): InetSocketAddress = InetSocketAddress(logicalAddress(), 443)
+
     private fun factory(
         relayHost: String,
         relayServer: RelayServer,
@@ -296,8 +407,17 @@ class SecureTunnelSocketFactoryTest {
         expectedUpstreamHost = "ws024.juntadeandalucia.es",
         approvedUpstreamAddresses = setOf(approvedAddress),
         cancellation = ProfileHttpCancellation(),
-        outerClientFactory = { relay, timeout ->
-            clientSocket(clientCertificates(relayCertificate), relay.host, relayServer.port, timeout)
+        outerSocketFactory = object : SecureTunnelOuterSocketFactory {
+            override fun createRawSocket(): Socket = object : Socket() {
+                override fun connect(endpoint: SocketAddress?, timeout: Int) {
+                    assertEquals(InetSocketAddress(relayHost, 443), endpoint)
+                    super.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), relayServer.port), timeout)
+                }
+            }
+
+            override fun createTlsSocket(rawSocket: Socket, relay: SecureTunnelRelay): SSLSocket =
+                clientCertificates(relayCertificate).sslSocketFactory()
+                    .createSocket(rawSocket, relay.host, relay.port, true) as SSLSocket
         },
     )
 
@@ -316,17 +436,6 @@ class SecureTunnelSocketFactoryTest {
         .addTrustedCertificate(certificate.certificate)
         .build()
 
-    private fun clientSocket(
-        certificates: HandshakeCertificates,
-        hostname: String,
-        port: Int,
-        timeout: Int,
-    ): SSLSocket {
-        val tcp = Socket()
-        tcp.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), port), timeout)
-        return certificates.sslSocketFactory().createSocket(tcp, hostname, port, true) as SSLSocket
-    }
-
     private fun spkiPin(certificate: HeldCertificate): String = "sha256/" + Base64.getEncoder().encodeToString(
         MessageDigest.getInstance("SHA-256").digest(certificate.certificate.publicKey.encoded),
     )
@@ -340,6 +449,137 @@ class SecureTunnelSocketFactoryTest {
             block()
         } finally {
             HttpsURLConnection.setDefaultHostnameVerifier(previous)
+        }
+    }
+
+    private class FakeOuterSocketFactory(
+        private val raw: Socket,
+        private val tls: SSLSocket,
+        private val beforeTlsReturn: () -> Unit = {},
+    ) : SecureTunnelOuterSocketFactory {
+        val rawSocketCreations = AtomicInteger()
+        val tlsSocketCreations = AtomicInteger()
+
+        override fun createRawSocket(): Socket {
+            rawSocketCreations.incrementAndGet()
+            return raw
+        }
+
+        override fun createTlsSocket(rawSocket: Socket, relay: SecureTunnelRelay): SSLSocket {
+            assertSame(raw, rawSocket)
+            assertEquals("relay.example", relay.host)
+            tlsSocketCreations.incrementAndGet()
+            beforeTlsReturn()
+            return tls
+        }
+    }
+
+    private open class FakeRawSocket : Socket() {
+        val connectCalls = AtomicInteger()
+        val lastEndpoint = AtomicReference<SocketAddress?>()
+        val lastTimeout = AtomicInteger(-1)
+        val closed = AtomicBoolean(false)
+
+        override fun connect(endpoint: SocketAddress?, timeout: Int) {
+            connectCalls.incrementAndGet()
+            lastEndpoint.set(endpoint)
+            lastTimeout.set(timeout)
+        }
+
+        override fun close() {
+            closed.set(true)
+        }
+    }
+
+    private class BlockingRawSocket : FakeRawSocket() {
+        val connectEntered = CountDownLatch(1)
+        private val closedWhileConnecting = CountDownLatch(1)
+
+        override fun connect(endpoint: SocketAddress?, timeout: Int) {
+            super.connect(endpoint, timeout)
+            connectEntered.countDown()
+            assertTrue(closedWhileConnecting.await(1, TimeUnit.SECONDS))
+            throw SocketException("raw socket was closed during connect")
+        }
+
+        override fun close() {
+            super.close()
+            closedWhileConnecting.countDown()
+        }
+    }
+
+    private open class FakeTlsSocket(
+        private val input: InputStream = ByteArrayInputStream(ByteArray(0)),
+        private val session: SSLSession = fakeSession(null),
+    ) : SSLSocket() {
+        val written = ByteArrayOutputStream()
+        val handshakeCalls = AtomicInteger()
+        val closed = AtomicBoolean(false)
+        private var enabledProtocols = arrayOf("TLSv1.3", "TLSv1.2")
+
+        override fun getInputStream(): InputStream = input
+
+        override fun getOutputStream(): ByteArrayOutputStream = written
+
+        override fun getSupportedCipherSuites(): Array<String> = emptyArray()
+
+        override fun getEnabledCipherSuites(): Array<String> = emptyArray()
+
+        override fun setEnabledCipherSuites(suites: Array<String>) = Unit
+
+        override fun getSupportedProtocols(): Array<String> = arrayOf("TLSv1.3", "TLSv1.2")
+
+        override fun getEnabledProtocols(): Array<String> = enabledProtocols
+
+        override fun setEnabledProtocols(protocols: Array<String>) {
+            enabledProtocols = protocols
+        }
+
+        override fun getSession(): SSLSession = session
+
+        override fun addHandshakeCompletedListener(listener: HandshakeCompletedListener) = Unit
+
+        override fun removeHandshakeCompletedListener(listener: HandshakeCompletedListener) = Unit
+
+        override fun startHandshake() {
+            handshakeCalls.incrementAndGet()
+        }
+
+        override fun setUseClientMode(mode: Boolean) = Unit
+
+        override fun getUseClientMode(): Boolean = true
+
+        override fun setNeedClientAuth(need: Boolean) = Unit
+
+        override fun getNeedClientAuth(): Boolean = false
+
+        override fun setWantClientAuth(want: Boolean) = Unit
+
+        override fun getWantClientAuth(): Boolean = false
+
+        override fun setEnableSessionCreation(flag: Boolean) = Unit
+
+        override fun getEnableSessionCreation(): Boolean = true
+
+        override fun close() {
+            closed.set(true)
+        }
+    }
+
+    private class BlockingHandshakeTlsSocket : FakeTlsSocket() {
+        val handshakeEntered = CountDownLatch(1)
+        private val closedWhileHandshaking = CountDownLatch(1)
+
+        override fun startHandshake() {
+            super.startHandshake()
+            handshakeEntered.countDown()
+            assertTrue(closedWhileHandshaking.await(1, TimeUnit.SECONDS))
+            throw SocketException("TLS socket was closed during handshake")
+        }
+
+        override fun close() {
+            super.close()
+            closedWhileHandshaking.countDown()
         }
     }
 
@@ -405,6 +645,24 @@ class SecureTunnelSocketFactoryTest {
     }
 
     private companion object {
+        fun fakeSession(certificate: X509Certificate?): SSLSession = java.lang.reflect.Proxy.newProxyInstance(
+            SSLSession::class.java.classLoader,
+            arrayOf(SSLSession::class.java),
+        ) { _, method, _ ->
+            when (method.name) {
+                "getPeerCertificates" -> certificate?.let { arrayOf(it) } ?: emptyArray<java.security.cert.Certificate>()
+                "toString" -> "FakeSslSession"
+                "hashCode" -> System.identityHashCode(method)
+                "equals" -> false
+                else -> when (method.returnType) {
+                    Boolean::class.javaPrimitiveType -> false
+                    Int::class.javaPrimitiveType -> 0
+                    Long::class.javaPrimitiveType -> 0L
+                    else -> null
+                }
+            }
+        } as SSLSession
+
         val EXPECTED_CONNECT = (
             "CONNECT ws024.juntadeandalucia.es:443 HTTP/1.1\r\n" +
                 "Host: ws024.juntadeandalucia.es:443\r\n" +

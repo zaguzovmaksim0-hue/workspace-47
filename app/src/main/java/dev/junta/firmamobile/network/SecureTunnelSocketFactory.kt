@@ -61,13 +61,19 @@ internal fun interface TunnelSocketFactoryProvider {
     ): SocketFactory
 }
 
+internal interface SecureTunnelOuterSocketFactory {
+    fun createRawSocket(): Socket
+
+    fun createTlsSocket(rawSocket: Socket, relay: SecureTunnelRelay): SSLSocket
+}
+
 internal class SecureTunnelSocketFactory(
     relay: SecureTunnelRelay,
     private val credentialProvider: TunnelCredentialProvider,
     expectedUpstreamHost: String,
     approvedUpstreamAddresses: Set<InetAddress>,
     private val cancellation: ProfileHttpCancellation,
-    private val outerClientFactory: (SecureTunnelRelay, Int) -> SSLSocket = ::openPlatformOuterSocket,
+    private val outerSocketFactory: SecureTunnelOuterSocketFactory = PlatformOuterSocketFactory,
 ) : SocketFactory() {
     private val relay = relay.copy(spkiPins = relay.spkiPins.toSet())
     private val expectedUpstreamHost = expectedUpstreamHost.also {
@@ -85,7 +91,7 @@ internal class SecureTunnelSocketFactory(
         expectedUpstreamHost = expectedUpstreamHost,
         approvedUpstreamAddresses = approvedUpstreamAddresses,
         cancellation = cancellation,
-        outerClientFactory = outerClientFactory,
+        outerSocketFactory = outerSocketFactory,
     )
 
     override fun createSocket(host: String?, port: Int): Socket = unsupported()
@@ -100,22 +106,12 @@ internal class SecureTunnelSocketFactory(
         "WS024 tunnel sockets must be connected by OkHttp using a validated InetSocketAddress",
     )
 
-    private companion object {
-        fun openPlatformOuterSocket(relay: SecureTunnelRelay, timeoutMillis: Int): SSLSocket {
-            val tcp = Socket()
-            try {
-                tcp.connect(InetSocketAddress(relay.host, relay.port), timeoutMillis)
-                return (SSLSocketFactory.getDefault() as SSLSocketFactory)
-                    .createSocket(tcp, relay.host, relay.port, true) as SSLSocket
-            } catch (failure: Exception) {
-                try {
-                    tcp.close()
-                } catch (_: IOException) {
-                    // The original failure is the only safe signal to retain.
-                }
-                throw failure
-            }
-        }
+    private object PlatformOuterSocketFactory : SecureTunnelOuterSocketFactory {
+        override fun createRawSocket(): Socket = Socket()
+
+        override fun createTlsSocket(rawSocket: Socket, relay: SecureTunnelRelay): SSLSocket =
+            (SSLSocketFactory.getDefault() as SSLSocketFactory)
+                .createSocket(rawSocket, relay.host, relay.port, true) as SSLSocket
     }
 }
 
@@ -125,7 +121,7 @@ internal class TunnelBackedSocket(
     private val expectedUpstreamHost: String,
     approvedUpstreamAddresses: Set<InetAddress>,
     private val cancellation: ProfileHttpCancellation,
-    private val outerClientFactory: (SecureTunnelRelay, Int) -> SSLSocket,
+    private val outerSocketFactory: SecureTunnelOuterSocketFactory,
 ) : Socket() {
     private val approvedUpstreamAddresses = approvedUpstreamAddresses.toSet()
     private val lock = Any()
@@ -139,6 +135,8 @@ internal class TunnelBackedSocket(
 
     @Volatile
     private var outerSocket: SSLSocket? = null
+    @Volatile
+    private var rawSocket: Socket? = null
     private var cancellationRegistration: Closeable? = null
     private var closed = false
     private var connected = false
@@ -153,21 +151,34 @@ internal class TunnelBackedSocket(
     override fun connect(endpoint: SocketAddress?, timeout: Int) {
         if (timeout < 0) throw IllegalArgumentException("timeout < 0")
         val accepted = validateEndpoint(endpoint)
-        val registration = cancellation.register(::close)
         try {
+            val raw = outerSocketFactory.createRawSocket()
             synchronized(lock) {
-                if (closed || cancellation.isCancelled()) throw SocketException("Socket is closed")
-                if (connected || outerSocket != null) throw SocketException("Socket is already connected")
+                if (connected || outerSocket != null || rawSocket != null) {
+                    throw SocketException("Socket is already connected")
+                }
+                if (closed) {
+                    closeQuietly(raw)
+                    throw SocketException("Socket is closed")
+                }
+                rawSocket = raw
+                val registration = cancellation.register(::close)
+                if (closed) {
+                    registration.close()
+                    throw SocketException("Socket is closed")
+                }
+                cancellationRegistration = registration
             }
 
-            val outer = outerClientFactory(relay, timeout)
+            raw.connect(InetSocketAddress(relay.host, relay.port), timeout)
+            val outer = outerSocketFactory.createTlsSocket(raw, relay)
             synchronized(lock) {
                 if (closed || cancellation.isCancelled()) {
                     closeQuietly(outer)
                     throw SocketException("Socket is closed")
                 }
                 outerSocket = outer
-                cancellationRegistration = registration
+                rawSocket = null
                 outer.soTimeout = pendingSoTimeout
                 outer.tcpNoDelay = pendingTcpNoDelay
                 outer.keepAlive = pendingKeepAlive
@@ -304,20 +315,27 @@ internal class TunnelBackedSocket(
     override fun getKeepAlive(): Boolean = synchronized(lock) { outerSocket?.keepAlive ?: pendingKeepAlive }
 
     override fun close() {
-        val toClose: SSLSocket?
+        val outerToClose: SSLSocket?
+        val rawToClose: Socket?
         val registration: Closeable?
         synchronized(lock) {
             if (closed) return
             closed = true
-            toClose = outerSocket
+            outerToClose = outerSocket
             outerSocket = null
+            rawToClose = rawSocket
+            rawSocket = null
             registration = cancellationRegistration
             cancellationRegistration = null
         }
         try {
-            toClose?.close()
+            closeQuietly(outerToClose)
         } finally {
-            registration?.close()
+            try {
+                closeQuietly(rawToClose)
+            } finally {
+                registration?.close()
+            }
         }
     }
 
@@ -332,9 +350,9 @@ internal class TunnelBackedSocket(
         MessageDigest.getInstance("SHA-256").digest(certificate.publicKey.encoded),
     )
 
-    private fun closeQuietly(socket: SSLSocket) {
+    private fun closeQuietly(socket: Socket?) {
         try {
-            socket.close()
+            socket?.close()
         } catch (_: IOException) {
             // A rejected route never needs a second error channel.
         }
