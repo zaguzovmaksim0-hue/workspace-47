@@ -45,6 +45,22 @@ type admissionController struct {
 	maxPerCredential int
 	maxPerPeer       int
 	maxGlobal        int
+
+	// releaseStateObserver is a package-internal test seam. It only observes
+	// whether sensitive admission state has been cleared, never its values.
+	releaseStateObserver func(admissionReleaseState)
+}
+
+type admissionReleaseState struct {
+	credentialIDCleared bool
+	peerCleared         bool
+}
+
+type admissionReleaseTicket struct {
+	controller   *admissionController
+	credentialID string
+	peer         netip.Addr
+	once         sync.Once
 }
 
 // NewAdmissionController constructs an immediate-rejection controller: it
@@ -65,7 +81,7 @@ func NewAdmissionController(limits AdmissionLimits) (AdmissionController, error)
 }
 
 func (a *admissionController) Admit(ctx context.Context, credentialID string, peer netip.Addr) (func(), error) {
-	if ctx == nil || ctx.Err() != nil || credentialID == "" || !validAdmissionPeer(peer) {
+	if ctx == nil || ctx.Err() != nil || !validCredentialID(credentialID) || !validAdmissionPeer(peer) {
 		return nil, ErrAdmissionRejected
 	}
 
@@ -81,17 +97,32 @@ func (a *admissionController) Admit(ctx context.Context, credentialID string, pe
 	a.byCredential[credentialID]++
 	a.byPeer[peer]++
 
-	var once sync.Once
-	return func() {
-		once.Do(func() {
-			a.mu.Lock()
-			defer a.mu.Unlock()
+	ticket := &admissionReleaseTicket{
+		controller:   a,
+		credentialID: credentialID,
+		peer:         peer,
+	}
+	return ticket.release, nil
+}
 
-			a.active--
-			decrementCredentialCount(a.byCredential, credentialID)
-			decrementPeerCount(a.byPeer, peer)
-		})
-	}, nil
+func (t *admissionReleaseTicket) release() {
+	t.once.Do(func() {
+		t.controller.mu.Lock()
+		decrementCredentialCount(t.controller.byCredential, t.credentialID)
+		decrementPeerCount(t.controller.byPeer, t.peer)
+		t.controller.active--
+		t.credentialID = ""
+		t.peer = netip.Addr{}
+		observer := t.controller.releaseStateObserver
+		t.controller.mu.Unlock()
+
+		if observer != nil {
+			observer(admissionReleaseState{
+				credentialIDCleared: t.credentialID == "",
+				peerCleared:         t.peer == (netip.Addr{}),
+			})
+		}
+	})
 }
 
 func validAdmissionPeer(peer netip.Addr) bool {

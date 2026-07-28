@@ -5,7 +5,9 @@ import (
 	"errors"
 	"net/netip"
 	"strconv"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -134,8 +136,73 @@ func TestAdmissionRejectsCanceledAndInvalidPeersWithoutMutation(t *testing.T) {
 	}
 }
 
+func TestAdmissionRejectsInvalidCredentialIDsWithoutMutation(t *testing.T) {
+	controller := newTestAdmission(t, AdmissionLimits{MaxPerCredential: 2, MaxPerPeer: 4, MaxGlobal: 64})
+	peer := netip.MustParseAddr("203.0.113.1")
+	for _, tc := range []struct {
+		name string
+		id   string
+	}{
+		{"whitespace only", "   "},
+		{"leading space", " credential"},
+		{"trailing space", "credential "},
+		{"control character", "credential\nnext"},
+		{"disallowed punctuation", "credential/id"},
+		{"too long", strings.Repeat("a", 129)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertAdmissionRejectedWithoutMutation(t, controller, tc.id, peer)
+		})
+	}
+}
+
+func TestAdmissionAcceptsCredentialIDValidationBoundary(t *testing.T) {
+	controller := newTestAdmission(t, AdmissionLimits{MaxPerCredential: 2, MaxPerPeer: 4, MaxGlobal: 64})
+	credentialID := strings.Repeat("Aa-_.", 25) + "A0."
+	if got, want := len(credentialID), 128; got != want {
+		t.Fatalf("credential ID length = %d, want %d", got, want)
+	}
+	release, err := controller.Admit(context.Background(), credentialID, netip.MustParseAddr("203.0.113.1"))
+	if err != nil {
+		t.Fatalf("Admit() error = %v", err)
+	}
+	release()
+	if got, want := controller.(*admissionController).snapshot(), (admissionSnapshot{}); got != want {
+		t.Fatalf("counters after release = %+v, want %+v", got, want)
+	}
+}
+
+func TestAdmissionReleaseClearsRetainedTicketState(t *testing.T) {
+	controller := newTestAdmission(t, AdmissionLimits{MaxPerCredential: 2, MaxPerPeer: 4, MaxGlobal: 64})
+	var observerCalls atomic.Int32
+	controller.(*admissionController).releaseStateObserver = func(state admissionReleaseState) {
+		if !state.credentialIDCleared || !state.peerCleared {
+			t.Error("release retained admission state")
+		}
+		observerCalls.Add(1)
+	}
+
+	release, err := controller.Admit(context.Background(), "credential-a", netip.MustParseAddr("203.0.113.1"))
+	if err != nil {
+		t.Fatalf("Admit() error = %v", err)
+	}
+	retainedRelease := release
+	retainedRelease()
+	retainedRelease()
+	if got, want := observerCalls.Load(), int32(1); got != want {
+		t.Fatalf("release state observations = %d, want %d", got, want)
+	}
+}
+
 func TestAdmissionReleaseIsConcurrentSafeAndCleansUp(t *testing.T) {
 	controller := newTestAdmission(t, AdmissionLimits{MaxPerCredential: 2, MaxPerPeer: 4, MaxGlobal: 64})
+	var observerCalls atomic.Int32
+	controller.(*admissionController).releaseStateObserver = func(state admissionReleaseState) {
+		if !state.credentialIDCleared || !state.peerCleared {
+			t.Error("concurrent release retained admission state")
+		}
+		observerCalls.Add(1)
+	}
 	release, err := controller.Admit(context.Background(), "credential-a", netip.MustParseAddr("203.0.113.1"))
 	if err != nil {
 		t.Fatalf("Admit() error = %v", err)
@@ -153,6 +220,9 @@ func TestAdmissionReleaseIsConcurrentSafeAndCleansUp(t *testing.T) {
 	release()
 	if got, want := controller.(*admissionController).snapshot(), (admissionSnapshot{}); got != want {
 		t.Fatalf("counters after repeated release = %+v, want %+v", got, want)
+	}
+	if got, want := observerCalls.Load(), int32(1); got != want {
+		t.Fatalf("release state observations = %d, want %d", got, want)
 	}
 }
 
