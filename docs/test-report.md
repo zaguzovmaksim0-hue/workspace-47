@@ -484,10 +484,10 @@ Validación:
 - androidTest APK SHA-256:
   `b49f56812af4ca97c147529338fb580a7cea1bef380614b9afd051a8d57ee0d2`.
 
-El profile `junta-ofvirtual` permanece `VERIFIED_CONTRACT` / `QA_ONLY`. La
-corrección elimina el fallo reproducido, pero la aceptación E2E con el
-certificado real debe confirmarse mediante un nuevo acceso manual antes de
-promover el estado del profile.
+En ese milestone, `junta-ofvirtual` permanecía `VERIFIED_CONTRACT / QA_ONLY`:
+la corrección eliminaba el fallo reproducido, pero todavía faltaba un nuevo
+acceso manual. Este estado histórico quedó superado por el milestone P07B del
+2026-07-29, donde Oficina Virtual aceptó el login real.
 
 ## Milestone WS024-QA — gates completos y límites documentados — 2026-07-29
 
@@ -573,8 +573,10 @@ binario production.
 
 ### Estado funcional y trabajo pendiente
 
-`junta-ofvirtual` conserva `VERIFIED_CONTRACT / QA_ONLY / E2E_PENDING`. El único
-tuple elegible para el túnel QA es:
+En el milestone WS024-QA, `junta-ofvirtual` conservaba
+`VERIFIED_CONTRACT / QA_ONLY / E2E_PENDING`. Ese estado histórico quedó
+superado por P07B; el tuple experimental descrito a continuación no fue necesario
+para el E2E directo aceptado. El único tuple elegible para el túnel QA era:
 
 - profile: `junta-ofvirtual`;
 - initiator: `https://ws072.juntadeandalucia.es`;
@@ -585,3 +587,50 @@ credenciales production, no se ha construido una QA APK con tuple/pins reales y
 no se ejecutó el flujo físico de Oficina Virtual después de este cambio. El
 Task 12 permanece bloqueado hasta cumplir esas precondiciones. No se emite
 `VERIFIED_E2E`, no se promueve el profile y no se habilita el túnel en release.
+
+## Milestone P07B — Junta Oficina Virtual login VERIFIED_E2E — 2026-07-29
+
+El flujo real `junta-ofvirtual` fue ejecutado manualmente en un POCO F6 Pro con
+un certificado personal. La aplicación completó PRE, firma RSA local, POST,
+callback y envío del formulario; Oficina Virtual aceptó la autenticación y abrió
+su área interna. La pantalla observada correspondía a los trámites pendientes de
+la persona autenticada.
+
+La evidencia se limita al login CAdES observado. No acredita presentación de
+solicitudes, firma documental posterior, cofirma, contrafirma ni todas las
+funciones del portal. La captura original no se guarda porque contiene datos
+identificativos; tampoco se conservaron contraseña, PKCS#12, clave privada,
+certificado, firma, cookies o payloads.
+
+Dos defectos explicaban el fallo anterior:
+
+- el redirect HTTP heredado exacto de Oficina Virtual era bloqueado; `6538e1a`
+  permite únicamente su upgrade seguro a HTTPS para top-level GET dentro del
+  mismo host/profile/path;
+- `onStop()` bloqueaba el certificado y destruía el WebView; `26230ab` conserva
+  identidad y navegador mientras vive el proceso, con expiración a dos horas y
+  limpieza en lock/forget/memory pressure/process death.
+
+La aceptación real se obtuvo en `26230ab` con QA APK SHA-256
+`6c14b2d95187b89261973a221d391f0ea469d43149e9a3bf3e1358355ca69779`.
+El profile fue promovido después en `b3f1817` a versión 2,
+`VERIFIED_E2E / ENABLED`; el catálogo muestra `VALIDADO CON EL PORTAL` y
+`Verificado: Firma electrónica`.
+
+Gate posterior a la promoción:
+
+- Python: 75 tests, 0 failures/errors, 1 skipped;
+- `testDebugUnitTest`: 431 tests, 0 failures/errors;
+- `testQaUnitTest`: 431 tests, 0 failures/errors;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Debug APK SHA-256:
+  `2a5c0b45595efeafd336a11bdbc27f04bc28d669c7237f10423a679462685d47`;
+- QA APK e installed `base.apk` SHA-256:
+  `ba82c501c4e1e4d9843dc263648d4b051ea2d9bbbbefd6f7ff451ab197b30e34`;
+- QA AndroidTest APK SHA-256:
+  `8a67d0ca4c32590022de4cf9728a09e32cac501ba85ff62cb71a2021dd4e250f`;
+- QA sigue direct-only: tunnel deshabilitado, relay host/pins vacíos.
+
+Informe completo:
+`docs/e2e/2026-07-29-junta-ofvirtual-auth-success.md`.

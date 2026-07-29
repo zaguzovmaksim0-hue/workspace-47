@@ -29,18 +29,21 @@ Los estados significan:
 - `UNSUPPORTED`: la operación está fuera del alcance o una fuente oficial
   confirma que el flujo móvil no es compatible.
 
-P19 (Carné Joven Europeo de Andalucía) cuenta con verificación `VERIFIED_E2E` delimitada a `CLIENT_TLS_AUTH` en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW) cuenta con `VERIFIED_E2E` limitado al login CAdES aceptado por el portal en dispositivo físico el 2026-07-28. Además de los contratos
-genéricos, cuatro integraciones publican JavaScript suficiente para marcar su
-contrato estático como `VERIFIED_CONTRACT`: REG/RedSARA, ACCEDA, Gobierno de
-Aragón y Universidad de Zaragoza. REG/RedSARA y UniZAR ya disponen de profiles
-y adapters limitados, pero ese estado no significa aceptación por los portales.
-ACCEDA no está implementada. Aragón SIRAW sí dispone de implementación y
-`VERIFIED_E2E` limitado al login CAdES descrito en P16; Storage/Retrieve y firma
-documental permanecen bloqueados. La integración histórica Ovorion (MiniApplet
-1.4) permanece `EXPERIMENTAL`. El profile separado
-`junta-ofvirtual` (MiniApplet 1.5) está `VERIFIED_CONTRACT / QA_ONLY /
-E2E_PENDING`; la integración double-TLS sintética verifica la arquitectura, no
-la aceptación del portal real.
+P19 (Carné Joven Europeo de Andalucía) cuenta con verificación `VERIFIED_E2E`
+delimitada a `CLIENT_TLS_AUTH` en dispositivo físico (2026-07-21, commit
+dc3c231). P16 (Aragón SIRAW) cuenta con `VERIFIED_E2E` limitado al login CAdES
+aceptado por el portal el 2026-07-28. P07B (`junta-ofvirtual`, MiniApplet 1.5)
+cuenta con `VERIFIED_E2E` limitado al login CAdES aceptado por Oficina Virtual
+en dispositivo físico el 2026-07-29.
+
+Además de los contratos genéricos, REG/RedSARA, ACCEDA y Universidad de Zaragoza
+publican JavaScript suficiente para `VERIFIED_CONTRACT`; REG/RedSARA y UniZAR
+disponen de profiles/adapters limitados, pero todavía no de aceptación E2E.
+ACCEDA no está implementada. Aragón SIRAW y Oficina Virtual están habilitados
+solo para sus logins observados; Storage/Retrieve, firma documental y
+presentación administrativa permanecen fuera de la evidencia. La integración
+histórica Ovorion MiniApplet 1.4 permanece `EXPERIMENTAL` y no hereda el estado
+del profile separado MiniApplet 1.5.
 
 ## 2. Contratos oficiales del motor común
 
@@ -78,7 +81,7 @@ rama heredada y no el API general del producto. [C0]
 | Justicia | Sede Judicial — `https://sedejudicial.justicia.es` | Acceso con certificado/Cl@ve y firma de escritos con AutoFirma | No verificado | `BROWSE_ONLY` |
 | Ministerio | Sede Ministerio de Justicia — `https://sede.mjusticia.gob.es` | Firma local con AutoFirma en determinados trámites | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Junta de Andalucía — `https://www.juntadeandalucia.es` | `MiniApplet.sign` para autenticación, tri-phase CAdES | No en el contorno observado | `EXPERIMENTAL` |
-| Comunidad autónoma | Junta de Andalucía — Oficina Virtual — `https://ws072.juntadeandalucia.es` | `MiniApplet.sign` 1.5, tri-phase CAdES contra endpoint WS024 exacto | No | `VERIFIED_CONTRACT`; profile/adapter/túnel QA implementados; solo double-TLS sintético, E2E real pendiente |
+| Comunidad autónoma | Junta de Andalucía — Oficina Virtual — `https://ws072.juntadeandalucia.es` | Login mediante `MiniApplet.sign` 1.5 y tri-phase CAdES contra endpoint WS024 exacto | No | `VERIFIED_E2E` limitado al login aceptado por el portal el 2026-07-29; release direct-only; firma documental no verificada |
 | Comunidad autónoma | IAJ / Carné Joven Andalucía — `https://ws104.juntadeandalucia.es` | Entrada con certificado mediante facade TLS exacta en `ws235` | Sí, `CertificateRequest` verificado | `VERIFIED_E2E` (solamente `CLIENT_TLS_AUTH`; verificado en dispositivo físico 2026-07-21 tras dc3c231; Zona privada y Solicitar Carné Joven autenticados; firma/AutoFirma posterior no E2E) |
 | Comunidad autónoma | Comunidad de Madrid — `https://sede.comunidad.madrid` | Descargar PDF, firmarlo localmente con AutoFirma y adjuntarlo al registro | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Comunidad de Madrid / gestiona2 — `https://gestiona2.comunidad.madrid` | Acceso con certificado y firma AutoFirma del trámite observado | No verificado | `UNSUPPORTED` en móvil para ese flujo |
@@ -237,18 +240,21 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
 - **Algoritmo:** `SHA1withRSA`, exclusivamente bajo capability
   `LEGACY_SHA1` del profile exacto.
 - **TLS client auth:** no forma parte de este profile.
-- **Estado:** `VERIFIED_CONTRACT / QA_ONLY / E2E_PENDING`.
-- **Transporte QA:** direct-first; solo un fallo clasificado antes de bytes HTTP
-  puede intentar una vez el túnel. El túnel exige outer TLS, hostname, SPKI
-  pins, ALPN `http/1.1`, CONNECT de autoridad fija, credential QA revocable y
-  conserva una verificación inner TLS independiente para WS024.
-- **Evidencia local 2026-07-29:** double-TLS sintético PASS con un único POST;
-  after-write no reintenta; wrong inner SAN no alcanza HTTP; relay no expone
-  payload. Suites Debug/QA, lint, builds, firmas y scans PASS.
-- **Limitación:** no existe todavía relay externo desplegado ni credencial QA
-  provisionada para una build física. La prueba sintética no equivale a
-  aceptación por Oficina Virtual y no permite `VERIFIED_E2E`. Release permanece
-  direct-only.
+- **Estado actual:** profile version 2, `VERIFIED_E2E / ENABLED`.
+- **Evidencia E2E 2026-07-29:** en un POCO F6 Pro, la build QA direct-only
+  completó PRE, firma local, POST, callback y submit; Oficina Virtual aceptó la
+  autenticación y abrió el área interna de trámites pendientes.
+- **Causa del fallo anterior:** un redirect HTTP heredado era bloqueado y
+  `onStop()` bloqueaba la identidad/destruía el WebView. Los commits `6538e1a`
+  y `26230ab` corrigen ambas transiciones sin ampliar origin ni contrato.
+- **Transporte:** el E2E aceptado fue directo. El tunnel permanece aislado,
+  QA-only y deshabilitado; release es direct-only y no contiene credential ni
+  relay tuple.
+- **Limitación:** verificación limitada al login CAdES observado. No demuestra
+  Storage/Retrieve, firma documental, cofirma, contrafirma, presentación de
+  solicitudes ni todas las funciones del portal.
+- **Informe sanitizado:**
+  `docs/e2e/2026-07-29-junta-ofvirtual-auth-success.md`.
 
 ### P08 — Comunidad de Madrid
 

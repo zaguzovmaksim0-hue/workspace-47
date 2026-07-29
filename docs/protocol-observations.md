@@ -250,3 +250,29 @@ real segura aceptada por el portal.
   capture antes de release.
 - Cada nuevo algoritmo, operación, host o codec requiere una prueba y una
   actualización de threat model si cambia una frontera de confianza.
+
+## Observación 2026-07-29 — Oficina Virtual MiniApplet 1.5 aceptada E2E
+
+En un dispositivo físico, el profile `junta-ofvirtual` completó el contrato
+exacto ya registrado:
+
+- origin `https://ws072.juntadeandalucia.es`;
+- `MiniApplet.sign` con `SHA1withRSA` y `CAdES`;
+- endpoint PRE/POST MiniApplet 1.5 exacto en `ws024`;
+- callback de firma/certificado y posterior submit del formulario de login.
+
+El portal aceptó el resultado y abrió su área interna. Esto cierra la evidencia
+pendiente de aceptación portal-side para la autenticación, pero no amplía el
+contrato a Storage/Retrieve, firma documental, cofirma, contrafirma o presentación
+de solicitudes.
+
+La investigación identificó dos transiciones relevantes:
+
+1. un GET HTTP heredado del mismo host/path debía actualizarse de forma cerrada a
+   HTTPS; otras navegaciones HTTP siguen bloqueadas;
+2. el cambio a segundo plano no debe bloquear la identidad mientras viva el
+   proceso, porque destruiría el WebView y la sesión antes del callback/redirect.
+
+No se registraron valores de firma, certificado, challenge, formulario, cookie,
+contraseña ni identificadores de la persona. La captura visual con identidad fue
+excluida del repositorio.

@@ -1278,3 +1278,31 @@
 - [ ] **Step 9: Finish the development branch**
 
   Invoke `superpowers:finishing-a-development-branch`. Do not push or merge without explicit user authorization.
+
+---
+
+## Completion note — direct Oficina Virtual E2E — 2026-07-29
+
+El bloqueo que motivó el diseño de relay dejó de ser necesario para el escenario
+verificado: una QA build direct-only completó el login real de Oficina Virtual y
+el portal aceptó la firma CAdES. No se desplegó ni se usó un relay externo.
+
+La evidencia real siguió una ruta distinta de la secuencia hipotética de Task 12:
+
+```text
+DIRECT / PRE / SUCCESS
+LOCAL_SIGNATURE / SUCCESS
+POST / SUCCESS
+CALLBACK / SUCCESS
+PORTAL_LOGIN / ACCEPTED
+```
+
+Los fixes causales fueron el upgrade cerrado del redirect HTTP heredado y la
+retención de la sesión desbloqueada/WebView mientras vive el proceso. El profile
+pasó a versión 2, `VERIFIED_E2E / ENABLED` en `b3f1817`. El tunnel permanece
+QA-only y deshabilitado; release continúa direct-only.
+
+La revisión íntegra está en
+`docs/e2e/2026-07-29-junta-ofvirtual-auth-success.md`. Las tareas de despliegue de
+relay dejan de ser precondición para este login, aunque la implementación puede
+conservarse como trabajo experimental aislado sin activación production.

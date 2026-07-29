@@ -8,7 +8,11 @@ Completed:
 - Private release signing with no debug-key fallback (F-01).
 - `qa` build variant for unverified portal work.
 - Release activation restricted to sensitive `VERIFIED_E2E` profiles (F-04).
-- Junta, Carné Joven and Aragón SIRAW login marked `VERIFIED_E2E` (Carné Joven: CLIENT_TLS_AUTH verified on physical device 2026-07-21 after commit dc3c231; Aragón: login CAdES accepted on physical device 2026-07-28); RedSARA and UniZAR remain `QA_ONLY`.
+- Junta legacy Ovorion, Carné Joven, Aragón SIRAW and Junta Oficina Virtual are
+  tracked separately. Carné Joven `CLIENT_TLS_AUTH` was verified on a physical
+  device on 2026-07-21; Aragón login CAdES on 2026-07-28; Oficina Virtual
+  MiniApplet 1.5 login CAdES on 2026-07-29. RedSARA and UniZAR remain `QA_ONLY`;
+  historical Ovorion MiniApplet 1.4 remains `EXPERIMENTAL`.
 - Browser navigation, WebMessage bridge and signing origin bound to the selected profile (F-06).
 - Cross-profile and external HTTP navigation blocked (F-06, F-07).
 - Renderer loss invalidates bridge/signing state and creates a fresh WebView.
@@ -31,7 +35,8 @@ Current isolated PR — WebView session-state hardening:
 
 Next isolated PRs:
 
-1. Client TLS state machine and Carné Joven E2E (F-03, F-13).
+1. Remaining Client TLS portals and grant-lifecycle hardening beyond the already
+   verified Carné Joven scenario (F-03, F-13).
 2. Profile-scoped cookies/session transport and IPv6 handling (F-08, F-17).
 3. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
 4. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
@@ -63,18 +68,17 @@ Completed and locally verified:
 - Go race instrumentation is not available in the current Android/arm64 Go
   toolchain and remains an external CI requirement, not a passed gate.
 
-Still required before physical-device E2E:
+Status after physical-device E2E:
 
-1. Deploy a project-controlled QA relay outside the blocked path with a valid
-   outer TLS certificate and reviewed SPKI pins.
-2. Provision a revocable QA credential outside source control and deliver it
-   through the one-shot QA credential path.
-3. Build and verify a QA APK with the complete public relay tuple; the current
-   validated QA APK is direct-only because no tuple was supplied.
-4. Execute one manually approved Oficina Virtual login on a physical device and
-   retain only sanitized route/result evidence.
-5. Re-run Go race tests in a supported Linux CI environment.
+1. A direct-only QA build completed and Oficina Virtual accepted the real login
+   on 2026-07-29; an external relay was not required.
+2. `junta-ofvirtual` is profile version 2, `VERIFIED_E2E / ENABLED`, limited to
+   the observed CAdES authentication flow.
+3. The relay implementation remains experimental, QA-only and disabled. No
+   credential, host or pins are present in the verified QA build or release.
+4. Release remains direct-only. This decision is independent of the profile
+   promotion and must not be relaxed without a separate reviewed change.
+5. Go race tests still require a supported Linux CI environment.
 
-Production decision remains unchanged: release is direct-only, contains no QA
-credential or relay tuple, and `junta-ofvirtual` remains
-`VERIFIED_CONTRACT / QA_ONLY / E2E_PENDING`.
+Remaining portal work concerns document-signing/submission branches and other
+profiles; the successful login does not verify those operations.

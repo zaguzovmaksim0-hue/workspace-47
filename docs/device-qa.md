@@ -57,3 +57,34 @@ un password real, no se firmó un documento y no se obtuvo evidencia E2E.
 - Deterministic instrumentation: `PASSED`.
 - Real Junta E2E: `NOT_RUN`.
 - Capturas/logs con identidad o payload: ninguno guardado.
+
+## Actualización 2026-07-29 — Oficina Virtual aceptada en dispositivo físico
+
+Dispositivo: POCO F6 Pro (`24069PC21G`), Android API 36.
+
+Se ejecutó manualmente la autenticación real de
+`https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs`. El portal
+aceptó el resultado y abrió el área interna de trámites pendientes. La captura
+original no se conserva en Git porque contiene identidad del certificado.
+
+Build que produjo la aceptación:
+
+- commit `26230abac82c791901f6c45e6dfb9b02ff62547b`;
+- QA APK SHA-256
+  `6c14b2d95187b89261973a221d391f0ea469d43149e9a3bf3e1358355ca69779`.
+
+Build posterior con el estado visible `VERIFIED_E2E`:
+
+- commit de promoción `b3f1817c36324394a1816befc172340d6f5cd180`;
+- QA APK e installed `base.apk` SHA-256
+  `ba82c501c4e1e4d9843dc263648d4b051ea2d9bbbbefd6f7ff451ab197b30e34`;
+- instalación `pm install -r`: `Success`;
+- `firstInstallTime` preservado: `2026-07-11 20:55:37`;
+- direct-only, sin relay tuple ni credencial QA.
+
+Estado actualizado:
+
+- Deterministic unit/lint/build: `PASSED`;
+- Real Junta Oficina Virtual authentication E2E: `PASSED`;
+- Scope: login CAdES observado únicamente;
+- capturas o logs sensibles incorporados al repositorio: ninguno.
