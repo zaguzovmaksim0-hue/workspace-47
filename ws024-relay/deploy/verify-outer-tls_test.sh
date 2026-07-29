@@ -96,8 +96,9 @@ start_oversize_server() {
 import socket
 import ssl
 import sys
+import time
 
-port, cert, key, payload = int(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4]
+port, cert, key, payload, ready_delay = int(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4], float(sys.argv[5])
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain(cert, key)
 context.set_alpn_protocols(["http/1.1"])
@@ -105,6 +106,7 @@ listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 listener.bind(("127.0.0.1", port))
 listener.listen(1)
+time.sleep(ready_delay)
 print("READY", flush=True)
 try:
     connection, _ = listener.accept()
@@ -119,12 +121,24 @@ try:
 finally:
     listener.close()
 ' "$port" "$tmp_dir/current-cert.pem" "$tmp_dir/current-key.pem" \
-            "$tmp_dir/oversize-payload" >"$tmp_dir/server.log" 2>&1 &
+            "$tmp_dir/oversize-payload" "${WS024_TEST_OVERSIZE_READY_DELAY_SECONDS:-0.25}" \
+            >"$tmp_dir/server.log" 2>&1 &
         server_pid=$!
-        sleep 0.1
-        if kill -0 "$server_pid" 2>/dev/null && grep -Fqx 'READY' "$tmp_dir/server.log"; then
+        local ready=false ready_attempt
+        for ready_attempt in $(seq 1 100); do
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+                break
+            fi
+            if grep -Fqx 'READY' "$tmp_dir/server.log"; then
+                ready=true
+                break
+            fi
+            sleep 0.05
+        done
+        if "$ready"; then
             return 0
         fi
+        kill "$server_pid" 2>/dev/null || true
         wait "$server_pid" 2>/dev/null || true
         server_pid=""
     done
