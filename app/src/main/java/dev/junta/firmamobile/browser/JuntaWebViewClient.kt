@@ -98,6 +98,28 @@ class JuntaWebViewClient(
                 }
                 false
             }
+            is NavigationDecision.UpgradeToHttps -> {
+                if (!isModernMainFrame || !method.equals(GET_METHOD, ignoreCase = true)) {
+                    logger.recordNavigationEvent(
+                        code = DiagnosticEventCode.NAVIGATION_BLOCKED,
+                        rawUrl = targetUrl,
+                        reason = NavigationBlockReason.INSECURE_HTTP.name,
+                        isMainFrame = isModernMainFrame,
+                        method = method,
+                    )
+                    callbacks.onNavigationBlocked(NavigationBlockReason.INSECURE_HTTP)
+                } else {
+                    val upgradedUrl = decision.uri.toString()
+                    logger.recordNavigationEvent(
+                        code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                        rawUrl = upgradedUrl,
+                        isMainFrame = true,
+                        method = GET_METHOD,
+                    )
+                    view.loadUrl(upgradedUrl)
+                }
+                true
+            }
             is NavigationDecision.OpenExternal -> {
                 logger.recordBrowserEvent(
                     DiagnosticEventCode.EXTERNAL_NAVIGATION,
@@ -225,5 +247,6 @@ class JuntaWebViewClient(
     private companion object {
         const val HTTP_ERROR_START = 400
         const val UNKNOWN_METHOD = "UNKNOWN"
+        const val GET_METHOD = "GET"
     }
 }

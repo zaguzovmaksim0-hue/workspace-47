@@ -298,6 +298,10 @@ private class ProtocolProbeWebViewClient(
                 logger.recordBrowserEvent(DiagnosticEventCode.NAVIGATION_BLOCKED)
                 true
             }
+            is NavigationDecision.UpgradeToHttps -> {
+                logger.recordBrowserEvent(DiagnosticEventCode.NAVIGATION_BLOCKED)
+                true
+            }
             is NavigationDecision.Block -> {
                 val event = if (decision.reason == NavigationBlockReason.PLAY_STORE_FALLBACK) {
                     DiagnosticEventCode.PLAY_STORE_FALLBACK_INTERCEPTED

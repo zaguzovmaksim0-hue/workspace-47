@@ -28,6 +28,8 @@ sealed interface NavigationDecision {
 
     data class OpenExternal(val uri: Uri) : NavigationDecision
 
+    data class UpgradeToHttps(val uri: Uri) : NavigationDecision
+
     data class HandleAfirma(val request: AfirmaRequest) : NavigationDecision
 
     data class Block(val reason: NavigationBlockReason) : NavigationDecision
@@ -55,7 +57,7 @@ class JuntaNavigationPolicy(
         }
         return when (target.scheme?.lowercase(Locale.ROOT)) {
             "https" -> decideHttpsUrl(target, targetUrl)
-            "http" -> NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
+            "http" -> decideLegacyHttpUpgrade(target, currentPageUrl)
             "afirma" -> decideAfirma(targetUrl, currentPageUrl)
             "intent" -> decideIntent(targetUrl, currentPageUrl)
             "market" -> if (isAutoFirmaPlayStoreUrl(target, targetUrl)) {
@@ -113,6 +115,53 @@ class JuntaNavigationPolicy(
             return null
         }
         return runCatching { ExactOrigin.parse("https://$canonicalHost") }.getOrNull()
+    }
+
+    private fun decideLegacyHttpUpgrade(
+        target: Uri,
+        currentPageUrl: String?,
+    ): NavigationDecision {
+        val blocked = NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
+        if (selectedProfileId != OFVIRTUAL_PROFILE_ID || target.isOpaque ||
+            target.encodedUserInfo != null || target.port !in setOf(-1, 80) ||
+            !target.host.equals(OFVIRTUAL_HOST, ignoreCase = true) ||
+            !isExactOfvirtualPath(target)
+        ) {
+            return blocked
+        }
+        val current = currentPageUrl?.let { raw ->
+            runCatching { Uri.parse(raw) }.getOrNull()
+        } ?: return blocked
+        if (current.isOpaque || !current.scheme.equals("https", ignoreCase = true) ||
+            current.encodedUserInfo != null || current.port !in setOf(-1, 443) ||
+            !current.host.equals(OFVIRTUAL_HOST, ignoreCase = true) ||
+            !isExactOfvirtualPath(current)
+        ) {
+            return blocked
+        }
+        val upgraded = target.buildUpon()
+            .scheme("https")
+            .encodedAuthority(OFVIRTUAL_HOST)
+            .build()
+        return if (JuntaOriginPolicy.isAllowed(upgraded, selectedProfileId)) {
+            NavigationDecision.UpgradeToHttps(upgraded)
+        } else {
+            blocked
+        }
+    }
+
+    private fun isExactOfvirtualPath(uri: Uri): Boolean {
+        val encodedPath = uri.encodedPath ?: return false
+        val decodedPath = uri.path ?: return false
+        if (!encodedPath.startsWith(OFVIRTUAL_PATH_PREFIX) ||
+            !decodedPath.startsWith(OFVIRTUAL_PATH_PREFIX) ||
+            encodedPath.contains('\\') || decodedPath.contains('\\') ||
+            encodedPath.contains("%2f", ignoreCase = true) ||
+            encodedPath.contains("%5c", ignoreCase = true)
+        ) {
+            return false
+        }
+        return decodedPath.split('/').none { segment -> segment == "." || segment == ".." }
     }
 
     private fun decideAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
@@ -215,5 +264,8 @@ class JuntaNavigationPolicy(
     private companion object {
         const val AUTOFIRMA_PACKAGE = "es.gob.afirma"
         const val BROWSER_FALLBACK_URL = "browser_fallback_url"
+        const val OFVIRTUAL_HOST = "ws072.juntadeandalucia.es"
+        const val OFVIRTUAL_PATH_PREFIX = "/ofvirtual/"
+        val OFVIRTUAL_PROFILE_ID = ProfileId("junta-ofvirtual")
     }
 }

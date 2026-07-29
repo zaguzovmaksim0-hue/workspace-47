@@ -52,6 +52,43 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
+    fun upgradesOnlyExactOfvirtualLegacyHttpDowngradeToHttps() {
+        val ofvirtualPolicy = JuntaNavigationPolicy(ProfileId("junta-ofvirtual"))
+        val current = "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+        val target = "http://ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn?state=ok#done"
+
+        val decision = ofvirtualPolicy.decide(target, current) as NavigationDecision.UpgradeToHttps
+
+        assertEquals(
+            "https://ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn?state=ok#done",
+            decision.uri.toString(),
+        )
+    }
+
+    @Test
+    fun rejectsEveryOtherHttpNavigationIncludingNearMisses() {
+        val ofvirtualPolicy = JuntaNavigationPolicy(ProfileId("junta-ofvirtual"))
+        val current = "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+        val blockedTargets = listOf(
+            "http://ws072.juntadeandalucia.es/outside/legacyReturn",
+            "http://user@ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn",
+            "http://ws072.juntadeandalucia.es:8080/ofvirtual/auth/legacyReturn",
+            "http://ws072.juntadeandalucia.es.evil.example/ofvirtual/auth/legacyReturn",
+            "http://example.org/ofvirtual/auth/legacyReturn",
+        )
+
+        blockedTargets.forEach { target ->
+            val decision = ofvirtualPolicy.decide(target, current) as NavigationDecision.Block
+            assertEquals(target, NavigationBlockReason.INSECURE_HTTP, decision.reason)
+        }
+        val untrustedCurrent = ofvirtualPolicy.decide(
+            "http://ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn",
+            "https://evil.example/ofvirtual/auth/signInAutcertjs",
+        ) as NavigationDecision.Block
+        assertEquals(NavigationBlockReason.INSECURE_HTTP, untrustedCurrent.reason)
+    }
+
+    @Test
     fun interceptsAfirmaOnlyFromTheSelectedProfilesSigningOrigin() {
         val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc"
         val accepted = policy.decide(raw, trustedPage) as NavigationDecision.HandleAfirma

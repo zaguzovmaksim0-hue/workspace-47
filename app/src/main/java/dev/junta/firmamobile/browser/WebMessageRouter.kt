@@ -63,6 +63,7 @@ class WebMessageRouter(
             )
             NavigationDecision.AllowInWebView,
             is NavigationDecision.OpenExternal,
+            is NavigationDecision.UpgradeToHttps,
             -> WebMessageRouteResult.Rejected(
                 requestId = parsed.requestId,
                 errorCode = ERROR_UNEXPECTED_NAVIGATION,

@@ -88,6 +88,57 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun exactOfvirtualMainFrameGetDowngradeIsReloadedAsHttps() {
+        val ofvirtualCallbacks = RecordingBrowserCallbacks()
+        val ofvirtualLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        val ofvirtualClient = JuntaWebViewClient(
+            callbacks = ofvirtualCallbacks,
+            logger = ofvirtualLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-ofvirtual")),
+            currentPageUrl = {
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+            },
+        )
+        val target = "http://ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn?state=ok#done"
+
+        val overridden = ofvirtualClient.shouldOverrideUrlLoading(webView, request(target))
+
+        assertTrue(overridden)
+        assertEquals(
+            "https://ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn?state=ok#done",
+            shadowOf(webView).lastLoadedUrl,
+        )
+        assertTrue(ofvirtualCallbacks.events.isEmpty())
+        assertTrue(ofvirtualLogger.exportText().contains("event=NAVIGATION_ALLOWED"))
+        assertTrue(ofvirtualLogger.exportText().contains("method=GET"))
+    }
+
+    @Test
+    fun ofvirtualPostAndSubframeHttpDowngradesRemainBlocked() {
+        val ofvirtualCallbacks = RecordingBrowserCallbacks()
+        val ofvirtualClient = JuntaWebViewClient(
+            callbacks = ofvirtualCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-ofvirtual")),
+            currentPageUrl = {
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+            },
+        )
+        val target = "http://ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn"
+
+        assertTrue(ofvirtualClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        assertTrue(ofvirtualClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
+
+        assertEquals(
+            listOf("blocked:INSECURE_HTTP", "blocked:INSECURE_HTTP"),
+            ofvirtualCallbacks.events,
+        )
+        assertTrue(shadowOf(webView).lastLoadedUrl.isNullOrEmpty())
+    }
+
+    @Test
     fun externalAndAfirmaNavigationAreConsumedByNativeCallbacks() {
         assertTrue(
             client.shouldOverrideUrlLoading(webView, request("https://example.org/help")),
