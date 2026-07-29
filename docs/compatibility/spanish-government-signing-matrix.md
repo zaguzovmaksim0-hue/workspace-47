@@ -1,6 +1,6 @@
 # Matriz de compatibilidad de firma de las administraciones públicas españolas
 
-Fecha de corte: 2026-07-15
+Fecha de corte: 2026-07-29
 
 Estado del documento: investigación de contratos previa a cambios de
 producción. Esta matriz no convierte por sí sola ningún sitio en confiable.
@@ -34,8 +34,13 @@ genéricos, cuatro integraciones publican JavaScript suficiente para marcar su
 contrato estático como `VERIFIED_CONTRACT`: REG/RedSARA, ACCEDA, Gobierno de
 Aragón y Universidad de Zaragoza. REG/RedSARA y UniZAR ya disponen de profiles
 y adapters limitados, pero ese estado no significa aceptación por los portales.
-ACCEDA y Aragón no están implementados. Junta de Andalucía
-permanece `EXPERIMENTAL`.
+ACCEDA no está implementada. Aragón SIRAW sí dispone de implementación y
+`VERIFIED_E2E` limitado al login CAdES descrito en P16; Storage/Retrieve y firma
+documental permanecen bloqueados. La integración histórica Ovorion (MiniApplet
+1.4) permanece `EXPERIMENTAL`. El profile separado
+`junta-ofvirtual` (MiniApplet 1.5) está `VERIFIED_CONTRACT / QA_ONLY /
+E2E_PENDING`; la integración double-TLS sintética verifica la arquitectura, no
+la aceptación del portal real.
 
 ## 2. Contratos oficiales del motor común
 
@@ -73,10 +78,11 @@ rama heredada y no el API general del producto. [C0]
 | Justicia | Sede Judicial — `https://sedejudicial.justicia.es` | Acceso con certificado/Cl@ve y firma de escritos con AutoFirma | No verificado | `BROWSE_ONLY` |
 | Ministerio | Sede Ministerio de Justicia — `https://sede.mjusticia.gob.es` | Firma local con AutoFirma en determinados trámites | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Junta de Andalucía — `https://www.juntadeandalucia.es` | `MiniApplet.sign` para autenticación, tri-phase CAdES | No en el contorno observado | `EXPERIMENTAL` |
+| Comunidad autónoma | Junta de Andalucía — Oficina Virtual — `https://ws072.juntadeandalucia.es` | `MiniApplet.sign` 1.5, tri-phase CAdES contra endpoint WS024 exacto | No | `VERIFIED_CONTRACT`; profile/adapter/túnel QA implementados; solo double-TLS sintético, E2E real pendiente |
 | Comunidad autónoma | IAJ / Carné Joven Andalucía — `https://ws104.juntadeandalucia.es` | Entrada con certificado mediante facade TLS exacta en `ws235` | Sí, `CertificateRequest` verificado | `VERIFIED_E2E` (solamente `CLIENT_TLS_AUTH`; verificado en dispositivo físico 2026-07-21 tras dc3c231; Zona privada y Solicitar Carné Joven autenticados; firma/AutoFirma posterior no E2E) |
 | Comunidad autónoma | Comunidad de Madrid — `https://sede.comunidad.madrid` | Descargar PDF, firmarlo localmente con AutoFirma y adjuntarlo al registro | No verificado | `BROWSE_ONLY` |
 | Comunidad autónoma | Comunidad de Madrid / gestiona2 — `https://gestiona2.comunidad.madrid` | Acceso con certificado y firma AutoFirma del trámite observado | No verificado | `UNSUPPORTED` en móvil para ese flujo |
-| Comunidad autónoma | Gobierno de Aragón — `https://aplicaciones.aragon.es` | `MiniApplet.sign` CAdES y Storage/Retrieve | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
+| Comunidad autónoma | Gobierno de Aragón — `https://aplicaciones.aragon.es` | Login mediante `MiniApplet.sign` CAdES; Storage/Retrieve y firma documental separados | No verificado | `VERIFIED_E2E` limitado al login CAdES aceptado el 2026-07-28; ramas restantes bloqueadas |
 | Diputación | Diputación de Valladolid — `https://www.sede.diputaciondevalladolid.es` | Identificación/firma con certificados admitidos por @firma | No verificado | `BROWSE_ONLY` |
 | Ayuntamiento | Ayuntamiento de Sevilla — `https://sede.sevilla.org` | Presentación con certificado actual y AutoFirma | No verificado | `BROWSE_ONLY` |
 | Ayuntamiento | Ayuntamiento de Madrid — `https://sede.madrid.es` | Trámites con certificado en navegador/móvil según el procedimiento | No verificado | `BROWSE_ONLY` |
@@ -214,6 +220,35 @@ otro portal.
 Los redirects/origins Junta ya codificados (`sede`, `ssoweb`, `pfirma`,
 `ws024`, `ws050`) no se promueven automáticamente a origins iniciadores de
 firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
+
+### P07B — Junta de Andalucía, Oficina Virtual (`junta-ofvirtual`)
+
+- **Organización:** Junta de Andalucía, Oficina Virtual.
+- **Origin iniciador exacto:** `https://ws072.juntadeandalucia.es`.
+- **Entrada:**
+  `https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs`.
+- **Operación:** acceso con certificado mediante `MiniApplet.sign`.
+- **Signing endpoint exacto:**
+  `https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService`.
+- **Contrato:** `POST`, request
+  `application/x-www-form-urlencoded; charset=UTF-8`, response `text/plain`,
+  redirects denegados y límites de 2 MiB por request/response.
+- **Formato / packaging / modo:** `CAdES` / `DETACHED` / `EXPLICIT`.
+- **Algoritmo:** `SHA1withRSA`, exclusivamente bajo capability
+  `LEGACY_SHA1` del profile exacto.
+- **TLS client auth:** no forma parte de este profile.
+- **Estado:** `VERIFIED_CONTRACT / QA_ONLY / E2E_PENDING`.
+- **Transporte QA:** direct-first; solo un fallo clasificado antes de bytes HTTP
+  puede intentar una vez el túnel. El túnel exige outer TLS, hostname, SPKI
+  pins, ALPN `http/1.1`, CONNECT de autoridad fija, credential QA revocable y
+  conserva una verificación inner TLS independiente para WS024.
+- **Evidencia local 2026-07-29:** double-TLS sintético PASS con un único POST;
+  after-write no reintenta; wrong inner SAN no alcanza HTTP; relay no expone
+  payload. Suites Debug/QA, lint, builds, firmas y scans PASS.
+- **Limitación:** no existe todavía relay externo desplegado ni credencial QA
+  provisionada para una build física. La prueba sintética no equivale a
+  aceptación por Oficina Virtual y no permite `VERIFIED_E2E`. Release permanece
+  direct-only.
 
 ### P08 — Comunidad de Madrid
 
@@ -452,8 +487,9 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
 2. Las fichas `BROWSE_ONLY` no contienen endpoints, callbacks ni capabilities
    de certificado. Pueden aportar accesos HTTPS visibles, nunca confianza.
 3. REG y UniZAR son entradas activas limitadas por contrato; siguen sin E2E y
-   no se anuncian como aceptadas por el portal. ACCEDA y Aragón permanecen como
-   candidatos estáticos hasta disponer de un runtime contract suficiente.
+   no se anuncian como aceptadas por el portal. ACCEDA permanece como candidato
+   estático. Aragón SIRAW está habilitado solo para el login CAdES verificado
+   E2E; Storage/Retrieve y firma documental continúan bloqueados.
 4. AEAT es candidata a la primera investigación de `CLIENT_TLS_AUTH`, pero no
    entra como profile confiable hasta observar host, puerto, key types, issuer
    constraints, frame/origin y resultado real.

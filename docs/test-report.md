@@ -488,3 +488,100 @@ El profile `junta-ofvirtual` permanece `VERIFIED_CONTRACT` / `QA_ONLY`. La
 corrección elimina el fallo reproducido, pero la aceptación E2E con el
 certificado real debe confirmarse mediante un nuevo acceso manual antes de
 promover el estado del profile.
+
+## Milestone WS024-QA — gates completos y límites documentados — 2026-07-29
+
+Base verificada antes de este cambio documental: `07c3b053480529ee15fd5d1fa486c0ca0cafff0f`.
+
+Veredicto: `SYNTHETIC_DOUBLE_TLS_VERIFIED_EXTERNAL_E2E_PENDING`.
+
+Este milestone verifica la arquitectura de transporte seguro con infraestructura
+sintética y ejecuta todos los gates locales disponibles. No demuestra que la
+Oficina Virtual real acepte una firma ni autoriza el estado `VERIFIED_E2E`.
+
+### Evidencia de Android
+
+| Gate | Resultado exacto |
+|---|---|
+| `testDebugUnitTest` | 68 suites, 408 tests, 0 failures, 0 errors, 0 skipped |
+| `testQaUnitTest` | 68 suites, 408 tests, 0 failures, 0 errors, 0 skipped |
+| `lintDebug` | 0 errors, 25 warnings |
+| `lintQa` | 0 errors, 25 warnings |
+| `assembleDebug` | PASS |
+| `assembleQa` | PASS |
+| Tests focused de política release/túnel | PASS |
+| `assembleRelease` sin secretos | rechazo esperado en `:app:verifyReleaseSigning`; no existe fallback a debug key |
+
+Nota de repetición: una ejecución adicional conjunta de Debug+QA con
+`--rerun-tasks` produjo una vez un failure en
+`ProfileHttpTransportTest.publicExactEndpointReturnsOneOwnedBoundedBody`. El
+test exacto pasó de forma aislada y después los suites completos QA y Debug
+pasaron por separado con `--rerun-tasks` (408/408 cada uno). La causa exacta de
+ese resultado transitorio no quedó demostrada; se registra y no se usa como
+evidencia de PASS ni como prueba de una regresión production. La evidencia final
+del cuadro anterior procede de los suites completos separados con cero fallos.
+
+### Integridad de APK
+
+| Variante | SHA-256 | Tamaño | Firma | Alineación |
+|---|---|---:|---|---|
+| debug | `998f581634056dff70fa18c68b7be13fb5880be4ba01e6465b5b74677a2ffce0` | 20,870,052 bytes | v2, 1 signer `CN=Android Debug`; v1/v3/v4 false | `zipalign -c -p -v 4` PASS |
+| qa | `e4b0bf6f75baadde1ebd06be5e4692b2a6b037960c2929a18edf7c70a0890192` | 20,689,877 bytes | v2, 1 signer `CN=Android Debug`; v1/v3/v4 false | `zipalign -c -p -v 4` PASS |
+
+Estas APK son artefactos locales de desarrollo/QA, no artefactos de distribución.
+La QA APK se construyó sin tuple externo: su `BuildConfig` generado contiene
+`ENABLE_WS024_QA_TUNNEL=false`, host vacío, puerto `443` y pins vacíos. Por
+tanto, este hash corresponde a una QA build direct-only; no contiene una
+credencial ni una configuración de relay desplegado.
+
+### Evidencia del relay y double TLS sintético
+
+- `go test ./... -count=1`: PASS en los 2 paquetes production.
+- `go vet ./...`: PASS.
+- `go build ./cmd/ws024-relay`: PASS.
+- `go test ./... -race -count=1`: `NOT_AVAILABLE_ENVIRONMENTAL`; Go devolvió
+  exactamente `-race is not supported on android/arm64`. No se presenta como PASS.
+- `scripts/verify-ws024-tunnel.sh`: PASS y stdout exacto:
+
+```json
+{"direct":"TCP_BEFORE_HTTP_BYTES","tunnel":"ESTABLISHED","innerTls":"VERIFIED_WS024","httpPosts":1,"relayPayloadVisible":false}
+```
+
+El harness usa dos PKI temporales independientes, outer TLS con hostname y SPKI
+pinning, ALPN `http/1.1`, CONNECT de destino fijo, transporte opaco y una segunda
+verificación TLS para `ws024.juntadeandalucia.es`. También prueba que un fallo
+directo después de iniciar HTTP no permite fallback y que un leaf inner con SAN
+incorrecto no alcanza el POST. Todos los procesos, claves y archivos temporales
+se eliminan al terminar.
+
+### Scan de secretos y límites de alcance
+
+El scan de source, generated BuildConfig y strings de las APK debug/QA no encontró:
+
+- private keys o marcadores PEM privados;
+- bearer tokens con valor real o sintético;
+- credenciales QA;
+- canaries o payloads del harness;
+- variables del harness JVM;
+- clases/comandos build-tagged de integración;
+- certificados, firmas o payload tri-phase completos añadidos por este milestone.
+
+La configuración release permanece explícitamente direct-only:
+`ENABLE_WS024_QA_TUNNEL=false`, relay host vacío y pins vacíos. El código de
+integración Go está protegido por `//go:build integration` y no forma parte del
+binario production.
+
+### Estado funcional y trabajo pendiente
+
+`junta-ofvirtual` conserva `VERIFIED_CONTRACT / QA_ONLY / E2E_PENDING`. El único
+tuple elegible para el túnel QA es:
+
+- profile: `junta-ofvirtual`;
+- initiator: `https://ws072.juntadeandalucia.es`;
+- endpoint: `https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService`.
+
+No se ha desplegado un relay externo controlado por el proyecto, no existen
+credenciales production, no se ha construido una QA APK con tuple/pins reales y
+no se ejecutó el flujo físico de Oficina Virtual después de este cambio. El
+Task 12 permanece bloqueado hasta cumplir esas precondiciones. No se emite
+`VERIFIED_E2E`, no se promueve el profile y no se habilita el túnel en release.

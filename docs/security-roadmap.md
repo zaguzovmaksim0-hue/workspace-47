@@ -40,3 +40,41 @@ Next isolated PRs:
 
 Open privacy item to schedule separately: keep `FLAG_SECURE` enabled throughout unlocked
 certificate, browser and signing states (F-05).
+
+## WS024 secure-tunnel QA status — 2026-07-29
+
+Completed and locally verified:
+
+- Direct-first routing retries exactly once only after a classified pre-HTTP
+  failure; after-write and unknown outcomes remain fail-closed.
+- Tunnel eligibility is restricted to the exact `junta-ofvirtual` / MiniApplet
+  1.5 endpoint tuple and is unavailable to debug and release variants.
+- Outer TLS requires TLS 1.2+, hostname verification, SPKI pins and ALPN
+  `http/1.1`; inner TLS remains a separate verification boundary for
+  `ws024.juntadeandalucia.es`.
+- The Go relay accepts only the fixed WS024 CONNECT authority, validates a
+  revocable QA credential, applies admission and pump bounds, and records only
+  coarse closed audit fields. It exposes no arbitrary upstream option.
+- Synthetic double-TLS integration covers success, forbidden after-write
+  fallback and wrong-inner-SAN rejection. Relay output and audit remain opaque
+  to the tri-phase payload.
+- Debug and QA JVM suites, lint, APK build/alignment/signature checks, Go
+  tests/vet/build, release fail-closed checks and forbidden-value scans pass.
+- Go race instrumentation is not available in the current Android/arm64 Go
+  toolchain and remains an external CI requirement, not a passed gate.
+
+Still required before physical-device E2E:
+
+1. Deploy a project-controlled QA relay outside the blocked path with a valid
+   outer TLS certificate and reviewed SPKI pins.
+2. Provision a revocable QA credential outside source control and deliver it
+   through the one-shot QA credential path.
+3. Build and verify a QA APK with the complete public relay tuple; the current
+   validated QA APK is direct-only because no tuple was supplied.
+4. Execute one manually approved Oficina Virtual login on a physical device and
+   retain only sanitized route/result evidence.
+5. Re-run Go race tests in a supported Linux CI environment.
+
+Production decision remains unchanged: release is direct-only, contains no QA
+credential or relay tuple, and `junta-ofvirtual` remains
+`VERIFIED_CONTRACT / QA_ONLY / E2E_PENDING`.
