@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.lifecycle.Lifecycle
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.junta.firmamobile.certificate.CertificateDocumentAccess
 import dev.junta.firmamobile.certificate.CertificateDocumentMetadata
@@ -34,7 +35,7 @@ class CertificateSetupFlowTest {
     val rule = createEmptyComposeRule()
 
     @Test
-    fun wrongPasswordThenUnlockRecreateAndManualLockKeepsKeyMemoryOnly() {
+    fun wrongPasswordThenUnlockBackgroundRecreateAndManualLockKeepsKeyMemoryOnly() {
         val uri = Uri.parse("content://dev.junta.firmamobile.tests/synthetic-identity.p12")
         val bytes = syntheticPkcs12()
         val reference = StoredCertificateReference(
@@ -81,18 +82,23 @@ class CertificateSetupFlowTest {
                 }
                 assertSecureFlag(scenario, expected = false)
 
-                scenario.recreate()
-                rule.onNodeWithContentDescription("Contraseña del certificado")
-                    .performScrollTo()
-                    .assertIsDisplayed()
+                scenario.moveToState(Lifecycle.State.CREATED)
                 rule.runOnIdle {
-                    check(session.state() is CertificateSessionState.Locked)
+                    check(session.state() is CertificateSessionState.Unlocked)
                 }
-                assertSecureFlag(scenario, expected = true)
-
-                enterPassword(TEST_PASSPHRASE)
+                scenario.moveToState(Lifecycle.State.RESUMED)
                 waitForText("Certificado encontrado")
+                rule.onNodeWithContentDescription("Contraseña del certificado").assertDoesNotExist()
                 assertSecureFlag(scenario, expected = false)
+
+                scenario.recreate()
+                waitForText("Certificado encontrado")
+                rule.onNodeWithContentDescription("Contraseña del certificado").assertDoesNotExist()
+                rule.runOnIdle {
+                    check(session.state() is CertificateSessionState.Unlocked)
+                }
+                assertSecureFlag(scenario, expected = false)
+
                 rule.onNodeWithText("Bloquear certificado")
                     .performScrollTo()
                     .performClick()

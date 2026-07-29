@@ -49,17 +49,32 @@ class CertificateSessionTest {
     }
 
     @Test
-    fun backgroundAndMemoryPressureLockImmediately() = runTest {
+    fun backgroundKeepsIdentityButMemoryPressureLocksImmediately() = runTest {
         val identity = validIdentity()
         val session = CertificateSession(mutableClock, Duration.ofMinutes(10))
 
         session.unlock(identity)
         session.onAppBackgrounded()
-        assertNull(session.identityForSigning())
+        assertSame(identity, session.identityForSigning())
+        assertTrue(session.state() is CertificateSessionState.Unlocked)
 
-        session.unlock(identity)
         session.onMemoryPressure()
         assertNull(session.identityForSigning())
+        assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
+    }
+
+    @Test
+    fun defaultUnlockWindowIsTwoHours() = runTest {
+        val identity = validIdentity()
+        val session = CertificateSession(clock = mutableClock)
+        session.unlock(identity)
+
+        mutableClock.advance(Duration.ofHours(2).minusMillis(1))
+        assertSame(identity, session.identityForSigning())
+
+        mutableClock.advance(Duration.ofMillis(2))
+        assertNull(session.identityForSigning())
+        assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
     }
 
     @Test

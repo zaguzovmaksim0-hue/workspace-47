@@ -119,6 +119,7 @@ class CertificateViewModel(
     fun onAppBackgrounded() {
         cancelUnlockOperation()
         session.onAppBackgrounded()
+        if (session.identityForSigning() != null) return
         val current = mutableState.value
         val reference = current.referenceOrNull() ?: return
         mutableState.value = reference.toLockedState(current.summaryOrNull())

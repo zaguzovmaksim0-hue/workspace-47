@@ -44,7 +44,7 @@ internal class CertificateSigningSnapshot(
 
 class CertificateSession internal constructor(
     private val clock: Clock = Clock.systemUTC(),
-    private val unlockDuration: Duration = Duration.ofMinutes(10),
+    private val unlockDuration: Duration = Duration.ofHours(2),
     private val fingerprintObserver: SensitiveCertificateFingerprintObserver =
         SensitiveCertificateFingerprintObserver {},
 ) {
@@ -77,7 +77,9 @@ class CertificateSession internal constructor(
     }
 
     @Synchronized
-    fun onAppBackgrounded() = lock()
+    fun onAppBackgrounded() {
+        expireIfNeeded()
+    }
 
     @Synchronized
     fun onMemoryPressure() = lock()

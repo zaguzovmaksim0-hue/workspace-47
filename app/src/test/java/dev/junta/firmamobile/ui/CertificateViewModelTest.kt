@@ -151,7 +151,7 @@ class CertificateViewModelTest {
     }
 
     @Test
-    fun manualLockAndBackgroundDropUnlockedIdentity() = runTest(dispatcher) {
+    fun manualLockDropsUnlockedIdentity() = runTest(dispatcher) {
         val selected = reference()
         val identity = validIdentity()
         val gateway = FakeCertificateGateway().apply {
@@ -168,14 +168,32 @@ class CertificateViewModelTest {
         advanceUntilIdle()
 
         viewModel.lock()
+
         assertNull(session.identityForSigning())
         assertEquals(CertificateUiState.Locked(selected, identity.summary, null), viewModel.state.value)
+    }
 
-        gateway.unlockResult = CertificateLoadResult.Success(identity)
+    @Test
+    fun backgroundKeepsUnlockedIdentityAndUiState() = runTest(dispatcher) {
+        val selected = reference()
+        val identity = validIdentity()
+        val gateway = FakeCertificateGateway().apply {
+            current = selected
+            unlockResult = CertificateLoadResult.Success(identity)
+        }
+        val session = CertificateSession(
+            Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
+            Duration.ofMinutes(10),
+        )
+        val viewModel = viewModel(gateway, session)
+        advanceUntilIdle()
         viewModel.unlock(TestCertificateFactory.password())
         advanceUntilIdle()
+
         viewModel.onAppBackgrounded()
-        assertNull(session.identityForSigning())
+
+        assertSame(identity, session.identityForSigning())
+        assertEquals(CertificateUiState.Unlocked(selected, identity.summary), viewModel.state.value)
     }
 
     @Test
