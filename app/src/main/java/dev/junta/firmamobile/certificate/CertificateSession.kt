@@ -44,7 +44,7 @@ internal class CertificateSigningSnapshot(
 
 class CertificateSession internal constructor(
     private val clock: Clock = Clock.systemUTC(),
-    private val unlockDuration: Duration = Duration.ofHours(2),
+    private val unlockDuration: Duration = Duration.ofHours(24),
     private val fingerprintObserver: SensitiveCertificateFingerprintObserver =
         SensitiveCertificateFingerprintObserver {},
 ) {
@@ -58,9 +58,21 @@ class CertificateSession internal constructor(
 
     @Synchronized
     fun unlock(identity: UnlockedIdentity) {
+        val now = clock.instant()
+        unlock(identity, now.plus(unlockDuration), now)
+    }
+
+    @Synchronized
+    fun unlock(identity: UnlockedIdentity, expiresAt: Instant) {
+        unlock(identity, expiresAt, clock.instant())
+    }
+
+    private fun unlock(identity: UnlockedIdentity, expiresAt: Instant, now: Instant) {
+        require(expiresAt.isAfter(now))
+        require(!expiresAt.isAfter(now.plus(unlockDuration)))
         unlockedIdentity = identity
         lastSummary = identity.summary
-        expiresAt = clock.instant().plus(unlockDuration)
+        this.expiresAt = expiresAt
     }
 
     @Synchronized

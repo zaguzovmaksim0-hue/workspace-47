@@ -64,15 +64,33 @@ class CertificateSessionTest {
     }
 
     @Test
-    fun defaultUnlockWindowIsTwoHours() = runTest {
+    fun defaultUnlockWindowIsTwentyFourHours() = runTest {
         val identity = validIdentity()
         val session = CertificateSession(clock = mutableClock)
         session.unlock(identity)
 
-        mutableClock.advance(Duration.ofHours(2).minusMillis(1))
+        mutableClock.advance(Duration.ofHours(24).minusMillis(1))
         assertSame(identity, session.identityForSigning())
 
         mutableClock.advance(Duration.ofMillis(2))
+        assertNull(session.identityForSigning())
+        assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
+    }
+
+
+    @Test
+    fun restoredIdentityKeepsOriginalExpiryWithoutRenewal() = runTest {
+        val identity = validIdentity()
+        val session = CertificateSession(clock = mutableClock)
+        val originalExpiry = mutableClock.instant().plus(Duration.ofHours(6))
+
+        session.unlock(identity, originalExpiry)
+        mutableClock.advance(Duration.ofHours(5).plusMinutes(59))
+
+        assertSame(identity, session.identityForSigning())
+
+        mutableClock.advance(Duration.ofMinutes(1))
+
         assertNull(session.identityForSigning())
         assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
     }

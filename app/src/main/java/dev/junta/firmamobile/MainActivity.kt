@@ -74,7 +74,11 @@ class MainActivity : ComponentActivity() {
 
     private val certificateViewModel: CertificateViewModel by viewModels {
         val app = application as JuntaFirmaApplication
-        CertificateViewModel.Factory(app.certificateGateway, app.certificateSession)
+        CertificateViewModel.Factory(
+            app.certificateGateway,
+            app.certificateSession,
+            app.certificateUnlockCache,
+        )
     }
 
     private val certificatePicker = registerForActivityResult(
@@ -279,6 +283,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        certificateViewModel.onAppForegrounded()
         catalogSmokeHook.start()
     }
 

@@ -2,7 +2,9 @@ package dev.junta.firmamobile
 
 import android.app.Application
 import android.util.Log
+import dev.junta.firmamobile.certificate.AndroidKeystoreCertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateGateway
+import dev.junta.firmamobile.certificate.CertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.ContentResolverCertificateDocumentAccess
@@ -22,6 +24,9 @@ class JuntaFirmaApplication : Application() {
     lateinit var certificateSession: CertificateSession
         internal set
 
+    lateinit var certificateUnlockCache: CertificateUnlockCache
+        internal set
+
     lateinit var sanitizedLogger: SanitizedLogger
         internal set
 
@@ -39,6 +44,7 @@ class JuntaFirmaApplication : Application() {
         )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
         certificateSession = CertificateSession()
+        certificateUnlockCache = AndroidKeystoreCertificateUnlockCache(this)
         certificateGateway = CertificateRepository(
             documentAccess = ContentResolverCertificateDocumentAccess(contentResolver),
             referenceStore = PreferencesCertificateReferenceStore(certificateReferenceDataStore),
