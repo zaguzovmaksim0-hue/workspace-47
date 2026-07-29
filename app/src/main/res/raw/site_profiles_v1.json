@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 7,
+  "catalogVersion": 8,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -72,10 +72,10 @@
     },
     {
       "profileId": "junta-ofvirtual",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Junta de Andalucía — Oficina Virtual",
-      "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "QA_ONLY",
+      "compatibilityStatus": "VERIFIED_E2E",
+      "activation": "ENABLED",
       "startUrl": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
       "initiatorOrigins": ["https://ws072.juntadeandalucia.es"],
       "redirectOrigins": [],
@@ -85,7 +85,7 @@
       "capabilities": ["SIGN", "LEGACY_SHA1"],
       "clientAuthPolicy": null,
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs","reviewedOn":"2026-07-22"}]
+      "evidence": [{"url":"https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs","reviewedOn":"2026-07-29"}]
     },
     {
       "profileId": "educacion-convocatoria",

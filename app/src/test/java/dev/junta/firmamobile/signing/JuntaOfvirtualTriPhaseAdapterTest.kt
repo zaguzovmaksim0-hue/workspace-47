@@ -103,10 +103,10 @@ class JuntaOfvirtualTriPhaseAdapterTest {
             protocolId = protocolId,
             context = SigningContext(
                 profileId = "junta-ofvirtual",
-                profileVersion = 1,
+                profileVersion = 2,
                 origin = origin,
                 navigationId = NavigationId("00000000-0000-4000-8000-000000000092"),
-                observedAt = Instant.parse("2026-07-22T00:00:00Z"),
+                observedAt = Instant.parse("2026-07-29T00:00:00Z"),
             ),
             algorithm = algorithm,
             format = SigningFormat.CADES,

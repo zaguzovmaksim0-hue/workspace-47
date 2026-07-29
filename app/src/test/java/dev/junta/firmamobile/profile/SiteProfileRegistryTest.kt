@@ -51,4 +51,19 @@ class SiteProfileRegistryTest {
         }
     }
 
+    @Test
+    fun `release and qa resolve verified Junta Oficina Virtual login`() {
+        val profileId = ProfileId("junta-ofvirtual")
+        val startUri = URI("https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs")
+
+        listOf(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.qaRegistry).forEach { registry ->
+            val profile = registry.profile(profileId)
+            assertNotNull(profile)
+            assertEquals(2, profile?.profileVersion)
+            assertEquals(CompatibilityStatus.VERIFIED_E2E, profile?.compatibilityStatus)
+            assertEquals(ProfileActivation.ENABLED, profile?.activation)
+            assertEquals(TrustMode.TRUSTED_SIGNING, registry.resolve(startUri)?.trustMode)
+        }
+    }
+
 }

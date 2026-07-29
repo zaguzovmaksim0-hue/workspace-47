@@ -75,6 +75,7 @@ class PortalCatalogRepositoryTest {
             ProfileId("junta-andalucia"),
             ProfileId("carne-joven-andalucia"),
             ProfileId("aragon-siraw"),
+            ProfileId("junta-ofvirtual"),
         )
         verifiedIds.forEach { profileId ->
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
@@ -103,6 +104,26 @@ class PortalCatalogRepositoryTest {
                 assertFalse(portal.isEnabled)
                 assertEquals(null, releaseRepository.resolveLaunch(portal))
             }
+        }
+    }
+
+    @Test
+    fun `Junta Oficina Virtual verified authentication is enabled in qa and release`() {
+        val profileId = ProfileId("junta-ofvirtual")
+        val expectedUrl = java.net.URI(
+            "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+        )
+
+        listOf(qaRepository, releaseRepository).forEach { repository ->
+            val portal = repository.portals().single { it.profileId == profileId }
+            assertEquals(PortalSupportStatus.VERIFIED_E2E, portal.supportStatus)
+            assertTrue(portal.isEnabled)
+            assertEquals(setOf(SignatureFormat.CADES), portal.signatureFormats)
+            assertTrue(PortalMechanism.CERTIFICATE_ACCESS in portal.observedMechanisms)
+            assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
+            assertEquals(PortalLaunchTarget(profileId, expectedUrl), repository.resolveLaunch(portal))
+            assertTrue(portal.limitations.contains("portal real aceptó", ignoreCase = true))
+            assertTrue(portal.limitations.contains("login", ignoreCase = true))
         }
     }
 

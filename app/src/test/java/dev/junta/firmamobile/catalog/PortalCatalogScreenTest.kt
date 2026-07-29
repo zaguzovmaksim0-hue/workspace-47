@@ -1,10 +1,13 @@
 package dev.junta.firmamobile.catalog
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -47,7 +50,7 @@ class PortalCatalogScreenTest {
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
         assertEquals(6, compatible.items.size)
-        val verifiedIds = setOf("junta-andalucia", "carne-joven-andalucia", "aragon-siraw")
+        val verifiedIds = setOf("junta-andalucia", "carne-joven-andalucia", "aragon-siraw", "junta-ofvirtual")
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }
                 .all { it.supportStatus == PortalSupportStatus.VERIFIED_E2E },
@@ -135,6 +138,31 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `verified Oficina Virtual card states portal validation and verified signature`() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                PortalCatalogScreen(
+                    repository = repository,
+                    onOpenPortal = {},
+                )
+            }
+        }
+
+        rule.onNodeWithText("Buscar servicio u organismo")
+            .performTextInput("oficina virtual")
+        rule.onNode(hasScrollToIndexAction())
+            .performScrollToNode(hasText("Junta de Andalucía — Oficina Virtual"))
+        rule.onNodeWithText("Junta de Andalucía — Oficina Virtual")
+            .assertIsDisplayed()
+        rule.onNodeWithText("VALIDADO CON EL PORTAL")
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText("Verificado: Firma electrónica")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun `metadata only browse record explains why integrated navigation is blocked`() {
         rule.setContent {
             JuntaFirmaTheme {
@@ -175,7 +203,7 @@ class PortalCatalogScreenTest {
         rule.onNodeWithText("Carné Joven Europeo de Andalucía")
             .performScrollTo()
             .assertIsDisplayed()
-        rule.onNodeWithText("E2E VERIFICADO").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("VALIDADO CON EL PORTAL").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Favorito").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Abrir sede").assertIsDisplayed()
     }

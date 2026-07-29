@@ -44,6 +44,16 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("aragon-siraw", aragon["profileId"])
         self.assertEqual("E2E_VERIFIED", aragon["catalogStatus"])
         self.assertEqual("VERIFIED_E2E", aragon["inventoryStatus"])
+        ofvirtual = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "junta-andalucia-ofvirtual"
+        )
+        self.assertEqual("junta-ofvirtual", ofvirtual["profileId"])
+        self.assertEqual("E2E_VERIFIED", ofvirtual["catalogStatus"])
+        self.assertEqual("VERIFIED_E2E", ofvirtual["inventoryStatus"])
+        self.assertEqual("2026-07-29", ofvirtual["reviewedOn"])
+        self.assertIn("portal real aceptó", ofvirtual["limitations"].lower())
+        self.assertIn("login", ofvirtual["limitations"].lower())
         self.assertEqual(
             hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
             catalog["sourceRevision"],

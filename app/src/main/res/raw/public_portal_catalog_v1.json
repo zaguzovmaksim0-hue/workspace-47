@@ -4387,14 +4387,15 @@
         "CADES"
       ],
       "protocolFamily": "MINIAPPLET_TRIPHASE",
-      "catalogStatus": "E2E_PENDING",
-      "inventoryStatus": "VERIFIED_CONTRACT",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "LIVE-JUNTA-OFVIRTUAL-2026-07-22"
+        "LIVE-JUNTA-OFVIRTUAL-2026-07-22",
+        "E2E-JUNTA-OFVIRTUAL-2026-07-29"
       ],
-      "reviewedOn": "2026-07-22",
-      "limitations": "Contrato estático implementado; aceptación E2E pendiente."
+      "reviewedOn": "2026-07-29",
+      "limitations": "El portal real aceptó la firma CAdES de autenticación y abrió la sesión interna; verificación limitada al login observado."
     },
     {
       "portalId": "educacion-convocatoria-46",

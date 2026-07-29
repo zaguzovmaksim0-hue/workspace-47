@@ -281,7 +281,11 @@ private fun PortalCard(
             }
             if (services.isNotEmpty()) {
                 Text(
-                    text = "Compatible: ${services.joinToString(" · ")}",
+                    text = if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E) {
+                        "Verificado: ${services.joinToString(" · ")}"
+                    } else {
+                        "Compatible: ${services.joinToString(" · ")}"
+                    },
                     color = JuntaTeal,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
@@ -500,7 +504,7 @@ private val PortalCatalogFilter.label: String
 
 private val PortalSupportStatus.shortLabel: String
     get() = when (this) {
-        PortalSupportStatus.VERIFIED_E2E -> "E2E VERIFICADO"
+        PortalSupportStatus.VERIFIED_E2E -> "VALIDADO CON EL PORTAL"
         PortalSupportStatus.IMPLEMENTED_NOT_E2E -> "IMPLEMENTADO · E2E PENDIENTE"
         PortalSupportStatus.VERIFIED_CONTRACT -> "CONTRATO VERIFICADO"
         PortalSupportStatus.BROWSE_ONLY -> "SOLO NAVEGACIÓN"

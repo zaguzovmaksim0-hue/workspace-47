@@ -114,7 +114,7 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 7,
+  "catalogVersion": 8,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -322,10 +322,10 @@ object BuiltInSiteProfiles {
     },
     {
       "profileId": "junta-ofvirtual",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Junta de Andalucía — Oficina Virtual",
-      "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "QA_ONLY",
+      "compatibilityStatus": "VERIFIED_E2E",
+      "activation": "ENABLED",
       "startUrl": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
       "initiatorOrigins": ["https://ws072.juntadeandalucia.es"],
       "redirectOrigins": [],
@@ -371,7 +371,7 @@ object BuiltInSiteProfiles {
       "evidence": [
         {
           "url": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
-          "reviewedOn": "2026-07-22"
+          "reviewedOn": "2026-07-29"
         }
       ]
     },
