@@ -32,6 +32,7 @@ internal fun SigningStatusDialog(
         is SigningUiState.Completed -> AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.signing_completed_title)) },
+            text = { Text(stringResource(R.string.signing_completed_copy)) },
             confirmButton = {
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.close))

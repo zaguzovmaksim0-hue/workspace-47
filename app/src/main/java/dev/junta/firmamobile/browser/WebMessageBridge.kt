@@ -6,6 +6,7 @@ import androidx.webkit.ScriptHandler
 import androidx.webkit.WebMessageCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
+import dev.junta.firmamobile.BuildConfig
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
@@ -34,6 +35,7 @@ class WebMessageBridge(
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
+    private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
     clock: Clock = Clock.systemUTC(),
 ) {
     private val replyRegistry = MiniAppletReplyRegistry(
@@ -65,7 +67,11 @@ class WebMessageBridge(
         ) {
             WebViewCompat.addDocumentStartJavaScript(
                 webView,
-                AfirmaJavascriptShim.load(webView.context, miniAppletMode),
+                AfirmaJavascriptShim.load(
+                    webView.context,
+                    miniAppletMode,
+                    qaDiagnosticsEnabled,
+                ),
                 originRules,
             )
         } else {
@@ -91,6 +97,27 @@ class WebMessageBridge(
         if (message.type != WebMessageCompat.TYPE_STRING || rawMessage == null) {
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
             return
+        }
+
+        when (
+            val diagnostic = PortalCallbackDiagnosticProtocol.parse(
+                rawMessage = rawMessage,
+                sourceOrigin = sourceOrigin,
+                isMainFrame = isMainFrame,
+                expectedProfileId = profileId,
+                registry = BuiltInSiteProfiles.runtimeRegistry,
+                enabled = qaDiagnosticsEnabled,
+            )
+        ) {
+            is PortalCallbackDiagnosticParseResult.Accepted -> {
+                logger.recordPortalCallback(diagnostic.stage.name, sourceOrigin.host.orEmpty())
+                return
+            }
+            PortalCallbackDiagnosticParseResult.Rejected -> {
+                logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                return
+            }
+            PortalCallbackDiagnosticParseResult.NotApplicable -> Unit
         }
 
         when (

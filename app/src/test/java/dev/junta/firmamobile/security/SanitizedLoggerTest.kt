@@ -107,6 +107,55 @@ class SanitizedLoggerTest {
     }
 
     @Test
+    fun navigationDiagnosticsExposeOnlyClosedMetadataAndNeverQueryFragmentOrBody() {
+        val mirrored = mutableListOf<String>()
+        val logger = SanitizedLogger(
+            clock = clock,
+            sink = SanitizedLogSink(mirrored::add),
+        )
+        val secret = "certificate-and-signature-secret-canary"
+
+        logger.recordNavigationEvent(
+            code = DiagnosticEventCode.NAVIGATION_BLOCKED,
+            rawUrl = "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs?payload=$secret#fragment",
+            reason = "CROSS_PROFILE_NAVIGATION",
+            isMainFrame = true,
+            method = "POST",
+        )
+
+        val exported = logger.exportText()
+        assertEquals(listOf(exported), mirrored)
+        assertTrue(exported.contains("event=NAVIGATION_BLOCKED"))
+        assertTrue(exported.contains("reason=CROSS_PROFILE_NAVIGATION"))
+        assertTrue(exported.contains("scheme=https"))
+        assertTrue(exported.contains("host=ws072.juntadeandalucia.es"))
+        assertTrue(exported.contains("method=POST"))
+        assertTrue(exported.contains("main_frame=true"))
+        assertTrue(Regex("path_sha256_8=[0-9a-f]{8}").containsMatchIn(exported))
+        assertTrue(exported.contains("path_length=31"))
+        for (forbidden in listOf(secret, "payload=", "fragment", "certificadoB64", "firmaB64")) {
+            assertFalse("forbidden=$forbidden record=$exported", exported.contains(forbidden))
+        }
+    }
+
+    @Test
+    fun portalCallbackDiagnosticsContainOnlyClosedStageAndHost() {
+        val logger = SanitizedLogger(clock = clock)
+
+        logger.recordPortalCallback(
+            stage = "CALLBACK_THROWN",
+            host = "ws072.juntadeandalucia.es",
+        )
+
+        val exported = logger.exportText()
+        assertTrue(exported.contains("event=PORTAL_CALLBACK"))
+        assertTrue(exported.contains("stage=CALLBACK_THROWN"))
+        assertTrue(exported.contains("host=ws072.juntadeandalucia.es"))
+        assertFalse(exported.contains("certificate"))
+        assertFalse(exported.contains("signature"))
+    }
+
+    @Test
     fun clearRemovesAllInMemoryDiagnostics() {
         val logger = SanitizedLogger(clock = clock)
         logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR, "www.juntadeandalucia.es")

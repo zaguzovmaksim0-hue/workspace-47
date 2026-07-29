@@ -58,13 +58,23 @@ class JuntaWebViewClient(
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
-    ): Boolean = handleNavigation(view, request.url.toString(), request.isForMainFrame)
+    ): Boolean = handleNavigation(
+            view,
+            request.url.toString(),
+            request.isForMainFrame,
+            request.method,
+        )
 
     @Deprecated("Legacy callback retained for old WebView implementations")
     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =
-        handleNavigation(view, url, false)
+        handleNavigation(view, url, false, UNKNOWN_METHOD)
 
-    private fun handleNavigation(view: WebView, targetUrl: String, isModernMainFrame: Boolean): Boolean {
+    private fun handleNavigation(
+        view: WebView,
+        targetUrl: String,
+        isModernMainFrame: Boolean,
+        method: String,
+    ): Boolean {
         val currentUrl = currentPageUrl(view)
         clientAuthAuthorizer?.observeTopLevelNavigation(
             activeProfileId = activeProfileId(),
@@ -77,7 +87,17 @@ class JuntaWebViewClient(
             return true
         }
         return when (val decision = navigationPolicy.decide(targetUrl, currentUrl)) {
-            NavigationDecision.AllowInWebView -> false
+            NavigationDecision.AllowInWebView -> {
+                if (isModernMainFrame) {
+                    logger.recordNavigationEvent(
+                        code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                        rawUrl = targetUrl,
+                        isMainFrame = true,
+                        method = method,
+                    )
+                }
+                false
+            }
             is NavigationDecision.OpenExternal -> {
                 logger.recordBrowserEvent(
                     DiagnosticEventCode.EXTERNAL_NAVIGATION,
@@ -97,7 +117,13 @@ class JuntaWebViewClient(
                 } else {
                     DiagnosticEventCode.NAVIGATION_BLOCKED
                 }
-                logger.recordBrowserEvent(event)
+                logger.recordNavigationEvent(
+                    code = event,
+                    rawUrl = targetUrl,
+                    reason = decision.reason.name,
+                    isMainFrame = isModernMainFrame,
+                    method = method,
+                )
                 callbacks.onNavigationBlocked(decision.reason)
                 true
             }
@@ -105,6 +131,12 @@ class JuntaWebViewClient(
     }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+        logger.recordNavigationEvent(
+            code = DiagnosticEventCode.PAGE_STARTED,
+            rawUrl = url,
+            isMainFrame = true,
+            method = UNKNOWN_METHOD,
+        )
         callbacks.onTopLevelNavigationStarted(url)
         callbacks.onTopLevelUrlChanged(url)
         clientAuthAuthorizer?.onTopLevelPageStarted(url, currentNavigationEpoch())
@@ -115,7 +147,28 @@ class JuntaWebViewClient(
     }
 
     override fun onPageFinished(view: WebView, url: String) {
+        logger.recordNavigationEvent(
+            code = DiagnosticEventCode.PAGE_FINISHED,
+            rawUrl = url,
+            isMainFrame = true,
+            method = UNKNOWN_METHOD,
+        )
         callbacks.onTopLevelUrlChanged(url)
+    }
+
+    override fun shouldInterceptRequest(
+        view: WebView,
+        request: WebResourceRequest,
+    ): WebResourceResponse? {
+        if (request.isForMainFrame) {
+            logger.recordNavigationEvent(
+                code = DiagnosticEventCode.NETWORK_REQUEST,
+                rawUrl = request.url.toString(),
+                isMainFrame = true,
+                method = request.method,
+            )
+        }
+        return null
     }
 
     override fun onReceivedSslError(
@@ -171,5 +224,6 @@ class JuntaWebViewClient(
 
     private companion object {
         const val HTTP_ERROR_START = 400
+        const val UNKNOWN_METHOD = "UNKNOWN"
     }
 }

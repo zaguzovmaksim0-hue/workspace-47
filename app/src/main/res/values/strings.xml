@@ -93,7 +93,8 @@
     <string name="signing_secure_connection_copy">Conectando de forma segura con el servicio de firma…</string>
     <string name="signing_service_unavailable_copy">No se pudo conectar con el servicio de firma de la Junta. Inténtalo de nuevo más tarde.</string>
     <string name="signing_network_result_uncertain_copy">El resultado de red no es seguro. Vuelve al portal e inicia la operación de nuevo.</string>
-    <string name="signing_completed_title">Firma completada</string>
+    <string name="signing_completed_title">Firma enviada al portal</string>
+    <string name="signing_completed_copy">La aplicación entregó el resultado a la página. El acceso solo termina cuando el portal lo confirma.</string>
     <string name="signing_failed_title">No se pudo completar la firma</string>
     <string name="signing_closed_error_code">Código: %1$s</string>
     <string name="unknown_value">desconocido</string>

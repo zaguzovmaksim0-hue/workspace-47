@@ -119,6 +119,32 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun blockedAndMainFramePostRequestsRecordSafeNavigationMetadata() {
+        val secret = "certificate-secret-canary"
+        val target =
+            "https://reg.redsara.es/es/continue?certificate=$secret#fragment"
+
+        assertTrue(client.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        client.shouldInterceptRequest(
+            webView,
+            request(
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs?firmaB64=$secret",
+                method = "POST",
+            ),
+        )
+
+        val exported = logger.exportText()
+        assertTrue(exported.contains("event=NAVIGATION_BLOCKED"))
+        assertTrue(exported.contains("reason=CROSS_PROFILE_NAVIGATION"))
+        assertTrue(exported.contains("event=NETWORK_REQUEST"))
+        assertTrue(exported.contains("host=ws072.juntadeandalucia.es"))
+        assertTrue(exported.contains("method=POST"))
+        assertFalse(exported.contains(secret))
+        assertFalse(exported.contains("certificate="))
+        assertFalse(exported.contains("firmaB64="))
+    }
+
+    @Test
     fun sslErrorsAlwaysCancelAndNeverProceed() {
         val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
         val sslError = Shadow.newInstanceOf(SslError::class.java)
@@ -291,12 +317,12 @@ class JuntaWebViewClientTest {
         assertEquals(listOf("blocked:CROSS_PROFILE_NAVIGATION"), legacyCallbacks.events)
     }
 
-    private fun request(rawUrl: String) = object : WebResourceRequest {
+    private fun request(rawUrl: String, method: String = "GET") = object : WebResourceRequest {
         override fun getUrl(): Uri = Uri.parse(rawUrl)
         override fun isForMainFrame(): Boolean = true
         override fun isRedirect(): Boolean = false
         override fun hasGesture(): Boolean = true
-        override fun getMethod(): String = "GET"
+        override fun getMethod(): String = method
         override fun getRequestHeaders(): Map<String, String> = emptyMap()
     }
 

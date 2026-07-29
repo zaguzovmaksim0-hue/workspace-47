@@ -13,6 +13,7 @@
   const bridge = window.JuntaFirmaMobile;
   const probe = window.JuntaFirmaProbe;
   const functionalSigningEnabled = __JFM_FUNCTIONAL_SIGNING_ENABLED__;
+  const qaDiagnosticsEnabled = __JFM_QA_DIAGNOSTICS_ENABLED__;
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -71,6 +72,23 @@
 
   function safeErrorMessage(errorCode) {
     return closedErrorMessages[errorCode] || "No se pudo completar la firma.";
+  }
+
+  function postQaPortalDiagnostic(stage, requestIdValue) {
+    if (!qaDiagnosticsEnabled || !bridge || typeof bridge.postMessage !== "function" ||
+        !canonicalUuidPattern.test(requestIdValue)) {
+      return;
+    }
+    try {
+      bridge.postMessage(JSON.stringify({
+        type: "QA_PORTAL_DIAGNOSTIC",
+        documentId: probeDocumentId,
+        requestId: requestIdValue,
+        stage
+      }));
+    } catch (_) {
+      // QA diagnostics are best-effort and never alter portal behavior.
+    }
   }
 
   function clearPending(requestIdValue) {
@@ -204,8 +222,10 @@
         !canonicalUuidPattern.test(result.requestId)) {
       return;
     }
+    postQaPortalDiagnostic("RESULT_RECEIVED", result.requestId);
     const pending = clearPending(result.requestId);
     if (!pending) {
+      postQaPortalDiagnostic("RESULT_IGNORED", result.requestId);
       return;
     }
     if (result.status === "success" && typeof result.signature === "string" &&
@@ -213,9 +233,12 @@
         base64Pattern.test(result.signature) && base64Pattern.test(result.certificate)) {
       const signatureB64 = result.signature;
       const certificateB64 = result.certificate;
+      postQaPortalDiagnostic("CALLBACK_STARTED", result.requestId);
       try {
         pending.successCallback(signatureB64, certificateB64);
+        postQaPortalDiagnostic("CALLBACK_RETURNED", result.requestId);
       } catch (_) {
+        postQaPortalDiagnostic("CALLBACK_THROWN", result.requestId);
         // Portal callback exceptions are terminal.
       }
       return;

@@ -2,6 +2,7 @@ package dev.junta.firmamobile.security
 
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.network.TunnelRouteEvent
+import java.net.URI
 import java.security.MessageDigest
 import java.time.Clock
 import java.util.ArrayDeque
@@ -21,11 +22,21 @@ enum class DiagnosticEventCode {
     MINIAPPLET_OBSERVED,
     PROTOCOL_CORRELATION_REJECTED,
     TUNNEL_ROUTE,
+    NAVIGATION_ALLOWED,
+    NETWORK_REQUEST,
+    PAGE_STARTED,
+    PAGE_FINISHED,
+    PORTAL_CALLBACK,
+}
+
+fun interface SanitizedLogSink {
+    fun emit(record: String)
 }
 
 class SanitizedLogger(
     private val clock: Clock = Clock.systemUTC(),
     private val capacity: Int = DEFAULT_CAPACITY,
+    private val sink: SanitizedLogSink = SanitizedLogSink {},
 ) {
     private val records = ArrayDeque<String>(capacity)
 
@@ -97,6 +108,50 @@ class SanitizedLogger(
     }
 
     @Synchronized
+    fun recordNavigationEvent(
+        code: DiagnosticEventCode,
+        rawUrl: String,
+        reason: String? = null,
+        isMainFrame: Boolean,
+        method: String,
+    ) {
+        require(
+            code == DiagnosticEventCode.NAVIGATION_ALLOWED ||
+                code == DiagnosticEventCode.NAVIGATION_BLOCKED ||
+                code == DiagnosticEventCode.PLAY_STORE_FALLBACK_INTERCEPTED ||
+                code == DiagnosticEventCode.NETWORK_REQUEST ||
+                code == DiagnosticEventCode.PAGE_STARTED ||
+                code == DiagnosticEventCode.PAGE_FINISHED,
+        )
+        val parsed = runCatching { URI(rawUrl) }.getOrNull()
+        val rawPath = parsed?.rawPath ?: ""
+        val fields = mutableListOf(
+            "timestamp=${clock.instant()}",
+            "event=${code.name}",
+            "scheme=${safeToken(parsed?.scheme?.lowercase(Locale.ROOT))}",
+            "host=${safeHost(parsed?.host.orEmpty())}",
+            "method=${safeToken(method.uppercase(Locale.ROOT))}",
+            "main_frame=$isMainFrame",
+            "path_length=${rawPath.length.coerceAtMost(MAX_DIAGNOSTIC_PATH_LENGTH)}",
+            "path_sha256_8=${sha256Prefix(rawPath)}",
+        )
+        if (reason != null) fields += "reason=${safeToken(reason)}"
+        append(fields.joinToString(separator = " "))
+    }
+
+    @Synchronized
+    fun recordPortalCallback(stage: String, host: String) {
+        append(
+            listOf(
+                "timestamp=${clock.instant()}",
+                "event=${DiagnosticEventCode.PORTAL_CALLBACK.name}",
+                "stage=${safeToken(stage)}",
+                "host=${safeHost(host)}",
+            ).joinToString(separator = " "),
+        )
+    }
+
+    @Synchronized
     internal fun recordTunnelRouteEvent(event: TunnelRouteEvent) {
         append(
             listOf(
@@ -124,6 +179,7 @@ class SanitizedLogger(
     private fun append(record: String) {
         while (records.size >= capacity) records.removeFirst()
         records.addLast(record)
+        runCatching { sink.emit(record) }
     }
 
     private fun safeHost(host: String): String {
@@ -165,6 +221,7 @@ class SanitizedLogger(
         const val INVALID_LENGTH = -1
         const val MAX_OBSERVED_ARGUMENTS = 32
         const val MAX_OBSERVED_ARGUMENT_LENGTH = 1_048_576
+        const val MAX_DIAGNOSTIC_PATH_LENGTH = 1_048_576
         const val HEX = "0123456789abcdef"
         val HOST_PATTERN = Regex("[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?")
         val TOKEN_PATTERN = Regex("[A-Za-z0-9._+\\-]{1,64}")

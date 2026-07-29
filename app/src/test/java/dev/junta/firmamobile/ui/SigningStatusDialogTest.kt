@@ -120,7 +120,10 @@ class SigningStatusDialogTest {
         rule.runOnIdle {
             state = SigningUiState.Completed(REQUEST_ID)
         }
-        rule.onNodeWithText("Firma completada").assertIsDisplayed()
+        rule.onNodeWithText("Firma enviada al portal").assertIsDisplayed()
+        rule.onNodeWithText(
+            "La aplicación entregó el resultado a la página. El acceso solo termina cuando el portal lo confirma.",
+        ).assertIsDisplayed()
         rule.onNodeWithText("Cerrar").performClick()
         rule.runOnIdle {
             assertEquals(listOf("dismiss", "dismiss"), events)

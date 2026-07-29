@@ -72,6 +72,32 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun qaModeReportsClosedPortalCallbackStagesWithoutPayloadFields() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val qa = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+        )
+        val release = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+
+        assertTrue(qa.contains("const qaDiagnosticsEnabled = true"))
+        assertTrue(release.contains("const qaDiagnosticsEnabled = false"))
+        assertTrue(qa.contains("QA_PORTAL_DIAGNOSTIC"))
+        assertTrue(qa.contains("RESULT_RECEIVED"))
+        assertTrue(qa.contains("RESULT_IGNORED"))
+        assertTrue(qa.contains("CALLBACK_STARTED"))
+        assertTrue(qa.contains("CALLBACK_RETURNED"))
+        assertTrue(qa.contains("CALLBACK_THROWN"))
+        assertFalse(qa.contains("certificate: certificateB64"))
+        assertFalse(qa.contains("signature: signatureB64"))
+    }
+
+    @Test
     fun functionalModeOwnsMiniAppletSignWhileProbeModeKeepsObservationOnly() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val functional = AfirmaJavascriptShim.load(

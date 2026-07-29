@@ -1,6 +1,7 @@
 package dev.junta.firmamobile
 
 import android.app.Application
+import android.util.Log
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
@@ -10,6 +11,7 @@ import dev.junta.firmamobile.certificate.PreferencesCertificateReferenceStore
 import dev.junta.firmamobile.certificate.certificateReferenceDataStore
 import dev.junta.firmamobile.network.BuildVariantSecureTunnelRuntimeFactory
 import dev.junta.firmamobile.network.SecureTunnelRuntime
+import dev.junta.firmamobile.security.SanitizedLogSink
 import dev.junta.firmamobile.security.SanitizedLogger
 
 class JuntaFirmaApplication : Application() {
@@ -27,7 +29,13 @@ class JuntaFirmaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        sanitizedLogger = SanitizedLogger()
+        sanitizedLogger = SanitizedLogger(
+            sink = if (BuildConfig.ALLOW_QA_PROFILES) {
+                SanitizedLogSink { record -> Log.i(QA_DIAGNOSTIC_TAG, record) }
+            } else {
+                SanitizedLogSink {}
+            },
+        )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
         certificateSession = CertificateSession()
         certificateGateway = CertificateRepository(
@@ -35,5 +43,9 @@ class JuntaFirmaApplication : Application() {
             referenceStore = PreferencesCertificateReferenceStore(certificateReferenceDataStore),
             loader = Pkcs12Loader(),
         )
+    }
+
+    private companion object {
+        const val QA_DIAGNOSTIC_TAG = "JFM_QA"
     }
 }
