@@ -11,6 +11,7 @@ import dev.junta.firmamobile.certificate.PreferencesCertificateReferenceStore
 import dev.junta.firmamobile.certificate.certificateReferenceDataStore
 import dev.junta.firmamobile.network.BuildVariantSecureTunnelRuntimeFactory
 import dev.junta.firmamobile.network.SecureTunnelRuntime
+import dev.junta.firmamobile.security.ApplicationSanitizedLoggerFactory
 import dev.junta.firmamobile.security.SanitizedLogSink
 import dev.junta.firmamobile.security.SanitizedLogger
 
@@ -29,11 +30,11 @@ class JuntaFirmaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        sanitizedLogger = SanitizedLogger(
-            sink = if (BuildConfig.ALLOW_QA_PROFILES) {
-                SanitizedLogSink { record -> Log.i(QA_DIAGNOSTIC_TAG, record) }
-            } else {
-                SanitizedLogSink {}
+        sanitizedLogger = ApplicationSanitizedLoggerFactory.create(
+            filesDirectory = filesDir,
+            qaEnabled = BuildConfig.ALLOW_QA_PROFILES,
+            diagnosticMirror = SanitizedLogSink { record ->
+                Log.i(QA_DIAGNOSTIC_TAG, record)
             },
         )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
