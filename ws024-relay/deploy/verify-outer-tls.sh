@@ -6,6 +6,10 @@ readonly exit_invalid_input=64
 readonly exit_missing_dependency=69
 readonly exit_tls_verification=70
 readonly exit_pin_mismatch=71
+# OpenSSL's untrusted stdout and stderr each have a hard 32,769-byte capture
+# cap: 32,768 allowed bytes plus one sentinel byte used solely to detect
+# overflow. Any sentinel is fail-closed as TLS verification failure.
+readonly openssl_output_limit=32768
 
 die() {
     local status="$1"
@@ -76,7 +80,7 @@ valid_pin() {
 
 valid_host "$host" && valid_port "$port" && ((${#pins[@]} >= 2)) || die "$exit_invalid_input" 'invalid input'
 
-for dependency in awk chmod grep mktemp openssl rm timeout wc; do
+for dependency in awk chmod dd grep mkfifo mktemp openssl rm timeout wc; do
     command -v "$dependency" >/dev/null 2>&1 || die "$exit_missing_dependency" 'missing dependency'
 done
 
@@ -85,7 +89,20 @@ chmod 700 "$temp_dir" 2>/dev/null || {
     rm -rf -- "$temp_dir" 2>/dev/null || true
     die "$exit_tls_verification" 'TLS verification failed'
 }
+session_reader=""
+diagnostic_reader=""
+input_fd=""
 cleanup() {
+    local reader
+    if [[ -n "$input_fd" ]]; then
+        exec {input_fd}>&-
+    fi
+    for reader in "$session_reader" "$diagnostic_reader"; do
+        if [[ -n "$reader" ]]; then
+            kill "$reader" 2>/dev/null || true
+            wait "$reader" 2>/dev/null || true
+        fi
+    done
     rm -rf -- "$temp_dir" 2>/dev/null || true
 }
 trap cleanup EXIT HUP INT TERM
@@ -99,13 +116,48 @@ done
 
 session="$temp_dir/session.txt"
 diagnostic="$temp_dir/openssl.err"
-if ! timeout 15s openssl s_client \
+session_fifo="$temp_dir/session.fifo"
+diagnostic_fifo="$temp_dir/openssl.err.fifo"
+input_fifo="$temp_dir/input.fifo"
+mkfifo "$session_fifo" "$diagnostic_fifo" "$input_fifo" 2>/dev/null || \
+    die "$exit_tls_verification" 'TLS verification failed'
+exec {input_fd}<>"$input_fifo"
+
+dd if="$session_fifo" of="$session" bs=1 \
+    count="$((openssl_output_limit + 1))" status=none 2>/dev/null &
+session_reader=$!
+dd if="$diagnostic_fifo" of="$diagnostic" bs=1 \
+    count="$((openssl_output_limit + 1))" status=none 2>/dev/null &
+diagnostic_reader=$!
+
+set +e
+# Keep each status separate: a pipeline would hide OpenSSL/timeout failure.
+timeout 15s openssl s_client \
     -connect "$host:$port" \
     -servername "$host" \
     -alpn http/1.1 \
     -verify_hostname "$host" \
     -verify_return_error \
-    -showcerts </dev/null >"$session" 2>"$diagnostic"; then
+    -showcerts <&"$input_fd" >"$session_fifo" 2>"$diagnostic_fifo"
+openssl_status=$?
+exec {input_fd}>&-
+input_fd=""
+wait "$session_reader"
+session_reader_status=$?
+wait "$diagnostic_reader"
+diagnostic_reader_status=$?
+set -e
+session_reader=""
+diagnostic_reader=""
+
+if ((session_reader_status != 0 || diagnostic_reader_status != 0)); then
+    die "$exit_tls_verification" 'TLS verification failed'
+fi
+if (( $(wc -c <"$session") > openssl_output_limit || \
+      $(wc -c <"$diagnostic") > openssl_output_limit )); then
+    die "$exit_tls_verification" 'TLS verification failed'
+fi
+if ((openssl_status != 0)); then
     die "$exit_tls_verification" 'TLS verification failed'
 fi
 

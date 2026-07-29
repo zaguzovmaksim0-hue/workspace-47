@@ -27,7 +27,7 @@ require() {
     }
 }
 
-for dependency in openssl timeout; do
+for dependency in openssl python3 timeout; do
     require "$dependency"
 done
 
@@ -84,6 +84,54 @@ start_server() {
     exit 70
 }
 
+start_oversize_server() {
+    local attempt
+    for attempt in $(seq 1 20); do
+        port=$((20000 + (RANDOM % 30000)))
+        # OpenSSL s_server only writes application data after client input. The
+        # standard-library Python 3 endpoint is test-only and required above
+        # (the test fails closed with 69 if unavailable); it completes TLS
+        # handshake before emitting the synthetic body.
+        python3 -c '
+import socket
+import ssl
+import sys
+
+port, cert, key, payload = int(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4]
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain(cert, key)
+context.set_alpn_protocols(["http/1.1"])
+listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+listener.bind(("127.0.0.1", port))
+listener.listen(1)
+print("READY", flush=True)
+try:
+    connection, _ = listener.accept()
+    with context.wrap_socket(connection, server_side=True) as tls:
+        if tls.selected_alpn_protocol() != "http/1.1":
+            raise RuntimeError("ALPN was not negotiated")
+        print("HANDSHAKE_COMPLETE", flush=True)
+        try:
+            tls.sendall(open(payload, "rb").read())
+        except (BrokenPipeError, ConnectionResetError, ssl.SSLError):
+            pass
+finally:
+    listener.close()
+' "$port" "$tmp_dir/current-cert.pem" "$tmp_dir/current-key.pem" \
+            "$tmp_dir/oversize-payload" >"$tmp_dir/server.log" 2>&1 &
+        server_pid=$!
+        sleep 0.1
+        if kill -0 "$server_pid" 2>/dev/null && grep -Fqx 'READY' "$tmp_dir/server.log"; then
+            return 0
+        fi
+        wait "$server_pid" 2>/dev/null || true
+        server_pid=""
+    done
+    printf '%s\n' 'unable to start oversized synthetic TLS server' >&2
+    exit 70
+}
+
 expect_exit() {
     local expected="$1"
     shift
@@ -93,6 +141,61 @@ expect_exit() {
     set -e
     if [[ "$actual" -ne "$expected" ]]; then
         printf '%s\n' "unexpected exit: got $actual, want $expected" >&2
+        exit 1
+    fi
+}
+
+expect_bounded_tls_failure() {
+    local started actual elapsed attempt handshake_ready=false
+    local verifier_tmp="$tmp_dir/verifier-tmp" verifier_pid
+    mkdir -p "$verifier_tmp"
+    started=$SECONDS
+    set +e
+    env TMPDIR="$verifier_tmp" SSL_CERT_FILE="$tmp_dir/ca-cert.pem" "$verifier" \
+        --host localhost --port "$port" --pin "$current_pin" --pin "$backup_pin" \
+        >"$tmp_dir/stdout" 2>"$tmp_dir/stderr" &
+    verifier_pid=$!
+    set -e
+    for attempt in $(seq 1 100); do
+        if grep -Fqx 'HANDSHAKE_COMPLETE' "$tmp_dir/server.log"; then
+            handshake_ready=true
+            break
+        fi
+        sleep 0.05
+    done
+    "$handshake_ready" || {
+        kill "$verifier_pid" 2>/dev/null || true
+        wait "$verifier_pid" 2>/dev/null || true
+        printf '%s\n' 'oversized TLS endpoint did not complete the ALPN handshake' >&2
+        exit 1
+    }
+    set +e
+    wait "$verifier_pid"
+    actual=$?
+    set -e
+    elapsed=$((SECONDS - started))
+    [[ "$actual" -eq 70 ]] || {
+        printf '%s\n' "oversized TLS endpoint exit: got $actual, want 70" >&2
+        exit 1
+    }
+    [[ ! -s "$tmp_dir/stdout" ]] || {
+        printf '%s\n' 'oversized TLS endpoint wrote stdout' >&2
+        exit 1
+    }
+    [[ "$(<"$tmp_dir/stderr")" == 'verify-outer-tls: TLS verification failed' ]] || {
+        printf '%s\n' 'oversized TLS endpoint stderr was not generic' >&2
+        exit 1
+    }
+    [[ "$(wc -c <"$tmp_dir/stderr")" -le 80 && "$elapsed" -lt 5 ]] || {
+        printf '%s\n' 'oversized TLS endpoint did not fail within the bounded path' >&2
+        exit 1
+    }
+    [[ -z "$(find "$verifier_tmp" -mindepth 1 -print -quit)" ]] || {
+        printf '%s\n' 'oversized TLS endpoint left temporary output behind' >&2
+        exit 1
+    }
+    if grep -Eq 'CERTIFICATE|PRIVATE KEY|sha256/|localhost' "$tmp_dir/stderr"; then
+        printf '%s\n' 'oversized TLS endpoint leaked TLS material' >&2
         exit 1
     fi
 }
@@ -149,3 +252,14 @@ stop_server
 start_server "$tmp_dir/current-cert.pem" "$tmp_dir/current-key.pem" h2
 expect_exit 70 env SSL_CERT_FILE="$tmp_dir/ca-cert.pem" "$verifier" --host localhost --port "$port" \
     --pin "$current_pin" --pin "$backup_pin"
+
+stop_server
+dd if=/dev/zero bs=1024 count=96 status=none | tr '\0' 'A' >"$tmp_dir/oversize-payload"
+start_oversize_server
+oversize_pid="$server_pid"
+expect_bounded_tls_failure
+stop_server
+if kill -0 "$oversize_pid" 2>/dev/null; then
+    printf '%s\n' 'oversized TLS server was not cleaned up' >&2
+    exit 1
+fi
