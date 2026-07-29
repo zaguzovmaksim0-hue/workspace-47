@@ -47,7 +47,10 @@ class JuntaTriPhaseCodecTest {
             "keyusage.digitalsignature:true;nonexpired:",
             serializedProperties.getProperty("filters"),
         )
-        assertFalse(serializedProperties.containsKey("serverUrl"))
+        assertEquals(
+            SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT,
+            serializedProperties.getProperty("serverUrl"),
+        )
 
         val preResponse = urlBase64(
             """
@@ -81,6 +84,53 @@ class JuntaTriPhaseCodecTest {
         expectedPk1.fill(0)
         prepared.close()
         postRequest.close()
+        request.close()
+    }
+
+    @Test
+    fun legacyJav01ForwardsOriginalPropertiesToPreAndPost() {
+        val endpoint = SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT
+        val request = request(
+            extraProperties =
+                "filters=keyusage.digitalsignature:true;nonexpired:\n" +
+                    "serverUrl=$endpoint\n" +
+                    "documentId=synthetic-document-id\n",
+        )
+        val decoded = codec.decodeRequest(request, identity.chain)
+        val pre = codec.buildPreRequest(decoded)
+        val preProperties = pre.withBody { body ->
+            body.decodeToString().queryParameters().getValue("params").decodeProperties()
+        }
+
+        assertEquals(endpoint, preProperties.getProperty("serverUrl"))
+        assertEquals("synthetic-document-id", preProperties.getProperty("documentId"))
+        assertEquals(
+            "keyusage.digitalsignature:true;nonexpired:",
+            preProperties.getProperty("filters"),
+        )
+
+        val preResponse = urlBase64(
+            "<xml><firmas format=\"CAdES\"><firma Id=\"one\"><param n=\"PRE\">${standardBase64("pre-one")}</param><param n=\"NEED_PRE\">true</param></firma></firmas></xml>",
+        )
+        val prepared = codec.parsePreResponse(decoded, preResponse)
+        val localSignature = sign(prepared)
+        val state = checkNotNull(prepared.consumeState(request))
+        val post = codec.buildPostRequest(state, localSignature)
+        val postProperties = post.withBody { body ->
+            body.decodeToString().queryParameters().getValue("params").decodeProperties()
+        }
+
+        assertEquals(endpoint, postProperties.getProperty("serverUrl"))
+        assertEquals("synthetic-document-id", postProperties.getProperty("documentId"))
+        assertEquals(
+            "keyusage.digitalsignature:true;nonexpired:",
+            postProperties.getProperty("filters"),
+        )
+
+        pre.close()
+        post.close()
+        state.close()
+        prepared.close()
         request.close()
     }
 
@@ -151,8 +201,11 @@ class JuntaTriPhaseCodecTest {
         }
         assertEquals("explicit", roundTripped.getProperty("mode"))
         assertEquals("á", roundTripped.getProperty("note"))
-        assertFalse(roundTripped.containsKey("serverUrl"))
-        assertFalse(roundTripped.containsKey("documentId"))
+        assertEquals(
+            SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT,
+            roundTripped.getProperty("serverUrl"),
+        )
+        assertEquals("remove-me", roundTripped.getProperty("documentId"))
         preRequest.close()
         assertTrue(checkNotNull(ownedBody).all { it == 0.toByte() })
 
@@ -228,6 +281,10 @@ class JuntaTriPhaseCodecTest {
 
     private fun String.queryParameters(): Map<String, String> = split('&').associate { pair ->
         pair.substringBefore('=') to pair.substringAfter('=', "")
+    }
+
+    private fun String.decodeProperties(): Properties = Properties().apply {
+        load(Base64.getUrlDecoder().decode(this@decodeProperties).inputStream().reader(StandardCharsets.UTF_8))
     }
 
     private fun standardBase64(value: String): String =

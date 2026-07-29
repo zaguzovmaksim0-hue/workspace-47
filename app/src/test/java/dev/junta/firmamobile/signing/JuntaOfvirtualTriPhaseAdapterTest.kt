@@ -60,9 +60,9 @@ class JuntaOfvirtualTriPhaseAdapterTest {
             .substringAfter('=')
         val decodedProperties = Base64.getUrlDecoder().decode(encodedProperties).decodeToString()
         val parsedProperties = java.util.Properties().apply { load(decodedProperties.reader()) }
-        assertEquals(setOf("filters"), parsedProperties.stringPropertyNames())
+        assertEquals(setOf("filters", "serverUrl"), parsedProperties.stringPropertyNames())
         assertEquals("keyusage.digitalsignature:true;nonexpired:", parsedProperties.getProperty("filters"))
-        assertEquals(null, parsedProperties.getProperty("serverUrl"))
+        assertEquals(JuntaOfvirtualTriPhaseAdapter.ENDPOINT, parsedProperties.getProperty("serverUrl"))
         assertEquals(null, parsedProperties.getProperty("mode"))
         request.close()
     }

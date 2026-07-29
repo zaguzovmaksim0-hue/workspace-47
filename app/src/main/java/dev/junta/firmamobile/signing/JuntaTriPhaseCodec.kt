@@ -49,17 +49,15 @@ internal class AutoFirmaCadesTriPhaseCodec(
                         fail(TriPhaseCodecError.INVALID_REQUEST)
                     }
                     val properties = parseProperties(rawProperties)
-                    val endpointValue = properties.remove(SERVER_URL_PROPERTY) as? String
+                    val endpointValue = properties.getProperty(SERVER_URL_PROPERTY)
                         ?: fail(TriPhaseCodecError.INVALID_REQUEST)
-                    properties.remove(DOCUMENT_ID_PROPERTY)
                     val endpoint = when (val validation = urlPolicy.validateEndpoint(endpointValue)) {
                         is NetworkUrlValidation.Allowed -> validation.url
                         is NetworkUrlValidation.Blocked -> fail(TriPhaseCodecError.ORIGIN_NOT_ALLOWED)
                     }
                     expectedExtraProperties?.let { expected ->
-                        val expectedRemaining = expected - SERVER_URL_PROPERTY
                         val actual = properties.stringPropertyNames().associateWith(properties::getProperty)
-                        if (endpointValue != expected.getValue(SERVER_URL_PROPERTY) || actual != expectedRemaining) {
+                        if (actual != expected) {
                             fail(TriPhaseCodecError.INVALID_REQUEST)
                         }
                     }
