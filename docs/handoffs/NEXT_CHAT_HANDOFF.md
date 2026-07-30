@@ -235,6 +235,25 @@ WARP, и неизменённая сборка выполнила E2E успеш
   корректное открытие портала и меню; scope только login CAdES;
 - test package и staging APK/XML удалены; чувствительные артефакты не сохранены.
 
+## F-14 CI/supply-chain gate — 2026-07-31
+
+- workflows имеют только `contents: read`, immutable action SHAs, timeout и
+  concurrency gates; `pull_request_target` отсутствует;
+- Gradle distribution и wrapper JAR согласованы с 9.4.1 и закреплены официальными
+  SHA-256; dependency verification без wildcard trust;
+- Dependabot: Gradle, Go modules, GitHub Actions;
+- Gitleaks 8.30.1 full-history: 166 commits, zero findings;
+- Go и CI закреплены на 1.26.5; test/vet/build/govulncheck PASS;
+- OSV 2.3.8 проверяет только `tools/requirements.txt` и `ws024-relay/go.mod`,
+  zero vulnerable packages;
+- Android: Debug/QA 499/499, lint/builds/APK checks PASS; release без private
+  signing material корректно fail-closed;
+- local race не выполнен: Android/arm64 не поддерживает `-race`; обязательный
+  Linux CI gate сохранён;
+- не утверждать полное CVE-покрытие Gradle: verification metadata — integrity
+  ledger, а не runtime lockfile. Отдельный reviewed Gradle SCA остаётся residual
+  hardening.
+
 ## Ограничения и следующие задачи
 
 1. Legacy UI Oficina Virtual исправлен только для exact `ws072 /ofvirtual/`;
@@ -247,9 +266,10 @@ WARP, и неизменённая сборка выполнила E2E успеш
    реально не примет XAdES E2E. UniZAR уже повышен только для login CAdES.
 5. Не сохранять в Git скриншоты кабинета, пароль, PKCS#12, сертификат, подпись,
    cookie или персональные идентификаторы.
-6. Следующий исполнимый security-блок: CI/supply-chain gate F-14, затем
-   catalog-generation deduplication F-15B. Дополнительные Client TLS-порталы F-03
-   и документальные операции F-12 не включать без отдельного реального E2E.
+6. F-14 CI/supply-chain gate завершён в текущем HEAD. Следующий исполнимый
+   блок — catalog-generation deduplication F-15B. Дополнительные Client TLS-
+   порталы F-03 и документальные операции F-12 не включать без отдельного
+   реального E2E.
 
 Для продолжения в новом чате достаточно написать: «Открой приватный репозиторий,
 ветку `feature/ws024-secure-tunnel-20260728`, прочитай

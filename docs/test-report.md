@@ -1211,3 +1211,71 @@ Physical-device acceptance:
 
 No screenshot, password, PKCS#12, certificate body, signature, cookie or personal
 identifier was retained in the repository.
+
+## Milestone F14 — CI and supply-chain gate — 2026-07-31
+
+F-14 adds repository-enforced build and dependency controls without changing the
+runtime portal, signing or direct-only release policy:
+
+- `.github/workflows/ci.yml` runs separate Android, Python and Go jobs with
+  read-only permissions, immutable third-party action SHAs, timeouts and
+  concurrency cancellation;
+- `.github/workflows/security.yml` scans complete Git history with pinned
+  Gitleaks 8.30.1 and scans the explicit Python/Go manifests with pinned
+  OSV-Scanner 2.3.8;
+- Dependabot covers Gradle, Go modules and GitHub Actions weekly;
+- Gradle 9.4.1 distribution checksum is pinned and the wrapper JAR was regenerated
+  for the same version. The previous JAR was official but did not match the
+  configured Gradle version;
+- Gradle dependency verification records SHA-256 metadata/artifacts and contains
+  no wildcard trust rule;
+- Android artifact scripts verify alignment, signature scheme v2, exactly one
+  signer, hardened manifest values and forbidden canaries;
+- release without private signing inputs must fail and leave no release APK;
+- Go is pinned to 1.26.5; Linux CI retains the race detector gate.
+
+TDD evidence:
+
+- RED: policy tests identified a missing Gradle distribution checksum, a setup-go
+  cache path for nonexistent `go.sum`, an unsafe `yes | sdkmanager` pipeline under
+  `pipefail`, mismatched wrapper JAR version, recursive OSV scope and Go 1.24;
+- GREEN: 10/10 CI policy tests pass after exact, minimal corrections;
+- action tag commits were resolved against each official action repository and
+  matched every pinned SHA;
+- official Gradle distribution/wrapper and Gitleaks archive checksums matched.
+
+Fresh local verification:
+
+- Python: 85 tests, 0 failures/errors, 1 expected environmental skip;
+- Debug unit: 499 tests, 0 failures/errors/skips;
+- QA unit: 499 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`, `assembleDebug`, `assembleQa`,
+  `assembleQaAndroidTest`: PASS;
+- APK alignment, v2 signature, exactly one signer, manifest hardening and exact
+  forbidden-canary scan: PASS;
+- release-signing fail-closed gate: PASS; no release APK remained;
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
+- `govulncheck` 1.6.0: no reachable Go vulnerabilities found;
+- OSV explicit scans of `tools/requirements.txt` and `ws024-relay/go.mod`: exit 0,
+  no vulnerable packages reported;
+- Gitleaks history scan under Debian/proot: 166 commits, 3,992,451 bytes, zero
+  findings. Native Android execution was blocked by seccomp `faccessat2`; the same
+  checksum-verified ARM64 binary completed in Debian/proot;
+- workflow/Dependabot YAML parsing and both CI shell scripts: PASS.
+
+Artifact SHA-256 values remain identical to the preceding F-09/F-10 build:
+
+- Debug: `51c425a45e8b8fee3a384a9c8098771f0896eb456c78eae9bcfdf810170c0824`;
+- QA: `0258378038d703979239c8701e1e8d2ce68ecabc7de5699b68cbccbef1e5ceec`;
+- QA AndroidTest:
+  `4cc4be8ae9ca7d3300f444d7a40c4dd5d83a4005f9b53080ef09521ab02a2904`.
+
+Limitations are explicit:
+
+- local `go test -race` is not supported on Android/arm64 and is not marked PASS;
+  the required Linux CI job provides that gate;
+- OSV does not scan `gradle/verification-metadata.xml` as a runtime lockfile. It is
+  an integrity ledger containing build/test tooling. Gradle dependency
+  verification and Dependabot remain active, but they do not prove that the full
+  Gradle graph is free of known vulnerabilities. A dedicated reviewed Gradle SCA
+  remains future hardening.

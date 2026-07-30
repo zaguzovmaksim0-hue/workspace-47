@@ -296,7 +296,40 @@ Gates adicionales:
 - v2/v3 signature verificada y fingerprint guardado;
 - diff final revisado y dependencias/licencias documentadas.
 
-## 7. Clasificación del resultado
+## 7. Gate CI y supply chain (F-14)
+
+Cada `push`, pull request y ejecución manual debe conservar estos límites:
+
+- permisos globales `contents: read`; no `pull_request_target` ni credenciales Git
+  persistentes;
+- todas las Actions de terceros fijadas a SHA completo de 40 caracteres;
+- Gradle wrapper 9.4.1 y su distribución verificados por SHA-256 oficial;
+- dependency verification con metadata y artifacts SHA-256, sin trusted wildcard;
+- Python: descubrimiento completo de `tools/tests/test_*.py`;
+- Android: Debug/QA unit, lint, Debug/QA/QA AndroidTest builds;
+- APK: `zipalign -c -p -v 4`, v2 signature, exactamente un signer,
+  `allowBackup=false`, cleartext false, no `testOnly` inesperado y canarios
+  prohibidos ausentes;
+- release sin las cuatro entradas privadas de firma: fallo obligatorio y ningún
+  `app-release.apk` residual;
+- Go 1.26.5: test normal, race en Linux, vet, build y `govulncheck` 1.6.0;
+- Gitleaks 8.30.1: archivo descargado con checksum exacto y scan de historial Git
+  completo con redacción;
+- OSV-Scanner 2.3.8: solo `tools/requirements.txt` y `ws024-relay/go.mod` como
+  manifests fuente explícitos;
+- Dependabot semanal para Gradle, Go modules y GitHub Actions.
+
+Limitación explícita: `gradle/verification-metadata.xml` es un ledger de integridad
+que incluye dependencias de herramientas/build/test y no se presenta como lockfile
+de runtime Android. Dependency verification detecta sustitución de artefactos, no
+vulnerabilidades. Hasta incorporar un SCA Gradle con alcance y supresiones
+revisados, no afirmar que el grafo Gradle completo está libre de CVEs.
+
+El race detector no es compatible con Android/arm64. Una ejecución local que
+retorne `-race is not supported on android/arm64` se clasifica como no ejecutada;
+el job Linux debe seguir siendo obligatorio.
+
+## 8. Clasificación del resultado
 
 - **Passed:** evidencia directa cubre el caso completo.
 - **Failed — change-caused:** se corrige antes de avanzar de etapa.

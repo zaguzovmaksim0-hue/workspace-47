@@ -183,14 +183,25 @@ pantalla inicial sin certificado y el probe debug aislado no heredan el flag.
 sobre unlock/recreate/lock, inspección de exports/logcat/manifest y `dumpsys
 window` en dispositivo físico para certificado restaurado y WebView activo.
 
-### T11. Build/release comprometido
+### T11. Build/release o cadena de suministro comprometidos
 
-**Riesgo:** APK alterado, debug habilitado o pérdida del keystore.
-**Controles:** wrapper fijado, checksums/dependency locking donde sea viable,
-release no debug, WebView debugging condicionado a `BuildConfig.DEBUG`,
-keystore fuera del repo con permisos privados, v2/v3, `apksigner`, `zipalign`,
-SHA-256 y fingerprint registrados.
-**Verificación:** release checklist y análisis del APK final.
+**Riesgo:** Action/tag mutable, wrapper o dependencia sustituida, secreto en el
+historial, toolchain vulnerable, APK alterado, debug habilitado o pérdida del
+keystore.
+**Controles:** workflows con `contents: read`, sin `pull_request_target` y con
+Actions fijadas a SHA de 40 caracteres; Gradle 9.4.1 wrapper/distribution y
+artifacts resueltos verificados por SHA-256 sin trusted wildcard; Gitleaks pinned
+sobre historial completo; Dependabot para Gradle, Go y Actions; Go 1.26.5 con
+race/vet/build/`govulncheck`; OSV pinned sobre manifests Python/Go explícitos.
+Release no acepta debug-key fallback y falla cerrado sin keystore privado. Cada
+APK se valida con `zipalign`, `apksigner`, signer count, manifest y canarios.
+**Verificación:** policy tests del workflow, checksums oficiales, history scan,
+unit/lint/build, vulnerability gates y análisis del APK final.
+**Riesgo residual:** Gradle verification metadata demuestra identidad/integridad,
+no ausencia de vulnerabilidades. El ledger contiene build/test tooling y no se
+trata como runtime lockfile. El grafo Gradle completo requiere un SCA separado y
+revisado antes de afirmar cobertura CVE total. El race gate se ejecuta en Linux;
+Android/arm64 no lo soporta.
 
 ### T12. Una decisión Client TLS cacheada sobrevive al lifecycle o se reutiliza
 

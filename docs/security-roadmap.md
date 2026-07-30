@@ -66,6 +66,13 @@ Completed:
   Crypto and fail closed; `Math.random()` is absent from the shim.
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
+- CI and supply-chain gate completed (F-14): GitHub Actions use read-only
+  permissions and exact action commit SHAs; Gradle 9.4.1 wrapper/distribution and
+  resolved artifacts are SHA-256 verified; complete Git history is scanned with
+  pinned Gitleaks; Dependabot covers Gradle, Go modules and Actions; Android APKs
+  are checked for alignment, signature count, manifest hardening and forbidden
+  canaries; release still fails closed without the private signing key. Go is
+  pinned to 1.26.5 and OSV scans the explicit Python and Go manifests.
 
 Completed isolated PR — public IPv6 DNS results (F-17):
 
@@ -96,30 +103,36 @@ Completed isolated PR — process-scoped Client TLS preference barrier (F-13):
 - Physical-device instrumentation exercised the real Android clear callback
   without opening a portal, reading a certificate or starting a signature.
 
-Latest completed isolated PR — monotonic TTL/replay hardening (F-09/F-10):
+Latest completed isolated PR — CI and supply-chain gate (F-14):
 
-- `MonotonicSecurityTime` uses `System.nanoTime()` for authorization deadlines;
-  civil `Instant` remains display/audit metadata only.
-- `PendingSignRequestStore`, `SigningCoordinator` and MiniApplet reply delivery
-  share the same two-minute monotonic lifetime from bridge observation through
-  PRE, local signature, POST and callback.
-- `BoundedReplayLedger` retains terminal request IDs for five minutes, prunes
-  expired entries before capacity checks and treats clock rollback as fail-closed.
-- The JavaScript shim requires `crypto.randomUUID()` or
-  `crypto.getRandomValues()` and does not use `Math.random()`.
-- Hostile tests cover exact TTL boundaries, civil-clock jumps, monotonic rollback,
-  concurrent confirm, concurrent success/failure and stale/replayed callbacks.
-- The F-09/F-10 QA build completed a fresh user-operated Oficina Virtual login
-  on the physical device; scope remains certificate authentication only.
+- CI separates Android, Python and Go gates and uses `contents: read`, immutable
+  action SHAs, bounded timeouts and concurrency cancellation.
+- Gradle 9.4.1 distribution and wrapper JAR are pinned by official SHA-256;
+  dependency verification rejects unrecorded artifacts and contains no wildcard
+  trust rule.
+- Android gates run unit tests, lint and APK builds, then verify 16 KiB alignment,
+  v2 signature, exactly one signer, manifest hardening and forbidden canaries.
+- A release build without private signing inputs must fail and must not leave an
+  APK; debug signing is never accepted as a fallback.
+- Gitleaks 8.30.1 scans complete history with redaction; its exact Linux x64
+  archive checksum is verified before execution.
+- Dependabot covers Gradle, Go modules and GitHub Actions. Go is pinned to the
+  patched 1.26.5 toolchain; `govulncheck` and OSV cover the relay and the explicit
+  Python/Go manifests.
+- OSV intentionally does not parse `gradle/verification-metadata.xml` as a runtime
+  lockfile: it is an integrity checksum ledger containing build-tool artifacts.
+  Full Gradle-graph vulnerability reachability remains a residual limitation;
+  integrity verification and update automation do not prove absence of CVEs.
+- Go race instrumentation remains a required Linux CI gate. The local
+  Android/arm64 toolchain cannot run it and is not recorded as passed.
 
 Next isolated PRs:
 
-1. CI, lint, secret/dependency scanning and signer verification (F-14).
-2. Remaining catalog-generation deduplication after the completed E2E consistency
+1. Remaining catalog-generation deduplication after the completed E2E consistency
    gate (F-15B).
-3. Additional Client TLS portals beyond Carné Joven only after exact runtime
+2. Additional Client TLS portals beyond Carné Joven only after exact runtime
    contract and physical E2E evidence (F-03).
-4. Remaining portal E2E and document-signing branches after local CAdES/XAdES
+3. Remaining portal E2E and document-signing branches after local CAdES/XAdES
    validation and an authorized real administrative case (F-12).
 
 
