@@ -12,7 +12,11 @@ Completed:
   tracked separately. Carné Joven `CLIENT_TLS_AUTH` was verified on a physical
   device on 2026-07-21; Aragón login CAdES on 2026-07-28; Oficina Virtual
   MiniApplet 1.5 login CAdES on 2026-07-29. RedSARA and UniZAR remain `QA_ONLY`;
-  historical Ovorion MiniApplet 1.4 remains `EXPERIMENTAL`.
+  historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL`, is available only under
+  QA policy for sensitive operations, and is excluded from release.
+- Profile/public-catalog E2E consistency gate (F-15A): every bound profile marked
+  `VERIFIED_E2E` must have the exact public metadata pair
+  `E2E_VERIFIED / VERIFIED_E2E`, and non-E2E profiles cannot carry that pair.
 - Browser navigation, WebMessage bridge and signing origin bound to the selected profile (F-06).
 - Cross-profile and external HTTP navigation blocked (F-06, F-07).
 - Renderer loss invalidates bridge/signing state and creates a fresh WebView.
@@ -41,7 +45,8 @@ Next isolated PRs:
 3. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
 4. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
 5. CI, lint, secret/dependency scanning and signer verification (F-14).
-6. Catalog single source of truth and remaining maintenance work (F-15).
+6. Remaining catalog-generation deduplication after the completed E2E consistency
+   gate (F-15B).
 
 Open privacy item to schedule separately: keep `FLAG_SECURE` enabled throughout unlocked
 certificate, browser and signing states (F-05).

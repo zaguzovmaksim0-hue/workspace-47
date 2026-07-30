@@ -20,8 +20,12 @@ class RuntimeProfilePolicyTest {
             BuiltInSiteProfiles.runtimeRegistry.profile(ProfileId("carne-joven-andalucia")) != null,
         )
         assertEquals(
-            CompatibilityStatus.VERIFIED_E2E,
-            BuiltInSiteProfiles.releaseRegistry.profile(ProfileId("junta-andalucia"))
+            null,
+            BuiltInSiteProfiles.releaseRegistry.profile(ProfileId("junta-andalucia")),
+        )
+        assertEquals(
+            CompatibilityStatus.EXPERIMENTAL,
+            BuiltInSiteProfiles.qaRegistry.profile(ProfileId("junta-andalucia"))
                 ?.compatibilityStatus,
         )
     }

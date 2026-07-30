@@ -14,7 +14,7 @@ import org.junit.Test
 
 class BrowserTrustControllerTest {
     private val invalidations = mutableListOf<BrowserTransitionReason>()
-    private val registry = SiteProfileRegistry(BuiltInSiteProfiles.catalog, BuildTrustPolicy.RELEASE)
+    private val registry = SiteProfileRegistry(BuiltInSiteProfiles.catalog, BuildTrustPolicy.QA)
     private val controller = BrowserTrustController(
         BrowserUrlPolicy(registry, ProfileId("junta-andalucia")),
         SensitiveFlowInvalidator(invalidations::add),
@@ -73,6 +73,7 @@ class BrowserTrustControllerTest {
         }
         val clientAuthProfile = base.copy(
             profileId = ProfileId("client-auth-fixture"),
+            compatibilityStatus = dev.junta.firmamobile.profile.CompatibilityStatus.VERIFIED_E2E,
             startUrl = java.net.URI("https://start.client-auth.example/"),
             initiatorOrigins = setOf(ExactOrigin.parse("https://start.client-auth.example")),
             redirectOrigins = emptySet(),

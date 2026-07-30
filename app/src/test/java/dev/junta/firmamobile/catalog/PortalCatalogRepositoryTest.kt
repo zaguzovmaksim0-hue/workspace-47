@@ -72,7 +72,6 @@ class PortalCatalogRepositoryTest {
         assertTrue(metadataBrowseOnly.all { it.supportStatus in setOf(PortalSupportStatus.DISCOVERED, PortalSupportStatus.CATALOGED) })
 
         val verifiedIds = setOf(
-            ProfileId("junta-andalucia"),
             ProfileId("carne-joven-andalucia"),
             ProfileId("aragon-siraw"),
             ProfileId("junta-ofvirtual"),
@@ -96,14 +95,38 @@ class PortalCatalogRepositoryTest {
             assertTrue(releasePortal.isEnabled)
         }
         releasePortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
-            if (portal.profileId == ProfileId("educacion-convocatoria")) {
-                assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
-                assertTrue(portal.isEnabled)
-            } else {
-                assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, portal.supportStatus)
-                assertFalse(portal.isEnabled)
-                assertEquals(null, releaseRepository.resolveLaunch(portal))
+            when (portal.profileId) {
+                ProfileId("educacion-convocatoria") -> {
+                    assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
+                    assertTrue(portal.isEnabled)
+                }
+                ProfileId("junta-andalucia") -> {
+                    assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
+                    assertFalse(portal.isEnabled)
+                    assertEquals(null, releaseRepository.resolveLaunch(portal))
+                }
+                else -> {
+                    assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, portal.supportStatus)
+                    assertFalse(portal.isEnabled)
+                    assertEquals(null, releaseRepository.resolveLaunch(portal))
+                }
             }
+        }
+    }
+
+
+    @Test
+    fun `profile evidence and public catalog E2E status remain consistent`() {
+        publicCatalog.entries.filter { it.profileId != null }.forEach { entry ->
+            val profile = catalog.profiles.single { it.profileId == entry.profileId }
+            val metadataIsE2e = entry.catalogStatus == PublicCatalogStatus.E2E_VERIFIED &&
+                entry.inventoryStatus == PortalInventoryStatus.VERIFIED_E2E
+
+            assertEquals(
+                "${entry.portalId.value} / ${profile.profileId.value}",
+                profile.compatibilityStatus == CompatibilityStatus.VERIFIED_E2E,
+                metadataIsE2e,
+            )
         }
     }
 

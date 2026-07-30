@@ -753,3 +753,42 @@ Fresh verification:
 
 No authenticated screenshot, password, PKCS#12, private key, certificate body, signature, cookie
 or form payload was committed.
+
+## Milestone F15A — profile/public-catalog evidence consistency — 2026-07-30
+
+A cross-source review found that the legacy `junta-andalucia` / Ovorion MiniApplet 1.4
+profile had been changed from `EXPERIMENTAL` to `VERIFIED_E2E` inside commit `84c3c937`
+while implementing release profile gating. That commit contained no portal-acceptance evidence
+for Ovorion. The public catalog, compatibility matrix and security roadmap all continued to
+state `E2E_PENDING / IMPLEMENTED_NOT_E2E` or `EXPERIMENTAL`.
+
+The bundled profile has therefore been corrected to `EXPERIMENTAL`. Its activation remains
+`ENABLED`, which means the QA registry can continue controlled testing, while the existing
+release policy excludes the sensitive profile because it lacks `VERIFIED_E2E` evidence. No
+origin, endpoint, algorithm, adapter, callback, capability or transport was changed.
+
+A new cross-catalog regression gate now checks every bound public entry: profile status
+`VERIFIED_E2E` must be equivalent to the exact metadata pair
+`E2E_VERIFIED / VERIFIED_E2E`. Contractual, experimental and browse-only profiles cannot carry
+that public E2E pair. The relevant trust, catalog UI and signing-confirmation fixtures were
+updated to use QA policy when exercising Ovorion and to display its real `EXPERIMENTAL` status.
+The profile catalog version was incremented from 8 to 9.
+
+Fresh verification:
+
+- RED: four focused tests failed against the incorrect Ovorion promotion;
+- GREEN focused profile/catalog/trust/signing tests: PASS;
+- `testDebugUnitTest`: 450 tests, 0 failures, 0 errors, 0 skipped;
+- `testQaUnitTest`: 450 tests, 0 failures, 0 errors, 0 skipped;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: PASS;
+- Debug APK SHA-256:
+  `2075adeea1d97627ee04564644e73c0fefd73b78b1409c5b735d8cc26176e225`;
+- QA APK SHA-256:
+  `190115079eba9c942db9e1fa3a20b4119eac445fef9406c90c4254729cc5fc7f`;
+- QA AndroidTest APK SHA-256:
+  `8a67d0ca4c32590022de4cf9728a09e32cac501ba85ff62cb71a2021dd4e250f`.
+
+This milestone corrects metadata and release eligibility only. It does not run or claim a new
+portal E2E flow.

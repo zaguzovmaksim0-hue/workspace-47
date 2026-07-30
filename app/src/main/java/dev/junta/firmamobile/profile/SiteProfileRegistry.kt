@@ -114,13 +114,13 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 8,
+  "catalogVersion": 9,
   "profiles": [
     {
       "profileId": "junta-andalucia",
       "profileVersion": 1,
       "displayName": "Junta de Andalucía",
-      "compatibilityStatus": "VERIFIED_E2E",
+      "compatibilityStatus": "EXPERIMENTAL",
       "activation": "ENABLED",
       "startUrl": "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
       "initiatorOrigins": ["https://www.juntadeandalucia.es"],

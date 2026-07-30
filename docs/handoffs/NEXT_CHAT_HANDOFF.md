@@ -72,12 +72,15 @@
 
 ## Последний QA gate
 
-- Debug unit: 449/449, 0 failures/errors/skips;
-- QA unit: 449/449, 0 failures/errors/skips;
+- Debug unit: 450/450, 0 failures/errors/skips;
+- QA unit: 450/450, 0 failures/errors/skips;
 - `lintDebug`, `lintQa`: PASS;
 - `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
-- QA APK SHA-256:
-  `262244e7aa7267808f668ef8ddd67c233266e4dd439dae1fc46c5ad2dcd00518`.
+- Python catalog/tool tests: PASS;
+- latest built QA APK SHA-256:
+  `190115079eba9c942db9e1fa3a20b4119eac445fef9406c90c4254729cc5fc7f`;
+- этот F-15A APK ещё не устанавливался: установленный hash выше относится к
+  предыдущей проверенной P07D-сборке.
 
 ## Сетевой инцидент 30 июля 2026
 
@@ -87,6 +90,16 @@
 WARP, и неизменённая сборка выполнила E2E успешно. Считать это временным внешним
 сбоем маршрута/доступности; точная причина не доказана. Не добавлять обходы,
 ослабление TLS или relay fallback без новой воспроизводимой evidence.
+
+## Исправление статуса Ovorion / F-15A
+
+- legacy profile `junta-andalucia` MiniApplet 1.4 не имеет отдельной E2E-evidence;
+- ошибочная историческая промоция внутри `84c3c937` отменена;
+- profile catalog version 9: `EXPERIMENTAL / ENABLED`;
+- sensitive runtime доступен для контролируемой QA-проверки, но release registry
+  профиль не активирует;
+- публичный каталог остаётся `E2E_PENDING / IMPLEMENTED_NOT_E2E`;
+- новый test gate запрещает расхождение E2E-статуса между profile и public catalog.
 
 ## Ограничения и следующие задачи
 
