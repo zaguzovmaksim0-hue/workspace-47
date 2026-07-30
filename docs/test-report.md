@@ -634,3 +634,73 @@ Gate posterior a la promoción:
 
 Informe completo:
 `docs/e2e/2026-07-29-junta-ofvirtual-auth-success.md`.
+
+## Milestone P07C — 24-hour certificate unlock and physical revalidation — 2026-07-30
+
+The certificate unlock lifecycle was extended from an in-memory two-hour window to an
+encrypted 24-hour device-local window. The cache stores only the minimum unlock secret,
+encrypted with an AES-GCM key generated in Android Keystore. The ciphertext is written
+atomically under `noBackupFilesDir`; the plaintext password is not written to logs,
+preferences, the repository or APK resources. The original expiry timestamp is retained,
+so process restarts do not renew the 24-hour window.
+
+Early invalidation remains intentional: manual lock, session clear, certificate replacement,
+forget, an incorrect cached password, an expired record, malformed/tampered ciphertext or a
+certificate-reference mismatch clears the cache. Clearing app data or uninstalling the app
+also removes it.
+
+### Physical verification on the installed QA build
+
+- A cold launch after process termination restored the selected certificate without showing
+  the password prompt.
+- The encrypted cache file remained present at 101 bytes across `pm install -r` and a
+  subsequent force-stop/cold launch.
+- The unlocked UI exposed the normal actions (`Bloquear certificado`, `Elegir otro`,
+  `Olvidar certificado`) with no password prompt.
+- The corrected resource text states the 24-hour behavior and is present in the installed APK.
+- The installed `base.apk` SHA-256 exactly matched the locally verified QA APK:
+  `880e72d7cd4e69bc61412ae3a75ed976a6857da0c56f37c031073136a1938a11`.
+
+### Oficina Virtual revalidation
+
+The real `junta-ofvirtual` profile was opened through the QA catalog smoke hook using only
+its identifiers (`portalId=junta-andalucia-ofvirtual`, `profileId=junta-ofvirtual`). The
+active WebView was confirmed as `https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs`.
+After the user-authorized native signing confirmation:
+
+- the bridge returned `MINIAPPLET_RESULT` with `status=success`;
+- the signature and certificate fields were non-empty strings and passed the closed standard
+  Base64 shape check; their values were not stored or printed;
+- the portal callback reached `CALLBACK_STARTED` and `CALLBACK_RETURNED`;
+- Oficina Virtual accepted the authentication and navigated to
+  `/ofvirtual/ovMisTramites/index` with HTTP 200;
+- the resulting page showed `Mis trámites pendientes` and no login button or
+  `No se pudo completar la firma` marker.
+
+This confirms certificate login only. It does not claim that filing, later document signing,
+co-signing, countersigning or every authenticated portal feature was tested.
+
+### Transient network incident observed during revalidation
+
+Before the successful run, the bridge returned the closed error
+`SIGNING_SERVICE_UNAVAILABLE`. Safe diagnostics showed that DNS resolution for `ws024`
+succeeded while TCP/TLS connection attempts timed out before the PRE request. The same
+failure was reproduced outside the app from Termux. Later, with WARP reported active, the
+exact endpoint completed TCP/TLS and returned HTTP 200, and the unchanged app completed the
+full login. Therefore the incident is recorded as a transient route/service reachability
+failure; its exact external cause was not proven and no speculative code workaround was
+added.
+
+### Fresh QA gate and APK checks
+
+- `testQaUnitTest`: 442 tests, 0 failures, 0 errors, 0 skipped.
+- `lintQa`: PASS.
+- `assembleQa`: PASS.
+- `zipalign -c -p -v 4`: PASS.
+- APK Signature Scheme v2: verified, one signer.
+- QA APK / installed `base.apk` SHA-256:
+  `880e72d7cd4e69bc61412ae3a75ed976a6857da0c56f37c031073136a1938a11`.
+- QA remains direct-only; the external relay tuple is not enabled in this build.
+
+No screenshot of the authenticated area, password, PKCS#12, private key, certificate body,
+signature, cookie or form payload was committed or retained.

@@ -6,27 +6,51 @@
 - ветка: `feature/ws024-secure-tunnel-20260728`;
 - всегда сначала выполнить `git fetch` и проверить HEAD ветки;
 - подробная E2E-фиксация:
-  `docs/e2e/2026-07-29-junta-ofvirtual-auth-success.md`.
+  `docs/e2e/2026-07-29-junta-ofvirtual-auth-success.md`;
+- дополнительная физическая проверка 24-часового unlock и повторного E2E записана в
+  `docs/test-report.md`, milestone P07C.
 
 ## Подтверждённый результат
 
-Профиль `junta-ofvirtual` прошёл реальный вход на физическом POCO F6 Pro. Портал
-принял CAdES-аутентификацию и открыл внутреннюю страницу Oficina Virtual.
+Профиль `junta-ofvirtual` повторно прошёл реальный вход на физическом POCO F6 Pro
+30 июля 2026 года. Портал принял CAdES-аутентификацию и открыл:
+
+`https://ws072.juntadeandalucia.es/ofvirtual/ovMisTramites/index`
+
 Проверенный объём — только вход с сертификатом:
 
 - origin `https://ws072.juntadeandalucia.es`;
 - endpoint MiniApplet 1.5 на `ws024`;
 - `SHA1withRSA`, `CAdES`, detached/explicit;
-- PRE → локальная подпись → POST → callback → form submit → portal accepted.
+- PRE → локальная подпись → POST → callback → form submit → portal accepted;
+- итоговая страница: `Mis trámites pendientes`, HTTP 200;
+- страница входа и `No se pudo completar la firma` отсутствовали.
 
 Не заявлять, что проверены все процедуры, отправка заявлений или документальная
 подпись внутри кабинета.
 
-## Исправленные причины
+## 24-часовое восстановление сертификата
+
+- `32b27ca`: зашифрованное восстановление unlock в течение максимум 24 часов;
+- AES-GCM key хранится в Android Keystore;
+- ciphertext хранится атомарно в `noBackupFilesDir`;
+- срок отсчитывается от успешного ручного ввода пароля и не продлевается после
+  перезапуска процесса;
+- force-stop, cold start и `pm install -r` не потребовали повторного пароля;
+- cache file сохранился при обновлении и имел размер 101 bytes;
+- manual lock, clear session, replacement, forget, wrong cached password,
+  expiry/tamper/reference mismatch очищают cache;
+- clear app data и uninstall также удаляют cache;
+- пароль, PKCS#12, private key, certificate body и подпись не сохранять в Git,
+  shell output или diagnostics.
+
+`3045e7d` исправляет UI-текст: он теперь явно сообщает о 24 часах и условиях
+досрочного сброса.
+
+## Другие исправленные причины Oficina Virtual
 
 - `6538e1a`: безопасный upgrade точного legacy HTTP GET Oficina Virtual на HTTPS;
 - `26230ab`: сворачивание больше не блокирует сертификат и не уничтожает WebView;
-  in-memory unlock window — 2 часа;
 - `b3f1817`: profile version 2, `VERIFIED_E2E / ENABLED`, каталог и UI показывают
   `VALIDADO CON EL PORTAL` / `Verificado: Firma electrónica`.
 
@@ -35,18 +59,32 @@
 - package: `dev.junta.firmamobile`;
 - versionName: `0.1.0-qa`;
 - установленный SHA-256:
-  `ba82c501c4e1e4d9843dc263648d4b051ea2d9bbbbefd6f7ff451ab197b30e34`;
+  `880e72d7cd4e69bc61412ae3a75ed976a6857da0c56f37c031073136a1938a11`;
+- локальный QA APK имеет тот же SHA-256;
+- `zipalign`: PASS;
+- APK Signature Scheme v2: PASS, one signer;
 - direct-only: tunnel выключен, relay tuple отсутствует;
-- выбранная ссылка на сертификат сохранена, пароль не сохраняется;
-- после полной выгрузки процесса Android пароль потребуется снова.
+- зашифрованный 24-hour cache сертификата сохранён после обновления.
 
-## Последний полный gate
+## Последний QA gate
 
-- Python: 75 tests, 1 skipped, остальное PASS;
-- Debug unit: 431/431;
-- QA unit: 431/431;
-- lint Debug/QA: PASS;
-- Debug/QA/QA-AndroidTest build: PASS.
+- QA unit: 442/442, 0 failures/errors/skips;
+- `lintQa`: PASS;
+- `assembleQa`: PASS;
+- QA APK SHA-256:
+  `880e72d7cd4e69bc61412ae3a75ed976a6857da0c56f37c031073136a1938a11`.
+
+Ранее полный Debug + QA gate также проходил с 442 тестами в каждой variant,
+`lintDebug/lintQa`, `assembleDebug/assembleQa/assembleQaAndroidTest` без ошибок.
+
+## Сетевой инцидент 30 июля 2026
+
+Перед успешным повтором наблюдался `SIGNING_SERVICE_UNAVAILABLE`: DNS `ws024`
+работал, но TCP/TLS завершался `ConnectException`/timeout до PRE. Такой же timeout
+был воспроизведён из Termux. Позже точный endpoint вернул HTTP 200 при активном
+WARP, и неизменённая сборка выполнила E2E успешно. Считать это временным внешним
+сбоем маршрута/доступности; точная причина не доказана. Не добавлять обходы,
+ослабление TLS или relay fallback без новой воспроизводимой evidence.
 
 ## Ограничения и следующие задачи
 
