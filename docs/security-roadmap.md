@@ -35,24 +35,33 @@ Completed:
   active during password entry, certificate unlocking, every unlocked certificate
   surface, portal WebView and every non-idle signing state. First-run/no-certificate
   idle UI remains capturable; the isolated debug probe policy is unchanged.
+- Profile-scoped cookie/session hardening completed (F-08): native cookie
+  access requires an active `SiteProfile` and an exact declared network endpoint;
+  the historical WebView facade is profile-bound; current-site cleanup deletes
+  only the current HTTPS origin and never falls back to global deletion. Closing
+  the certificate session and deleting all WebView data are separate confirmed
+  actions. WebView provider capabilities are measured without calling
+  `WebViewCompat.setProfile`.
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 
-Current isolated PR — WebView session-state hardening:
+Latest completed isolated PR — profile-scoped WebView data (F-08):
 
-- Remove raw `WebView.saveState()` / `restoreState()` history from Activity bundles (F-11).
-- Explicitly discard the legacy `junta_webview_history` saved-state key.
-- Start every recreated WebView from a catalog-selected URL revalidated against its profile.
-- Never persist dedicated Client TLS WebView state.
-- Route renderer death with the exact affected WebView and abandon one-shot Client TLS grants.
-- Recreate a bridge-free, history-free WebView after renderer termination.
-- Unit and device tests cover process-state sanitization and renderer-session invalidation.
+- `ProfileCookieBridge` accepts only exact endpoint URLs from one active profile.
+- `SiteDataCleaner.clearOrigin` deletes exact-origin WebStorage and, only when
+  supported, expires same-host cookie names without copying cookie values.
+- Parent-domain or malformed cookie metadata fails closed and remains untouched.
+- Current-site, certificate-session and global-data actions have independent UI
+  commands and confirmations.
+- The device capability probe records provider metadata and four booleans without
+  starting `MainActivity` or exposing URLs/cookies.
 
 Next isolated PRs:
 
 1. Remaining Client TLS portals and grant-lifecycle hardening beyond the already
    verified Carné Joven scenario (F-03, F-13).
-2. Profile-scoped cookies/session transport and IPv6 handling (F-08, F-17).
+2. Public IPv6 address classification and transport support without admitting
+   special-purpose ranges (F-17).
 3. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
 4. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
 5. CI, lint, secret/dependency scanning and signer verification (F-14).

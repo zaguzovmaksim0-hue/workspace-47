@@ -72,7 +72,9 @@ internal fun IndustrialBrowserTopBar(
     onReload: () -> Unit,
     onChangeCertificate: () -> Unit,
     onLockCertificate: () -> Unit,
+    onClearCurrentSiteRequested: () -> Unit,
     onClearSessionRequested: () -> Unit,
+    onDeleteAllBrowserDataRequested: () -> Unit,
     onIdentityClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
@@ -157,9 +159,17 @@ internal fun IndustrialBrowserTopBar(
                             menuExpanded = false
                             onLockCertificate()
                         },
+                        onClearCurrentSiteRequested = {
+                            menuExpanded = false
+                            onClearCurrentSiteRequested()
+                        },
                         onClearSessionRequested = {
                             menuExpanded = false
                             onClearSessionRequested()
+                        },
+                        onDeleteAllBrowserDataRequested = {
+                            menuExpanded = false
+                            onDeleteAllBrowserDataRequested()
                         },
                     )
                 }
@@ -222,7 +232,9 @@ internal fun BrowserOverflowMenu(
     onDismissRequest: () -> Unit,
     onChangeCertificate: () -> Unit,
     onLockCertificate: () -> Unit,
+    onClearCurrentSiteRequested: () -> Unit,
     onClearSessionRequested: () -> Unit,
+    onDeleteAllBrowserDataRequested: () -> Unit,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -244,9 +256,19 @@ internal fun BrowserOverflowMenu(
         )
         BrowserMenuItem(
             iconRes = R.drawable.ic_browser_logout,
+            text = stringResource(R.string.browser_clear_current_site),
+            onClick = onClearCurrentSiteRequested,
+        )
+        BrowserMenuItem(
+            iconRes = R.drawable.ic_browser_logout,
             text = stringResource(R.string.browser_clear_session),
-            contentColor = MaterialTheme.colorScheme.error,
             onClick = onClearSessionRequested,
+        )
+        BrowserMenuItem(
+            iconRes = R.drawable.ic_browser_logout,
+            text = stringResource(R.string.browser_delete_all_data),
+            contentColor = MaterialTheme.colorScheme.error,
+            onClick = onDeleteAllBrowserDataRequested,
         )
     }
 }

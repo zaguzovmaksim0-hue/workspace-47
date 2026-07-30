@@ -140,13 +140,21 @@ terminales.
 **Verificación:** tests de requestId repetido, origin cambiado, navegación,
 cancelación y payload con caracteres de inyección.
 
-### T9. Cookies cruzan de host o sesión expirada se toma por éxito
+### T9. Cookies cruzan de perfil o una limpieza local borra otras sesiones
 
-**Riesgo:** secuestro de sesión o firma enviada a login HTML.
-**Controles:** obtención/aplicación por URL exacta, redirects allowlisted,
-`Set-Cookie` sincronizado sin logs, detección de 401/403/login redirect/HTML
-inesperado.
-**Verificación:** CookieBridge tests y respuestas simuladas.
+**Riesgo:** secuestro/confusión de sesión, firma enviada a login HTML o pérdida
+involuntaria de sesiones de otros portales.
+**Controles:** el bridge nativo se construye con un único `SiteProfile` y acepta
+solo URLs exactas declaradas como endpoints de red; los perfiles sin endpoint no
+pueden crear el bridge. `Set-Cookie` queda acotado, sin CR/LF/NUL ni logs. La
+limpieza del sitio usa `WebStorage.deleteOrigin` y solo expira nombres de cookies
+con host exacto cuando `GET_COOKIE_INFO` está disponible; metadata parent-domain
+o malformada queda intacta. Cerrar el certificado no borra cookies, y la limpieza
+global requiere una acción y confirmación diferentes. Redirects, 401/403 y HTML
+de login siguen clasificándose como sesión expirada.
+**Verificación:** tests de cruce de perfil/path, límites y excepciones del store;
+tests del cleaner que prohíben fallback global; Compose/source regressions para
+las tres acciones; instrumentation de capabilities sin iniciar la UI.
 
 ### T10. Diagnóstico, clipboard, screenshots o backup filtran datos
 

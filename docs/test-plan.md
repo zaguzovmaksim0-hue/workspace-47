@@ -70,16 +70,21 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - algoritmo/formato no permitidos rechazados;
 - límites de input y error de provider sanitizado.
 
-### CookieBridgeTest
+### ProfileCookieBridgeTest / SiteDataCleanerTest
 
-- cookies se entregan al mismo host;
-- cookies no se entregan a otro host permitido ni externo;
-- `Set-Cookie` se sincroniza con URL exacta y flush;
-- 301/302 a login produce `SESSION_EXPIRED`;
-- 401/403 produce `SESSION_EXPIRED`;
-- HTML login con status 200 no se toma como respuesta de protocolo;
-- redirects se revalidan por salto;
-- ningún error/log contiene header Cookie o Set-Cookie.
+- cookies nativas se entregan solo al endpoint exacto del perfil activo;
+- otro perfil, mismo host con path distinto y perfil sin endpoints fallan antes
+  de consultar `CookieManager`;
+- `Set-Cookie` se acota, rechaza CR/LF/NUL/oversize y hace flush sin logs;
+- borrar el sitio elimina solo WebStorage del origin HTTPS actual;
+- si `GET_COOKIE_INFO` no existe, las cookies quedan intactas y nunca se ejecuta
+  un borrado global implícito;
+- al estar disponible, solo se reutilizan nombre, host exacto, path y `Secure`
+  para expirar la cookie; no se copia su valor;
+- metadata parent-domain/malformada deja las cookies intactas;
+- cerrar sesión, borrar el sitio y borrar todos los datos son acciones y
+  confirmaciones diferentes;
+- 301/302 a login, 401/403 o HTML inesperado producen `SESSION_EXPIRED`.
 
 ### OriginAllowlistTest / SafeUrlValidatorTest
 
@@ -158,7 +163,10 @@ Ejecutar en API 36 real o emulador equivalente:
 - una hoja de confirmación aparece y cancelar no firma;
 - `FLAG_SECURE` está inactivo solo en loading/no-certificate idle y activo
   durante password, unlock, certificado desbloqueado, catálogo/WebView y firma;
-- borrar sesión limpia cookies/storage según UI y vuelve a estado esperado.
+- borrar datos del sitio no afecta otros origins y muestra resultado
+  exacto/limitado/fallido;
+- cerrar sesión bloquea el certificado sin borrar datos de otros portales;
+- borrar todos los datos web requiere una confirmación separada.
 
 Los tests de WebView usarán contenido controlado e interceptores/test server;
 no dependerán del portal real para ser deterministas. La configuración release

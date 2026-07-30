@@ -949,3 +949,66 @@ Physical-device verification:
 
 No certificate screen or authenticated portal screenshot was created or
 committed during this gate.
+
+## Milestone F08 — profile-scoped cookies and site data — 2026-07-30
+
+The previous browser action combined certificate-session closure with
+`CookieManager.removeAllCookies`, `WebStorage.deleteAllData`, cache/history and
+form-data deletion. The historical cookie bridge also accepted a global Junta
+origin allowlist instead of one active profile.
+
+The implementation now has three separate boundaries:
+
+- `ProfileCookieBridge` and the compatibility `WebViewCookieBridge` require one
+  `SiteProfile` and accept only its exact declared network endpoint URLs;
+- `SiteDataCleaner.clearOrigin` deletes WebStorage only for the current HTTPS
+  origin. With `GET_COOKIE_INFO`, it creates expired same-host cookies from only
+  name/path/domain/Secure metadata and never copies values. Unsupported,
+  parent-domain or malformed metadata returns the limited result without global
+  fallback;
+- `clearAllConfirmed` is the only global WebView-data path and is reachable from
+  a separately named and confirmed UI command. `Cerrar sesión` now only closes
+  the portal and locks the certificate.
+
+`WebViewProfileCapabilities` records provider package/version plus
+`MULTI_PROFILE`, `GET_COOKIE_INFO`, `WEB_MESSAGE_LISTENER` and
+`DOCUMENT_START_SCRIPT`. No trust decision depends on these booleans and the app
+does not call `WebViewCompat.setProfile` in this milestone.
+
+TDD evidence:
+
+- RED core: the capability, cleaner and profile bridge types/method were absent;
+- GREEN core: new isolation/cleanup tests and the rewritten compatibility bridge
+  tests passed together;
+- RED UI: `BrowserLayout` lacked distinct current-site/global callbacks;
+- GREEN UI: Compose tests prove three menu actions and independent confirmations;
+  a source regression forbids direct global deletion from `BrowserScreen`.
+
+Fresh verification:
+
+- `testDebugUnitTest`: 464 tests, 0 failures, 0 errors, 0 skipped;
+- `testQaUnitTest`: 464 tests, 0 failures, 0 errors, 0 skipped;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: 75 tests, 0 failures/errors, 1 skipped;
+- APK alignment: Debug, QA and QA AndroidTest PASS;
+- QA APK Signature Scheme v2: verified, one signer;
+- QA manifest: `debuggable=true` (expected QA), `allowBackup=false`,
+  `usesCleartextTraffic=false`;
+- exact forbidden-canary scan: PASS;
+- Debug APK SHA-256:
+  `190a56b25d9f625a6a1b6a39ee513855388122f49be7357915bbf3187f5b9db9`;
+- QA APK SHA-256:
+  `40f03d634b5053b0b79a217b88edf65ca32a3c57c5b36d0371ab968f9bc558b7`;
+- QA AndroidTest APK SHA-256:
+  `ceafc6b65c513b1e5e6fb5ed728bd376c7617557144e3c5581088dce782bf68f`.
+
+Physical-device capability gate:
+
+- target/test installation: Success; installed `base.apk` matched the QA hash;
+- encrypted unlock cache remained 101 bytes, mode `600`;
+- one named instrumentation class returned `OK (1 test)`;
+- provider `com.google.android.webview` version `150.0.7871.181` reported all
+  four measured capabilities as true;
+- `MainActivity` was never resumed and the target process did not remain alive;
+- no URL, cookie, certificate or portal content was emitted.

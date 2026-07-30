@@ -107,3 +107,36 @@ sin protección de lifetime para permitir fixtures sanitizados. La pantalla
 inicial `LoadingReference/NoCertificate + Idle` también permanece sin flag; una
 vez que existe estado Locked, Unlocking, Unlocked o signing no-idle, la ventana
 queda protegida.
+
+## Actualización 2026-07-30 — F-08 profile-scoped WebView data
+
+Se instalaron mediante `pm install -r -t`, sin iniciar `MainActivity`:
+
+- QA APK SHA-256:
+  `40f03d634b5053b0b79a217b88edf65ca32a3c57c5b36d0371ab968f9bc558b7`;
+- QA AndroidTest APK SHA-256:
+  `ceafc6b65c513b1e5e6fb5ed728bd376c7617557144e3c5581088dce782bf68f`.
+
+Los hashes se conservaron al copiar a almacenamiento compartido,
+`/data/local/tmp` y el `base.apk` instalado. El cache cifrado de desbloqueo
+permaneció en 101 bytes, modo `600`.
+
+Se ejecutó únicamente:
+
+```text
+am instrument -w -r -e class dev.junta.firmamobile.browser.WebViewCapabilitiesInstrumentedTest dev.junta.firmamobile.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+Resultado: `OK (1 test)`. Observación permitida:
+
+- provider package: `com.google.android.webview`;
+- provider version: `150.0.7871.181`;
+- `MULTI_PROFILE=true`;
+- `GET_COOKIE_INFO=true`;
+- `WEB_MESSAGE_LISTENER=true`;
+- `DOCUMENT_START_SCRIPT=true`.
+
+`topResumedActivity` antes y después siguió siendo ChatGPT; el proceso target no
+quedó activo. La app no llamó `WebViewCompat.setProfile`: el milestone mide la
+capacidad, pero mantiene un único perfil físico de WebView. No se registraron
+URLs, nombres/valores de cookies, certificado ni contenido de portal.

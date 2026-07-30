@@ -1,13 +1,17 @@
 package dev.junta.firmamobile.browser
 
-import android.net.Uri
 import android.webkit.CookieManager
-import dev.junta.firmamobile.network.JuntaOriginPolicy
+import androidx.webkit.CookieManagerCompat
+import dev.junta.firmamobile.network.ProfileCookieBridge
+import dev.junta.firmamobile.network.ValidatedNetworkUrl
+import dev.junta.firmamobile.profile.SiteProfile
 
 interface WebCookieStore {
     fun getCookie(url: String): String?
 
     fun setCookie(url: String, value: String)
+
+    fun getCookieInfo(url: String): List<String>? = null
 
     fun flush()
 
@@ -23,6 +27,9 @@ class AndroidWebCookieStore(
         cookieManager.setCookie(url, value)
     }
 
+    override fun getCookieInfo(url: String): List<String> =
+        CookieManagerCompat.getCookieInfo(cookieManager, url)
+
     override fun flush() {
         cookieManager.flush()
     }
@@ -32,49 +39,18 @@ class AndroidWebCookieStore(
     }
 }
 
-class WebViewCookieBridge(
-    private val cookieStore: WebCookieStore = AndroidWebCookieStore(),
+/**
+ * Compatibility facade retained for callers that still use the historical name.
+ * The bridge is profile-bound and cannot access a URL outside that profile's exact endpoints.
+ */
+internal class WebViewCookieBridge(
+    profile: SiteProfile,
+    cookieStore: WebCookieStore = AndroidWebCookieStore(),
 ) {
-    fun cookieHeaderFor(url: String): String? {
-        if (!isAllowedUrl(url)) return null
-        return try {
-            cookieStore.getCookie(url)
-        } catch (_: Exception) {
-            null
-        }
-    }
+    private val delegate = ProfileCookieBridge(profile, cookieStore)
 
-    fun applySetCookie(url: String, setCookieValue: String): Boolean {
-        if (!isAllowedUrl(url) ||
-            setCookieValue.length > MAX_SET_COOKIE_CHARS ||
-            setCookieValue.any { it == '\r' || it == '\n' || it == '\u0000' }
-        ) {
-            return false
-        }
-        return try {
-            cookieStore.setCookie(url, setCookieValue)
-            cookieStore.flush()
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
+    fun cookieHeaderFor(url: ValidatedNetworkUrl): String? = delegate.cookieHeaderFor(url)
 
-    fun clearSession(callback: (Boolean) -> Unit) {
-        try {
-            cookieStore.removeAllCookies(callback)
-        } catch (_: Exception) {
-            callback(false)
-        }
-    }
-
-    private fun isAllowedUrl(url: String): Boolean = try {
-        JuntaOriginPolicy.isAllowed(Uri.parse(url))
-    } catch (_: Exception) {
-        false
-    }
-
-    private companion object {
-        const val MAX_SET_COOKIE_CHARS = 8192
-    }
+    fun applySetCookie(url: ValidatedNetworkUrl, value: String): Boolean =
+        delegate.applySetCookie(url, value)
 }

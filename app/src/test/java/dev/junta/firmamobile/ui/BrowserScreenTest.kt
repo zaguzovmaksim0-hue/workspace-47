@@ -58,7 +58,9 @@ class BrowserScreenTest {
                     onReload = { events += "reload" },
                     onChangeCertificate = { events += "change" },
                     onLockCertificate = { events += "lock" },
-                    onClearSession = { events += "clear" },
+                    onClearCurrentSite = { events += "clear-site" },
+                    onClearSession = { events += "close-session" },
+                    onDeleteAllBrowserData = { events += "clear-all" },
                 ) {
                     Text("contenido-web")
                 }
@@ -83,11 +85,26 @@ class BrowserScreenTest {
         rule.runOnIdle { check(events.takeLast(2) == listOf("change", "lock")) }
 
         rule.onNodeWithContentDescription("Más opciones").performClick()
+        rule.onNodeWithText("Borrar datos de este sitio").performClick()
+        rule.onNodeWithText("Borrar datos de este sitio").assertIsDisplayed()
+        rule.runOnIdle { check("clear-site" !in events) }
+        rule.onNodeWithText("Borrar este sitio").performClick()
+        rule.runOnIdle { check(events.last() == "clear-site") }
+
+        rule.onNodeWithContentDescription("Más opciones").performClick()
         rule.onNodeWithText("Cerrar sesión").performClick()
-        rule.onNodeWithText("Cerrar sesión y borrar datos").assertIsDisplayed()
-        rule.runOnIdle { check("clear" !in events) }
-        rule.onNodeWithText("Confirmar cierre").performClick()
-        rule.runOnIdle { check(events.last() == "clear") }
+        rule.onNodeWithText("Cerrar sesión del certificado").assertIsDisplayed()
+        rule.runOnIdle { check("close-session" !in events) }
+        rule.onNodeWithText("Cerrar sesión", useUnmergedTree = true).performClick()
+        rule.runOnIdle { check(events.last() == "close-session") }
+
+        rule.onNodeWithContentDescription("Más opciones").performClick()
+        rule.onNodeWithText("Borrar todos los datos web").performClick()
+        rule.onNodeWithText("Borrar todos los datos web").assertIsDisplayed()
+        rule.onNodeWithText("todos los portales", substring = true).assertIsDisplayed()
+        rule.runOnIdle { check("clear-all" !in events) }
+        rule.onNodeWithText("Borrar todo").performClick()
+        rule.runOnIdle { check(events.last() == "clear-all") }
     }
 
     @Test
@@ -103,7 +120,9 @@ class BrowserScreenTest {
                     onReload = {},
                     onChangeCertificate = {},
                     onLockCertificate = {},
+                    onClearCurrentSite = {},
                     onClearSession = {},
+                    onDeleteAllBrowserData = {},
                 ) { modifier ->
                     Text(
                         text = "contenido-web",
@@ -135,7 +154,9 @@ class BrowserScreenTest {
                     onReload = {},
                     onChangeCertificate = {},
                     onLockCertificate = {},
+                    onClearCurrentSite = {},
                     onClearSession = {},
+                    onDeleteAllBrowserData = {},
                 ) { modifier ->
                     Text(
                         text = "contenido-web",
@@ -167,7 +188,9 @@ class BrowserScreenTest {
                     onReload = {},
                     onChangeCertificate = {},
                     onLockCertificate = {},
+                    onClearCurrentSite = {},
                     onClearSession = {},
+                    onDeleteAllBrowserData = {},
                 ) { modifier ->
                     Text("contenido-web", modifier.testTag(BROWSER_CONTENT_TAG))
                 }
@@ -191,7 +214,9 @@ class BrowserScreenTest {
                     onReload = {},
                     onChangeCertificate = {},
                     onLockCertificate = {},
+                    onClearCurrentSite = {},
                     onClearSession = {},
+                    onDeleteAllBrowserData = {},
                 ) { modifier ->
                     Text("contenido-web", modifier.testTag(BROWSER_CONTENT_TAG))
                 }
@@ -219,7 +244,9 @@ class BrowserScreenTest {
                     onReload = {},
                     onChangeCertificate = {},
                     onLockCertificate = {},
+                    onClearCurrentSite = {},
                     onClearSession = {},
+                    onDeleteAllBrowserData = {},
                 ) { modifier ->
                     Text("contenido-web", modifier.testTag(BROWSER_CONTENT_TAG))
                 }

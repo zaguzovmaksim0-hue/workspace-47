@@ -63,7 +63,7 @@
 - package: `dev.junta.firmamobile`;
 - versionName: `0.1.0-qa`;
 - установленный SHA-256:
-  `262244e7aa7267808f668ef8ddd67c233266e4dd439dae1fc46c5ad2dcd00518`;
+  `40f03d634b5053b0b79a217b88edf65ca32a3c57c5b36d0371ab968f9bc558b7`;
 - локальный QA APK имеет тот же SHA-256;
 - `zipalign`: PASS;
 - APK Signature Scheme v2: PASS, one signer;
@@ -72,15 +72,21 @@
 
 ## Последний QA gate
 
-- Debug unit: 450/450, 0 failures/errors/skips;
-- QA unit: 450/450, 0 failures/errors/skips;
+- Debug unit: 464/464, 0 failures/errors/skips;
+- QA unit: 464/464, 0 failures/errors/skips;
 - `lintDebug`, `lintQa`: PASS;
 - `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
-- Python catalog/tool tests: PASS;
-- latest built QA APK SHA-256:
-  `190115079eba9c942db9e1fa3a20b4119eac445fef9406c90c4254729cc5fc7f`;
-- этот F-15A APK ещё не устанавливался: установленный hash выше относится к
-  предыдущей проверенной P07D-сборке.
+- Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
+- Debug APK SHA-256:
+  `190a56b25d9f625a6a1b6a39ee513855388122f49be7357915bbf3187f5b9db9`;
+- QA APK SHA-256:
+  `40f03d634b5053b0b79a217b88edf65ca32a3c57c5b36d0371ab968f9bc558b7`;
+- QA AndroidTest APK SHA-256:
+  `ceafc6b65c513b1e5e6fb5ed728bd376c7617557144e3c5581088dce782bf68f`;
+- zipalign, v2 signature, one signer, manifest hardening and forbidden-canary
+  scan: PASS;
+- QA APK установлен поверх данных; installed `base.apk` совпадает; cache
+  сертификата сохранился: 101 bytes, mode 600.
 
 ## Сетевой инцидент 30 июля 2026
 
@@ -156,6 +162,23 @@ WARP, и неизменённая сборка выполнила E2E успеш
   `fe303b10658a8fcf3698e00d42e5714e4d7b42ba28208c8beb196da505963199`;
 - no authenticated screenshots should be requested after this milestone; use
   sanitized UI semantics, smoke results, window flags and coarse logs.
+
+## F-08 profile-scoped cookies/session data — 2026-07-30
+
+- native cookie bridges require one active `SiteProfile` and exact endpoint URL;
+- profiles without endpoints cannot construct the bridge;
+- current-site cleanup uses exact HTTPS origin and never falls back to global
+  deletion; parent-domain/malformed cookie metadata remains untouched;
+- `Borrar datos de este sitio`, `Cerrar sesión` and `Borrar todos los datos web`
+  are independent commands with independent confirmations;
+- closing the session locks the certificate but no longer deletes other portal
+  data;
+- global data deletion exists only in `SiteDataCleaner.clearAllConfirmed`;
+- device capability probe (no UI): Google WebView 150.0.7871.181; MULTI_PROFILE,
+  GET_COOKIE_INFO, WEB_MESSAGE_LISTENER and DOCUMENT_START_SCRIPT all true;
+- do not adopt physical WebView profiles from this observation alone;
+  `WebViewCompat.setProfile` remains unused;
+- next security block: F-17 public IPv6 classification/transport.
 
 ## Ограничения и следующие задачи
 

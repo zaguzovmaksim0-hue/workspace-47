@@ -2,9 +2,9 @@ package dev.junta.firmamobile.ui
 
 import android.net.Uri
 import android.view.ViewGroup
-import android.webkit.CookieManager
-import android.webkit.WebStorage
 import android.webkit.WebView
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -53,9 +53,12 @@ import dev.junta.firmamobile.browser.MiniAppletBridgeMode
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.browser.NavigationBlockReason
 import dev.junta.firmamobile.browser.SensitiveFlowInvalidator
+import dev.junta.firmamobile.browser.SiteClearResult
+import dev.junta.firmamobile.browser.SiteDataCleaner
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
+import dev.junta.firmamobile.browser.WebViewProfileCapabilities
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
@@ -92,6 +95,9 @@ fun BrowserScreen(
 ) {
     val context = LocalContext.current
     val selectedServiceId = profileId
+    val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
+    val siteDataCleaner = remember { SiteDataCleaner() }
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
         checkNotNull(
             BrowserSessionStatePolicy.validatedEntryUrl(
@@ -135,6 +141,8 @@ fun BrowserScreen(
     var blockedReason by remember { mutableStateOf<NavigationBlockReason?>(null) }
     var browserError by remember { mutableStateOf<BrowserErrorCode?>(null) }
     var compatibilityError by remember { mutableStateOf(false) }
+    var siteClearResult by remember { mutableStateOf<SiteClearResult?>(null) }
+    var globalClearResult by remember { mutableStateOf<Boolean?>(null) }
     var currentUrl by remember(profileId, entryUrl) {
         mutableStateOf(validatedEntryUrl)
     }
@@ -329,30 +337,58 @@ fun BrowserScreen(
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             onLockCertificate()
         },
+        onClearCurrentSite = {
+            clientAuthGrant = null
+            abandonClientAuth()
+            onCancelSigning(SigningCancelReason.NAVIGATION, null)
+            pendingRequest = null
+            globalClearResult = null
+            val webView = webViewRef.get()
+            webView?.apply {
+                stopLoading()
+                clearHistory()
+                clearFormData()
+            }
+            val exactUrl = webView?.url ?: currentUrl
+            siteClearResult = runCatching {
+                siteDataCleaner.clearOrigin(URI(exactUrl), webViewCapabilities)
+            }.getOrDefault(SiteClearResult.FAILED)
+            webView?.loadUrl(validatedEntryUrl)
+        },
         onClearSession = {
             clientAuthGrant = null
             abandonClientAuth()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             pendingRequest = null
-            webViewRef.get()?.apply {
+            onClearSession()
+        },
+        onDeleteAllBrowserData = {
+            clientAuthGrant = null
+            abandonClientAuth()
+            onCancelSigning(SigningCancelReason.NAVIGATION, null)
+            pendingRequest = null
+            siteClearResult = null
+            val webView = webViewRef.get()
+            webView?.apply {
                 stopLoading()
-                clearCache(true)
                 clearHistory()
                 clearFormData()
             }
-            CookieManager.getInstance().apply {
-                removeAllCookies(null)
-                flush()
+            siteDataCleaner.clearAllConfirmed { cleared ->
+                mainHandler.post {
+                    globalClearResult = cleared
+                    if (cleared) webViewRef.get()?.loadUrl(validatedEntryUrl)
+                }
             }
-            WebStorage.getInstance().deleteAllData()
-            onClearSession()
         },
     ) { modifier ->
         Column(modifier = modifier) {
+            val dataNotice = browserDataNotice(siteClearResult, globalClearResult)
             val notice = browserNotice(
                 compatibilityError = compatibilityError,
                 blockedReason = blockedReason,
                 browserError = browserError,
+                dataNotice = dataNotice,
             )
             notice?.let { message ->
                 BrowserNoticeBanner(
@@ -577,10 +613,14 @@ internal fun BrowserLayout(
     onReload: () -> Unit,
     onChangeCertificate: () -> Unit,
     onLockCertificate: () -> Unit,
+    onClearCurrentSite: () -> Unit,
     onClearSession: () -> Unit,
+    onDeleteAllBrowserData: () -> Unit,
     content: @Composable (Modifier) -> Unit,
 ) {
+    var confirmClearCurrentSite by remember { mutableStateOf(false) }
     var confirmClearSession by remember { mutableStateOf(false) }
+    var confirmDeleteAllData by remember { mutableStateOf(false) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -594,7 +634,9 @@ internal fun BrowserLayout(
                 onReload = onReload,
                 onChangeCertificate = onChangeCertificate,
                 onLockCertificate = onLockCertificate,
+                onClearCurrentSiteRequested = { confirmClearCurrentSite = true },
                 onClearSessionRequested = { confirmClearSession = true },
+                onDeleteAllBrowserDataRequested = { confirmDeleteAllData = true },
                 windowInsets = browserInsets.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                 ),
@@ -624,6 +666,27 @@ internal fun BrowserLayout(
         )
     }
 
+    if (confirmClearCurrentSite) {
+        AlertDialog(
+            onDismissRequest = { confirmClearCurrentSite = false },
+            title = { Text(stringResource(R.string.browser_clear_current_site_title)) },
+            text = { Text(stringResource(R.string.browser_clear_current_site_copy)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmClearCurrentSite = false
+                    onClearCurrentSite()
+                }) {
+                    Text(stringResource(R.string.browser_clear_current_site_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClearCurrentSite = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+
     if (confirmClearSession) {
         AlertDialog(
             onDismissRequest = { confirmClearSession = false },
@@ -644,6 +707,27 @@ internal fun BrowserLayout(
             },
         )
     }
+
+    if (confirmDeleteAllData) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAllData = false },
+            title = { Text(stringResource(R.string.browser_delete_all_data_title)) },
+            text = { Text(stringResource(R.string.browser_delete_all_data_copy)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteAllData = false
+                    onDeleteAllBrowserData()
+                }) {
+                    Text(stringResource(R.string.browser_delete_all_data_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAllData = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -651,12 +735,30 @@ private fun browserNotice(
     compatibilityError: Boolean,
     blockedReason: NavigationBlockReason?,
     browserError: BrowserErrorCode?,
+    dataNotice: String?,
 ): String? = when {
     compatibilityError -> stringResource(R.string.browser_compatibility_error)
     browserError != null -> stringResource(R.string.browser_load_error)
     blockedReason == NavigationBlockReason.PLAY_STORE_FALLBACK ->
         stringResource(R.string.browser_play_store_blocked)
     blockedReason != null -> stringResource(R.string.browser_navigation_blocked)
+    dataNotice != null -> dataNotice
+    else -> null
+}
+
+@Composable
+private fun browserDataNotice(
+    siteClearResult: SiteClearResult?,
+    globalClearResult: Boolean?,
+): String? = when {
+    globalClearResult == true -> stringResource(R.string.browser_delete_all_data_success)
+    globalClearResult == false -> stringResource(R.string.browser_delete_all_data_failed)
+    siteClearResult == SiteClearResult.CLEARED_EXACTLY ->
+        stringResource(R.string.browser_clear_current_site_success)
+    siteClearResult == SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE ->
+        stringResource(R.string.browser_clear_current_site_limited)
+    siteClearResult == SiteClearResult.FAILED ->
+        stringResource(R.string.browser_clear_current_site_failed)
     else -> null
 }
 

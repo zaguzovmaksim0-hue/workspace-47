@@ -202,6 +202,44 @@ class BrowserSecurityRegressionTest {
         )
     }
 
+
+    @Test
+    fun currentSiteClearCannotFallBackToGlobalBrowserDataDeletion() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val chromeSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserChromeComponents.kt",
+        )
+
+        assertTrue(
+            "Current-site clearing must call the exact-origin cleaner",
+            "siteDataCleaner.clearOrigin" in screenSource,
+        )
+        assertTrue(
+            "Global deletion must use a separate confirmed cleaner method",
+            "siteDataCleaner.clearAllConfirmed" in screenSource,
+        )
+        assertFalse(
+            "BrowserScreen must not call CookieManager global deletion directly",
+            "removeAllCookies" in screenSource || "CookieManager.getInstance" in screenSource,
+        )
+        assertFalse(
+            "BrowserScreen must not call WebStorage global deletion directly",
+            "deleteAllData" in screenSource || "WebStorage.getInstance" in screenSource,
+        )
+        assertTrue(
+            "The overflow menu must expose distinct site, session and global actions",
+            "onClearCurrentSiteRequested" in chromeSource &&
+                "onClearSessionRequested" in chromeSource &&
+                "onDeleteAllBrowserDataRequested" in chromeSource,
+        )
+        assertFalse(
+            "Measured MULTI_PROFILE support must not silently opt the WebView into a physical profile",
+            "WebViewCompat.setProfile" in screenSource,
+        )
+    }
+
     @Test
     fun rendererDeathInvalidatesBothNormalAndClientTlsSessions() {
         val clientSource = projectSource(

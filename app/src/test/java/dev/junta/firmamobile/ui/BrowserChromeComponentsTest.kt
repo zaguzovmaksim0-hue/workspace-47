@@ -40,7 +40,9 @@ class BrowserChromeComponentsTest {
                         onReload = { events += "reload" },
                         onChangeCertificate = { events += "change" },
                         onLockCertificate = { events += "lock" },
-                        onClearSessionRequested = { events += "clear" },
+                        onClearCurrentSiteRequested = { events += "clear-site" },
+                        onClearSessionRequested = { events += "close-session" },
+                        onDeleteAllBrowserDataRequested = { events += "clear-all" },
                         onIdentityClick = { events += "identity" },
                     )
                     BrowserLoadingIndicator(visible = true)
@@ -59,7 +61,9 @@ class BrowserChromeComponentsTest {
         rule.onNodeWithContentDescription("Más opciones").performClick()
         rule.onNodeWithText("Cambiar certificado").assertIsDisplayed()
         rule.onNodeWithText("Bloquear certificado").assertIsDisplayed()
+        rule.onNodeWithText("Borrar datos de este sitio").assertIsDisplayed()
         rule.onNodeWithText("Cerrar sesión").assertIsDisplayed()
+        rule.onNodeWithText("Borrar todos los datos web").assertIsDisplayed()
         rule.onNodeWithText("Historial").assertDoesNotExist()
         rule.onNodeWithText("Ajustes").assertDoesNotExist()
         rule.onNodeWithText("Ayuda").assertDoesNotExist()
