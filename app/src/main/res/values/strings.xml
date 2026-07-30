@@ -12,11 +12,11 @@
     <string name="certificate_status_loading_title">Preparando el almacén seguro</string>
     <string name="certificate_status_loading_copy">Comprobando si existe un certificado seleccionado.</string>
     <string name="certificate_status_locked_title">Certificado protegido</string>
-    <string name="certificate_status_locked_copy">Introduce la contraseña para desbloquearlo solo durante esta sesión.</string>
+    <string name="certificate_status_locked_copy">Introduce la contraseña para mantener el certificado desbloqueado durante 24 horas en este dispositivo.</string>
     <string name="certificate_status_unlocking_title">Verificando certificado</string>
     <string name="certificate_status_unlocking_copy">La identidad se está comprobando localmente.</string>
     <string name="certificate_status_unlocked_title">Certificado listo</string>
-    <string name="certificate_status_unlocked_copy">La firma está disponible mientras mantengas abierta esta sesión.</string>
+    <string name="certificate_status_unlocked_copy">No tendrás que volver a introducir la contraseña durante 24 horas, salvo que bloquees, cambies o elimines el certificado.</string>
     <string name="certificate_loading">Cargando certificado…</string>
     <string name="certificate_selected">Certificado seleccionado: %1$s</string>
     <string name="certificate_password">Contraseña del certificado</string>
