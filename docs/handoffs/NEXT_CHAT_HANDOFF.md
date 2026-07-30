@@ -141,6 +141,22 @@ WARP, и неизменённая сборка выполнила E2E успеш
 - blocker-only QA APK is built but not installed separately; install the next
   combined security build instead.
 
+## F-05 secure-window state policy — 2026-07-30
+
+- `SensitiveWindowStatePolicy` is the single MainActivity decision point;
+- `FLAG_SECURE=false` only for `LoadingReference` or `NoCertificate` with
+  `SigningUiState.Idle`;
+- `FLAG_SECURE=true` for Locked, Unlocking, Unlocked and every signing state
+  other than Idle; therefore unlocked certificate UI, native catalog, portal
+  WebView, confirmation, signing, completed and failed states are protected;
+- first-run visual tests and isolated debug probe remain capturable;
+- device: cold restored certificate and active UniZAR WebView both showed
+  `SECURE` in `dumpsys window`;
+- installed QA/base hash:
+  `fe303b10658a8fcf3698e00d42e5714e4d7b42ba28208c8beb196da505963199`;
+- no authenticated screenshots should be requested after this milestone; use
+  sanitized UI semantics, smoke results, window flags and coarse logs.
+
 ## Ограничения и следующие задачи
 
 1. Legacy UI Oficina Virtual исправлен только для exact `ws072 /ofvirtual/`;

@@ -4,6 +4,12 @@
 **Scope:** Junta browser/probe UI only
 **Status:** Approved through the user's standing instruction to select the recommended option
 
+> **Superseded privacy policy (2026-07-30, F-05):** the password-only
+> `FLAG_SECURE` scope below is historical. Current `MainActivity` keeps the flag
+> for Locked, Unlocking, Unlocked and all non-idle signing states, including the
+> native catalog and portal WebView. The first-run no-certificate UI and isolated
+> debug probe remain capturable.
+
 ## Goal
 
 Fix three device-confirmed UX defects on the POCO F6 Pro before continuing the

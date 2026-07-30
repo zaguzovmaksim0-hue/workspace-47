@@ -80,7 +80,7 @@ class CertificateSetupFlowTest {
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
-                assertSecureFlag(scenario, expected = false)
+                assertSecureFlag(scenario, expected = true)
 
                 scenario.moveToState(Lifecycle.State.CREATED)
                 rule.runOnIdle {
@@ -89,7 +89,7 @@ class CertificateSetupFlowTest {
                 scenario.moveToState(Lifecycle.State.RESUMED)
                 waitForText("Certificado encontrado")
                 rule.onNodeWithContentDescription("Contraseña del certificado").assertDoesNotExist()
-                assertSecureFlag(scenario, expected = false)
+                assertSecureFlag(scenario, expected = true)
 
                 scenario.recreate()
                 waitForText("Certificado encontrado")
@@ -97,7 +97,7 @@ class CertificateSetupFlowTest {
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
-                assertSecureFlag(scenario, expected = false)
+                assertSecureFlag(scenario, expected = true)
 
                 rule.onNodeWithText("Bloquear certificado")
                     .performScrollTo()

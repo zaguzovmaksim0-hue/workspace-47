@@ -88,3 +88,22 @@ Estado actualizado:
 - Real Junta Oficina Virtual authentication E2E: `PASSED`;
 - Scope: login CAdES observado únicamente;
 - capturas o logs sensibles incorporados al repositorio: ninguno.
+
+## Actualización 2026-07-30 — F-05 secure-window state policy
+
+Se instaló la QA APK SHA-256
+`fe303b10658a8fcf3698e00d42e5714e4d7b42ba28208c8beb196da505963199`
+mediante `pm install -r`; el `base.apk` instalado coincidió byte-for-byte. El
+cache cifrado de desbloqueo permaneció en 101 bytes, modo `600`.
+
+Tras `force-stop` y cold launch, el certificado se restauró sin contraseña. El
+window dump de `MainActivity` mostró `fl=... SECURE ...`. Después de abrir el
+profile exacto UniZAR mediante el QA smoke hook y confirmar
+`VERIFIED_E2E / WEBVIEW_ACTIVE`, el mismo window continuó mostrando `SECURE`.
+No se tomó screenshot del certificado ni del WebView autenticado.
+
+El gate no modifica `ProtocolProbeActivity`: la Activity debug aislada continúa
+sin protección de lifetime para permitir fixtures sanitizados. La pantalla
+inicial `LoadingReference/NoCertificate + Idle` también permanece sin flag; una
+vez que existe estado Locked, Unlocking, Unlocked o signing no-idle, la ventana
+queda protegida.

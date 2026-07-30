@@ -31,6 +31,10 @@ Completed:
   exact origin, 20-byte precalculated challenge, detached CAdES,
   `SHA1withRSA`, exact `precalculatedHashAlgorithm=SHA1` and `serverUrl`;
   Storage/Retrieve, co-sign, counter-sign and document-signing remain blocked.
+- MainActivity secure-window policy completed (F-05): `FLAG_SECURE` remains
+  active during password entry, certificate unlocking, every unlocked certificate
+  surface, portal WebView and every non-idle signing state. First-run/no-certificate
+  idle UI remains capturable; the isolated debug probe policy is unchanged.
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 
@@ -55,8 +59,6 @@ Next isolated PRs:
 6. Remaining catalog-generation deduplication after the completed E2E consistency
    gate (F-15B).
 
-Open privacy item to schedule separately: keep `FLAG_SECURE` enabled throughout unlocked
-certificate, browser and signing states (F-05).
 
 ## WS024 secure-tunnel QA status — 2026-07-29
 

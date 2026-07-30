@@ -4,6 +4,12 @@
 
 **Goal:** Keep Junta WebView controls above Android system UI, present the current address in a stable one-line toolbar, and scope `FLAG_SECURE` to password input while preserving the current browser, observer, certificate, and signing behavior.
 
+> **Superseded privacy policy (2026-07-30, F-05):** the password-only
+> `FLAG_SECURE` scope below is historical. Current `MainActivity` keeps the flag
+> for Locked, Unlocking, Unlocked and all non-idle signing states, including the
+> native catalog and portal WebView. The first-run no-certificate UI and isolated
+> debug probe remain capturable.
+
 **Architecture:** Add one `BrowserWindowInsetsPolicy` with Compose and Android View adapters, one focused `BrowserAddressBar`, and one scoped `SensitiveWindowProtection` effect. `BrowserScreen` owns address presentation and consumes chrome padding; the debug probe reuses the native inset adapter and keeps URL details outside sanitized observations.
 
 **Tech Stack:** Kotlin 2.3.10, Jetpack Compose BOM 2026.06.00, Material 3, AndroidX Core/Activity/WebKit, Robolectric, AndroidX Test, Gradle Wrapper on Termux/aarch64, Android 16 POCO F6 Pro.

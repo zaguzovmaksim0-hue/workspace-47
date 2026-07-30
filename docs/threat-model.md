@@ -152,9 +152,13 @@ inesperado.
 
 **Riesgo:** secreto disponible a otras apps o soporte.
 **Controles:** logger con esquema allowlist, hashes truncados, almacenamiento
-privado, export sanitizado; `FLAG_SECURE` mientras se introduce contraseña o se
-muestra material sensible; no copiar secreto; backup desactivado.
-**Verificación:** tests del redactor, inspección de exports, logcat y manifest.
+privado y export sanitizado; `FLAG_SECURE` state-driven en `MainActivity` durante
+password, unlock, certificado desbloqueado, catálogo asociado, WebView de portal
+y cualquier estado de firma no idle; no copiar secreto; backup desactivado. La
+pantalla inicial sin certificado y el probe debug aislado no heredan el flag.
+**Verificación:** tests del redactor y de la policy de estados, instrumentation
+sobre unlock/recreate/lock, inspección de exports/logcat/manifest y `dumpsys
+window` en dispositivo físico para certificado restaurado y WebView activo.
 
 ### T11. Build/release comprometido
 

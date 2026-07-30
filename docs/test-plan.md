@@ -156,7 +156,8 @@ Ejecutar en API 36 real o emulador equivalente:
 - bloqueo manual obliga a introducir contraseña otra vez;
 - background timeout bloquea identidad;
 - una hoja de confirmación aparece y cancelar no firma;
-- `FLAG_SECURE` está activo durante entrada de password;
+- `FLAG_SECURE` está inactivo solo en loading/no-certificate idle y activo
+  durante password, unlock, certificado desbloqueado, catálogo/WebView y firma;
 - borrar sesión limpia cookies/storage según UI y vuelve a estado esperado.
 
 Los tests de WebView usarán contenido controlado e interceptores/test server;
@@ -201,11 +202,15 @@ Secuencia de aceptación:
 8. aceptar, completar pre-sign/local/post-sign y entregar resultado;
 9. confirmar que el portal acepta y continúa;
 10. bloquear certificado y confirmar que otra firma exige contraseña;
-11. inspeccionar UI tree, screenshot no sensible y logcat sanitizado;
+11. inspeccionar `FLAG_SECURE` mediante window state y usar UI tree/logcat
+    sanitizados; no capturar screenshot de certificado, catálogo autenticado,
+    WebView ni firma;
 12. repetir el camino de cancelación y sesión expirada.
 
-Artefactos permitidos: capturas sin datos personales, UI XML sanitizado, lista
-de eventos/códigos y hashes cortos. No se conserva network trace con cuerpos.
+Artefactos permitidos: capturas únicamente de la pantalla inicial sin
+certificado o de una Activity de prueba no sensible, UI XML sanitizado, estado
+de window flags, lista de eventos/códigos y hashes cortos. Las superficies
+protegidas por F-05 no se capturan. No se conserva network trace con cuerpos.
 
 ## 6. Comandos y gates de build/release
 

@@ -891,3 +891,61 @@ Fresh verification:
 - public catalog generator reproducibility: PASS;
 - QA APK SHA-256:
   `ceae0d202796cc8788011aa880fbf6a7aabdca34789caa340f0eae12dcd573cc`.
+
+## Milestone F05 — state-driven secure window — 2026-07-30
+
+The previous `MainActivity` policy enabled `FLAG_SECURE` only while the
+certificate password field was visible. After a successful unlock it cleared
+the flag, exposing certificate identity, native catalog, authenticated WebView
+content and native signing UI to screenshots or screen recording.
+
+A pure `SensitiveWindowStatePolicy` now drives the window flag:
+
+- `LoadingReference` and `NoCertificate` are unprotected only while signing is
+  `Idle`;
+- `Locked`, `Unlocking` and `Unlocked` are always protected;
+- any non-idle signing state is protected as a fail-safe even if certificate
+  state is inconsistent;
+- the Compose effect still clears the flag on Activity disposal;
+- `ProtocolProbeActivity` and first-run no-certificate visual tests are not
+  changed.
+
+TDD evidence:
+
+- RED: focused unit compilation failed because the state policy did not exist;
+- GREEN: forced `SensitiveWindowProtectionTest` run completed 3 tests with 0
+  failures/errors; the policy covers loading/no-certificate, password,
+  unlocking, unlocked, signing and failed states;
+- `CertificateSetupFlowTest` now requires the real window flag to remain set
+  after unlock, background/resume and Activity recreation, and while manually
+  locked.
+
+Fresh global verification:
+
+- `testDebugUnitTest`: 453 tests, 0 failures, 0 errors, 0 skipped;
+- `testQaUnitTest`: 453 tests, 0 failures, 0 errors, 0 skipped;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: 75 tests, 0 failures/errors, 1 skipped;
+- APK alignment: Debug, QA and QA AndroidTest PASS;
+- QA APK Signature Scheme v2: verified, one signer;
+- forbidden exact canary scan: PASS;
+- Debug APK SHA-256:
+  `da984cf742ea8106091d7a1575ddf85f22eafa09207d15f89d5e8fe09376f97a`;
+- QA APK SHA-256:
+  `fe303b10658a8fcf3698e00d42e5714e4d7b42ba28208c8beb196da505963199`;
+- QA AndroidTest APK SHA-256:
+  `3f516205ac62d96fd42de924a7a817b1f9a4723a8a8f878bdc412ff6c133e4d2`.
+
+Physical-device verification:
+
+- `pm install -r`: Success;
+- installed `base.apk` hash exactly matched the QA APK;
+- encrypted unlock cache remained 101 bytes, mode `600`;
+- force-stop/cold launch restored the certificate without a password prompt;
+- `dumpsys window` reported `SECURE` on the restored certificate screen;
+- UniZAR smoke returned `VERIFIED_E2E / OPEN_REQUESTED / WEBVIEW_ACTIVE` and the
+  same MainActivity window still reported `SECURE`.
+
+No certificate screen or authenticated portal screenshot was created or
+committed during this gate.

@@ -55,6 +55,7 @@ import dev.junta.firmamobile.ui.BrowserScreen
 import dev.junta.firmamobile.ui.CertificateUiState
 import dev.junta.firmamobile.ui.CertificateViewModel
 import dev.junta.firmamobile.ui.SensitiveWindowProtection
+import dev.junta.firmamobile.ui.SensitiveWindowStatePolicy
 import dev.junta.firmamobile.ui.WindowSecureFlagPolicy
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
@@ -174,7 +175,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
             SensitiveWindowProtection(
-                enabled = certificateState.value is CertificateUiState.Locked,
+                enabled = SensitiveWindowStatePolicy.requiresSecureWindow(
+                    certificateState = certificateState.value,
+                    signingState = signingState.value,
+                ),
                 updateSecure = updateSecureWindow,
             )
             LaunchedEffect(certificateState.value) {
