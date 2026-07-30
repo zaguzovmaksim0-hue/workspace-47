@@ -363,8 +363,14 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
   flujo como fallo. El certificado no se consume en ese wrapper.
 - **TLS client auth:** no verificado; la evidencia de firma no demuestra ni
   descarta un handshake distinto.
-- **Estado:** `VERIFIED_CONTRACT`; profile exacto y adapter XAdES local
-  implementados, sin aceptación E2E del portal.
+- **Comprobación física 2026-07-30:** `Nuevo registro` y `Mis registros`
+  conducen a `/es/login` y requieren Cl@ve. La firma XAdES observada pertenece
+  al XML de resumen preparado dentro de una solicitud y precede a
+  `saveXMLAutoSign`; no existe un gate público no destructivo que pruebe su
+  aceptación sin avanzar hacia una actuación administrativa.
+- **Estado:** `VERIFIED_CONTRACT / QA_ONLY`; profile exacto y adapter XAdES local
+  implementados, sin aceptación E2E del portal. La evidencia del blocker está en
+  `docs/e2e/2026-07-30-redsara-e2e-blocked.md`.
 - **Evidencia reproducible:** el `main` actual referencia el chunk lazy
   `chunk-64DWZJJG.js`, cuyo SHA-256 revalidado el 2026-07-18 es
   `980d6d49f4d2c660d3f0375fdcd50dcb8743e866403213f759a1c83dcd5382d9`.
@@ -498,8 +504,9 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
    `EXPERIMENTAL`, junto a los perfiles contractuales más recientes.
 2. Las fichas `BROWSE_ONLY` no contienen endpoints, callbacks ni capabilities
    de certificado. Pueden aportar accesos HTTPS visibles, nunca confianza.
-3. REG permanece como entrada activa limitada por contrato y no se anuncia
-   como aceptada por el portal. ACCEDA permanece como candidato estático.
+3. REG permanece como entrada QA limitada por contrato y no se anuncia como
+   aceptada por el portal: Cl@ve y una solicitud administrativa real son
+   precondiciones del XAdES observado. ACCEDA permanece como candidato estático.
    Aragón SIRAW y UniZAR están habilitados solo para sus logins CAdES verificados
    E2E; Storage/Retrieve, firma documental y presentación continúan bloqueados.
 4. AEAT es candidata a la primera investigación de `CLIENT_TLS_AUTH`, pero no

@@ -289,3 +289,17 @@ La investigación identificó dos transiciones relevantes:
 No se registraron valores de firma, certificado, challenge, formulario, cookie,
 contraseña ni identificadores de la persona. La captura visual con identidad fue
 excluida del repositorio.
+
+## Observación 2026-07-30 — RedSARA no ofrece E2E XAdES público no destructivo
+
+En el dispositivo físico, el profile QA abrió `https://reg.redsara.es/es/` con
+el adapter `local-xades-detached-v1`. Tanto `Nuevo registro` como `Mis registros`
+condujeron a `/es/login`; la única identificación visible fue `Accede con tu
+Cl@ve`.
+
+La firma XAdES contractual no es un login. Se ejecuta sobre el XML de resumen de
+una solicitud preparada y el callback continúa con `saveXMLAutoSign`. Probar la
+aceptación real exige autenticación Cl@ve y una actuación administrativa real.
+La investigación se detuvo antes de autenticarse o crear/modificar un registro.
+El estado permanece `VERIFIED_CONTRACT / QA_ONLY`; los tests criptográficos no
+se reinterpretan como aceptación E2E.

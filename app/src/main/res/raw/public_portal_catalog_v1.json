@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "404ce5a5fa2d05c3c1f9ee448f0bd333ebe414ac579eb0d50db6ebe8b92ff980",
+  "sourceRevision": "e339436348db173d2a93dedfefc83f3894377ae1b175c261ad474ea36671563d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -55,10 +55,11 @@
         "P14",
         "P14B",
         "P14C",
-        "P14D"
+        "P14D",
+        "LIVE-REDSARA-2026-07-30"
       ],
-      "reviewedOn": "2026-07-18",
-      "limitations": "Contrato JS estático probado y profile/adapter local implementados; endpoint servidor runtime y aceptación E2E no verificados."
+      "reviewedOn": "2026-07-30",
+      "limitations": "Revalidación física 2026-07-30: Nuevo registro y Mis registros exigen Cl@ve; XAdES solo aparece tras preparar una solicitud, sin E2E público seguro antes de una actuación administrativa."
     },
     {
       "portalId": "age-acceda",

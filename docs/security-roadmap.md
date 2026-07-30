@@ -17,6 +17,9 @@ Completed:
 - Profile/public-catalog E2E consistency gate (F-15A): every bound profile marked
   `VERIFIED_E2E` must have the exact public metadata pair
   `E2E_VERIFIED / VERIFIED_E2E`, and non-E2E profiles cannot carry that pair.
+- RedSARA live gate revalidated on 2026-07-30: both public entry paths require
+  Cl@ve and the XAdES operation belongs to a prepared administrative request;
+  the profile remains `VERIFIED_CONTRACT / QA_ONLY` until a real authorized case.
 - Browser navigation, WebMessage bridge and signing origin bound to the selected profile (F-06).
 - Cross-profile and external HTTP navigation blocked (F-06, F-07).
 - Renderer loss invalidates bridge/signing state and creates a fresh WebView.

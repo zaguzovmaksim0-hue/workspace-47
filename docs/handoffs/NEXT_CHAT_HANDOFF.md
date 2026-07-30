@@ -125,6 +125,22 @@ WARP, и неизменённая сборка выполнила E2E успеш
 - device smoke reports `VERIFIED_E2E / OPEN_REQUESTED / WEBVIEW_ACTIVE` for the
   exact UniZAR profile and adapter.
 
+## RedSARA safe E2E blocker — 2026-07-30
+
+- exact profile `reg-age-redsara`, adapter `local-xades-detached-v1` opened in QA;
+- public routes `Nuevo registro` and `Mis registros` both lead to `/es/login`;
+- the only visible authentication action is Cl@ve;
+- contractual XAdES signs a prepared application-summary XML and then calls
+  `saveXMLAutoSign`, so portal acceptance requires a real administrative case;
+- no Cl@ve login, draft, form data, XML, signature or submission was created;
+- keep profile version 1, `VERIFIED_CONTRACT / QA_ONLY` and public
+  `E2E_PENDING / IMPLEMENTED_NOT_E2E`;
+- do not promote from local XAdES tests or the Android delivery callback.
+- gate after catalog update: Debug 452/452, QA 452/452, lint and QA build
+  PASS; Python 75 with 1 environmental skip;
+- blocker-only QA APK is built but not installed separately; install the next
+  combined security build instead.
+
 ## Ограничения и следующие задачи
 
 1. Legacy UI Oficina Virtual исправлен только для exact `ws072 /ofvirtual/`;

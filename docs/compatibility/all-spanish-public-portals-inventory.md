@@ -524,10 +524,10 @@ records:
     operation_summary: "Firma del XML de resumen antes de guardarlo en el expediente."
     protocol_evidence: "AutoScript.sign estático; el wrapper consume signatureB64 y llama a saveXMLAutoSign."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P14", "P14B", "P14C", "P14D"]
-    reason: "Contrato JS estático probado y profile/adapter local implementados; endpoint servidor runtime y aceptación E2E no verificados."
-    reviewed_at: "2026-07-18"
-    next_gate: "E2E seguro hasta la aceptación de firma, sin envío administrativo final."
+    evidence_ids: ["P14", "P14B", "P14C", "P14D", "LIVE-REDSARA-2026-07-30"]
+    reason: "Revalidación física 2026-07-30: Nuevo registro y Mis registros exigen Cl@ve; XAdES solo aparece tras preparar una solicitud, sin E2E público seguro antes de una actuación administrativa."
+    reviewed_at: "2026-07-30"
+    next_gate: "Caso administrativo real autorizado: Cl@ve, preparación de solicitud y aceptación XAdES por RedSARA; no usar datos ficticios ni automatizar la presentación."
 
   - inventory_id: "ES-PUB-0003"
     surface_key: "age-acceda"

@@ -853,3 +853,41 @@ Final verification after the reproducible catalog regeneration:
 - QA smoke `OPEN` and `INSPECT` returned profile `unizar-tramitador`, adapter
   `unizar-autoscript-triphase-cades-v1`, support `VERIFIED_E2E` and
   `OPEN_REQUESTED / WEBVIEW_ACTIVE`.
+
+## Milestone P07C — RedSARA safe E2E blocker revalidated — 2026-07-30
+
+The promoted UniZAR QA build was used to reopen the exact `reg-age-redsara`
+profile on a physical Android device. Smoke resolution returned profile
+`reg-age-redsara`, adapter `local-xades-detached-v1` and
+`IMPLEMENTED_NOT_E2E / WEBVIEW_ACTIVE`.
+
+Read-only inspection of the public portal established that both `Nuevo registro`
+and `Mis registros` lead to `/es/login`, where the only visible authentication
+action is Cl@ve. The contractual XAdES operation is not authentication: the
+portal invokes it over an application-summary XML and continues with
+`saveXMLAutoSign`. Consequently, a real acceptance test requires Cl@ve and a
+real authorized administrative case.
+
+The test stopped before Cl@ve and before creating, modifying, signing or saving
+any registration. Profile version 1 remains `VERIFIED_CONTRACT / QA_ONLY`; the
+public catalog remains `E2E_PENDING / IMPLEMENTED_NOT_E2E`. No origin, tuple,
+XAdES adapter, capability or release policy changed.
+
+TDD/catalog evidence:
+
+- RED: the generator test rejected the stale 2026-07-18 limitations;
+- the canonical inventory now records the live Cl@ve/administrative blocker and
+  review date 2026-07-30;
+- the generated public resource must remain byte-for-byte reproducible;
+- no credential, certificate, XML, signature, cookie, form value or case ID was
+  retained.
+
+Fresh verification:
+
+- `testDebugUnitTest`: 452 tests, 0 failures, 0 errors, 0 skipped;
+- `testQaUnitTest`: 452 tests, 0 failures, 0 errors, 0 skipped;
+- `lintDebug`, `lintQa`, `assembleQa`: PASS;
+- Python catalog/tool tests: 75 tests, 0 failures/errors, 1 skipped;
+- public catalog generator reproducibility: PASS;
+- QA APK SHA-256:
+  `ceae0d202796cc8788011aa880fbf6a7aabdca34789caa340f0eae12dcd573cc`.
