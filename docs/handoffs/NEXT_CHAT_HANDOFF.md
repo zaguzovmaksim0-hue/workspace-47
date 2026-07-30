@@ -52,14 +52,18 @@
 - `6538e1a`: безопасный upgrade точного legacy HTTP GET Oficina Virtual на HTTPS;
 - `26230ab`: сворачивание больше не блокирует сертификат и не уничтожает WebView;
 - `b3f1817`: profile version 2, `VERIFIED_E2E / ENABLED`, каталог и UI показывают
-  `VALIDADO CON EL PORTAL` / `Verificado: Firma electrónica`.
+  `VALIDADO CON EL PORTAL` / `Verificado: Firma electrónica`;
+- текущий P07D patch ограничен точным `https://ws072.juntadeandalucia.es/ofvirtual/`
+  и исправляет только три доказанных legacy-дефекта: `MenÃº`, несовместимые
+  Font Awesome 5 classes при загруженном FA 4.1 и Bootstrap Collapse markup без
+  загруженного Collapse JavaScript. Меню и иконки проверены на физическом устройстве.
 
 ## Установленная сборка
 
 - package: `dev.junta.firmamobile`;
 - versionName: `0.1.0-qa`;
 - установленный SHA-256:
-  `880e72d7cd4e69bc61412ae3a75ed976a6857da0c56f37c031073136a1938a11`;
+  `262244e7aa7267808f668ef8ddd67c233266e4dd439dae1fc46c5ad2dcd00518`;
 - локальный QA APK имеет тот же SHA-256;
 - `zipalign`: PASS;
 - APK Signature Scheme v2: PASS, one signer;
@@ -68,14 +72,12 @@
 
 ## Последний QA gate
 
-- QA unit: 442/442, 0 failures/errors/skips;
-- `lintQa`: PASS;
-- `assembleQa`: PASS;
+- Debug unit: 449/449, 0 failures/errors/skips;
+- QA unit: 449/449, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
 - QA APK SHA-256:
-  `880e72d7cd4e69bc61412ae3a75ed976a6857da0c56f37c031073136a1938a11`.
-
-Ранее полный Debug + QA gate также проходил с 442 тестами в каждой variant,
-`lintDebug/lintQa`, `assembleDebug/assembleQa/assembleQaAndroidTest` без ошибок.
+  `262244e7aa7267808f668ef8ddd67c233266e4dd439dae1fc46c5ad2dcd00518`.
 
 ## Сетевой инцидент 30 июля 2026
 
@@ -88,8 +90,8 @@ WARP, и неизменённая сборка выполнила E2E успеш
 
 ## Ограничения и следующие задачи
 
-1. Вёрстка самого старого портала иногда показывает mojibake (`MenÃº`) и
-   повреждённые иконки; это косметика страницы Junta, не сбой подписи.
+1. Legacy UI Oficina Virtual исправлен только для exact `ws072 /ofvirtual/`;
+   не распространять compatibility script на другие сайты без отдельной evidence.
 2. Instrumentation test APK на HyperOS иногда блокируется политикой установки
    `testOnly`; не обходить системную защиту ослаблением приложения.
 3. Release остаётся direct-only; QA relay не нужен для уже подтверждённого

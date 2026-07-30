@@ -176,6 +176,7 @@ class JuntaWebViewClient(
             method = UNKNOWN_METHOD,
         )
         callbacks.onTopLevelUrlChanged(url)
+        OfvirtualPageCompatibility.apply(view, url)
     }
 
     override fun shouldInterceptRequest(

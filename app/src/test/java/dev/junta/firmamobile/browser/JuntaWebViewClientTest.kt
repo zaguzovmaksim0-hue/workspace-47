@@ -9,6 +9,7 @@ import android.webkit.RenderProcessGoneDetail
 import android.webkit.ClientCertRequest
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
+import android.webkit.ValueCallback
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
@@ -249,6 +250,28 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun ofvirtualPageFinishInjectsMenuCompatibilityWithoutTouchingPortalData() {
+        val recordingWebView = RecordingJavascriptWebView(context)
+        val ofvirtualClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-ofvirtual")),
+            currentPageUrl = { OFVIRTUAL_PAGE },
+        )
+
+        ofvirtualClient.onPageFinished(recordingWebView, OFVIRTUAL_PAGE)
+
+        val script = recordingWebView.evaluatedScripts.single()
+        assertTrue(script.contains("MenÃº"))
+        assertTrue(script.contains("Menú"))
+        assertTrue(script.contains("data-toggle=\"collapse\""))
+        assertTrue(script.contains("classList.toggle('show'"))
+        assertFalse(script.contains("firmaB64"))
+        assertFalse(script.contains("certificadoB64"))
+        assertFalse(script.contains("document.cookie"))
+    }
+
+    @Test
     fun topLevelPageLifecycleUpdatesAddressWithoutLoggingTheUrl() {
         val rawUrl =
             "https://www.juntadeandalucia.es/path?secret-canary=value#fragment"
@@ -386,6 +409,15 @@ class JuntaWebViewClientTest {
         override fun getRequestHeaders(): Map<String, String> = emptyMap()
     }
 
+    private class RecordingJavascriptWebView(context: Context) : WebView(context) {
+        val evaluatedScripts = mutableListOf<String>()
+
+        override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
+            evaluatedScripts += script
+            resultCallback?.onReceiveValue("null")
+        }
+    }
+
     private class RecordingBrowserCallbacks : BrowserNavigationCallbacks {
         val events = mutableListOf<String>()
         var rendererView: WebView? = null
@@ -467,5 +499,6 @@ class JuntaWebViewClientTest {
 
     private companion object {
         const val TRUSTED_PAGE = "https://www.juntadeandalucia.es/portal"
+        const val OFVIRTUAL_PAGE = "https://ws072.juntadeandalucia.es/ofvirtual/ovMisTramites/index"
     }
 }

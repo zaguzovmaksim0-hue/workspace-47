@@ -704,3 +704,52 @@ added.
 
 No screenshot of the authenticated area, password, PKCS#12, private key, certificate body,
 signature, cookie or form payload was committed or retained.
+
+## Milestone P07D — Oficina Virtual legacy UI compatibility — 2026-07-30
+
+After the verified certificate login, the authenticated `junta-ofvirtual` pages exposed three
+independent defects in the legacy portal UI:
+
+- the server-produced mobile label contained the exact mojibake string `MenÃº`;
+- the page used Font Awesome 5 classes (`fas`) while loading only Font Awesome 4.1;
+- the markup declared Bootstrap Collapse controls, but Bootstrap Collapse JavaScript was not
+  loaded, so the mobile navigation and Oficina submenu did not open.
+
+The application now applies a narrow, idempotent compatibility patch only to exact HTTPS pages
+on `ws072.juntadeandalucia.es` whose path begins with `/ofvirtual/`. It does not run on other
+hosts, ports, schemes, profiles or paths. The patch:
+
+- replaces only the exact broken navigation label with `Menú`;
+- adds the compatible Font Awesome 4 class only when a rendered `i.fas` glyph is not already
+  using a Font Awesome family;
+- provides a Collapse fallback only when neither jQuery Collapse nor native Bootstrap is
+  available;
+- synchronizes all controls targeting the same collapse element and keeps `aria-expanded` and
+  `collapsed` consistent;
+- observes later DOM additions without reading forms, cookies, certificate fields, signature
+  fields or portal payloads.
+
+Physical-device verification on the installed QA build confirmed that the authenticated
+`/ofvirtual/ovMisTramites/index` page displayed the corrected label and icons, and both the
+mobile navigation menu and the Oficina submenu opened and closed normally. The user independently
+confirmed the corrected display and menu behavior. The patch remains limited to UI compatibility;
+it does not broaden the signing profile or claim validation of later administrative procedures.
+
+Fresh verification:
+
+- `testDebugUnitTest`: 449 tests, 0 failures, 0 errors, 0 skipped;
+- `testQaUnitTest`: 449 tests, 0 failures, 0 errors, 0 skipped;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- QA APK `zipalign -c -p -v 4`: PASS;
+- QA APK Signature Scheme v2: verified, one signer;
+- Debug APK SHA-256:
+  `67b17672e7a681658253af27b2d46840f1bd0c4087d481fd3d64ae2363f55f3d`;
+- QA APK and installed `base.apk` SHA-256:
+  `262244e7aa7267808f668ef8ddd67c233266e4dd439dae1fc46c5ad2dcd00518`;
+- QA AndroidTest APK SHA-256:
+  `8a67d0ca4c32590022de4cf9728a09e32cac501ba85ff62cb71a2021dd4e250f`;
+- encrypted certificate-unlock cache remained present at 101 bytes with mode `600`.
+
+No authenticated screenshot, password, PKCS#12, private key, certificate body, signature, cookie
+or form payload was committed.
