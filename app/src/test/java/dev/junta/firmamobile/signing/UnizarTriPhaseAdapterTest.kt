@@ -98,7 +98,7 @@ class UnizarTriPhaseAdapterTest {
             protocolId = protocolId,
             context = SigningContext(
                 profileId = "unizar-tramitador",
-                profileVersion = 1,
+                profileVersion = 2,
                 origin = origin,
                 navigationId = NavigationId("00000000-0000-4000-8000-000000000082"),
                 observedAt = Instant.parse("2026-07-18T00:00:00Z"),

@@ -34,14 +34,15 @@ delimitada a `CLIENT_TLS_AUTH` en dispositivo físico (2026-07-21, commit
 dc3c231). P16 (Aragón SIRAW) cuenta con `VERIFIED_E2E` limitado al login CAdES
 aceptado por el portal el 2026-07-28. P07B (`junta-ofvirtual`, MiniApplet 1.5)
 cuenta con `VERIFIED_E2E` limitado al login CAdES aceptado por Oficina Virtual
-en dispositivo físico el 2026-07-29.
+en dispositivo físico el 2026-07-29. P17 (Universidad de Zaragoza) cuenta con
+`VERIFIED_E2E` limitado al login CAdES aceptado por el portal el 2026-07-30.
 
-Además de los contratos genéricos, REG/RedSARA, ACCEDA y Universidad de Zaragoza
-publican JavaScript suficiente para `VERIFIED_CONTRACT`; REG/RedSARA y UniZAR
-disponen de profiles/adapters limitados, pero todavía no de aceptación E2E.
-ACCEDA no está implementada. Aragón SIRAW y Oficina Virtual están habilitados
-solo para sus logins observados; Storage/Retrieve, firma documental y
-presentación administrativa permanecen fuera de la evidencia. La integración
+Además de los contratos genéricos, REG/RedSARA y ACCEDA publican JavaScript
+suficiente para `VERIFIED_CONTRACT`; REG/RedSARA dispone de profile/adapter
+limitado, pero todavía no de aceptación E2E. ACCEDA no está implementada.
+Aragón SIRAW, Oficina Virtual y UniZAR están habilitados solo para sus logins
+observados; Storage/Retrieve, firma documental y presentación administrativa
+permanecen fuera de la evidencia. La integración
 histórica Ovorion MiniApplet 1.4 permanece `EXPERIMENTAL` y no hereda el estado
 del profile separado MiniApplet 1.5.
 
@@ -91,7 +92,7 @@ rama heredada y no el API general del producto. [C0]
 | Ayuntamiento | Ayuntamiento de Madrid — `https://sede.madrid.es` | Trámites con certificado en navegador/móvil según el procedimiento | No verificado | `BROWSE_ONLY` |
 | Universidad pública | Universidad de Granada — `https://sede.ugr.es` | Apertura de AutoFirma y elección de certificado para acceder/firmar | No verificado | `BROWSE_ONLY` |
 | Universidad pública | Universidad de Sevilla — `https://sede.us.es` | Autenticación y firma con AutoFirma de escritorio | No verificado | `BROWSE_ONLY` |
-| Universidad pública | Universidad de Zaragoza — `https://tramita.unizar.es` | Firma de challenge de sesión CAdES; tri-phase en móvil | No verificado | `VERIFIED_CONTRACT`; profile/adapter implementados, sin E2E |
+| Universidad pública | Universidad de Zaragoza — `https://tramita.unizar.es` | Firma de challenge de sesión CAdES; tri-phase en móvil | No verificado | `VERIFIED_E2E` limitado al login CAdES aceptado el 2026-07-30; Storage/Retrieve y firma documental bloqueados |
 
 ## 4. Fichas de evidencia por portal
 
@@ -459,14 +460,19 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
   error recibe `(tipo, mensaje)`.
 - **TLS client auth:** no verificado; el flow observado es firma de challenge,
   no una captura de autenticación TLS.
-- **Estado:** `VERIFIED_CONTRACT`; profile y adapter tri-phase implementados,
-  sin aceptación E2E del portal. El profile solo admite el origin exacto, el
+- **E2E 2026-07-30:** la aplicación completó PRE, firma RSA local, POST y
+  callback; el portal aceptó la autenticación y abrió el `Buzón Electrónico`
+  interno con el bloque `Mis Gestiones`. La ejecución terminó sin iniciar ni
+  modificar un trámite administrativo.
+- **Estado:** profile version 2, `VERIFIED_E2E / ENABLED`, exclusivamente para
+  el login CAdES observado. El profile solo admite el origin exacto, el
   challenge precalculado de 20 bytes, `CAdES`, `SHA1withRSA`, las dos
   propiedades observadas y el endpoint `SignatureService` exacto. No habilita
-  `afirma://`, Storage/Retrieve, co-sign ni counter-sign.
-- **Privacidad de la comprobación:** la entrada pública genera un challenge
-  efímero. Se verificaron únicamente nombres de campos, formato y algoritmo;
-  el valor no se conservó ni se copia en este documento.
+  `afirma://`, Storage/Retrieve, co-sign, counter-sign ni firma documental.
+- **Privacidad de la comprobación:** el challenge efímero, certificado, firma,
+  cookies y datos personales no se conservaron. Las capturas originales no se
+  incorporan al repositorio. La evidencia sanitizada está en
+  `docs/e2e/2026-07-30-unizar-auth-success.md`.
 
 ### P19 — Carné Joven Europeo de Andalucía
 
@@ -492,10 +498,10 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
    `EXPERIMENTAL`, junto a los perfiles contractuales más recientes.
 2. Las fichas `BROWSE_ONLY` no contienen endpoints, callbacks ni capabilities
    de certificado. Pueden aportar accesos HTTPS visibles, nunca confianza.
-3. REG y UniZAR son entradas activas limitadas por contrato; siguen sin E2E y
-   no se anuncian como aceptadas por el portal. ACCEDA permanece como candidato
-   estático. Aragón SIRAW está habilitado solo para el login CAdES verificado
-   E2E; Storage/Retrieve y firma documental continúan bloqueados.
+3. REG permanece como entrada activa limitada por contrato y no se anuncia
+   como aceptada por el portal. ACCEDA permanece como candidato estático.
+   Aragón SIRAW y UniZAR están habilitados solo para sus logins CAdES verificados
+   E2E; Storage/Retrieve, firma documental y presentación continúan bloqueados.
 4. AEAT es candidata a la primera investigación de `CLIENT_TLS_AUTH`, pero no
    entra como profile confiable hasta observar host, puerto, key types, issuer
    constraints, frame/origin y resultado real.

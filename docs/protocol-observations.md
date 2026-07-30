@@ -237,8 +237,21 @@ ID, TTL, tuple, tamaño del challenge, propiedades y endpoint antes de red. SHA-
 solo existe detrás de `LEGACY_SHA1`, sin fallback. Aunque AutoScript configura
 Storage/Retrieve, esos endpoints no se habilitan: la interceptación directa de
 `sign` no prueba que deban exponerse como capabilities separadas. El estado
-permanece `VERIFIED_CONTRACT` / `IMPLEMENTED_NOT_E2E` hasta una autenticación
-real segura aceptada por el portal.
+permaneció `VERIFIED_CONTRACT` / `IMPLEMENTED_NOT_E2E` hasta la autenticación
+real segura aceptada por el portal el 2026-07-30.
+
+## Observación 2026-07-30 — UniZAR aceptó la autenticación CAdES
+
+En un dispositivo físico, el profile exacto completó PRE, firma RSA local, POST
+y callback AutoScript. El portal abrió el área interna `Buzón Electrónico` y
+`Mis Gestiones`, por lo que el resultado se considera aceptación E2E del login y
+no solamente entrega de una firma a la página. La comprobación terminó sin
+crear, modificar ni presentar ningún trámite.
+
+El profile se promueve a versión 2, `VERIFIED_E2E / ENABLED`, sin modificar el
+contrato técnico. Storage/Retrieve, cofirma, contrafirma, firma documental y
+presentación administrativa siguen bloqueados. No se retuvieron challenge,
+certificado, firma, cookies ni datos identificativos.
 
 ## Política para nuevas observaciones
 

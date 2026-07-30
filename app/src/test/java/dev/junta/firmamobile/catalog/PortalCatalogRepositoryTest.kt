@@ -75,6 +75,7 @@ class PortalCatalogRepositoryTest {
             ProfileId("carne-joven-andalucia"),
             ProfileId("aragon-siraw"),
             ProfileId("junta-ofvirtual"),
+            ProfileId("unizar-tramitador"),
         )
         verifiedIds.forEach { profileId ->
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
@@ -147,6 +148,30 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalLaunchTarget(profileId, expectedUrl), repository.resolveLaunch(portal))
             assertTrue(portal.limitations.contains("portal real aceptó", ignoreCase = true))
             assertTrue(portal.limitations.contains("login", ignoreCase = true))
+        }
+    }
+
+    @Test
+    fun `unizar verified authentication is enabled in qa and release`() {
+        val profileId = ProfileId("unizar-tramitador")
+        val expectedUrl = java.net.URI(
+            "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
+        )
+
+        listOf(qaRepository, releaseRepository).forEach { repository ->
+            val portal = repository.portals().single { it.profileId == profileId }
+            assertEquals(PortalSupportStatus.VERIFIED_E2E, portal.supportStatus)
+            assertTrue(portal.isEnabled)
+            assertEquals(setOf(SignatureFormat.CADES), portal.signatureFormats)
+            assertEquals(
+                setOf(PortalServiceCapability.ELECTRONIC_SIGNATURE),
+                portal.capabilities,
+            )
+            assertTrue(PortalMechanism.CERTIFICATE_ACCESS in portal.observedMechanisms)
+            assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
+            assertEquals(PortalLaunchTarget(profileId, expectedUrl), repository.resolveLaunch(portal))
+            assertTrue(portal.limitations.contains("portal real aceptó", ignoreCase = true))
+            assertTrue(portal.limitations.contains("autenticación", ignoreCase = true))
         }
     }
 

@@ -114,7 +114,7 @@ object BuiltInSiteProfiles {
     const val JSON = """
 {
   "schemaVersion": 1,
-  "catalogVersion": 9,
+  "catalogVersion": 10,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -222,10 +222,10 @@ object BuiltInSiteProfiles {
     },
     {
       "profileId": "unizar-tramitador",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Universidad de Zaragoza — Oficina Virtual",
-      "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "QA_ONLY",
+      "compatibilityStatus": "VERIFIED_E2E",
+      "activation": "ENABLED",
       "startUrl": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
       "initiatorOrigins": ["https://tramita.unizar.es"],
       "redirectOrigins": [],
@@ -271,7 +271,7 @@ object BuiltInSiteProfiles {
       "evidence": [
         {
           "url": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
-          "reviewedOn": "2026-07-18"
+          "reviewedOn": "2026-07-30"
         },
         {
           "url": "https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js",

@@ -11,8 +11,8 @@ Completed:
 - Junta legacy Ovorion, Carné Joven, Aragón SIRAW and Junta Oficina Virtual are
   tracked separately. Carné Joven `CLIENT_TLS_AUTH` was verified on a physical
   device on 2026-07-21; Aragón login CAdES on 2026-07-28; Oficina Virtual
-  MiniApplet 1.5 login CAdES on 2026-07-29. RedSARA and UniZAR remain `QA_ONLY`;
-  historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL`, is available only under
+  MiniApplet 1.5 login CAdES on 2026-07-29; UniZAR login CAdES on 2026-07-30.
+  RedSARA remains `QA_ONLY`; historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL`, is available only under
   QA policy for sensitive operations, and is excluded from release.
 - Profile/public-catalog E2E consistency gate (F-15A): every bound profile marked
   `VERIFIED_E2E` must have the exact public metadata pair
@@ -24,6 +24,10 @@ Completed:
   origin, 20-byte challenge, local detached CAdES, `SHA1withRSA`, exact
   `mode=explicit` and `filter=nonexpired`; Storage/Retrieve and document-signing
   branches remain blocked.
+- UniZAR login profile version 2 enabled after physical-device E2E acceptance:
+  exact origin, 20-byte precalculated challenge, detached CAdES,
+  `SHA1withRSA`, exact `precalculatedHashAlgorithm=SHA1` and `serverUrl`;
+  Storage/Retrieve, co-sign, counter-sign and document-signing remain blocked.
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 

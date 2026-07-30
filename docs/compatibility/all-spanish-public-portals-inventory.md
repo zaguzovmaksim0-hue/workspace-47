@@ -362,7 +362,7 @@ requiera traducción manual.
 | `P14` | REG/RedSARA | [P14][P14A][P14B][P14C][P14D] | Entrada, manual y JS público con contrato estático. |
 | `P15` | ACCEDA | [P15][P15A][P15B] | Entrada y helper/AutoScript públicos; uso runtime del helper no observado. |
 | `P16` | Gobierno de Aragón / SIRAW | [P16][P16B][P16C] | Entrada y JS público con MiniApplet y Storage/Retrieve. |
-| `P17` | Universidad de Zaragoza | [P17][P17A][P17B] | Entrada e integration JS con firma de challenge y tri-phase móvil. |
+| `P17` | Universidad de Zaragoza | [P17][P17A][P17B] | Entrada e integration JS con firma de challenge y tri-phase móvil; login CAdES aceptado E2E en dispositivo físico el 2026-07-30. |
 | `P18` | Comunidad de Madrid / Cuenta Digital — Carné Joven 53F1 | [P18][P18A][P18B][P18C][P18D][P18E][P18F] | Ficha oficial, métodos de identificación/firma, entrada 53F1 y cadena JS de lookup/redirect autenticado; sin contrato de presentación. |
 | `P19` | IAJ / Carné Joven Europeo de Andalucía | [P19][P19A][P19B][P19C][P19D] | Autenticación CLIENT_TLS_AUTH verificada E2E en dispositivo físico (2026-07-21, commit dc3c231); Zona privada y Solicitar Carné Joven alcanzaron entrada nativa autenticada; firma posterior no E2E. |
 
@@ -1065,14 +1065,14 @@ records:
       - "https://tramita.unizar.es/afirma-signature-storage/StorageService"
       - "https://tramita.unizar.es/afirma-signature-retriever/RetrieveService"
     discovery_state: "REVIEWED"
-    inventory_status: "IMPLEMENTED_NOT_E2E"
+    inventory_status: "VERIFIED_E2E"
     operation_summary: "Firma de challenge de sesión precalculado; tri-phase en móvil."
     protocol_evidence: "Integration JS y AutoScript públicos fijan formato, algoritmo, serverUrl y Storage/Retrieve."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P17", "P17A", "P17B"]
-    reason: "Profile y adapter tri-phase limitados implementados; falta aceptación E2E real del portal."
-    reviewed_at: "2026-07-18"
-    next_gate: "E2E seguro de autenticación sin iniciar una presentación administrativa."
+    evidence_ids: ["P17", "P17A", "P17B", "E2E-UNIZAR-2026-07-30"]
+    reason: "El portal real aceptó la firma CAdES de autenticación y abrió el buzón electrónico; verificación limitada al login observado."
+    reviewed_at: "2026-07-30"
+    next_gate: "Mantener bloqueadas Storage/Retrieve, cofirma, contrafirma, firma documental y presentación administrativa hasta evidencia separada."
 ```
 
 ### 7.2. Directorio oficial de sedes AGE [D11]

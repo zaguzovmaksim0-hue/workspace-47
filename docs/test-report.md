@@ -792,3 +792,64 @@ Fresh verification:
 
 This milestone corrects metadata and release eligibility only. It does not run or claim a new
 portal E2E flow.
+
+## Milestone P08B — UniZAR login VERIFIED_E2E — 2026-07-30
+
+The real `unizar-tramitador` authentication flow was executed on a physical
+Android device using the exact QA profile and a manually controlled personal
+certificate. The application completed the observed 20-byte precalculated
+challenge flow with `SHA1withRSA`, detached `CAdES`, exact
+`precalculatedHashAlgorithm=SHA1`, exact `serverUrl`, PRE, local RSA signing,
+POST and the AutoScript callback. The portal accepted the result and opened its
+authenticated `Buzón Electrónico` area with the `Mis Gestiones` block.
+
+The acceptance build used profile version 1 and QA APK SHA-256
+`190115079eba9c942db9e1fa3a20b4119eac445fef9406c90c4254729cc5fc7f`.
+The subsequent profile promotion is metadata-only: version 2,
+`VERIFIED_E2E / ENABLED`, profile catalog version 10 and public catalog
+`E2E_VERIFIED / VERIFIED_E2E`. Origins, endpoint, capabilities, algorithm,
+format, challenge constraints, properties, callback and transport are unchanged.
+
+The evidence is limited to authentication. Storage/Retrieve, co-sign,
+counter-sign, document signing and administrative submission remain blocked.
+No procedure was created, modified or submitted. Authenticated screenshots are
+not committed because they contain identifying data. No password, PKCS#12,
+private key, certificate, signature, challenge, cookie, session field or case
+content was retained.
+
+TDD evidence before promotion:
+
+- focused profile/catalog/UI tests failed against the previous
+  `VERIFIED_CONTRACT / QA_ONLY` metadata;
+- the public-catalog generator test failed with `E2E_PENDING` instead of the
+  required `E2E_VERIFIED`;
+- after the exact metadata promotion, all focused tests and reproducibility
+  checks passed.
+
+Final verification after the reproducible catalog regeneration:
+
+- `testDebugUnitTest`: 452 tests, 0 failures, 0 errors, 0 skipped;
+- `testQaUnitTest`: 452 tests, 0 failures, 0 errors, 0 skipped;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: 75 tests, 0 failures/errors, 1 skipped;
+- committed public catalog is byte-for-byte reproducible from the inventory;
+- QA APK `zipalign -c -p -v 4`: PASS;
+- QA APK Signature Scheme v2: verified, one signer;
+- QA manifest: `debuggable=true` (expected QA), `allowBackup=false`,
+  `usesCleartextTraffic=false`;
+- forbidden canary scan: no certificate identity, password, PKCS#12, private-key,
+  `firmaB64` or `certificadoB64` markers;
+- Debug APK SHA-256:
+  `c0d79cb55f6d28db69ef92b8734c11331a6076f3855cd429103c96198fecf34b`;
+- QA APK SHA-256:
+  `28373cb7cccf9a8a80347ff06e36192feab29474578a566d9021ef1384b36c61`;
+- QA AndroidTest APK SHA-256:
+  `8a67d0ca4c32590022de4cf9728a09e32cac501ba85ff62cb71a2021dd4e250f`.
+- `pm install -r` of the promoted QA APK: `Success`;
+- local QA APK and installed `base.apk` SHA-256 matched exactly;
+- encrypted certificate-unlock cache remained `101` bytes with mode `600`;
+- force-stop and cold launch restored the certificate without a password prompt;
+- QA smoke `OPEN` and `INSPECT` returned profile `unizar-tramitador`, adapter
+  `unizar-autoscript-triphase-cades-v1`, support `VERIFIED_E2E` and
+  `OPEN_REQUESTED / WEBVIEW_ACTIVE`.

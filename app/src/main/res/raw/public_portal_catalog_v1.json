@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "de02e2ed8092ae2dc1effa548f79c105c502b1d9519534a43e3dd811c6538e52",
+  "sourceRevision": "404ce5a5fa2d05c3c1f9ee448f0bd333ebe414ac579eb0d50db6ebe8b92ff980",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -532,16 +532,17 @@
         "CADES"
       ],
       "protocolFamily": "AUTOSCRIPT_TRIFASICA_MOVIL_CON_STORAGE_RETRIEVE",
-      "catalogStatus": "E2E_PENDING",
-      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P17",
         "P17A",
-        "P17B"
+        "P17B",
+        "E2E-UNIZAR-2026-07-30"
       ],
-      "reviewedOn": "2026-07-18",
-      "limitations": "Profile y adapter tri-phase limitados implementados; falta aceptación E2E real del portal."
+      "reviewedOn": "2026-07-30",
+      "limitations": "El portal real aceptó la firma CAdES de autenticación y abrió el buzón electrónico; verificación limitada al login observado."
     },
     {
       "portalId": "age-administrador-de-infraestructuras-ferroviarias-adif",

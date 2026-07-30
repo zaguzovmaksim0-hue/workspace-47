@@ -54,6 +54,16 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-29", ofvirtual["reviewedOn"])
         self.assertIn("portal real aceptó", ofvirtual["limitations"].lower())
         self.assertIn("login", ofvirtual["limitations"].lower())
+        unizar = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "unizar-tramitador"
+        )
+        self.assertEqual("unizar-tramitador", unizar["profileId"])
+        self.assertEqual("E2E_VERIFIED", unizar["catalogStatus"])
+        self.assertEqual("VERIFIED_E2E", unizar["inventoryStatus"])
+        self.assertEqual("2026-07-30", unizar["reviewedOn"])
+        self.assertIn("portal real aceptó", unizar["limitations"].lower())
+        self.assertIn("autenticación", unizar["limitations"].lower())
         self.assertEqual(
             hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
             catalog["sourceRevision"],

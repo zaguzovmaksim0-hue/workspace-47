@@ -50,7 +50,7 @@ class PortalCatalogScreenTest {
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
         assertEquals(6, compatible.items.size)
-        val verifiedIds = setOf("carne-joven-andalucia", "aragon-siraw", "junta-ofvirtual")
+        val verifiedIds = setOf("carne-joven-andalucia", "aragon-siraw", "junta-ofvirtual", "unizar-tramitador")
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }
                 .all { it.supportStatus == PortalSupportStatus.VERIFIED_E2E },
@@ -138,6 +138,30 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `verified UniZAR card states portal validation and verified signature`() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                PortalCatalogScreen(
+                    repository = repository,
+                    onOpenPortal = {},
+                )
+            }
+        }
+
+        rule.onNodeWithText("Buscar servicio u organismo")
+            .performTextInput("zaragoza")
+        rule.onNodeWithText("Universidad de Zaragoza — Oficina Virtual")
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText("VALIDADO CON EL PORTAL")
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText("Verificado: Firma electrónica")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun `verified Oficina Virtual card states portal validation and verified signature`() {
         rule.setContent {
             JuntaFirmaTheme {
@@ -149,7 +173,7 @@ class PortalCatalogScreenTest {
         }
 
         rule.onNodeWithText("Buscar servicio u organismo")
-            .performTextInput("oficina virtual")
+            .performTextInput("Junta de Andalucía")
         rule.onNode(hasScrollToIndexAction())
             .performScrollToNode(hasText("Junta de Andalucía — Oficina Virtual"))
         rule.onNodeWithText("Junta de Andalucía — Oficina Virtual")

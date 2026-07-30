@@ -101,6 +101,30 @@ WARP, и неизменённая сборка выполнила E2E успеш
 - публичный каталог остаётся `E2E_PENDING / IMPLEMENTED_NOT_E2E`;
 - новый test gate запрещает расхождение E2E-статуса между profile и public catalog.
 
+## UniZAR login VERIFIED_E2E — 2026-07-30
+
+- profile `unizar-tramitador`, acceptance build profile version 1;
+- QA APK SHA-256
+  `190115079eba9c942db9e1fa3a20b4119eac445fef9406c90c4254729cc5fc7f`;
+- exact origin `https://tramita.unizar.es`;
+- 20-byte precalculated challenge, `SHA1withRSA`, detached `CAdES`;
+- exact properties `precalculatedHashAlgorithm=SHA1` and `serverUrl`;
+- PRE → local RSA signature → POST → AutoScript callback → portal accepted;
+- final authenticated area showed `Buzón Electrónico` and `Mis Gestiones`;
+- no procedure was created, modified or submitted;
+- promoted metadata: profile version 2, `VERIFIED_E2E / ENABLED`, profile
+  catalog version 10, public `E2E_VERIFIED / VERIFIED_E2E`;
+- Storage/Retrieve, co-sign, counter-sign and document signing remain blocked.
+- promotion build final gate: Debug 452/452, QA 452/452, Python 75 with
+  1 environmental skip; lint/builds PASS;
+- promoted QA APK SHA-256
+  `28373cb7cccf9a8a80347ff06e36192feab29474578a566d9021ef1384b36c61`.
+- installed `base.apk` matches the same hash; `pm install -r` succeeded;
+- cold launch restored the certificate without password; encrypted cache remained
+  101 bytes, mode 600;
+- device smoke reports `VERIFIED_E2E / OPEN_REQUESTED / WEBVIEW_ACTIVE` for the
+  exact UniZAR profile and adapter.
+
 ## Ограничения и следующие задачи
 
 1. Legacy UI Oficina Virtual исправлен только для exact `ws072 /ofvirtual/`;
@@ -109,8 +133,8 @@ WARP, и неизменённая сборка выполнила E2E успеш
    `testOnly`; не обходить системную защиту ослаблением приложения.
 3. Release остаётся direct-only; QA relay не нужен для уже подтверждённого
    direct E2E и не должен включаться в release.
-4. Следующие порталы (`reg-age-redsara`, `unizar-tramitador`) остаются
-   `VERIFIED_CONTRACT / QA_ONLY`, пока портал реально не примет их E2E.
+4. `reg-age-redsara` остаётся `VERIFIED_CONTRACT / QA_ONLY`, пока портал
+   реально не примет XAdES E2E. UniZAR уже повышен только для login CAdES.
 5. Не сохранять в Git скриншоты кабинета, пароль, PKCS#12, сертификат, подпись,
    cookie или персональные идентификаторы.
 

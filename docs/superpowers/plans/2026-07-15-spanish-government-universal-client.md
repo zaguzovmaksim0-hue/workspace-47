@@ -458,18 +458,19 @@ Pasos:
 Commit previsto solo tras evidencia/E2E:
 `feat: add Universidad de Zaragoza signing profile`.
 
-- [ ] Volver a leer JS público vigente, registrar hash y crear fixture mínima
+- [x] Volver a leer JS público vigente, registrar hash y crear fixture mínima
   sin challenge ni sesión.
-- [ ] Confirmar en debug, sin firmar automáticamente, el transporte móvil,
-  PRE/POST, MIME, response codec, redirects y uso real de Storage/Retrieve.
-- [ ] Verificar que origin, endpoint, CAdES, SHA1 precalculado y callbacks
+- [x] Confirmar el transporte móvil de autenticación, PRE/POST, MIME,
+  response codec y redirects. El login aceptado no requirió exponer
+  Storage/Retrieve; ambas ramas permanecen bloqueadas.
+- [x] Verificar que origin, endpoint, CAdES, SHA1 precalculado y callbacks
   coinciden con la matriz; cualquier divergencia detiene la tarea.
-- [ ] Añadir profile `QA_ONLY`, exact origins/endpoints y `LEGACY_SHA1`.
-- [ ] Reutilizar adapter tri-phase común; no copiar código Junta.
-- [ ] Parser/origin/redirect/replay/TTL/iframe/callback/network tests.
-- [ ] Ejecutar E2E manual de acceso sin producir trámite administrativo; solo
+- [x] Añadir profile inicialmente `QA_ONLY`, exact origins/endpoints y `LEGACY_SHA1`; promoverlo solo tras E2E.
+- [x] Reutilizar adapter tri-phase común; no copiar código Junta.
+- [x] Parser/origin/redirect/replay/TTL/iframe/callback/network tests.
+- [x] Ejecutar E2E manual de acceso sin producir trámite administrativo; solo
   después promover status/activation.
-- [ ] Repetir Junta E2E, gates globales y commit del profile aislado.
+- [x] Repetir los gates globales y conservar la evidencia E2E previa de Junta; commit del profile aislado.
 
 Si el flujo exige datos/decisión personal más allá del login, detenerse en la
 pantalla exacta y pedir la acción manual.
