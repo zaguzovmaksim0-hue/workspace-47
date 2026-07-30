@@ -2,6 +2,7 @@ package dev.junta.firmamobile
 
 import android.app.Application
 import android.util.Log
+import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
 import dev.junta.firmamobile.certificate.AndroidKeystoreCertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
@@ -30,6 +31,9 @@ class JuntaFirmaApplication : Application() {
     lateinit var sanitizedLogger: SanitizedLogger
         internal set
 
+    lateinit var clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator
+        internal set
+
     internal lateinit var secureTunnelRuntime: SecureTunnelRuntime
         private set
 
@@ -43,6 +47,7 @@ class JuntaFirmaApplication : Application() {
             },
         )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
+        clientCertPreferenceCoordinator = ClientCertPreferenceCoordinator()
         certificateSession = CertificateSession()
         certificateUnlockCache = AndroidKeystoreCertificateUnlockCache(this)
         certificateGateway = CertificateRepository(

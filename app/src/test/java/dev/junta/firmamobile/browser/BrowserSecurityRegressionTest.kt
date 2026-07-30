@@ -241,6 +241,87 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun clientTlsWebViewWaitsForGenerationBoundPreferenceBarrier() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val barrierSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/ClientCertPreferenceBarrier.kt",
+        )
+        val coordinatorSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/ClientCertPreferenceCoordinator.kt",
+        )
+
+        assertTrue(
+            "Client TLS entry must request a process-scoped asynchronous clear",
+            "clientCertPreferenceCoordinator.requestClear" in screenSource &&
+                "ClientCertPreferenceClearResult.CLEARED" in screenSource,
+        )
+        assertTrue(
+            "The dedicated grant may be activated only inside the successful callback",
+            "clientAuthGrant = grant" in screenSource &&
+                "clientAuthClearRequest.compareAndSet" in screenSource,
+        )
+        assertFalse(
+            "BrowserScreen must never call the platform static preference API directly",
+            "WebView.clearClientCertPreferences" in screenSource,
+        )
+        assertFalse(
+            "A confirmed target must not directly activate a Client TLS grant",
+            "clientAuthGrant = ClientAuthGrant" in screenSource,
+        )
+        assertTrue(
+            "Timeout must be exactly three seconds and callbacks generation-bound",
+            "Duration.ofSeconds(3)" in barrierSource &&
+                "token.generation" in barrierSource &&
+                "finishSuccess(token)" in coordinatorSource,
+        )
+        assertTrue(
+            "Renderer, disposal, profile and background paths must use process cleanup",
+            "DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator)" in screenSource &&
+                "DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator)" in screenSource &&
+                "Lifecycle.Event.ON_STOP" in screenSource &&
+                "abandonClientAuth" in screenSource,
+        )
+        assertTrue(
+            "Post-callback validation failures must share one fail-closed recovery path",
+            "recoverClientAuthPreparationFailure(requestAnotherClear" in screenSource,
+        )
+        assertTrue(
+            "Profile changes must recreate local authorizer and callback ownership",
+            "remember(selectedServiceId)" in screenSource &&
+                "AtomicReference<ClientCertPreferenceClearRequest?>" in screenSource,
+        )
+    }
+
+    @Test
+    fun clientCertPreferenceFailureIsProcessScopedAndBlocksWebViewCreation() {
+        val appSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/JuntaFirmaApplication.kt",
+        )
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+
+        assertTrue(
+            "The preference coordinator must be owned by the Application process",
+            "clientCertPreferenceCoordinator" in appSource &&
+                "ClientCertPreferenceCoordinator" in appSource,
+        )
+        assertTrue(
+            "CLEARING or FAILED must suppress all AndroidView creation",
+            "clientCertPreferenceState" in screenSource &&
+                "ClientCertPreferenceBarrierState.IDLE" in screenSource &&
+                "if (!clientCertPreferenceBlocked)" in screenSource,
+        )
+        assertTrue(
+            "A failed process-wide clear must have a distinct recovery request",
+            "beginClientCertPreferenceRecovery" in screenSource &&
+                "ClientCertPreferenceClearResult.CLEARED" in screenSource,
+        )
+    }
+
+    @Test
     fun rendererDeathInvalidatesBothNormalAndClientTlsSessions() {
         val clientSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/browser/JuntaWebViewClient.kt",
@@ -273,7 +354,8 @@ class BrowserSecurityRegressionTest {
         assertTrue(
             "Renderer death must force a fresh WebView",
             "webViewRecreationEpoch++" in screenSource &&
-                "key(clientAuthGrant != null, webViewRecreationEpoch)" in screenSource,
+                "if (!clientCertPreferenceBlocked) key(" in screenSource &&
+                "webViewRecreationEpoch" in screenSource,
         )
         assertFalse(
             "A fresh WebView must never restore the dead renderer's history",

@@ -83,6 +83,8 @@
     <string name="browser_retry">Reintentar</string>
     <string name="browser_compatibility_error">Este WebView no ofrece el bridge seguro requerido. La firma permanece deshabilitada.</string>
     <string name="browser_load_error">No se pudo cargar el portal de forma segura.</string>
+    <string name="browser_client_cert_preferences_error">No se pudo preparar una sesión nueva de certificado. Vuelve a iniciar el acceso.</string>
+    <string name="browser_client_cert_preferences_clearing">Preparando una sesión nueva de certificado…</string>
     <string name="browser_play_store_blocked">Se bloqueó el intento de abrir AutoFirma o Google Play.</string>
     <string name="browser_navigation_blocked">Se bloqueó una navegación no permitida.</string>
     <string name="afirma_request_observed_title">Solicitud de firma interceptada</string>

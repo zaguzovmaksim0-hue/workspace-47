@@ -186,6 +186,25 @@ keystore fuera del repo con permisos privados, v2/v3, `apksigner`, `zipalign`,
 SHA-256 y fingerprint registrados.
 **Verificación:** release checklist y análisis del APK final.
 
+### T12. Una decisión Client TLS cacheada sobrevive al lifecycle o se reutiliza
+
+**Riesgo:** WebView reutiliza una preferencia de certificado cliente después de
+background, cambio de profile, bloqueo, renderer death o recreación de Activity;
+un callback tardío puede activar un grant viejo antes de que la limpieza global
+haya terminado.
+**Controles:** `ClientCertPreferenceCoordinator` pertenece al proceso y modela
+`IDLE/CLEARING/FAILED` con generation token. La creación de cualquier WebView de
+portal queda bloqueada durante `CLEARING` y `FAILED`. El timeout es de tres
+segundos; excepción, ausencia de callback o mismatch posterior de profile, epoch
+o TTL fallan cerrados. El callback UI puede desacoplarse sin cancelar la limpieza
+del proceso y una generation anterior nunca puede reactivar un grant. Solo una
+limpieza posterior confirmada vuelve a `IDLE`. La clave y el certificado no se
+guardan en el coordinator.
+**Verificación:** tests deterministas de callback síncrono/tardío/ausente,
+timeout, excepción, supersession, cancelación del listener y retry; source
+regressions para impedir el API estático en `BrowserScreen`; instrumentation del
+callback Android real sin WebView ni portal.
+
 ## 5. Decisiones explícitas
 
 - No localhost WSS, puertos 63117/63118/63119/17629, CA local ni trust bypass.

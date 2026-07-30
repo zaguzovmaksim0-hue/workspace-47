@@ -148,6 +148,22 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - strings con comillas, saltos y secuencias JS no producen inyección;
 - mensajes fuera del navigation id activo se rechazan.
 
+### ClientCertPreferenceBarrierTest / ClientCertPreferenceCoordinatorTest
+
+- estado inicial `IDLE`; ninguna navegación se habilita antes del callback;
+- timeout exacto de tres segundos deja `FAILED` persistente a nivel de proceso;
+- callback tardío, generation anterior y segundo consumo se ignoran;
+- callback síncrono no deja una tarea de timeout activa;
+- excepción del API y ausencia de callback fallan cerradas;
+- una nueva limpieza supersede la generation anterior y solo su callback puede
+  recuperar `IDLE`;
+- desacoplar el listener de una Activity no cancela la limpieza global;
+- el coordinator no conserva certificado, clave, WebView, URL ni datos del
+  challenge;
+- `BrowserScreen` no llama directamente a
+  `WebView.clearClientCertPreferences` y no crea `AndroidView` en `CLEARING` o
+  `FAILED`.
+
 ### SanitizedLoggerTest
 
 - solo acepta campos allowlisted;
@@ -183,6 +199,10 @@ Ejecutar en API 36 real o emulador equivalente:
   exacto/limitado/fallido;
 - cerrar sesión bloquea el certificado sin borrar datos de otros portales;
 - borrar todos los datos web requiere una confirmación separada.
+- el callback Android real de `clearClientCertPreferences` produce
+  `CLEARING → IDLE` sin abrir WebView, portal ni certificado;
+- el classifier IPv6 físico confirma IPv6 global ordinario, NAT64 con IPv4
+  público y rechazo de NAT64 con IPv4 no público.
 
 Los tests de WebView usarán contenido controlado e interceptores/test server;
 no dependerán del portal real para ser deterministas. La configuración release

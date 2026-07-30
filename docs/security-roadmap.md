@@ -49,10 +49,18 @@ Completed:
   well-known NAT64 `64:ff9b::/96` is accepted only when the embedded IPv4 passes
   the existing public IPv4 policy. Hostname/SNI and connected-peer pinning are
   unchanged.
+- Process-scoped Client TLS preference lifecycle completed (F-13): a single
+  `ClientCertPreferenceCoordinator` owns the asynchronous WebView preference
+  clear for the process. `CLEARING` and sticky `FAILED` suppress every portal
+  WebView; a dedicated Client TLS grant is activated only after the generation-
+  bound callback, exact profile/epoch/TTL revalidation and one-shot consumption.
+  Timeout is three seconds; late callbacks, Activity recreation, background,
+  renderer death, certificate lock and profile switch fail closed. A later
+  successful clear is the only in-process recovery.
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 
-Latest completed isolated PR — public IPv6 DNS results (F-17):
+Completed isolated PR — public IPv6 DNS results (F-17):
 
 - `PublicIpAddressPolicy` classifies resolved `InetAddress` values before any
   HTTP bytes are created.
@@ -64,14 +72,27 @@ Latest completed isolated PR — public IPv6 DNS results (F-17):
   uses only the approved DNS set and verifies the actual connected address.
 - The Go relay mirrors the classifier, rejects unsafe mixed DNS sets, dials a
   bracketed IPv6 literal and verifies the exact remote peer.
-- QA instrumentation compiled, but the device-only classifier run is
-  `NOT_RUN_ENVIRONMENTAL` because the Shizuku server was unavailable; no F-17
-  APK was installed.
+- Physical-device `PublicIpAddressPolicyInstrumentedTest` now passes on the
+  production Android `InetAddress` implementation. This closes the deferred
+  classifier gate; it is not a live IPv6 route or portal E2E claim.
+
+Latest completed isolated PR — process-scoped Client TLS preference barrier (F-13):
+
+- `JuntaFirmaApplication` owns one coordinator for the entire app process.
+- `WebView.clearClientCertPreferences` is isolated behind one Android adapter;
+  `BrowserScreen` cannot call it directly.
+- `CLEARING` and `FAILED` prevent normal and dedicated `AndroidView` creation.
+- Timeout, exception and post-callback profile/epoch/TTL mismatch fail closed;
+  the `FAILED` state survives Activity recreation and ignores stale callbacks.
+- Retry issues a new generation and only a completed platform callback returns
+  the process to `IDLE`.
+- Physical-device instrumentation exercised the real Android clear callback
+  without opening a portal, reading a certificate or starting a signature.
 
 Next isolated PRs:
 
-1. Remaining Client TLS portals and grant-lifecycle hardening beyond the already
-   verified Carné Joven scenario (F-03, F-13).
+1. Additional Client TLS portals beyond the already verified Carné Joven
+   scenario, only after exact runtime contract and physical E2E evidence (F-03).
 2. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
 3. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
 4. CI, lint, secret/dependency scanning and signer verification (F-14).

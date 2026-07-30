@@ -25,6 +25,7 @@ enum class BrowserErrorCode {
     SSL_ERROR,
     RENDER_PROCESS_GONE,
     SAFE_BROWSING,
+    CLIENT_CERT_PREFERENCES,
 }
 
 interface BrowserNavigationCallbacks {

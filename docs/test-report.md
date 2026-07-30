@@ -1068,8 +1068,79 @@ Fresh global verification:
 - QA AndroidTest APK SHA-256:
   `7182651ac0926cf65f4bcf0a6cd067b819f5a512a92d1a2e54c20f8f21a21acf`.
 
-Device-only classifier instrumentation compiled successfully but was not run:
-Shizuku/rish timed out and no ADB device was connected. The failure occurred
-before `pm install`; the F-17 QA APK was not installed and the existing F-08 app
-data were not modified. Status: `NOT_RUN_ENVIRONMENTAL`, not PASS. This milestone
-does not claim a live IPv6 route or portal E2E.
+The previously deferred device classifier gate was completed during the F-13
+installation. `PublicIpAddressPolicyInstrumentedTest` returned `OK (1 test)` on
+the physical Android implementation with the reviewed revision `2025-10-09`:
+ordinary global IPv6 and NAT64 with a public embedded IPv4 were accepted, while
+NAT64 with a non-public embedded IPv4 was rejected. This is a classifier test,
+not a live IPv6 route or portal E2E claim.
+
+## Milestone F13 — process-scoped Client TLS preference lifecycle — 2026-07-30
+
+The previous Client TLS flow invoked `WebView.clearClientCertPreferences`
+asynchronously but could create or recreate a WebView before a reliable process-
+wide completion barrier. A missing callback or Activity recreation could lose the
+failure state, and late callbacks had no shared generation owner.
+
+F-13 adds one process-scoped boundary:
+
+- `JuntaFirmaApplication` owns `ClientCertPreferenceCoordinator`;
+- the coordinator publishes `IDLE`, `CLEARING` and sticky `FAILED` state;
+- the platform static API exists only in `AndroidClientCertPreferenceClearer`;
+- every portal `AndroidView` is suppressed during `CLEARING` or `FAILED`;
+- timeout is exactly three seconds and exception/timeout remain fail-closed;
+- callbacks are generation-bound; superseded or late callbacks cannot activate a
+  grant or clear a newer failure;
+- a Client TLS grant is activated only after `CLEARED` plus exact profile,
+  navigation epoch and TTL revalidation;
+- background, Activity disposal, renderer death, certificate lock and profile
+  switch detach local callbacks and request process cleanup;
+- only a later successful clear returns the process to `IDLE`;
+- the coordinator stores no certificate, private key, WebView, URL, cookie or
+  signed payload.
+
+TDD and regression evidence:
+
+- RED: coordinator and process-owned WebView gate were absent;
+- barrier tests: 7/7;
+- coordinator tests: 7/7, including synchronous callback, timeout, exception,
+  retry, supersession, listener cancellation and stale callback;
+- Client TLS authorizer/request-handler/dedicated-WebView tests: 16/16;
+- browser security source regressions: 11/11;
+- QA AndroidTest compilation: PASS.
+
+Fresh global verification:
+
+- `testDebugUnitTest`: 489 tests, 0 failures/errors/skips;
+- `testQaUnitTest`: 489 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
+- APK alignment: Debug, QA and QA AndroidTest PASS;
+- APK Signature Scheme v2: verified, one signer for all three artifacts;
+- QA manifest: `debuggable=true` (expected QA), `allowBackup=false`,
+  `usesCleartextTraffic=false`, not `testOnly`;
+- exact forbidden-canary scan: PASS;
+- Debug APK SHA-256:
+  `9fb8c65c11f446ea4bce2d87c140e02a034748656f12e9a68c3649507aec87fe`;
+- QA APK SHA-256:
+  `8547b3e45cd27636b6b716059fbc216e7cc5cff93c3fc2dca69149f18dad3477`;
+- QA AndroidTest APK SHA-256:
+  `73bfc781ee2e3eabf275dcdaca811efc398c0735fdbcbf29493e4367b68ea618`.
+
+Physical-device verification:
+
+- target and test APK installation: `Success`;
+- installed `base.apk` exactly matched the QA hash;
+- `ClientCertPreferenceCoordinatorInstrumentedTest`: `OK (1 test)` using the
+  real Android preference-clear callback without opening a WebView or portal;
+- the deferred F-17 classifier instrumentation also returned `OK (1 test)`;
+- encrypted 24-hour unlock cache remained 101 bytes, mode `600`;
+- force-stop/cold launch restored the unlocked certificate without a password
+  prompt and the MainActivity window retained `FLAG_SECURE`;
+- the test package and staging files were removed and ChatGPT was returned to the
+  foreground.
+
+This milestone hardens the already observed Carné Joven Client TLS lifecycle. It
+does not verify or enable any additional Client TLS portal; that remains F-03.

@@ -28,9 +28,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -44,6 +49,10 @@ import dev.junta.firmamobile.browser.BrowserTrustController
 import dev.junta.firmamobile.browser.BrowserUrlPolicy
 import dev.junta.firmamobile.browser.AuthorizedClientAuthTarget
 import dev.junta.firmamobile.browser.ClientAuthGrant
+import dev.junta.firmamobile.browser.ClientCertPreferenceClearRequest
+import dev.junta.firmamobile.browser.ClientCertPreferenceClearResult
+import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
+import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
 import dev.junta.firmamobile.browser.ClientAuthNavigationAuthorizer
 import dev.junta.firmamobile.browser.ClientAuthRequestHandler
 import dev.junta.firmamobile.browser.ClientAuthWebViewClient
@@ -90,11 +99,16 @@ fun BrowserScreen(
     onLockCertificate: () -> Unit,
     onClearSession: () -> Unit,
     clientCertificateIdentityProvider: () -> UnlockedIdentity?,
+    clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator,
     onWebViewChanged: (WebView?) -> Unit,
     onNavigationEpochChanged: (Long) -> Unit = {},
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val selectedServiceId = profileId
+    val clientCertPreferenceState by
+        clientCertPreferenceCoordinator.state.collectAsStateWithLifecycle()
+    val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
@@ -130,9 +144,13 @@ fun BrowserScreen(
     val navigationPolicy = remember(selectedServiceId) {
         JuntaNavigationPolicy(selectedServiceId)
     }
-    val clientAuthAuthorizer = remember {
+    val clientAuthAuthorizer = remember(selectedServiceId) {
         ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.runtimeRegistry)
     }
+    val clientAuthClearRequest = remember(selectedServiceId) {
+        AtomicReference<ClientCertPreferenceClearRequest?>()
+    }
+    var clientAuthPreparing by remember(selectedServiceId) { mutableStateOf(false) }
     var clientAuthGrant by remember { mutableStateOf<ClientAuthGrant?>(null) }
     var pendingClientAuthTarget by remember {
         mutableStateOf<AuthorizedClientAuthTarget?>(null)
@@ -148,6 +166,8 @@ fun BrowserScreen(
     }
     var pageProgress by remember { mutableIntStateOf(100) }
     var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
+    val clientCertPreferenceBlocked =
+        clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing
 
     fun advanceNavigationEpoch() {
         bridgeRef.get()?.abandonMiniAppletRequests()
@@ -156,11 +176,110 @@ fun BrowserScreen(
         onNavigationEpochChanged(navigationEpoch.longValue)
     }
 
+    fun cancelClientAuthClearCallback() {
+        clientAuthClearRequest.getAndSet(null)?.let(
+            clientCertPreferenceCoordinator::cancelCallback,
+        )
+        clientAuthPreparing = false
+    }
+
+    fun requestProcessClientCertPreferenceClear() {
+        clientCertPreferenceCoordinator.requestClear()
+    }
+
     fun abandonClientAuth() {
-        dedicatedClientRef.getAndSet(null)?.abandon()
+        cancelClientAuthClearCallback()
+        pendingClientAuthTarget = null
+        clientAuthGrant = null
+        val dedicatedClient = dedicatedClientRef.getAndSet(null)
         dedicatedWebViewRef.set(null)
         clientAuthAuthorizer.invalidate()
-        WebView.clearClientCertPreferences(null)
+        if (dedicatedClient != null) {
+            dedicatedClient.abandon()
+        } else {
+            requestProcessClientCertPreferenceClear()
+        }
+    }
+
+    fun recoverClientAuthPreparationFailure(requestAnotherClear: Boolean) {
+        cancelClientAuthClearCallback()
+        pendingClientAuthTarget = null
+        clientAuthGrant = null
+        val dedicatedClient = dedicatedClientRef.getAndSet(null)
+        dedicatedWebViewRef.set(null)
+        clientAuthAuthorizer.invalidate()
+        if (dedicatedClient != null) {
+            dedicatedClient.abandon()
+        } else if (requestAnotherClear) {
+            requestProcessClientCertPreferenceClear()
+        }
+        pendingNormalUrl.set(validatedEntryUrl)
+        bridgeRef.getAndSet(null)?.close()
+        advanceNavigationEpoch()
+        onCancelSigning(SigningCancelReason.NAVIGATION, null)
+        browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+        pageProgress = 100
+        webViewRecreationEpoch++
+    }
+
+    fun beginClientAuthPreparation(grant: ClientAuthGrant) {
+        cancelClientAuthClearCallback()
+        clientAuthGrant = null
+        browserError = null
+        pageProgress = 0
+        clientAuthPreparing = true
+        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+            mainHandler.post {
+                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                clientAuthPreparing = false
+                when (result) {
+                    ClientCertPreferenceClearResult.CLEARED -> {
+                        if (grant.authorized.profileId != effectiveTopLevelProfileId ||
+                            grant.navigationEpoch != navigationEpoch.longValue ||
+                            !java.time.Instant.now().isBefore(grant.authorized.expiresAt)
+                        ) {
+                            recoverClientAuthPreparationFailure(requestAnotherClear = true)
+                            return@post
+                        }
+                        clientAuthGrant = grant
+                    }
+
+                    ClientCertPreferenceClearResult.FAILED -> {
+                        recoverClientAuthPreparationFailure(requestAnotherClear = false)
+                    }
+                }
+            }
+        }
+        clientAuthClearRequest.set(request)
+    }
+
+    fun beginClientCertPreferenceRecovery() {
+        cancelClientAuthClearCallback()
+        pendingClientAuthTarget = null
+        clientAuthGrant = null
+        pendingNormalUrl.set(validatedEntryUrl)
+        browserError = null
+        pageProgress = 0
+        clientAuthPreparing = true
+        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+            mainHandler.post {
+                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                clientAuthPreparing = false
+                when (result) {
+                    ClientCertPreferenceClearResult.CLEARED -> {
+                        browserError = null
+                        pageProgress = 0
+                        webViewRecreationEpoch++
+                    }
+
+                    ClientCertPreferenceClearResult.FAILED -> {
+                        browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                        pageProgress = 100
+                    }
+                }
+            }
+        }
+        clientAuthClearRequest.set(request)
     }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
@@ -172,6 +291,7 @@ fun BrowserScreen(
         onOpenExternal,
         onCancelSigning,
         onWebViewChanged,
+        clientCertPreferenceCoordinator,
     ) {
         object : BrowserNavigationCallbacks {
             override fun openExternal(uri: Uri) {
@@ -257,7 +377,7 @@ fun BrowserScreen(
     }
 
     BackHandler(onBack = ::goBack)
-    DisposableEffect(onCancelSigning) {
+    DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeRef.getAndSet(null)?.close()
@@ -268,6 +388,28 @@ fun BrowserScreen(
             }
             abandonClientAuth()
         }
+    }
+
+    DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                val hadClientAuthState = pendingClientAuthTarget != null ||
+                    clientAuthGrant != null ||
+                    clientAuthPreparing ||
+                    currentClientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE
+                pendingClientAuthTarget = null
+                clientAuthGrant = null
+                if (hadClientAuthState) pendingNormalUrl.set(validatedEntryUrl)
+                abandonClientAuth()
+                if (hadClientAuthState) {
+                    advanceNavigationEpoch()
+                    onCancelSigning(SigningCancelReason.BACKGROUND, null)
+                    webViewRecreationEpoch++
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val selectedProfile = BuiltInSiteProfiles.runtimeRegistry.profile(selectedServiceId)
@@ -388,37 +530,51 @@ fun BrowserScreen(
                 compatibilityError = compatibilityError,
                 blockedReason = blockedReason,
                 browserError = browserError,
+                clientCertPreferenceState = clientCertPreferenceState,
                 dataNotice = dataNotice,
             )
             notice?.let { message ->
                 BrowserNoticeBanner(
                     message = message,
-                    onRetry = if (browserError != null) {
-                        {
-                            onCancelSigning(SigningCancelReason.RELOAD, null)
-                            browserError = null
-                            pageProgress = 0
-                            if (clientAuthGrant != null) {
-                                val activeStartUrl = BuiltInSiteProfiles.runtimeRegistry
-                                    .profile(selectedServiceId)
-                                    ?.startUrl
-                                    ?.toASCIIString()
-                                    ?: validatedEntryUrl
-                                pendingNormalUrl.set(activeStartUrl)
-                                clientAuthGrant = null
-                                abandonClientAuth()
-                                advanceNavigationEpoch()
-                            } else {
-                                webViewRef.get()?.reload()
+                    onRetry = when {
+                        clientCertPreferenceState == ClientCertPreferenceBarrierState.FAILED ||
+                            browserError == BrowserErrorCode.CLIENT_CERT_PREFERENCES -> {
+                            { beginClientCertPreferenceRecovery() }
+                        }
+
+                        browserError != null -> {
+                            {
+                                onCancelSigning(SigningCancelReason.RELOAD, null)
+                                browserError = null
+                                pageProgress = 0
+                                if (clientAuthGrant != null) {
+                                    val activeStartUrl = BuiltInSiteProfiles.runtimeRegistry
+                                        .profile(selectedServiceId)
+                                        ?.startUrl
+                                        ?.toASCIIString()
+                                        ?: validatedEntryUrl
+                                    pendingNormalUrl.set(activeStartUrl)
+                                    clientAuthGrant = null
+                                    abandonClientAuth()
+                                    advanceNavigationEpoch()
+                                } else {
+                                    webViewRef.get()?.reload()
+                                }
                             }
                         }
-                    } else {
-                        null
+
+                        else -> null
                     },
                 )
             }
-            BrowserLoadingIndicator(visible = pageProgress in 0..99)
-            key(clientAuthGrant != null, webViewRecreationEpoch) {
+            BrowserLoadingIndicator(
+                visible = clientCertPreferenceState == ClientCertPreferenceBarrierState.CLEARING ||
+                    clientAuthPreparing || pageProgress in 0..99,
+            )
+            if (!clientCertPreferenceBlocked) key(
+                clientAuthGrant != null,
+                webViewRecreationEpoch,
+            ) {
                 AndroidView(
                     factory = {
                     TrustedJuntaWebView(context).also { webView ->
@@ -490,7 +646,9 @@ fun BrowserScreen(
                                 identityProvider = clientCertificateIdentityProvider,
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 clearClientCertPreferences = {
-                                    webView.post { WebView.clearClientCertPreferences(null) }
+                                    mainHandler.post {
+                                        clientCertPreferenceCoordinator.requestClear()
+                                    }
                                 },
                             )
                             val client = ClientAuthWebViewClient(
@@ -501,13 +659,7 @@ fun BrowserScreen(
                             dedicatedClientRef.set(client)
                             dedicatedWebViewRef.set(webView)
                             webView.webViewClient = client
-                            WebView.clearClientCertPreferences {
-                                webView.post {
-                                    if (webViewRef.get() === webView) {
-                                        webView.loadUrl(tlsGrant.authorized.target.toASCIIString())
-                                    }
-                                }
-                            }
+                            webView.loadUrl(tlsGrant.authorized.target.toASCIIString())
                         }
                         if (tlsGrant == null) {
                             val requestedUrl = pendingNormalUrl.getAndSet(null)
@@ -559,9 +711,12 @@ fun BrowserScreen(
                     advanceNavigationEpoch()
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
                     bridgeRef.getAndSet(null)?.close()
-                    clientAuthGrant = ClientAuthGrant(
-                        authorized = authorized,
-                        navigationEpoch = navigationEpoch.longValue,
+                    webViewRef.get()?.stopLoading()
+                    beginClientAuthPreparation(
+                        ClientAuthGrant(
+                            authorized = authorized,
+                            navigationEpoch = navigationEpoch.longValue,
+                        ),
                     )
                 }
             },
@@ -735,9 +890,16 @@ private fun browserNotice(
     compatibilityError: Boolean,
     blockedReason: NavigationBlockReason?,
     browserError: BrowserErrorCode?,
+    clientCertPreferenceState: ClientCertPreferenceBarrierState,
     dataNotice: String?,
 ): String? = when {
+    clientCertPreferenceState == ClientCertPreferenceBarrierState.CLEARING ->
+        stringResource(R.string.browser_client_cert_preferences_clearing)
+    clientCertPreferenceState == ClientCertPreferenceBarrierState.FAILED ->
+        stringResource(R.string.browser_client_cert_preferences_error)
     compatibilityError -> stringResource(R.string.browser_compatibility_error)
+    browserError == BrowserErrorCode.CLIENT_CERT_PREFERENCES ->
+        stringResource(R.string.browser_client_cert_preferences_error)
     browserError != null -> stringResource(R.string.browser_load_error)
     blockedReason == NavigationBlockReason.PLAY_STORE_FALLBACK ->
         stringResource(R.string.browser_play_store_blocked)

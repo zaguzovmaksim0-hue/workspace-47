@@ -62,11 +62,9 @@
 
 - package: `dev.junta.firmamobile`;
 - versionName: `0.1.0-qa`;
-- установленный SHA-256 (последняя физически подтверждённая F-08 сборка):
-  `40f03d634b5053b0b79a217b88edf65ca32a3c57c5b36d0371ab968f9bc558b7`;
-- текущий локальный F-17 QA APK имеет SHA-256
-  `46788b0c65380aab91ff02bccde2d5f4dafe931320bf58fe4e7e645e5772c013`
-  и не установлен из-за недоступного Shizuku/ADB;
+- установленный SHA-256 (физически подтверждённая F-13 сборка):
+  `8547b3e45cd27636b6b716059fbc216e7cc5cff93c3fc2dca69149f18dad3477`;
+- F-13 QA APK установлен поверх данных; локальный APK и `base.apk` совпадают;
 - `zipalign`: PASS;
 - APK Signature Scheme v2: PASS, one signer;
 - direct-only: tunnel выключен, relay tuple отсутствует;
@@ -74,22 +72,24 @@
 
 ## Последний QA gate
 
-- Debug unit: 473/473, 0 failures/errors/skips;
-- QA unit: 473/473, 0 failures/errors/skips;
+- Debug unit: 489/489, 0 failures/errors/skips;
+- QA unit: 489/489, 0 failures/errors/skips;
 - `lintDebug`, `lintQa`: PASS;
 - `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
-- Go `test ./... -count=1` and `go vet ./...`: PASS;
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
 - Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
 - Debug APK SHA-256:
-  `c4ded880e4310d21e1818a5878424e091a9ef1863626069d9f3ebfd37d4afec6`;
-- QA APK SHA-256:
-  `46788b0c65380aab91ff02bccde2d5f4dafe931320bf58fe4e7e645e5772c013`;
+  `9fb8c65c11f446ea4bce2d87c140e02a034748656f12e9a68c3649507aec87fe`;
+- QA APK and installed `base.apk` SHA-256:
+  `8547b3e45cd27636b6b716059fbc216e7cc5cff93c3fc2dca69149f18dad3477`;
 - QA AndroidTest APK SHA-256:
-  `7182651ac0926cf65f4bcf0a6cd067b819f5a512a92d1a2e54c20f8f21a21acf`;
+  `73bfc781ee2e3eabf275dcdaca811efc398c0735fdbcbf29493e4367b68ea618`;
 - zipalign, v2 signature, one signer, manifest hardening and forbidden-canary
   scan: PASS;
-- F-17 device classifier: `NOT_RUN_ENVIRONMENTAL`; Shizuku server unavailable,
-  ADB empty, failure before install. Installed F-08 app remains unchanged.
+- physical `ClientCertPreferenceCoordinatorInstrumentedTest`: `OK (1 test)`;
+- physical F-17 `PublicIpAddressPolicyInstrumentedTest`: `OK (1 test)`;
+- cold launch restored unlock without password; cache 101 bytes/mode 600 and
+  `FLAG_SECURE` remained active.
 
 ## Сетевой инцидент 30 июля 2026
 
@@ -180,8 +180,7 @@ WARP, и неизменённая сборка выполнила E2E успеш
 - device capability probe (no UI): Google WebView 150.0.7871.181; MULTI_PROFILE,
   GET_COOKIE_INFO, WEB_MESSAGE_LISTENER and DOCUMENT_START_SCRIPT all true;
 - do not adopt physical WebView profiles from this observation alone;
-  `WebViewCompat.setProfile` remains unused;
-- next security block after F-17: remaining Client TLS grant lifecycle (F-03/F-13).
+  `WebViewCompat.setProfile` remains unused.
 
 ## F-17 public IPv6 DNS-result policy — 2026-07-30
 
@@ -194,10 +193,27 @@ WARP, и неизменённая сборка выполнила E2E успеш
 - relay rejects an entire unsafe/mixed set, dials bracketed IPv6 literal and
   verifies exact `RemoteAddr`;
 - full Android/Go/Python/artifact gates PASS;
-- physical classifier test compiled but did not run because Shizuku/rish was
-  unavailable and ADB had no device; no APK installation occurred;
-- repeat only `PublicIpAddressPolicyInstrumentedTest` after device transport is
-  restored; do not interpret it as live portal IPv6 E2E.
+- physical `PublicIpAddressPolicyInstrumentedTest` returned `OK (1 test)`;
+- this proves Android classification only; do not interpret it as live IPv6
+  routing or portal E2E.
+
+
+## F-13 process-scoped Client TLS lifecycle — 2026-07-30
+
+- `JuntaFirmaApplication` owns one `ClientCertPreferenceCoordinator` for the
+  process;
+- `WebView.clearClientCertPreferences` is isolated in one Android adapter;
+- `CLEARING` and sticky `FAILED` prevent creation of every portal WebView;
+- timeout is exactly 3 seconds; exception, missing callback and stale generation
+  fail closed;
+- a grant is activated only after callback `CLEARED` and exact profile/epoch/TTL
+  revalidation;
+- background, Activity disposal, renderer death, profile switch and certificate
+  lock detach local callbacks and request process cleanup;
+- a later successful cleanup is the only in-process recovery from `FAILED`;
+- physical Android callback test passed without opening a WebView or portal;
+- no additional Client TLS profile was enabled. F-03 remains open and requires
+  exact runtime contract plus physical E2E evidence.
 
 ## Ограничения и следующие задачи
 
@@ -211,6 +227,8 @@ WARP, и неизменённая сборка выполнила E2E успеш
    реально не примет XAdES E2E. UniZAR уже повышен только для login CAdES.
 5. Не сохранять в Git скриншоты кабинета, пароль, PKCS#12, сертификат, подпись,
    cookie или персональные идентификаторы.
+6. Следующий security-блок: TTL/replay и hostile behavioral tests F-09/F-10.
+   Дополнительные Client TLS-порталы F-03 не включать без отдельного E2E.
 
 Для продолжения в новом чате достаточно написать: «Открой приватный репозиторий,
 ветку `feature/ws024-secure-tunnel-20260728`, прочитай

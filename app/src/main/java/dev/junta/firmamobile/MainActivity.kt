@@ -240,6 +240,7 @@ class MainActivity : ComponentActivity() {
                         clientCertificateIdentityProvider = {
                             app.certificateSession.identityForSigning()
                         },
+                        clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onWebViewChanged = { currentWebView = it },
                             onNavigationEpochChanged = { currentNavigationEpoch = it },
                         )
