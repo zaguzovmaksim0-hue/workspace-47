@@ -42,30 +42,40 @@ Completed:
   the certificate session and deleting all WebView data are separate confirmed
   actions. WebView provider capabilities are measured without calling
   `WebViewCompat.setProfile`.
+- Public IPv6 DNS-result hardening completed (F-17): Android and the QA
+  relay use equivalent public-address policy reviewed against the IANA IPv6
+  Special-Purpose Address Space registry revision 2025-10-09. Ordinary IPv6 is
+  limited to `2000::/3`; scoped, mapped and special-purpose ranges are blocked;
+  well-known NAT64 `64:ff9b::/96` is accepted only when the embedded IPv4 passes
+  the existing public IPv4 policy. Hostname/SNI and connected-peer pinning are
+  unchanged.
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 
-Latest completed isolated PR — profile-scoped WebView data (F-08):
+Latest completed isolated PR — public IPv6 DNS results (F-17):
 
-- `ProfileCookieBridge` accepts only exact endpoint URLs from one active profile.
-- `SiteDataCleaner.clearOrigin` deletes exact-origin WebStorage and, only when
-  supported, expires same-host cookie names without copying cookie values.
-- Parent-domain or malformed cookie metadata fails closed and remains untouched.
-- Current-site, certificate-session and global-data actions have independent UI
-  commands and confirmations.
-- The device capability probe records provider metadata and four booleans without
-  starting `MainActivity` or exposing URLs/cookies.
+- `PublicIpAddressPolicy` classifies resolved `InetAddress` values before any
+  HTTP bytes are created.
+- Ordinary IPv6 must be within `2000::/3` and outside the reviewed IANA
+  special-purpose deny-set; scoped and IPv4-mapped addresses fail closed.
+- Well-known NAT64 is accepted only for a public embedded IPv4; private,
+  loopback, documentation, benchmark and other special embedded IPv4 fail.
+- OkHttp keeps the original endpoint hostname for URL/SNI/hostname verification,
+  uses only the approved DNS set and verifies the actual connected address.
+- The Go relay mirrors the classifier, rejects unsafe mixed DNS sets, dials a
+  bracketed IPv6 literal and verifies the exact remote peer.
+- QA instrumentation compiled, but the device-only classifier run is
+  `NOT_RUN_ENVIRONMENTAL` because the Shizuku server was unavailable; no F-17
+  APK was installed.
 
 Next isolated PRs:
 
 1. Remaining Client TLS portals and grant-lifecycle hardening beyond the already
    verified Carné Joven scenario (F-03, F-13).
-2. Public IPv6 address classification and transport support without admitting
-   special-purpose ranges (F-17).
-3. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
-4. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
-5. CI, lint, secret/dependency scanning and signer verification (F-14).
-6. Remaining catalog-generation deduplication after the completed E2E consistency
+2. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
+3. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
+4. CI, lint, secret/dependency scanning and signer verification (F-14).
+5. Remaining catalog-generation deduplication after the completed E2E consistency
    gate (F-15B).
 
 

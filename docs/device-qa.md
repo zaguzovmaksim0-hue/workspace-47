@@ -140,3 +140,29 @@ Resultado: `OK (1 test)`. Observación permitida:
 quedó activo. La app no llamó `WebViewCompat.setProfile`: el milestone mide la
 capacidad, pero mantiene un único perfil físico de WebView. No se registraron
 URLs, nombres/valores de cookies, certificado ni contenido de portal.
+
+## Actualización 2026-07-30 — F-17 IPv6 classifier
+
+Artefactos construidos y verificados localmente:
+
+- QA APK SHA-256:
+  `46788b0c65380aab91ff02bccde2d5f4dafe931320bf58fe4e7e645e5772c013`;
+- QA AndroidTest APK SHA-256:
+  `7182651ac0926cf65f4bcf0a6cd067b819f5a512a92d1a2e54c20f8f21a21acf`.
+
+Los hashes coincidieron al copiar ambos APK al staging compartido. Antes de
+consultar estado, instalar o ejecutar instrumentation, `rish` devolvió timeout
+porque el servidor Shizuku no estaba activo. `adb devices -l` no enumeró ningún
+dispositivo. Abrir únicamente el launcher de Shizuku no restauró el servidor.
+
+Por tanto:
+
+- `PublicIpAddressPolicyInstrumentedTest` compila, pero no fue ejecutado;
+- `pm install` no se invocó;
+- la F-17 QA APK no está instalada;
+- la F-08 instalada y sus datos no fueron modificados;
+- no se obtuvo evidencia de ruta IPv6/DNS64 ni E2E de portal.
+
+Resultado del gate físico: `NOT_RUN_ENVIRONMENTAL`. Repetir solo el test nombrado
+cuando Shizuku o ADB vuelva a estar disponible; debe publicar únicamente revisión
+IANA y tres booleanos, nunca IP, DNS, URL, certificado o payload.

@@ -62,9 +62,11 @@
 
 - package: `dev.junta.firmamobile`;
 - versionName: `0.1.0-qa`;
-- установленный SHA-256:
+- установленный SHA-256 (последняя физически подтверждённая F-08 сборка):
   `40f03d634b5053b0b79a217b88edf65ca32a3c57c5b36d0371ab968f9bc558b7`;
-- локальный QA APK имеет тот же SHA-256;
+- текущий локальный F-17 QA APK имеет SHA-256
+  `46788b0c65380aab91ff02bccde2d5f4dafe931320bf58fe4e7e645e5772c013`
+  и не установлен из-за недоступного Shizuku/ADB;
 - `zipalign`: PASS;
 - APK Signature Scheme v2: PASS, one signer;
 - direct-only: tunnel выключен, relay tuple отсутствует;
@@ -72,21 +74,22 @@
 
 ## Последний QA gate
 
-- Debug unit: 464/464, 0 failures/errors/skips;
-- QA unit: 464/464, 0 failures/errors/skips;
+- Debug unit: 473/473, 0 failures/errors/skips;
+- QA unit: 473/473, 0 failures/errors/skips;
 - `lintDebug`, `lintQa`: PASS;
 - `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Go `test ./... -count=1` and `go vet ./...`: PASS;
 - Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
 - Debug APK SHA-256:
-  `190a56b25d9f625a6a1b6a39ee513855388122f49be7357915bbf3187f5b9db9`;
+  `c4ded880e4310d21e1818a5878424e091a9ef1863626069d9f3ebfd37d4afec6`;
 - QA APK SHA-256:
-  `40f03d634b5053b0b79a217b88edf65ca32a3c57c5b36d0371ab968f9bc558b7`;
+  `46788b0c65380aab91ff02bccde2d5f4dafe931320bf58fe4e7e645e5772c013`;
 - QA AndroidTest APK SHA-256:
-  `ceafc6b65c513b1e5e6fb5ed728bd376c7617557144e3c5581088dce782bf68f`;
+  `7182651ac0926cf65f4bcf0a6cd067b819f5a512a92d1a2e54c20f8f21a21acf`;
 - zipalign, v2 signature, one signer, manifest hardening and forbidden-canary
   scan: PASS;
-- QA APK установлен поверх данных; installed `base.apk` совпадает; cache
-  сертификата сохранился: 101 bytes, mode 600.
+- F-17 device classifier: `NOT_RUN_ENVIRONMENTAL`; Shizuku server unavailable,
+  ADB empty, failure before install. Installed F-08 app remains unchanged.
 
 ## Сетевой инцидент 30 июля 2026
 
@@ -178,7 +181,23 @@ WARP, и неизменённая сборка выполнила E2E успеш
   GET_COOKIE_INFO, WEB_MESSAGE_LISTENER and DOCUMENT_START_SCRIPT all true;
 - do not adopt physical WebView profiles from this observation alone;
   `WebViewCompat.setProfile` remains unused;
-- next security block: F-17 public IPv6 classification/transport.
+- next security block after F-17: remaining Client TLS grant lifecycle (F-03/F-13).
+
+## F-17 public IPv6 DNS-result policy — 2026-07-30
+
+- Android and Go relay policy revision: IANA IPv6 Special-Purpose 2025-10-09;
+- ordinary IPv6 requires `2000::/3`; special-purpose, scoped and mapped fail;
+- `64:ff9b::/96` requires a public embedded IPv4;
+- profile URL/IP-literal policy is unchanged: only canonical DNS hostnames;
+- Android filters unsafe answers, then OkHttp pins hostname, approved DNS set and
+  actual connected peer;
+- relay rejects an entire unsafe/mixed set, dials bracketed IPv6 literal and
+  verifies exact `RemoteAddr`;
+- full Android/Go/Python/artifact gates PASS;
+- physical classifier test compiled but did not run because Shizuku/rish was
+  unavailable and ADB had no device; no APK installation occurred;
+- repeat only `PublicIpAddressPolicyInstrumentedTest` after device transport is
+  restored; do not interpret it as live portal IPv6 E2E.
 
 ## Ограничения и следующие задачи
 

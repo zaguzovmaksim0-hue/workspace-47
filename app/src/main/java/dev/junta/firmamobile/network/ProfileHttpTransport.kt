@@ -5,7 +5,6 @@ import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
-import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.Proxy
 import java.net.URI
@@ -239,7 +238,7 @@ class HttpsProfileHttpTransport internal constructor(
         if (addresses == null) {
             return ProfileHttpResult.Failure(tracker.dnsFailure(ProfileHttpFailure.NETWORK_ERROR))
         }
-        val approvedAddresses = addresses.filter { it.isPublicAddress() }
+        val approvedAddresses = addresses.filter(PublicIpAddressPolicy::isPublicRoutable)
         if (approvedAddresses.isEmpty()) {
             return ProfileHttpResult.Failure(tracker.dnsFailure(ProfileHttpFailure.PRIVATE_ADDRESS))
         }
@@ -294,21 +293,6 @@ class HttpsProfileHttpTransport internal constructor(
         }
     }
 
-    private fun InetAddress.isPublicAddress(): Boolean {
-        if (isAnyLocalAddress || isLoopbackAddress || isLinkLocalAddress ||
-            isSiteLocalAddress || isMulticastAddress
-        ) {
-            return false
-        }
-        val raw = address
-        if (raw.size == 4 && !raw.isGlobalIpv4()) return false
-        if (this is Inet6Address) {
-            // Fail closed until the full IANA IPv6 special-purpose registry is modeled.
-            return false
-        }
-        return true
-    }
-
     private fun resolveWithDeadline(
         host: String,
         cancellation: ProfileHttpCancellation,
@@ -333,26 +317,6 @@ class HttpsProfileHttpTransport internal constructor(
                 future.cancel(true)
                 null
             }
-        }
-    }
-
-    private fun ByteArray.isGlobalIpv4(): Boolean {
-        val first = this[0].toInt() and 0xff
-        val second = this[1].toInt() and 0xff
-        val third = this[2].toInt() and 0xff
-        return when {
-            first == 0 || first == 10 || first == 127 || first >= 224 -> false
-            first == 100 && second in 64..127 -> false
-            first == 169 && second == 254 -> false
-            first == 172 && second in 16..31 -> false
-            first == 192 && second == 168 -> false
-            first == 192 && second == 0 && third == 0 -> false
-            first == 192 && second == 0 && third == 2 -> false
-            first == 192 && second == 88 && third == 99 -> false
-            first == 198 && second in 18..19 -> false
-            first == 198 && second == 51 && third == 100 -> false
-            first == 203 && second == 0 && third == 113 -> false
-            else -> true
         }
     }
 

@@ -93,14 +93,23 @@ rechazar package/component explícitos no aprobados; nunca usar
 `es.gob.afirma`; evento sanitizado de fallback.
 **Verificación:** instrumentation tests sin resolución de Play/AutoFirma.
 
-### T4. Callback o server URL produce SSRF
+### T4. Callback, server URL o DNS produce SSRF
 
-**Riesgo:** acceso a localhost/red privada o envío de cookies/datos a tercero.
-**Controles:** HTTPS exclusivo, hosts exactos, sin userinfo, puerto restringido,
-rechazo de IP/localhost/private/reserved, DNS y redirects revalidados, cookies
-solo al mismo host, límites de respuesta.
-**Verificación:** unit tests de URL, redirect y cookie isolation; test de DNS
-abstraction con IP no pública.
+**Riesgo:** acceso a localhost/red privada/especial o envío de cookies/datos a
+tercero mediante DNS rebinding, IPv6 ambiguo o NAT64 hacia IPv4 no público.
+**Controles:** HTTPS exclusivo, hosts exactos, sin userinfo ni IP literal en el
+profile, puerto restringido y redirects revalidados. Cada resultado DNS pasa por
+`PublicIpAddressPolicy`, revisada contra el registro IANA IPv6 Special-Purpose
+revision 2025-10-09: IPv6 ordinario solo en `2000::/3`; scope IDs, IPv4-mapped,
+ULA, link-local, documentation, transition, benchmark, multicast y demás bloques
+especiales se rechazan. `64:ff9b::/96` solo se acepta si el IPv4 embebido pasa la
+misma policy pública IPv4. OkHttp conserva hostname/SNI, recibe exclusivamente el
+set aprobado y verifica la dirección conectada. El relay rechaza el conjunto DNS
+completo si contiene una respuesta insegura, marca mapped/zoned como inválida,
+marca el literal IPv6 con brackets y verifica el peer exacto.
+**Verificación:** tests table-driven de límites/prefijos/NAT64, filtering y DNS
+pinning Android; tests Go de clasificación, mixed-set rejection, literal IPv6 y
+remote-peer verification; no se registra la dirección resuelta.
 
 ### T5. Robo o persistencia de contraseña/clave
 

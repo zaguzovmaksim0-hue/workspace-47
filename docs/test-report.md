@@ -231,18 +231,19 @@ endpoints HTTPS del profile activo. La resolución DNS se ejecuta con deadline
 y un pool global acotado a dos tareas; saturación, cancelación, resolución
 vacía o direcciones no globales fallan cerradas antes de iniciar HTTP.
 
-OkHttp 5.4.0 recibe exclusivamente las direcciones IPv4 públicas previamente
+OkHttp 5.4.0 recibe exclusivamente las direcciones públicas previamente
 aprobadas, conserva el hostname original para SNI y hostname verification,
 deshabilita proxy, redirects, cookies, autenticadores, cache y retry. Un
 network interceptor verifica además la dirección realmente conectada. El POST
 usa un body one-shot para impedir reenvíos automáticos, incluido
 `503 Retry-After`, y mantiene límites de tiempo y tamaño de respuesta.
 
-La deny-policy IPv4 se contrastó con el registro IANA actualizado el
-2025-10-09, incluido el prefijo deprecated `192.88.99.0/24`. IPv6 permanece
-temporalmente bloqueado por completo: respuestas dual-stack pueden usar solo
-una IPv4 global aprobada; portales IPv6-only y redes DNS64 fallan cerradas.
-Esta limitación no se interpreta como compatibilidad.
+La revisión original bloqueaba IPv6 por completo. Esta limitación fue sustituida
+por F-17 el 2026-07-30: el clasificador IPv4/IPv6 se contrastó con el registro
+IANA IPv6 Special-Purpose revision 2025-10-09. IPv6 ordinario se restringe a
+`2000::/3`; los bloques especiales, mapped y scoped se bloquean. Well-known
+NAT64 se admite solo si su IPv4 embebido es público. Esto habilita el transporte,
+pero no constituye por sí solo E2E de un portal IPv6-only.
 
 Validación local: tests focused de policy/transport PASS, incluido intercambio
 TLS real HTTP/2 con SNI, route pinning y ausencia de segundo POST; timeout,
@@ -1012,3 +1013,63 @@ Physical-device capability gate:
   four measured capabilities as true;
 - `MainActivity` was never resumed and the target process did not remain alive;
 - no URL, cookie, certificate or portal content was emitted.
+
+## Milestone F17 — public IPv6 DNS-result policy — 2026-07-30
+
+Android previously rejected every `Inet6Address`, so IPv6-only endpoints and
+valid DNS64 results failed before connect. The Go QA relay allowed global IPv6
+more broadly, including addresses outside `2000::/3`, and normalized mapped IPv4
+before classification. The two network boundaries therefore had different
+semantics.
+
+F-17 introduces equivalent reviewed policy:
+
+- policy revision is pinned to the IANA IPv6 Special-Purpose Address Space
+  snapshot dated 2025-10-09;
+- ordinary IPv6 must be in `2000::/3` and outside the closed special-purpose
+  table;
+- scoped and IPv4-mapped addresses fail closed;
+- well-known NAT64 `64:ff9b::/96` is allowed only when its embedded IPv4 passes
+  the complete public IPv4 deny-policy;
+- profile URLs still require canonical DNS hostnames and never accept IP
+  literals;
+- OkHttp keeps the original endpoint hostname and pins DNS plus the actual
+  connected address;
+- the Go relay rejects unsafe mixed DNS sets, dials a bracketed IPv6 literal and
+  verifies that `RemoteAddr` equals the selected address.
+
+TDD evidence:
+
+- Android RED: the new policy type did not exist;
+- Android GREEN: `PublicIpAddressPolicyTest` 7/7 and
+  `ProfileHttpTransportTest` 11/11 passed; the wildcard regression also ran the
+  18 direct-first transport tests;
+- second RED: three reviewed special IPv4 ranges passed directly and through
+  NAT64; adding them to the shared IPv4 policy returned GREEN;
+- Go RED: the pinned registry revision/new classifier were absent;
+- Go GREEN: classifier, mapped/zoned rejection, deterministic selection,
+  bracketed IPv6 literal and exact-peer verification passed.
+
+Fresh global verification:
+
+- Debug unit: 473 tests, 0 failures/errors/skips;
+- QA unit: 473 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Go `test ./... -count=1` and `go vet ./...`: PASS;
+- Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
+- APK alignment: Debug, QA and QA AndroidTest PASS;
+- QA APK Signature Scheme v2: verified, one signer;
+- forbidden exact canary scan: PASS;
+- Debug APK SHA-256:
+  `c4ded880e4310d21e1818a5878424e091a9ef1863626069d9f3ebfd37d4afec6`;
+- QA APK SHA-256:
+  `46788b0c65380aab91ff02bccde2d5f4dafe931320bf58fe4e7e645e5772c013`;
+- QA AndroidTest APK SHA-256:
+  `7182651ac0926cf65f4bcf0a6cd067b819f5a512a92d1a2e54c20f8f21a21acf`.
+
+Device-only classifier instrumentation compiled successfully but was not run:
+Shizuku/rish timed out and no ADB device was connected. The failure occurred
+before `pm install`; the F-17 QA APK was not installed and the existing F-08 app
+data were not modified. Status: `NOT_RUN_ENVIRONMENTAL`, not PASS. This milestone
+does not claim a live IPv6 route or portal E2E.

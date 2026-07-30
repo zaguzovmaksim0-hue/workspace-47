@@ -183,8 +183,11 @@ class ProfileHttpTransportTest {
             "172.16.0.1",
             "192.0.0.1",
             "192.0.2.1",
+            "192.31.196.1",
+            "192.52.193.1",
             "192.88.99.2",
             "192.168.0.1",
+            "192.175.48.1",
             "198.18.0.1",
             "198.51.100.1",
             "203.0.113.1",
@@ -195,7 +198,13 @@ class ProfileHttpTransportTest {
             "100::1",
             "2001:2::1",
             "2001:10::1",
-            "2606:4700:4700::1111",
+            "100:0:0:1::1",
+            "2001:20::1",
+            "2001:30::1",
+            "2002::1",
+            "2620:4f:8000::1",
+            "3fff::1",
+            "5f00::1",
         )
         blockedAddresses.forEach { address ->
             val executorCalled = AtomicBoolean(false)
@@ -213,6 +222,49 @@ class ProfileHttpTransportTest {
             )
             assertTrue(!executorCalled.get())
         }
+    }
+
+    @Test
+    fun publicIpv6AndSafeNat64DnsResultsReachThePinnedExecutorUnmodified() {
+        val publicV6 = InetAddress.getByName("2606:4700:4700::1111")
+        val safeNat64 = InetAddress.getByName("64:ff9b::808:808")
+        val blockedUla = InetAddress.getByName("fd00::1")
+        val blockedNat64 = InetAddress.getByName("64:ff9b::7f00:1")
+        val executor = QueueExecutor(
+            RawProfileHttpResponse(200, "text/plain", null, "ok".encodeToByteArray()),
+        )
+        val transport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver {
+                listOf(blockedUla, publicV6, blockedNat64, safeNat64, publicV6)
+            },
+            executor = executor,
+        )
+
+        val result = post(transport)
+
+        (result as ProfileHttpResult.Success).response.close()
+        assertEquals(listOf(publicV6, safeNat64, publicV6), executor.resolvedAddresses.single())
+    }
+
+    @Test
+    fun productionClientPinsAnApprovedIpv6DnsSetWithoutChangingHostname() {
+        val approved = listOf(
+            InetAddress.getByName("2606:4700:4700::1111"),
+            InetAddress.getByName("64:ff9b::808:808"),
+        )
+        val client = OkHttpProfileHttpExecutor().buildClient(
+            expectedHost = "ws024.juntadeandalucia.es",
+            approvedAddresses = approved,
+            connectTimeoutMillis = 1_234,
+            readTimeoutMillis = 2_345,
+            tracker = ProfileHttpCallPhaseTracker(),
+        )
+
+        assertEquals(approved, client.dns.lookup("ws024.juntadeandalucia.es"))
+        assertThrows(IOException::class.java) { client.dns.lookup("evil.example") }
+        assertEquals(Proxy.NO_PROXY, client.proxy)
+        assertTrue(!client.followRedirects)
+        assertTrue(!client.retryOnConnectionFailure)
     }
 
     @Test

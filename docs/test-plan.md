@@ -98,6 +98,22 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - userinfo y esquemas file/content/javascript/data se rechazan;
 - DNS result no público y redirect externo se rechazan.
 
+### PublicIpAddressPolicyTest / ProfileHttpTransportTest / relay upstream tests
+
+- la revisión IANA IPv6 queda fijada a `2025-10-09`;
+- IPv4 público y IPv6 global ordinario dentro de `2000::/3` se aceptan;
+- unspecified, loopback, mapped, scoped, ULA, link-local, multicast,
+  documentation, transition, benchmark y todos los prefijos especiales revisados
+  se rechazan en sus límites exactos;
+- `64:ff9b::/96` acepta solo IPv4 embebido público y rechaza private, loopback,
+  documentation, benchmark y demás IPv4 especiales;
+- Android filtra el DNS set y entrega al executor únicamente direcciones
+  aprobadas sin cambiar hostname/SNI;
+- el network interceptor rechaza un peer fuera del set aprobado;
+- el relay rechaza cualquier mixed DNS set inseguro, no unmappea IPv4-mapped,
+  marca IPv6 literal con brackets y verifica el peer exacto;
+- profiles continúan rechazando IP literals: F-17 afecta solo DNS results.
+
 ### AfirmaRequestRouterTest
 
 - `afirma://sign` se enruta a confirmación;

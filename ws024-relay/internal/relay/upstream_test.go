@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+func TestIANAIPv6RegistryRevisionIsPinned(t *testing.T) {
+	if IANAIPv6RegistryRevision != "2025-10-09" {
+		t.Fatalf("registry revision = %q", IANAIPv6RegistryRevision)
+	}
+}
+
 func TestIsPublicRoutable(t *testing.T) {
 	for _, tc := range []struct {
 		ip   string
@@ -16,18 +22,26 @@ func TestIsPublicRoutable(t *testing.T) {
 	}{
 		{"8.8.8.8", true},
 		{"2606:4700:4700::1111", true},
+		{"2001:4860:4860::8888", true},
+		{"2001:200::1", true},
+		{"3fff:1000::1", true},
+		{"64:ff9b::808:808", true},
 		{"0.0.0.0", false}, {"10.0.0.1", false}, {"100.64.0.1", false},
 		{"127.0.0.1", false}, {"169.254.1.1", false}, {"172.16.0.1", false},
 		{"192.0.2.1", false}, {"192.168.1.1", false}, {"192.31.196.1", false},
 		{"192.52.193.1", false}, {"192.88.99.1", false}, {"192.175.48.1", false},
 		{"198.18.0.1", false}, {"198.51.100.1", false}, {"203.0.113.1", false},
 		{"224.0.0.1", false}, {"240.0.0.1", false}, {"255.255.255.255", false},
-		{"::", false}, {"::1", false}, {"::ffff:192.0.2.1", false},
-		{"64:ff9b::192.0.2.1", false}, {"64:ff9b:1::1", false}, {"100::1", false},
+		{"::", false}, {"::1", false}, {"::ffff:8.8.8.8", false},
+		{"64:ff9b::10.0.0.1", false}, {"64:ff9b::127.0.0.1", false},
+		{"64:ff9b::192.0.2.1", false}, {"64:ff9b::192.31.196.1", false},
+		{"64:ff9b::192.52.193.1", false}, {"64:ff9b::192.175.48.1", false},
+		{"64:ff9b:1::1", false}, {"100::1", false},
 		{"100:0:0:1::", false}, {"100:0:0:1:ffff:ffff:ffff:ffff", false},
-		{"100:0:0:2::1", true},
-		{"2001:2::1", false}, {"2001:db8::1", false}, {"2002::1", false},
-		{"3fff::1", false}, {"5f00::1", false},
+		{"100:0:0:2::1", false}, {"4000::1", false}, {"8000::1", false},
+		{"2001:1ff:ffff::1", false}, {"2001:2::1", false}, {"2001:20::1", false},
+		{"2001:db8::1", false}, {"2002::1", false}, {"2620:4f:8000::1", false},
+		{"3fff::1", false}, {"3fff:0fff:ffff::1", false}, {"5f00::1", false},
 		{"fc00::1", false}, {"fe80::1", false}, {"ff02::1", false},
 	} {
 		t.Run(tc.ip, func(t *testing.T) {
@@ -77,10 +91,27 @@ func TestFixedUpstreamDialerDialsDeterministicLiteralAndVerifiesPeer(t *testing.
 	}
 }
 
+func TestFixedUpstreamDialerDialsIPv6LiteralAndVerifiesExactPeer(t *testing.T) {
+	address := netip.MustParseAddr("2606:4700:4700::1111")
+	resolver := &fakeResolver{addrs: []netip.Addr{address}}
+	dialer := &fakeTCPDialer{
+		conn: &fakeConn{remote: &net.TCPAddr{IP: net.ParseIP(address.String()), Port: 443}},
+	}
+
+	conn, chosen, err := NewFixedUpstreamDialer(resolver, dialer).DialContext(context.Background())
+	if err != nil || conn != dialer.conn || chosen != address {
+		t.Fatalf("DialContext() = (%v, %v, %v), want exact IPv6 connection", conn, chosen, err)
+	}
+	if got, want := dialer.address, "[2606:4700:4700::1111]:443"; got != want {
+		t.Fatalf("dial address = %q, want %q", got, want)
+	}
+}
+
 func TestFixedUpstreamDialerRejectsUnsafeOrDuplicateDNSWithoutDial(t *testing.T) {
 	for _, addrs := range [][]netip.Addr{
 		nil,
 		{netip.MustParseAddr("8.8.8.8"), netip.MustParseAddr("10.0.0.1")},
+		{netip.MustParseAddr("::ffff:8.8.8.8")},
 		{netip.MustParseAddr("::ffff:8.8.8.8"), netip.MustParseAddr("8.8.8.8")},
 	} {
 		resolver := &fakeResolver{addrs: addrs}
