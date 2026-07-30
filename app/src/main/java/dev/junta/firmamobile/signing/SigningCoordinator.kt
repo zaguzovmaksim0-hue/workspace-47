@@ -12,6 +12,7 @@ import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.profile.SignatureAlgorithm as ProfileSignatureAlgorithm
 import dev.junta.firmamobile.profile.SignatureFormat as ProfileSignatureFormat
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Duration
@@ -80,7 +81,11 @@ class SigningCoordinator internal constructor(
     private val currentOrigin: () -> TrustedOrigin?,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val clock: Clock = Clock.systemUTC(),
-    private val pendingStore: PendingSignRequestStore = PendingSignRequestStore(clock),
+    private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
+    private val pendingStore: PendingSignRequestStore = PendingSignRequestStore(
+        clock = clock,
+        monotonicNanos = monotonicNanos,
+    ),
     private val expiryScheduler: SigningExpiryScheduler,
     private val adapterResolver: (SigningProtocolId) -> SigningProtocolAdapter? = { id ->
         adapter.takeIf { it.id == id }
@@ -131,11 +136,21 @@ class SigningCoordinator internal constructor(
             reply = reply,
             adapter = operationAdapter,
         )
+        val expiryDelay = MonotonicSecurityTime.remaining(
+            summary.observedAtMonotonicNanos,
+            summary.lifetimeNanos,
+            monotonicNanos(),
+        )
+        if (expiryDelay.isZero) {
+            pendingStore.clear(ConsumeError.REQUEST_EXPIRED)
+            operation.clearSensitive()
+            return reject(request, reply, SigningErrorCode.REQUEST_EXPIRED)
+        }
         pending = operation
         try {
             operation.attachExpiry(
                 expiryScheduler.schedule(
-                    delay = Duration.between(clock.instant(), summary.expiresAt),
+                    delay = expiryDelay,
                     action = { expirePending(summary.requestId) },
                 ),
             )
@@ -393,9 +408,12 @@ class SigningCoordinator internal constructor(
         if (expectedAlgorithm !in operation.algorithms || expectedFormat != operation.format) {
             return SigningErrorCode.UNSUPPORTED_PROTOCOL
         }
-        val age = Duration.between(request.context.observedAt, clock.instant())
-        if (age.isNegative) return SigningErrorCode.INVALID_REQUEST
-        if (age >= REQUEST_LIFETIME) return SigningErrorCode.REQUEST_EXPIRED
+        if (MonotonicSecurityTime.isExpiredOrInvalid(
+                request.observedAtMonotonicNanos,
+                REQUEST_LIFETIME_NANOS,
+                monotonicNanos(),
+            )
+        ) return SigningErrorCode.REQUEST_EXPIRED
         return if (currentOriginSafely() == request.context.origin &&
             currentNavigationEpochSafely() == request.context.navigationEpoch
         ) {
@@ -459,9 +477,12 @@ class SigningCoordinator internal constructor(
     ): SigningErrorCode? {
         operation.cancellationCode()?.let { return it }
         if (!isActive(operation)) return SigningErrorCode.NAVIGATION_CHANGED
-        if (!clock.instant().isBefore(operation.summary.expiresAt)) {
-            return SigningErrorCode.REQUEST_EXPIRED
-        }
+        if (MonotonicSecurityTime.isExpiredOrInvalid(
+                operation.summary.observedAtMonotonicNanos,
+                operation.summary.lifetimeNanos,
+                monotonicNanos(),
+            )
+        ) return SigningErrorCode.REQUEST_EXPIRED
         if (!originStillMatches(operation)) return SigningErrorCode.NAVIGATION_CHANGED
         if (certificateSession.identityForSigning(operation.certificateSnapshot) !== identity) {
             return SigningErrorCode.CERTIFICATE_LOCKED
@@ -566,5 +587,6 @@ class SigningCoordinator internal constructor(
     private companion object {
         const val SHA_256 = "SHA-256"
         val REQUEST_LIFETIME: Duration = Duration.ofMinutes(2)
+        val REQUEST_LIFETIME_NANOS: Long = MonotonicSecurityTime.durationNanos(REQUEST_LIFETIME)
     }
 }

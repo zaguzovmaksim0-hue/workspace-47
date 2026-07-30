@@ -143,26 +143,32 @@ URLs, nombres/valores de cookies, certificado ni contenido de portal.
 
 ## Actualización 2026-07-30 — F-17 IPv6 classifier
 
-Artefactos construidos y verificados localmente:
+La incidencia ambiental inicial quedó superada durante la instalación F-13. En
+el dispositivo físico se ejecutó únicamente
+`PublicIpAddressPolicyInstrumentedTest`: `OK (1 test)`. Publicó la revisión IANA
+`2025-10-09` y tres booleanos sanitizados: IPv6 global ordinario y NAT64 con IPv4
+público aceptados; NAT64 con IPv4 no público rechazado. Esto verifica el
+clasificador Android, no una ruta IPv6/DNS64 real ni E2E de portal.
 
-- QA APK SHA-256:
-  `46788b0c65380aab91ff02bccde2d5f4dafe931320bf58fe4e7e645e5772c013`;
-- QA AndroidTest APK SHA-256:
-  `7182651ac0926cf65f4bcf0a6cd067b819f5a512a92d1a2e54c20f8f21a21acf`.
+## Actualización 2026-07-30 — F-09/F-10 monotonic TTL y replay
 
-Los hashes coincidieron al copiar ambos APK al staging compartido. Antes de
-consultar estado, instalar o ejecutar instrumentation, `rish` devolvió timeout
-porque el servidor Shizuku no estaba activo. `adb devices -l` no enumeró ningún
-dispositivo. Abrir únicamente el launcher de Shizuku no restauró el servidor.
+Se instaló mediante `pm install -r -t` la QA APK SHA-256
+`0258378038d703979239c8701e1e8d2ce68ecabc7de5699b68cbccbef1e5ceec`.
+El `base.apk` instalado coincidió byte-for-byte; el cache cifrado permaneció en
+101 bytes, modo `600`, y el cold launch restauró el certificado sin contraseña
+con `FLAG_SECURE` activo.
 
-Por tanto:
+Antes del E2E se repitieron dos regressions físicas sanitizadas:
 
-- `PublicIpAddressPolicyInstrumentedTest` compila, pero no fue ejecutado;
-- `pm install` no se invocó;
-- la F-17 QA APK no está instalada;
-- la F-08 instalada y sus datos no fueron modificados;
-- no se obtuvo evidencia de ruta IPv6/DNS64 ni E2E de portal.
+- `ClientCertPreferenceCoordinatorInstrumentedTest`: `OK (1 test)`;
+- `PublicIpAddressPolicyInstrumentedTest`: `OK (1 test)`.
 
-Resultado del gate físico: `NOT_RUN_ENVIRONMENTAL`. Repetir solo el test nombrado
-cuando Shizuku o ADB vuelva a estar disponible; debe publicar únicamente revisión
-IANA y tres booleanos, nunca IP, DNS, URL, certificado o payload.
+El usuario autorizado abrió después Junta de Andalucía — Oficina Virtual,
+confirmó una firma nueva y comunicó que el portal abrió correctamente y que todo
+el interfaz, incluido el menú legacy reparado, funcionó. El alcance probado sigue
+siendo solo autenticación CAdES; no se firmó un documento ni se presentó un
+trámite. No se guardaron screenshots, certificado, firma, cookie, password ni
+identificadores personales.
+
+Tras la aceptación se desinstaló `dev.junta.firmamobile.test` y se eliminaron los
+APK/XML de staging F-09/F-10. La aplicación target y su cache permanecieron.

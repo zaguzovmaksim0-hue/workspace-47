@@ -18,11 +18,13 @@ import org.junit.Test
 
 class PendingSignRequestStoreTest {
     private val clock = MutableClock(Instant.parse("2030-01-01T00:00:00Z"))
+    private val monotonic = MutableMonotonicClock(1_000_000_000L)
     private val clearedCopies = mutableListOf<Boolean>()
     private val store = PendingSignRequestStore(
         clock = clock,
         lifetime = Duration.ofMinutes(2),
         observer = SensitiveSigningCopyObserver(clearedCopies::add),
+        monotonicNanos = monotonic::nowNanos,
     )
 
     @Test
@@ -104,7 +106,10 @@ class PendingSignRequestStoreTest {
                 ConsumeError.PAYLOAD_CHANGED,
         )
         mismatches.forEach { (change, expected) ->
-            val localStore = PendingSignRequestStore(clock)
+            val localStore = PendingSignRequestStore(
+                clock = clock,
+                monotonicNanos = monotonic::nowNanos,
+            )
             val request = request(UUID.randomUUID())
             localStore.put(request)
             val result = localStore.consume(change(validation(request)))
@@ -113,14 +118,70 @@ class PendingSignRequestStoreTest {
             assertNull(localStore.peek())
         }
 
-        val expiringStore = PendingSignRequestStore(clock, Duration.ofMinutes(2))
+        val expiringStore = PendingSignRequestStore(
+            clock = clock,
+            lifetime = Duration.ofMinutes(2),
+            monotonicNanos = monotonic::nowNanos,
+        )
         val expiringRequest = request(UUID.randomUUID())
         expiringStore.put(expiringRequest)
-        clock.advance(Duration.ofMinutes(2))
+        monotonic.advance(Duration.ofMinutes(2))
         val expired = expiringStore.consume(validation(expiringRequest))
             as PendingConsumeResult.Rejected
         assertEquals(ConsumeError.REQUEST_EXPIRED, expired.error)
         assertNull(expiringStore.peek())
+    }
+
+
+    @Test
+    fun civilClockJumpsDoNotAlterSecurityLifetimeButMonotonicBoundaryDoes() {
+        val first = request(UUID.randomUUID())
+        store.put(first)
+
+        clock.advance(Duration.ofDays(30))
+        val acceptedAfterCivilJump = store.consume(validation(first))
+            as PendingConsumeResult.Accepted
+        acceptedAfterCivilJump.request.close()
+
+        val second = request(UUID.randomUUID())
+        store.put(second)
+        clock.rewind(Duration.ofDays(60))
+        monotonic.advance(Duration.ofMinutes(2))
+
+        val expired = store.consume(validation(second)) as PendingConsumeResult.Rejected
+        assertEquals(ConsumeError.REQUEST_EXPIRED, expired.error)
+    }
+
+    @Test
+    fun replayLedgerExpiresAndCapacityRecoversInsteadOfPermanentDenialOfService() {
+        val localMonotonic = MutableMonotonicClock(50L)
+        val localStore = PendingSignRequestStore(
+            clock = clock,
+            lifetime = Duration.ofMinutes(2),
+            monotonicNanos = localMonotonic::nowNanos,
+            replayRetention = Duration.ofMinutes(5),
+            maxReplayEntries = 2,
+        )
+        val firstId = UUID.randomUUID()
+        val secondId = UUID.randomUUID()
+        val thirdId = UUID.randomUUID()
+
+        fun consume(id: UUID) {
+            val candidate = request(id, observedAtMonotonicNanos = localMonotonic.nowNanos())
+            localStore.put(candidate)
+            val accepted = localStore.consume(validation(candidate)) as PendingConsumeResult.Accepted
+            accepted.request.close()
+        }
+
+        consume(firstId)
+        consume(secondId)
+        assertThrows(IllegalStateException::class.java) {
+            localStore.put(request(thirdId, observedAtMonotonicNanos = localMonotonic.nowNanos()))
+        }
+
+        localMonotonic.advance(Duration.ofMinutes(5))
+        consume(thirdId)
+        consume(firstId)
     }
 
     @Test
@@ -147,6 +208,7 @@ class PendingSignRequestStoreTest {
     private fun request(
         requestId: UUID = REQUEST_ID,
         payload: ByteArray = PAYLOAD.copyOf(),
+        observedAtMonotonicNanos: Long = monotonic.nowNanos(),
     ) = NormalizedSignRequest(
         requestId = requestId,
         protocolId = SigningProtocolId("junta-miniapplet-cades-v1"),
@@ -161,6 +223,7 @@ class PendingSignRequestStoreTest {
         format = SigningFormat.CADES,
         safeDescription = "Solicitud de acceso",
         payload = payload,
+        observedAtMonotonicNanos = observedAtMonotonicNanos,
     )
 
     private fun validation(request: NormalizedSignRequest) = PendingValidationContext(
@@ -186,6 +249,20 @@ class PendingSignRequestStoreTest {
 
         fun advance(duration: Duration) {
             current = current.plus(duration)
+        }
+
+        fun rewind(duration: Duration) {
+            current = current.minus(duration)
+        }
+    }
+
+    private class MutableMonotonicClock(
+        private var currentNanos: Long,
+    ) {
+        fun nowNanos(): Long = currentNanos
+
+        fun advance(duration: Duration) {
+            currentNanos += duration.toNanos()
         }
     }
 

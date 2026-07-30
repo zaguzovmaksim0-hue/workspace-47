@@ -13,6 +13,8 @@ import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.DiagnosticEventCode
+import dev.junta.firmamobile.security.BoundedReplayLedger
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningContext
@@ -29,19 +31,22 @@ class WebMessageBridge(
     private val onMiniAppletCancel: (UUID) -> Unit = {},
     private val router: WebMessageRouter = WebMessageRouter(profileId),
     activeProfileId: () -> ProfileId? = { null },
+    clock: Clock = Clock.systemUTC(),
+    monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     private val miniAppletAdapter: MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(
+        clock = clock,
+        monotonicNanos = monotonicNanos,
         activeProfileId = activeProfileId,
     ),
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
     private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
-    clock: Clock = Clock.systemUTC(),
 ) {
     private val replyRegistry = MiniAppletReplyRegistry(
         currentNavigationEpoch = currentNavigationEpoch,
         currentOrigin = currentOrigin,
-        clock = clock,
+        monotonicNanos = monotonicNanos,
     )
 
     fun attach(webView: WebView): WebMessageBridgeAttachment {
@@ -293,10 +298,17 @@ class WebMessageBridgeAttachment internal constructor(
 internal class MiniAppletReplyRegistry(
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
-    private val clock: Clock = Clock.systemUTC(),
+    private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
+    replayRetention: Duration = DEFAULT_REPLAY_RETENTION,
+    maxReplayEntries: Int = MAX_SEEN_REQUESTS,
 ) {
     private val pending = linkedMapOf<UUID, PendingReply>()
-    private val seen = linkedSetOf<UUID>()
+    private val replyTtlNanos = MonotonicSecurityTime.durationNanos(REPLY_TTL)
+    private val replayLedger = BoundedReplayLedger<UUID>(
+        monotonicNanos = monotonicNanos,
+        retention = replayRetention,
+        maxEntries = maxReplayEntries,
+    )
 
     @Synchronized
     fun create(
@@ -304,17 +316,16 @@ internal class MiniAppletReplyRegistry(
         context: SigningContext,
         postMessage: (String) -> Unit,
     ): MiniAppletReplyChannel? {
-        if (requestId in seen || pending.isNotEmpty() || seen.size >= MAX_SEEN_REQUESTS) {
-            return null
-        }
+        expireInvalidPending()
+        if (pending.isNotEmpty() || replayLedger.contains(requestId)) return null
         val binding = PendingBinding(
             profileId = context.profileId,
             origin = context.origin,
             navigationId = context.navigationId,
             navigationEpoch = context.navigationEpoch,
-            expiresAtMillis = clock.millis() + REPLY_TTL.toMillis(),
+            observedAtMonotonicNanos = monotonicNanos(),
         )
-        if (!isCurrent(binding)) return null
+        if (!isCurrent(binding) || !replayLedger.recordNew(requestId)) return null
         lateinit var channel: MiniAppletReplyChannel
         channel = MiniAppletReplyChannel(
             requestId = requestId,
@@ -323,7 +334,6 @@ internal class MiniAppletReplyRegistry(
             canDeliver = { isCurrent(binding) },
         )
         pending[requestId] = PendingReply(binding, channel)
-        seen += requestId
         return channel
     }
 
@@ -344,11 +354,24 @@ internal class MiniAppletReplyRegistry(
 
     @Synchronized
     private fun remove(requestId: UUID, channel: MiniAppletReplyChannel) {
-        if (pending[requestId]?.channel === channel) pending.remove(requestId)
+        if (pending[requestId]?.channel === channel) {
+            pending.remove(requestId)
+            replayLedger.refresh(requestId)
+        }
+    }
+
+    private fun expireInvalidPending() {
+        pending.values
+            .filterNot { isCurrent(it.binding) }
+            .forEach { it.channel.abandon() }
     }
 
     private fun isCurrent(binding: PendingBinding): Boolean = runCatching {
-        if (clock.millis() >= binding.expiresAtMillis ||
+        if (MonotonicSecurityTime.isExpiredOrInvalid(
+                binding.observedAtMonotonicNanos,
+                replyTtlNanos,
+                monotonicNanos(),
+            ) ||
             currentNavigationEpoch() != binding.navigationEpoch ||
             currentOrigin() != binding.origin
         ) return@runCatching false
@@ -359,6 +382,7 @@ internal class MiniAppletReplyRegistry(
     private companion object {
         const val MAX_SEEN_REQUESTS = 64
         val REPLY_TTL: Duration = Duration.ofMinutes(2)
+        val DEFAULT_REPLAY_RETENTION: Duration = Duration.ofMinutes(5)
     }
 
     private data class PendingReply(
@@ -371,6 +395,6 @@ internal class MiniAppletReplyRegistry(
         val origin: TrustedOrigin,
         val navigationId: NavigationId,
         val navigationEpoch: Long,
-        val expiresAtMillis: Long,
+        val observedAtMonotonicNanos: Long,
     )
 }

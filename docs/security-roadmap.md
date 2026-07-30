@@ -57,6 +57,13 @@ Completed:
   Timeout is three seconds; late callbacks, Activity recreation, background,
   renderer death, certificate lock and profile switch fail closed. A later
   successful clear is the only in-process recovery.
+- Monotonic TTL and replay hardening completed (F-09/F-10): pending signing,
+  active operation and MiniApplet reply windows are decided only by process
+  monotonic time. Request IDs remain replay-blocked for a bounded five-minute
+  retention window and are then pruned before capacity checks. Clock rollback,
+  exact-boundary expiry, concurrent confirmation and concurrent terminal reply
+  races are covered by hostile tests. Bridge-generated security IDs require Web
+  Crypto and fail closed; `Math.random()` is absent from the shim.
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 
@@ -76,7 +83,7 @@ Completed isolated PR — public IPv6 DNS results (F-17):
   production Android `InetAddress` implementation. This closes the deferred
   classifier gate; it is not a live IPv6 route or portal E2E claim.
 
-Latest completed isolated PR — process-scoped Client TLS preference barrier (F-13):
+Completed isolated PR — process-scoped Client TLS preference barrier (F-13):
 
 - `JuntaFirmaApplication` owns one coordinator for the entire app process.
 - `WebView.clearClientCertPreferences` is isolated behind one Android adapter;
@@ -89,15 +96,31 @@ Latest completed isolated PR — process-scoped Client TLS preference barrier (F
 - Physical-device instrumentation exercised the real Android clear callback
   without opening a portal, reading a certificate or starting a signature.
 
+Latest completed isolated PR — monotonic TTL/replay hardening (F-09/F-10):
+
+- `MonotonicSecurityTime` uses `System.nanoTime()` for authorization deadlines;
+  civil `Instant` remains display/audit metadata only.
+- `PendingSignRequestStore`, `SigningCoordinator` and MiniApplet reply delivery
+  share the same two-minute monotonic lifetime from bridge observation through
+  PRE, local signature, POST and callback.
+- `BoundedReplayLedger` retains terminal request IDs for five minutes, prunes
+  expired entries before capacity checks and treats clock rollback as fail-closed.
+- The JavaScript shim requires `crypto.randomUUID()` or
+  `crypto.getRandomValues()` and does not use `Math.random()`.
+- Hostile tests cover exact TTL boundaries, civil-clock jumps, monotonic rollback,
+  concurrent confirm, concurrent success/failure and stale/replayed callbacks.
+- The F-09/F-10 QA build completed a fresh user-operated Oficina Virtual login
+  on the physical device; scope remains certificate authentication only.
+
 Next isolated PRs:
 
-1. Additional Client TLS portals beyond the already verified Carné Joven
-   scenario, only after exact runtime contract and physical E2E evidence (F-03).
-2. TTL-bounded replay protection and behavioral security tests (F-09, F-10).
-3. Remaining portal E2E and document-signing branches after local CAdES/XAdES validation (F-12).
-4. CI, lint, secret/dependency scanning and signer verification (F-14).
-5. Remaining catalog-generation deduplication after the completed E2E consistency
+1. CI, lint, secret/dependency scanning and signer verification (F-14).
+2. Remaining catalog-generation deduplication after the completed E2E consistency
    gate (F-15B).
+3. Additional Client TLS portals beyond Carné Joven only after exact runtime
+   contract and physical E2E evidence (F-03).
+4. Remaining portal E2E and document-signing branches after local CAdES/XAdES
+   validation and an authorized real administrative case (F-12).
 
 
 ## WS024 secure-tunnel QA status — 2026-07-29

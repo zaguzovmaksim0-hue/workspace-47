@@ -164,6 +164,39 @@ class SigningCoordinatorTest {
     }
 
     @Test
+    fun concurrentConfirmAllowsOnlyOneExecutionToOwnTheRequest() {
+        val blockingAdapter = BlockingPrepareAdapter()
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = blockingAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request(), reply))
+        val first = AtomicReference<SigningExecutionResult>()
+        val firstThread = thread(start = true) {
+            first.set(runBlocking { localCoordinator.confirm(REQUEST_ID) })
+        }
+
+        assertTrue(blockingAdapter.prepareEntered.await(5, TimeUnit.SECONDS))
+        val second = runBlocking { localCoordinator.confirm(REQUEST_ID) }
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.INVALID_REQUEST),
+            second,
+        )
+
+        blockingAdapter.releasePrepare.countDown()
+        firstThread.join(5_000)
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), first.get())
+        assertEquals(listOf("local"), localEngine.events)
+        assertEquals(listOf("success"), reply.events)
+    }
+
+    @Test
     fun changedOriginAfterConfirmationFailsBeforeNetworkOrPrivateKeyUse() = runTest {
         val reply = RecordingReply(REQUEST_ID)
         coordinator.prepare(request(), reply)
@@ -279,8 +312,42 @@ class SigningCoordinatorTest {
     }
 
     @Test
+    fun civilClockJumpCannotExpireOrExtendARequestSecurityWindow() = runTest {
+        val civilClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(10_000L)
+        val localAdapter = RecordingAdapter()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = localAdapter,
+            localSignatureEngine = RecordingEngine(),
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = civilClock,
+            monotonicNanos = monotonic::nowNanos,
+            pendingStore = PendingSignRequestStore(
+                clock = civilClock,
+                monotonicNanos = monotonic::nowNanos,
+            ),
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        val candidate = request(observedAtMonotonicNanos = monotonic.nowNanos())
+
+        civilClock.advance(Duration.ofDays(30))
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(candidate, reply))
+        civilClock.rewind(Duration.ofDays(60))
+
+        assertEquals(
+            SigningExecutionResult.Delivered(REQUEST_ID),
+            localCoordinator.confirm(REQUEST_ID),
+        )
+        assertEquals(listOf("pre", "post"), localAdapter.events)
+        assertEquals(listOf("success"), reply.events)
+    }
+
+    @Test
     fun pendingConfirmationExpiresAndClearsSensitiveStateWithoutUserAction() {
         val mutableClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(20_000L)
         val storedCopyClears = mutableListOf<Boolean>()
         val certificateFingerprintClears = mutableListOf<Boolean>()
         val localSession = CertificateSession(
@@ -296,16 +363,22 @@ class SigningCoordinatorTest {
             localSignatureEngine = RecordingEngine(),
             currentOrigin = { PORTAL_ORIGIN },
             clock = mutableClock,
+            monotonicNanos = monotonic::nowNanos,
             pendingStore = PendingSignRequestStore(
                 clock = mutableClock,
                 observer = SensitiveSigningCopyObserver(storedCopyClears::add),
+                monotonicNanos = monotonic::nowNanos,
             ),
             expiryScheduler = localScheduler,
         )
         val reply = RecordingReply(REQUEST_ID)
-        localCoordinator.prepare(request(), reply)
+        localCoordinator.prepare(
+            request(observedAtMonotonicNanos = monotonic.nowNanos()),
+            reply,
+        )
 
-        mutableClock.advance(Duration.ofMinutes(2))
+        monotonic.advance(Duration.ofMinutes(2))
+        mutableClock.rewind(Duration.ofDays(30))
         localScheduler.runPending()
 
         assertEquals(
@@ -377,11 +450,12 @@ class SigningCoordinatorTest {
     @Test
     fun requestExpiryDuringPreSignClosesPreSignWithoutUsingPrivateKey() = runTest {
         val mutableClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(30_000L)
         val localSession = CertificateSession(mutableClock).apply { unlock(identity) }
         val preSignState = TrackingPreSignState()
         val localAdapter = MutatingAdapter(
             preSignState = preSignState,
-            onPrepare = { mutableClock.advance(Duration.ofMinutes(2)) },
+            onPrepare = { monotonic.advance(Duration.ofMinutes(2)) },
         )
         val localEngine = RecordingEngine()
         val localCoordinator = SigningCoordinator(
@@ -390,10 +464,18 @@ class SigningCoordinatorTest {
             localSignatureEngine = localEngine,
             currentOrigin = { PORTAL_ORIGIN },
             clock = mutableClock,
+            monotonicNanos = monotonic::nowNanos,
+            pendingStore = PendingSignRequestStore(
+                clock = mutableClock,
+                monotonicNanos = monotonic::nowNanos,
+            ),
             expiryScheduler = ControlledExpiryScheduler(),
         )
         val reply = RecordingReply(REQUEST_ID)
-        localCoordinator.prepare(request(), reply)
+        localCoordinator.prepare(
+            request(observedAtMonotonicNanos = monotonic.nowNanos()),
+            reply,
+        )
 
         val result = localCoordinator.confirm(REQUEST_ID)
 
@@ -473,10 +555,11 @@ class SigningCoordinatorTest {
     @Test
     fun requestExpiryDuringPostSignClosesResultWithoutDeliveringSuccess() = runTest {
         val mutableClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(40_000L)
         val finalSignatureCleared = AtomicBoolean(false)
         val localAdapter = MutatingAdapter(
             preSignState = TrackingPreSignState(),
-            onComplete = { mutableClock.advance(Duration.ofMinutes(2)) },
+            onComplete = { monotonic.advance(Duration.ofMinutes(2)) },
             finalSignatureCleared = finalSignatureCleared,
         )
         val localEngine = RecordingEngine()
@@ -486,10 +569,18 @@ class SigningCoordinatorTest {
             localSignatureEngine = localEngine,
             currentOrigin = { PORTAL_ORIGIN },
             clock = mutableClock,
+            monotonicNanos = monotonic::nowNanos,
+            pendingStore = PendingSignRequestStore(
+                clock = mutableClock,
+                monotonicNanos = monotonic::nowNanos,
+            ),
             expiryScheduler = ControlledExpiryScheduler(),
         )
         val reply = RecordingReply(REQUEST_ID)
-        localCoordinator.prepare(request(), reply)
+        localCoordinator.prepare(
+            request(observedAtMonotonicNanos = monotonic.nowNanos()),
+            reply,
+        )
 
         val result = localCoordinator.confirm(REQUEST_ID)
 
@@ -505,6 +596,7 @@ class SigningCoordinatorTest {
     private fun request(
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA,
         navigationEpoch: Long = 0L,
+        observedAtMonotonicNanos: Long = System.nanoTime(),
     ) = NormalizedSignRequest(
         requestId = REQUEST_ID,
         protocolId = JuntaTriPhaseAdapter.ID,
@@ -520,6 +612,7 @@ class SigningCoordinatorTest {
         format = SigningFormat.CADES,
         safeDescription = "Autenticación con certificado",
         payload = PAYLOAD.copyOf(),
+        observedAtMonotonicNanos = observedAtMonotonicNanos,
     )
 
     private fun redRequest(
@@ -669,6 +762,20 @@ class SigningCoordinatorTest {
 
         fun advance(duration: Duration) {
             current = current.plus(duration)
+        }
+
+        fun rewind(duration: Duration) {
+            current = current.minus(duration)
+        }
+    }
+
+    private class MutableMonotonicClock(
+        private var currentNanos: Long,
+    ) {
+        fun nowNanos(): Long = currentNanos
+
+        fun advance(duration: Duration) {
+            currentNanos += duration.toNanos()
         }
     }
 

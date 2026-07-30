@@ -241,6 +241,46 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun signingTtlAndReplayPathsUseMonotonicBoundedStateOnly() {
+        val pendingSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/signing/PendingSignRequestStore.kt",
+        )
+        val coordinatorSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/signing/SigningCoordinator.kt",
+        )
+        val bridgeSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/WebMessageBridge.kt",
+        )
+        val shimSource = projectSource("app/src/main/res/raw/afirma_shim.js")
+
+        assertTrue(
+            "Pending request and reply replay state must use a TTL-bounded ledger",
+            "BoundedReplayLedger" in pendingSource && "BoundedReplayLedger" in bridgeSource,
+        )
+        assertTrue(
+            "Request and active-operation boundaries must use process monotonic time",
+            "MonotonicSecurityTime.isExpiredOrInvalid" in pendingSource &&
+                "MonotonicSecurityTime.isExpiredOrInvalid" in coordinatorSource &&
+                "MonotonicSecurityTime.remaining" in coordinatorSource,
+        )
+        assertFalse(
+            "Civil clocks must not decide request or reply expiry",
+            "Duration.between(request.context.observedAt" in coordinatorSource ||
+                "clock.millis() >= binding" in bridgeSource ||
+                "isExpired(expiresAt: Instant)" in pendingSource,
+        )
+        assertFalse(
+            "Bridge security identifiers must never fall back to Math.random",
+            "Math.random" in shimSource,
+        )
+        assertTrue(
+            "AFIRMA URI forwarding must fail closed without a Web Crypto UUID",
+            "const uriRequestId = secureRequestId()" in shimSource &&
+                "if (!uriRequestId)" in shimSource,
+        )
+    }
+
+    @Test
     fun clientTlsWebViewWaitsForGenerationBoundPreferenceBarrier() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",

@@ -3,6 +3,7 @@ package dev.junta.firmamobile.signing
 import dev.junta.firmamobile.browser.NavigationId
 import dev.junta.firmamobile.browser.WebBridgeMessage
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.io.Closeable
 import java.time.Instant
 import java.util.UUID
@@ -68,6 +69,7 @@ class NormalizedSignRequest internal constructor(
     val format: SigningFormat,
     val safeDescription: String,
     payload: ByteArray,
+    internal val observedAtMonotonicNanos: Long = MonotonicSecurityTime.nowNanos(),
     private val payloadObserver: SensitiveSigningCopyObserver = SensitiveSigningCopyObserver {},
 ) : Closeable {
     private var ownedPayload: ByteArray? = payload

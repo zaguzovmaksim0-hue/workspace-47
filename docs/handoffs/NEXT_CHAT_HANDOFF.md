@@ -62,9 +62,9 @@
 
 - package: `dev.junta.firmamobile`;
 - versionName: `0.1.0-qa`;
-- установленный SHA-256 (физически подтверждённая F-13 сборка):
-  `8547b3e45cd27636b6b716059fbc216e7cc5cff93c3fc2dca69149f18dad3477`;
-- F-13 QA APK установлен поверх данных; локальный APK и `base.apk` совпадают;
+- установленный SHA-256 (физически подтверждённая F-09/F-10 сборка):
+  `0258378038d703979239c8701e1e8d2ce68ecabc7de5699b68cbccbef1e5ceec`;
+- F-09/F-10 QA APK установлен поверх данных; локальный APK и `base.apk` совпадают;
 - `zipalign`: PASS;
 - APK Signature Scheme v2: PASS, one signer;
 - direct-only: tunnel выключен, relay tuple отсутствует;
@@ -72,18 +72,18 @@
 
 ## Последний QA gate
 
-- Debug unit: 489/489, 0 failures/errors/skips;
-- QA unit: 489/489, 0 failures/errors/skips;
+- Debug unit: 499/499, 0 failures/errors/skips;
+- QA unit: 499/499, 0 failures/errors/skips;
 - `lintDebug`, `lintQa`: PASS;
 - `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
 - Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
 - Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
 - Debug APK SHA-256:
-  `9fb8c65c11f446ea4bce2d87c140e02a034748656f12e9a68c3649507aec87fe`;
+  `51c425a45e8b8fee3a384a9c8098771f0896eb456c78eae9bcfdf810170c0824`;
 - QA APK and installed `base.apk` SHA-256:
-  `8547b3e45cd27636b6b716059fbc216e7cc5cff93c3fc2dca69149f18dad3477`;
+  `0258378038d703979239c8701e1e8d2ce68ecabc7de5699b68cbccbef1e5ceec`;
 - QA AndroidTest APK SHA-256:
-  `73bfc781ee2e3eabf275dcdaca811efc398c0735fdbcbf29493e4367b68ea618`;
+  `4cc4be8ae9ca7d3300f444d7a40c4dd5d83a4005f9b53080ef09521ab02a2904`;
 - zipalign, v2 signature, one signer, manifest hardening and forbidden-canary
   scan: PASS;
 - physical `ClientCertPreferenceCoordinatorInstrumentedTest`: `OK (1 test)`;
@@ -215,6 +215,26 @@ WARP, и неизменённая сборка выполнила E2E успеш
 - no additional Client TLS profile was enabled. F-03 remains open and requires
   exact runtime contract plus physical E2E evidence.
 
+## F-09/F-10 monotonic TTL/replay hardening — 2026-07-30
+
+- все security TTL для MiniApplet/signing/reply используют process monotonic
+  time; civil clock не решает допуск операции;
+- lifetime от bridge observation через PRE/local/POST/callback — 2 минуты;
+- terminal request IDs хранятся в bounded replay ledger 5 минут и затем
+  очищаются до capacity-check;
+- monotonic rollback, exact boundary, concurrent confirm и concurrent terminal
+  delivery покрыты hostile tests;
+- JS shim не содержит `Math.random()` и без Web Crypto fail-closed;
+- полный gate: Debug 499/499, QA 499/499, lint/builds/APK/Go/Python PASS;
+- установленный QA/base SHA-256:
+  `0258378038d703979239c8701e1e8d2ce68ecabc7de5699b68cbccbef1e5ceec`;
+- cache 101 bytes/mode 600, cold unlock и `FLAG_SECURE` сохранены;
+- физические Client TLS callback и IPv6 classifier regressions: `OK (1 test)`
+  каждый;
+- пользователь выполнил новый Oficina Virtual login на этой сборке и подтвердил
+  корректное открытие портала и меню; scope только login CAdES;
+- test package и staging APK/XML удалены; чувствительные артефакты не сохранены.
+
 ## Ограничения и следующие задачи
 
 1. Legacy UI Oficina Virtual исправлен только для exact `ws072 /ofvirtual/`;
@@ -227,8 +247,9 @@ WARP, и неизменённая сборка выполнила E2E успеш
    реально не примет XAdES E2E. UniZAR уже повышен только для login CAdES.
 5. Не сохранять в Git скриншоты кабинета, пароль, PKCS#12, сертификат, подпись,
    cookie или персональные идентификаторы.
-6. Следующий security-блок: TTL/replay и hostile behavioral tests F-09/F-10.
-   Дополнительные Client TLS-порталы F-03 не включать без отдельного E2E.
+6. Следующий исполнимый security-блок: CI/supply-chain gate F-14, затем
+   catalog-generation deduplication F-15B. Дополнительные Client TLS-порталы F-03
+   и документальные операции F-12 не включать без отдельного реального E2E.
 
 Для продолжения в новом чате достаточно написать: «Открой приватный репозиторий,
 ветку `feature/ws024-secure-tunnel-20260728`, прочитай

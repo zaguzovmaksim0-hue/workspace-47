@@ -2,6 +2,8 @@ package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.browser.NavigationId
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.security.BoundedReplayLedger
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Duration
@@ -41,6 +43,8 @@ data class PendingSignSummary(
     val format: SigningFormat,
     val safeDescription: String,
     val expiresAt: Instant,
+    internal val observedAtMonotonicNanos: Long,
+    internal val lifetimeNanos: Long,
 )
 
 internal fun interface SensitiveSigningCopyObserver {
@@ -51,26 +55,34 @@ class PendingSignRequestStore internal constructor(
     private val clock: Clock = Clock.systemUTC(),
     private val lifetime: Duration = Duration.ofMinutes(2),
     private val observer: SensitiveSigningCopyObserver = SensitiveSigningCopyObserver {},
+    private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
+    replayRetention: Duration = DEFAULT_REPLAY_RETENTION,
+    maxReplayEntries: Int = MAX_TRACKED_REQUEST_IDS,
 ) {
     private var pending: StoredRequest? = null
-    private val seenRequestIds = linkedSetOf<UUID>()
-    private var lastTerminalRequestId: UUID? = null
-
-    init {
-        require(!lifetime.isNegative && !lifetime.isZero)
-    }
+    private val lifetimeNanos = MonotonicSecurityTime.durationNanos(lifetime)
+    private val replayLedger = BoundedReplayLedger<UUID>(
+        monotonicNanos = monotonicNanos,
+        retention = replayRetention,
+        maxEntries = maxReplayEntries,
+    )
 
     @Synchronized
     fun put(request: NormalizedSignRequest): PendingSignSummary {
-        if (request.requestId in seenRequestIds) {
+        if (replayLedger.contains(request.requestId)) {
             request.close()
             clearPending(ConsumeError.ALREADY_CONSUMED)
             throw IllegalArgumentException("Duplicate signing request ID")
         }
-        if (seenRequestIds.size >= MAX_TRACKED_REQUEST_IDS) {
+        if (MonotonicSecurityTime.isExpiredOrInvalid(
+                request.observedAtMonotonicNanos,
+                lifetimeNanos,
+                monotonicNanos(),
+            )
+        ) {
             request.close()
-            clearPending(ConsumeError.CANCELLED)
-            throw IllegalArgumentException("Signing request replay window is full")
+            clearPending(ConsumeError.REQUEST_EXPIRED)
+            throw IllegalArgumentException("Signing request is already expired")
         }
         if (request.payloadSize > MAX_PAYLOAD_BYTES ||
             request.safeDescription.length > MAX_SAFE_DESCRIPTION_CHARS
@@ -80,6 +92,10 @@ class PendingSignRequestStore internal constructor(
         }
 
         clearPending(ConsumeError.CANCELLED)
+        if (!replayLedger.recordNew(request.requestId)) {
+            request.close()
+            throw IllegalStateException("Signing request replay window is full")
+        }
         val payload = try {
             request.payloadCopy()
         } finally {
@@ -97,7 +113,9 @@ class PendingSignRequestStore internal constructor(
             algorithm = request.algorithm,
             format = request.format,
             safeDescription = request.safeDescription,
-            expiresAt = clock.instant().plus(lifetime),
+            expiresAt = request.context.observedAt.plus(lifetime),
+            observedAtMonotonicNanos = request.observedAtMonotonicNanos,
+            lifetimeNanos = lifetimeNanos,
         )
         pending = StoredRequest(
             protocolId = request.protocolId,
@@ -105,14 +123,13 @@ class PendingSignRequestStore internal constructor(
             payload = payload,
             fingerprint = fingerprint,
         )
-        seenRequestIds += request.requestId
         return summary
     }
 
     @Synchronized
     fun peek(): PendingSignSummary? {
         val current = pending ?: return null
-        if (isExpired(current.summary.expiresAt)) {
+        if (isExpired(current.summary)) {
             clearPending(ConsumeError.REQUEST_EXPIRED)
             return null
         }
@@ -122,13 +139,13 @@ class PendingSignRequestStore internal constructor(
     @Synchronized
     fun consume(expected: PendingValidationContext): PendingConsumeResult {
         val current = pending ?: return PendingConsumeResult.Rejected(
-            if (expected.requestId == lastTerminalRequestId || expected.requestId in seenRequestIds) {
+            if (replayLedger.contains(expected.requestId)) {
                 ConsumeError.ALREADY_CONSUMED
             } else {
                 ConsumeError.NOT_FOUND
             },
         )
-        if (isExpired(current.summary.expiresAt)) {
+        if (isExpired(current.summary)) {
             return rejectAndClear(ConsumeError.REQUEST_EXPIRED)
         }
         if (expected.requestId != current.summary.requestId) {
@@ -165,6 +182,7 @@ class PendingSignRequestStore internal constructor(
             format = current.summary.format,
             safeDescription = current.summary.safeDescription,
             payload = acceptedPayload,
+            observedAtMonotonicNanos = current.summary.observedAtMonotonicNanos,
             payloadObserver = observer,
         )
         clearPending(ConsumeError.ALREADY_CONSUMED)
@@ -185,11 +203,16 @@ class PendingSignRequestStore internal constructor(
         val current = pending ?: return
         current.payload.clearAndReport()
         current.fingerprint.clearAndReport()
-        lastTerminalRequestId = current.summary.requestId
+        replayLedger.refresh(current.summary.requestId)
         pending = null
     }
 
-    private fun isExpired(expiresAt: Instant): Boolean = !clock.instant().isBefore(expiresAt)
+    private fun isExpired(summary: PendingSignSummary): Boolean =
+        MonotonicSecurityTime.isExpiredOrInvalid(
+            summary.observedAtMonotonicNanos,
+            summary.lifetimeNanos,
+            monotonicNanos(),
+        )
 
     private fun digest(bytes: ByteArray): ByteArray =
         MessageDigest.getInstance(SHA_256).digest(bytes)
@@ -210,6 +233,7 @@ class PendingSignRequestStore internal constructor(
         const val MAX_PAYLOAD_BYTES = 524_288
         private const val MAX_SAFE_DESCRIPTION_CHARS = 256
         private const val MAX_TRACKED_REQUEST_IDS = 1_024
+        private val DEFAULT_REPLAY_RETENTION: Duration = Duration.ofMinutes(5)
         private const val SHA_256 = "SHA-256"
         private const val SHA_256_BYTES = 32
     }

@@ -8,6 +8,7 @@ import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.profile.SignatureAlgorithm
 import dev.junta.firmamobile.profile.SignatureFormat
 import dev.junta.firmamobile.profile.TrustMode
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
@@ -49,10 +50,12 @@ sealed interface MiniAppletBridgeRouteResult {
 
 class MiniAppletBridgeAdapter(
     clock: Clock = Clock.systemUTC(),
+    monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     activeProfileId: () -> dev.junta.firmamobile.profile.ProfileId? = { null },
 ) {
     private val delegate = ProfileMiniAppletBridgeAdapter(
         clock = clock,
+        monotonicNanos = monotonicNanos,
         activeProfileId = activeProfileId,
     )
 
@@ -78,6 +81,7 @@ class MiniAppletBridgeAdapter(
 
 internal class ProfileMiniAppletBridgeAdapter(
     private val clock: Clock = Clock.systemUTC(),
+    private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     private val profileRegistry: dev.junta.firmamobile.profile.SiteProfileRegistry =
         BuiltInSiteProfiles.runtimeRegistry,
     private val adapterRegistry: ProtocolAdapterRegistry = BuiltInProtocolAdapterRegistry.registry,
@@ -262,6 +266,7 @@ internal class ProfileMiniAppletBridgeAdapter(
                     format = format.first,
                     safeDescription = operation.safeDescription,
                     payload = payload,
+                    observedAtMonotonicNanos = monotonicNanos(),
                 ),
             ),
         )

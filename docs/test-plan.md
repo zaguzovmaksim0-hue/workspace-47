@@ -148,6 +148,22 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - strings con comillas, saltos y secuencias JS no producen inyección;
 - mensajes fuera del navigation id activo se rechazan.
 
+### MonotonicSecurityTimeTest / BoundedReplayLedger / SigningCoordinator hostile tests
+
+- el TTL de request, pending, operación activa y reply se calcula solo con reloj
+  monotónico; el reloj civil puede avanzar o retroceder sin alterar autorización;
+- el límite exacto de dos minutos expira y un valor monotónico menor que el
+  observado falla cerrado;
+- los request IDs terminales se retienen cinco minutos, se podan en el boundary
+  exacto y liberan capacidad sin permitir replay durante la retención;
+- rollback monotónico conserva la evidencia de replay y no poda entradas;
+- dos `confirm` concurrentes permiten una sola ejecución de PRE/local/POST;
+- success y failure concurrentes producen exactamente un terminal/callback;
+- callbacks stale, epoch/origin cambiados y replay posterior al terminal no se
+  entregan;
+- el shim no contiene `Math.random()` y no reenvía AFIRMA/MiniApplet al bridge si
+  Web Crypto no puede generar un UUID seguro.
+
 ### ClientCertPreferenceBarrierTest / ClientCertPreferenceCoordinatorTest
 
 - estado inicial `IDLE`; ninguna navegación se habilita antes del callback;

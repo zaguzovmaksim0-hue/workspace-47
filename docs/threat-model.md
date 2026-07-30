@@ -138,16 +138,22 @@ desactivados; parser streaming cuando sea posible; content type y tamaño
 obligatorios; JSON con modelo cerrado; no Java serialization.
 **Verificación:** tests XXE, billion-laughs/DOCTYPE, tamaño y content type.
 
-### T8. Confusión, replay o entrega JS inyectada
+### T8. Confusión, replay, manipulación del reloj o entrega JS inyectada
 
-**Riesgo:** resultado A vuelve a solicitud B o se ejecuta JavaScript construido
-con concatenación.
-**Controles:** estado de un solo uso enlazado a requestId+origin+navigation;
-mensajes JSON; callbacks guardados como referencias dentro del shim; no se
-construye código JS con datos; solicitudes pendientes borradas en todos los
-terminales.
-**Verificación:** tests de requestId repetido, origin cambiado, navegación,
-cancelación y payload con caracteres de inyección.
+**Riesgo:** resultado A vuelve a solicitud B, un cambio del reloj civil amplía la
+ventana de firma, el ledger de replay queda lleno de forma permanente o se ejecuta
+JavaScript construido con concatenación/identificadores débiles.
+**Controles:** estado one-shot enlazado a requestId+profile+origin+navigation;
+TTL de dos minutos medido exclusivamente con reloj monotónico desde la observación
+bridge hasta PRE, firma local, POST y callback; IDs terminales retenidos en un
+ledger acotado durante cinco minutos y podados antes del límite de capacidad. Un
+retroceso del reloj monotónico falla cerrado. Los mensajes son JSON, los callbacks
+son referencias internas del shim y los request IDs exigen Web Crypto; no existe
+fallback `Math.random()` ni construcción de código JS con datos.
+**Verificación:** tests de boundary exacto, salto del reloj civil, rollback
+monotónico, pruning/capacity, requestId repetido, origin/navigation cambiados,
+confirmaciones concurrentes, success/failure concurrentes, callbacks stale y
+payload con caracteres de inyección.
 
 ### T9. Cookies cruzan de perfil o una limpieza local borra otras sesiones
 

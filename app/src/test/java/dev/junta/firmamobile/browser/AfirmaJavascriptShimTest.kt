@@ -126,5 +126,8 @@ class AfirmaJavascriptShimTest {
         assertTrue(functional.contains("errorCallback(errorCode"))
         assertTrue(functional.contains("pagehide"))
         assertFalse(functional.contains("evaluateJavascript"))
+        assertFalse(functional.contains("Math.random"))
+        assertTrue(functional.contains("const uriRequestId = secureRequestId()"))
+        assertTrue(functional.contains("if (!uriRequestId)"))
     }
 }

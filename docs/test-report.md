@@ -1144,3 +1144,70 @@ Physical-device verification:
 
 This milestone hardens the already observed Carné Joven Client TLS lifecycle. It
 does not verify or enable any additional Client TLS portal; that remains F-03.
+
+## Milestone F09/F10 — monotonic TTL and replay hardening — 2026-07-30
+
+The previous signing/reply lifetimes used civil wall-clock values and replay IDs
+were bounded only by capacity. A system-clock jump could change authorization
+windows, while a long-lived process could eventually fill a permanent replay set.
+The JavaScript shim also contained a non-cryptographic fallback for identifiers.
+
+F-09/F-10 introduces one consistent boundary:
+
+- `MonotonicSecurityTime` uses process monotonic nanoseconds for every security
+  lifetime decision;
+- request observation, pending confirmation, active PRE/local/POST operation and
+  MiniApplet reply all share the same two-minute window;
+- civil `Instant` remains only display/context metadata;
+- `BoundedReplayLedger` retains terminal IDs for five minutes, prunes at the exact
+  boundary before capacity checks and fails closed on monotonic rollback;
+- pending signing capacity remains 1024 IDs and reply capacity 64 IDs, now without
+  permanent denial of service after retention expires;
+- the shim uses Web Crypto UUID generation only and contains no `Math.random()`;
+  missing Web Crypto stops bridge forwarding fail-closed.
+
+Hostile/regression evidence:
+
+- exact monotonic TTL boundary and rollback;
+- civil clock jumps forward/backward without changing the security window;
+- replay retention/pruning and capacity recovery;
+- two concurrent confirmations with only one PRE/local/POST owner;
+- concurrent success/failure with exactly one terminal delivery;
+- stale/replayed callbacks and changed origin/navigation remain rejected;
+- source regression prohibits civil-clock expiry and weak JS identifiers.
+
+Fresh global verification:
+
+- `testDebugUnitTest`: 499 tests, 0 failures/errors/skips;
+- `testQaUnitTest`: 499 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
+- APK alignment and APK Signature Scheme v2: PASS for Debug, QA and AndroidTest;
+- QA manifest hardening and exact forbidden-canary scan: PASS;
+- Debug APK SHA-256:
+  `51c425a45e8b8fee3a384a9c8098771f0896eb456c78eae9bcfdf810170c0824`;
+- QA APK SHA-256:
+  `0258378038d703979239c8701e1e8d2ce68ecabc7de5699b68cbccbef1e5ceec`;
+- QA AndroidTest APK SHA-256:
+  `4cc4be8ae9ca7d3300f444d7a40c4dd5d83a4005f9b53080ef09521ab02a2904`.
+
+Physical-device acceptance:
+
+- target/test APK installation returned `Success`;
+- installed `base.apk` exactly matched the QA hash;
+- encrypted unlock cache remained 101 bytes, mode `600`;
+- cold launch restored the certificate without password and retained
+  `FLAG_SECURE`;
+- F-13 Client TLS callback regression and F-17 IPv6 classifier each returned
+  `OK (1 test)`;
+- the authorized user then completed a fresh Oficina Virtual certificate login
+  with this exact build and reported correct portal opening and correct UI/menu
+  behavior;
+- scope remains login CAdES only: no document signing or administrative
+  submission is claimed;
+- the test package and F-09 staging files were removed after acceptance.
+
+No screenshot, password, PKCS#12, certificate body, signature, cookie or personal
+identifier was retained in the repository.
