@@ -71,6 +71,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("administrativa", redsara["limitations"].lower())
         self.assertIn("xades", redsara["limitations"].lower())
 
+        aeat = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "aeat-sede"
+        )
+        self.assertEqual("aeat-mis-datos-censales", aeat["profileId"])
+        self.assertEqual("E2E_PENDING", aeat["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", aeat["inventoryStatus"])
+        self.assertEqual("2026-07-31", aeat["reviewedOn"])
+        self.assertIn("client tls", aeat["limitations"].lower())
+        self.assertIn("qa", aeat["limitations"].lower())
+        self.assertIn("e2e", aeat["limitations"].lower())
+        self.assertNotIn("firma aceptada", aeat["limitations"].lower())
+
         aragon = next(entry for entry in catalog["entries"] if entry["portalId"] == "aragon-siraw")
         self.assertEqual("aragon-siraw", aragon["profileId"])
         self.assertEqual("E2E_VERIFIED", aragon["catalogStatus"])

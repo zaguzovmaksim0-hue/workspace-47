@@ -8,6 +8,24 @@ import org.junit.Test
 
 class SiteProfileRegistryTest {
     @Test
+    fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
+        val profileId = ProfileId("aeat-mis-datos-censales")
+        val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")
+        val target = URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(source))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(target))
+
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(source)?.trustMode)
+        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(target)?.trustMode)
+    }
+
+    @Test
     fun `release and qa registries activate verified carne joven profile`() {
         val carneId = ProfileId("carne-joven-andalucia")
 

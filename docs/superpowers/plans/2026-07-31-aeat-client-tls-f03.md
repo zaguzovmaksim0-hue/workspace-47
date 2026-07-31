@@ -47,13 +47,13 @@
 - Produces: `enum class ClientAuthTransitionMode { REDIRECT_AFTER_SOURCE, DIRECT_FROM_SOURCE }`
 - Produces: `ClientAuthPolicy.transitionMode: ClientAuthTransitionMode`
 
-- [ ] **Step 1: Write parser tests that require an explicit mode**
+- [x] **Step 1: Write parser tests that require an explicit mode**
 
 Add assertions that Carné Joven parses as `REDIRECT_AFTER_SOURCE`, that removing
 `transitionMode` is rejected, and that a direct mode accepts empty fixed and
 ephemeral parameter sets only when the exact target is queryless.
 
-- [ ] **Step 2: Run the focused parser tests and verify RED**
+- [x] **Step 2: Run the focused parser tests and verify RED**
 
 Run:
 
@@ -64,7 +64,7 @@ Run:
 Expected: compilation/test failure because `ClientAuthTransitionMode` and the
 required JSON field do not exist.
 
-- [ ] **Step 3: Implement the minimal model/parser change**
+- [x] **Step 3: Implement the minimal model/parser change**
 
 Add the enum and field. Parse `transitionMode` as a required exact key. Enforce:
 
@@ -79,7 +79,7 @@ when (transitionMode) {
 
 Add `"transitionMode":"REDIRECT_AFTER_SOURCE"` to Carné Joven.
 
-- [ ] **Step 4: Re-run focused parser tests and verify GREEN**
+- [x] **Step 4: Re-run focused parser tests and verify GREEN**
 
 Run the Step 2 command. Expected: PASS.
 
@@ -95,13 +95,13 @@ Run the Step 2 command. Expected: PASS.
 - Consumes: `ClientAuthPolicy.transitionMode`
 - Produces: immediate one-shot `AuthorizedClientAuthTarget` for a valid `DIRECT_FROM_SOURCE` transition.
 
-- [ ] **Step 1: Add direct-transition success test using a test catalog**
+- [x] **Step 1: Add direct-transition success test using a test catalog**
 
 Create an exact AEAT test profile and assert one modern main-frame transition
 from the exact source to the exact target returns one authorization and a repeat
 returns no authorization.
 
-- [ ] **Step 2: Add hostile direct-transition tests**
+- [x] **Step 2: Add hostile direct-transition tests**
 
 Assert rejection for:
 
@@ -119,7 +119,7 @@ any query
 empty query marker
 ```
 
-- [ ] **Step 3: Run focused authorizer tests and verify RED**
+- [x] **Step 3: Run focused authorizer tests and verify RED**
 
 Run:
 
@@ -130,7 +130,7 @@ Run:
 Expected: direct AEAT transition returns null because only pending redirect mode
 exists.
 
-- [ ] **Step 4: Implement minimal mode dispatch**
+- [x] **Step 4: Implement minimal mode dispatch**
 
 For `DIRECT_FROM_SOURCE`, clear pending state, require `currentUrl` to equal an
 exact policy source URL, require `target.matches(policy)`, and return the bounded
@@ -140,7 +140,7 @@ target immediately. Preserve the existing code path unchanged for
 Update target matching so an empty expected parameter set requires
 `rawQuery == null`; an empty `?` is rejected.
 
-- [ ] **Step 5: Re-run focused authorizer tests and verify GREEN**
+- [x] **Step 5: Re-run focused authorizer tests and verify GREEN**
 
 Run the Step 3 command. Expected: all direct and existing Carné Joven tests pass.
 
@@ -157,7 +157,7 @@ Run the Step 3 command. Expected: all direct and existing Carné Joven tests pas
 **Interfaces:**
 - Produces: `ProfileId("aeat-mis-datos-censales")` in QA registry only.
 
-- [ ] **Step 1: Write exact profile and registry tests**
+- [x] **Step 1: Write exact profile and registry tests**
 
 Assert:
 
@@ -178,7 +178,7 @@ Also assert QA resolves the source as `TRUSTED_CLIENT_AUTH`, QA resolves the
 request origin only as `BROWSE_ONLY`, and release resolves neither profile nor
 origins.
 
-- [ ] **Step 2: Run focused profile tests and verify RED**
+- [x] **Step 2: Run focused profile tests and verify RED**
 
 Run:
 
@@ -192,13 +192,13 @@ Run:
 
 Expected: AEAT profile is absent.
 
-- [ ] **Step 3: Add the minimal QA profile**
+- [x] **Step 3: Add the minimal QA profile**
 
 Increment `catalogVersion` and add the exact profile described in Global
 Constraints. Do not add redirect or trusted-browse origins, endpoints, signing
 operations, or extra capabilities.
 
-- [ ] **Step 4: Re-run focused profile tests and verify GREEN**
+- [x] **Step 4: Re-run focused profile tests and verify GREEN**
 
 Run Step 2. Expected: PASS.
 
@@ -213,13 +213,13 @@ Run Step 2. Expected: PASS.
 **Interfaces:**
 - Consumes: AEAT `allowedKeyAlgorithms={RSA,EC}`, `allowEmptyIssuerList=false`.
 
-- [ ] **Step 1: Add tests for AEAT-style offers**
+- [x] **Step 1: Add tests for AEAT-style offers**
 
 Verify a matching RSA identity can proceed when the request advertises RSA and
 an acceptable issuer matches the chain. Verify an empty principal list is
 ignored for AEAT policy, and EC/ECDSA normalization remains exact.
 
-- [ ] **Step 2: Run focused handler tests**
+- [x] **Step 2: Run focused handler tests**
 
 Run:
 
@@ -230,11 +230,11 @@ Run:
 Expected: PASS if existing behavior already satisfies the contract; otherwise a
 behavioral failure must precede the minimal production fix.
 
-- [ ] **Step 3: Make only an evidence-driven fix if RED occurs**
+- [x] **Step 3: Make only an evidence-driven fix if RED occurs**
 
 Do not relax issuer, EKU, key-usage, validity, epoch, TTL or host/port checks.
 
-- [ ] **Step 4: Re-run focused tests**
+- [x] **Step 4: Re-run focused tests**
 
 Expected: PASS.
 
@@ -251,13 +251,13 @@ Expected: PASS.
 - Produces: `aeat-sede.profileId == "aeat-mis-datos-censales"` while inventory
   status remains contract-only/QA, not E2E.
 
-- [ ] **Step 1: Add catalog-generation assertions**
+- [x] **Step 1: Add catalog-generation assertions**
 
 Assert the AEAT entry binds to the profile and that its limitations explicitly
 state exact Client TLS contract observed, QA-only, physical E2E pending, and no
 signing/submission claim.
 
-- [ ] **Step 2: Run Python generator tests and verify RED**
+- [x] **Step 2: Run Python generator tests and verify RED**
 
 Run:
 
@@ -267,12 +267,12 @@ python -m unittest tools.tests.test_generate_public_portal_catalog -v
 
 Expected: binding assertion fails because `profileId` is null.
 
-- [ ] **Step 3: Update the canonical inventory source and regenerate**
+- [x] **Step 3: Update the canonical inventory source and regenerate**
 
 Use the repository generator rather than hand-editing generated JSON. Preserve
 all unrelated entry IDs and ordering.
 
-- [ ] **Step 4: Re-run generator and policy tests**
+- [x] **Step 4: Re-run generator and policy tests**
 
 Run:
 
@@ -295,13 +295,13 @@ Expected: PASS and deterministic regenerated output.
 - Modify: `docs/test-report.md`
 - Modify: `docs/handoffs/NEXT_CHAT_HANDOFF.md`
 
-- [ ] **Step 1: Record only verified facts**
+- [x] **Step 1: Record only verified facts**
 
 Document exact source/target, TLS `CertificateRequest`, QA-only status, direct
 transition mode and remaining Android callback/E2E gates. Do not claim WebView
 or portal acceptance before physical evidence.
 
-- [ ] **Step 2: Run documentation/policy checks**
+- [x] **Step 2: Run documentation/policy checks**
 
 Run:
 
@@ -318,7 +318,7 @@ Expected: PASS.
 
 **Files:** none unless failures reveal defects.
 
-- [ ] **Step 1: Run full Android verification**
+- [x] **Step 1: Run full Android verification**
 
 ```bash
 ./gradlew \
@@ -337,7 +337,7 @@ Expected: PASS.
 
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 2: Run artifact and release gates**
+- [x] **Step 2: Run artifact and release gates**
 
 ```bash
 scripts/ci/verify-android-artifacts.sh
@@ -347,7 +347,7 @@ scripts/ci/verify-release-fail-closed.sh
 Expected: artifact checks pass and release remains fail-closed without signing
 credentials.
 
-- [ ] **Step 3: Run full Python and unchanged Go regression gates**
+- [x] **Step 3: Run full Python and unchanged Go regression gates**
 
 ```bash
 python -m unittest discover -s tools/tests -v
@@ -365,7 +365,7 @@ Expected: PASS, allowing only the existing environmental hardlink skip.
 - Create only if successful or blocked evidence is sanitized: `docs/e2e/2026-07-31-aeat-client-tls-*.md`
 - Modify status/docs only after observed result.
 
-- [ ] **Step 1: Install the exact QA APK through the existing Shizuku/rish path**
+- [x] **Step 1: Install the exact QA APK through the existing Shizuku/rish path**
 
 Verify installed package hash matches the built QA APK. Do not export app-private
 certificate material or browser data.
@@ -376,7 +376,7 @@ Use the app UI to open `Mi área personal`, select `Mis datos censales`, confirm
 the native certificate prompt, and observe whether the authenticated read-only
 landing page opens. Stop before every modification or submission control.
 
-- [ ] **Step 3: Record sanitized outcome**
+- [x] **Step 3: Record sanitized outcome**
 
 Allowed evidence:
 
@@ -391,7 +391,7 @@ portal accepted authentication: yes/no
 final origin/path category without query or personal data
 ```
 
-- [ ] **Step 4: Apply status rule**
+- [x] **Step 4: Apply status rule**
 
 If all physical gates pass, change only this profile to
 `VERIFIED_E2E / ENABLED`, update catalog/docs/tests, rerun impacted gates, and
@@ -402,7 +402,7 @@ the blocker without weakening validation.
 
 ### Task 9: Commit, push and update PR
 
-- [ ] **Step 1: Review staged scope**
+- [x] **Step 1: Review staged scope**
 
 ```bash
 git status --short

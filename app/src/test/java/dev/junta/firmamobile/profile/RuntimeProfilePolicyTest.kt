@@ -28,5 +28,14 @@ class RuntimeProfilePolicyTest {
             BuiltInSiteProfiles.qaRegistry.profile(ProfileId("junta-andalucia"))
                 ?.compatibilityStatus,
         )
+        assertEquals(
+            null,
+            BuiltInSiteProfiles.releaseRegistry.profile(ProfileId("aeat-mis-datos-censales")),
+        )
+        assertEquals(
+            CompatibilityStatus.VERIFIED_CONTRACT,
+            BuiltInSiteProfiles.qaRegistry.profile(ProfileId("aeat-mis-datos-censales"))
+                ?.compatibilityStatus,
+        )
     }
 }

@@ -20,7 +20,7 @@ Completed:
 - Catalog-generation deduplication completed (F-15B):
   `config/site_profiles_v1.json` is the sole committed profile data source and
   is embedded through `BuildConfig`; the public catalog is generated only from
-  the reviewed inventory. All seven profile bindings require exact equality of
+  the reviewed inventory. All eight profile bindings require exact equality of
   `startUrl` and `entry_url`; missing, duplicate or colliding mappings fail
   closed. The former Python binding table and supplemental entries are removed.
 - RedSARA live gate revalidated on 2026-07-30: both public entry paths require
@@ -144,7 +144,7 @@ Latest completed isolated PR — catalog-generation deduplication (F-15B):
 - The reviewed inventory now contains 182 records. Oficina Virtual and
   Educación convocatoria 46 have stable IDs `ES-PUB-0181` and `ES-PUB-0182`;
   there are no supplemental public entries outside the inventory.
-- The generator reads both canonical sources and binds all seven profiles only
+- The generator reads both canonical sources and binds all eight profiles only
   by exact full-URL equality. Duplicate IDs/URLs, missing matches, multiple
   matches, collisions and unexpected profile-catalog root keys fail closed.
 - Semantic comparison against the preceding generated catalog found no added or
@@ -192,10 +192,33 @@ Latest completed isolated PR — Android runtime dependency SCA:
   coverage remain distinct claims; OSV results do not prove absence of unknown
   or unreported vulnerabilities.
 
+Latest F-03 progress — AEAT exact Client TLS contract:
+
+- `aeat-mis-datos-censales` is profile version 1,
+  `VERIFIED_CONTRACT / QA_ONLY`; release resolves neither its profile nor its
+  source/request origins.
+- The exact public transition is `Mi área personal` to queryless
+  `www1.agenciatributaria.gob.es:443/wlpl/BUGC-JDIT/MdcAcceso`.
+- A certificate-free TLS 1.2 probe observed `CertificateRequest` with a non-empty
+  issuer list and then a safe 403 path. This proves the endpoint contract only.
+- `DIRECT_FROM_SOURCE` is distinct from Carné Joven's
+  `REDIRECT_AFTER_SOURCE`; legacy/subframe, wrong source, suffix host, path/query
+  expansion, empty `?`, fragment and non-443 requests fail closed.
+- RSA/EC are permitted by policy, issuer remains mandatory, and all existing
+  validity/keyUsage/EKU/epoch/TTL checks remain unchanged.
+- Public catalog status is `E2E_PENDING / IMPLEMENTED_NOT_E2E`; physical WebView
+  callback and accepted read-only authentication remain mandatory before any
+  release promotion.
+- The exact QA APK was installed and hash-matched on 2026-07-31. Protected smoke
+  resolved the profile but the certificate was locked, so no WebView callback or
+  portal authentication occurred. Status remains QA-only; see the blocked E2E
+  record.
+
 Next isolated PRs:
 
-1. Additional Client TLS portals beyond Carné Joven only after exact runtime
-   contract and physical E2E evidence (F-03).
+1. Complete AEAT physical WebView/E2E validation for the exact QA-only
+   `Mi área personal → Mis datos censales` Client TLS profile (F-03); keep it
+   out of release unless the read-only login is accepted.
 2. Remaining portal E2E and document-signing branches after local CAdES/XAdES
    validation and an authorized real administrative case (F-12).
 

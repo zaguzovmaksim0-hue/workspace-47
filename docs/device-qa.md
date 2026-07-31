@@ -172,3 +172,20 @@ identificadores personales.
 
 Tras la aceptación se desinstaló `dev.junta.firmamobile.test` y se eliminaron los
 APK/XML de staging F-09/F-10. La aplicación target y su cache permanecieron.
+
+## Actualización 2026-07-31 — F-03 AEAT Client TLS
+
+Se instaló mediante `pm install -r -t` la QA APK SHA-256
+`ca5b351656cb41904f3774ed2a84ac002041d9babdf5fe877d6191d04d6befe2`.
+El artefacto local, la copia de almacenamiento compartido, la copia de
+`/data/local/tmp` y el `base.apk` instalado coincidieron byte-for-byte.
+
+El smoke protegido para `aeat-sede` resolvió el profile exacto, pero devolvió
+`profileResolvedOnly=1` y `webViewActive=0`. La Activity mostró exclusivamente
+los marcadores allowlisted del estado bloqueado: `Contraseña del certificado`,
+`Desbloquear certificado`, `Elegir otro` y `Olvidar certificado`.
+
+No se leyó ni automatizó la contraseña. No se abrió el WebView AEAT, no se
+observó el callback `ClientCertRequest`, no apareció confirmación nativa y no se
+probó autenticación. El profile permanece `VERIFIED_CONTRACT / QA_ONLY`; no se
+realizó modificación censal, pago, firma ni presentación.

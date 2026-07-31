@@ -567,29 +567,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Estatal de Administración Tributaria"
-    surface_name: "Sede electrónica de la AEAT"
+    surface_name: "AEAT — Mi área personal / Mis datos censales"
     surface_type: "SEDE"
     origin: "https://sede.agenciatributaria.gob.es"
     official_site: "https://sede.agenciatributaria.gob.es/"
     e_sede: "https://sede.agenciatributaria.gob.es/"
-    entry_url: "https://sede.agenciatributaria.gob.es/Sede/certificado-dni-electronico.html"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
+    entry_url: "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+    procedure_page: "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+    certificate_required: "SI"
+    signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Autenticación con certificado instalado; algunos servicios incluyen una fase de firma."
-    protocol_evidence: "La documentación Android no distingue un ClientCertRequest de otro mecanismo del portal."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P02", "P02A", "P02B", "D11"]
-    reason: "Host, puerto, key types, issuers, ABI, formato y endpoint no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Observar una petición TLS exacta sin continuar con el certificado."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Autenticación Client TLS para el acceso de solo lectura a Mis datos censales."
+    protocol_evidence: "La transición exacta desde Mi área personal al endpoint MdcAcceso solicita certificado de cliente en TLS 1.2; sin certificado termina en error 403."
+    client_tls_auth: "SI"
+    evidence_ids: ["P02", "P02A", "P02C", "P02D", "D11"]
+    reason: "Contrato Client TLS exacto implementado solo en QA; faltan callback WebView y aceptación E2E del portal. No se afirma firma ni presentación administrativa."
+    reviewed_at: "2026-07-31"
+    next_gate: "Confirmar ClientCertRequest y autenticación de solo lectura en dispositivo físico; mantener QA_ONLY si cualquier gate falla."
 
   - inventory_id: "ES-PUB-0005"
     surface_key: "seguridad-social-sede"
@@ -6201,6 +6201,8 @@ Orden de expansión recomendado:
 [P02]: https://sede.agenciatributaria.gob.es/Sede/certificado-dni-electronico.html
 [P02A]: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/firma-digital-sistema-clave-pin-tecnica/certificados-electronicos-dispositivos-moviles/android-cuestiones-generales-uso-certificados.html
 [P02B]: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/otros-servicios-ayuda-tecnica/documentos-pendientes-firma.html
+[P02C]: https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html
+[P02D]: https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso
 [P03]: https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es
 [P03A]: https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda
 [P04]: https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma

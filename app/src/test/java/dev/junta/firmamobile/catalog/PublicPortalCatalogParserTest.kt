@@ -34,7 +34,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 182)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(7, catalog.entries.count { it.profileId != null })
+        assertEquals(8, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -46,6 +46,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("junta-ofvirtual"),
                 ProfileId("educacion-convocatoria"),
                 ProfileId("aragon-siraw"),
+                ProfileId("aeat-mis-datos-censales"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -54,13 +55,15 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
-    fun `metadata-only portal records observed mechanisms but grants no profile binding`() {
+    fun `AEAT record binds only the exact pending Client TLS profile`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val aeat = catalog.entries.single { it.portalId == PortalId("aeat-sede") }
 
-        assertNull(aeat.profileId)
-        assertEquals(PortalInventoryStatus.BROWSE_ONLY, aeat.inventoryStatus)
+        assertEquals(ProfileId("aeat-mis-datos-censales"), aeat.profileId)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, aeat.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, aeat.catalogStatus)
         assertTrue(PortalMechanism.CERTIFICATE_ACCESS in aeat.observedMechanisms)
+        assertTrue(PortalMechanism.CLIENT_TLS_AUTH in aeat.observedMechanisms)
         assertFalse(aeat.observedSignatureFormats.isNotEmpty())
     }
 

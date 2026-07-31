@@ -1501,3 +1501,75 @@ Claim boundaries remain explicit: locking fixes exact versions; dependency
 verification authenticates downloaded files; OSV reports currently known
 vulnerabilities. No portal, WebView, certificate, authentication, signing,
 physical-device or APK-install operation was performed.
+
+## Milestone F-03 — AEAT exact Client TLS QA profile — 2026-07-31
+
+F-03 adds one additional Client TLS contract without broadening release trust:
+
+- profile `aeat-mis-datos-censales`, version 1,
+  `VERIFIED_CONTRACT / QA_ONLY`;
+- exact source:
+  `https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html`;
+- exact queryless target:
+  `https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso`;
+- explicit transition mode `DIRECT_FROM_SOURCE`; Carné Joven retains the
+  separate `REDIRECT_AFTER_SOURCE` contract;
+- legacy callbacks, subframes, wrong profile/source, suffix host, non-443,
+  alternate or encoded path, fragment, any query and an empty `?` fail closed;
+- direct grants are one-shot per exact profile/source/target/epoch tuple, and a
+  hostile navigation cannot reset the consumed marker;
+- AEAT permits RSA/EC, requires a non-empty acceptable-issuer list and retains
+  the existing epoch, TTL, validity, keyUsage and EKU checks;
+- release resolves neither the profile nor its source/request origins.
+
+TDD evidence:
+
+- parser/model RED: explicit transition mode absent; GREEN after the minimal
+  enum/parser contract;
+- direct-authorizer RED: exact AEAT transition unsupported; GREEN after mode
+  dispatch and queryless exact matching;
+- hostile replay RED: a rejected navigation could reset the consumed direct
+  grant; GREEN after separating pending-state cleanup from lifecycle invalidation;
+- profile/catalog RED: AEAT was unbound metadata; GREEN with one QA-only profile
+  and exact inventory binding;
+- request-handler regression: matching RSA + issuer proceeds once; empty issuer
+  fails closed and clears Client TLS preferences.
+
+Fresh complete verification:
+
+- runtime lock, core version and portable AAPT2 gates: PASS;
+- Debug JVM: 509 tests, 0 failures/errors/skips;
+- QA JVM: 509 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Gradle: `BUILD SUCCESSFUL`, 143/143 tasks executed;
+- Android artifact verification: PASS;
+- release-signing fail-closed verification: PASS;
+- Python: 94 tests, 0 failures/errors, 1 environmental skip
+  (`hardlinks unavailable`);
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
+- Debug APK SHA-256:
+  `7b956e3369ea9efa133e0bd8a4b8ce49a00e4b2c3282eec8c1ce619db3902b35`;
+- QA APK SHA-256:
+  `ca5b351656cb41904f3774ed2a84ac002041d9babdf5fe877d6191d04d6befe2`;
+- QA AndroidTest APK SHA-256:
+  `0030fc08655511c51ec284f87775dc0a231e80ebdc1832f3ae0d9a5cf5c365f4`.
+
+Physical-device gate:
+
+- `pm install -r -t`: `Success`; local/staging/installed hashes matched the QA
+  hash above;
+- protected catalog smoke resolved `aeat-sede` exactly but returned
+  `profileResolvedOnly=1`, `webViewActive=0`, with zero failures;
+- MainActivity showed only allowlisted locked-state markers
+  `Contraseña del certificado`, `Desbloquear certificado`, `Elegir otro` and
+  `Olvidar certificado`;
+- the password was not read, copied, logged or automated;
+- WebView `ClientCertRequest`, native confirmation and accepted AEAT login were
+  not reached.
+
+The physical outcome is recorded in
+`docs/e2e/2026-07-31-aeat-client-tls-blocked.md`. The profile remains
+`VERIFIED_CONTRACT / QA_ONLY`; the public entry remains
+`E2E_PENDING / IMPLEMENTED_NOT_E2E`. No signing, tax modification, payment or
+administrative submission was attempted.

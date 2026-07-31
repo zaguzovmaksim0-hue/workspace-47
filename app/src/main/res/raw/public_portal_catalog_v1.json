@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "018f94bb22cb42b3093f86b028cf87b490bcee8f5e15e255d8c9728594e71951",
+  "sourceRevision": "315b25bc6c6e0091c210ab32a89d56b457d521c4ce55852c2c80d887197bbd0c",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -96,30 +96,31 @@
     {
       "portalId": "aeat-sede",
       "inventoryId": "ES-PUB-0004",
-      "profileId": null,
-      "displayName": "Sede electrónica de la AEAT",
+      "profileId": "aeat-mis-datos-censales",
+      "displayName": "AEAT — Mi área personal / Mis datos censales",
       "organization": "Agencia Estatal de Administración Tributaria",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Autenticación con certificado instalado; algunos servicios incluyen una fase de firma.",
-      "entryUrl": "https://sede.agenciatributaria.gob.es/Sede/certificado-dni-electronico.html",
+      "purpose": "Autenticación Client TLS para el acceso de solo lectura a Mis datos censales.",
+      "entryUrl": "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "CLIENT_TLS_AUTH"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P02",
         "P02A",
-        "P02B",
+        "P02C",
+        "P02D",
         "D11"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Host, puerto, key types, issuers, ABI, formato y endpoint no verificados."
+      "reviewedOn": "2026-07-31",
+      "limitations": "Contrato Client TLS exacto implementado solo en QA; faltan callback WebView y aceptación E2E del portal. No se afirma firma ni presentación administrativa."
     },
     {
       "portalId": "seguridad-social-sede",

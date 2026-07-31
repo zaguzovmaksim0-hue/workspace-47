@@ -74,7 +74,7 @@ rama heredada y no el API general del producto. [C0]
 | AGE / PAG | Punto de Acceso General — `https://sede.administracion.gob.es` | Acceso al catálogo y al Registro General | No verificado | `BROWSE_ONLY` |
 | AGE / RedSARA | Registro Electrónico General — `https://reg.redsara.es` | Firma de XML de resumen mediante AutoScript | No verificado | `VERIFIED_CONTRACT`; profile/adapter implementados, sin E2E |
 | AGE / ACCEDA | Sede Administraciones Públicas — `https://sede.administracionespublicas.gob.es` | Firma PAdES de solicitud; rama genérica XAdES | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
-| Estatal | AEAT — `https://sede.agenciatributaria.gob.es` | Identificación con certificado instalado en el navegador/dispositivo | No verificado como `ClientCertRequest` | `BROWSE_ONLY` |
+| Estatal | AEAT — `https://sede.agenciatributaria.gob.es` → `https://www1.agenciatributaria.gob.es` | Acceso de solo lectura a `Mis datos censales` mediante Client TLS exacto | `CertificateRequest` TLS observado; callback WebView y aceptación aún no E2E | `VERIFIED_CONTRACT / QA_ONLY`; release no lo incluye |
 | Estatal | Sede Seguridad Social — `https://sede.seg-social.gob.es` | Firma con AutoFirma | No verificado | `UNSUPPORTED` en móvil para ese flujo |
 | Estatal | Import@ss — `https://portal.seg-social.gob.es` | Identificación con certificado/DNIe, Cl@ve o SMS | No verificado | `BROWSE_ONLY` |
 | Estatal | SEPE — `https://sede.sepe.gob.es` | Firma con AutoFirma tras identificación con certificado | No verificado | `BROWSE_ONLY` |
@@ -119,20 +119,28 @@ otro portal.
 ### P02 — Agencia Estatal de Administración Tributaria
 
 - **Organización:** Agencia Tributaria (AEAT).
-- **Origin oficial investigado:** `https://sede.agenciatributaria.gob.es`.
-- **Entrada:** [certificado y DNI electrónico][P02]; [selección de certificado
-  en Android][P02A].
-- **Operación:** autenticación con certificado instalado en el navegador o el
-  dispositivo; algunos servicios contienen una fase de firma. [P02B]
-- **Protocolo:** uso de certificado instalado en Android y autenticación del
-  navegador. La fuente no expone un contrato `ClientCertRequest` de WebView ni
-  permite distinguir con certeza TLS cliente de otro mecanismo del portal.
-- **Signing endpoint / formato / algoritmo / callback:** no verificados.
-- **TLS client auth:** no verificado; host, puerto, tipos de clave, principals
-  y endpoint exactos no están probados para el catálogo.
-- **Estado:** `BROWSE_ONLY`.
-- **Motivo:** no se creará un profile `TRUSTED_CLIENT_AUTH` hasta observar la
-  petición TLS exacta y completar consentimiento y E2E.
+- **Source exacto:** [Mi área personal][P02C],
+  `https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html`.
+- **Target exacto:** [Mis datos censales][P02D],
+  `https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso`.
+- **Operación acotada:** autenticación Client TLS y acceso de solo lectura a
+  `Mis datos censales`; no incluye modificación censal, presentación, pago ni
+  firma. La documentación general de certificado móvil permanece como contexto
+  [P02][P02A]; las ramas de firma separadas no forman parte del profile [P02B].
+- **Evidencia runtime:** un handshake TLS 1.2 sin certificado recibió
+  `CertificateRequest` con lista de issuers no vacía; sin certificado, el
+  servidor terminó en la página de error 403. Esto prueba el contrato TLS del
+  endpoint, no el callback Android ni la aceptación del certificado.
+- **Contrato implementado:** profile `aeat-mis-datos-censales`, transición
+  `DIRECT_FROM_SOURCE`, source/host/443/path exactos, sin query ni fragment,
+  key algorithms RSA/EC, issuer obligatorio y TTL de 15 segundos.
+- **Signing endpoint / formato / algoritmo / callback:** no verificados y fuera
+  de alcance.
+- **Estado:** `VERIFIED_CONTRACT / QA_ONLY`; el release no contiene este trust
+  profile.
+- **Gate restante:** observar `onReceivedClientCertRequest` en WebView y que el
+  portal acepte el acceso de solo lectura en dispositivo físico. Solo entonces
+  puede evaluarse `VERIFIED_E2E / ENABLED`.
 
 ### P03 — Seguridad Social e Import@ss
 
@@ -569,6 +577,8 @@ de protocolo y por eso continúa `BROWSE_ONLY`.
 [P02]: https://sede.agenciatributaria.gob.es/Sede/certificado-dni-electronico.html
 [P02A]: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/firma-digital-sistema-clave-pin-tecnica/certificados-electronicos-dispositivos-moviles/android-cuestiones-generales-uso-certificados.html
 [P02B]: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/otros-servicios-ayuda-tecnica/documentos-pendientes-firma.html
+[P02C]: https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html
+[P02D]: https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso
 [P03]: https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es
 [P03A]: https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda
 [P04]: https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma

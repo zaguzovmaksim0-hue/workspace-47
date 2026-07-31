@@ -4,6 +4,7 @@ import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.profile.ClientAuthPolicy
+import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
@@ -82,6 +83,7 @@ class BrowserTrustControllerTest {
             operationPolicies = emptyMap(),
             capabilities = setOf(Capability.CLIENT_TLS_AUTH),
             clientAuthPolicy = ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse("https://tls.client-auth.example")),
                 sourceUrls = setOf(java.net.URI("https://start.client-auth.example/auth")),
                 requestPath = "/facade",

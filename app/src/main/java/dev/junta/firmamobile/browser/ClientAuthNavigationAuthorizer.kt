@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import dev.junta.firmamobile.profile.ClientAuthPolicy
+import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfile
@@ -21,15 +22,17 @@ data class AuthorizedClientAuthTarget internal constructor(
 )
 
 /**
- * Arms client TLS only after the exact source navigation and consumes it for one
- * exact, top-level authentication-facade redirect. Ephemeral values are checked
- * in memory and never retained separately.
+ * Authorizes Client TLS only for an explicit profile transition contract:
+ * either one exact direct source-to-target navigation or the existing bounded
+ * two-stage source/redirect flow. Ephemeral values are checked in memory and
+ * never retained separately.
  */
 class ClientAuthNavigationAuthorizer internal constructor(
     private val registry: SiteProfileRegistry,
     private val clock: Clock = Clock.systemUTC(),
 ) {
     private var pending: PendingSource? = null
+    private var consumedDirect: DirectConsumption? = null
 
     @Synchronized
     fun observeTopLevelNavigation(
@@ -40,23 +43,87 @@ class ClientAuthNavigationAuthorizer internal constructor(
         isModernMainFrameRequest: Boolean,
     ): AuthorizedClientAuthTarget? {
         if (!isModernMainFrameRequest || activeProfileId == null || currentEpoch == Long.MAX_VALUE) {
-            pending = null
+            clearPending()
             return null
         }
         val profile = registry.profile(activeProfileId) ?: run {
-            pending = null
+            clearPending()
             return null
         }
         val policy = profile.clientAuthPolicy ?: run {
-            pending = null
+            clearPending()
             return null
         }
         val target = strictHttpsUri(targetUrl) ?: run {
-            pending = null
+            clearPending()
             return null
         }
         val now = clock.instant()
 
+        return when (policy.transitionMode) {
+            ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> authorizeDirectTransition(
+                profile = profile,
+                policy = policy,
+                currentUrl = currentUrl,
+                target = target,
+                currentEpoch = currentEpoch,
+                now = now,
+            )
+            ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> authorizeRedirectTransition(
+                profile = profile,
+                policy = policy,
+                currentUrl = currentUrl,
+                target = target,
+                currentEpoch = currentEpoch,
+                now = now,
+            )
+        }
+    }
+
+    private fun authorizeDirectTransition(
+        profile: SiteProfile,
+        policy: ClientAuthPolicy,
+        currentUrl: String?,
+        target: URI,
+        currentEpoch: Long,
+        now: Instant,
+    ): AuthorizedClientAuthTarget? {
+        pending = null
+        val source = currentUrl?.let(::strictHttpsUri) ?: run {
+            return null
+        }
+        if (source !in policy.sourceUrls || !target.matches(policy)) {
+            return null
+        }
+        val previous = consumedDirect
+        if (previous != null &&
+            previous.profileId == profile.profileId &&
+            previous.source == source &&
+            previous.target == target &&
+            previous.epoch == currentEpoch &&
+            now.isBefore(previous.expiresAt)
+        ) {
+            return null
+        }
+        val expiresAt = now.plusSeconds(policy.grantTtlSeconds.toLong())
+        consumedDirect = DirectConsumption(
+            profileId = profile.profileId,
+            source = source,
+            target = target,
+            epoch = currentEpoch,
+            expiresAt = expiresAt,
+        )
+        return authorized(profile, policy, target, expiresAt)
+    }
+
+    private fun authorizeRedirectTransition(
+        profile: SiteProfile,
+        policy: ClientAuthPolicy,
+        currentUrl: String?,
+        target: URI,
+        currentEpoch: Long,
+        now: Instant,
+    ): AuthorizedClientAuthTarget? {
         if (target in policy.sourceUrls && currentBelongsTo(profile, currentUrl)) {
             pending = PendingSource(
                 profileId = profile.profileId,
@@ -69,33 +136,31 @@ class ClientAuthNavigationAuthorizer internal constructor(
 
         val source = pending
         pending = null
-        if (source == null) {
-            return null
-        }
-        if (source.profileId != profile.profileId) {
-            return null
-        }
-        if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) {
-            return null
-        }
-        if (!now.isBefore(source.expiresAt)) {
-            return null
-        }
-        if (source.source !in policy.sourceUrls) {
-            return null
-        }
-        if (!target.matches(policy)) {
-            return null
-        }
+        if (source == null || source.profileId != profile.profileId) return null
+        if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) return null
+        if (!now.isBefore(source.expiresAt)) return null
+        if (source.source !in policy.sourceUrls || !target.matches(policy)) return null
 
-        return AuthorizedClientAuthTarget(
-            profileId = profile.profileId,
-            target = target,
+        return authorized(
+            profile = profile,
             policy = policy,
-            certificateRules = profile.certificateRules,
+            target = target,
             expiresAt = now.plusSeconds(policy.grantTtlSeconds.toLong()),
         )
     }
+
+    private fun authorized(
+        profile: SiteProfile,
+        policy: ClientAuthPolicy,
+        target: URI,
+        expiresAt: Instant,
+    ) = AuthorizedClientAuthTarget(
+        profileId = profile.profileId,
+        target = target,
+        policy = policy,
+        certificateRules = profile.certificateRules,
+        expiresAt = expiresAt,
+    )
 
     @Synchronized
     fun onTopLevelPageStarted(url: String, currentEpoch: Long) {
@@ -110,7 +175,16 @@ class ClientAuthNavigationAuthorizer internal constructor(
 
     @Synchronized
     fun invalidate() {
+        clearState()
+    }
+
+    private fun clearPending() {
         pending = null
+    }
+
+    private fun clearState() {
+        clearPending()
+        consumedDirect = null
     }
 
     private fun currentBelongsTo(profile: SiteProfile, currentUrl: String?): Boolean {
@@ -122,8 +196,9 @@ class ClientAuthNavigationAuthorizer internal constructor(
         if (rawPath != policy.requestPath || rawFragment != null) return false
         val origin = runCatching { ExactOrigin.parse("https://$host") }.getOrNull() ?: return false
         if (origin !in policy.requestOrigins) return false
-        val parameters = parseQuery(rawQuery ?: return false) ?: return false
         val expectedNames = policy.fixedQueryParameters.keys + policy.requiredEphemeralQueryParameters
+        if (expectedNames.isEmpty()) return rawQuery == null
+        val parameters = parseQuery(rawQuery ?: return false) ?: return false
         if (parameters.keys != expectedNames) return false
         if (policy.fixedQueryParameters.any { (name, value) ->
             val paramValue = parameters[name] ?: return false
@@ -186,6 +261,14 @@ class ClientAuthNavigationAuthorizer internal constructor(
         val profileId: ProfileId,
         val source: URI,
         val armingEpoch: Long,
+        val expiresAt: Instant,
+    )
+
+    private data class DirectConsumption(
+        val profileId: ProfileId,
+        val source: URI,
+        val target: URI,
+        val epoch: Long,
         val expiresAt: Instant,
     )
 

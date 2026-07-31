@@ -1,7 +1,16 @@
 package dev.junta.firmamobile.browser
 
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.BuildTrustPolicy
+import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.profile.ClientAuthPolicy
+import dev.junta.firmamobile.profile.ClientAuthTransitionMode
+import dev.junta.firmamobile.profile.CompatibilityStatus
+import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.ProfileActivation
+import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.ProfileId
+import java.net.URI
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -16,6 +25,102 @@ class ClientAuthNavigationAuthorizerTest {
         BuiltInSiteProfiles.qaRegistry,
         clock,
     )
+
+    @Test
+    fun exactDirectSourceTransitionProducesOneBoundedAeatTarget() {
+        val direct = aeatAuthorizer()
+
+        val result = direct.observeTopLevelNavigation(
+            activeProfileId = AEAT_PROFILE,
+            currentUrl = AEAT_SOURCE,
+            targetUrl = AEAT_TARGET,
+            currentEpoch = 40,
+            isModernMainFrameRequest = true,
+        )
+
+        assertEquals(AEAT_PROFILE, result?.profileId)
+        assertEquals("www1.agenciatributaria.gob.es", result?.target?.host)
+        assertEquals("/wlpl/BUGC-JDIT/MdcAcceso", result?.target?.rawPath)
+        assertNull(
+            direct.observeTopLevelNavigation(
+                AEAT_PROFILE, AEAT_SOURCE, AEAT_TARGET, 40, true,
+            ),
+        )
+    }
+
+    @Test
+    fun hostileNavigationCannotResetConsumedDirectGrantInTheSameEpoch() {
+        val direct = aeatAuthorizer()
+        assertEquals(
+            AEAT_PROFILE,
+            direct.observeTopLevelNavigation(
+                AEAT_PROFILE, AEAT_SOURCE, AEAT_TARGET, 70, true,
+            )?.profileId,
+        )
+
+        assertNull(
+            direct.observeTopLevelNavigation(
+                AEAT_PROFILE, AEAT_SOURCE, "$AEAT_TARGET?extra=1", 70, true,
+            ),
+        )
+        assertNull(
+            direct.observeTopLevelNavigation(
+                AEAT_PROFILE, AEAT_SOURCE, AEAT_TARGET, 70, true,
+            ),
+        )
+    }
+
+    @Test
+    fun aeatDirectTransitionRejectsLegacySubframeWrongProfileAndWrongSource() {
+        val invalidCalls = listOf<(ClientAuthNavigationAuthorizer) -> AuthorizedClientAuthTarget?>(
+            { it.observeTopLevelNavigation(AEAT_PROFILE, AEAT_SOURCE, AEAT_TARGET, 50, false) },
+            { it.observeTopLevelNavigation(null, AEAT_SOURCE, AEAT_TARGET, 50, true) },
+            { it.observeTopLevelNavigation(PROFILE, AEAT_SOURCE, AEAT_TARGET, 50, true) },
+            { it.observeTopLevelNavigation(AEAT_PROFILE, null, AEAT_TARGET, 50, true) },
+            {
+                it.observeTopLevelNavigation(
+                    AEAT_PROFILE,
+                    "https://sede.agenciatributaria.gob.es/Sede/other.html",
+                    AEAT_TARGET,
+                    50,
+                    true,
+                )
+            },
+            {
+                it.observeTopLevelNavigation(
+                    AEAT_PROFILE,
+                    "https://sede.agenciatributaria.gob.es.evil.example/Sede/mi-area-personal.html",
+                    AEAT_TARGET,
+                    50,
+                    true,
+                )
+            },
+        )
+
+        invalidCalls.forEach { call -> assertNull(call(aeatAuthorizer())) }
+    }
+
+    @Test
+    fun aeatDirectTransitionRejectsEveryTargetExpansion() {
+        val invalidTargets = listOf(
+            AEAT_TARGET.replace("www1.agenciatributaria.gob.es", "www1.agenciatributaria.gob.es.evil.example"),
+            AEAT_TARGET.replace("/MdcAcceso", "/Other"),
+            AEAT_TARGET.replace("/MdcAcceso", "/MdcAcceso%2Fother"),
+            AEAT_TARGET.replace("www1.agenciatributaria.gob.es", "www1.agenciatributaria.gob.es:8443"),
+            "$AEAT_TARGET#fragment",
+            "$AEAT_TARGET?extra=1",
+            "$AEAT_TARGET?",
+        )
+
+        invalidTargets.forEach { target ->
+            assertNull(
+                target,
+                aeatAuthorizer().observeTopLevelNavigation(
+                    AEAT_PROFILE, AEAT_SOURCE, target, 60, true,
+                ),
+            )
+        }
+    }
 
     @Test
     fun exactTwoStageTopLevelRedirectProducesOneBoundedTarget() {
@@ -215,6 +320,40 @@ class ClientAuthNavigationAuthorizerTest {
         assertNull(authorize(TARGET, 701))
     }
 
+    private fun aeatAuthorizer(): ClientAuthNavigationAuthorizer {
+        val base = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == PROFILE }
+        val profile = base.copy(
+            profileId = AEAT_PROFILE,
+            profileVersion = 1,
+            displayName = "AEAT — Mis datos censales",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
+            activation = ProfileActivation.QA_ONLY,
+            startUrl = URI(AEAT_SOURCE),
+            initiatorOrigins = setOf(ExactOrigin.parse("https://sede.agenciatributaria.gob.es")),
+            redirectOrigins = emptySet(),
+            trustedBrowseOrigins = emptySet(),
+            endpoints = emptyMap(),
+            operationPolicies = emptyMap(),
+            capabilities = setOf(Capability.CLIENT_TLS_AUTH),
+            clientAuthPolicy = ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse("https://www1.agenciatributaria.gob.es")),
+                sourceUrls = setOf(URI(AEAT_SOURCE)),
+                requestPath = "/wlpl/BUGC-JDIT/MdcAcceso",
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = 15,
+            ),
+            evidence = emptyList(),
+        )
+        val registry = SiteProfileRegistry(
+            BuiltInSiteProfiles.catalog.copy(profiles = listOf(profile)),
+            BuildTrustPolicy.QA,
+        )
+        return ClientAuthNavigationAuthorizer(registry, clock)
+    }
+
     private fun arm(epoch: Long) = authorizer.observeTopLevelNavigation(
         activeProfileId = PROFILE,
         currentUrl = INDEX,
@@ -242,6 +381,11 @@ class ClientAuthNavigationAuthorizerTest {
 
     private companion object {
         val PROFILE = ProfileId("carne-joven-andalucia")
+        val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
+        const val AEAT_SOURCE =
+            "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+        const val AEAT_TARGET =
+            "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"

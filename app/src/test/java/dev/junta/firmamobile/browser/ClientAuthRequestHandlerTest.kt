@@ -23,6 +23,43 @@ class ClientAuthRequestHandlerTest {
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
     @Test
+    fun aeatMatchingRsaIdentityAndIssuerProceedOnce() {
+        val clears = AtomicInteger()
+        val handler = aeatHandler(epoch = 30, clears = clears)
+        val issuer = identity.chain.firstOrNull()?.issuerX500Principal
+            ?: identity.certificate.issuerX500Principal
+        val request = RecordingRequest(
+            host = "www1.agenciatributaria.gob.es",
+            keyTypes = arrayOf("rsa", "ECDSA"),
+            principals = arrayOf(issuer),
+        )
+
+        handler.handle(request)
+
+        assertEquals(1, request.proceeds)
+        assertEquals(0, request.ignores)
+        assertEquals(0, clears.get())
+        assertEquals(0, synthetic.encodedReads.get())
+    }
+
+    @Test
+    fun aeatEmptyIssuerListFailsClosedAndClearsPreferences() {
+        val clears = AtomicInteger()
+        val handler = aeatHandler(epoch = 31, clears = clears)
+        val request = RecordingRequest(
+            host = "www1.agenciatributaria.gob.es",
+            keyTypes = arrayOf("RSA"),
+            principals = emptyArray(),
+        )
+
+        handler.handle(request)
+
+        assertEquals(0, request.proceeds)
+        assertEquals(1, request.ignores)
+        assertEquals(1, clears.get())
+    }
+
+    @Test
     fun exactEmptyIssuerRequestProceedsOnceWithoutExportingThePrivateKey() {
         val clears = AtomicInteger()
         val handler = handler(epoch = 9, clears = clears)
@@ -122,6 +159,32 @@ class ClientAuthRequestHandlerTest {
         assertEquals(1, missingClears.get())
     }
 
+    private fun aeatHandler(
+        epoch: Long,
+        currentEpoch: () -> Long = { epoch },
+        clears: AtomicInteger = AtomicInteger(),
+        clock: Clock = this.clock,
+    ) = ClientAuthRequestHandler(
+        grant = ClientAuthGrant(authorizedAeat(), epoch),
+        identityProvider = { identity },
+        currentNavigationEpoch = currentEpoch,
+        clearClientCertPreferences = { clears.incrementAndGet() },
+        clock = clock,
+    )
+
+    private fun authorizedAeat(): AuthorizedClientAuthTarget {
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, clock)
+        return checkNotNull(
+            authorizer.observeTopLevelNavigation(
+                AEAT_PROFILE,
+                AEAT_SOURCE,
+                AEAT_TARGET,
+                5,
+                true,
+            ),
+        )
+    }
+
     private fun handler(
         epoch: Long,
         currentEpoch: () -> Long = { epoch },
@@ -177,6 +240,11 @@ class ClientAuthRequestHandlerTest {
 
     private companion object {
         val PROFILE = ProfileId("carne-joven-andalucia")
+        val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
+        const val AEAT_SOURCE =
+            "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+        const val AEAT_TARGET =
+            "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"

@@ -208,6 +208,68 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun clientAuthPolicyRequiresExplicitTransitionMode() {
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(
+                    "\"transitionMode\": \"REDIRECT_AFTER_SOURCE\",",
+                    "",
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun preservesTheExactAeatClientTlsQaContract() {
+        val profileId = ProfileId("aeat-mis-datos-censales")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"),
+            profile.startUrl,
+        )
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://www1.agenciatributaria.gob.es")),
+            policy.requestOrigins,
+        )
+        assertEquals(setOf(profile.startUrl), policy.sourceUrls)
+        assertEquals("/wlpl/BUGC-JDIT/MdcAcceso", policy.requestPath)
+        assertTrue(policy.fixedQueryParameters.isEmpty())
+        assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
+        assertEquals(false, policy.allowEmptyIssuerList)
+        assertEquals(15, policy.grantTtlSeconds)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"),
+            )?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertNull(
+            BuiltInSiteProfiles.releaseRegistry.resolve(
+                URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"),
+            ),
+        )
+    }
+
+    @Test
     fun preservesTheExactCarneJovenClientTlsContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("carne-joven-andalucia")
@@ -218,6 +280,7 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE, policy.transitionMode)
         assertEquals(
             setOf(ExactOrigin.parse("https://ws235.juntadeandalucia.es")),
             policy.requestOrigins,
@@ -282,6 +345,7 @@ class SiteProfileCatalogParserTest {
         val qaOnly = setOf(
             junta,
             ProfileId("reg-age-redsara"),
+            ProfileId("aeat-mis-datos-censales"),
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
@@ -332,7 +396,7 @@ class SiteProfileCatalogParserTest {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 10", "\"unknown\": true, \"catalogVersion\": 10"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 11", "\"unknown\": true, \"catalogVersion\": 11"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))

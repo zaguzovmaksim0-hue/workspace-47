@@ -164,6 +164,20 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - el shim no contiene `Math.random()` y no reenvía AFIRMA/MiniApplet al bridge si
   Web Crypto no puede generar un UUID seguro.
 
+### ClientAuthNavigationAuthorizerTest / ClientAuthRequestHandlerTest
+
+- Carné Joven conserva `REDIRECT_AFTER_SOURCE` y sus parámetros exactos;
+- AEAT usa `DIRECT_FROM_SOURCE` únicamente desde
+  `https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html` hacia
+  `https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso`;
+- legacy callback, subframe, profile/source incorrectos, suffix-host, non-443,
+  path distinto/codificado, fragment, query y `?` vacío fallan cerrados;
+- el mismo tuple profile/source/target/epoch se consume una sola vez;
+- RSA procede únicamente con issuer DER coincidente; issuer vacío se rechaza
+  para AEAT y dispara limpieza de preferencias;
+- release no resuelve el profile ni sus origins mientras siga
+  `VERIFIED_CONTRACT / QA_ONLY`.
+
 ### ClientCertPreferenceBarrierTest / ClientCertPreferenceCoordinatorTest
 
 - estado inicial `IDLE`; ninguna navegación se habilita antes del callback;
@@ -266,6 +280,21 @@ Secuencia de aceptación:
     sanitizados; no capturar screenshot de certificado, catálogo autenticado,
     WebView ni firma;
 12. repetir el camino de cancelación y sesión expirada.
+
+Para F-03 AEAT, la aceptación física se limita a:
+
+1. abrir exactamente `Mi área personal` y seleccionar `Mis datos censales`;
+2. observar `onReceivedClientCertRequest` para
+   `www1.agenciatributaria.gob.es:443` sin registrar principals completos;
+3. confirmar que key types e issuer digest son compatibles con la identidad;
+4. aceptar el consentimiento nativo y verificar únicamente la apertura del área
+   autenticada de solo lectura;
+5. detenerse antes de cualquier modificación, firma, pago o presentación;
+6. conservar solo hash del APK, sí/no de callback/aceptación, host/port,
+   key-types normalizados, número/digest corto de issuers y categoría path sin
+   query ni datos personales.
+
+Si cualquiera de estos gates falla, el profile permanece `QA_ONLY`.
 
 Artefactos permitidos: capturas únicamente de la pantalla inicial sin
 certificado o de una Activity de prueba no sensible, UI XML sanitizado, estado

@@ -100,13 +100,21 @@ object SiteProfileCatalogParser {
 
     private fun clientAuth(o: JObject): ClientAuthPolicy {
         o.exact(
-            "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
+            "transitionMode", "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
             "requiredEphemeralQueryParameters", "allowEmptyIssuerList", "grantTtlSeconds",
         )
+        val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
         val fixed = stringMap(o.objValue("fixedQueryParameters"))
         val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
         require((fixed.keys intersect ephemeral).isEmpty())
+        when (transitionMode) {
+            ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE ->
+                require(fixed.isNotEmpty() || ephemeral.isNotEmpty())
+            ClientAuthTransitionMode.DIRECT_FROM_SOURCE ->
+                require(fixed.isEmpty() && ephemeral.isEmpty())
+        }
         return ClientAuthPolicy(
+            transitionMode = transitionMode,
             requestOrigins = origins(o.array("requestOrigins")).also { require(it.size == 1) },
             sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
                 .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) },
@@ -114,7 +122,7 @@ object SiteProfileCatalogParser {
                 require(it.startsWith('/') && URI(null, null, it, null).rawPath == it)
             },
             fixedQueryParameters = fixed,
-            requiredEphemeralQueryParameters = ephemeral.also { require(it.isNotEmpty()) },
+            requiredEphemeralQueryParameters = ephemeral,
             allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
             grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
         )

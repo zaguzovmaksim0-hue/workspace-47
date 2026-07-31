@@ -279,7 +279,7 @@ WARP, и неизменённая сборка выполнила E2E успеш
 - Oficina Virtual and Educación convocatoria 46 moved from Python supplemental
   objects into the reviewed inventory as `ES-PUB-0181` and `ES-PUB-0182`;
 - `PROFILE_BINDINGS` and `_supplemental_entries()` were deleted;
-- all seven profile/public bindings now require exact full URL equality between
+- all eight profile/public bindings now require exact full URL equality between
   profile `startUrl` and inventory `entry_url`;
 - malformed profile roots, duplicate IDs/start URLs, missing or multiple
   inventory matches and profile/surface collisions fail closed;
@@ -287,6 +287,43 @@ WARP, и неизменённая сборка выполнила E2E успеш
   no trust/evidence change; only the two inventory IDs and source revision differ;
 - no push, device installation, portal navigation, authentication or signing was
   performed for this task.
+
+## F-03 AEAT exact Client TLS profile — 2026-07-31
+
+- profile: `aeat-mis-datos-censales`, version 1,
+  `VERIFIED_CONTRACT / QA_ONLY`;
+- exact source:
+  `https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html`;
+- exact target:
+  `https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso`;
+- TLS 1.2 probe without a certificate observed `CertificateRequest`, non-empty
+  acceptable issuers and safe 403 termination; Android callback/acceptance is
+  not inferred from this;
+- new explicit modes: Carné Joven `REDIRECT_AFTER_SOURCE`, AEAT
+  `DIRECT_FROM_SOURCE`;
+- direct mode rejects legacy/subframe, wrong profile/source, suffix host,
+  non-443, wrong/encoded path, fragment, any query and empty `?`; same tuple at
+  the same epoch is one-shot;
+- request handler retains exact host/port, TTL/epoch, validity, keyUsage, EKU and
+  issuer checks; AEAT permits RSA/EC but `allowEmptyIssuerList=false`;
+- QA registry resolves source as `TRUSTED_CLIENT_AUTH` and request origin only as
+  `BROWSE_ONLY`; release resolves neither;
+- public catalog remains 182 entries; AEAT is bound as
+  `E2E_PENDING / IMPLEMENTED_NOT_E2E`;
+- no tax modification, signature, payment or submission is in scope;
+- fresh gates: Debug 509/509, QA 509/509, 143/143 Gradle tasks, lint/build,
+  artifact, release fail-closed, Python 94 with one environmental skip and Go
+  test/vet/build PASS;
+- exact installed QA/base SHA-256:
+  `ca5b351656cb41904f3774ed2a84ac002041d9babdf5fe877d6191d04d6befe2`;
+- physical smoke resolved the profile but stopped at locked certificate state:
+  `profileResolvedOnly=1`, `webViewActive=0`, zero failures;
+- WebView callback/native confirmation/portal acceptance were not reached; the
+  password was not read or automated;
+- blocked evidence: `docs/e2e/2026-07-31-aeat-client-tls-blocked.md`;
+- next gate: user manually unlocks the existing certificate, then run only the
+  exact read-only `Mi área personal → Mis datos censales` flow. Retain
+  `QA_ONLY` unless callback and accepted portal authentication both pass.
 
 ## Ограничения и следующие задачи
 
@@ -303,9 +340,9 @@ WARP, и неизменённая сборка выполнила E2E успеш
 6. DNS-executor unit-test isolation завершён: saturation test использует
    собственный bounded executor и ждёт его termination; production fail-closed
    policy и лимит двух worker'ов не изменены.
-7. Следующие продуктовые блоки F-03 и F-12 остаются заблокированы до отдельного
-   точного runtime-контракта и реального E2E. Android runtime SCA завершён;
-   locking, checksum integrity и OSV coverage не объединять в один claim.
+7. F-03 AEAT имеет точный runtime-контракт и QA-only реализацию, но остаётся
+   заблокирован для release до WebView callback и принятого read-only E2E.
+   F-12 по-прежнему требует отдельного реального административного случая.
 
 Для продолжения в новом чате достаточно написать: «Открой приватный репозиторий,
 ветку `feature/ws024-secure-tunnel-20260728`, прочитай
