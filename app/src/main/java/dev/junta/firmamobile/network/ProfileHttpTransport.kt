@@ -14,6 +14,7 @@ import java.util.UUID
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -217,6 +218,7 @@ class HttpsProfileHttpTransport internal constructor(
     private val tunnelSocketFactoryProvider: TunnelSocketFactoryProvider? = null,
     private val executor: ProfileHttpExecutor = OkHttpProfileHttpExecutor(tunnelSocketFactoryProvider),
     private val dnsTimeoutMillis: Long = DNS_TIMEOUT_MILLIS,
+    private val dnsExecutor: ExecutorService = DNS_EXECUTOR,
 ) : ProfileHttpTransport {
     init {
         require(dnsTimeoutMillis > 0)
@@ -298,7 +300,7 @@ class HttpsProfileHttpTransport internal constructor(
         cancellation: ProfileHttpCancellation,
     ): List<InetAddress>? {
         val future = try {
-            DNS_EXECUTOR.submit(Callable { dnsResolver.resolve(host) })
+            dnsExecutor.submit(Callable { dnsResolver.resolve(host) })
         } catch (_: RejectedExecutionException) {
             return null
         }

@@ -300,11 +300,45 @@ WARP, и неизменённая сборка выполнила E2E успеш
    реально не примет XAdES E2E. UniZAR уже повышен только для login CAdES.
 5. Не сохранять в Git скриншоты кабинета, пароль, PKCS#12, сертификат, подпись,
    cookie или персональные идентификаторы.
-6. F-15B завершён. Следующий локально исполнимый блок — детерминировать
-   teardown bounded DNS-executor unit test без ослабления production policy.
-   Дополнительные Client TLS-порталы F-03 и документальные операции F-12 не
-   включать без отдельного точного контракта и реального E2E.
+6. DNS-executor unit-test isolation завершён: saturation test использует
+   собственный bounded executor и ждёт его termination; production fail-closed
+   policy и лимит двух worker'ов не изменены.
+7. Следующие продуктовые блоки F-03 и F-12 остаются заблокированы до отдельного
+   точного runtime-контракта и реального E2E. Отдельно можно спроектировать
+   reviewed Gradle runtime-dependency SCA gate; не путать integrity metadata с
+   доказательством отсутствия CVE.
 
 Для продолжения в новом чате достаточно написать: «Открой приватный репозиторий,
 ветку `feature/ws024-secure-tunnel-20260728`, прочитай
 `docs/handoffs/NEXT_CHAT_HANDOFF.md` и продолжай от текущего HEAD».
+
+
+## Deterministic DNS executor test isolation — 2026-07-31
+
+- root cause: JVM tests shared the process-wide zero-core `ThreadPoolExecutor`;
+  caller/Future completion could precede workers returning to
+  `SynchronousQueue`, so a rapid next submission could fail closed;
+- the initial saturation-only patch passed early repeats but a mandatory fresh
+  QA run failed the ordinary address loop at `2001:10::1` with
+  `NETWORK_ERROR`; this intermediate failure was not accepted or hidden;
+- `HttpsProfileHttpTransport` now has an internal `ExecutorService` seam whose
+  runtime default remains the unchanged production `DNS_EXECUTOR`;
+- all 18 JVM-test transport constructions explicitly use test-owned executors;
+  synchronous DNS is inline, while timeout/cancel/saturation own bounded pools
+  and await termination;
+- production remains `0..2`, 30-second keep-alive, daemon workers,
+  `SynchronousQueue`, `AbortPolicy`, core-thread timeout and fail-closed
+  `NETWORK_ERROR` on rejected submission;
+- final focused evidence: combined Debug/QA PASS plus five additional sequential
+  runs per variant; complete Debug 500/500 and QA 500/500;
+- lint/build/toolchain/APK artifact/release fail-closed PASS; Python 91 with one
+  environmental skip; Go test/vet/build PASS;
+- final APK SHA-256: Debug
+  `dbddc5a31a719fa59ff6a5d7ec1a7199f4fe916982f07399327e3869c0754758`,
+  QA `6132831e16ddd807c2ac7ec4ddea3a6d63ab5045ce6f89d6365157a493300944`,
+  AndroidTest
+  `f1bb688aaae481752a3095a70ede7b16669ae06cab8c1c09b755308d4f04dabc`;
+- current Termux has no `govulncheck`; relay code/module did not change and
+  test/vet/build were rerun;
+- no push, APK installation, physical-device test, portal navigation,
+  authentication, certificate operation or signing was performed.

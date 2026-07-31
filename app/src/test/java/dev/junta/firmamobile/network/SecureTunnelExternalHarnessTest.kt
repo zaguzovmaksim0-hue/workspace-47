@@ -210,6 +210,7 @@ class SecureTunnelExternalHarnessTest {
                 listOf(logicalAddress)
             },
             executor = executor,
+            dnsExecutor = DirectTestExecutorService(),
         )
     }
 

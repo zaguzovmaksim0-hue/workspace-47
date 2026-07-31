@@ -1348,3 +1348,80 @@ Test-stability limitation:
 
 No APK was installed, no physical-device instrumentation was executed and no
 portal, certificate, authentication or signature flow was opened for F-15B.
+
+
+## Deterministic DNS executor unit-test isolation — 2026-07-31
+
+The residual order-sensitive failure recorded after F-15B was caused by JVM
+tests sharing the process-wide bounded DNS executor, not by the public-address
+classifier or a portal regression. With a zero-core `ThreadPoolExecutor` and a
+`SynchronousQueue`, caller/Future completion can precede a worker returning to
+the handoff queue. A rapid following test submission may therefore be rejected
+and correctly map to fail-closed `NETWORK_ERROR`.
+
+The first implementation isolated only the saturation test. Its focused test,
+three Debug repeats, three QA repeats, and full suites initially passed. The
+mandatory fresh pre-commit run then failed QA:
+
+- test: `everyRepresentativeNonGlobalDnsRangeIsRejectedBeforeConnect`;
+- address: `2001:10::1`;
+- expected: `PRIVATE_ADDRESS`;
+- actual: `NETWORK_ERROR`.
+
+That second RED disproved the saturation-only diagnosis. The final design is
+broader but remains test-scoped:
+
+- `HttpsProfileHttpTransport` accepts an internal `ExecutorService`, defaulting
+  at runtime to the unchanged process-wide `DNS_EXECUTOR`;
+- `DirectTestExecutorService` executes synchronous JVM resolver tasks inline and
+  owns no worker thread;
+- timeout and cancellation subcases each own a separate bounded executor and
+  require bounded termination;
+- saturation owns an identically configured bounded executor and terminates it;
+- all 18 JVM-test constructions of `HttpsProfileHttpTransport` explicitly supply
+  a test-owned executor, including the secure-tunnel harnesses.
+
+Production invariants remain exact: 0 core workers, 2 maximum workers,
+30-second keep-alive, `SynchronousQueue`, daemon threads, `AbortPolicy`,
+core-thread timeout, and fail-closed `NETWORK_ERROR` on rejected submission. No
+retry, queue, fallback, DNS timeout, URL policy, public-IP policy, peer pinning,
+or HTTP behavior changed.
+
+TDD and stability evidence:
+
+- RED 1: focused compilation failed with
+  `No parameter with name 'dnsExecutor' found`;
+- GREEN 1: injected-executor test passed after the minimal seam;
+- RED 2: the fresh QA failure above exposed remaining process-executor use;
+- GREEN 2: exact combined Debug/QA focused command PASS;
+- additional final focused repetitions: Debug 5/5, QA 5/5;
+- explicit source audit: 18/18 JVM-test transport constructors specify
+  `dnsExecutor`.
+
+Fresh final verification on the corrected content:
+
+- Debug unit: 500 tests, 0 failures/errors/skips;
+- QA unit: 500 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- `verifyResolvedCoreVersion`, `verifyPortableAapt2Configuration`: PASS;
+- Python catalog/tool tests: 91 tests, 0 failures/errors, 1 environmental skip
+  (`hardlinks unavailable`);
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
+- Android artifact verification: alignment, v2 signature, exactly one signer,
+  QA manifest hardening and exact forbidden-canary scan PASS;
+- release-signing fail-closed gate: PASS; no release APK remained;
+- Debug APK SHA-256:
+  `dbddc5a31a719fa59ff6a5d7ec1a7199f4fe916982f07399327e3869c0754758`;
+- QA APK SHA-256:
+  `6132831e16ddd807c2ac7ec4ddea3a6d63ab5045ce6f89d6365157a493300944`;
+- QA AndroidTest APK SHA-256:
+  `f1bb688aaae481752a3095a70ede7b16669ae06cab8c1c09b755308d4f04dabc`.
+
+`govulncheck` was not installed in the current Termux environment and was not
+rerun for this Android/test-only change. Relay source and module files did not
+change; Go test/vet/build were rerun. Local Go race instrumentation remains
+unsupported on Android/arm64 and is provided by Linux CI.
+
+No APK was installed, no physical-device instrumentation was executed and no
+portal, certificate, authentication or signature flow was opened.

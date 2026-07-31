@@ -153,14 +153,32 @@ Latest completed isolated PR — catalog-generation deduplication (F-15B):
 - No portal request, certificate operation, signature or physical-device E2E was
   performed for this refactor.
 
+Latest completed isolated PR — deterministic DNS executor test isolation:
+
+- `HttpsProfileHttpTransport` accepts an internal `ExecutorService`; runtime
+  callers still default to the unchanged process-wide bounded executor.
+- The production executor remains `0..2` workers, 30-second keep-alive,
+  `SynchronousQueue`, daemon threads, `AbortPolicy` and core-thread timeout.
+- The initial saturation-only isolation passed early repeats but was rejected
+  after a fresh QA run returned transient `NETWORK_ERROR` inside the ordinary
+  non-global-address loop. This established that all JVM transport tests, not
+  only saturation, had to stop sharing process executor timing.
+- All 18 JVM-test transport constructions now specify a test-owned executor.
+  Synchronous resolvers run inline; timeout, cancellation and saturation each
+  own bounded asynchronous pools and wait for termination.
+- Final evidence: exact combined focused command PASS, then Debug 5/5 and QA 5/5
+  additional repeats, followed by complete 500-test Debug and QA suites.
+- No production retry, queue, fallback, timeout, DNS policy or network scope
+  changed.
+
 Next isolated PRs:
 
-1. Stabilize the order-sensitive bounded DNS-executor unit-test teardown without
-   weakening the production fail-closed policy or expanding network scope.
-2. Additional Client TLS portals beyond Carné Joven only after exact runtime
+1. Additional Client TLS portals beyond Carné Joven only after exact runtime
    contract and physical E2E evidence (F-03).
-3. Remaining portal E2E and document-signing branches after local CAdES/XAdES
+2. Remaining portal E2E and document-signing branches after local CAdES/XAdES
    validation and an authorized real administrative case (F-12).
+3. A separately reviewed Gradle runtime-dependency SCA gate; current dependency
+   verification is an integrity ledger and does not prove full CVE reachability.
 
 
 ## WS024 secure-tunnel QA status — 2026-07-29

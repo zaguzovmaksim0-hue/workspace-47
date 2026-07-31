@@ -6,10 +6,12 @@ import java.net.Proxy
 import java.net.URI
 import java.util.ArrayDeque
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import okhttp3.Authenticator
 import okhttp3.CookieJar
 import okhttp3.Protocol
@@ -29,6 +31,7 @@ class ProfileHttpTransportTest {
     private val requestUrl = (
         policy.validateRequest(java.net.URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT)) as NetworkUrlValidation.Allowed
     ).url
+    private val directDnsExecutor = DirectTestExecutorService()
 
     @Test
     fun publicExactEndpointReturnsOneOwnedBoundedBody() {
@@ -44,6 +47,7 @@ class ProfileHttpTransportTest {
         val transport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
             executor = executor,
+            dnsExecutor = directDnsExecutor,
         )
 
         val requestBody = "op=pre&cop=sign".encodeToByteArray()
@@ -74,6 +78,7 @@ class ProfileHttpTransportTest {
             urlPolicy = secondPolicy,
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("93.184.216.34")) },
             executor = executor,
+            dnsExecutor = directDnsExecutor,
         )
 
         val allowed = ProfileHttpRequest(secondUrl, "op=pre".encodeToByteArray()).use {
@@ -90,6 +95,7 @@ class ProfileHttpTransportTest {
                 emptyList()
             },
             executor = executor,
+            dnsExecutor = directDnsExecutor,
         )
         val blocked = ProfileHttpRequest(secondUrl, "op=pre".encodeToByteArray()).use {
             defaultTransport.post(it, ProfileHttpCancellation())
@@ -113,6 +119,7 @@ class ProfileHttpTransportTest {
         val redirectTransport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
             executor = redirectExecutor,
+            dnsExecutor = directDnsExecutor,
         )
 
         assertEquals(
@@ -128,6 +135,7 @@ class ProfileHttpTransportTest {
             executor = QueueExecutor(
                 RawProfileHttpResponse(200, "text/html", null, htmlBody),
             ),
+            dnsExecutor = directDnsExecutor,
         )
         assertEquals(ProfileHttpFailure.SESSION_EXPIRED, (post(htmlTransport) as ProfileHttpResult.Failure).code)
         assertTrue(htmlBody.all { it == 0.toByte() })
@@ -139,6 +147,7 @@ class ProfileHttpTransportTest {
                 privateExecutorCalled.set(true)
                 error("must not connect")
             },
+            dnsExecutor = directDnsExecutor,
         )
         assertEquals(ProfileHttpFailure.PRIVATE_ADDRESS, (post(privateTransport) as ProfileHttpResult.Failure).code)
         assertTrue(!privateExecutorCalled.get())
@@ -149,12 +158,14 @@ class ProfileHttpTransportTest {
         val authTransport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
             executor = QueueExecutor(RawProfileHttpResponse(401, null, null, ByteArray(0))),
+            dnsExecutor = directDnsExecutor,
         )
         assertEquals(ProfileHttpFailure.SESSION_EXPIRED, (post(authTransport) as ProfileHttpResult.Failure).code)
 
         val oversizedTransport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
             executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> throw ProfileResponseTooLargeException() },
+            dnsExecutor = directDnsExecutor,
         )
         assertEquals(ProfileHttpFailure.RESPONSE_TOO_LARGE, (post(oversizedTransport) as ProfileHttpResult.Failure).code)
 
@@ -163,6 +174,7 @@ class ProfileHttpTransportTest {
             val wrongTypeTransport = HttpsProfileHttpTransport(
                 dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
                 executor = QueueExecutor(RawProfileHttpResponse(200, contentType, null, wrongTypeBody)),
+                dnsExecutor = directDnsExecutor,
             )
             assertEquals(
                 ProfileHttpFailure.CONTENT_TYPE_INVALID,
@@ -214,6 +226,7 @@ class ProfileHttpTransportTest {
                     executorCalled.set(true)
                     error("must not connect")
                 },
+                dnsExecutor = directDnsExecutor,
             )
             assertEquals(
                 address,
@@ -238,6 +251,7 @@ class ProfileHttpTransportTest {
                 listOf(blockedUla, publicV6, blockedNat64, safeNat64, publicV6)
             },
             executor = executor,
+            dnsExecutor = directDnsExecutor,
         )
 
         val result = post(transport)
@@ -269,33 +283,41 @@ class ProfileHttpTransportTest {
 
     @Test
     fun dnsResolutionIsBoundedAndCancellationReturnsWithoutCallingHttp() {
+        val timeoutDnsExecutor = newBoundedDnsExecutor()
         val timeoutStarted = CountDownLatch(1)
         val timeoutInterrupted = CountDownLatch(1)
         val executorCalled = AtomicBoolean(false)
-        val timeoutTransport = HttpsProfileHttpTransport(
-            dnsResolver = DnsResolver {
-                timeoutStarted.countDown()
-                try {
-                    Thread.sleep(10_000)
-                } catch (_: InterruptedException) {
-                    timeoutInterrupted.countDown()
-                }
-                emptyList()
-            },
-            executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ ->
-                executorCalled.set(true)
-                error("HTTP must not start")
-            },
-            dnsTimeoutMillis = 100,
-        )
+        try {
+            val timeoutTransport = HttpsProfileHttpTransport(
+                dnsResolver = DnsResolver {
+                    timeoutStarted.countDown()
+                    try {
+                        Thread.sleep(10_000)
+                    } catch (_: InterruptedException) {
+                        timeoutInterrupted.countDown()
+                    }
+                    emptyList()
+                },
+                executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ ->
+                    executorCalled.set(true)
+                    error("HTTP must not start")
+                },
+                dnsTimeoutMillis = 100,
+                dnsExecutor = timeoutDnsExecutor,
+            )
 
-        val timedOut = post(timeoutTransport)
+            val timedOut = post(timeoutTransport)
 
-        assertTrue(timeoutStarted.await(1, TimeUnit.SECONDS))
-        assertEquals(ProfileHttpFailure.NETWORK_ERROR, (timedOut as ProfileHttpResult.Failure).code)
-        assertTrue(timeoutInterrupted.await(1, TimeUnit.SECONDS))
-        assertTrue(!executorCalled.get())
+            assertTrue(timeoutStarted.await(1, TimeUnit.SECONDS))
+            assertEquals(ProfileHttpFailure.NETWORK_ERROR, (timedOut as ProfileHttpResult.Failure).code)
+            assertTrue(timeoutInterrupted.await(1, TimeUnit.SECONDS))
+            assertTrue(!executorCalled.get())
+        } finally {
+            timeoutDnsExecutor.shutdown()
+            assertTrue(timeoutDnsExecutor.awaitTermination(1, TimeUnit.SECONDS))
+        }
 
+        val cancelDnsExecutor = newBoundedDnsExecutor()
         val cancelStarted = CountDownLatch(1)
         val cancelInterrupted = CountDownLatch(1)
         val cancellation = ProfileHttpCancellation()
@@ -312,6 +334,7 @@ class ProfileHttpTransportTest {
             },
             executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> error("HTTP must not start") },
             dnsTimeoutMillis = 10_000,
+            dnsExecutor = cancelDnsExecutor,
         )
         val worker = Thread {
             cancelledResult.set(
@@ -320,21 +343,45 @@ class ProfileHttpTransportTest {
                 },
             )
         }
-        worker.start()
-        assertTrue(cancelStarted.await(1, TimeUnit.SECONDS))
-        cancellation.cancel()
-        worker.join(1_000)
+        try {
+            worker.start()
+            assertTrue(cancelStarted.await(1, TimeUnit.SECONDS))
+            cancellation.cancel()
+            worker.join(1_000)
 
-        assertTrue(!worker.isAlive)
-        assertTrue(cancelInterrupted.await(1, TimeUnit.SECONDS))
-        assertEquals(
-            ProfileHttpFailure.NETWORK_ERROR,
-            (cancelledResult.get() as ProfileHttpResult.Failure).code,
+            assertTrue(!worker.isAlive)
+            assertTrue(cancelInterrupted.await(1, TimeUnit.SECONDS))
+            assertEquals(
+                ProfileHttpFailure.NETWORK_ERROR,
+                (cancelledResult.get() as ProfileHttpResult.Failure).code,
+            )
+        } finally {
+            cancellation.cancel()
+            worker.join(1_000)
+            cancelDnsExecutor.shutdown()
+            assertTrue(cancelDnsExecutor.awaitTermination(1, TimeUnit.SECONDS))
+        }
+    }
+
+    @Test
+    fun dnsResolutionUsesTheInjectedExecutor() {
+        val dnsExecutor = DirectTestExecutorService()
+        val transport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver { listOf(InetAddress.getByName("127.0.0.1")) },
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> error("HTTP must not start") },
+            dnsExecutor = dnsExecutor,
         )
+
+        assertEquals(
+            ProfileHttpFailure.PRIVATE_ADDRESS,
+            (post(transport) as ProfileHttpResult.Failure).code,
+        )
+        assertEquals(1, dnsExecutor.submissions.get())
     }
 
     @Test
     fun dnsResolverSaturationFailsClosedWithoutGrowingTheWorkerPool() {
+        val dnsExecutor = newBoundedDnsExecutor()
         val started = CountDownLatch(2)
         val release = CountDownLatch(1)
         val cancellations = List(2) { ProfileHttpCancellation() }
@@ -356,6 +403,7 @@ class ProfileHttpTransportTest {
                         error("HTTP must not start")
                     },
                     dnsTimeoutMillis = 10_000,
+                    dnsExecutor = dnsExecutor,
                 )
                 ProfileHttpRequest(requestUrl, "op=pre".encodeToByteArray()).use {
                     transport.post(it, cancellation)
@@ -369,6 +417,7 @@ class ProfileHttpTransportTest {
                 dnsResolver = DnsResolver { error("A third resolver task must be rejected") },
                 executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> error("HTTP must not start") },
                 dnsTimeoutMillis = 10_000,
+                dnsExecutor = dnsExecutor,
             )
 
             assertEquals(
@@ -376,10 +425,10 @@ class ProfileHttpTransportTest {
                 (post(saturated) as ProfileHttpResult.Failure).code,
             )
         } finally {
-            // Release the resolver tasks before joining their callers so the shared bounded
-            // executor has actually regained capacity when this test returns.
             release.countDown()
             workers.forEach { it.join(1_000) }
+            dnsExecutor.shutdown()
+            assertTrue(dnsExecutor.awaitTermination(1, TimeUnit.SECONDS))
             cancellations.forEach(ProfileHttpCancellation::cancel)
         }
         assertTrue(workers.none(Thread::isAlive))
@@ -504,6 +553,16 @@ class ProfileHttpTransportTest {
         ProfileHttpRequest(requestUrl, "op=pre".encodeToByteArray()).use {
             transport.post(it, ProfileHttpCancellation())
         }
+
+    private fun newBoundedDnsExecutor(): ThreadPoolExecutor = ThreadPoolExecutor(
+        0,
+        2,
+        30,
+        TimeUnit.SECONDS,
+        SynchronousQueue(),
+        { task -> Thread(task, "profile-dns-test").apply { isDaemon = true } },
+        ThreadPoolExecutor.AbortPolicy(),
+    ).apply { allowCoreThreadTimeOut(true) }
 
     private class QueueExecutor(
         vararg responses: RawProfileHttpResponse,

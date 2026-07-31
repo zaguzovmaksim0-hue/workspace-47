@@ -735,6 +735,7 @@ class SecureTunnelSocketFactoryTest {
         val transport = HttpsProfileHttpTransport(
             dnsResolver = DnsResolver { listOf(logicalAddress) },
             executor = executor,
+            dnsExecutor = DirectTestExecutorService(),
         )
         return ProfileHttpRequest(requestUrl, E2E_BODY.copyOf()).use { request ->
             transport.post(request, ProfileHttpCancellation())
