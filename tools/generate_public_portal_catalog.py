@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the bundled public portal catalog from the reviewed inventory.
+"""Generate the bundled public portal catalog from reviewed local sources.
 
 This is a build-time transformation only. Android never reads Markdown at runtime.
 The generator does not fetch URLs, authenticate, or mutate external systems.
@@ -13,17 +13,10 @@ import json
 from pathlib import Path
 import re
 import tempfile
+from urllib.parse import urlsplit
 
 import yaml
 
-
-PROFILE_BINDINGS = {
-    "age-reg-redsara": "reg-age-redsara",
-    "junta-andalucia-ovorion": "junta-andalucia",
-    "unizar-tramitador": "unizar-tramitador",
-    "junta-andalucia-carne-joven": "carne-joven-andalucia",
-    "aragon-siraw": "aragon-siraw",
-}
 
 LEVELS = {
     "ESTATAL": "STATE",
@@ -35,7 +28,8 @@ LEVELS = {
     "OTRA_INSTITUCION_PUBLICA": "PUBLIC_INSTITUTION",
 }
 
-MIN_INVENTORY_RECORDS = 180
+MIN_INVENTORY_RECORDS = 182
+SITE_PROFILE_ROOT_KEYS = {"schemaVersion", "catalogVersion", "profiles"}
 
 
 def _records(markdown: str) -> list[dict[str, object]]:
@@ -47,8 +41,84 @@ def _records(markdown: str) -> list[dict[str, object]]:
     return records
 
 
+def _site_profiles(source: Path) -> list[tuple[str, str]]:
+    try:
+        parsed = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"invalid site profile catalog: {source}") from error
+    if not isinstance(parsed, dict) or set(parsed) != SITE_PROFILE_ROOT_KEYS:
+        raise ValueError("invalid site profile catalog root")
+    if parsed.get("schemaVersion") != 1:
+        raise ValueError("unsupported site profile schemaVersion")
+    if not isinstance(parsed.get("catalogVersion"), int) or parsed["catalogVersion"] < 1:
+        raise ValueError("invalid site profile catalogVersion")
+    raw_profiles = parsed.get("profiles")
+    if not isinstance(raw_profiles, list) or not raw_profiles:
+        raise ValueError("site profile catalog must contain profiles")
+
+    profiles: list[tuple[str, str]] = []
+    profile_ids: set[str] = set()
+    start_urls: set[str] = set()
+    for index, raw_profile in enumerate(raw_profiles):
+        if not isinstance(raw_profile, dict):
+            raise ValueError(f"invalid site profile at index {index}")
+        profile_id = raw_profile.get("profileId")
+        start_url = raw_profile.get("startUrl")
+        if not isinstance(profile_id, str) or not profile_id.strip():
+            raise ValueError(f"invalid profileId at index {index}")
+        if profile_id != profile_id.strip():
+            raise ValueError(f"non-canonical profileId: {profile_id!r}")
+        if not isinstance(start_url, str) or not start_url.strip():
+            raise ValueError(f"invalid profile startUrl: {profile_id}")
+        if start_url != start_url.strip():
+            raise ValueError(f"non-canonical profile startUrl: {profile_id}")
+        parsed_url = urlsplit(start_url)
+        if (
+            parsed_url.scheme != "https"
+            or not parsed_url.hostname
+            or parsed_url.username is not None
+            or parsed_url.password is not None
+            or parsed_url.fragment
+        ):
+            raise ValueError(f"invalid HTTPS profile startUrl: {profile_id}")
+        if profile_id in profile_ids:
+            raise ValueError(f"duplicate profileId: {profile_id}")
+        if start_url in start_urls:
+            raise ValueError(f"duplicate profile startUrl: {start_url}")
+        profile_ids.add(profile_id)
+        start_urls.add(start_url)
+        profiles.append((profile_id, start_url))
+    return profiles
+
+
+def _profile_bindings(
+    records: list[dict[str, object]],
+    profiles: list[tuple[str, str]],
+) -> dict[str, str]:
+    records_by_entry_url: dict[str, list[dict[str, object]]] = {}
+    for record in records:
+        entry_url = str(record.get("entry_url", ""))
+        records_by_entry_url.setdefault(entry_url, []).append(record)
+
+    bindings: dict[str, str] = {}
+    for profile_id, start_url in profiles:
+        matches = records_by_entry_url.get(start_url, [])
+        if not matches:
+            raise ValueError(f"profile {profile_id} has no inventory entry for exact startUrl")
+        if len(matches) != 1:
+            raise ValueError(f"profile {profile_id} has multiple inventory entries for exact startUrl")
+        surface_key = str(matches[0].get("surface_key", ""))
+        if not surface_key:
+            raise ValueError(f"profile {profile_id} matched an invalid inventory surface")
+        if surface_key in bindings:
+            raise ValueError(f"multiple profiles map to inventory surface: {surface_key}")
+        bindings[surface_key] = profile_id
+    return bindings
+
+
 def _mechanisms(record: dict[str, object]) -> list[str]:
-    js_client = str(record.get("js_client", "")).strip().lower()
+    js_client = str(record.get("js_client", "")).strip().upper().replace("@FIRMA", "AFIRMA")
+    js_tokens = set(re.split(r"[^A-Z0-9]+", js_client))
     protocol_family = str(record.get("protocol_family", "")).strip().upper()
     protocol_tokens = set(re.split(r"[^A-Z0-9]+", protocol_family))
     client_tls_auth = str(record.get("client_tls_auth", "")).strip().upper()
@@ -57,17 +127,17 @@ def _mechanisms(record: dict[str, object]) -> list[str]:
         result.add("CERTIFICATE_ACCESS")
     if record.get("signature_required") in {"SI", "CONDICIONAL"}:
         result.add("ELECTRONIC_SIGNATURE")
-    if js_client == "autofirma" or "AUTOFIRMA" in protocol_tokens:
+    if "AUTOFIRMA" in js_tokens or "AUTOFIRMA" in protocol_tokens:
         result.add("AUTOFIRMA")
-    if js_client == "autoscript" or "AUTOSCRIPT" in protocol_tokens:
+    if "AUTOSCRIPT" in js_tokens or "AUTOSCRIPT" in protocol_tokens:
         result.add("AUTOSCRIPT")
-    if js_client == "miniapplet" or "MINIAPPLET" in protocol_tokens:
+    if "MINIAPPLET" in js_tokens or "MINIAPPLET" in protocol_tokens:
         result.add("MINIAPPLET")
     if client_tls_auth in {"SI", "VERIFIED_E2E"} or (
         "CLIENT" in protocol_tokens and "TLS" in protocol_tokens
     ):
         result.add("CLIENT_TLS_AUTH")
-    if js_client in {"@firma", "afirma"} or "AFIRMA" in protocol_tokens:
+    if "AFIRMA" in js_tokens or "AFIRMA" in protocol_tokens:
         result.add("AFIRMA")
     return sorted(result)
 
@@ -101,7 +171,7 @@ def _territory(record: dict[str, object]) -> str:
     return "España"
 
 
-def _entry(record: dict[str, object]) -> dict[str, object]:
+def _entry(record: dict[str, object], profile_bindings: dict[str, str]) -> dict[str, object]:
     surface_key = str(record["surface_key"])
     entry_url = str(record["entry_url"])
     if not entry_url.startswith("https://"):
@@ -112,7 +182,7 @@ def _entry(record: dict[str, object]) -> dict[str, object]:
     return {
         "portalId": surface_key,
         "inventoryId": str(record["inventory_id"]),
-        "profileId": PROFILE_BINDINGS.get(surface_key),
+        "profileId": profile_bindings.get(surface_key),
         "displayName": str(record["surface_name"]),
         "organization": str(record["institution_name"]),
         "governmentLevel": LEVELS[str(record["administrative_level"])],
@@ -131,58 +201,7 @@ def _entry(record: dict[str, object]) -> dict[str, object]:
     }
 
 
-def _supplemental_entries() -> list[dict[str, object]]:
-    return [
-        {
-            "portalId": "junta-andalucia-ofvirtual",
-            "inventoryId": None,
-            "profileId": "junta-ofvirtual",
-            "displayName": "Junta de Andalucía — Oficina Virtual",
-            "organization": "Junta de Andalucía",
-            "governmentLevel": "AUTONOMOUS_COMMUNITY",
-            "territory": "Andalucía",
-            "purpose": "Acceso con certificado a la Oficina Virtual",
-            "entryUrl": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
-            "observedMechanisms": ["AFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE", "MINIAPPLET"],
-            "observedSignatureFormats": ["CADES"],
-            "protocolFamily": "MINIAPPLET_TRIPHASE",
-            "catalogStatus": "E2E_VERIFIED",
-            "inventoryStatus": "VERIFIED_E2E",
-            "discoveryState": "REVIEWED",
-            "evidenceIds": [
-                "LIVE-JUNTA-OFVIRTUAL-2026-07-22",
-                "E2E-JUNTA-OFVIRTUAL-2026-07-29",
-            ],
-            "reviewedOn": "2026-07-29",
-            "limitations": (
-                "El portal real aceptó la firma CAdES de autenticación y abrió la sesión interna; "
-                "verificación limitada al login observado."
-            ),
-        },
-        {
-            "portalId": "educacion-convocatoria-46",
-            "inventoryId": None,
-            "profileId": "educacion-convocatoria",
-            "displayName": "Ministerio de Educación — Convocatoria 46",
-            "organization": "Ministerio de Educación, Formación Profesional y Deportes",
-            "governmentLevel": "STATE",
-            "territory": "España",
-            "purpose": "Consulta de la convocatoria de homologación y convalidación",
-            "entryUrl": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
-            "observedMechanisms": ["CERTIFICATE_ACCESS"],
-            "observedSignatureFormats": [],
-            "protocolFamily": "CLAVE_GATEWAY_UNVERIFIED",
-            "catalogStatus": "CATALOGED",
-            "inventoryStatus": "BROWSE_ONLY",
-            "discoveryState": "REVIEWED",
-            "evidenceIds": ["LIVE-EDUCACION-ENTRY-2026-07-22"],
-            "reviewedOn": "2026-07-22",
-            "limitations": "Transporte downstream de certificado y callback no verificados; firma bloqueada.",
-        },
-    ]
-
-
-def generate(source: Path) -> dict[str, object]:
+def generate(source: Path, profiles_source: Path) -> dict[str, object]:
     raw = source.read_bytes()
     markdown = raw.decode("utf-8")
     records = _records(markdown)
@@ -190,10 +209,16 @@ def generate(source: Path) -> dict[str, object]:
         raise ValueError(
             f"expected at least {MIN_INVENTORY_RECORDS} inventory records, found {len(records)}"
         )
-    entries = [_entry(record) for record in records] + _supplemental_entries()
-    portal_ids = [entry["portalId"] for entry in entries]
-    if len(portal_ids) != len(set(portal_ids)):
-        raise ValueError("duplicate portalId")
+    profiles = _site_profiles(profiles_source)
+    profile_bindings = _profile_bindings(records, profiles)
+    entries = [_entry(record, profile_bindings) for record in records]
+
+    for field in ("portalId", "inventoryId", "entryUrl"):
+        values = [entry[field] for entry in entries]
+        if len(values) != len(set(values)):
+            raise ValueError(f"duplicate {field}")
+    if sum(entry["profileId"] is not None for entry in entries) != len(profiles):
+        raise ValueError("not all profiles were mapped exactly once")
     return {
         "schemaVersion": 1,
         "catalogVersion": 1,
@@ -205,9 +230,10 @@ def generate(source: Path) -> dict[str, object]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, required=True)
+    parser.add_argument("--profiles", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    catalog = generate(args.source)
+    catalog = generate(args.source, args.profiles)
     output = (json.dumps(catalog, ensure_ascii=False, indent=2, sort_keys=False) + "\n").encode("utf-8")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(dir=args.output.parent, delete=False) as temporary:

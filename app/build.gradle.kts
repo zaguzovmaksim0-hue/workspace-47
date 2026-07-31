@@ -28,6 +28,30 @@ fun quotedBuildConfigString(value: String): String {
     }
 }
 
+fun quotedBuildConfigText(value: String): String = buildString(value.length + 2) {
+    append('"')
+    value.forEach { character ->
+        when (character) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            '\b' -> append("\\b")
+            '\u000C' -> append("\\f")
+            else -> {
+                if (character.code < 0x20) {
+                    append("\\u")
+                    append(character.code.toString(16).padStart(4, '0'))
+                } else {
+                    append(character)
+                }
+            }
+        }
+    }
+    append('"')
+}
+
 fun validRelayHost(value: String): Boolean {
     if (value.isBlank() || value.length > 253 || value.any(Char::isISOControl)) return false
     if (value != value.lowercase(Locale.ROOT) || value.endsWith('.') || value == "localhost") return false
@@ -54,6 +78,9 @@ fun parseRelayPins(value: String): List<String>? {
     }
     return pins.takeIf { valid }
 }
+
+val siteProfileCatalogFile = rootProject.layout.projectDirectory.file("config/site_profiles_v1.json")
+val siteProfileCatalogJson = providers.fileContents(siteProfileCatalogFile).asText.get()
 
 val qaRelayHostInput = providers.secretValue("JFM_WS024_QA_RELAY_HOST")
 val qaRelayPortInput = providers.secretValue("JFM_WS024_QA_RELAY_PORT")
@@ -122,6 +149,11 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "SITE_PROFILE_CATALOG_JSON",
+            quotedBuildConfigText(siteProfileCatalogJson),
+        )
         buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
         buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
         buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))

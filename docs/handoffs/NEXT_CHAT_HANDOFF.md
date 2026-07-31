@@ -70,26 +70,41 @@
 - direct-only: tunnel выключен, relay tuple отсутствует;
 - зашифрованный 24-hour cache сертификата сохранён после обновления.
 
-## Последний QA gate
+## Последний локальный QA gate — F-15B
 
+- canonical site-profile JSON: one tracked source,
+  `config/site_profiles_v1.json`; SHA-256
+  `a45cf2bbfe13d3492a963d0b8866c676ec13e5e95fac99e0cf2e0eeac568dc4c`;
+- public catalog: 182/182 inventory-backed entries, 7 exact profile bindings,
+  source revision
+  `018f94bb22cb42b3093f86b028cf87b490bcee8f5e15e255d8c9728594e71951`;
 - Debug unit: 499/499, 0 failures/errors/skips;
 - QA unit: 499/499, 0 failures/errors/skips;
 - `lintDebug`, `lintQa`: PASS;
 - `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: 91, 0 failures/errors, 1 environmental skip
+  (`hardlinks unavailable`);
 - Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
-- Python catalog/tool tests: 75, 0 failures/errors, 1 environmental skip;
+- pinned `govulncheck` 1.6.0: no vulnerabilities found;
+- APK alignment, v2 signature, exactly one signer, QA manifest hardening and
+  exact forbidden-canary scan: PASS;
+- release without private signing inputs: expected fail-closed; no release APK;
 - Debug APK SHA-256:
-  `51c425a45e8b8fee3a384a9c8098771f0896eb456c78eae9bcfdf810170c0824`;
-- QA APK and installed `base.apk` SHA-256:
-  `0258378038d703979239c8701e1e8d2ce68ecabc7de5699b68cbccbef1e5ceec`;
+  `cce4e9c36668bb62520c9f7ccfa7cffbda5626b84230e56e9bc5deb9dd5573e7`;
+- QA APK SHA-256:
+  `d57ccc3850c8f44d4f01f5d578c5c0a9013c7310d98c40faa39cc1fc1f8ace6d`;
 - QA AndroidTest APK SHA-256:
-  `4cc4be8ae9ca7d3300f444d7a40c4dd5d83a4005f9b53080ef09521ab02a2904`;
-- zipalign, v2 signature, one signer, manifest hardening and forbidden-canary
-  scan: PASS;
-- physical `ClientCertPreferenceCoordinatorInstrumentedTest`: `OK (1 test)`;
-- physical F-17 `PublicIpAddressPolicyInstrumentedTest`: `OK (1 test)`;
-- cold launch restored unlock without password; cache 101 bytes/mode 600 and
-  `FLAG_SECURE` remained active.
+  `f1bb688aaae481752a3095a70ede7b16669ae06cab8c1c09b755308d4f04dabc`;
+- current F-15B APKs were not installed and no physical portal/E2E flow was run;
+  the installed physical-device build remains the earlier F-09/F-10 build.
+
+Two earlier combined clean runs exposed an order-sensitive transient in the
+existing `ProfileHttpTransportTest`: immediately after the bounded DNS saturation
+test, a later resolver submission returned `NETWORK_ERROR` instead of the
+expected classified private-address result. No network source changed in F-15B;
+the exact test, full Debug, full QA and the final current-content combined gate
+all passed on rerun. Treat this as residual unit-test determinism work, not as a
+new portal or runtime-network claim.
 
 ## Сетевой инцидент 30 июля 2026
 
@@ -254,6 +269,25 @@ WARP, и неизменённая сборка выполнила E2E успеш
   ledger, а не runtime lockfile. Отдельный reviewed Gradle SCA остаётся residual
   hardening.
 
+
+## F-15B catalog-generation deduplication — 2026-07-31
+
+- `app/src/main/res/raw/site_profiles_v1.json` moved unchanged to
+  `config/site_profiles_v1.json`; no second tracked profile JSON remains;
+- Gradle safely escapes and emits the canonical file as
+  `BuildConfig.SITE_PROFILE_CATALOG_JSON`; the large Kotlin JSON copy is gone;
+- Oficina Virtual and Educación convocatoria 46 moved from Python supplemental
+  objects into the reviewed inventory as `ES-PUB-0181` and `ES-PUB-0182`;
+- `PROFILE_BINDINGS` and `_supplemental_entries()` were deleted;
+- all seven profile/public bindings now require exact full URL equality between
+  profile `startUrl` and inventory `entry_url`;
+- malformed profile roots, duplicate IDs/start URLs, missing or multiple
+  inventory matches and profile/surface collisions fail closed;
+- generated public catalog remains 182 entries with no portal added/removed and
+  no trust/evidence change; only the two inventory IDs and source revision differ;
+- no push, device installation, portal navigation, authentication or signing was
+  performed for this task.
+
 ## Ограничения и следующие задачи
 
 1. Legacy UI Oficina Virtual исправлен только для exact `ws072 /ofvirtual/`;
@@ -266,10 +300,10 @@ WARP, и неизменённая сборка выполнила E2E успеш
    реально не примет XAdES E2E. UniZAR уже повышен только для login CAdES.
 5. Не сохранять в Git скриншоты кабинета, пароль, PKCS#12, сертификат, подпись,
    cookie или персональные идентификаторы.
-6. F-14 CI/supply-chain gate завершён в текущем HEAD. Следующий исполнимый
-   блок — catalog-generation deduplication F-15B. Дополнительные Client TLS-
-   порталы F-03 и документальные операции F-12 не включать без отдельного
-   реального E2E.
+6. F-15B завершён. Следующий локально исполнимый блок — детерминировать
+   teardown bounded DNS-executor unit test без ослабления production policy.
+   Дополнительные Client TLS-порталы F-03 и документальные операции F-12 не
+   включать без отдельного точного контракта и реального E2E.
 
 Для продолжения в новом чате достаточно написать: «Открой приватный репозиторий,
 ветку `feature/ws024-secure-tunnel-20260728`, прочитай

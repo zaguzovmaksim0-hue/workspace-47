@@ -1279,3 +1279,72 @@ Limitations are explicit:
   verification and Dependabot remain active, but they do not prove that the full
   Gradle graph is free of known vulnerabilities. A dedicated reviewed Gradle SCA
   remains future hardening.
+
+## Milestone F15B — catalog-generation deduplication — 2026-07-31
+
+F-15B removes the remaining manually maintained copies from the profile/public
+catalog pipeline without changing portal trust, activation, protocol or E2E
+scope:
+
+- `config/site_profiles_v1.json` is now the sole committed profile data source;
+  its SHA-256 is unchanged from the former raw resource:
+  `a45cf2bbfe13d3492a963d0b8866c676ec13e5e95fac99e0cf2e0eeac568dc4c`;
+- Gradle emits that exact JSON as `BuildConfig.SITE_PROFILE_CATALOG_JSON` and
+  `BuiltInSiteProfiles` parses it; the handwritten Kotlin JSON and Android raw
+  profile resource are removed;
+- the public inventory now contains 182 records and 210 registered sources
+  (198 portal-specific plus 12 enumerators);
+- Oficina Virtual and Educación convocatoria 46 are inventory records
+  `ES-PUB-0181` and `ES-PUB-0182`, not Python supplemental objects;
+- the generator has no `PROFILE_BINDINGS` or `_supplemental_entries()` and maps
+  all seven profiles by exact equality of profile `startUrl` and inventory
+  `entry_url`;
+- malformed/unexpected profile roots, duplicate profile IDs/start URLs, missing
+  matches, multiple matches and profile/surface collisions fail closed.
+
+TDD and semantic evidence:
+
+- RED focused tests failed because the two-argument generator API, canonical
+  profile source and generated BuildConfig field did not exist;
+- GREEN focused generator tests: 7/7;
+- the committed public catalog is byte-for-byte reproducible from the two local
+  canonical sources;
+- semantic comparison against the preceding 182-entry catalog found zero added
+  or removed portals and zero unexpected field changes. Only
+  `junta-andalucia-ofvirtual` and `educacion-convocatoria-46` changed
+  `inventoryId` from `null` to their stable IDs; `sourceRevision` changed as
+  required by the inventory update;
+- profile/catalog JVM regression tests passed and all seven exact bindings remain
+  covered by the existing consistency gates.
+
+Fresh final verification on the completed content:
+
+- Debug unit: 499 tests, 0 failures/errors/skips;
+- QA unit: 499 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Python catalog/tool tests: 91 tests, 0 failures/errors, 1 environmental skip
+  (`hardlinks unavailable`);
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
+- pinned `govulncheck` 1.6.0: no vulnerabilities found;
+- Android artifact verification: alignment, v2 signature, exactly one signer,
+  QA manifest hardening and exact forbidden-canary scan PASS;
+- release-signing fail-closed gate: PASS; no release APK remained;
+- Debug APK SHA-256:
+  `cce4e9c36668bb62520c9f7ccfa7cffbda5626b84230e56e9bc5deb9dd5573e7`;
+- QA APK SHA-256:
+  `d57ccc3850c8f44d4f01f5d578c5c0a9013c7310d98c40faa39cc1fc1f8ace6d`;
+- QA AndroidTest APK SHA-256:
+  `f1bb688aaae481752a3095a70ede7b16669ae06cab8c1c09b755308d4f04dabc`.
+
+Test-stability limitation:
+
+- two earlier combined clean invocations observed the existing bounded DNS
+  executor test immediately after its saturation test returning transient
+  `NETWORK_ERROR` for a blocked address. F-15B changes no network source. The
+  exact test, full Debug suite, full QA suite and final combined current-content
+  gate all passed on rerun. This is recorded as residual order-sensitive test
+  teardown work; no runtime network defect or portal regression is claimed.
+
+No APK was installed, no physical-device instrumentation was executed and no
+portal, certificate, authentication or signature flow was opened for F-15B.

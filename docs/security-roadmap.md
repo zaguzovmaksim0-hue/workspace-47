@@ -17,6 +17,12 @@ Completed:
 - Profile/public-catalog E2E consistency gate (F-15A): every bound profile marked
   `VERIFIED_E2E` must have the exact public metadata pair
   `E2E_VERIFIED / VERIFIED_E2E`, and non-E2E profiles cannot carry that pair.
+- Catalog-generation deduplication completed (F-15B):
+  `config/site_profiles_v1.json` is the sole committed profile data source and
+  is embedded through `BuildConfig`; the public catalog is generated only from
+  the reviewed inventory. All seven profile bindings require exact equality of
+  `startUrl` and `entry_url`; missing, duplicate or colliding mappings fail
+  closed. The former Python binding table and supplemental entries are removed.
 - RedSARA live gate revalidated on 2026-07-30: both public entry paths require
   Cl@ve and the XAdES operation belongs to a prepared administrative request;
   the profile remains `VERIFIED_CONTRACT / QA_ONLY` until a real authorized case.
@@ -126,10 +132,31 @@ Latest completed isolated PR — CI and supply-chain gate (F-14):
 - Go race instrumentation remains a required Linux CI gate. The local
   Android/arm64 toolchain cannot run it and is not recorded as passed.
 
+
+Latest completed isolated PR — catalog-generation deduplication (F-15B):
+
+- The unchanged profile catalog moved from Android `res/raw` to the canonical
+  `config/site_profiles_v1.json`; its SHA-256 remains
+  `a45cf2bbfe13d3492a963d0b8866c676ec13e5e95fac99e0cf2e0eeac568dc4c`.
+- Gradle emits the canonical JSON as `BuildConfig.SITE_PROFILE_CATALOG_JSON`;
+  `BuiltInSiteProfiles` no longer contains a handwritten JSON body and the APK
+  no longer packages a second raw profile copy.
+- The reviewed inventory now contains 182 records. Oficina Virtual and
+  Educación convocatoria 46 have stable IDs `ES-PUB-0181` and `ES-PUB-0182`;
+  there are no supplemental public entries outside the inventory.
+- The generator reads both canonical sources and binds all seven profiles only
+  by exact full-URL equality. Duplicate IDs/URLs, missing matches, multiple
+  matches, collisions and unexpected profile-catalog root keys fail closed.
+- Semantic comparison against the preceding generated catalog found no added or
+  removed portal and no changed trust/evidence field; only the two former null
+  inventory IDs and the deterministic source revision changed.
+- No portal request, certificate operation, signature or physical-device E2E was
+  performed for this refactor.
+
 Next isolated PRs:
 
-1. Remaining catalog-generation deduplication after the completed E2E consistency
-   gate (F-15B).
+1. Stabilize the order-sensitive bounded DNS-executor unit-test teardown without
+   weakening the production fail-closed policy or expanding network scope.
 2. Additional Client TLS portals beyond Carné Joven only after exact runtime
    contract and physical E2E evidence (F-03).
 3. Remaining portal E2E and document-signing branches after local CAdES/XAdES

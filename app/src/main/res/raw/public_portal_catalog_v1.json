@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "e339436348db173d2a93dedfefc83f3894377ae1b175c261ad474ea36671563d",
+  "sourceRevision": "018f94bb22cb42b3093f86b028cf87b490bcee8f5e15e255d8c9728594e71951",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4371,7 +4371,7 @@
     },
     {
       "portalId": "junta-andalucia-ofvirtual",
-      "inventoryId": null,
+      "inventoryId": "ES-PUB-0181",
       "profileId": "junta-ofvirtual",
       "displayName": "Junta de Andalucía — Oficina Virtual",
       "organization": "Junta de Andalucía",
@@ -4401,7 +4401,7 @@
     },
     {
       "portalId": "educacion-convocatoria-46",
-      "inventoryId": null,
+      "inventoryId": "ES-PUB-0182",
       "profileId": "educacion-convocatoria",
       "displayName": "Ministerio de Educación — Convocatoria 46",
       "organization": "Ministerio de Educación, Formación Profesional y Deportes",

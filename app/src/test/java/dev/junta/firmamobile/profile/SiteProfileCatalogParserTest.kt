@@ -1,7 +1,6 @@
 package dev.junta.firmamobile.profile
 
-import androidx.test.core.app.ApplicationProvider
-import dev.junta.firmamobile.R
+import dev.junta.firmamobile.BuildConfig
 import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -20,12 +19,12 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SiteProfileCatalogParserTest {
     @Test
-    fun bundledResourceMatchesTheCompiledCatalog() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        val resource = context.resources.openRawResource(R.raw.site_profiles_v1)
-            .bufferedReader().use { it.readText() }
-
-        assertEquals(BuiltInSiteProfiles.catalog, SiteProfileCatalogParser.parse(resource))
+    fun generatedBuildConfigSourceMatchesTheCompiledCatalog() {
+        assertEquals(BuildConfig.SITE_PROFILE_CATALOG_JSON, BuiltInSiteProfiles.JSON)
+        assertEquals(
+            BuiltInSiteProfiles.catalog,
+            SiteProfileCatalogParser.parse(BuildConfig.SITE_PROFILE_CATALOG_JSON),
+        )
     }
 
     @Test

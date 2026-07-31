@@ -1,8 +1,8 @@
 # Inventario evolutivo de portales públicos españoles
 
-- Fecha del snapshot: 2026-07-18
+- Fecha del snapshot: 2026-07-31
 - `inventory_schema_version`: `2`
-- `snapshot_id`: `2026-07-18-age-d11-ccaa-d03-insular-d12-diputaciones-d06-profile-expansion-3`
+- `snapshot_id`: `2026-07-31-age-d11-ccaa-d03-insular-d12-diputaciones-d06-profile-catalog-dedup-4`
 - Fecha de corte de la matriz de firma de origen: 2026-07-15
 
 Este documento es un **censo de descubrimiento evolutivo**, no una afirmación
@@ -139,8 +139,8 @@ histórica de la matriz ni constituye una escala automática:
 | `INACCESSIBLE` | No se puede alcanzar o revalidar de forma segura y repetible la superficie oficial; no se hacen afirmaciones técnicas mientras persista. |
 | `DEPRECATED` | Una fuente oficial confirma retirada o sustitución del flujo; se conserva únicamente para trazabilidad. |
 
-P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW) cuenta desde 2026-07-28 con verificación E2E delimitada al login CAdES observado. Tests locales, hashes de JS y
-revisión documental nunca producen por sí solos ese estado. La implementación Junta se
+P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW), P20 (Oficina Virtual) y P17 (UniZAR) cuentan con verificación E2E delimitada a sus logins CAdES observados el 2026-07-28, 2026-07-29 y 2026-07-30, respectivamente. Tests locales, hashes de JS y
+revisión documental nunca producen por sí solos ese estado. La implementación Junta Ovorion se
 mapea a `IMPLEMENTED_NOT_E2E`; los dos flujos móviles que la matriz marcaba
 como no soportados se mapean a `UNSUPPORTED_PROTOCOL`, con razón específica en
 cada ficha. No se asigna `REQUIRES_AUTHENTICATED_RESEARCH` sin demostrar antes
@@ -187,52 +187,52 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Entradas D06 materializadas | 41/41 del snapshot 2026-07-16 |
 | Entradas D06 ya presentes por exact origin | 1 |
 | Registros nuevos creados desde D06 | 40 |
-| Registros totales del snapshot | 180 |
-| Origins primarios distintos | 179 |
+| Registros totales del snapshot | 182 |
+| Origins primarios distintos | 180 |
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 195 |
-| Fuentes oficiales totales registradas | 207 |
-| Entradas `VERIFIED_E2E` | 2 |
+| Fuentes oficiales portal-specific registradas | 198 |
+| Fuentes oficiales totales registradas | 210 |
+| Entradas `VERIFIED_E2E` | 4 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
 
 | Nivel | Registros |
 | --- | ---: |
-| `ESTATAL` | 81 |
-| `AUTONOMICO` | 30 |
+| `ESTATAL` | 82 |
+| `AUTONOMICO` | 31 |
 | `PROVINCIAL` | 41 |
 | `INSULAR` | 22 |
 | `MUNICIPAL` | 2 |
 | `UNIVERSIDAD_PUBLICA` | 4 |
 | `OTRA_INSTITUCION_PUBLICA` | 0 |
-| **Total** | **180** |
+| **Total** | **182** |
 
 Por estado del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `VERIFIED_E2E` | 2 |
-| `IMPLEMENTED_NOT_E2E` | 3 |
+| `VERIFIED_E2E` | 4 |
+| `IMPLEMENTED_NOT_E2E` | 2 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 168 |
+| `BROWSE_ONLY` | 169 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
-| **Total** | **180** |
+| **Total** | **182** |
 
 Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 102 |
+| `REVIEWED` | 104 |
 | `RECHECK_REQUIRED` | 5 |
 | `DISCOVERED` | 73 |
 | `CANDIDATE`, `RETIRED` | 0 |
-| **Total** | **180** |
+| **Total** | **182** |
 
 ## 5. Método de descubrimiento reproducible
 
@@ -365,6 +365,8 @@ requiera traducción manual.
 | `P17` | Universidad de Zaragoza | [P17][P17A][P17B] | Entrada e integration JS con firma de challenge y tri-phase móvil; login CAdES aceptado E2E en dispositivo físico el 2026-07-30. |
 | `P18` | Comunidad de Madrid / Cuenta Digital — Carné Joven 53F1 | [P18][P18A][P18B][P18C][P18D][P18E][P18F] | Ficha oficial, métodos de identificación/firma, entrada 53F1 y cadena JS de lookup/redirect autenticado; sin contrato de presentación. |
 | `P19` | IAJ / Carné Joven Europeo de Andalucía | [P19][P19A][P19B][P19C][P19D] | Autenticación CLIENT_TLS_AUTH verificada E2E en dispositivo físico (2026-07-21, commit dc3c231); Zona privada y Solicitar Carné Joven alcanzaron entrada nativa autenticada; firma posterior no E2E. |
+| `P20` | Junta de Andalucía / Oficina Virtual | [LIVE-JUNTA-OFVIRTUAL-2026-07-22][E2E-JUNTA-OFVIRTUAL-2026-07-29] | Entrada oficial y autenticación CAdES aceptada E2E el 2026-07-29; alcance limitado al login observado. |
+| `P21` | Ministerio de Educación / convocatoria 46 | [LIVE-EDUCACION-ENTRY-2026-07-22] | Entrada oficial revisada; transporte downstream de certificado y callback no verificados. |
 
 D11 se añadió además como provenance a los siete registros seed cuyo exact
 origin coincide con el directorio. Esta relación de existencia no modifica ni
@@ -6018,6 +6020,85 @@ records:
     next_gate: "Research autenticado post-login deteniéndose antes de cualquier presentación jurídica."
 ```
 
+
+### 7.8. Junta de Andalucía — Oficina Virtual
+
+La ficha materializa el mismo flujo de login ya delimitado por el profile
+`junta-ofvirtual`. La aceptación E2E se limita a la autenticación CAdES y no
+amplía el alcance a firma documental, presentación jurídica ni otros trámites.
+
+```yaml
+records:
+  - inventory_id: "ES-PUB-0181"
+    surface_key: "junta-andalucia-ofvirtual"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Andalucía"
+    surface_name: "Junta de Andalucía — Oficina Virtual"
+    surface_type: "PORTAL_AUTENTICACION"
+    origin: "https://ws072.juntadeandalucia.es"
+    official_site: "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+    e_sede: "NO_VERIFICADO"
+    entry_url: "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+    procedure_page: "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MiniApplet / @firma"
+    protocol_family: "MINIAPPLET_TRIPHASE"
+    signature_format: "CAdES"
+    signature_algorithm: "SHA1withRSA"
+    endpoint: "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService"
+    discovery_state: "REVIEWED"
+    inventory_status: "VERIFIED_E2E"
+    operation_summary: "Acceso con certificado a la Oficina Virtual"
+    protocol_evidence: "MiniApplet.sign 1.5, PRE/POST tri-phase, callback y submit aceptados por el login real; evidencia sanitizada en P20."
+    client_tls_auth: "NO_EN_CONTORNO_OBSERVADO"
+    evidence_ids: ["LIVE-JUNTA-OFVIRTUAL-2026-07-22", "E2E-JUNTA-OFVIRTUAL-2026-07-29"]
+    reason: "El portal real aceptó la firma CAdES de autenticación y abrió la sesión interna; verificación limitada al login observado."
+    reviewed_at: "2026-07-29"
+    next_gate: "No ampliar el alcance sin evidencia portal-specific y consentimiento para una operación distinta del login."
+```
+
+### 7.9. Ministerio de Educación — convocatoria 46
+
+La entrada oficial se conserva como navegación inventariada. El profile no
+concede firma porque no existe evidencia suficiente del transporte downstream,
+callback ni contrato de presentación.
+
+```yaml
+records:
+  - inventory_id: "ES-PUB-0182"
+    surface_key: "educacion-convocatoria-46"
+    administrative_level: "ESTATAL"
+    autonomous_community: "NO_APLICA"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Ministerio de Educación, Formación Profesional y Deportes"
+    surface_name: "Ministerio de Educación — Convocatoria 46"
+    surface_type: "FRONTEND_TRAMITE"
+    origin: "https://sede.educacion.gob.es"
+    official_site: "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46"
+    e_sede: "https://sede.educacion.gob.es/"
+    entry_url: "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46"
+    procedure_page: "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46"
+    certificate_required: "SI"
+    signature_required: "NO_VERIFICADO"
+    js_client: "NO_VERIFICADO"
+    protocol_family: "CLAVE_GATEWAY_UNVERIFIED"
+    signature_format: "NO_VERIFICADO"
+    signature_algorithm: "NO_VERIFICADO"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "Consulta de la convocatoria de homologación y convalidación"
+    protocol_evidence: "La entrada oficial fue revisada; no se observó un contrato downstream suficiente para exponer certificado o firma."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["LIVE-EDUCACION-ENTRY-2026-07-22"]
+    reason: "Transporte downstream de certificado y callback no verificados; firma bloqueada."
+    reviewed_at: "2026-07-22"
+    next_gate: "Obtener evidencia pública o autenticada controlada del transporte exacto sin realizar presentación jurídica."
+```
+
 ## 8. Relación con el catálogo de producto
 
 Este archivo es documentación de investigación, no configuración ejecutable:
@@ -6072,7 +6153,7 @@ grandes y explícitos:
    institucional.
 6. No existe inventario separado de proveedores compartidos, plataformas
    multi-tenant, SSO, Storage/Retrieve o endpoints tri-phase.
-7. No hay evidencia E2E ni un `ClientCertRequest` exacto para ningún registro.
+7. Hay cuatro entradas con evidencia E2E delimitada y una sola evidencia exacta de `ClientCertRequest`; ningún otro registro hereda esos resultados.
 8. Las variantes lingüísticas no crean registros; los dominios históricos y
    redirects solo se separan cuando existe una frontera funcional acreditada.
    Los candidatos INAGA de Aragón, el checker técnico de Castilla y León, el
@@ -6166,6 +6247,9 @@ Orden de expansión recomendado:
 [P19B]: https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp
 [P19C]: https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet
 [P19D]: https://ws235.juntadeandalucia.es/authenticationFacade
+[LIVE-JUNTA-OFVIRTUAL-2026-07-22]: https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs
+[E2E-JUNTA-OFVIRTUAL-2026-07-29]: ../e2e/2026-07-29-junta-ofvirtual-auth-success.md
+[LIVE-EDUCACION-ENTRY-2026-07-22]: https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46
 
 ### Evidencia de comunidades y ciudades autónomas
 
