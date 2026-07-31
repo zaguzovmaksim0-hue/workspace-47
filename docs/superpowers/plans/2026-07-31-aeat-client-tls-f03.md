@@ -411,14 +411,14 @@ git diff --stat
 git diff --cached --check
 ```
 
-- [ ] **Step 2: Commit implementation**
+- [x] **Step 2: Commit implementation**
 
 ```bash
 git add <reviewed files>
 git commit -m "feat(client-tls): add exact AEAT QA profile"
 ```
 
-- [ ] **Step 3: Push and verify PR #6**
+- [x] **Step 3: Push and verify PR #6**
 
 ```bash
 git push origin feature/ws024-secure-tunnel-20260728
