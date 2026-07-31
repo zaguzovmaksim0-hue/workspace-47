@@ -44,12 +44,31 @@ jobs:
   dependency-vulnerabilities:
     name: OSV source dependency scan
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+        with:
+          cache-read-only: true
+      - name: Install Android API 36 toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Verify Android runtime dependency lock
+        run: ./gradlew :app:verifyRuntimeDependencyLocks --no-daemon
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -57,5 +76,9 @@ jobs:
           cache: false
       - name: Install pinned OSV-Scanner
         run: go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
-      - name: Scan source dependency manifests
-        run: osv-scanner scan source --lockfile tools/requirements.txt --lockfile ws024-relay/go.mod
+      - name: Scan explicit source dependency locks
+        run: >-
+          osv-scanner scan source
+          --lockfile app/gradle.lockfile
+          --lockfile tools/requirements.txt
+          --lockfile ws024-relay/go.mod

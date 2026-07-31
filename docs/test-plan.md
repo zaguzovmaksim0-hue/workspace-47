@@ -315,15 +315,19 @@ Cada `push`, pull request y ejecución manual debe conservar estos límites:
 - Go 1.26.5: test normal, race en Linux, vet, build y `govulncheck` 1.6.0;
 - Gitleaks 8.30.1: archivo descargado con checksum exacto y scan de historial Git
   completo con redacción;
-- OSV-Scanner 2.3.8: solo `tools/requirements.txt` y `ws024-relay/go.mod` como
-  manifests fuente explícitos;
+- Gradle runtime locking estricto: `app/gradle.lockfile` contiene solo
+  `debugRuntimeClasspath`, `qaRuntimeClasspath` y `releaseRuntimeClasspath`; la
+  task de verificación materializa artifacts y falla ante lock ausente o stale;
+- OSV-Scanner 2.3.8: solo `app/gradle.lockfile`,
+  `tools/requirements.txt` y `ws024-relay/go.mod` como inputs explícitos;
 - Dependabot semanal para Gradle, Go modules y GitHub Actions.
 
-Limitación explícita: `gradle/verification-metadata.xml` es un ledger de integridad
-que incluye dependencias de herramientas/build/test y no se presenta como lockfile
-de runtime Android. Dependency verification detecta sustitución de artefactos, no
-vulnerabilidades. Hasta incorporar un SCA Gradle con alcance y supresiones
-revisados, no afirmar que el grafo Gradle completo está libre de CVEs.
+Separación explícita de claims: `app/gradle.lockfile` fija versiones de los
+runtime graphs instalables; `gradle/verification-metadata.xml` autentica metadata
+y artifacts descargados por SHA-256; OSV consulta vulnerabilidades conocidas para
+los paquetes del lock. Ninguno de estos controles demuestra ausencia de
+vulnerabilidades desconocidas, lógica maliciosa o riesgos fuera del alcance de
+las bases de datos.
 
 El race detector no es compatible con Android/arm64. Una ejecución local que
 retorne `-race is not supported on android/arm64` se clasifica como no ejecutada;

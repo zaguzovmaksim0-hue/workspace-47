@@ -192,16 +192,18 @@ keystore.
 Actions fijadas a SHA de 40 caracteres; Gradle 9.4.1 wrapper/distribution y
 artifacts resueltos verificados por SHA-256 sin trusted wildcard; Gitleaks pinned
 sobre historial completo; Dependabot para Gradle, Go y Actions; Go 1.26.5 con
-race/vet/build/`govulncheck`; OSV pinned sobre manifests Python/Go explícitos.
-Release no acepta debug-key fallback y falla cerrado sin keystore privado. Cada
+race/vet/build/`govulncheck`; locking Gradle `STRICT` limitado a los tres
+runtime classpaths instalables; OSV pinned sobre el runtime lock Android y los
+manifests Python/Go explícitos. Release no acepta debug-key fallback y falla
+cerrado sin keystore privado. Cada
 APK se valida con `zipalign`, `apksigner`, signer count, manifest y canarios.
 **Verificación:** policy tests del workflow, checksums oficiales, history scan,
 unit/lint/build, vulnerability gates y análisis del APK final.
-**Riesgo residual:** Gradle verification metadata demuestra identidad/integridad,
-no ausencia de vulnerabilidades. El ledger contiene build/test tooling y no se
-trata como runtime lockfile. El grafo Gradle completo requiere un SCA separado y
-revisado antes de afirmar cobertura CVE total. El race gate se ejecuta en Linux;
-Android/arm64 no lo soporta.
+**Riesgo residual:** dependency locking demuestra reproducibilidad de versiones,
+verification metadata demuestra identidad/integridad de artifacts y OSV cubre
+solo vulnerabilidades conocidas en sus fuentes. No prueban ausencia de CVEs no
+publicadas, paquetes maliciosos ni riesgos en build/test tooling fuera del claim
+runtime. El race gate se ejecuta en Linux; Android/arm64 no lo soporta.
 
 ### T12. Una decisión Client TLS cacheada sobrevive al lifecycle o se reutiliza
 

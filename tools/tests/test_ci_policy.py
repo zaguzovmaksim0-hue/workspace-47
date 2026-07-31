@@ -12,10 +12,18 @@ DEPENDABOT = ROOT / ".github/dependabot.yml"
 GITLEAKS = ROOT / ".gitleaks.toml"
 VERIFY_APKS = ROOT / "scripts/ci/verify-android-artifacts.sh"
 VERIFY_RELEASE = ROOT / "scripts/ci/verify-release-fail-closed.sh"
+UPDATE_ANDROID_RUNTIME_LOCK = ROOT / "scripts/ci/update-android-runtime-lock.sh"
 VERIFICATION_METADATA = ROOT / "gradle/verification-metadata.xml"
 GRADLE_WRAPPER_PROPERTIES = ROOT / "gradle/wrapper/gradle-wrapper.properties"
 GRADLE_WRAPPER_JAR = ROOT / "gradle/wrapper/gradle-wrapper.jar"
 GO_MOD = ROOT / "ws024-relay/go.mod"
+APP_BUILD = ROOT / "app" / "build.gradle.kts"
+APP_RUNTIME_LOCK = ROOT / "app" / "gradle.lockfile"
+APP_RUNTIME_CONFIGURATIONS = {
+    "debugRuntimeClasspath",
+    "qaRuntimeClasspath",
+    "releaseRuntimeClasspath",
+}
 
 PINNED_ACTION = re.compile(r"^\s*-?\s*uses:\s*([\w.-]+/[\w./-]+)@([0-9a-f]{40})\s*(?:#.*)?$", re.M)
 ANY_ACTION = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)", re.M)
@@ -34,10 +42,13 @@ class CiPolicyTest(unittest.TestCase):
             GITLEAKS,
             VERIFY_APKS,
             VERIFY_RELEASE,
+            UPDATE_ANDROID_RUNTIME_LOCK,
             VERIFICATION_METADATA,
             GRADLE_WRAPPER_PROPERTIES,
             GRADLE_WRAPPER_JAR,
             GO_MOD,
+            APP_BUILD,
+            APP_RUNTIME_LOCK,
         ):
             self.assertTrue(path.is_file(), f"missing {path.relative_to(ROOT)}")
 
@@ -91,12 +102,80 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("gitleaks git --redact --no-banner", source)
         self.assertIn("github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8", source)
         self.assertIn('go-version: "1.26.5"', source)
-        self.assertIn(
-            "osv-scanner scan source --lockfile tools/requirements.txt --lockfile ws024-relay/go.mod",
-            source,
-        )
+        gradle_verify = "./gradlew :app:verifyRuntimeDependencyLocks --no-daemon"
+        osv_install = "Install pinned OSV-Scanner"
+        self.assertIn(gradle_verify, source)
+        self.assertLess(source.index(gradle_verify), source.index(osv_install))
+        for lockfile in (
+            "--lockfile app/gradle.lockfile",
+            "--lockfile tools/requirements.txt",
+            "--lockfile ws024-relay/go.mod",
+        ):
+            self.assertIn(lockfile, source)
         self.assertNotIn("osv-scanner scan source -r .", source)
         self.assertIn("schedule:", source)
+
+    def test_android_runtime_dependency_lock_is_strict_and_scoped(self) -> None:
+        source = self.read(APP_BUILD)
+        self.assertIn("LockMode.STRICT", source)
+        self.assertIn("verifyRuntimeDependencyLocks", source)
+        self.assertNotIn("lockAllConfigurations()", source)
+        match = re.search(
+            r"val\s+runtimeDependencyLockConfigurations\s*=\s*setOf\((.*?)\)",
+            source,
+            re.S,
+        )
+        self.assertIsNotNone(match, "runtime dependency lock set is missing")
+        configured = set(re.findall(r'"([A-Za-z0-9]+)"', match.group(1)))
+        self.assertEqual(APP_RUNTIME_CONFIGURATIONS, configured)
+        self.assertIn("configuration.incoming.artifactView { }.files.files.size", source)
+        self.assertNotIn("resolutionResult.allComponents.size", source)
+
+    def test_android_runtime_lock_updater_is_fail_closed(self) -> None:
+        source = self.read(UPDATE_ANDROID_RUNTIME_LOCK)
+        self.assertTrue(source.startswith("#!/usr/bin/env bash\nset -euo pipefail\n"))
+        for required in (
+            ":app:verifyRuntimeDependencyLocks --write-locks",
+            "settings-gradle.lockfile",
+            "empty=incomingCatalogForLibs0",
+            "test_android_runtime_lockfile_is_canonical",
+        ):
+            self.assertIn(required, source)
+        self.assertNotIn("rm -f app/gradle.lockfile", source)
+        self.assertNotIn("lockAllConfigurations", source)
+        self.assertNotIn("trap cleanup EXIT", source)
+        self.assertIn('rm -f "$settings_lock" "$expected_settings_lock"', source)
+
+    def test_android_runtime_lockfile_is_canonical(self) -> None:
+        source = self.read(APP_RUNTIME_LOCK)
+        rows = [
+            line
+            for line in source.splitlines()
+            if line and not line.startswith("#")
+        ]
+        self.assertGreater(len(rows), 1, "runtime lockfile has no dependency rows")
+        self.assertEqual("empty=", rows[-1])
+        dependency_rows = rows[:-1]
+        self.assertEqual(sorted(dependency_rows), dependency_rows)
+        self.assertEqual(len(dependency_rows), len(set(dependency_rows)))
+        self.assertEqual([], sorted(ROOT.glob("*gradle.lockfile")))
+        row_pattern = re.compile(
+            r"^[^:=\s]+:[^:=\s]+:[^=\s]+="
+            r"(?:debugRuntimeClasspath|qaRuntimeClasspath|releaseRuntimeClasspath)"
+            r"(?:,(?:debugRuntimeClasspath|qaRuntimeClasspath|releaseRuntimeClasspath))*$"
+        )
+        seen_configurations: set[str] = set()
+        forbidden_versions = ("+", "SNAPSHOT", "latest.", "[", "(")
+        for row in dependency_rows:
+            self.assertRegex(row, row_pattern)
+            coordinate, configurations = row.split("=", 1)
+            version = coordinate.split(":", 2)[2]
+            self.assertFalse(
+                any(marker in version for marker in forbidden_versions),
+                f"dynamic/changing runtime dependency version: {coordinate}",
+            )
+            seen_configurations.update(configurations.split(","))
+        self.assertEqual(APP_RUNTIME_CONFIGURATIONS, seen_configurations)
 
     def test_go_module_requires_the_patched_toolchain(self) -> None:
         source = self.read(GO_MOD)

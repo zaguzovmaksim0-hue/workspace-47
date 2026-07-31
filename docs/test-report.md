@@ -1425,3 +1425,79 @@ unsupported on Android/arm64 and is provided by Linux CI.
 
 No APK was installed, no physical-device instrumentation was executed and no
 portal, certificate, authentication or signature flow was opened.
+
+
+## Android runtime dependency SCA — 2026-07-31
+
+This milestone closes the reviewed Gradle runtime-SCA gap without changing any
+application dependency version or runtime behavior:
+
+- strict dependency locking is activated only for
+  `debugRuntimeClasspath`, `qaRuntimeClasspath` and
+  `releaseRuntimeClasspath`;
+- `app/gradle.lockfile` contains 140 external Maven component rows plus Gradle's
+  canonical trailing `empty=` sentinel;
+- lock SHA-256:
+  `286bcc684775520851aa5de6a4bb01fa172a72ca87dae2dc73e671fc76afa64d`;
+- no unit-test, Android-test, lint, buildscript or plugin configuration is
+  included in the runtime claim;
+- `verifyRuntimeDependencyLocks` materializes artifact views and is run before
+  OSV in the security workflow;
+- `scripts/ci/update-android-runtime-lock.sh` accepts only the exact generated
+  `empty=incomingCatalogForLibs0` settings sentinel, removes it and rejects any
+  other root lock state.
+
+TDD and hostile evidence:
+
+- RED 1: four policy tests failed for missing lockfile, missing
+  `LockMode.STRICT`, missing verification task and missing Android OSV input;
+- GREEN 1: the four focused tests passed after the minimal scoped lock/workflow
+  implementation;
+- RED 2: a temporary `0.0.0-stale-lock` mutation unexpectedly passed while the
+  task only read `resolutionResult`; this result was rejected;
+- GREEN 2: after materializing artifact views, the same mutation failed on
+  `debugRuntimeClasspath` with `Dependency version enforced by Dependency
+  Locking`, and the trap restored the original lock with no diff;
+- RED/GREEN maintenance: direct `--write-locks` generated a non-runtime
+  settings lock; updater policy tests failed before the script existed, then
+  passed and a second update reproduced the identical lock SHA-256;
+- staged review found that the first cleanup trap would delete unexpected
+  settings-lock evidence after failure. A new policy test failed on that trap;
+  the final updater removes only exact known content and preserves unknown drift.
+
+Pinned vulnerability scan:
+
+- official OSV-Scanner release: `v2.3.8`, Linux ARM64;
+- downloaded binary matched the publisher's `osv-scanner_SHA256SUMS` entry:
+  `8158b18edd2d03b1a30d905ca91b032bc62262167be8f206c27114f08823e27c`;
+- native Termux execution was blocked before scanning by Android seccomp on
+  `faccessat2` and is not marked PASS;
+- the same verified binary ran in `ws024-gate-debian` proot and found 140 Android
+  packages, one Python package and one Go package;
+- result: `No issues found`, exit 0.
+
+Fresh final verification:
+
+- Debug unit: 500 tests, 0 failures/errors/skips;
+- QA unit: 500 tests, 0 failures/errors/skips;
+- Python: 94 tests, 0 failures/errors, 1 environmental skip
+  (`hardlinks unavailable`);
+- strict runtime lock, `verifyResolvedCoreVersion` and
+  `verifyPortableAapt2Configuration`: PASS;
+- `lintDebug`, `lintQa`, `assembleDebug`, `assembleQa`,
+  `assembleQaAndroidTest`: PASS; 143/143 fresh Gradle tasks executed;
+- Android artifact verification: alignment, APK Signature Scheme v2, exactly one
+  signer, QA manifest hardening and forbidden-canary scan PASS;
+- release-signing fail-closed gate: PASS; no release APK remained;
+- Go `test ./... -count=1`, `go vet ./...` and relay build: PASS;
+- Debug APK SHA-256:
+  `7a93dddcccc90b339e33df55f6cac8a24ad26acfe4b8ced7c6ed6707dee62233`;
+- QA APK SHA-256:
+  `7c99595546f9fa8cb0e6bd77832531c648ffa06d62081309d244b5bad840abcd`;
+- QA AndroidTest APK SHA-256:
+  `f1bb688aaae481752a3095a70ede7b16669ae06cab8c1c09b755308d4f04dabc`.
+
+Claim boundaries remain explicit: locking fixes exact versions; dependency
+verification authenticates downloaded files; OSV reports currently known
+vulnerabilities. No portal, WebView, certificate, authentication, signing,
+physical-device or APK-install operation was performed.

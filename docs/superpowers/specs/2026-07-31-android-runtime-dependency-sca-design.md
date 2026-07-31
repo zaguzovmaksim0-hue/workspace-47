@@ -49,13 +49,22 @@ lint, buildscript, compiler-plugin, or Android-test dependencies.
 
 Add `:app:verifyRuntimeDependencyLocks` in `app/build.gradle.kts`.
 
-The task resolves exactly the three approved runtime configurations. Normal
-execution verifies the committed lock state. Lock generation or review uses the
-same task with `--write-locks`:
+The task resolves exactly the three approved runtime configurations and
+materializes their artifact views. Reading only `resolutionResult` is
+insufficient: hostile testing proved that a stale lock could otherwise escape
+artifact resolution. Normal execution verifies the committed lock state.
+
+Lock generation and review use the fail-closed updater:
 
 ```bash
-./gradlew :app:verifyRuntimeDependencyLocks --write-locks
+scripts/ci/update-android-runtime-lock.sh
 ```
+
+The updater invokes the same Gradle task with `--write-locks`, accepts only the
+exact generated `settings-gradle.lockfile` version-catalog sentinel
+`empty=incomingCatalogForLibs0`, removes that non-runtime file, then runs the
+canonical runtime-lock policy test. Unknown settings-lock content is preserved
+for inspection rather than deleted by cleanup. No root lockfile is committed.
 
 The task fails closed when:
 
@@ -91,6 +100,8 @@ Extend `tools/tests/test_ci_policy.py` to verify:
 - `app/gradle.lockfile` exists;
 - only the three approved runtime configuration names appear after `=`;
 - every dependency row has canonical `group:name:version=configurations` form;
+- the generated trailing `empty=` sentinel is present, while root/settings lock
+  files are absent;
 - the lockfile is sorted and contains no changing/dynamic version marker;
 - the app build uses `LockMode.STRICT` and does not use
   `lockAllConfigurations()`;
@@ -138,11 +149,13 @@ Use TDD:
    not exist;
 2. activate strict runtime locking and add the deterministic resolver task;
 3. generate `app/gradle.lockfile` from the three exact configurations;
-4. verify a stale/mutated temporary lock copy is rejected without modifying the
-   committed lock;
-5. install/run pinned OSV-Scanner locally when the environment permits and record
+4. first prove that graph-only resolution does not reject a hostile stale lock,
+   then materialize artifact views and verify the same mutation fails closed;
+5. verify the updater reproduces the same lock SHA-256 and removes only the exact
+   reviewed settings sentinel;
+6. install/run pinned OSV-Scanner locally when the environment permits and record
    the exact result;
-6. run all Python policy tests, Debug/QA JVM suites, lint, APK assemblies,
+7. run all Python policy tests, Debug/QA JVM suites, lint, APK assemblies,
    artifact verification, release fail-closed, Go test/vet/build, and final
    diff/sensitive-data checks.
 

@@ -304,9 +304,8 @@ WARP, и неизменённая сборка выполнила E2E успеш
    собственный bounded executor и ждёт его termination; production fail-closed
    policy и лимит двух worker'ов не изменены.
 7. Следующие продуктовые блоки F-03 и F-12 остаются заблокированы до отдельного
-   точного runtime-контракта и реального E2E. Отдельно можно спроектировать
-   reviewed Gradle runtime-dependency SCA gate; не путать integrity metadata с
-   доказательством отсутствия CVE.
+   точного runtime-контракта и реального E2E. Android runtime SCA завершён;
+   locking, checksum integrity и OSV coverage не объединять в один claim.
 
 Для продолжения в новом чате достаточно написать: «Открой приватный репозиторий,
 ветку `feature/ws024-secure-tunnel-20260728`, прочитай
@@ -342,3 +341,32 @@ WARP, и неизменённая сборка выполнила E2E успеш
   test/vet/build were rerun;
 - no push, APK installation, physical-device test, portal navigation,
   authentication, certificate operation or signing was performed.
+
+
+## Android runtime dependency SCA — 2026-07-31
+
+- `app/gradle.lockfile`: 140 external Maven rows, only
+  `debugRuntimeClasspath`, `qaRuntimeClasspath`, `releaseRuntimeClasspath`;
+  SHA-256 `286bcc684775520851aa5de6a4bb01fa172a72ca87dae2dc73e671fc76afa64d`;
+- `LockMode.STRICT`; no `lockAllConfigurations`, ignored dependency or test/build
+  configuration claim;
+- verification task must materialize artifact views. The first graph-only
+  implementation accepted a hostile `0.0.0-stale-lock` and was rejected; the
+  final task fails closed with dependency-lock enforcement;
+- updater validates/removes only exact `empty=incomingCatalogForLibs0` settings
+  sentinel, preserves unknown lock evidence, and reproduces the app lock
+  byte-for-byte;
+- security workflow verifies the lock before pinned OSV 2.3.8 and scans only the
+  Android runtime lock plus Python/Go explicit inputs;
+- checksum-verified OSV Linux ARM64 binary under Debian/proot: 140 Android + 1
+  Python + 1 Go packages, `No issues found`; native Termux is blocked by seccomp
+  `faccessat2` before scan and is not marked PASS;
+- final gates: Debug 500/500, QA 500/500, Python 94 with one environmental skip,
+  lint/build/toolchain/APK artifact/release fail-closed/Go test-vet-build PASS;
+- final APK SHA-256: Debug
+  `7a93dddcccc90b339e33df55f6cac8a24ad26acfe4b8ced7c6ed6707dee62233`,
+  QA `7c99595546f9fa8cb0e6bd77832531c648ffa06d62081309d244b5bad840abcd`,
+  AndroidTest
+  `f1bb688aaae481752a3095a70ede7b16669ae06cab8c1c09b755308d4f04dabc`;
+- no dependency version, runtime code, portal scope, device state, certificate,
+  authentication or signing operation changed; no push performed.

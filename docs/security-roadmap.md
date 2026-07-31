@@ -171,14 +171,33 @@ Latest completed isolated PR — deterministic DNS executor test isolation:
 - No production retry, queue, fallback, timeout, DNS policy or network scope
   changed.
 
+Latest completed isolated PR — Android runtime dependency SCA:
+
+- `app/gradle.lockfile` records 140 exact external Maven components for only
+  `debugRuntimeClasspath`, `qaRuntimeClasspath` and
+  `releaseRuntimeClasspath`; `LockMode.STRICT` is active only on those graphs.
+- `verifyRuntimeDependencyLocks` materializes artifact views. Hostile testing
+  first proved that `resolutionResult` alone accepted a stale lock, then proved
+  the final task rejects `0.0.0-stale-lock` as enforced dependency locking.
+- `scripts/ci/update-android-runtime-lock.sh` reproduces the lock byte-for-byte,
+  accepts and removes only the exact Gradle version-catalog settings sentinel,
+  and rejects every other root lockfile.
+- The security workflow verifies lock state before pinned OSV-Scanner 2.3.8 and
+  scans only `app/gradle.lockfile`, `tools/requirements.txt` and
+  `ws024-relay/go.mod`.
+- Local checksum-verified OSV under Debian/proot found 140 Android, one Python
+  and one Go package and reported no known issues. Native Android execution is
+  blocked by seccomp `faccessat2` before scanning.
+- Version locking, artifact SHA-256 verification and vulnerability-database
+  coverage remain distinct claims; OSV results do not prove absence of unknown
+  or unreported vulnerabilities.
+
 Next isolated PRs:
 
 1. Additional Client TLS portals beyond Carné Joven only after exact runtime
    contract and physical E2E evidence (F-03).
 2. Remaining portal E2E and document-signing branches after local CAdES/XAdES
    validation and an authorized real administrative case (F-12).
-3. A separately reviewed Gradle runtime-dependency SCA gate; current dependency
-   verification is an integrity ledger and does not prove full CVE reachability.
 
 
 ## WS024 secure-tunnel QA status — 2026-07-29

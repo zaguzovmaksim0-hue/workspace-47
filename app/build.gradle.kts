@@ -1,10 +1,27 @@
 import java.net.IDN
 import java.util.Base64
 import java.util.Locale
+import org.gradle.api.artifacts.dsl.LockMode
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+}
+
+val runtimeDependencyLockConfigurations = setOf(
+    "debugRuntimeClasspath",
+    "qaRuntimeClasspath",
+    "releaseRuntimeClasspath",
+)
+
+dependencyLocking {
+    lockMode.set(LockMode.STRICT)
+}
+
+configurations.configureEach {
+    if (name in runtimeDependencyLockConfigurations) {
+        resolutionStrategy.activateDependencyLocking()
+    }
 }
 
 fun org.gradle.api.provider.ProviderFactory.secretValue(name: String): String? =
@@ -113,6 +130,25 @@ val releaseSigningConfigured = listOf(
     releaseKeyAlias,
     releaseKeyPassword,
 ).all { it != null }
+
+val verifyRuntimeDependencyLocks by tasks.registering {
+    group = "verification"
+    description = "Verifies the exact locked Android runtime dependency graphs."
+    notCompatibleWithConfigurationCache(
+        "Resolves selected runtime configurations at execution time",
+    )
+
+    doLast {
+        runtimeDependencyLockConfigurations.sorted().forEach { configurationName ->
+            val configuration = configurations.findByName(configurationName)
+                ?: throw GradleException("Missing runtime configuration: $configurationName")
+            check(configuration.isCanBeResolved) {
+                "Runtime configuration is not resolvable: $configurationName"
+            }
+            configuration.incoming.artifactView { }.files.files.size
+        }
+    }
+}
 
 val verifyReleaseSigning by tasks.registering {
     group = "verification"
