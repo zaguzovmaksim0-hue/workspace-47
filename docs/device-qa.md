@@ -189,3 +189,21 @@ No se leyó ni automatizó la contraseña. No se abrió el WebView AEAT, no se
 observó el callback `ClientCertRequest`, no apareció confirmación nativa y no se
 probó autenticación. El profile permanece `VERIFIED_CONTRACT / QA_ONLY`; no se
 realizó modificación censal, pago, firma ni presentación.
+
+
+## Actualización 2026-08-01 — F-03 después del desbloqueo manual
+
+El usuario desbloqueó manualmente el certificado ya instalado. No se leyó ni se
+automatizó la contraseña.
+
+El smoke protegido de `aeat-sede` pasó a `webViewActive=1`,
+`profileResolvedOnly=0`, `catalogOnly=0`, `failures=0`. Al devolver
+`dev.junta.firmamobile/.MainActivity` al foreground, el WebView mostró el label
+público exacto `Mis datos censales`.
+
+No se realizó el click final: la Activity de Android Control Bridge robó el
+foreground durante el intento de accesibilidad y el intento fue descartado. Tras
+cerrar ese UI auxiliar, el siguiente dump de `uiautomator` quedó vacío. No se
+usaron coordenadas aproximadas. Por ello siguen pendientes el callback
+`ClientCertRequest`, la confirmación nativa y la aceptación autenticada por AEAT.
+El profile permanece `VERIFIED_CONTRACT / QA_ONLY`.

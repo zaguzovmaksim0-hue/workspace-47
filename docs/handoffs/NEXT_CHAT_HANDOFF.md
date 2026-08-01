@@ -407,3 +407,46 @@ WARP, и неизменённая сборка выполнила E2E успеш
   `f1bb688aaae481752a3095a70ede7b16669ae06cab8c1c09b755308d4f04dabc`;
 - no dependency version, runtime code, portal scope, device state, certificate,
   authentication or signing operation changed; no push performed.
+
+
+## LATEST F-03 RESUME POINT — 2026-08-01
+
+This section supersedes the older F-03 physical-state notes above.
+
+The user manually unlocked the existing certificate on the installed QA build.
+The password was not supplied to, read by, copied by, logged by or automated by
+the agent.
+
+Current verified physical state:
+
+- installed QA/base SHA-256 remains
+  `ca5b351656cb41904f3774ed2a84ac002041d9babdf5fe877d6191d04d6befe2`;
+- unlocked UI state confirmed by `Bloquear certificado`, `Elegir otro` and
+  `Olvidar certificado`;
+- protected `aeat-sede` smoke returned `total=1`, `webViewActive=1`,
+  `profileResolvedOnly=0`, `catalogOnly=0`, `failures=0`;
+- with `dev.junta.firmamobile/.MainActivity` restored to foreground, the exact
+  public WebView label `Mis datos censales` was observed;
+- the target was **not clicked** and Client TLS authentication was **not**
+  completed.
+
+Why execution stopped: Android Control Bridge repeatedly brought
+`io.termux.androidcontrol/.MainActivity` to foreground during accessibility
+attempts. The first click attempt therefore targeted the wrong application's UI
+and was rejected. After force-stopping that service UI and returning `Junta
+Firma` to foreground, the following `uiautomator dump` was empty. No guessed
+coordinate tap was performed.
+
+Still unproven: exact AEAT WebView `ClientCertRequest`, request callback metadata,
+native certificate confirmation and accepted authenticated read-only landing.
+Status therefore remains `VERIFIED_CONTRACT / QA_ONLY` and public catalog remains
+`E2E_PENDING / IMPLEMENTED_NOT_E2E`.
+
+**New-chat starting point:** read
+`docs/handoffs/F03_NEXT_CHAT_2026-08-01.md` first. Continue the physical F-03 test
+from the exact click only; do not redo design/implementation/full gates or APK
+installation unless source/build state changed. Prefer rish-only foreground
+control and do not launch Android Control Bridge UI while the portal is active.
+
+Latest sanitized evidence:
+`docs/e2e/2026-08-01-aeat-client-tls-partial.md`.

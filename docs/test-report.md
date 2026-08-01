@@ -1573,3 +1573,32 @@ The physical outcome is recorded in
 `VERIFIED_CONTRACT / QA_ONLY`; the public entry remains
 `E2E_PENDING / IMPLEMENTED_NOT_E2E`. No signing, tax modification, payment or
 administrative submission was attempted.
+
+
+### F-03 physical continuation after manual unlock — 2026-08-01
+
+The user manually unlocked the existing certificate on the installed QA build;
+the password was not supplied to, read by, logged by or automated by the agent.
+
+Sanitized observations:
+
+- unlocked UI state confirmed by `Bloquear certificado`, `Elegir otro` and
+  `Olvidar certificado` markers;
+- protected `aeat-sede` smoke: `total=1`, `webViewActive=1`,
+  `profileResolvedOnly=0`, `catalogOnly=0`, `failures=0`;
+- with `Junta Firma` restored to foreground, the exact public label
+  `Mis datos censales` was observed in the WebView.
+
+The source-to-target click was not executed. Android Control Bridge repeatedly
+brought its own Activity to foreground; the first exact-click attempt therefore
+inspected the wrong application and was rejected. After force-stopping that
+service UI and restoring `Junta Firma`, the next system UI dump was empty. No
+coordinate guess or blind click was used.
+
+Therefore the following gates remain unproven: WebView `ClientCertRequest`,
+native certificate confirmation and accepted authenticated read-only AEAT
+landing. The status remains `VERIFIED_CONTRACT / QA_ONLY` and
+`E2E_PENDING / IMPLEMENTED_NOT_E2E`.
+
+Continuation evidence:
+`docs/e2e/2026-08-01-aeat-client-tls-partial.md`.
