@@ -153,6 +153,22 @@ Latest completed isolated PR — catalog-generation deduplication (F-15B):
 - No portal request, certificate operation, signature or physical-device E2E was
   performed for this refactor.
 
+
+Latest autonomous hardening — QA WebView debugging boundary (G1-01):
+
+- `TrustedJuntaWebView` no longer derives Chrome DevTools exposure from the broad
+  `BuildConfig.DEBUG` flag.
+- `ENABLE_WEBVIEW_CONTENTS_DEBUGGING` is explicit and fail-safe: `true` only for
+  the ordinary developer Debug build; QA and Release are pinned `false`.
+- QA intentionally remains `android:debuggable=true` for its existing controlled
+  diagnostics, but that no longer turns on application-wide WebView remote
+  debugging during portal acceptance work.
+- TDD policy checks bind each build block independently and reject both a missing
+  override and accidental cross-block matching.
+- Fresh gates: Debug 509/509, QA 509/509, lint/builds, Android artifacts, Python
+  95 with one environmental hardlink skip, Go test/vet/build, and release
+  fail-closed all passed. No portal/profile/TLS/signing/certificate scope changed.
+
 Latest completed isolated PR — deterministic DNS executor test isolation:
 
 - `HttpsProfileHttpTransport` accepts an internal `ExecutorService`; runtime

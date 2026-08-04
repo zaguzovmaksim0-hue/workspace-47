@@ -191,6 +191,7 @@ android {
             quotedBuildConfigText(siteProfileCatalogJson),
         )
         buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
+        buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")
         buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
         buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
         buildConfigField("int", "WS024_QA_RELAY_PORT", "443")
@@ -217,6 +218,7 @@ android {
         debug {
             isDebuggable = true
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
+            buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "true")
             buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
             buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
             buildConfigField("int", "WS024_QA_RELAY_PORT", "443")
@@ -229,6 +231,7 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             versionNameSuffix = "-qa"
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
+            buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")
             buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", qaTunnelConfigured.toString())
             buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(qaRelayHost))
             buildConfigField("int", "WS024_QA_RELAY_PORT", qaRelayPort.toString())
@@ -238,6 +241,7 @@ android {
             isDebuggable = false
             signingConfig = signingConfigs.findByName("privateRelease")
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
+            buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")
             buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
             buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
             buildConfigField("int", "WS024_QA_RELAY_PORT", "443")

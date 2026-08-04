@@ -1602,3 +1602,51 @@ landing. The status remains `VERIFIED_CONTRACT / QA_ONLY` and
 
 Continuation evidence:
 `docs/e2e/2026-08-01-aeat-client-tls-partial.md`.
+
+
+## Autonomous G1-01 — QA WebView debugging boundary — 2026-08-04
+
+Reproduction showed that `TrustedJuntaWebView` used
+`setWebContentsDebuggingEnabled(BuildConfig.DEBUG)` while the generated QA
+BuildConfig had both `BUILD_TYPE="qa"` and `DEBUG=true`. The acceptance QA
+variant therefore inherited WebView remote-debugging capability from the broad
+debuggable flag.
+
+The remediation adds the explicit build field
+`ENABLE_WEBVIEW_CONTENTS_DEBUGGING`: default false, Debug true, QA false and
+Release false. `TrustedJuntaWebView` uses only this field. QA remains debuggable
+for its existing controlled diagnostics; network, origin, TLS, profile, signing
+and certificate policies are unchanged.
+
+TDD sequence:
+
+- RED: focused Python policy test failed because the explicit boundary was absent;
+- an intermediate loose-regex GREEN was rejected during diff review because it
+  had allowed an invalid configuration (Debug both false/true, QA without an
+  explicit false);
+- the test was tightened to isolate each Gradle build block and observed RED on
+  that malformed state;
+- GREEN: the corrected policy passed the focused test.
+
+Fresh verification:
+
+- Debug JVM: 509 tests, 0 failures/errors/skips;
+- QA JVM: 509 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS, 0 errors and 27 warnings per variant;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- combined Gradle gate: `BUILD SUCCESSFUL`, 140 actionable tasks;
+- generated BuildConfig: Debug WebView debugging `true`, QA `false`;
+- Python: 95 tests, 0 failures/errors, 1 environmental hardlink skip;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./...`: PASS;
+- Android artifact verification: PASS;
+- release signing without private inputs: expected fail-closed PASS; no release
+  APK was produced;
+- Debug APK SHA-256:
+  `2f45274f105faac67c5cedd3272278cad1a7b77bae592730fecea3786da7b4c4`;
+- QA APK SHA-256:
+  `d326174c55a470f5a857574342ebad9dd0e6a68e82768f95c061e895d4749e62`;
+- QA AndroidTest APK SHA-256:
+  `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+No APK installation, app launch, device control, portal navigation, certificate
+operation, credential use, signing, upload, payment or submission occurred.

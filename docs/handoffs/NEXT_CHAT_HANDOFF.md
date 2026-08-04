@@ -450,3 +450,23 @@ control and do not launch Android Control Bridge UI while the portal is active.
 
 Latest sanitized evidence:
 `docs/e2e/2026-08-01-aeat-client-tls-partial.md`.
+
+
+## Autonomous audit G1-01 — QA WebView debugging boundary — 2026-08-04
+
+- acceptance QA previously inherited `BuildConfig.DEBUG=true` and therefore
+  enabled application-wide WebView remote debugging;
+- explicit `ENABLE_WEBVIEW_CONTENTS_DEBUGGING` now permits DevTools only in the
+  ordinary developer Debug variant; QA and Release are pinned false;
+- QA remains debuggable for existing controlled diagnostics; portal/profile, TLS,
+  origin, certificate and signing policy are unchanged;
+- fresh automated gates: Debug 509/509, QA 509/509, lint/build/APK artifact,
+  Python 95 (one environmental hardlink skip), Go test/vet/build and release
+  fail-closed PASS;
+- no APK installation, app launch, physical test or portal interaction occurred
+  for this autonomous milestone.
+
+Next autonomous audit line: classify the suppressed exposed network transport
+type boundary, then continue QA-only catalog/release consistency and certificate/
+storage/logging/signing trust-boundary review. Physical AEAT F-03 continuation
+remains outside the autonomous safety boundary.

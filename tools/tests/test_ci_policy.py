@@ -218,6 +218,37 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("assembleRelease", release)
         self.assertIn("app-release.apk", release)
 
+    def test_webview_debugging_is_debug_only(self) -> None:
+        gradle = self.read(APP_BUILD)
+        webview = self.read(
+            ROOT / "app" / "src" / "main" / "java" / "dev" / "junta" / "firmamobile" / "browser" / "TrustedJuntaWebView.kt"
+        )
+        disabled = 'buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")'
+        enabled = 'buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "true")'
+        self.assertIn(disabled, gradle)
+
+        debug_start = gradle.index("        debug {")
+        qa_start = gradle.index('        create("qa") {', debug_start)
+        release_start = gradle.index("        release {", qa_start)
+        source_sets_start = gradle.index("    sourceSets {", release_start)
+        debug_block = gradle[debug_start:qa_start]
+        qa_block = gradle[qa_start:release_start]
+        release_block = gradle[release_start:source_sets_start]
+
+        self.assertIn(enabled, debug_block)
+        self.assertNotIn(disabled, debug_block)
+        self.assertIn(disabled, qa_block)
+        self.assertNotIn(enabled, qa_block)
+        self.assertIn(disabled, release_block)
+        self.assertNotIn(enabled, release_block)
+        self.assertEqual(1, gradle.count(enabled))
+        self.assertEqual(3, gradle.count(disabled))
+        self.assertIn(
+            "setWebContentsDebuggingEnabled(BuildConfig.ENABLE_WEBVIEW_CONTENTS_DEBUGGING)",
+            webview,
+        )
+        self.assertNotIn("setWebContentsDebuggingEnabled(BuildConfig.DEBUG)", webview)
+
     def test_dependency_verification_uses_sha256_and_has_no_trusted_wildcard(self) -> None:
         source = self.read(VERIFICATION_METADATA)
         self.assertIn("<verify-metadata>true</verify-metadata>", source)

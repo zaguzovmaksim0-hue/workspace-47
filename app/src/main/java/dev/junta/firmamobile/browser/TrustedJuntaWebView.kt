@@ -16,7 +16,7 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(this@TrustedJuntaWebView, false)
         }
-        setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+        setWebContentsDebuggingEnabled(BuildConfig.ENABLE_WEBVIEW_CONTENTS_DEBUGGING)
     }
 
     fun setPageProgressListener(listener: (Int) -> Unit) {
