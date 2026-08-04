@@ -1870,3 +1870,36 @@ TDD RED had already been observed against the old source before this state appea
 No APK installation/launch, device control, portal request, credential/certificate
 use, real signing, upload, payment or administrative submission occurred. Go race
 instrumentation remains an external supported-Linux CI gate.
+
+
+## Autonomous G4-02 — persisted certificate-unlock threat-model reconciliation — 2026-08-04
+
+The runtime already implements a bounded encrypted unlock-recovery cache: after a
+successful manual PKCS#12 password entry, the password may remain for at most the
+original 24-hour window as authenticated AES-256-GCM ciphertext in
+`noBackupFilesDir`, protected by an Android Keystore AES key. The feature does not
+persist the PKCS#12 bytes or private-key object. The existing threat model still
+claimed lifecycle/process death locked the identity, despite explicit runtime tests
+and P07C evidence for valid-cache restoration.
+
+This milestone reconciles only `docs/threat-model.md` and a documentation-policy
+regression. T5 now records original-expiry semantics, clearing conditions, process
+death and memory-pressure recovery, API 28+ unlocked-device Keystore behavior and
+residual app-privilege risk. No runtime or build behavior changed.
+
+Verification evidence:
+
+- RED: focused documentation-policy regression failed on the stale threat model;
+- GREEN: the same focused policy test passed after reconciliation;
+- Python: 99 tests, 0 failures/errors, 1 environmental hardlink skip;
+- focused lifecycle Debug+QA: the three named `CertificateSession`/
+  `CertificateViewModel` tests passed with `--no-daemon --rerun-tasks`;
+  `BUILD SUCCESSFUL`, 60 actionable tasks, 60 executed;
+- two earlier retry jobs are intentionally not counted as product verification:
+  their `--tests` placement broadened Debug discovery while multiple Gradle jobs
+  overlapped, and they failed during test-class execution. Duplicate jobs were
+  removed and the exact task-scoped command then passed.
+
+No APK installation/launch, device control, portal request, credential/certificate
+use, real signing, upload, payment or administrative submission occurred. Go race
+remains an external supported-Linux CI gate; AEAT F-03 remains manual.

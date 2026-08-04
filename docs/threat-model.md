@@ -1,6 +1,7 @@
 # Threat model — Junta Firma Mobile
 
-Fecha: 2026-07-11
+Fecha inicial: 2026-07-11
+Última reconciliación de límites: 2026-08-04
 Método: límites de confianza, activos, capacidades del atacante, rutas de abuso
 y mitigaciones verificables.
 
@@ -10,6 +11,8 @@ y mitigaciones verificables.
 |---|---|
 | Clave privada PKCS#12 | Suplantación y firmas no autorizadas |
 | Contraseña PKCS#12 | Desbloqueo de la identidad si se obtiene el archivo |
+| Registro cifrado de unlock PKCS#12 | Recuperación local del secreto de desbloqueo dentro de la ventana válida |
+| Clave AES de unlock en Android Keystore | Descifrado del registro local si se compromete su uso autorizado |
 | Documento/challenge `dat` | Divulgación de datos y manipulación de la firma |
 | Firma y certificado completo | Privacidad, replay o entrega al trámite incorrecto |
 | Cookies y tokens SSO | Secuestro de sesión del portal |
@@ -24,8 +27,14 @@ Usuario
   │ SAF + contraseña + confirmación
   ▼
 UI/estado de la app ─────► memoria de identidad desbloqueada
+  │                              ▲
+  │ store/restore ≤ 24 h         │ recarga validada del PKCS#12
+  ▼                              │
+registro AES-256-GCM ────────────┘
+`noBackupFilesDir`
   │
-  ▼
+  └────► clave AES no exportable en Android Keystore
+
 WebView (contenido remoto) ⇄ WebMessage bridge ⇄ router/signing
   │ cookies                                      │
   ▼                                              ▼
@@ -113,13 +122,44 @@ remote-peer verification; no se registra la dirección resuelta.
 
 ### T5. Robo o persistencia de contraseña/clave
 
-**Riesgo:** firma posterior sin consentimiento.
-**Controles:** contraseña `CharArray` borrada en `finally`; no Preferences ni
-logs; no `PrivateKey.encoded`; P12 no se copia por defecto; identidad solo en
-memoria; bloqueo en lifecycle/timeout/manual/process death; `allowBackup=false`.
-La correspondencia de clave se prueba firmando un nonce, no exportando bytes.
-**Verificación:** tests del ciclo de sesión y búsquedas estáticas de APIs/campos
-prohibidos; inspección de backup config y logcat.
+**Riesgo:** recuperación posterior de la identidad o firma sin el consentimiento
+esperado durante la ventana de desbloqueo.
+**Controles:** la clave privada y los bytes PKCS#12 no se persisten por este
+mecanismo y `PrivateKey.encoded` no se consulta. Tras un desbloqueo manual
+correcto, la contraseña puede persistir durante un máximo de 24 horas únicamente
+como ciphertext autenticado AES-256-GCM en `noBackupFilesDir`, nunca en texto
+plano ni Preferences/logs. El registro queda ligado mediante AAD a la referencia
+del certificado y a los timestamps originales de emisión/expiración. La clave AES
+es material no exportable de Android Keystore; en API 28+ el provider actual exige
+que el dispositivo esté desbloqueado para usarla. `allowBackup=false` y
+`noBackupFilesDir` excluyen el registro del backup/transfer de la app. La
+restauración automática conserva la expiración original y no renueva la ventana.
+Los buffers temporales `CharArray`/`ByteArray` en claro se limpian best-effort.
+
+**Semántica lifecycle:** bloqueo manual, clear session, cambio u olvido del
+certificado, expiración, reference mismatch, ciphertext malformado/manipulado o
+unlock cacheado fallido eliminan el registro. Background, process death,
+force-stop, reinicio del dispositivo y actualización ordinaria no eliminan por sí
+solos un registro todavía válido. Ante memory pressure, `CertificateSession`
+suelta primero la identidad en memoria, pero el ViewModel puede restaurarla desde
+el cache válido; por tanto memory pressure o process death no garantizan un estado
+locked persistente dentro de la ventana de 24 horas.
+
+**Riesgo residual:** antes de expirar el registro, código que ejecute con los
+privilegios de la app en un dispositivo elegible y desbloqueado puede intentar
+activar la recuperación local. En API 26–27 no existe la protección adicional
+`setUnlockedDeviceRequired(true)` usada por este provider desde API 28. Un
+dispositivo/root con control del proceso sigue fuera de la garantía. Recuperar la
+identidad no omite la confirmación independiente exigida para cada solicitud de
+firma. La correspondencia de clave se prueba firmando un nonce, no exportando
+bytes.
+
+**Verificación:** tests de `CertificateUnlockCache`, `CertificateSession` y
+`CertificateViewModel` cubren cifrado/tamper/expiración, limpieza, process
+recreation y memory-pressure recovery; búsquedas estáticas cubren APIs/campos
+prohibidos; se inspeccionan backup config y logs. La evidencia física P07C confirma
+un cold launch tras terminación del proceso sin nuevo password prompt y sin
+registrar el secreto.
 
 ### T6. P12 malicioso agota recursos o selecciona identidad equivocada
 
@@ -246,8 +286,9 @@ que demuestran ausencia completa del profile/origins en release.
 
 - No localhost WSS, puertos 63117/63118/63119/17629, CA local ni trust bypass.
 - No pinning hasta disponer de rotación operativa.
-- No copia del P12 en app-private storage en el alcance inicial; por tanto no se
-  introduce todavía AES-GCM/Keystore para ese archivo.
+- No copia del P12 en app-private storage: el AES-256-GCM/Android Keystore
+  existente protege únicamente el registro cifrado de la contraseña de unlock, no
+  una copia del PKCS#12 ni de la clave privada.
 - No SHA-1 general: solo compatibilidad delimitada si el runtime confirma que el
   portal continúa exigiéndolo.
 - No DES hasta evidencia runtime, test vector y aislamiento en codec legacy.

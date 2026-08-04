@@ -369,3 +369,24 @@ profiles; the successful login does not verify those operations.
 - Next autonomous priority: fresh architecture/lifecycle/concurrency/recovery audit;
   return to signing-copy lifetime only for a reproducible excess-lifetime,
   persistence or logging boundary.
+
+
+Latest autonomous reconciliation — persisted certificate unlock threat model (G4-02):
+
+- Runtime behavior was not changed. The existing bounded recovery design persists
+  only the unlock password as authenticated AES-256-GCM ciphertext in
+  `noBackupFilesDir`; the AES key remains non-exportable Android Keystore material,
+  while PKCS#12 bytes/private-key objects are not persisted by that feature.
+- `docs/threat-model.md` had a stale T5 lifecycle/process-death claim that contradicted
+  intentional process-recreation and memory-pressure restoration within the original
+  24-hour expiry. T5, the asset list and trust-boundary diagram now describe the
+  actual retention, clearing, recovery and residual-risk boundary without implying
+  that recovery bypasses per-signature confirmation.
+- Documentation-policy TDD was observed RED then GREEN. Fresh Python discovery: 99
+  tests, zero failures/errors, one environmental hardlink skip. Fresh Debug+QA
+  lifecycle focus: three named regressions, `BUILD SUCCESSFUL`, 60/60 Gradle tasks
+  executed. Mis-scoped parallel retry invocations were discarded as operator/command
+  evidence, not recorded as product failures; the exact task-scoped rerun passed.
+- No device/app/portal/credential/certificate/real-signing/upload/payment/submission
+  action occurred. Next autonomous priority is a fresh
+  architecture/lifecycle/concurrency/recovery audit.

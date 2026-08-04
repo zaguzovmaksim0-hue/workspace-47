@@ -603,3 +603,29 @@ Next autonomous line: after commit/push verification of G4-01, start a fresh
 architecture/lifecycle/concurrency/recovery audit. Do not modify a new behavior line
 without a separate subordinate design/plan and TDD RED. Physical AEAT F-03 remains a
 manual acceptance gate outside this task's autonomous safety boundary.
+
+
+## Autonomous audit G4-02 — persisted certificate-unlock threat-model reconciliation — 2026-08-04
+
+- Runtime recovery semantics were confirmed intentional, not repaired: valid encrypted
+  unlock state can restore the identity after process recreation or memory pressure
+  before the original 24-hour expiry. Password persistence is limited to
+  AES-256-GCM ciphertext in `noBackupFilesDir`; the AES key is in Android Keystore;
+  PKCS#12 bytes/private-key objects are not persisted by this feature.
+- The authoritative T5 threat-model text was stale and incorrectly implied process
+  death guaranteed persistent locking. Asset/trust-boundary/T5 text now documents
+  bounded recovery, clearing conditions, non-extension and residual risk. No runtime,
+  profile, signing, network/WebView, build or dependency behavior changed.
+- Policy TDD RED/GREEN is recorded. Fresh verification: Python 99 tests with one
+  environmental hardlink skip; exact Debug+QA lifecycle focus PASS,
+  `BUILD SUCCESSFUL`, 60/60 tasks executed. Two mis-scoped parallel Gradle retry jobs
+  failed during broad test-class execution and were discarded as operator-command
+  artifacts; the corrected task-scoped rerun passed.
+- No APK install/launch, device control, portal interaction, credential/certificate
+  use, real signing, upload, payment or submission occurred.
+
+Next autonomous line: commit/push this documentation-only reconciliation, then start
+a fresh architecture/lifecycle/concurrency/recovery audit. Prioritize browser
+post-dispose callbacks, stale asynchronous completions and lifecycle ownership. Any
+runtime change requires a new subordinate design/plan and TDD RED. Physical AEAT
+F-03 and Go race remain external/manual gates.

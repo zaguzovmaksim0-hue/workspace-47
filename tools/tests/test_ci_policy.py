@@ -309,6 +309,23 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("finally", canonicalize)
         self.assertIn("output.clear()", canonicalize)
 
+    def test_threat_model_matches_persisted_certificate_unlock_boundary(self) -> None:
+        threat_model = self.read(ROOT / "docs" / "threat-model.md")
+        for marker in (
+            "AES-256-GCM",
+            "noBackupFilesDir",
+            "Android Keystore",
+            "24 horas",
+            "memory pressure",
+            "process death",
+            "no renueva",
+        ):
+            self.assertIn(marker, threat_model)
+        self.assertNotIn(
+            "bloqueo en lifecycle/timeout/manual/process death",
+            threat_model,
+        )
+
     def test_dependency_verification_uses_sha256_and_has_no_trusted_wildcard(self) -> None:
         source = self.read(VERIFICATION_METADATA)
         self.assertIn("<verify-metadata>true</verify-metadata>", source)

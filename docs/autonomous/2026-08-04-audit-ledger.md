@@ -30,11 +30,12 @@ manual gate. A finding is not marked complete from reasoning alone.
 
 ## Remaining audit queue
 
-1. Continue the fresh security/privacy trust-boundary audit with final-signature and
-   certificate temporary-copy lifetime as the next explicit review lead; re-open
-   logging/storage only if a new reproducible retention or failure-path defect appears.
-2. Start a fresh independent architecture/lifecycle or UX/accessibility pass after
-   the trust-boundary line reaches a clean checkpoint.
+1. Start a fresh architecture/lifecycle/concurrency/recovery pass, prioritizing
+   browser post-dispose callbacks, stale asynchronous completions, renderer/profile
+   transitions and ownership/cancellation boundaries.
+2. Re-open signing/certificate/logging/storage only for a newly reproducible
+   excess-lifetime, persistence, disclosure or failure-path defect; otherwise move to
+   an independent UX/accessibility or CI/supply-chain pass.
 
 ## Queue reconciliation — generation 1
 
@@ -316,3 +317,41 @@ submission occurred. Go race remains an external supported-Linux CI gate. With t
 XAdES application-owned stream-copy defect closed, the next autonomous pass should
 move to a fresh architecture/lifecycle or UX/accessibility audit unless another
 reproducible signing-copy excess-lifetime or persistence boundary is found.
+
+
+## Finding G4-02 — persisted certificate-unlock threat-model reconciliation
+
+**Reproduction.** Runtime behavior introduced by commit
+`32b27caf95c039020dd8512018c0875ed483c291` intentionally permits automatic
+certificate re-unlock for no longer than the original 24-hour window after one
+successful manual password entry. The unlock password is persisted only as
+authenticated AES-256-GCM ciphertext in `noBackupFilesDir`, with the AES key owned by
+Android Keystore; PKCS#12 bytes and the private-key object are not persisted by this
+feature. The pre-existing T5 text in `docs/threat-model.md` still stated that
+lifecycle/process death locks the identity, which contradicted the implemented
+process-recreation and memory-pressure recovery path.
+
+**Remediation.** This milestone changes documentation and its policy regression only.
+The threat model now names the encrypted unlock record and Keystore key as assets,
+shows the bounded recovery trust boundary, records the original-expiry/non-extension
+rule, exact clearing conditions, process-death/memory-pressure semantics and residual
+risk, and removes the obsolete assertion that process death guarantees persistent
+locking. No runtime, resource, certificate-cache implementation, signing, profile,
+network, WebView, build or dependency behavior changed.
+
+**TDD and verification.** The focused documentation-policy test was first observed
+RED against the stale T5 text and GREEN after reconciliation. Fresh complete Python
+discovery passed 99 tests with zero failures/errors and one environmental hardlink
+skip. Fresh task-scoped lifecycle verification then passed the three named
+`CertificateSession`/`CertificateViewModel` regressions in both Debug and QA with
+`--no-daemon --rerun-tasks`: `BUILD SUCCESSFUL`, 60 actionable tasks, all 60
+executed. Two earlier retry invocations were not accepted as product evidence: the
+`--tests` options were placed after both Gradle tasks and therefore broadened Debug
+discovery while duplicate Gradle jobs overlapped; those runs failed at test-class
+execution. After duplicate jobs were removed and the exact previously successful
+task-scoped command was restored, the focused lifecycle gate passed.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate use, real signing, upload, payment or administrative
+submission occurred. Physical AEAT F-03 remains a separate manual acceptance gate,
+and Go race remains an external supported-Linux CI gate.
