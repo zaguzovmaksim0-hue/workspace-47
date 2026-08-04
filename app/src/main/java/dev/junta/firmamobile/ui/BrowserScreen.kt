@@ -111,6 +111,7 @@ fun BrowserScreen(
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
+    val globalDataClearLease = remember { BrowserDataClearCompletionLease<WebView?>() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
         checkNotNull(
@@ -379,6 +380,7 @@ fun BrowserScreen(
     BackHandler(onBack = ::goBack)
     DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
+            globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeRef.getAndSet(null)?.close()
             webViewRef.getAndSet(null)?.let { webView ->
@@ -511,6 +513,7 @@ fun BrowserScreen(
             pendingRequest = null
             siteClearResult = null
             val webView = webViewRef.get()
+            val clearRequest = globalDataClearLease.begin(webView)
             webView?.apply {
                 stopLoading()
                 clearHistory()
@@ -518,8 +521,14 @@ fun BrowserScreen(
             }
             siteDataCleaner.clearAllConfirmed { cleared ->
                 mainHandler.post {
+                    if (!globalDataClearLease.consume(clearRequest)) return@post
                     globalClearResult = cleared
-                    if (cleared) webViewRef.get()?.loadUrl(validatedEntryUrl)
+                    if (cleared &&
+                        clearRequest.owner != null &&
+                        webViewRef.get() === clearRequest.owner
+                    ) {
+                        clearRequest.owner.loadUrl(validatedEntryUrl)
+                    }
                 }
             }
         },

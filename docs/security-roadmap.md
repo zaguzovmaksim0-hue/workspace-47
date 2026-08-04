@@ -420,3 +420,24 @@ Latest autonomous reconciliation — persisted certificate unlock threat model (
 Next autonomous priority: continue a fresh architecture/lifecycle/concurrency audit
 for stale asynchronous completions and ownership transfer; any behavior change
 requires a separate design/plan and observed TDD RED.
+
+## Autonomous global data-clear completion ownership — 2026-08-04 (G6-02)
+
+- A delayed process-wide browser-data-clear callback could outlive its initiating
+  profile and mutate current result state or reload the old profile URL on a replacement
+  WebView.
+- Confirmed clears now use a unique atomic completion lease bound to the initiating
+  WebView; later requests supersede earlier ones, disposal invalidates ownership, and
+  completion is consumed once.
+- Reload occurs only when the exact initiating WebView is still active. Stale
+  completion is ignored; the global deletion itself is not cancelled or falsely
+  reported as rolled back.
+- No deletion scope, URL/origin allowlist, WebView/TLS/Client-TLS, certificate,
+  signing, portal-profile, release or dependency policy changed.
+- Fresh gates: Debug 517/517, QA 517/517, lint 0 errors / 27 warnings per variant,
+  Debug/QA/QA-AndroidTest builds, Android artifacts, release fail-closed, Python 100
+  with one environmental hardlink skip, and Go test/vet/build all PASS. Generated
+  relay binary and release APK are absent.
+- Next autonomous priority: continue the architecture/lifecycle/concurrency audit for
+  other delayed completions or ownership-transfer boundaries; require a separate
+  design/plan and observed RED before any further behavior change.

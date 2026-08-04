@@ -1976,3 +1976,45 @@ APK SHA-256:
 No APK installation/launch, device control, portal request, credential/certificate
 use, real signing, upload, payment or administrative submission occurred. Physical
 AEAT F-03 and Go race remain external gates.
+
+## Autonomous G6-02 — browser data-clear completion lease — 2026-08-04
+
+A delayed `clearAllConfirmed()` completion could execute after profile disposal,
+update the replacement profile's UI state and reload the obsolete profile URL on the
+new active WebView. The regression was pinned before production mutation by a source-
+policy RED and a behavioral compile-time RED.
+
+The implementation adds an atomic one-shot completion lease. Each confirmed request
+is bound to its initiating WebView, later requests supersede earlier ones, disposal
+invalidates outstanding ownership, and reload requires exact identity with the active
+`webViewRef`. The already-started global deletion semantics are unchanged.
+
+Verification evidence:
+
+- source-policy RED: `job_20260804_181217_616624bb`, expected failure, 30/30 tasks;
+- behavioral RED: `job_20260804_181902_691aaf9e`, expected missing-type compile
+  failure, 28/28 tasks;
+- minimum GREEN: `job_20260804_182201_7546f3be`, PASS, 30/30 tasks;
+- focused Debug+QA lease/browser/security/cleaner gate:
+  `job_20260804_182900_2034c491`, PASS, 60/60 tasks;
+- full Android: `job_20260804_184100_327d7ebe`, pins PASS, Debug 517/517 and QA
+  517/517 with zero failures/errors/skips, three assemblies PASS, 127/127 tasks;
+- `lintDebug`, `lintQa`: PASS, 0 errors / 27 warnings per variant, 55/55 tasks;
+- Python: 100 tests, zero failures/errors, one environmental hardlink skip;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS; no release APK;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+  generated relay binary removed;
+- complete-diff whitespace, exact-scope, sensitive-content, personal-data and unsafe
+  WebView/TLS/backup scans: PASS. The first scan wrapper had an operator shell-quoting
+  error before content scanning and was replaced by a successful simplified rerun.
+
+APK SHA-256:
+
+- Debug: `e02c14c9383b480a7ca9792136737e0e1b71932ae7b8bd517459d76eab43702f`;
+- QA: `e14387a60d88127762ba552d7b34dcd39384cc6f36757da21dae0488d13c2742`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK installation/launch, device control, portal request, credential/certificate
+use, real signing, upload, payment or administrative submission occurred. Physical
+AEAT F-03 and Go race remain external gates.

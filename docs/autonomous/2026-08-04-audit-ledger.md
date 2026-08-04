@@ -434,3 +434,54 @@ No APK was installed or launched; no ADB/device control, portal interaction,
 credential/certificate material use, real signing, upload, payment or
 administrative submission occurred. Physical AEAT F-03 and supported-Linux Go race
 remain external gates.
+
+## Finding G6-02 — stale global browser-data-clear completion ownership
+
+**Reproduction.** `BrowserScreen` started process-wide WebView-data deletion through
+`SiteDataCleaner.clearAllConfirmed()`, then posted its asynchronous completion to the
+main handler. The callback captured the request profile URL but read `webViewRef` only
+when the runnable executed. Because the reference survives recomposition and is
+replaced after profile-keyed disposal, a delayed completion from an old profile could
+set current UI result state and reload the old profile URL on a newly active WebView.
+The source-policy RED job rejected the missing lease at
+`BrowserSecurityRegressionTest.kt:249`; a separate behavioral RED failed to compile
+because the planned lease type did not yet exist.
+
+**Remediation.** A small generic `BrowserDataClearCompletionLease` now gives each
+confirmed clear a unique request bound to its initiating WebView. A later request
+supersedes an earlier one; profile change/disposal invalidates pending ownership; and
+completion is consumed atomically once. Successful completion reloads only when the
+initiating owner is non-null and still identical to the active `webViewRef`. Stale
+completion is ignored while the already-started global deletion is neither cancelled
+nor represented as rolled back. Callback work remains marshalled through the main
+handler. No cookie/storage deletion scope, URL/origin policy, WebView TLS, Client TLS,
+certificate, signing, profile/catalog, release or dependency policy changed.
+
+**TDD and verification.** Source-policy RED job
+`job_20260804_181217_616624bb` failed as expected after 30/30 tasks. Behavioral RED
+job `job_20260804_181902_691aaf9e` failed as expected before the lease existed after
+28/28 tasks. Minimum GREEN job `job_20260804_182201_7546f3be` passed the helper and
+integration-policy regressions; focused Debug+QA job
+`job_20260804_182900_2034c491` passed the lease, browser security, BrowserScreen and
+SiteDataCleaner suites with 60/60 tasks. Fresh full Android job
+`job_20260804_184100_327d7ebe` passed pin checks, Debug 517/517 and QA 517/517 JVM
+tests with zero failures/errors/skips, and Debug/QA/QA-AndroidTest assembly
+(`BUILD SUCCESSFUL`, 127/127 tasks). Forced lint passed 55/55 tasks with zero errors
+and 27 warnings per variant; the existing `ProfileHttpCallPhaseTracker` parameter-name
+warning is outside this diff. Python passed 100 tests with one environmental hardlink
+skip. Android artifact verification and release-signing fail-closed passed with no
+release APK. Go test/vet/build passed and the generated relay binary was removed.
+Whitespace, exact-scope, sensitive-content, personal-data and unsafe WebView/TLS/
+backup scans passed; an initial local scan wrapper stopped before scanning because of
+shell quoting and was rerun successfully with simplified expressions.
+
+APK SHA-256:
+
+- Debug: `e02c14c9383b480a7ca9792136737e0e1b71932ae7b8bd517459d76eab43702f`;
+- QA: `e14387a60d88127762ba552d7b34dcd39384cc6f36757da21dae0488d13c2742`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate material use, real signature, upload, payment or
+administrative submission occurred. Physical AEAT F-03 and supported-Linux Go race
+remain external gates.

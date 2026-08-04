@@ -241,6 +241,29 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun globalDataClearCompletionIsBoundToTheInitiatingWebView() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+
+        assertTrue(
+            "Global clear must use a one-shot completion lease",
+            "BrowserDataClearCompletionLease<WebView?>" in screenSource &&
+                "globalDataClearLease.begin(webView)" in screenSource &&
+                "globalDataClearLease.consume(clearRequest)" in screenSource,
+        )
+        assertTrue(
+            "Profile disposal must invalidate a pending global-clear completion",
+            "globalDataClearLease.invalidate()" in screenSource,
+        )
+        assertTrue(
+            "Only the exact initiating WebView may be reloaded after clear",
+            "webViewRef.get() === clearRequest.owner" in screenSource &&
+                "clearRequest.owner.loadUrl(validatedEntryUrl)" in screenSource,
+        )
+    }
+
+    @Test
     fun signingTtlAndReplayPathsUseMonotonicBoundedStateOnly() {
         val pendingSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/signing/PendingSignRequestStore.kt",

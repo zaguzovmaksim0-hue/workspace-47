@@ -683,3 +683,33 @@ F-03 and Go race remain external gates.
 After remote verification of the containing G5-01 commit, continue a new independent
 architecture/lifecycle/concurrency audit. Physical AEAT F-03 and supported-Linux Go
 race remain external gates.
+
+## Autonomous audit G6-02 — browser data-clear completion ownership — 2026-08-04
+
+- Reproduced a stale asynchronous completion defect: a confirmed global WebView-data
+  clear could complete after profile disposal, update current result state and reload
+  the obsolete profile URL on a replacement active WebView.
+- TDD RED was observed first through the source-policy regression and a missing-helper
+  behavioral compile failure. The final helper is an atomic one-shot lease bound to
+  the initiating WebView; later requests supersede earlier requests and disposal
+  invalidates pending ownership.
+- Successful completion reloads only when the initiating WebView remains the exact
+  active instance. Stale completion is ignored without cancelling or misreporting the
+  process-wide deletion already in progress.
+- Final gates PASS: focused Debug+QA; full Debug 517/517 and QA 517/517; pins and
+  Debug/QA/QA-AndroidTest builds; lint zero errors / 27 warnings per variant; Android
+  artifacts; release fail-closed; Python 100 with one environmental hardlink skip;
+  Go test/vet/build; generated relay binary and release APK absent; exact-scope and
+  security scans PASS.
+- APK SHA-256: Debug
+  `e02c14c9383b480a7ca9792136737e0e1b71932ae7b8bd517459d76eab43702f`, QA
+  `e14387a60d88127762ba552d7b34dcd39384cc6f36757da21dae0488d13c2742`, QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- No APK install/launch, device control, portal interaction, credential/certificate
+  use, real signing, upload, payment or submission occurred.
+
+After commit/push verification of the containing G6-02 milestone, continue a fresh
+architecture/lifecycle/concurrency audit for other delayed completions and ownership
+transfers. Any behavior change requires a separate subordinate design/plan and an
+observed TDD RED. Physical AEAT F-03 and supported-Linux Go race remain external
+acceptance gates.
