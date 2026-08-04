@@ -411,18 +411,34 @@ internal object XadesDetachedCodec {
             runCatching { setAttribute(ACCESS_EXTERNAL_DTD, "") }
             runCatching { setAttribute(ACCESS_EXTERNAL_STYLESHEET, "") }
         }
-        val output = ByteArrayOutputStream()
-        factory.newTransformer().apply {
-            setOutputProperty(OutputKeys.ENCODING, Charsets.UTF_8.name())
-            setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no")
-            setOutputProperty(OutputKeys.INDENT, "no")
-        }.transform(DOMSource(document), StreamResult(output))
-        return output.toByteArray()
+        val output = ClearingByteArrayOutputStream()
+        return try {
+            factory.newTransformer().apply {
+                setOutputProperty(OutputKeys.ENCODING, Charsets.UTF_8.name())
+                setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no")
+                setOutputProperty(OutputKeys.INDENT, "no")
+            }.transform(DOMSource(document), StreamResult(output))
+            output.toByteArray()
+        } finally {
+            output.clear()
+        }
     }
 
-    private fun canonicalize(node: Node): ByteArray = ByteArrayOutputStream().use { output ->
-        Canonicalizer.getInstance(C14N).canonicalizeSubtree(node, output)
-        output.toByteArray()
+    private fun canonicalize(node: Node): ByteArray {
+        val output = ClearingByteArrayOutputStream()
+        return try {
+            Canonicalizer.getInstance(C14N).canonicalizeSubtree(node, output)
+            output.toByteArray()
+        } finally {
+            output.clear()
+        }
+    }
+
+    private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {
+        fun clear() {
+            buf.fill(0)
+            reset()
+        }
     }
 
     private fun digest(bytes: ByteArray): ByteArray = MessageDigest.getInstance(SHA_512).digest(bytes)

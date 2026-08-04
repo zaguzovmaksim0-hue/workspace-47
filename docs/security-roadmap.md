@@ -347,3 +347,25 @@ profiles; the successful login does not verify those operations.
 - Continue the trust-boundary audit with XAdES/final-signature/certificate temporary
   copies; do not classify public certificate/signature copies as defects solely for
   existing briefly in memory without excess lifetime or a persistence/logging leak.
+
+## Autonomous XAdES temporary stream zeroization — 2026-08-04 (G4-01)
+
+- XAdES serialization and canonicalization previously returned an intentional
+  `toByteArray()` result while leaving a duplicate in the ordinary stream backing
+  buffer until GC; a standalone JVM canary probe reproduced that exact retention
+  mechanism.
+- TDD first pinned the defect with a source-policy RED. Both helpers now use an
+  XAdES-local clearing stream and zero its protected backing `buf` from `finally`
+  after the intended result copy is obtained; inherited close semantics are not
+  overridden.
+- No XAdES cryptographic/protocol bytes, profile/catalog state, network/TLS/WebView,
+  certificate storage or release policy were intentionally changed. The guarantee is
+  limited to app-owned managed-heap buffers.
+- Fresh gates: Debug 510/510, QA 510/510, lint 0 errors / 27 warnings per variant,
+  Debug/QA/QA-AndroidTest builds, Android artifact verification, release fail-closed,
+  Python 98 with one environmental hardlink skip, and Go test/vet/build all PASS.
+- Generated relay binary was removed. No device/app/portal/credential/certificate/
+  real-signing/upload/payment/submission action occurred.
+- Next autonomous priority: fresh architecture/lifecycle/concurrency/recovery audit;
+  return to signing-copy lifetime only for a reproducible excess-lifetime,
+  persistence or logging boundary.

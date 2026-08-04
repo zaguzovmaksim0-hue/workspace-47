@@ -283,6 +283,32 @@ class CiPolicyTest(unittest.TestCase):
         capture = source[capture_start:capture_end]
         self.assertIn("output.clear()", capture)
 
+    def test_xades_serialization_streams_clear_owned_backing_buffers(self) -> None:
+        source = self.read(
+            ROOT / "app" / "src" / "main" / "java" / "dev" / "junta" / "firmamobile" / "signing" / "LocalXadesDetachedAdapter.kt"
+        )
+        self.assertNotIn("val output = ByteArrayOutputStream()", source)
+        self.assertNotIn("ByteArrayOutputStream().use", source)
+        self.assertGreaterEqual(source.count("val output = ClearingByteArrayOutputStream()"), 2)
+        self.assertIn(
+            "private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {\n"
+            "        fun clear() {\n"
+            "            buf.fill(0)\n"
+            "            reset()\n"
+            "        }\n"
+            "    }",
+            source,
+        )
+        serialize_start = source.index("private fun serialize(document: Document): ByteArray")
+        canonicalize_start = source.index("private fun canonicalize(node: Node): ByteArray", serialize_start)
+        stream_class_start = source.index("private class ClearingByteArrayOutputStream", canonicalize_start)
+        serialize = source[serialize_start:canonicalize_start]
+        canonicalize = source[canonicalize_start:stream_class_start]
+        self.assertIn("finally", serialize)
+        self.assertIn("output.clear()", serialize)
+        self.assertIn("finally", canonicalize)
+        self.assertIn("output.clear()", canonicalize)
+
     def test_dependency_verification_uses_sha256_and_has_no_trusted_wildcard(self) -> None:
         source = self.read(VERIFICATION_METADATA)
         self.assertIn("<verify-metadata>true</verify-metadata>", source)

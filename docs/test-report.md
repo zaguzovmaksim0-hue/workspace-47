@@ -1822,3 +1822,51 @@ invocation on the final tree.
 No APK installation/launch, device control, portal request, credential/certificate
 use, real signing, upload, payment or administrative submission occurred. Go race
 instrumentation remains an external supported-Linux CI gate.
+
+## Autonomous G4-01 — XAdES byte-stream backing-buffer zeroization — 2026-08-04
+
+`XadesDetachedCodec.serialize()` and `canonicalize()` previously used ordinary
+`ByteArrayOutputStream` and returned `toByteArray()` copies. A standalone JVM probe
+showed that `close()` left the original XML canary in the protected backing buffer
+while the returned copy also contained it. The focused source-policy test was added
+first and failed on the old stream patterns.
+
+The production change is limited to those two helpers and one private clearing
+stream. Each helper gets the intentional output copy and clears the app-owned backing
+buffer in `finally`; `clear()` zeros protected `buf` then resets it. XAdES algorithms,
+canonicalization identifiers, output ownership, certificate chain and runtime
+security policy are unchanged.
+
+Verification evidence:
+
+- RED: source-policy regression rejected the ordinary XAdES stream patterns;
+- focused policy GREEN: 1/1 PASS;
+- forced focused XAdES Debug+QA rerun: PASS, `BUILD SUCCESSFUL`, 60/60 tasks executed;
+- toolchain pin checks: PASS;
+- full Debug JVM: 510 tests, 0 failures/errors/skips;
+- full QA JVM: 510 tests, 0 failures/errors/skips;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS; non-lint Android gate
+  `BUILD SUCCESSFUL`, 127 actionable tasks;
+- `lintDebug`, `lintQa`: PASS, 0 errors / 27 warnings per variant; separate lint gate
+  `BUILD SUCCESSFUL`, 55 actionable tasks;
+- Python: 98 tests, 0 failures/errors, 1 environmental hardlink skip;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+- generated relay binary removed;
+- Debug APK SHA-256:
+  `6a6b6e72006048ea9191de2b4b509cda21bb9f60b226386afa54ea872e753139`;
+- QA APK SHA-256:
+  `20740737b0e977e263192367de217f8f03262f59e4ba972e2a233da08b5e8810`;
+- QA AndroidTest APK SHA-256:
+  `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+One guarded production-mutation command found the exact planned XAdES source diff
+already present before its write step and stopped on an old-source assertion. A
+follow-up process and hash stability check found no active mutator and no unrelated
+source diff; the origin of that transient/in-flight write was not established. The
+TDD RED had already been observed against the old source before this state appeared.
+
+No APK installation/launch, device control, portal request, credential/certificate
+use, real signing, upload, payment or administrative submission occurred. Go race
+instrumentation remains an external supported-Linux CI gate.

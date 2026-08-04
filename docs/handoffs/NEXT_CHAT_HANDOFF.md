@@ -574,3 +574,32 @@ lifetime review without widening public APIs solely for test visibility. If no
 reproducible excess-lifetime/persistence defect is found, record no-defect evidence
 and move to a fresh architecture/lifecycle or UX/accessibility audit pass. Physical
 AEAT F-03 remains a manual acceptance gate outside this task's autonomous boundary.
+
+## Autonomous audit G4-01 — XAdES byte-stream zeroization — 2026-08-04
+
+- A standalone JVM canary probe reproduced redundant XAdES heap retention from
+  ordinary `ByteArrayOutputStream.toByteArray()` plus no-op `close()`: both the
+  returned copy and the stream backing buffer retained the XML canary.
+- Source-policy TDD RED was observed before the production state changed. The final
+  XAdES implementation uses a private clearing stream in `serialize()` and
+  `canonicalize()` and clears protected `buf` in `finally` after obtaining the
+  intentional result copy; inherited close behavior is preserved.
+- A guarded patch command later found the exact planned source diff already present
+  before its own write step. No active mutator was found, the file hash was stable,
+  and no unrelated source diff was present; exact write origin remains unclassified.
+- Fresh gates PASS: forced focused XAdES Debug+QA; full Debug 510/510 and QA 510/510;
+  pins; Debug/QA/QA-AndroidTest builds; lint 0 errors / 27 warnings per variant;
+  Android artifact verification; release fail-closed; Python 98 with one
+  environmental hardlink skip; Go test/vet/build. Generated relay binary removed.
+- APK SHA-256: Debug
+  `6a6b6e72006048ea9191de2b4b509cda21bb9f60b226386afa54ea872e753139`, QA
+  `20740737b0e977e263192367de217f8f03262f59e4ba972e2a233da08b5e8810`, QA
+  AndroidTest `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+- No APK install/launch, device control, portal interaction, credential/certificate
+  use, real signing, upload, payment or submission occurred. Go race remains an
+  external supported-Linux CI gate.
+
+Next autonomous line: after commit/push verification of G4-01, start a fresh
+architecture/lifecycle/concurrency/recovery audit. Do not modify a new behavior line
+without a separate subordinate design/plan and TDD RED. Physical AEAT F-03 remains a
+manual acceptance gate outside this task's autonomous safety boundary.

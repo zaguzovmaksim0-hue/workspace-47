@@ -261,3 +261,58 @@ credential/certificate use, real signing, upload, payment, or administrative
 submission occurred. Next trust-boundary lead: continue XAdES/final-signature and
 certificate temporary-copy lifetime review, then move to an independent
 architecture/lifecycle or UX/accessibility pass if no reproducible defect remains.
+
+## Finding G4-01 — XAdES serialization/canonicalization backing-buffer lifetime
+
+**Reproduction.** `XadesDetachedCodec.serialize()` and `canonicalize()` used
+ordinary `ByteArrayOutputStream` instances and returned `toByteArray()` copies.
+Closing an ordinary byte-array stream is a no-op for its protected backing `buf`.
+A standalone JVM subclass probe wrote an XML canary, called `toByteArray()` and
+`close()`, and observed `returnedHasCanary=true` and
+`backingHasCanaryAfterClose=true`. The two XAdES source sites matched that ownership
+pattern. Depending on the helper call, the redundant backing copy could contain the
+serialized unsigned/final XAdES document or canonicalized document content,
+SignedInfo, SignedProperties or KeyInfo until garbage collection.
+
+**TDD and remediation.** A narrow source-policy regression was added first and
+observed RED on the ordinary-stream patterns. The production helpers now allocate a
+private `ClearingByteArrayOutputStream`, obtain only the intentional returned copy,
+and execute `output.clear()` in `finally`; `clear()` zeros protected `buf` and then
+resets it. Inherited stream close semantics remain unchanged. No XAdES algorithm,
+namespace, canonicalization method, digest, certificate chain, profile, callback,
+network/TLS/WebView or release policy changed. This is best-effort managed-heap
+hygiene, not a physical-memory secure-erasure claim and not a claim about internal
+copies owned by XML/JCA implementations.
+
+During the transition from RED to production mutation, the pre-mutation guard found
+the exact planned XAdES source diff already present before the guarded patch script
+could write it; the script stopped on its old-source assertion. A process/stability
+check found no active workspace mutator, the file hash remained stable, and the diff
+matched the subordinate design with no unrelated source edits. The origin of that
+transient/in-flight write was not established, so no stronger attribution is made.
+The required RED had already been captured against the old source before this state
+appeared.
+
+**Fresh verification.** The source-policy regression passed. A forced focused XAdES
+Debug+QA rerun executed all 60 Gradle tasks and passed. The full Android gate then
+passed toolchain pin checks, Debug 510/510 and QA 510/510 JVM tests with zero
+failures/errors/skips, plus `assembleDebug`, `assembleQa`, and
+`assembleQaAndroidTest` (`BUILD SUCCESSFUL`, 127 actionable tasks). Separate
+`lintDebug`/`lintQa` passed (`BUILD SUCCESSFUL`, 0 errors / 27 warnings per variant).
+Python passed 98 tests with one environmental hardlink skip. Android artifact
+verification and release signing fail-closed passed. Go `test ./... -count=1`,
+`go vet ./...`, and `go build ./cmd/ws024-relay` passed; the generated relay binary
+was removed.
+
+APK SHA-256:
+
+- Debug: `6a6b6e72006048ea9191de2b4b509cda21bb9f60b226386afa54ea872e753139`;
+- QA: `20740737b0e977e263192367de217f8f03262f59e4ba972e2a233da08b5e8810`;
+- QA AndroidTest: `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate use, real signing, upload, payment or administrative
+submission occurred. Go race remains an external supported-Linux CI gate. With the
+XAdES application-owned stream-copy defect closed, the next autonomous pass should
+move to a fresh architecture/lifecycle or UX/accessibility audit unless another
+reproducible signing-copy excess-lifetime or persistence boundary is found.
