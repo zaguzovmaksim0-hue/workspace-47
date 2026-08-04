@@ -208,3 +208,56 @@ No APK was installed or launched; no ADB/device control, portal interaction,
 certificate or credential use, real signature, upload, payment, or administrative
 submission occurred. Go race remains an external supported-Linux CI gate and was not
 claimed on Termux.
+
+
+## Finding G3-01 — CAdES pre-sign capture backing-buffer lifetime
+
+**Reproduction.** `CadesDetachedCodec.CapturingContentSigner.close()` attempted to
+clear captured signed attributes with `output.toByteArray().fill(0)` followed by
+`output.reset()`. `ByteArrayOutputStream.toByteArray()` returns a copy and `reset()`
+only resets the logical count. A standalone JVM probe using a subclass that exposes
+protected `buf` wrote a canary, executed the exact old sequence, and reported
+`retained=true`. Existing CAdES functional tests passed before mutation, confirming
+that the gap was memory hygiene rather than signature correctness.
+
+**TDD / debugging.** A new source-policy regression first failed on the exact old
+`output.toByteArray().fill(0)` pattern. The first production implementation used a
+clearing stream whose `close()` zeroed `buf`; that implementation was rejected when
+focused `LocalCadesDetachedAdapterTest` produced two failures because BouncyCastle
+closes the supplied output stream during generation and the captured attributes were
+therefore erased before `signedBytes()` was read. Repository comparison showed the
+established sensitive-stream pattern in `Pkcs12Loader`, `JuntaTriPhaseCodec`, and
+`ProfileHttpTransport`: an explicit `clear()` method, not an overridden stream
+`close()`. The corrected implementation preserves inherited close behavior and calls
+`output.clear()` only from `CapturingContentSigner.close()`.
+
+**Remediation.** The capturer now owns `ClearingByteArrayOutputStream`; its explicit
+`clear()` zeroes the actual protected `buf` and resets the logical length. The
+intentional `signedBytes()` copy remains owned by `PreSignResult` and its existing
+lifecycle. No CAdES algorithm, signed attribute, certificate, provider, portal,
+network/TLS/WebView, release, or public API behavior changed. This is managed-heap
+best-effort zeroization, not a physical RAM/JVM-copy secure-erasure claim.
+
+**Fresh verification.** Corrected focused source-policy plus CAdES/LocalSignature
+Debug+QA tests passed. The final full Android gate passed separately: toolchain pin
+checks; Debug 510/510 and QA 510/510 with zero failures/errors/skips; Debug/QA/
+QA-AndroidTest assemble (`BUILD SUCCESSFUL`, 127 actionable tasks). `lintDebug` and
+`lintQa` passed in a separate invocation (`BUILD SUCCESSFUL`, 0 errors / 27 warnings
+per variant). Android artifact verification and release signing fail-closed passed.
+Python passed 97 tests with one environmental hardlink skip. Go test/vet/build
+passed and the generated relay binary was removed. An earlier all-in-one verification
+wrapper hit its external 1800-second job timeout after unit/assemble tasks while lint
+was still analyzing; no test failure was attributed to that wrapper timeout, and all
+component gates were rerun/completed explicitly as described above.
+
+APK SHA-256:
+
+- Debug: `f8d819a0de57e40ad7e1575a2c44ff8577d9b70a55ff5b53942a2fd3d2f1227e`;
+- QA: `96331ee7bddd782981a5b4900e906e27887ddc0dfd28698e62c17c38cbdb7f1b`;
+- QA AndroidTest: `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate use, real signing, upload, payment, or administrative
+submission occurred. Next trust-boundary lead: continue XAdES/final-signature and
+certificate temporary-copy lifetime review, then move to an independent
+architecture/lifecycle or UX/accessibility pass if no reproducible defect remains.

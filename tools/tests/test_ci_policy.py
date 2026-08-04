@@ -263,6 +263,26 @@ class CiPolicyTest(unittest.TestCase):
         )
         self.assertNotIn("setWebContentsDebuggingEnabled(BuildConfig.DEBUG)", webview)
 
+    def test_cades_capture_stream_clears_owned_backing_buffer(self) -> None:
+        source = self.read(
+            ROOT / "app" / "src" / "main" / "java" / "dev" / "junta" / "firmamobile" / "signing" / "LocalCadesDetachedAdapter.kt"
+        )
+        self.assertNotIn("output.toByteArray().fill(0)", source)
+        self.assertIn("private val output = ClearingByteArrayOutputStream()", source)
+        self.assertIn(
+            "private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {\n"
+            "        fun clear() {\n"
+            "            buf.fill(0)\n"
+            "            reset()\n"
+            "        }\n"
+            "    }",
+            source,
+        )
+        capture_start = source.index("private class CapturingContentSigner")
+        capture_end = source.index("private class ClearingByteArrayOutputStream", capture_start)
+        capture = source[capture_start:capture_end]
+        self.assertIn("output.clear()", capture)
+
     def test_dependency_verification_uses_sha256_and_has_no_trusted_wildcard(self) -> None:
         source = self.read(VERIFICATION_METADATA)
         self.assertIn("<verify-metadata>true</verify-metadata>", source)

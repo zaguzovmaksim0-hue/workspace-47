@@ -544,3 +544,33 @@ lifetimes in CAdES/XAdES verification and related signing paths. Do not promote 
 copy to a defect unless its retention exceeds the required verification/output
 lifetime or crosses a persistence/logging boundary. Physical AEAT F-03 and Go race
 remain external/manual gates outside this autonomous Termux-only pass.
+
+
+## Autonomous audit G3-01 — CAdES capture-buffer zeroization — 2026-08-04
+
+- Reproduced a real managed-heap retention defect: `ByteArrayOutputStream.toByteArray()`
+  returned a copy, so the old `fill(0) + reset()` left the capturer's owned backing
+  buffer unchanged; standalone JVM canary probe returned `retained=true`.
+- Source-policy TDD RED rejected the old clearing pattern. A first `close()`-override
+  implementation was also rejected after focused CAdES tests failed: BouncyCastle
+  closes the supplied stream before `signedBytes()` is consumed.
+- Final implementation preserves inherited stream close behavior and uses an explicit
+  `ClearingByteArrayOutputStream.clear()` that zeros protected `buf` then resets it;
+  `CapturingContentSigner.close()` invokes this explicit clear.
+- Final gates PASS: pins; Debug 510/510; QA 510/510; Debug/QA/QA-AndroidTest builds;
+  lint 0 errors / 27 warnings per variant; Android artifact verification; release
+  fail-closed; Python 97 with one environmental hardlink skip; Go test/vet/build.
+- APK SHA-256: Debug
+  `f8d819a0de57e40ad7e1575a2c44ff8577d9b70a55ff5b53942a2fd3d2f1227e`, QA
+  `96331ee7bddd782981a5b4900e906e27887ddc0dfd28698e62c17c38cbdb7f1b`, QA
+  AndroidTest `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+- No device/app/portal/credential/certificate/real-signing/upload/payment/submission
+  action occurred. Go race remains an external supported-Linux CI gate.
+- The containing commit is the G3-01 milestone commit; obtain its exact SHA with
+  `git rev-parse HEAD` after checkout/push verification.
+
+Next autonomous line: continue XAdES/final-signature/certificate temporary-copy
+lifetime review without widening public APIs solely for test visibility. If no
+reproducible excess-lifetime/persistence defect is found, record no-defect evidence
+and move to a fresh architecture/lifecycle or UX/accessibility audit pass. Physical
+AEAT F-03 remains a manual acceptance gate outside this task's autonomous boundary.

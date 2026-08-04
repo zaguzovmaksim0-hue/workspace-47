@@ -301,7 +301,7 @@ internal object CadesDetachedCodec {
     }.getOrDefault(false)
 
     private class CapturingContentSigner(rsaBits: Int) : ContentSigner, AutoCloseable {
-        private val output = ByteArrayOutputStream()
+        private val output = ClearingByteArrayOutputStream()
         private var closed = false
         private val placeholder = ByteArray((rsaBits + 7) / 8)
 
@@ -317,9 +317,15 @@ internal object CadesDetachedCodec {
         override fun close() {
             if (closed) return
             closed = true
-            output.toByteArray().fill(0)
-            output.reset()
+            output.clear()
             placeholder.fill(0)
+        }
+    }
+
+    private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {
+        fun clear() {
+            buf.fill(0)
+            reset()
         }
     }
 

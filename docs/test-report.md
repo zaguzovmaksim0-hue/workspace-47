@@ -1774,3 +1774,51 @@ Verification evidence:
 Go race instrumentation remains an external supported-Linux CI gate. No APK
 installation/launch, device control, portal request, credential/certificate use,
 real signing, upload, payment or administrative submission occurred.
+
+
+## Autonomous G3-01 — CAdES capture backing-buffer zeroization — 2026-08-04
+
+The CAdES `CapturingContentSigner` used `output.toByteArray().fill(0)` before
+`reset()`. A standalone JVM subclass probe confirmed that the actual
+`ByteArrayOutputStream.buf` still contained the canary (`retained=true`) after this
+sequence. The new source-policy test observed RED against that exact implementation.
+
+An initial fix that zeroed `buf` from an overridden stream `close()` was not accepted:
+focused Debug CAdES tests produced two failures because BouncyCastle closes the
+supplied stream during generation, causing the signed-attributes capture to be empty
+before `signedBytes()`. The corrected implementation uses an explicit `clear()`
+method and invokes it only from `CapturingContentSigner.close()`, matching existing
+repository sensitive-stream patterns.
+
+Final verification evidence:
+
+- source-policy regression: PASS;
+- corrected focused CAdES/LocalSignature tests: Debug PASS and QA PASS;
+- toolchain pins: PASS;
+- full Debug JVM: 510 tests, 0 failures/errors/skips;
+- full QA JVM: 510 tests, 0 failures/errors/skips;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- final non-lint Android invocation: `BUILD SUCCESSFUL`, 127 actionable tasks;
+- `lintDebug`, `lintQa`: PASS, 0 errors / 27 warnings per variant; separate lint
+  invocation `BUILD SUCCESSFUL`;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS;
+- Python: 97 tests, 0 failures/errors, 1 environmental hardlink skip;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+- generated relay binary removed;
+- Debug APK SHA-256:
+  `f8d819a0de57e40ad7e1575a2c44ff8577d9b70a55ff5b53942a2fd3d2f1227e`;
+- QA APK SHA-256:
+  `96331ee7bddd782981a5b4900e906e27887ddc0dfd28698e62c17c38cbdb7f1b`;
+- QA AndroidTest APK SHA-256:
+  `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+One earlier all-in-one verification job reached its external 1800-second wrapper
+timeout while lint analysis was still active, after unit and assemble tasks had run.
+This was not treated as PASS or as a product failure. Lint was rerun to successful
+completion separately, then pins/unit/assemble were rerun in a separate successful
+invocation on the final tree.
+
+No APK installation/launch, device control, portal request, credential/certificate
+use, real signing, upload, payment or administrative submission occurred. Go race
+instrumentation remains an external supported-Linux CI gate.

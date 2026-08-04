@@ -325,3 +325,25 @@ profiles; the successful login does not verify those operations.
   release fail-closed, Python and Go gates.
 - Next trust-boundary review lead: temporary final-signature/certificate byte-copy
   lifetime in local CAdES/XAdES verification and related signing code.
+
+
+## Autonomous CAdES capture-buffer zeroization — 2026-08-04 (G3-01)
+
+- The CAdES pre-sign capturer previously cleared only a `toByteArray()` copy; a JVM
+  backing-buffer probe reproduced retention of the original canary after the exact
+  old sequence.
+- A TDD source-policy regression pins the owned-buffer invariant. The first attempted
+  `close()` override was rejected by focused tests because BouncyCastle closes the
+  supplied stream before the capturer consumes it.
+- The final implementation follows the repository's established pattern: inherited
+  `ByteArrayOutputStream.close()` semantics remain untouched and an explicit
+  `clear()` zeros protected `buf` plus resets it at capturer lifecycle close.
+- Cryptographic format/algorithm/provider, certificate ownership, portal profiles,
+  network/TLS/WebView and release policy are unchanged. The claim is managed-heap
+  best-effort zeroization only.
+- Fresh gates: Debug 510/510, QA 510/510, lint 0 errors / 27 warnings per variant,
+  Debug/QA/QA-AndroidTest builds, Android artifact verification, release fail-closed,
+  Python 97 with one environmental hardlink skip, and Go test/vet/build all PASS.
+- Continue the trust-boundary audit with XAdES/final-signature/certificate temporary
+  copies; do not classify public certificate/signature copies as defects solely for
+  existing briefly in memory without excess lifetime or a persistence/logging leak.
