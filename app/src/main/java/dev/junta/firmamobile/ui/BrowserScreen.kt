@@ -644,7 +644,9 @@ fun BrowserScreen(
                                 if (!attachment.listenerAttached ||
                                     !attachment.documentStartScriptAttached
                                 ) {
-                                    webView.post { compatibilityError = true }
+                                    webView.post {
+                                        if (webViewRef.get() === webView) compatibilityError = true
+                                    }
                                 }
                             } else {
                                 bridgeRef.set(null)

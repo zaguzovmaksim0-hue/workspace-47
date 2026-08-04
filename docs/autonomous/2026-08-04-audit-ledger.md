@@ -485,3 +485,47 @@ No APK was installed or launched; no ADB/device control, portal interaction,
 credential/certificate material use, real signature, upload, payment or
 administrative submission occurred. Physical AEAT F-03 and supported-Linux Go race
 remain external gates.
+
+## Finding G7-01 — stale WebMessageBridge compatibility-error delivery
+
+**Reproduction.** `BrowserScreen` posts WebMessageBridge listener/document-start
+attachment failure through the initiating WebView, but the posted runnable previously
+set `compatibilityError` without verifying that this WebView was still active. Because
+`webViewRef` survives selected-profile changes while the profile-keyed disposal path
+can destroy the old WebView and install a replacement, a queued runnable from the old
+instance could publish its local attachment failure into the current browser UI.
+Adjacent page-progress and WebViewClient callbacks already enforce exact active-WebView
+identity.
+
+**Remediation.** The existing WebView-posted delivery now sets compatibility state only
+when `webViewRef.get() === webView`. A released, destroyed or replaced WebView cannot
+mutate the later UI; a failure from the current active WebView remains visible. No
+bridge attachment API, origin rules, script content, profile/catalog status, WebView
+TLS, Client TLS, certificate, signing, release or dependency policy changed.
+
+**TDD and verification.** Source-policy RED job
+`job_20260804_192114_5aab8616` failed as expected at
+`BrowserSecurityRegressionTest.kt:280` after 30/30 tasks. Focused GREEN job
+`job_20260804_192637_31b56bc1` passed after the minimum identity guard with 30/30
+tasks. Focused Debug+QA job `job_20260804_193202_5d9e8290` passed
+`BrowserSecurityRegressionTest` and `BrowserScreenTest` with 60/60 tasks. Fresh full
+Android job `job_20260804_193946_0b04588e` passed pin checks, Debug 518/518 and QA
+518/518 JVM tests with zero failures/errors/skips, and Debug/QA/QA-AndroidTest
+assembly (`BUILD SUCCESSFUL`, 127/127 tasks). Forced lint job
+`job_20260804_195110_a0e5e68a` passed 55/55 tasks with zero errors and 27 warnings per
+variant. Python passed 100 tests with one environmental hardlink skip. Android artifact
+verification and release-signing fail-closed passed with no release APK. Go
+test/vet/build passed and the generated relay binary was removed. Complete-diff
+whitespace, exact-scope, sensitive-content, personal-data and unsafe WebView/TLS/backup
+scans passed.
+
+APK SHA-256:
+
+- Debug: `6c97ea151ffe4bfc8c1a0b53ac6657f03760a880d78e62dbec2284da72f7edc2`;
+- QA: `875b38927595c7f4b153d79f33e09395825ffeee38c1829e2d0333bcc85c233a`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate material use, real signature, upload, payment or
+administrative submission occurred. Physical AEAT F-03 and supported-Linux Go race
+remain external gates.

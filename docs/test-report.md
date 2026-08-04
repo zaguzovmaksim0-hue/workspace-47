@@ -2018,3 +2018,43 @@ APK SHA-256:
 No APK installation/launch, device control, portal request, credential/certificate
 use, real signing, upload, payment or administrative submission occurred. Physical
 AEAT F-03 and Go race remain external gates.
+
+## Autonomous G7-01 — WebMessageBridge compatibility-error ownership — 2026-08-04
+
+A WebMessageBridge listener/document-start attachment failure was posted through its
+initiating WebView but could set `compatibilityError` after that WebView had been
+released and replaced. A source-policy regression was added before production mutation
+to require exact active-WebView ownership inside the attachment-failure runnable.
+
+The minimum implementation keeps the existing WebView-posted delivery and adds
+`webViewRef.get() === webView` immediately before compatibility-state mutation. It
+does not alter bridge attachment or any trust policy.
+
+Verification evidence:
+
+- RED: `job_20260804_192114_5aab8616`, expected assertion failure at
+  `BrowserSecurityRegressionTest.kt:280`, 30/30 tasks;
+- focused GREEN: `job_20260804_192637_31b56bc1`, PASS, 30/30 tasks;
+- focused Debug+QA BrowserSecurityRegression/BrowserScreen:
+  `job_20260804_193202_5d9e8290`, PASS, 60/60 tasks;
+- full Android: `job_20260804_193946_0b04588e`, pins PASS, Debug 518/518 and QA
+  518/518 with zero failures/errors/skips, three assemblies PASS, 127/127 tasks;
+- lint: `job_20260804_195110_a0e5e68a`, PASS, 0 errors / 27 warnings per variant,
+  55/55 tasks;
+- Python: 100 tests, zero failures/errors, one environmental hardlink skip;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS; no release APK;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+  generated relay binary removed;
+- complete-diff whitespace, exact-scope, sensitive-content, personal-data and unsafe
+  WebView/TLS/backup scans: PASS.
+
+APK SHA-256:
+
+- Debug: `6c97ea151ffe4bfc8c1a0b53ac6657f03760a880d78e62dbec2284da72f7edc2`;
+- QA: `875b38927595c7f4b153d79f33e09395825ffeee38c1829e2d0333bcc85c233a`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK installation/launch, device control, portal request, credential/certificate
+use, real signing, upload, payment or administrative submission occurred. Physical
+AEAT F-03 and Go race remain external gates.

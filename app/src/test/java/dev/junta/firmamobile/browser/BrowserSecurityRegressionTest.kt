@@ -264,6 +264,28 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun bridgeCompatibilityErrorIsBoundToTheInitiatingWebView() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val attachmentFailureMarker = "if (!attachment.listenerAttached ||"
+        val attachmentFailureBlock = screenSource
+            .substringAfter(attachmentFailureMarker, missingDelimiterValue = "")
+            .substringBefore("} else {")
+
+        assertTrue(
+            "BrowserScreen must retain the bridge attachment failure boundary",
+            attachmentFailureBlock.isNotEmpty(),
+        )
+        assertTrue(
+            "Only the exact initiating WebView may publish a deferred compatibility error",
+            "webView.post {" in attachmentFailureBlock &&
+                "webViewRef.get() === webView" in attachmentFailureBlock &&
+                "compatibilityError = true" in attachmentFailureBlock,
+        )
+    }
+
+    @Test
     fun signingTtlAndReplayPathsUseMonotonicBoundedStateOnly() {
         val pendingSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/signing/PendingSignRequestStore.kt",

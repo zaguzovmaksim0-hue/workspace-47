@@ -713,3 +713,31 @@ architecture/lifecycle/concurrency audit for other delayed completions and owner
 transfers. Any behavior change requires a separate subordinate design/plan and an
 observed TDD RED. Physical AEAT F-03 and supported-Linux Go race remain external
 acceptance gates.
+
+## Autonomous audit G7-01 — bridge compatibility-error ownership — 2026-08-04
+
+- Reproduced a stale asynchronous UI-delivery defect: a WebMessageBridge attachment
+  failure queued by an old WebView could set compatibility state after that WebView
+  was released and replaced.
+- TDD RED was observed first at `BrowserSecurityRegressionTest.kt:280`. The minimum
+  repair keeps the existing WebView-posted delivery but requires
+  `webViewRef.get() === webView` before mutating compatibility state.
+- Current active-WebView failures remain visible; stale callbacks from a released,
+  destroyed or replaced instance are ignored. No bridge, origin, script, TLS,
+  certificate, signing, profile, release or dependency policy changed.
+- Final gates PASS: focused Debug and Debug+QA; full Debug 518/518 and QA 518/518;
+  pins and Debug/QA/QA-AndroidTest builds; lint zero errors / 27 warnings per variant;
+  Android artifacts; release fail-closed; Python 100 with one environmental hardlink
+  skip; Go test/vet/build; generated relay binary and release APK absent; exact-scope
+  and security scans PASS.
+- APK SHA-256: Debug
+  `6c97ea151ffe4bfc8c1a0b53ac6657f03760a880d78e62dbec2284da72f7edc2`, QA
+  `875b38927595c7f4b153d79f33e09395825ffeee38c1829e2d0333bcc85c233a`, QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- No APK install/launch, device control, portal interaction, credential/certificate
+  use, real signing, upload, payment or submission occurred.
+
+After remote verification of the containing G7-01 commit, continue a fresh
+lifecycle/concurrency audit for other delayed UI deliveries and ownership transfers.
+Any behavior change requires a separate subordinate design/plan and observed TDD RED.
+Physical AEAT F-03 and supported-Linux Go race remain external acceptance gates.

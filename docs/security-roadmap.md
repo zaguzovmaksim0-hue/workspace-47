@@ -441,3 +441,22 @@ requires a separate design/plan and observed TDD RED.
 - Next autonomous priority: continue the architecture/lifecycle/concurrency audit for
   other delayed completions or ownership-transfer boundaries; require a separate
   design/plan and observed RED before any further behavior change.
+
+## Autonomous WebMessageBridge compatibility-error ownership — 2026-08-04 (G7-01)
+
+- A queued WebMessageBridge attachment-failure runnable could outlive its initiating
+  WebView and publish compatibility state into a replacement profile/WebView UI.
+- Deferred compatibility-error delivery now requires exact identity between the
+  initiating WebView and the active `webViewRef`, matching the existing page-progress
+  ownership boundary.
+- Current active-WebView failures remain visible; stale released/destroyed/replaced
+  WebView callbacks are ignored.
+- No bridge attachment, origin, script, profile/catalog, WebView TLS, Client TLS,
+  certificate, signing, release or dependency policy changed.
+- Fresh gates: Debug 518/518, QA 518/518, lint 0 errors / 27 warnings per variant,
+  Debug/QA/QA-AndroidTest builds, Android artifacts, release fail-closed, Python 100
+  with one environmental hardlink skip, and Go test/vet/build all PASS. Generated
+  relay binary and release APK are absent.
+- Next autonomous priority: continue the lifecycle/concurrency audit for delayed UI
+  deliveries and ownership transfer; require a separate design/plan and observed TDD
+  RED before any further behavior change.
