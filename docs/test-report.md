@@ -1650,3 +1650,52 @@ Fresh verification:
 
 No APK installation, app launch, device control, portal navigation, certificate
 operation, credential use, signing, upload, payment or submission occurred.
+
+
+## Autonomous G1-02 — network failure-detail visibility — 2026-08-04
+
+The previous public `ProfileHttpResult.Failure` data class exposed the internal
+`ProfileHttpFailureDetail` type and suppressed Kotlin
+`EXPOSED_PARAMETER_TYPE`/`EXPOSED_PROPERTY_TYPE` diagnostics. The internal detail
+contains direct/tunnel fallback phase and HTTP-write state; production signing
+consumers use the public failure `code`.
+
+A synthetic Kotlin 2.3 fixture rejected the tempting data-class + internal-primary-
+constructor shape because generated `copy()` retains broader visibility. The final
+shape is an ordinary class with an internal primary constructor/internal `detail`,
+while preserving public `Failure(ProfileHttpFailure)` and public `code`.
+
+TDD sequence and compile evidence:
+
+- RED: source/API policy test rejected the existing suppression/data-class shape;
+- GREEN: policy test passed after only the visibility/class-shape change;
+- `compileDebugKotlin` and `compileQaKotlin`: PASS, no `EXPOSED_*` or copy-
+  visibility compiler diagnostics;
+- focused `ProfileHttpTransportTest`, `DirectFirstProfileHttpTransportTest` and
+  `TriPhaseExecutionAdapterTest`: PASS (`BUILD SUCCESSFUL`).
+
+Fresh complete verification:
+
+- Debug JVM: 509 tests, 0 failures/errors/skips;
+- QA JVM: 509 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS, 0 errors / 27 warnings per variant;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- combined Android gate: `BUILD SUCCESSFUL`, 140 actionable tasks;
+- Python: 96 tests, 0 failures/errors, 1 environmental hardlink skip;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./...`: PASS;
+- Android artifact verification: PASS;
+- release signing without private inputs: expected fail-closed PASS;
+- Debug APK SHA-256:
+  `a28a116087eead23c183bd54f4fabbc6e8c3d449a740c3f5fac6595c5bdab7fe`;
+- QA APK SHA-256:
+  `e6e51ec7a92f072e806310937db1968016d04793ff8269344ea3ffaa2811dc0c`;
+- QA AndroidTest APK SHA-256:
+  `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+The standalone Termux `kotlinc` fixture emitted an environmental Jansi native-
+library diagnostic (`libc.so.6` not found for bundled Jansi), but the selected
+ordinary-class fixture returned exit 0 with no visibility/compiler warning. The
+actual Gradle/Kotlin compilation is the authoritative repository gate.
+
+No APK installation, launch, device control, portal request, certificate use,
+credential, signature, upload, payment or submission occurred.

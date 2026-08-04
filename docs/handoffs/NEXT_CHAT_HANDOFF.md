@@ -470,3 +470,22 @@ Next autonomous audit line: classify the suppressed exposed network transport
 type boundary, then continue QA-only catalog/release consistency and certificate/
 storage/logging/signing trust-boundary review. Physical AEAT F-03 continuation
 remains outside the autonomous safety boundary.
+
+
+## Autonomous audit G1-02 — network failure-detail visibility — 2026-08-04
+
+- removed the Kotlin `EXPOSED_*` suppressions by internalizing only route failure
+  detail/primary construction; public failure code construction remains unchanged;
+- rejected the data-class/internal-constructor alternative because Kotlin 2.3
+  warns about generated `copy()` visibility;
+- no network retry/fallback/TLS/DNS/tunnel/signing behavior changed;
+- fresh gates: Debug 509/509, QA 509/509, lint/build/APK artifact, Python 96
+  (one environmental hardlink skip), Go test/vet/build and release fail-closed PASS;
+- no APK installation, launch, device control or portal/certificate operation.
+
+Read-only next-line reconciliation found all 8 configured site profiles bound to
+exactly 8 public-catalog entries. `reg-age-redsara` and
+`aeat-mis-datos-censales` remain `QA_ONLY` with catalog
+`E2E_PENDING / IMPLEMENTED_NOT_E2E`; verified profiles remain E2E-verified. Continue
+by proving release-registry behavior for all sensitive non-E2E profiles, then audit
+certificate/storage/logging/signing trust boundaries.

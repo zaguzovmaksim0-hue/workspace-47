@@ -218,6 +218,20 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("assembleRelease", release)
         self.assertIn("app-release.apk", release)
 
+    def test_network_failure_detail_is_internal_without_exposed_type_suppression(self) -> None:
+        source = self.read(
+            ROOT / "app" / "src" / "main" / "java" / "dev" / "junta" / "firmamobile" / "network" / "ProfileHttpTransport.kt"
+        )
+        self.assertNotIn('EXPOSED_PARAMETER_TYPE', source)
+        self.assertNotIn('EXPOSED_PROPERTY_TYPE', source)
+        self.assertNotIn('data class Failure', source)
+        self.assertIn(
+            'class Failure internal constructor(\n        internal val detail: ProfileHttpFailureDetail,\n    ) : ProfileHttpResult {',
+            source,
+        )
+        self.assertIn('val code: ProfileHttpFailure', source)
+        self.assertIn('constructor(code: ProfileHttpFailure)', source)
+
     def test_webview_debugging_is_debug_only(self) -> None:
         gradle = self.read(APP_BUILD)
         webview = self.read(

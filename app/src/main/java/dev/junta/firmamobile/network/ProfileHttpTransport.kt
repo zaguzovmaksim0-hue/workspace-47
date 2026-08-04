@@ -105,8 +105,9 @@ enum class ProfileHttpFailure {
 sealed interface ProfileHttpResult {
     data class Success(val response: ProfileHttpResponse) : ProfileHttpResult
 
-    @Suppress("EXPOSED_PARAMETER_TYPE", "EXPOSED_PROPERTY_TYPE")
-    data class Failure(val detail: ProfileHttpFailureDetail) : ProfileHttpResult {
+    class Failure internal constructor(
+        internal val detail: ProfileHttpFailureDetail,
+    ) : ProfileHttpResult {
         val code: ProfileHttpFailure
             get() = detail.code
 

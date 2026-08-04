@@ -154,6 +154,20 @@ Latest completed isolated PR — catalog-generation deduplication (F-15B):
   performed for this refactor.
 
 
+
+Latest autonomous hardening — network failure-detail visibility (G1-02):
+
+- `ProfileHttpResult.Failure` no longer exposes internal fallback phase/write-state
+  through a public data-class property or primary constructor.
+- The class retains public `Failure(ProfileHttpFailure)` and `code`, while `detail`
+  and the primary constructor are internal; `EXPOSED_*` suppressions are removed.
+- A rejected data-class/internal-constructor alternative was compiler-tested and
+  produced the Kotlin generated-`copy()` visibility warning, so the remediation
+  does not merely replace one suppression with another.
+- No retry/fallback/DNS/TLS/tunnel/signing semantics changed. Fresh gates: Debug
+  509/509, QA 509/509, lint/build/APKs, Python 96 with one environmental hardlink
+  skip, Go test/vet/build, artifact verification and release fail-closed PASS.
+
 Latest autonomous hardening — QA WebView debugging boundary (G1-01):
 
 - `TrustedJuntaWebView` no longer derives Chrome DevTools exposure from the broad

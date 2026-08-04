@@ -28,16 +28,12 @@ Findings are appended with evidence, severity, autonomous feasibility, exact
 sub-plan path, focused/full verification, commit SHA, push result, and residual
 manual gate. A finding is not marked complete from reasoning alone.
 
-## Initial audit queue
+## Remaining audit queue
 
-1. Reconcile residual items and incomplete claims in
-   `docs/handoffs/NEXT_CHAT_HANDOFF.md` with current source and tests.
-2. Review current Kotlin compiler warnings around exposed network transport types
-   and decide whether they indicate a real API boundary defect.
-3. Review QA-only portal profiles and compatibility documents for exact status and
+1. Review QA-only portal profiles and compatibility documents for exact status and
    release-registry consistency.
-4. Continue the fresh security/privacy trust-boundary audit across certificate,
-   storage, logging, WebView and signing boundaries.
+2. Continue the fresh security/privacy trust-boundary audit across certificate,
+   storage, logging and signing boundaries.
 
 ## Queue reconciliation — generation 1
 
@@ -90,3 +86,45 @@ APK SHA-256 after the remediation:
 
 No APK was installed or launched; no device control, portal interaction,
 certificate operation, credential use or signature occurred.
+
+
+## Finding G1-02 — network failure-detail visibility boundary
+
+**Reproduction.** `ProfileHttpResult.Failure` was a public data class with a
+public property/primary constructor of internal type `ProfileHttpFailureDetail`.
+Kotlin 2.3 required `EXPOSED_PARAMETER_TYPE` and `EXPOSED_PROPERTY_TYPE`
+suppressions. The detail contains fallback-only phase/write-state, while signing
+consumers use the stable public `code` surface.
+
+**Design check.** A synthetic Kotlin fixture showed that only making the data-class
+constructor internal creates a separate generated-`copy()` visibility warning
+(which is scheduled to become an error in a future language version). The chosen
+ordinary-class shape compiled without visibility warnings; the Termux `kotlinc`
+launcher still emitted its environmental Jansi native-library diagnostic but
+returned exit 0. Repository search found no `Failure.copy`, destructuring, or
+structural-equality dependency.
+
+**Remediation.** `Failure` is now an ordinary class with an internal primary
+constructor and `internal val detail`. Public `Failure(ProfileHttpFailure)` and
+`code: ProfileHttpFailure` are preserved. The `EXPOSED_*` suppression is removed.
+No retry, fallback, DNS, TLS, tunnel, timeout or signing path changed.
+
+**TDD and fresh verification.** The new source/API policy test first failed on the
+suppression/public data-class shape and then passed after the minimal visibility
+change. Debug and QA Kotlin compilation emitted no exposed-type/copy-visibility
+diagnostics. Focused transport/direct-first/tri-phase tests passed. Full Debug and
+QA JVM suites each passed 509/509 with zero failures/errors/skips. `lintDebug`,
+`lintQa`, `assembleDebug`, `assembleQa`, `assembleQaAndroidTest` passed
+(`BUILD SUCCESSFUL`, 140 actionable tasks); lint has 0 errors and 27 warnings per
+variant. Python passed 96 tests with one environmental hardlink skip. Go
+test/vet/build, Android artifact verification and release fail-closed verification
+all passed.
+
+APK SHA-256:
+
+- Debug: `a28a116087eead23c183bd54f4fabbc6e8c3d449a740c3f5fac6595c5bdab7fe`;
+- QA: `e6e51ec7a92f072e806310937db1968016d04793ff8269344ea3ffaa2811dc0c`;
+- QA AndroidTest: `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+No APK installation, app launch, device control, portal interaction, certificate,
+credential or signing operation occurred.
