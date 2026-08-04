@@ -306,3 +306,22 @@ profiles; the successful login does not verify those operations.
 - Next trust-boundary leads are QA diagnostic-journal clear semantics and temporary
   signature/certificate-copy lifetime; neither is promoted to a defect without a
   reproducible contract violation.
+
+
+## Autonomous QA diagnostic journal clear boundary — 2026-08-04
+
+- The test-plan `clear elimina el journal` contract was incomplete in QA: memory
+  cleared, but the app-private `qa-navigation.log` survived during the same process.
+- A focused integration test reproduced the defect before production mutation.
+- `SanitizedLogSink` now has a default no-op clear lifecycle hook, preserving lambda
+  compatibility; `SanitizedLogger.clear()` delegates best-effort, and the QA file
+  sink truncates the persisted sanitized journal.
+- Release/non-QA still persists no QA journal, and no diagnostic event fields,
+  allowlists, hashes, capacities, portal behavior, certificate behavior or signing
+  behavior changed.
+- This is logical app-journal clearing, not a claim of physical secure erasure on
+  flash or erasure of system Logcat history.
+- Fresh full gates passed at 510/510 Debug and 510/510 QA plus lint/build/artifact,
+  release fail-closed, Python and Go gates.
+- Next trust-boundary review lead: temporary final-signature/certificate byte-copy
+  lifetime in local CAdES/XAdES verification and related signing code.

@@ -25,6 +25,30 @@ class ApplicationSanitizedLoggerFactoryTest {
     }
 
     @Test
+    fun qaClearRemovesInMemoryAndPersistedJournal() {
+        val directory = Files.createTempDirectory("jfm-qa-logger-clear").toFile()
+        val logger = ApplicationSanitizedLoggerFactory.create(
+            filesDirectory = directory,
+            qaEnabled = true,
+            diagnosticMirror = SanitizedLogSink {},
+        )
+        val file = directory.resolve(QaDiagnosticFileSink.FILE_NAME)
+
+        logger.recordBrowserEvent(
+            DiagnosticEventCode.NETWORK_ERROR,
+            "ws072.juntadeandalucia.es",
+        )
+        assertTrue(logger.exportText().contains("event=NETWORK_ERROR"))
+        assertTrue(file.readText().contains("event=NETWORK_ERROR"))
+
+        logger.clear()
+
+        assertTrue(logger.exportText().isEmpty())
+        assertTrue(file.isFile)
+        assertTrue(file.readText().isEmpty())
+    }
+
+    @Test
     fun nonQaModeDoesNotCreateOrMirrorPersistentDiagnostics() {
         val directory = Files.createTempDirectory("jfm-release-logger-factory").toFile()
         val mirrored = mutableListOf<String>()

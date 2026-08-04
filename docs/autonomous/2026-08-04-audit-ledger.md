@@ -30,9 +30,9 @@ manual gate. A finding is not marked complete from reasoning alone.
 
 ## Remaining audit queue
 
-1. Continue the fresh security/privacy trust-boundary audit across certificate,
-   storage, logging and signing boundaries, with the QA diagnostic-journal clear
-   lifecycle and final-signature temporary-copy lifetime as explicit review leads.
+1. Continue the fresh security/privacy trust-boundary audit with final-signature and
+   certificate temporary-copy lifetime as the next explicit review lead; re-open
+   logging/storage only if a new reproducible retention or failure-path defect appears.
 2. Start a fresh independent architecture/lifecycle or UX/accessibility pass after
    the trust-boundary line reaches a clean checkpoint.
 
@@ -161,3 +161,50 @@ JVM suites were rerun on the final test diff and each passed 509/509 with zero
 failures, errors, or skips. No APK was installed or launched and no device,
 portal, certificate, credential, signature, upload, payment, or submission action
 occurred.
+
+
+## Finding G2-02 — QA diagnostic journal clear boundary
+
+**Reproduction.** `docs/test-plan.md` explicitly requires that logger `clear`
+remove the journal. The application logger has two app-controlled journal layers in
+QA: the bounded in-memory `SanitizedLogger` deque and
+`filesDir/qa-navigation.log` via `QaDiagnosticFileSink`. The existing
+`SanitizedLogger.clear()` removed only memory. The new integration regression first
+ran against the unmodified production implementation and failed exactly at
+`ApplicationSanitizedLoggerFactoryTest.kt:48`: after `logger.clear()`, the in-memory
+export was empty but the QA file still contained the pre-clear `NETWORK_ERROR`
+record. Repository search found no current production call site for
+`sanitizedLogger.clear()`, so this is a dormant privacy/API-contract defect, not
+evidence that a user-triggered clear already leaked retained diagnostics.
+
+**Design and remediation.** The narrow subordinate design/plan extends the existing
+`SanitizedLogSink` fun interface with a default no-op `clear()` while keeping
+`emit(record)` as its sole abstract method. Existing lambda/SAM sinks therefore
+remain compatible. `SanitizedLogger.clear()` clears memory and then best-effort
+delegates to its sink. `QaDiagnosticFileSink.clear()` synchronously truncates the
+app-private journal to zero bytes, and the QA composite sink propagates clear to the
+file sink plus any mirror clear hook. The current Logcat mirror is a lambda with the
+default no-op clear; no claim is made that the app can erase system Logcat history
+or physically secure-erase flash blocks. Non-QA mode remains a no-op sink and still
+creates no QA diagnostic file.
+
+**TDD and verification.** RED was the focused Debug integration failure described
+above. After the minimum production change, the complete
+`ApplicationSanitizedLoggerFactoryTest` passed in Debug and QA. Fresh full gates on
+the changed production tree then passed: toolchain pin checks; Debug 510/510 and QA
+510/510 JVM tests with zero failures/errors/skips; `lintDebug` and `lintQa` with 0
+errors / 27 warnings each; `assembleDebug`, `assembleQa`,
+`assembleQaAndroidTest`; Android artifact verification; release signing fail-closed;
+Python 96 tests with one environmental hardlink skip; Go test/vet/build. No relay
+binary was retained.
+
+APK SHA-256 after the remediation:
+
+- Debug: `079506fc28ee108c37b2a5bb929bfe5214dda767284fe8c9dac04e8e811adbec`;
+- QA: `c253e07b0cb94321e31769dc96dc1fd7f142f8a907884ecc7617254d0cb53e85`;
+- QA AndroidTest: `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+certificate or credential use, real signature, upload, payment, or administrative
+submission occurred. Go race remains an external supported-Linux CI gate and was not
+claimed on Termux.

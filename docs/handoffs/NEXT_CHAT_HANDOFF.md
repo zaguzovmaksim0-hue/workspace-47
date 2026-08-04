@@ -513,3 +513,34 @@ boundaries. Inspect the mismatch between `SanitizedLogger.clear()` (memory only)
 the QA file journal lifecycle, but treat it as a defect only if a concrete clear
 contract is established; also inspect temporary signature/certificate byte-copy
 lifetimes. Physical AEAT F-03 remains outside this autonomous task safety boundary.
+
+
+## Autonomous audit G2-02 — QA diagnostic journal clear boundary — 2026-08-04
+
+- `docs/test-plan.md` requires logger clear to eliminate the journal; QA persisted a
+  second sanitized journal in `filesDir/qa-navigation.log` that previously survived
+  `SanitizedLogger.clear()` during the same process.
+- TDD RED was observed at the persisted-file assertion while the in-memory export was
+  already empty; no current production caller of `sanitizedLogger.clear()` was found,
+  so the defect was dormant rather than evidence of an observed user leak.
+- `SanitizedLogSink` now exposes a default no-op `clear()` without losing SAM/lambda
+  compatibility. The logger delegates clear best-effort, the QA file sink truncates
+  its app-private journal, and the QA composite propagates clear. Release/non-QA
+  persistence is unchanged; system Logcat erasure is not claimed.
+- Focused Debug+QA GREEN passed. Fresh full gates passed: 510/510 Debug, 510/510 QA,
+  lint 0 errors / 27 warnings per variant, Debug/QA/QA-AndroidTest builds, Android
+  artifact verification, release fail-closed, Python 96 with one environmental
+  hardlink skip, and Go test/vet/build.
+- APK SHA-256: Debug
+  `079506fc28ee108c37b2a5bb929bfe5214dda767284fe8c9dac04e8e811adbec`, QA
+  `c253e07b0cb94321e31769dc96dc1fd7f142f8a907884ecc7617254d0cb53e85`, QA
+  AndroidTest
+  `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+- The containing commit is the G2-02 milestone commit; obtain its exact SHA with
+  `git rev-parse HEAD` after checkout/push verification.
+
+Next autonomous line: inspect temporary final-signature/certificate byte-copy
+lifetimes in CAdES/XAdES verification and related signing paths. Do not promote a
+copy to a defect unless its retention exceeds the required verification/output
+lifetime or crosses a persistence/logging boundary. Physical AEAT F-03 and Go race
+remain external/manual gates outside this autonomous Termux-only pass.

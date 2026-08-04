@@ -1735,3 +1735,42 @@ Verification evidence:
 
 Go race instrumentation remains an external Linux CI gate; it was not claimed on
 Termux. No application/device/portal/credential/certificate/signing action occurred.
+
+
+## Autonomous G2-02 — QA diagnostic journal clear boundary — 2026-08-04
+
+The authoritative test plan says logger `clear` removes the journal, but QA also
+persists sanitized records in `filesDir/qa-navigation.log`. The initial integration
+test proved the mismatch: after `logger.clear()` the in-memory export was empty while
+the file remained non-empty, failing at the final persisted-file assertion.
+
+The fix keeps `SanitizedLogSink` SAM-compatible by adding only a default no-op
+`clear()`. `SanitizedLogger.clear()` delegates best-effort to the sink, the QA file
+sink truncates its app-private journal, and the QA composite propagates clear. The
+release/non-QA sink remains no-op; event schemas, allowlists, hashes and capacities
+are unchanged. Logcat erasure is not claimed.
+
+Verification evidence:
+
+- RED: focused Debug regression failed at persisted-file emptiness after clear;
+- focused GREEN: complete `ApplicationSanitizedLoggerFactoryTest` PASS in Debug and
+  QA;
+- full Debug JVM: 510 tests, 0 failures/errors/skips;
+- full QA JVM: 510 tests, 0 failures/errors/skips;
+- `lintDebug`, `lintQa`: PASS, 0 errors / 27 warnings per variant;
+- `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS;
+- Python: 96 tests, 0 failures/errors, 1 environmental hardlink skip;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+- generated relay binary removed;
+- Debug APK SHA-256:
+  `079506fc28ee108c37b2a5bb929bfe5214dda767284fe8c9dac04e8e811adbec`;
+- QA APK SHA-256:
+  `c253e07b0cb94321e31769dc96dc1fd7f142f8a907884ecc7617254d0cb53e85`;
+- QA AndroidTest APK SHA-256:
+  `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+Go race instrumentation remains an external supported-Linux CI gate. No APK
+installation/launch, device control, portal request, credential/certificate use,
+real signing, upload, payment or administrative submission occurred.

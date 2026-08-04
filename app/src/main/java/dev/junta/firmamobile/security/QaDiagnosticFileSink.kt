@@ -51,6 +51,12 @@ internal class QaDiagnosticFileSink(
         recordBytes.fill(0)
     }
 
+    @Synchronized
+    override fun clear() {
+        file.parentFile?.mkdirs()
+        file.outputStream().use { }
+    }
+
     private fun isSafeRecord(record: String): Boolean {
         if (record.isEmpty() || record.length > MAX_RECORD_BYTES ||
             (!record.startsWith("timestamp=") && !record.startsWith("event=")) ||

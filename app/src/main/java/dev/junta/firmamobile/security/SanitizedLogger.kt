@@ -31,6 +31,8 @@ enum class DiagnosticEventCode {
 
 fun interface SanitizedLogSink {
     fun emit(record: String)
+
+    fun clear() = Unit
 }
 
 class SanitizedLogger(
@@ -174,6 +176,7 @@ class SanitizedLogger(
     @Synchronized
     fun clear() {
         records.clear()
+        runCatching { sink.clear() }
     }
 
     private fun append(record: String) {

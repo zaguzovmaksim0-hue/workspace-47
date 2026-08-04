@@ -12,9 +12,16 @@ internal object ApplicationSanitizedLoggerFactory {
             val fileSink = QaDiagnosticFileSink(
                 file = filesDirectory.resolve(QaDiagnosticFileSink.FILE_NAME),
             )
-            SanitizedLogSink { record ->
-                runCatching { fileSink.emit(record) }
-                runCatching { diagnosticMirror.emit(record) }
+            object : SanitizedLogSink {
+                override fun emit(record: String) {
+                    runCatching { fileSink.emit(record) }
+                    runCatching { diagnosticMirror.emit(record) }
+                }
+
+                override fun clear() {
+                    runCatching { fileSink.clear() }
+                    runCatching { diagnosticMirror.clear() }
+                }
             }
         } else {
             SanitizedLogSink {}
