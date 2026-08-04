@@ -289,3 +289,20 @@ Status after physical-device E2E:
 
 Remaining portal work concerns document-signing/submission branches and other
 profiles; the successful login does not verify those operations.
+
+
+## Autonomous release-registry invariant coverage — 2026-08-04
+
+- Runtime release eligibility already rejected sensitive non-E2E profiles; no
+  production change was required.
+- The prior downgrade regression test was order-dependent and asserted an unrelated
+  already-ineligible profile, so it did not prove the advertised invariant.
+- Coverage is now catalog-driven for `SIGN`, `SELECT_CERTIFICATE`, and
+  `CLIENT_TLS_AUTH`: every non-E2E sensitive profile must be absent from release, and
+  every current E2E sensitive profile is independently downgraded to prove the
+  release gate closes while QA remains available.
+- Current profile/catalog status did not change: RedSARA and AEAT remain QA-only /
+  implemented-not-E2E; verified release profiles retain their existing evidence scope.
+- Next trust-boundary leads are QA diagnostic-journal clear semantics and temporary
+  signature/certificate-copy lifetime; neither is promoted to a defect without a
+  reproducible contract violation.

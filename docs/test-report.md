@@ -1699,3 +1699,39 @@ actual Gradle/Kotlin compilation is the authoritative repository gate.
 
 No APK installation, launch, device control, portal request, certificate use,
 credential, signature, upload, payment or submission occurred.
+
+
+## Autonomous G2-01 — release-registry invariant evidence repair — 2026-08-04
+
+The release runtime policy itself was already generic and fail-closed, but the old
+`releaseRejectsSensitiveEnabledProfileWithoutVerifiedE2eEvidence` regression test was
+a false-positive proof: it downgraded the first `VERIFIED_E2E` JSON occurrence
+(`unizar-tramitador`) while asserting that the unrelated `junta-andalucia` profile
+was absent from release.
+
+The replacement test is catalog-driven. It verifies every sensitive non-E2E profile
+is absent from release and, one profile at a time, downgrades every current
+`ENABLED / VERIFIED_E2E` sensitive profile to `VERIFIED_CONTRACT`; release must then
+exclude that exact profile while QA keeps it with the downgraded status. No runtime
+source or profile data changed.
+
+Verification evidence:
+
+- focused final invariant test: Debug PASS and QA PASS;
+- complete final JVM rerun after the catalog-wide assertion: Debug 509/509 and QA
+  509/509, zero failures/errors/skips;
+- complete cross-stack gate on the same unchanged production tree before the final
+  test-only strengthening: toolchain pins PASS; Debug 509/509 and QA 509/509;
+  `lintDebug`, `lintQa`, `assembleDebug`, `assembleQa`, `assembleQaAndroidTest` PASS;
+- Android artifact verification PASS; release signing without private inputs rejected
+  fail-closed as required;
+- Python: 96 tests, 0 failures/errors, 1 environmental hardlink skip;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+- APK SHA-256 unchanged from G1-02: Debug
+  `a28a116087eead23c183bd54f4fabbc6e8c3d449a740c3f5fac6595c5bdab7fe`, QA
+  `e6e51ec7a92f072e806310937db1968016d04793ff8269344ea3ffaa2811dc0c`,
+  QA AndroidTest
+  `6e41e3c8c41775194681a3a7b41f999422cb82b48b59ff3aa19c3923c6db252b`.
+
+Go race instrumentation remains an external Linux CI gate; it was not claimed on
+Termux. No application/device/portal/credential/certificate/signing action occurred.

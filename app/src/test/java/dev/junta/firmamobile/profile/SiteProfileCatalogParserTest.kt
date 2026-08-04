@@ -374,19 +374,47 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun releaseRejectsSensitiveEnabledProfileWithoutVerifiedE2eEvidence() {
-        val downgradedCatalog = SiteProfileCatalogParser.parse(
-            BuiltInSiteProfiles.JSON.replaceFirst(
-                "\"compatibilityStatus\": \"VERIFIED_E2E\"",
-                "\"compatibilityStatus\": \"VERIFIED_CONTRACT\"",
-            ),
+    fun releaseRejectsEverySensitiveEnabledProfileWithoutVerifiedE2eEvidence() {
+        val sensitiveCapabilities = setOf(
+            Capability.SIGN,
+            Capability.SELECT_CERTIFICATE,
+            Capability.CLIENT_TLS_AUTH,
         )
-        val release = SiteProfileRegistry(downgradedCatalog, BuildTrustPolicy.RELEASE)
-        val qa = SiteProfileRegistry(downgradedCatalog, BuildTrustPolicy.QA)
-        val junta = ProfileId("junta-andalucia")
+        val sensitiveProfiles = BuiltInSiteProfiles.catalog.profiles.filter { profile ->
+            profile.capabilities.any(sensitiveCapabilities::contains)
+        }
+        val nonE2eSensitiveProfiles = sensitiveProfiles.filter { profile ->
+            profile.compatibilityStatus != CompatibilityStatus.VERIFIED_E2E
+        }
+        val verifiedSensitiveProfiles = sensitiveProfiles.filter { profile ->
+            profile.activation == ProfileActivation.ENABLED &&
+                profile.compatibilityStatus == CompatibilityStatus.VERIFIED_E2E
+        }
 
-        assertNull(release.profile(junta))
-        assertTrue(qa.profile(junta) != null)
+        assertTrue(nonE2eSensitiveProfiles.isNotEmpty())
+        nonE2eSensitiveProfiles.forEach { profile ->
+            assertNull(profile.profileId.value, BuiltInSiteProfiles.releaseRegistry.profile(profile.profileId))
+        }
+        assertTrue(verifiedSensitiveProfiles.isNotEmpty())
+        verifiedSensitiveProfiles.forEach { verifiedProfile ->
+            val downgradedCatalog = BuiltInSiteProfiles.catalog.copy(
+                profiles = BuiltInSiteProfiles.catalog.profiles.map { profile ->
+                    if (profile.profileId == verifiedProfile.profileId) {
+                        profile.copy(compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT)
+                    } else {
+                        profile
+                    }
+                },
+            )
+            val release = SiteProfileRegistry(downgradedCatalog, BuildTrustPolicy.RELEASE)
+            val qa = SiteProfileRegistry(downgradedCatalog, BuildTrustPolicy.QA)
+
+            assertNull(verifiedProfile.profileId.value, release.profile(verifiedProfile.profileId))
+            assertEquals(
+                CompatibilityStatus.VERIFIED_CONTRACT,
+                qa.profile(verifiedProfile.profileId)?.compatibilityStatus,
+            )
+        }
     }
 
     @Test

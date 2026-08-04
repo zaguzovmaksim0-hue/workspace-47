@@ -30,10 +30,11 @@ manual gate. A finding is not marked complete from reasoning alone.
 
 ## Remaining audit queue
 
-1. Review QA-only portal profiles and compatibility documents for exact status and
-   release-registry consistency.
-2. Continue the fresh security/privacy trust-boundary audit across certificate,
-   storage, logging and signing boundaries.
+1. Continue the fresh security/privacy trust-boundary audit across certificate,
+   storage, logging and signing boundaries, with the QA diagnostic-journal clear
+   lifecycle and final-signature temporary-copy lifetime as explicit review leads.
+2. Start a fresh independent architecture/lifecycle or UX/accessibility pass after
+   the trust-boundary line reaches a clean checkpoint.
 
 ## Queue reconciliation — generation 1
 
@@ -128,3 +129,35 @@ APK SHA-256:
 
 No APK installation, app launch, device control, portal interaction, certificate,
 credential or signing operation occurred.
+
+
+## Finding G2-01 — release-registry invariant evidence repair
+
+**Reproduction.** The runtime registry was already fail-closed for sensitive
+capabilities: an `ENABLED` profile containing `SIGN`, `SELECT_CERTIFICATE`, or
+`CLIENT_TLS_AUTH` is release-eligible only with `VERIFIED_E2E`, and `QA_ONLY` is
+never release-active. The regression test intended to prove downgrade rejection did
+not prove its claim: `replaceFirst` downgraded the first `VERIFIED_E2E` profile
+(`unizar-tramitador`) but the assertion checked `junta-andalucia`, which was already
+release-ineligible as `EXPERIMENTAL`. The test therefore passed even if that specific
+downgrade was not the reason for rejection.
+
+**Remediation.** No production policy changed. The test now derives the sensitive
+capability set directly, asserts every built-in sensitive profile whose status is not
+`VERIFIED_E2E` is absent from the release registry, and independently downgrades each
+current `ENABLED / VERIFIED_E2E` sensitive profile to `VERIFIED_CONTRACT`. Each
+mutated profile must disappear from release while remaining visible in QA with the
+downgraded status. The coverage is catalog-driven rather than name/order-driven, so a
+future sensitive non-E2E catalog entry is automatically included.
+
+**Verification.** Focused Debug passed after the first correction. A complete
+cross-stack gate on the unchanged production tree then passed: toolchain pin checks;
+Debug 509/509 and QA 509/509; `lintDebug`/`lintQa`; Debug/QA/QA-AndroidTest builds;
+Android artifact verification; release fail-closed; Python 96 tests with one
+environmental hardlink skip; Go test/vet/build. APK hashes remained identical to
+G1-02 because runtime sources were unchanged. The final additional catalog-wide
+non-E2E assertion then passed focused Debug and QA; the complete final Debug and QA
+JVM suites were rerun on the final test diff and each passed 509/509 with zero
+failures, errors, or skips. No APK was installed or launched and no device,
+portal, certificate, credential, signature, upload, payment, or submission action
+occurred.

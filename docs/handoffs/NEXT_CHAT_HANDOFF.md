@@ -489,3 +489,27 @@ exactly 8 public-catalog entries. `reg-age-redsara` and
 `E2E_PENDING / IMPLEMENTED_NOT_E2E`; verified profiles remain E2E-verified. Continue
 by proving release-registry behavior for all sensitive non-E2E profiles, then audit
 certificate/storage/logging/signing trust boundaries.
+
+
+## Autonomous audit G2-01 — release-registry invariant evidence — 2026-08-04
+
+- production `SiteProfileRegistry` already enforces the general sensitive-profile
+  release rule; no runtime/profile/catalog mutation was made;
+- the old downgrade regression test was a false-positive proof because it downgraded
+  `unizar-tramitador` but asserted the unrelated already-ineligible
+  `junta-andalucia`;
+- the replacement is name/order independent: all sensitive non-E2E built-in profiles
+  must be release-absent, and every current enabled E2E sensitive profile is
+  independently downgraded and must disappear from release while remaining in QA;
+- complete same-production-tree gates passed: Debug 509/509, QA 509/509, lint/build,
+  artifacts, release fail-closed, Python 96 with one environmental hardlink skip, Go
+  test/vet/build; final strengthened invariant passed focused Debug+QA and the
+  complete final JVM rerun passed Debug 509/509 and QA 509/509;
+- no APK install/launch, device control, portal interaction, certificate/credential
+  use, real signing, upload, payment, or submission occurred.
+
+Next autonomous audit line: continue certificate/storage/logging/signing trust
+boundaries. Inspect the mismatch between `SanitizedLogger.clear()` (memory only) and
+the QA file journal lifecycle, but treat it as a defect only if a concrete clear
+contract is established; also inspect temporary signature/certificate byte-copy
+lifetimes. Physical AEAT F-03 remains outside this autonomous task safety boundary.
