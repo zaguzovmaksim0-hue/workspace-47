@@ -140,6 +140,73 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun staleWebViewCannotDeliverNavigationOrLifecycleCallbacks() {
+        var active = true
+        val staleCallbacks = RecordingBrowserCallbacks()
+        val staleClient = JuntaWebViewClient(
+            callbacks = staleCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+            isActiveWebView = { active },
+        )
+        active = false
+
+        assertTrue(
+            staleClient.shouldOverrideUrlLoading(
+                webView,
+                request("https://example.org/help"),
+            ),
+        )
+        assertTrue(
+            staleClient.shouldOverrideUrlLoading(
+                webView,
+                request("afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc"),
+            ),
+        )
+        staleClient.onPageStarted(webView, TRUSTED_PAGE, null)
+        staleClient.onPageFinished(webView, TRUSTED_PAGE)
+
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val sslError = Shadow.newInstanceOf(SslError::class.java)
+        staleClient.onReceivedSslError(webView, handler, sslError)
+
+        val safeBrowsing = RecordingSafeBrowsingResponse()
+        staleClient.onSafeBrowsingHit(
+            webView,
+            request("https://www.juntadeandalucia.es/suspicious"),
+            0,
+            safeBrowsing,
+        )
+
+        assertTrue(staleCallbacks.events.isEmpty())
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
+        assertTrue(safeBrowsing.backToSafetyCalled)
+        assertFalse(safeBrowsing.proceedCalled)
+    }
+
+    @Test
+    fun activeViewPredicateFailureIsFailClosed() {
+        val staleCallbacks = RecordingBrowserCallbacks()
+        val staleClient = JuntaWebViewClient(
+            callbacks = staleCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+            isActiveWebView = { error("ownership probe failed") },
+        )
+
+        assertTrue(
+            staleClient.shouldOverrideUrlLoading(
+                webView,
+                request("https://example.org/help"),
+            ),
+        )
+        assertTrue(staleCallbacks.events.isEmpty())
+    }
+
+    @Test
     fun externalAndAfirmaNavigationAreConsumedByNativeCallbacks() {
         assertTrue(
             client.shouldOverrideUrlLoading(webView, request("https://example.org/help")),

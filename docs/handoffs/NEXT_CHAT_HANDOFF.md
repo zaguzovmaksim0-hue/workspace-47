@@ -653,3 +653,33 @@ F-03 and Go race remain external/manual gates.
 Next autonomous action: push the isolated G6-01 milestone, then finish the
 preserved G5-01 WebView stale-callback lease evidence/commit/push. Physical AEAT
 F-03 and Go race remain external gates.
+
+## Autonomous audit G5-01 — stale WebView callback ownership lease — 2026-08-04
+
+- Normal and Client TLS WebView clients lacked an active-instance lease, allowing a
+  released/replaced view to attempt obsolete navigation, state, Afirma, error or
+  renderer callbacks against current browser state. TDD RED proved the ownership
+  dependency was absent before production mutation.
+- `BrowserScreen` now supplies exact `webViewRef` identity predicates to both clients.
+  Stale navigation is consumed; stale UI/native callbacks are suppressed; predicate
+  exceptions fail closed.
+- SSL and safe-browsing rejection remains unconditional. Stale Client TLS requests
+  are ignored and the one-shot handler is abandoned, retaining process-scoped client
+  certificate cleanup. No URL/TLS/certificate/signing/profile/release policy changed.
+- Final gates PASS: focused Debug+QA regressions; full Debug 513/513 and QA 513/513;
+  lint zero errors / 27 warnings per variant; Debug/QA/QA-AndroidTest builds;
+  Android artifacts; release fail-closed; Python 100 with one environmental hardlink
+  skip; Go test/vet/build; generated relay binary removed; exact-scope and security
+  scans PASS.
+- APK SHA-256: Debug
+  `ee01227e286ab371a24d326a1a414f822e7e975b80892c6e2266ba866aaf3365`, QA
+  `d4eb3e09b4430e3a6a0007064577943195a1d8c9bfa02335aa33ab0ec9820dae`, QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- G6-01 public-inventory deadline cleanup is already pushed at
+  `3d00846e13e8b2874e9abe9b1f4b90d5d0862352`.
+- No APK install/launch, device control, portal interaction, credential/certificate
+  use, real signing, upload, payment or submission occurred.
+
+After remote verification of the containing G5-01 commit, continue a new independent
+architecture/lifecycle/concurrency audit. Physical AEAT F-03 and supported-Linux Go
+race remain external gates.

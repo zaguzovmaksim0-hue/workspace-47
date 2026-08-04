@@ -61,6 +61,39 @@ class ClientAuthWebViewClientTest {
         assertEquals(1, clears.get())
     }
 
+    @Suppress("DEPRECATION")
+    @Test
+    fun staleClientTlsWebViewRejectsCertificateAndCannotMutateActiveBrowser() {
+        val epoch = AtomicInteger(9)
+        val clears = AtomicInteger()
+        val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
+        var active = false
+        val client = client(
+            epoch = epoch,
+            callbacks = callbacks,
+            clears = clears,
+            isActiveWebView = { active },
+        )
+
+        val request = RecordingRequest()
+        client.onReceivedClientCertRequest(webView, request)
+        assertTrue(client.shouldOverrideUrlLoading(webView, "https://example.org/"))
+        client.onPageStarted(webView, TARGET, null)
+        client.onPageFinished(webView, TARGET)
+
+        assertEquals(0, request.proceeds)
+        assertEquals(1, request.ignores)
+        assertEquals(1, clears.get())
+        assertTrue(callbacks.events.isEmpty())
+
+        active = true
+        val secondRequest = RecordingRequest()
+        client.onReceivedClientCertRequest(webView, secondRequest)
+        assertEquals(0, secondRequest.proceeds)
+        assertEquals(1, secondRequest.ignores)
+        assertEquals(1, clears.get())
+    }
+
     @Test
     fun rendererDeathAbandonsTheOneShotClientTlsGrant() {
         val epoch = AtomicInteger(20)
@@ -109,6 +142,7 @@ class ClientAuthWebViewClientTest {
         epoch: AtomicInteger,
         callbacks: BrowserNavigationCallbacks,
         clears: AtomicInteger = AtomicInteger(),
+        isActiveWebView: (WebView) -> Boolean = { true },
     ): ClientAuthWebViewClient {
         val authorized = authorized()
         val grant = ClientAuthGrant(authorized, epoch.get().toLong())
@@ -119,7 +153,12 @@ class ClientAuthWebViewClientTest {
             clearClientCertPreferences = { clears.incrementAndGet() },
             clock = clock,
         )
-        return ClientAuthWebViewClient(grant, handler, callbacks)
+        return ClientAuthWebViewClient(
+            grant = grant,
+            requestHandler = handler,
+            callbacks = callbacks,
+            isActiveWebView = isActiveWebView,
+        )
     }
 
     private fun authorized(): AuthorizedClientAuthTarget {

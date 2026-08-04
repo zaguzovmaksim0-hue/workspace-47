@@ -385,3 +385,52 @@ work remained preserved and unstaged during this independent Python milestone.
 
 No APK installation/launch, device control, portal request, credential/certificate
 use, real signing, upload, payment or administrative submission occurred.
+
+## Finding G5-01 — stale WebView callback ownership lease
+
+**Reproduction.** `BrowserScreen` already guarded progress delivery and renderer
+recovery with exact `WebView` identity, but ordinary `JuntaWebViewClient` callbacks
+and dedicated `ClientAuthWebViewClient` callbacks had no equivalent ownership
+lease. A released/replaced view could therefore deliver obsolete navigation,
+Afirma, page-state, browser-error or renderer callbacks into state owned by the
+new active view. The Client TLS handler could abandon its one-shot grant, but that
+did not prevent stale UI/native callback delivery. Two focused RED jobs failed at
+compile time because neither client exposed an active-view predicate, proving the
+missing dependency before production mutation.
+
+**Remediation.** Both clients now accept an `isActiveWebView` predicate;
+`BrowserScreen` binds it to `webViewRef.get() === candidate`. Predicate exceptions
+fail closed. Stale normal and Client TLS navigation is consumed; stale page,
+Afirma, state, error and renderer-recovery callbacks are suppressed. Security-
+critical platform actions remain fail closed: SSL is cancelled, safe browsing
+returns to safety, stale Client TLS requests are ignored, and the Client TLS
+request handler is abandoned so process-scoped certificate preferences are cleared
+through the existing one-shot lifecycle. No origin/path allowlist, TLS trust,
+certificate selection, signing, profile/catalog, release or dependency policy
+changed.
+
+**Verification.** Focused stale-callback Debug GREEN passed, followed by complete
+`JuntaWebViewClientTest`, `ClientAuthWebViewClientTest` and renderer regressions in
+both Debug and QA. A fresh full rerun passed Debug 513/513 and QA 513/513 with zero
+failures/errors/skips (`BUILD SUCCESSFUL`, 60/60 tasks executed). The previously
+completed final-tree gates also passed: toolchain pin checks; Debug/QA/QA-
+AndroidTest assembly (`BUILD SUCCESSFUL`, 110/110 tasks); `lintDebug` and `lintQa`
+with zero errors and 27 warnings per variant (`BUILD SUCCESSFUL`, 55/55 tasks);
+Android artifact verification; release signing fail-closed with no residual release
+APK; Go test/vet/build with the generated relay binary removed; and final Python
+discovery after G6-01 at 100 tests with zero failures/errors and one environmental
+hardlink skip. Exact-scope, whitespace, sensitive-content and unsafe WebView/TLS/
+backup scans passed. The first local scan wrapper stopped before scanning because
+Android `/tmp` was not writable by the Termux app user; the same scan reran under
+`$TMPDIR` and passed.
+
+APK SHA-256:
+
+- Debug: `ee01227e286ab371a24d326a1a414f822e7e975b80892c6e2266ba866aaf3365`;
+- QA: `d4eb3e09b4430e3a6a0007064577943195a1d8c9bfa02335aa33ab0ec9820dae`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate material use, real signing, upload, payment or
+administrative submission occurred. Physical AEAT F-03 and supported-Linux Go race
+remain external gates.

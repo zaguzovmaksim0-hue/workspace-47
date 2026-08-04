@@ -1934,3 +1934,45 @@ Fresh verification:
 The concurrent uncommitted G5-01 Android/WebView milestone was not modified by
 this Python-only remediation. No APK, device, portal, certificate, credential,
 signature, upload, payment or submission action occurred.
+
+## Autonomous G5-01 — stale WebView callback ownership lease — 2026-08-04
+
+The normal and dedicated Client TLS WebView clients did not prove that a callback's
+`WebView` was still the active browser instance. Focused tests first observed RED at
+compile time because the ownership dependency did not exist. The implementation now
+injects an identity predicate from `BrowserScreen`, consumes stale navigation and
+suppresses stale state/native/error/recovery callbacks while preserving platform
+fail-closed rejection and Client TLS cleanup.
+
+Verification evidence:
+
+- focused new stale-callback regression, Debug: PASS;
+- complete normal/Client-TLS client tests plus existing renderer regression, Debug
+  and QA: PASS;
+- fresh full Debug JVM: 513 tests, zero failures/errors/skips;
+- fresh full QA JVM: 513 tests, zero failures/errors/skips;
+- full unit invocation: `BUILD SUCCESSFUL`, 60 actionable tasks, all executed;
+- `lintDebug`, `lintQa`: PASS, zero errors / 27 warnings per variant;
+  `BUILD SUCCESSFUL`, 55/55 tasks;
+- `verifyResolvedCoreVersion`, `verifyPortableAapt2Configuration`,
+  `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`: PASS;
+  `BUILD SUCCESSFUL`, 110/110 tasks;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS; no release APK
+  remained;
+- final Python discovery after G6-01: 100 tests, zero failures/errors, one
+  environmental hardlink skip;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+  generated relay binary removed;
+- complete-diff exact-scope, whitespace, sensitive-content and unsafe WebView/TLS/
+  backup scans: PASS.
+
+APK SHA-256:
+
+- Debug: `ee01227e286ab371a24d326a1a414f822e7e975b80892c6e2266ba866aaf3365`;
+- QA: `d4eb3e09b4430e3a6a0007064577943195a1d8c9bfa02335aa33ab0ec9820dae`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK installation/launch, device control, portal request, credential/certificate
+use, real signing, upload, payment or administrative submission occurred. Physical
+AEAT F-03 and Go race remain external gates.

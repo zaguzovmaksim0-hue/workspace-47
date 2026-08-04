@@ -51,6 +51,7 @@ class JuntaWebViewClient(
     private val logger: SanitizedLogger,
     private val navigationPolicy: JuntaNavigationPolicy,
     private val currentPageUrl: (WebView) -> String? = { webView -> webView.url },
+    private val isActiveWebView: (WebView) -> Boolean = { true },
     private val clientAuthAuthorizer: ClientAuthNavigationAuthorizer? = null,
     private val activeProfileId: () -> ProfileId? = { null },
     private val currentNavigationEpoch: () -> Long = { 0L },
@@ -76,6 +77,7 @@ class JuntaWebViewClient(
         isModernMainFrame: Boolean,
         method: String,
     ): Boolean {
+        if (!isCurrentWebView(view)) return true
         val currentUrl = currentPageUrl(view)
         clientAuthAuthorizer?.observeTopLevelNavigation(
             activeProfileId = activeProfileId(),
@@ -154,6 +156,7 @@ class JuntaWebViewClient(
     }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+        if (!isCurrentWebView(view)) return
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.PAGE_STARTED,
             rawUrl = url,
@@ -170,6 +173,7 @@ class JuntaWebViewClient(
     }
 
     override fun onPageFinished(view: WebView, url: String) {
+        if (!isCurrentWebView(view)) return
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.PAGE_FINISHED,
             rawUrl = url,
@@ -202,7 +206,7 @@ class JuntaWebViewClient(
     ) {
         handler.cancel()
         logger.recordBrowserEvent(DiagnosticEventCode.SSL_ERROR_CANCELLED)
-        callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
+        if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
     }
 
     @RequiresApi(Build.VERSION_CODES.O_MR1)
@@ -214,7 +218,7 @@ class JuntaWebViewClient(
     ) {
         callback.backToSafety(true)
         logger.recordBrowserEvent(DiagnosticEventCode.SAFE_BROWSING_BLOCKED)
-        callbacks.onBrowserError(BrowserErrorCode.SAFE_BROWSING)
+        if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.SAFE_BROWSING)
     }
 
     override fun onReceivedError(
@@ -224,7 +228,7 @@ class JuntaWebViewClient(
     ) {
         if (request.isForMainFrame) {
             logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR)
-            callbacks.onBrowserError(BrowserErrorCode.NETWORK_ERROR)
+            if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.NETWORK_ERROR)
         }
     }
 
@@ -233,7 +237,9 @@ class JuntaWebViewClient(
         request: WebResourceRequest,
         errorResponse: WebResourceResponse,
     ) {
-        if (request.isForMainFrame && errorResponse.statusCode >= HTTP_ERROR_START) {
+        if (request.isForMainFrame && errorResponse.statusCode >= HTTP_ERROR_START &&
+            isCurrentWebView(view)
+        ) {
             callbacks.onBrowserError(BrowserErrorCode.HTTP_ERROR)
         }
     }
@@ -242,8 +248,14 @@ class JuntaWebViewClient(
         view: WebView,
         detail: RenderProcessGoneDetail,
     ): Boolean {
-        callbacks.onRenderProcessGone(view)
+        if (isCurrentWebView(view)) callbacks.onRenderProcessGone(view)
         return true
+    }
+
+    private fun isCurrentWebView(view: WebView): Boolean = try {
+        isActiveWebView(view)
+    } catch (_: Exception) {
+        false
     }
 
     private companion object {

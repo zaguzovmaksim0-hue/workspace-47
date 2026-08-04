@@ -390,3 +390,33 @@ Latest autonomous reconciliation — persisted certificate unlock threat model (
 - No device/app/portal/credential/certificate/real-signing/upload/payment/submission
   action occurred. Next autonomous priority is a fresh
   architecture/lifecycle/concurrency/recovery audit.
+
+## Autonomous stale WebView callback ownership lease — 2026-08-04 (G5-01)
+
+- Ordinary and dedicated Client TLS WebView clients previously lacked the exact
+  active-instance ownership guard already used for progress and renderer recovery.
+  A released/replaced view could therefore deliver obsolete navigation or lifecycle
+  callbacks into current browser state.
+- Both clients now receive an active-view identity predicate from `BrowserScreen`;
+  predicate failure is treated as stale. Stale navigation is consumed and stale
+  UI/native callbacks are suppressed.
+- Platform security responses remain fail closed: stale SSL callbacks still cancel,
+  safe browsing still returns to safety, and stale Client TLS requests are ignored
+  while the one-shot request handler is abandoned and cleanup is retained.
+- URL/origin/path policy, DNS/TLS verification, Client TLS authorization, certificate
+  selection/storage, signing, portal profiles/catalog, release eligibility and
+  dependencies are unchanged.
+- Fresh final evidence: Debug 513/513, QA 513/513; lint zero errors / 27 warnings per
+  variant; Debug/QA/QA-AndroidTest builds; artifact and release fail-closed checks;
+  Python 100 with one environmental hardlink skip; Go test/vet/build; exact-scope,
+  sensitive-content and unsafe WebView/TLS scans PASS.
+- APK hashes: Debug
+  `ee01227e286ab371a24d326a1a414f822e7e975b80892c6e2266ba866aaf3365`, QA
+  `d4eb3e09b4430e3a6a0007064577943195a1d8c9bfa02335aa33ab0ec9820dae`, QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- No device, app, portal, credential, certificate, signature, upload, payment or
+  submission action occurred. Physical AEAT F-03 and Go race remain external gates.
+
+Next autonomous priority: continue a fresh architecture/lifecycle/concurrency audit
+for stale asynchronous completions and ownership transfer; any behavior change
+requires a separate design/plan and observed TDD RED.

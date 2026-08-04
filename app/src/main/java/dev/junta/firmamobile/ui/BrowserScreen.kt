@@ -598,6 +598,7 @@ fun BrowserScreen(
                                 clientAuthAuthorizer = clientAuthAuthorizer,
                                 activeProfileId = { effectiveTopLevelProfileId },
                                 currentNavigationEpoch = { navigationEpoch.longValue },
+                                isActiveWebView = { candidate -> webViewRef.get() === candidate },
                                 onClientAuthTarget = { authorized ->
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthTarget = authorized
@@ -655,6 +656,7 @@ fun BrowserScreen(
                                 grant = tlsGrant,
                                 requestHandler = handler,
                                 callbacks = callbacks,
+                                isActiveWebView = { candidate -> webViewRef.get() === candidate },
                             )
                             dedicatedClientRef.set(client)
                             dedicatedWebViewRef.set(webView)

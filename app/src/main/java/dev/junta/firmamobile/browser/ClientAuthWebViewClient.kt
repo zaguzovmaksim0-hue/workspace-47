@@ -135,14 +135,24 @@ internal class ClientAuthWebViewClient(
     private val grant: ClientAuthGrant,
     private val requestHandler: ClientAuthRequestHandler,
     private val callbacks: BrowserNavigationCallbacks,
+    private val isActiveWebView: (WebView) -> Boolean = { true },
 ) : WebViewClient() {
     private val initialTargetStarted = AtomicBoolean(false)
 
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
+        if (!isCurrentWebView(view)) {
+            request.ignore()
+            requestHandler.abandon()
+            return
+        }
         requestHandler.handle(request)
     }
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+        if (!isCurrentWebView(view)) {
+            requestHandler.abandon()
+            return true
+        }
         if (!request.isForMainFrame || isAllowed(request.url.toString())) return false
         blockNavigation()
         return true
@@ -150,12 +160,20 @@ internal class ClientAuthWebViewClient(
 
     @Deprecated("Legacy callback is never allowed to expand the TLS grant")
     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+        if (!isCurrentWebView(view)) {
+            requestHandler.abandon()
+            return true
+        }
         if (isAllowed(url)) return false
         blockNavigation()
         return true
     }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+        if (!isCurrentWebView(view)) {
+            requestHandler.abandon()
+            return
+        }
         val isInitialTarget = url == grant.authorized.target.toASCIIString() &&
             initialTargetStarted.compareAndSet(false, true)
         if (!isInitialTarget) {
@@ -166,13 +184,17 @@ internal class ClientAuthWebViewClient(
     }
 
     override fun onPageFinished(view: WebView, url: String) {
+        if (!isCurrentWebView(view)) {
+            requestHandler.abandon()
+            return
+        }
         callbacks.onTopLevelUrlChanged(url)
     }
 
     override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
         handler.cancel()
         requestHandler.abandon()
-        callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
+        if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
     }
 
     override fun onRenderProcessGone(
@@ -180,11 +202,17 @@ internal class ClientAuthWebViewClient(
         detail: RenderProcessGoneDetail,
     ): Boolean {
         requestHandler.abandon()
-        callbacks.onRenderProcessGone(view)
+        if (isCurrentWebView(view)) callbacks.onRenderProcessGone(view)
         return true
     }
 
     fun abandon() = requestHandler.abandon()
+
+    private fun isCurrentWebView(view: WebView): Boolean = try {
+        isActiveWebView(view)
+    } catch (_: Exception) {
+        false
+    }
 
     private fun blockNavigation() {
         requestHandler.abandon()
