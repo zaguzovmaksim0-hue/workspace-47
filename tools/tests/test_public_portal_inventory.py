@@ -194,6 +194,32 @@ class DeadlineTest(unittest.TestCase):
                 )
         self.assertEqual(len(connection.sock.timeouts), 2)
 
+    def test_expired_post_start_deadline_still_runs_timeout_cleanup(self) -> None:
+        import threading
+
+        cleanup_called = threading.Event()
+        release_worker = threading.Event()
+
+        def blocking_operation() -> bytes:
+            release_worker.wait(1.0)
+            return b""
+
+        def cleanup() -> None:
+            cleanup_called.set()
+            release_worker.set()
+
+        try:
+            with mock.patch.object(inventory.time, "monotonic", return_value=2.0):
+                with self.assertRaises(inventory.InventoryError):
+                    inventory._run_with_deadline(
+                        blocking_operation,
+                        deadline=1.0,
+                        on_timeout=cleanup,
+                    )
+            self.assertTrue(cleanup_called.is_set())
+        finally:
+            release_worker.set()
+
     def test_one_blocking_read_is_cancelled_at_the_wall_clock_deadline(self) -> None:
         import threading
         import time

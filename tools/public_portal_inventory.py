@@ -441,6 +441,15 @@ def _remaining_seconds(deadline: float) -> float:
     return remaining
 
 
+def _run_timeout_cleanup(on_timeout: Callable[[], None] | None) -> None:
+    if on_timeout is None:
+        return
+    try:
+        on_timeout()
+    except Exception:
+        pass
+
+
 def _run_with_deadline(
     operation: Callable[[], T],
     deadline: float,
@@ -458,13 +467,14 @@ def _run_with_deadline(
 
     worker = threading.Thread(target=run, daemon=True, name="public-inventory-io")
     worker.start()
-    worker.join(_remaining_seconds(deadline))
+    try:
+        join_timeout = _remaining_seconds(deadline)
+    except InventoryError:
+        _run_timeout_cleanup(on_timeout)
+        raise
+    worker.join(join_timeout)
     if worker.is_alive():
-        if on_timeout is not None:
-            try:
-                on_timeout()
-            except Exception:
-                pass
+        _run_timeout_cleanup(on_timeout)
         raise InventoryError("HTTPS request deadline exceeded")
     try:
         status, payload = results.get_nowait()

@@ -355,3 +355,33 @@ No APK was installed or launched; no ADB/device control, portal interaction,
 credential/certificate use, real signing, upload, payment or administrative
 submission occurred. Physical AEAT F-03 remains a separate manual acceptance gate,
 and Go race remains an external supported-Linux CI gate.
+
+## Finding G6-01 — public inventory deadline cleanup
+
+**Reproduction.** The fresh Python gate ran 99 tests and produced one failure plus
+one environmental hardlink skip. The failure was
+`DeadlineTest.test_one_blocking_read_is_cancelled_at_the_wall_clock_deadline`:
+a blocking body-read worker had not observed `connection.close()` when the caller
+returned the deadline error. Five immediate focused reruns passed, demonstrating
+scheduler sensitivity. A deterministic probe then supplied an already expired
+post-start deadline to `_run_with_deadline()` and observed
+`HTTPS request deadline exceeded` with `on_timeout_called=False`.
+
+**Root cause and remediation.** `_run_with_deadline()` started its worker before
+calling `_remaining_seconds(deadline)`. If that calculation itself raised, control
+never reached the existing `worker.is_alive()` cleanup branch. The helper now uses
+one private best-effort cleanup function both when post-start deadline calculation
+raises and when a timed join leaves the worker alive. Cleanup exceptions remain
+suppressed; no deadline, retry, redirect, DNS, address, TLS, portal or catalog
+policy changed.
+
+**TDD and verification.** The deterministic regression first failed because the
+cleanup event remained unset. After the minimum helper change, it passed. The
+complete `DeadlineTest` passed 3/3; the new regression plus the original blocking
+read regression passed ten sequential repetitions; complete Python discovery
+passed 100 tests with zero failures/errors and one environmental hardlink skip.
+`py_compile` and `git diff --check` passed. The pre-existing G5-01 Android/WebView
+work remained preserved and unstaged during this independent Python milestone.
+
+No APK installation/launch, device control, portal request, credential/certificate
+use, real signing, upload, payment or administrative submission occurred.

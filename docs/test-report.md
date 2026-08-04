@@ -1903,3 +1903,34 @@ Verification evidence:
 No APK installation/launch, device control, portal request, credential/certificate
 use, real signing, upload, payment or administrative submission occurred. Go race
 remains an external supported-Linux CI gate; AEAT F-03 remains manual.
+
+## Autonomous G6-01 — public inventory deadline cleanup — 2026-08-04
+
+A fresh complete Python run exposed one order/timing-sensitive failure in
+`DeadlineTest.test_one_blocking_read_is_cancelled_at_the_wall_clock_deadline`.
+The suite result was 99 tests, one failure and one environmental hardlink skip.
+Five immediate focused reruns passed, so the result was not hidden as a stable
+PASS. A deterministic probe established the exact control-flow defect: after the
+I/O worker started, an already expired deadline caused `_remaining_seconds()` to
+raise before the configured timeout cleanup callback could run.
+
+The new deterministic test observed RED with `cleanup_called=False`. The minimal
+production change introduces a private best-effort timeout-cleanup helper and
+uses it both for post-start deadline-calculation failure and the existing live-
+worker timeout path. Cleanup exceptions remain suppressed and the original
+`InventoryError` classification is retained. No timeout is extended and no
+network, TLS, DNS, redirect, origin, inventory or portal trust rule changes.
+
+Fresh verification:
+
+- deterministic regression: PASS after observed RED;
+- complete `DeadlineTest`: 3 tests, zero failures/errors/skips;
+- new plus original blocking deadline regressions: 10/10 sequential repetitions;
+- complete Python discovery: 100 tests, zero failures/errors, one environmental
+  skip (`hardlinks unavailable`);
+- `python -m py_compile` for production and test modules: PASS;
+- `git diff --check`: PASS.
+
+The concurrent uncommitted G5-01 Android/WebView milestone was not modified by
+this Python-only remediation. No APK, device, portal, certificate, credential,
+signature, upload, payment or submission action occurred.

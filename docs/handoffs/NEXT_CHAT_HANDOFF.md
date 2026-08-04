@@ -629,3 +629,27 @@ a fresh architecture/lifecycle/concurrency/recovery audit. Prioritize browser
 post-dispose callbacks, stale asynchronous completions and lifecycle ownership. Any
 runtime change requires a new subordinate design/plan and TDD RED. Physical AEAT
 F-03 and Go race remain external/manual gates.
+
+## Autonomous audit G6-01 — public inventory deadline cleanup — 2026-08-04
+
+- Fresh Python discovery initially ran 99 tests with one failure and one
+  environmental hardlink skip. The failing blocking-read deadline test passed on
+  five immediate reruns, but a deterministic expired post-start deadline probe
+  proved that `_run_with_deadline()` returned before invoking its cleanup hook.
+- TDD RED required cleanup after worker start even when deadline calculation
+  itself raises. The helper now invokes one best-effort cleanup function on both
+  post-start deadline-calculation failure and the existing live-worker timeout
+  path; cleanup exceptions do not replace the stable deadline error.
+- No deadline extension, retry, network/TLS/DNS/redirect/allowlist, portal,
+  catalog, profile, Android, signing, certificate, dependency or release policy
+  changed.
+- Final Python evidence: complete `DeadlineTest` 3/3; two deadline regressions
+  repeated 10/10; complete discovery 100 tests with zero failures/errors and one
+  environmental hardlink skip; `py_compile` and diff whitespace checks PASS.
+- G5-01 stale WebView callback ownership work remains a separate preserved local
+  milestone and must be committed/pushed only after its own evidence-document and
+  staged review.
+
+Next autonomous action: push the isolated G6-01 milestone, then finish the
+preserved G5-01 WebView stale-callback lease evidence/commit/push. Physical AEAT
+F-03 and Go race remain external gates.
