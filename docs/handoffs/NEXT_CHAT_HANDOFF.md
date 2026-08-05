@@ -876,3 +876,36 @@ behavior change requires a separate subordinate design/plan and observed TDD RED
 After remote verification of the containing G10-01 commit, continue a fresh independent
 lifecycle/concurrency, accessibility or supply-chain audit. Do not repeat G10-01. Any new behavior
 change requires a separate subordinate design/plan and observed TDD RED.
+
+## Autonomous audit G11-01 — WebMessage bridge release ownership — 2026-08-05
+
+- Reproduced a lifecycle ownership defect: normal `AndroidView.onRelease` destroyed a
+  WebView without closing its `WebMessageBridgeAttachment`; later recreation could
+  overwrite the raw reference while stale listener/script/pending-reply state remained.
+- Added a pure atomic exact-owner `BrowserOwnedResourceLease`. Replacement closes the
+  superseded resource; stale-owner release cannot close the current resource; exact
+  release and full close are one-shot. `BrowserScreen` binds each attachment to its
+  exact WebView and releases it before WebView destruction.
+- Renderer-death, Client TLS, navigation and full-disposal cleanup now use the same
+  current bridge lease. WebMessage payload/script, origin, TLS, certificate, signing,
+  profile/catalog, release and dependency policy are unchanged.
+- RED evidence: missing-lease compile failure
+  `job_20260805_195612_9b1c5899`; integration suite 15 tests / one exact ownership
+  failure read in `job_20260805_201142_349e55bb`.
+- GREEN/final gates PASS: focused Debug+QA 16/16 per variant; full Debug 525/525 and QA
+  525/525; pins/locks and three assemblies; lint 0 errors / 27 warnings per variant;
+  Python 101 with one environmental hardlink skip; Go test/vet/build; Android
+  artifacts; release fail-closed. Release APK count is zero and relay binary is absent.
+- APK SHA-256: Debug
+  `6bf8e4722fe865b1137a7a4498bc824b83e4413ca9b9dd4c8c8e64414703e195`, QA
+  `3a263176016595ec449bbaab3ee352c7a674bf79c48f5d9f0e954efa06aa8f37`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Exact-scope, whitespace, sensitive-content and unsafe WebView/TLS scans PASS. No APK/
+  device/portal/credential/certificate/real-signing/upload/payment/submission action
+  occurred. Threat model is unchanged.
+
+After remote verification of the containing G11-01 commit, continue a fresh independent
+lifecycle/concurrency, accessibility or supply-chain audit. Do not repeat G11-01. Any
+new behavior change requires a separate subordinate design/plan and observed TDD RED.
+Physical AEAT F-03, physical TalkBack/visual validation and supported-Linux Go race
+remain external gates.

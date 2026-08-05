@@ -557,3 +557,29 @@ requires a separate design/plan and observed TDD RED.
   manual acceptance gate and is not promoted to automated evidence.
 - Next autonomous priority: continue a fresh lifecycle/concurrency, accessibility or supply-chain
   audit. Any behavior change requires its own subordinate design/plan and observed RED.
+
+## Autonomous WebMessage bridge release ownership — 2026-08-05 (G11-01)
+
+- A normal WebView could be released while its `WebMessageBridgeAttachment` remained
+  active because `AndroidView.onRelease` destroyed the view without closing its bridge.
+  Later attachment creation could overwrite the only raw reference, retaining stale
+  listener/script/pending-reply state beyond the initiating WebView lifetime.
+- An atomic exact-owner lease now owns each bridge attachment. Replacement closes the
+  superseded attachment; stale-owner release cannot close the current attachment; exact
+  release and full disposal close once. `onRelease` performs exact-owner release before
+  WebView destruction.
+- Navigation, renderer-death, Client TLS and full-disposal cleanup now share that lease.
+  WebMessage protocol/script, origins, TLS, certificate, signing, profiles, release and
+  dependencies are unchanged.
+- TDD RED was observed for both the missing lease and absent BrowserScreen integration.
+  Fresh gates PASS: focused Debug+QA 16/16 per variant; full Debug 525/525 and QA
+  525/525; three assemblies; lint 0 errors / 27 warnings per variant; Python 101 with
+  one environmental hardlink skip; Go test/vet/build; Android artifacts; release
+  fail-closed with zero release APK. Generated relay binary is absent.
+- APK SHA-256: Debug
+  `6bf8e4722fe865b1137a7a4498bc824b83e4413ca9b9dd4c8c8e64414703e195`, QA
+  `3a263176016595ec449bbaab3ee352c7a674bf79c48f5d9f0e954efa06aa8f37`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Next autonomous priority: continue a fresh independent lifecycle/concurrency,
+  accessibility or supply-chain audit. Do not repeat G11-01; any behavior change
+  requires its own subordinate design/plan and observed RED.

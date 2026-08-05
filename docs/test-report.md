@@ -2274,3 +2274,54 @@ interruption behavior or real-device visual correctness. Those remain manual acc
 APK installation/launch, device control, portal request, credential/certificate use, real signing,
 upload, payment or administrative submission occurred. Threat-model wording is unchanged because
 this accessibility change creates no application trust boundary.
+
+## Autonomous G11-01 — WebMessage bridge release ownership — 2026-08-05
+
+The normal WebView bridge attachment previously had no exact WebView owner at the
+`AndroidView.onRelease` boundary. The released WebView was destroyed without invoking
+`WebMessageBridgeAttachment.close()`, so temporary AndroidView removal/recreation could
+retain its listener, document-start script and pending MiniApplet replies and then
+replace the only raw attachment reference.
+
+TDD evidence:
+
+- lease RED `job_20260805_195612_9b1c5899`: expected test-compilation failure on the
+  absent `BrowserOwnedResourceLease`, 28/28 tasks;
+- integration RED read `job_20260805_201142_349e55bb`: Browser security suite 15 tests,
+  one failure, zero errors/skips, exact missing exact-owner lease assertion;
+- minimum implementation: atomic owner/resource lease plus exact bind/release/current/
+  close wiring in `BrowserScreen`; `onRelease` releases before WebView destruction;
+- focused Debug GREEN `job_20260805_202100_6c1c3977`: 16/16 selected tests, 30/30
+  tasks;
+- focused Debug+QA `job_20260805_202539_f1cc3955`: 16/16 selected tests per variant,
+  60/60 tasks.
+
+Full verification:
+
+- Android `job_20260805_203513_76ad0a12`: resolved-core, portable-AAPT2 and runtime
+  dependency-lock checks PASS; Debug 525/525 and QA 525/525, zero failures/errors/
+  skips; Debug/QA/QA-AndroidTest assemblies PASS; 128/128 tasks;
+- lint `job_20260805_204136_e5c97e7b`: 55/55 tasks, zero errors and 27 warnings per
+  variant;
+- Python/Go `job_20260805_202651_47c08720`: Python 101 tests PASS with one
+  environmental hardlink skip; Go test/vet/build PASS;
+- artifacts `job_20260805_203536_e7dd25ed`: alignment/signature/manifest/canary
+  checks PASS;
+- release `job_20260805_203636_635bafd7`: expected private-signing rejection PASS;
+  release APK count zero;
+- cleanup/state `job_20260805_204226_28765586`: generated relay binary removed and
+  release APK count confirmed zero;
+- exact-scope, `git diff --check`, sensitive-content and unsafe WebView/TLS scans:
+  `job_20260805_204243_51a14b98`, PASS.
+
+APK SHA-256:
+
+- Debug: `6bf8e4722fe865b1137a7a4498bc824b83e4413ca9b9dd4c8c8e64414703e195`;
+- QA: `3a263176016595ec449bbaab3ee352c7a674bf79c48f5d9f0e954efa06aa8f37`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+Automated evidence validates owner ordering and source integration, not physical
+WebView/device behavior. No APK installation/launch, device control, portal request,
+credential/certificate use, real signing, upload, payment or administrative submission
+occurred. Physical AEAT F-03, physical TalkBack/visual validation and Go race on
+supported Linux remain external gates. Threat-model wording is unchanged.

@@ -137,7 +137,9 @@ fun BrowserScreen(
         )
     }
     val webViewRef = remember { AtomicReference<WebView?>() }
-    val bridgeRef = remember { AtomicReference<WebMessageBridgeAttachment?>() }
+    val bridgeAttachmentLease = remember {
+        BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>()
+    }
     val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
     val dedicatedWebViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
     val pendingNormalUrl = remember { AtomicReference<String?>() }
@@ -171,7 +173,7 @@ fun BrowserScreen(
         clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing
 
     fun advanceNavigationEpoch() {
-        bridgeRef.get()?.abandonMiniAppletRequests()
+        bridgeAttachmentLease.current()?.abandonMiniAppletRequests()
         check(navigationEpoch.longValue != Long.MAX_VALUE)
         navigationEpoch.longValue++
         onNavigationEpochChanged(navigationEpoch.longValue)
@@ -215,7 +217,7 @@ fun BrowserScreen(
             requestProcessClientCertPreferenceClear()
         }
         pendingNormalUrl.set(validatedEntryUrl)
-        bridgeRef.getAndSet(null)?.close()
+        bridgeAttachmentLease.close()
         advanceNavigationEpoch()
         onCancelSigning(SigningCancelReason.NAVIGATION, null)
         browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
@@ -325,7 +327,7 @@ fun BrowserScreen(
                 pendingClientAuthTarget = null
                 clientAuthGrant = null
                 pendingRequest = null
-                bridgeRef.getAndSet(null)?.close()
+                bridgeAttachmentLease.close()
                 abandonClientAuth()
                 advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
@@ -382,7 +384,7 @@ fun BrowserScreen(
         onDispose {
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
-            bridgeRef.getAndSet(null)?.close()
+            bridgeAttachmentLease.close()
             webViewRef.getAndSet(null)?.let { webView ->
                 onWebViewChanged(null)
                 webView.stopLoading()
@@ -640,7 +642,7 @@ fun BrowserScreen(
                                         }
                                     },
                                 ).attach(webView)
-                                bridgeRef.set(attachment)
+                                bridgeAttachmentLease.bind(webView, attachment)
                                 if (!attachment.listenerAttached ||
                                     !attachment.documentStartScriptAttached
                                 ) {
@@ -649,7 +651,7 @@ fun BrowserScreen(
                                     }
                                 }
                             } else {
-                                bridgeRef.set(null)
+                                bridgeAttachmentLease.close()
                             }
                         } else {
                             onWebViewChanged(browserWebViewForSigning(webView, dedicated = true))
@@ -688,6 +690,7 @@ fun BrowserScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     onRelease = { webView ->
+                        bridgeAttachmentLease.release(webView)
                         if (dedicatedWebViewRef.compareAndSet(webView, null)) {
                             dedicatedClientRef.getAndSet(null)?.abandon()
                         }
@@ -723,7 +726,7 @@ fun BrowserScreen(
                     pendingClientAuthTarget = null
                     advanceNavigationEpoch()
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
-                    bridgeRef.getAndSet(null)?.close()
+                    bridgeAttachmentLease.close()
                     webViewRef.get()?.stopLoading()
                     beginClientAuthPreparation(
                         ClientAuthGrant(

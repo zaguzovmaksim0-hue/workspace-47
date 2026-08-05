@@ -286,6 +286,34 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun webMessageBridgeReleaseIsBoundToTheExactWebViewOwner() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val onReleaseBlock = screenSource
+            .substringAfter("onRelease = { webView ->", missingDelimiterValue = "")
+            .substringBefore("},\n                )")
+
+        assertTrue(
+            "BrowserScreen must own bridge attachments through an exact-owner lease",
+            "BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>" in screenSource &&
+                "bridgeAttachmentLease.bind(webView, attachment)" in screenSource,
+        )
+        assertTrue(
+            "AndroidView release must release the exact bridge owner before destroying it",
+            onReleaseBlock.isNotEmpty() &&
+                "bridgeAttachmentLease.release(webView)" in onReleaseBlock &&
+                onReleaseBlock.indexOf("bridgeAttachmentLease.release(webView)") <
+                onReleaseBlock.indexOf("webView.destroy()"),
+        )
+        assertFalse(
+            "Bridge lifecycle must not use an unowned attachment reference",
+            "AtomicReference<WebMessageBridgeAttachment?>" in screenSource ||
+                "bridgeRef.set(attachment)" in screenSource,
+        )
+    }
+
+    @Test
     fun signingTtlAndReplayPathsUseMonotonicBoundedStateOnly() {
         val pendingSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/signing/PendingSignRequestStore.kt",
@@ -433,7 +461,7 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "Renderer death must close bridge state and advance the navigation epoch",
-            "bridgeRef.getAndSet(null)?.close()" in screenSource &&
+            "bridgeAttachmentLease.close()" in screenSource &&
                 "advanceNavigationEpoch()" in screenSource,
         )
         assertTrue(

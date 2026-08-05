@@ -742,3 +742,60 @@ Robolectric verifies the semantics property, not actual announcement timing or a
 interaction on hardware. Physical TalkBack behavior remains an explicit manual acceptance gate.
 No APK was installed or launched; no ADB/device control, portal interaction, credential or
 certificate material use, real signature, upload, payment or administrative submission occurred.
+
+## Finding G11-01 — WebMessage bridge release ownership
+
+**Reproduction.** `BrowserScreen` kept the normal WebView's
+`WebMessageBridgeAttachment` in an unowned atomic reference. `AndroidView.onRelease`
+destroyed the released WebView without closing that attachment. A temporary removal
+and later recreation of the AndroidView could therefore leave the old WebMessage
+listener, document-start script and pending MiniApplet reply registry alive, then
+replace the only attachment reference. The pure ownership regression first failed to
+compile because no owner-bound lease existed: RED job
+`job_20260805_195612_9b1c5899`, 28/28 executed tasks, exact unresolved reference
+`BrowserOwnedResourceLease`. The integration regression then ran against unchanged
+`BrowserScreen`; fresh XML read job `job_20260805_201142_349e55bb` reported 15 tests,
+one failure, zero errors/skips, exactly because the bridge was not bound to the exact
+WebView owner.
+
+**Remediation.** A small atomic `BrowserOwnedResourceLease` now binds one
+`AutoCloseable` resource to one exact owner identity. Replacement installs the new
+binding and closes the superseded resource; exact-owner release clears and closes it
+once; stale-owner release cannot close a replacement; full close clears whichever
+binding remains. `BrowserScreen` uses the lease as the sole normal bridge lifecycle
+holder. Attachment creation binds `(webView, attachment)`, navigation invalidation
+addresses only the current attachment, renderer/Client-TLS/disposal paths close the
+current attachment, and `AndroidView.onRelease` releases the exact owner before
+stopping and destroying the WebView. WebMessage payloads, JavaScript shim, origin/path
+policy, WebView TLS, Client TLS grant, certificate, signing, profile/catalog, release,
+dependency and UI behavior are unchanged.
+
+**TDD and fresh verification.** Focused Debug GREEN read job
+`job_20260805_202100_6c1c3977` passed the lease and browser-security regressions
+(16/16 tests, 30/30 tasks). Focused Debug+QA job
+`job_20260805_202539_f1cc3955` passed 16/16 selected tests per variant and 60/60
+tasks. Full Android job `job_20260805_203513_76ad0a12` passed resolved-core,
+portable-AAPT2 and runtime-lock gates, Debug 525/525 and QA 525/525 JVM tests with
+zero failures/errors/skips, all Debug/QA/QA-AndroidTest assemblies and 128/128 tasks.
+Lint job `job_20260805_204136_e5c97e7b` passed 55/55 tasks with zero errors and 27
+warnings per variant. Python/Go result job `job_20260805_202651_47c08720` confirmed
+Python 101 tests with one environmental hardlink skip and Go test/vet/build PASS.
+Artifact result job `job_20260805_203536_e7dd25ed` passed alignment, signature,
+manifest and forbidden-canary checks. Release job
+`job_20260805_203636_635bafd7` passed the expected private-signing rejection;
+`job_20260805_204226_28765586` confirmed zero release APKs and removed the generated
+relay binary. Exact-scope, whitespace, sensitive-content and unsafe WebView/TLS scans
+passed in `job_20260805_204243_51a14b98`.
+
+APK SHA-256:
+
+- Debug: `6bf8e4722fe865b1137a7a4498bc824b83e4413ca9b9dd4c8c8e64414703e195`;
+- QA: `3a263176016595ec449bbaab3ee352c7a674bf79c48f5d9f0e954efa06aa8f37`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+The existing threat model already treats WebView/MiniApplet lifecycle and cancellation
+as protected boundaries; this milestone enforces that boundary without adding an asset
+or trust edge, so threat-model wording is unchanged. No APK was installed or launched;
+no ADB/device control, portal interaction, credential/certificate material use, real
+signature, upload, payment or administrative submission occurred. Physical AEAT F-03,
+physical TalkBack/visual validation and supported-Linux Go race remain external gates.
