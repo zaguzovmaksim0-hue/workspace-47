@@ -606,3 +606,29 @@ requires a separate design/plan and observed TDD RED.
 - Next autonomous priority: continue a fresh independent certificate/signing/storage,
   accessibility or CI/supply-chain audit. Do not repeat G12-01; any behavior change
   requires its own subordinate design/plan and observed RED.
+
+## Autonomous Python Dependabot coverage — 2026-08-05 (G12-02)
+
+- `tools/requirements.txt` was already an OSV-scanned supply-chain input but was the
+  only explicit dependency ecosystem without matching Dependabot version-update
+  coverage.
+- Added exactly one `pip` Dependabot entry scoped to `/tools`, weekly Monday, PR limit
+  5; existing Gradle/Go/GitHub-Actions entries are unchanged.
+- Strengthened the CI policy test to fail on a missing/duplicate/mis-scoped Python
+  entry. RED proved zero pip entries; focused GREEN and all 19 CI policy tests pass.
+- No dependency version, requirements file, lockfile, Gradle verification metadata,
+  action SHA, workflow permission, runtime code or release rule changed. This is
+  update-monitoring coverage only; no hosted Dependabot run is claimed.
+- Fresh gates PASS: Android Debug 526/526 and QA 526/526; three assemblies and
+  pin/lock checks; lint 0 errors / unchanged 27 warnings per variant; Python 101 with
+  one environmental hardlink skip; Go test/vet/build; Android artifacts; release
+  fail-closed; zero release APK; generated relay binary removed.
+- APK hashes remain Debug
+  `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`, QA
+  `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Next audit line: continue fresh architecture/lifecycle, accessibility, certificate/
+  signing/storage/logging or supply-chain review; the residual
+  `ProfileHttpCallPhaseTracker` override-parameter-name compiler warning is low-risk
+  cleanup and must not be used to change transport semantics without a separate
+  reproducible reason.

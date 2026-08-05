@@ -954,3 +954,38 @@ certificate/signing/storage, accessibility or CI/supply-chain audit. Do not repe
 G12-01. Any new behavior change requires a separate subordinate design/plan and
 observed TDD RED. Physical AEAT F-03, physical TalkBack/visual validation and
 supported-Linux Go race remain external gates.
+
+## Autonomous audit G12-02 — Python Dependabot coverage — 2026-08-05
+
+- Found supply-chain control asymmetry: `tools/requirements.txt` was already scanned
+  by OSV but `.github/dependabot.yml` had no Python/pip update-monitoring entry.
+- RED `job_20260805_213934_d8a7096a` failed exactly on zero pip ecosystem entries.
+  Minimum fix adds one weekly Monday `pip` entry scoped to `/tools`, PR limit 5; no
+  dependency/tool/action version changed.
+- Exact GREEN plus complete CI policy module `job_20260805_213957_df23d7c9`: 19/19
+  policy tests PASS.
+- Full Android `job_20260805_214008_05cba7fd`: pins/locks, all three assemblies,
+  128/128 tasks PASS; `job_20260805_214720_ad44529f`: Debug 526/526 and QA 526/526,
+  zero failures/errors/skips, requirements hash unchanged.
+- Python/Go `job_20260805_214014_3f1f0af3`: Python 101 PASS with one environmental
+  hardlink skip; Go test/vet/build PASS. Lint `job_20260805_214728_d0d3ec61` PASS
+  55/55; count `job_20260805_215335_c01cf437`: 0 errors / unchanged 27 warnings per
+  variant. Artifacts `job_20260805_214736_54d890ad` and release fail-closed
+  `job_20260805_215344_817e8e2b` PASS.
+- Cleanup `job_20260805_215505_a917c8de`: generated relay binary removed, release APK
+  count zero. Pre-evidence scan `job_20260805_215529_fe814d2d`: exact 4-file scope,
+  YAML shape, whitespace, sensitive scan, unchanged requirements/locks/verification
+  metadata/workflows/runtime and SHA/permission policy PASS.
+- APK hashes unchanged from G12-01: Debug
+  `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`, QA
+  `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- No hosted Dependabot execution is claimed. No runtime/threat-model change and no
+  APK/device/portal/credential/certificate/real-signing/upload/payment/submission
+  action occurred.
+
+After remote verification of the containing G12-02 commit, continue a fresh independent
+audit. Do not repeat G12-01/G12-02. Physical AEAT F-03, physical TalkBack/visual
+validation and supported-Linux Go race remain external gates. Treat the existing
+`ProfileHttpCallPhaseTracker` parameter-name warning only as low-risk cleanup unless a
+separate reproducible transport/API defect is found.

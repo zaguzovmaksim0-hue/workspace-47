@@ -196,8 +196,17 @@ class CiPolicyTest(unittest.TestCase):
         self.assertEqual(source.count('package-ecosystem: "gradle"'), 1)
         self.assertEqual(source.count('package-ecosystem: "gomod"'), 1)
         self.assertEqual(source.count('package-ecosystem: "github-actions"'), 1)
+        self.assertEqual(source.count('package-ecosystem: "pip"'), 1)
         self.assertIn('directory: "/ws024-relay"', source)
-        self.assertGreaterEqual(source.count('interval: "weekly"'), 3)
+
+        pip_start = source.index('package-ecosystem: "pip"')
+        next_ecosystem = source.find('\n  - package-ecosystem:', pip_start + 1)
+        pip_block = source[pip_start:next_ecosystem if next_ecosystem >= 0 else len(source)]
+        self.assertIn('directory: "/tools"', pip_block)
+        self.assertIn('interval: "weekly"', pip_block)
+        self.assertIn('day: "monday"', pip_block)
+        self.assertIn('open-pull-requests-limit: 5', pip_block)
+        self.assertGreaterEqual(source.count('interval: "weekly"'), 4)
 
     def test_gitleaks_allowlist_is_exact_and_does_not_disable_rules(self) -> None:
         source = self.read(GITLEAKS)

@@ -2376,3 +2376,47 @@ validation. No APK installation/launch, device control, portal request, credenti
 certificate use, real signing, upload, payment or administrative submission occurred.
 Physical AEAT F-03, physical TalkBack/visual behavior and supported-Linux Go race remain
 external gates. Threat-model wording is unchanged.
+
+## Autonomous G12-02 — Python Dependabot update monitoring — 2026-08-05
+
+The security workflow already scans `tools/requirements.txt` with OSV, but Dependabot
+version-update configuration covered only Gradle, Go modules and GitHub Actions.
+Current GitHub Dependabot documentation supports `pip`/`requirements.txt`; the Python
+manifest therefore lacked the update-discovery control used by the other explicit
+package ecosystems.
+
+TDD evidence:
+
+- RED `job_20260805_213934_d8a7096a`: one policy test, one failure, exactly `0 != 1`
+  for the required `package-ecosystem: "pip"`; Dependabot config unchanged at RED;
+- minimum fix: one `pip` block at `/tools`, weekly Monday, PR limit 5; no version
+  update and no existing ecosystem block changed;
+- GREEN `job_20260805_213957_df23d7c9`: exact regression PASS and complete
+  `tools.tests.test_ci_policy` 19/19 PASS.
+
+Fresh full verification:
+
+- Android `job_20260805_214008_05cba7fd`: resolved-core, portable AAPT2, runtime
+  dependency locks, Debug/QA/QA-AndroidTest assemblies, 128/128 tasks PASS;
+- XML/hash read `job_20260805_214720_ad44529f`: Debug 526/526 and QA 526/526, zero
+  failures/errors/skips; requirements worktree/hash equals HEAD;
+- Python/Go `job_20260805_214014_3f1f0af3`: Python 101 PASS with one environmental
+  hardlink skip; Go test/vet/build PASS;
+- lint `job_20260805_214728_d0d3ec61`: 55/55 tasks PASS;
+  `job_20260805_215335_c01cf437`: zero errors / 27 warnings per variant;
+- artifacts `job_20260805_214736_54d890ad`: PASS;
+- release `job_20260805_215344_817e8e2b`: expected private-signing rejection PASS;
+- cleanup `job_20260805_215505_a917c8de`: relay binary absent, release APK count zero;
+- exact pre-evidence scope/YAML/whitespace/sensitive/dependency/workflow policy scan
+  `job_20260805_215529_fe814d2d`: PASS.
+
+APK SHA-256 (unchanged from G12-01):
+
+- Debug: `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`;
+- QA: `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+The automated evidence proves repository configuration and policy shape only. It does
+not prove that GitHub Dependabot executed or opened a PR from this autonomous branch.
+No dependency was upgraded. No APK/device/portal/credential/certificate/real-signing/
+upload/payment/submission action occurred. Threat-model wording is unchanged.

@@ -857,3 +857,58 @@ model wording is unchanged. No APK was installed or launched; no ADB/device cont
 portal interaction, credential/certificate material use, real signature, upload,
 payment or administrative submission occurred. Physical AEAT F-03, physical
 TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## Finding G12-02 — Python Dependabot update-monitoring coverage
+
+**Reproduction.** The repository has one explicit Python source dependency manifest,
+`tools/requirements.txt` (`PyYAML==6.0.3`). The security workflow already scans that
+manifest with OSV-Scanner, while `.github/dependabot.yml` covered only Gradle, Go
+modules and GitHub Actions. Current official GitHub Dependabot documentation checked
+on 2026-08-05 supports the `pip` ecosystem and `requirements.txt` manifests and uses a
+separate ecosystem/directory/schedule entry for version updates. The pinned Python
+dependency therefore had vulnerability-scan coverage but no matching automated
+version-update monitoring. This finding does not assert a PyYAML vulnerability and did
+not justify a dependency upgrade.
+
+**TDD remediation.** The existing CI policy regression was first strengthened to
+require exactly one `pip` ecosystem entry and its `/tools`, weekly Monday and PR-limit
+scope. RED job `job_20260805_213934_d8a7096a` ran one test and failed exactly because
+`package-ecosystem: "pip"` occurred zero times. Production/runtime and Dependabot
+configuration were unchanged at RED. The minimum configuration adds one weekly `pip`
+entry at `/tools` with `open-pull-requests-limit: 5`; existing Gradle, Go and GitHub
+Actions entries are unchanged. Exact GREEN plus the complete CI policy module
+`job_20260805_213957_df23d7c9` passed the target test and all 19/19 policy tests.
+
+**Fresh full verification.** Full Android `job_20260805_214008_05cba7fd` passed
+resolved-core, portable-AAPT2 and runtime dependency-lock gates, all Debug/QA/QA-
+AndroidTest assemblies and 128/128 tasks. XML/hash read
+`job_20260805_214720_ad44529f` reported Debug 526/526 and QA 526/526 JVM tests with
+zero failures/errors/skips and confirmed `tools/requirements.txt` is byte-for-byte
+unchanged from HEAD. Python/Go `job_20260805_214014_3f1f0af3` passed Python 101 tests
+with one environmental hardlink skip plus Go test/vet/build. Lint
+`job_20260805_214728_d0d3ec61` passed 55/55 tasks; count read
+`job_20260805_215335_c01cf437` reported zero errors and unchanged 27 warnings per
+variant. Android artifact verification `job_20260805_214736_54d890ad` passed and
+release-without-private-signing `job_20260805_215344_817e8e2b` passed fail-closed.
+Cleanup `job_20260805_215505_a917c8de` removed the expected untracked Go build binary
+and confirmed zero release APKs.
+
+Pre-evidence scope/security validation `job_20260805_215529_fe814d2d` passed: exactly
+four milestone files, whitespace clean, Dependabot YAML parsed to exactly
+`gradle/gomod/github-actions/pip`, the pip entry is `/tools` + weekly Monday + PR limit
+5, workflows/permissions/action pins, runtime source, lockfiles, verification metadata
+and requirements are unchanged, sensitive-content scan passed, and the workflow
+SHA/permission policy tests remained green.
+
+APK SHA-256 is unchanged from G12-01 because no Android source/build configuration
+changed:
+
+- Debug: `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`;
+- QA: `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No hosted Dependabot execution is claimed from this branch change. No dependency or
+tool version was changed, no runtime trust boundary was changed, and threat-model
+wording remains unchanged. No APK was installed/launched; no device control, portal
+interaction, credential/certificate material use, real signing, upload, payment or
+administrative submission occurred.
