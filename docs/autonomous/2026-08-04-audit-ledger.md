@@ -977,3 +977,24 @@ in `job_20260805_224754_055676e0` was removed by
 `job_20260805_224803_03dcec46`; release APK count is zero. Robolectric proves Compose
 semantics only; physical TalkBack timing/interruption and visual correctness remain
 manual gates. Threat-model wording is unchanged because no new trust edge was added.
+
+
+## Finding G14-01 — security-roadmap Dependabot reconciliation — 2026-08-06
+
+**Reproduction.** The verified G12-02 configuration and CI-policy test already cover
+weekly Dependabot version monitoring for the explicit Python manifest under `/tools`,
+and G13-01 reconciled `docs/test-plan.md`. Two older summary bullets in the authoritative
+security roadmap still described Dependabot as covering only Gradle, Go modules and
+GitHub Actions. The roadmap therefore understated an already-pushed supply-chain
+control.
+
+**Remediation.** Both stale roadmap summaries now include the existing `pip` `/tools`
+coverage. No workflow, Dependabot configuration, dependency, lockfile, verification
+metadata, runtime source, profile/catalog or release behavior changed. This is a
+documentation-only reconciliation, so a TDD RED is not applicable.
+
+**Verification.** `job_20260805_225840_0dc0db98` passed all 19/19 CI-policy
+`unittest` cases, parsed `.github/dependabot.yml` to exactly one weekly `pip` entry at
+`/tools`, confirmed both roadmap summaries name that coverage and reject both stale
+phrasings, passed `git diff --check`, and found no sensitive-material pattern in added
+lines.

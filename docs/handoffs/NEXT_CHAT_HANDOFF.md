@@ -1046,3 +1046,16 @@ external gates.
 After remote verification of the containing G13-02 commit, continue a fresh independent
 logging/privacy, lifecycle/concurrency, accessibility or supply-chain audit. Do not
 repeat G13-01/G13-02.
+
+
+## Autonomous audit G14-01 — security-roadmap Dependabot reconciliation — 2026-08-06
+
+- Reconciled two stale summary bullets in `docs/security-roadmap.md`: the verified
+  Dependabot coverage includes the existing weekly `pip` entry scoped to `/tools` in
+  addition to Gradle, Go modules and GitHub Actions.
+- No workflow, dependency/tool version, manifest, lockfile, verification metadata,
+  runtime, profile/catalog or release behavior changed; this is documentation-only.
+- Verification `job_20260805_225840_0dc0db98`: CI-policy 19/19 PASS, Dependabot
+  YAML↔roadmap consistency PASS, `git diff --check` PASS, sensitive-pattern scan PASS.
+- Continue with a fresh runtime logging/privacy, lifecycle/concurrency, accessibility
+  or supply-chain audit after remote verification. Do not repeat G14-01.
