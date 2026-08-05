@@ -160,6 +160,9 @@ class CertificateRepository(
         try {
             referenceStore.write(reference)
         } catch (cancellation: CancellationException) {
+            if (previous?.uri != uri) {
+                releaseQuietly(uri)
+            }
             throw cancellation
         } catch (_: Exception) {
             if (previous?.uri != uri) {

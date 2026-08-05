@@ -578,3 +578,43 @@ No APK was installed or launched; no ADB/device control, portal interaction,
 credential/certificate material use, real signature, upload, payment or administrative
 submission occurred. Physical AEAT F-03 and supported-Linux Go race remain external
 acceptance gates.
+
+## Finding G8-01 — cancelled certificate selection URI-permission cleanup
+
+**Reproduction.** `CertificateRepository.select()` acquires a persistable read permission
+before the suspending reference-store write. The deterministic regression
+`cancelledSelectionBeforeReferenceCommitReleasesNewPermission` blocked the store before it
+mutated its reference, then cancelled the selection. On unchanged production, RED job
+`job_20260805_105940_21cd09b2` failed after 30/30 tasks: the XML reported
+`expected:<[content://documents/cancelled-selection]> but was:<[]>` for the released-permission
+list, while no reference had been committed. The app therefore retained durable provider access
+to a cancelled, uncommitted certificate document.
+
+**Remediation.** The existing write-failure rollback now also runs for
+`CancellationException`: when the selected URI differs from the previously persisted URI,
+`releaseQuietly(uri)` runs before the original cancellation is rethrown. Same-URI selections do
+not release their pre-existing permission; ordinary failures and successful replacement order
+are unchanged. The fix is intentionally limited to cancellation while the reference write has
+not committed; it makes no claim about arbitrary hostile store implementations that commit and
+then throw cancellation.
+
+**TDD and fresh verification.** Exact GREEN job `job_20260805_110609_9d68b59d` passed
+(`BUILD SUCCESSFUL`, 30/30 tasks). Complete `CertificateRepositoryTest` passed Debug+QA in
+`job_20260805_111233_b8e16ac4`. Full Android job `job_20260805_112149_c6983e7c` passed
+`verifyResolvedCoreVersion`, `verifyPortableAapt2Configuration`, Debug 521/521 and QA 521/521
+JVM tests with zero failures/errors/skips, and Debug/QA/QA-AndroidTest assembly. Forced lint
+`job_20260805_113412_665bf0a2` passed 55/55 tasks with 0 errors / 27 warnings per variant.
+Python passed 100 tests with one environmental hardlink skip. Android artifact verification and
+release-signing fail-closed passed with no release APK. Go test/vet/build passed and the relay
+binary was removed. Pre-evidence exact-scope, whitespace, secret, personal-data and unsafe
+WebView/TLS/backup scans passed.
+
+APK SHA-256:
+
+- Debug: `6ceca12ed1254d6627c89406875bb57669c2ac64ae8b4852b4352cda7ed673d7`;
+- QA: `0e4789a79f4d0d4849825605f768dc677a1e7d844bdce449d6e952ed5d2b9096`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate material use, real signature, upload, payment or administrative
+submission occurred. Physical AEAT F-03 and supported-Linux Go race remain external gates.

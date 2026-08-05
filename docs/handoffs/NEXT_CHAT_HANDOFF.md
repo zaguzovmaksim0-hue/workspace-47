@@ -768,3 +768,27 @@ Physical AEAT F-03 and supported-Linux Go race remain external acceptance gates.
 After remote verification of the containing G7-02 commit, continue a fresh independent
 architecture/lifecycle/concurrency audit. Do not repeat G7-02. Any new behavior change
 requires its own subordinate design/plan and observed TDD RED.
+
+## Autonomous audit G8-01 — cancelled certificate-selection permission cleanup — 2026-08-05
+
+- Reproduced a least-privilege defect: after persistable SAF permission was acquired, cancelling
+  selection while reference `write()` was suspended before commit left the app permission
+  retained even though no selected reference existed.
+- The write cancellation branch now releases only a newly acquired URI that differs from the
+  previous persisted reference, then rethrows the original `CancellationException`.
+- Same-URI permission ownership, successful replacement ordering and ordinary storage-failure
+  rollback are unchanged; no certificate/password/signing/WebView/network/profile/release scope
+  changed.
+- Final gates PASS: Debug 521/521, QA 521/521, pins and Debug/QA/QA-AndroidTest builds, lint
+  0 errors / 27 warnings per variant, Python 100 with one environmental hardlink skip, Android
+  artifacts, release fail-closed and Go test/vet/build. Release APK and relay binary are absent.
+- APK SHA-256: Debug
+  `6ceca12ed1254d6627c89406875bb57669c2ac64ae8b4852b4352cda7ed673d7`, QA
+  `0e4789a79f4d0d4849825605f768dc677a1e7d844bdce449d6e952ed5d2b9096`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- No APK/device/portal/credential/certificate/real-signing/upload/payment/submission action
+  occurred. Physical AEAT F-03 and supported-Linux Go race remain external gates.
+
+After remote verification of the containing G8-01 commit, continue a fresh independent
+lifecycle/concurrency audit. Do not repeat G8-01; any new behavior change requires a separate
+subordinate design/plan and observed RED.

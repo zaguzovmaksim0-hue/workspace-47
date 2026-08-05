@@ -486,3 +486,22 @@ requires a separate design/plan and observed TDD RED.
 - Next autonomous priority: continue a fresh architecture/lifecycle/concurrency pass for
   other asynchronous ownership or invalidation boundaries; require a separate design,
   plan and observed RED before another behavior change.
+
+## Autonomous cancelled certificate-selection permission cleanup — 2026-08-05 (G8-01)
+
+- A cancelled certificate selection could retain a newly acquired persistable SAF read
+  permission when cancellation occurred after permission acquisition but while the reference
+  store was still suspended before commit.
+- Deterministic RED proved the selected reference remained absent while the new URI was never
+  released; this retained unnecessary app access to the cancelled PKCS#12/PFX document.
+- The `CancellationException` write path now mirrors the existing ordinary write-failure
+  cleanup: a newly acquired URI differing from the previous persisted URI is released
+  best-effort before the original cancellation is rethrown. Same-URI ownership is preserved.
+- Successful replacement ordering, PKCS#12 parsing, password/unlock cache, certificate session,
+  signing, WebView/network/TLS/profile/release/dependency policy are unchanged.
+- Fresh gates PASS: Debug 521/521, QA 521/521, pins and Debug/QA/QA-AndroidTest builds, lint
+  0 errors / 27 warnings per variant, Python 100 with one environmental hardlink skip, Android
+  artifacts, release fail-closed and Go test/vet/build. Release APK and relay binary are absent.
+- Next autonomous priority: continue the lifecycle/concurrency audit for reference selection,
+  repository cancellation and other stale ownership boundaries; require a new design/plan and
+  observed RED before another behavior change.

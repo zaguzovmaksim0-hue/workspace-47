@@ -2107,3 +2107,43 @@ existing contract hold under an in-flight blocking store. No APK installation,
 application launch, device control, portal request, credential/certificate use, real
 signing, upload, payment or administrative submission occurred. Go race remains an
 external supported-Linux CI gate and AEAT F-03 remains manual.
+
+## Autonomous G8-01 — cancelled certificate-selection URI permission — 2026-08-05
+
+`CertificateRepository.select()` obtains a persistable SAF read permission before writing its
+`StoredCertificateReference`. A new deterministic store test suspended `write()` before any
+reference mutation, cancelled the selection, and required the newly acquired URI permission to
+be released. RED job `job_20260805_105940_21cd09b2` failed exactly at that assertion: expected
+the cancelled URI in `released`, but the list was empty; tests=1, failures=1, errors=0.
+
+The minimum production repair adds the existing `releaseQuietly(uri)` rollback to the
+`CancellationException` branch when the URI differs from the previously persisted URI, then
+rethrows the same cancellation. It does not convert cancellation into a storage error and does
+not release a same-URI permission that was already owned by the previous reference.
+
+Verification evidence:
+
+- exact GREEN: `job_20260805_110609_9d68b59d`, `BUILD SUCCESSFUL`, 30/30 tasks;
+- complete `CertificateRepositoryTest` Debug+QA: `job_20260805_111233_b8e16ac4`, exit 0;
+- full Android: `job_20260805_112149_c6983e7c`, pins PASS, Debug 521/521 and QA 521/521 with
+  zero failures/errors/skips, Debug/QA/QA-AndroidTest assembly PASS;
+- forced lint: `job_20260805_113412_665bf0a2`, `BUILD SUCCESSFUL`, 55/55 tasks,
+  0 errors / 27 warnings per variant;
+- Python: 100 tests, zero failures/errors, one environmental hardlink skip;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS; release APK count zero;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS; relay binary
+  removed;
+- pre-evidence exact-scope, `git diff --check`, whitespace, high-confidence secret,
+  personal-data and unsafe WebView/TLS/backup scans: PASS.
+
+APK SHA-256:
+
+- Debug: `6ceca12ed1254d6627c89406875bb57669c2ac64ae8b4852b4352cda7ed673d7`;
+- QA: `0e4789a79f4d0d4849825605f768dc677a1e7d844bdce449d6e952ed5d2b9096`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK installation/launch, device control, portal request, credential/certificate material use,
+real signing, upload, payment or administrative submission occurred. The threat-model wording
+is unchanged because this milestone tightens cleanup within the existing certificate-document
+permission/reference lifecycle rather than introducing a new asset or trust boundary.

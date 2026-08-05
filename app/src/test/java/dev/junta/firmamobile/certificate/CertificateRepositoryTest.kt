@@ -5,7 +5,10 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.time.Clock
 import java.time.ZoneOffset
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -161,6 +164,30 @@ class CertificateRepositoryTest {
             CertificateSelectionErrorCode.PERMISSION_DENIED,
             repository(access).select(uri),
         )
+    }
+
+    @Test
+    fun cancelledSelectionBeforeReferenceCommitReleasesNewPermission() = runTest {
+        val uri = Uri.parse("content://documents/cancelled-selection")
+        val access = validAccess()
+        val store = BlockingReferenceStore()
+        val repository = CertificateRepository(
+            documentAccess = access,
+            referenceStore = store,
+            loader = Pkcs12Loader(
+                clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
+            ),
+            ioDispatcher = UnconfinedTestDispatcher(testScheduler),
+        )
+
+        val selection = async { repository.select(uri) }
+        store.writeStarted.await()
+        assertEquals(listOf(uri), access.persisted)
+
+        selection.cancelAndJoin()
+
+        assertNull(store.reference)
+        assertEquals(listOf(uri), access.released)
     }
 
     @Test
@@ -368,6 +395,24 @@ class CertificateRepositoryTest {
             opened += uri
             if (openFailure) throw SecurityException("open canary")
             return ByteArrayInputStream(content)
+        }
+    }
+
+    private class BlockingReferenceStore : CertificateReferenceStore {
+        val writeStarted = CompletableDeferred<Unit>()
+        private val finishWrite = CompletableDeferred<Unit>()
+        var reference: StoredCertificateReference? = null
+
+        override suspend fun read(): StoredCertificateReference? = reference
+
+        override suspend fun write(reference: StoredCertificateReference) {
+            writeStarted.complete(Unit)
+            finishWrite.await()
+            this.reference = reference
+        }
+
+        override suspend fun clear() {
+            reference = null
         }
     }
 
