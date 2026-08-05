@@ -909,3 +909,48 @@ lifecycle/concurrency, accessibility or supply-chain audit. Do not repeat G11-01
 new behavior change requires a separate subordinate design/plan and observed TDD RED.
 Physical AEAT F-03, physical TalkBack/visual validation and supported-Linux Go race
 remain external gates.
+
+## Autonomous audit G12-01 — stale WebView network-diagnostic ownership — 2026-08-05
+
+- Reproduced a lifecycle/logging provenance defect: a released/replaced normal WebView
+  could still invoke `shouldInterceptRequest()` and append sanitized main-frame
+  `NETWORK_REQUEST` metadata after its other browser callbacks were ownership-gated.
+- RED `job_20260805_205546_7e6ca54a` failed the single new test exactly on the stale
+  log record; XML read `job_20260805_205837_885abec9` confirmed 1 failure / 0 errors /
+  0 skips. Production was unchanged at RED.
+- Minimum fix adds only an exact active-WebView guard before request diagnostic logging;
+  return value stays `null`. Active logging, subframes, navigation, SSL/Safe Browsing,
+  DNS/TLS/Client TLS, certificate, signing, profile/catalog, release and dependencies
+  are unchanged.
+- Exact GREEN `job_20260805_205906_3890a3e5` PASS. Focused Debug+QA
+  `job_20260805_210208_77f0117c` PASS: `JuntaWebViewClientTest` 18/18 per variant,
+  60/60 tasks.
+- Full Android `job_20260805_210652_14457a72` PASS: pins/locks, all three assemblies,
+  128/128 tasks; XML aggregation `job_20260805_211450_91c4e83d`: Debug 526/526 and QA
+  526/526, zero failures/errors/skips. Lint `job_20260805_211457_1604b9df` PASS 55/55;
+  zero errors / unchanged 27 warnings per variant confirmed by
+  `job_20260805_212114_570c9a57`.
+- Python/Go `job_20260805_210659_0143787d`, Android artifacts
+  `job_20260805_211505_15af8337` and release fail-closed
+  `job_20260805_212127_371468b7` PASS. Python: 101 tests with one environmental
+  hardlink skip; Go test/vet/build PASS.
+- Cleanup whitelist assertion `job_20260805_212254_962eeacb` stopped before mutation
+  because it omitted the just-built untracked relay executable. Diagnostic
+  `job_20260805_212313_afba868a` confirmed it was the standard `go build` ARM64 ELF;
+  corrected cleanup `job_20260805_212329_ecd65e0a` removed it and confirmed zero
+  release APKs. This was not a source/test failure.
+- Exact pre-evidence scope/whitespace/sensitive/unsafe-pattern scan
+  `job_20260805_212358_bb60a813` PASS.
+- APK SHA-256: Debug
+  `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`, QA
+  `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Threat-model wording is unchanged: existing diagnostics/output and WebView lifecycle
+  boundaries cover this remediation, with no new trust edge. No APK/device/portal/
+  credential/certificate/real-signing/upload/payment/submission action occurred.
+
+After remote verification of the containing G12-01 commit, continue a fresh independent
+certificate/signing/storage, accessibility or CI/supply-chain audit. Do not repeat
+G12-01. Any new behavior change requires a separate subordinate design/plan and
+observed TDD RED. Physical AEAT F-03, physical TalkBack/visual validation and
+supported-Linux Go race remain external gates.

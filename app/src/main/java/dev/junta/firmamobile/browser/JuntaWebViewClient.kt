@@ -188,6 +188,7 @@ class JuntaWebViewClient(
         view: WebView,
         request: WebResourceRequest,
     ): WebResourceResponse? {
+        if (!isCurrentWebView(view)) return null
         if (request.isForMainFrame) {
             logger.recordNavigationEvent(
                 code = DiagnosticEventCode.NETWORK_REQUEST,

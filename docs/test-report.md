@@ -2325,3 +2325,54 @@ WebView/device behavior. No APK installation/launch, device control, portal requ
 credential/certificate use, real signing, upload, payment or administrative submission
 occurred. Physical AEAT F-03, physical TalkBack/visual validation and Go race on
 supported Linux remain external gates. Threat-model wording is unchanged.
+
+## Autonomous G12-01 — stale WebView network-diagnostic ownership — 2026-08-05
+
+A stale/released `JuntaWebViewClient` could still append sanitized main-frame request
+metadata because `shouldInterceptRequest()` did not use the exact active-WebView
+predicate already protecting its navigation/lifecycle/UI callbacks. Network handling
+was not intercepted or changed; the defect was diagnostic provenance/lifetime.
+
+TDD evidence:
+
+- RED `job_20260805_205546_7e6ca54a`: 30/30 tasks executed and the single new test
+  failed; XML read `job_20260805_205837_885abec9` showed one test, one failure, zero
+  errors/skips and the stale `NETWORK_REQUEST` record;
+- minimum implementation: one `if (!isCurrentWebView(view)) return null` guard before
+  the existing logging block;
+- exact Debug GREEN `job_20260805_205906_3890a3e5`: 30/30 tasks PASS;
+- focused Debug+QA `job_20260805_210208_77f0117c`: complete
+  `JuntaWebViewClientTest` 18/18 per variant, 60/60 tasks PASS.
+
+Full verification:
+
+- Android `job_20260805_210652_14457a72`: resolved-core, portable-AAPT2 and runtime
+  dependency-lock checks PASS; Debug/QA/QA-AndroidTest assemblies PASS; 128/128 tasks;
+- aggregate XML `job_20260805_211450_91c4e83d`: Debug 526/526 and QA 526/526 JVM
+  tests, zero failures/errors/skips;
+- lint `job_20260805_211457_1604b9df`: 55/55 tasks PASS;
+  `job_20260805_212114_570c9a57`: zero errors and unchanged 27 warnings per variant;
+- Python/Go `job_20260805_210659_0143787d`: Python 101 tests PASS with one
+  environmental hardlink skip; Go test/vet/build PASS;
+- artifacts `job_20260805_211505_15af8337`: alignment/signature/manifest/canary
+  checks PASS;
+- release `job_20260805_212127_371468b7`: expected private-signing rejection PASS;
+- cleanup `job_20260805_212329_ecd65e0a`: relay binary absent and release APK count
+  zero. The preceding whitelist assertion `job_20260805_212254_962eeacb` failed before
+  mutation only because the known `go build` output had not been listed; diagnostic
+  `job_20260805_212313_afba868a` confirmed the untracked ARM64 ELF origin;
+- exact-scope, whitespace, sensitive-material and unsafe WebView/TLS scans:
+  `job_20260805_212358_bb60a813`, PASS.
+
+APK SHA-256:
+
+- Debug: `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`;
+- QA: `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+The regression proves stale diagnostic suppression and the existing positive control
+proves active logging remains enabled. It does not constitute physical WebView/device
+validation. No APK installation/launch, device control, portal request, credential or
+certificate use, real signing, upload, payment or administrative submission occurred.
+Physical AEAT F-03, physical TalkBack/visual behavior and supported-Linux Go race remain
+external gates. Threat-model wording is unchanged.

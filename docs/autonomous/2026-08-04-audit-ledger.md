@@ -799,3 +799,61 @@ or trust edge, so threat-model wording is unchanged. No APK was installed or lau
 no ADB/device control, portal interaction, credential/certificate material use, real
 signature, upload, payment or administrative submission occurred. Physical AEAT F-03,
 physical TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## Finding G12-01 — stale WebView network-diagnostic ownership
+
+**Reproduction.** The exact active-WebView predicate already guarded navigation, page
+lifecycle, error UI and renderer callbacks in `JuntaWebViewClient`, but
+`shouldInterceptRequest()` recorded every main-frame request without checking that the
+callback owner was still active. A released/replaced WebView could therefore append
+obsolete sanitized host/method/path-hash metadata to process/QA diagnostics even though
+the interception result remained `null`. RED job `job_20260805_205546_7e6ca54a`
+executed 30/30 tasks and failed the single new regression. XML read
+`job_20260805_205837_885abec9` confirmed one test, one failure, zero errors/skips and
+the exact unexpected stale record:
+`event=NETWORK_REQUEST host=ws072.juntadeandalucia.es method=POST`.
+
+**Remediation.** `shouldInterceptRequest()` now returns its unchanged `null` result
+before logging whenever `!isCurrentWebView(view)`. Active main-frame logging and
+subframe behavior are unchanged. The existing `isCurrentWebView` helper also makes an
+owner-predicate exception fail closed for diagnostics. Request interception,
+navigation, SSL/Safe Browsing rejection, origin/path policy, DNS/TLS/Client TLS,
+cookies, bridge, certificate, signing, portal profiles/catalog, release and dependency
+policy are unchanged.
+
+**TDD and fresh verification.** Exact GREEN job `job_20260805_205906_3890a3e5`
+passed 30/30 tasks. Focused Debug+QA job `job_20260805_210208_77f0117c` passed the
+complete `JuntaWebViewClientTest` 18/18 in each variant and 60/60 tasks, preserving the
+existing active-request logging positive control. Full Android job
+`job_20260805_210652_14457a72` passed resolved-core, portable-AAPT2 and runtime-lock
+gates, all Debug/QA/QA-AndroidTest assemblies and 128/128 tasks; XML aggregation
+`job_20260805_211450_91c4e83d` reported Debug 526/526 and QA 526/526 JVM tests with
+zero failures/errors/skips. Lint `job_20260805_211457_1604b9df` passed 55/55 tasks;
+`job_20260805_212114_570c9a57` confirmed zero errors and the unchanged 27 warnings per
+variant. Python/Go `job_20260805_210659_0143787d` passed Python 101 tests with one
+environmental hardlink skip and Go test/vet/build. Artifact job
+`job_20260805_211505_15af8337` passed alignment/signature/manifest/canary checks.
+Release job `job_20260805_212127_371468b7` passed the expected private-signing
+fail-closed gate.
+
+An initial cleanup whitelist assertion `job_20260805_212254_962eeacb` stopped before
+mutation because it omitted the generated untracked `ws024-relay/ws024-relay` binary.
+Diagnostic job `job_20260805_212313_afba868a` confirmed that file was the default
+untracked ARM64 ELF output of the just-completed `go build`, not a source change.
+Corrected cleanup `job_20260805_212329_ecd65e0a` removed it and confirmed zero release
+APKs. Exact four-file pre-evidence scope, whitespace, sensitive-material and unsafe
+WebView/TLS added-line scans passed in `job_20260805_212358_bb60a813`.
+
+APK SHA-256:
+
+- Debug: `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`;
+- QA: `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+The threat model already treats diagnostics as an output channel and stale WebView
+ownership as a lifecycle boundary. This remediation narrows lifetime provenance
+without adding an asset, trust edge or new externally reachable behavior, so threat-
+model wording is unchanged. No APK was installed or launched; no ADB/device control,
+portal interaction, credential/certificate material use, real signature, upload,
+payment or administrative submission occurred. Physical AEAT F-03, physical
+TalkBack/visual validation and supported-Linux Go race remain external gates.

@@ -583,3 +583,26 @@ requires a separate design/plan and observed TDD RED.
 - Next autonomous priority: continue a fresh independent lifecycle/concurrency,
   accessibility or supply-chain audit. Do not repeat G11-01; any behavior change
   requires its own subordinate design/plan and observed RED.
+
+## Autonomous stale WebView network-diagnostic ownership — 2026-08-05 (G12-01)
+
+- `JuntaWebViewClient.shouldInterceptRequest()` previously logged a sanitized
+  main-frame `NETWORK_REQUEST` even when the callback came from a released/replaced
+  WebView whose other state-mutating callbacks were already ownership-gated.
+- TDD RED captured the stale diagnostic exactly; the minimum fix reuses the existing
+  exact active-WebView predicate and leaves the interception result `null`.
+- Active request metadata, subframe behavior, SSL/Safe Browsing rejection,
+  navigation/origin/TLS/certificate/signing/profile/release/dependency behavior are
+  unchanged. No new trust edge was introduced; threat-model wording is unchanged.
+- Fresh gates PASS: focused Debug+QA 18/18 per variant; full Debug 526/526 and QA
+  526/526; three assemblies and pin/lock checks; lint 0 errors / 27 warnings per
+  variant; Python 101 with one environmental hardlink skip; Go test/vet/build;
+  Android artifacts; release fail-closed with zero release APK. Generated relay binary
+  is absent.
+- APK SHA-256: Debug
+  `3beacea548b78ce09d110820212603ed538e5dc2072c8f218a6ec01658bf2b3f`, QA
+  `cb34cce2fc515a6a20d7cab68eed742d9d5d0fe023912d9b8371175fcf78e546`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Next autonomous priority: continue a fresh independent certificate/signing/storage,
+  accessibility or CI/supply-chain audit. Do not repeat G12-01; any behavior change
+  requires its own subordinate design/plan and observed RED.

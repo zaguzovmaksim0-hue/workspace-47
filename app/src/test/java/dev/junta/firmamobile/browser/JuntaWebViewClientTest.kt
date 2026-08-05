@@ -187,6 +187,32 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun staleWebViewDoesNotRecordNetworkRequestDiagnostics() {
+        val staleLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        var active = true
+        val staleClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = staleLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+            isActiveWebView = { active },
+        )
+        active = false
+
+        staleClient.shouldInterceptRequest(
+            webView,
+            request(
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs?firmaB64=stale-secret",
+                method = "POST",
+            ),
+        )
+
+        assertEquals("", staleLogger.exportText())
+    }
+
+    @Test
     fun activeViewPredicateFailureIsFailClosed() {
         val staleCallbacks = RecordingBrowserCallbacks()
         val staleClient = JuntaWebViewClient(
