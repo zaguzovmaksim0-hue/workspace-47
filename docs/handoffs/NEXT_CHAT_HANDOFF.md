@@ -792,3 +792,34 @@ requires its own subordinate design/plan and observed TDD RED.
 After remote verification of the containing G8-01 commit, continue a fresh independent
 lifecycle/concurrency audit. Do not repeat G8-01; any new behavior change requires a separate
 subordinate design/plan and observed RED.
+
+## Autonomous audit G8-02 — cancelled unlock stale-reference summary write — 2026-08-05
+
+- Reproduced a repository cancellation-ordering defect: an unlock cancelled while blocked in
+  PKCS#12/document loading could return from that blocking work and initiate an old-reference
+  summary write before coroutine cancellation was re-observed.
+- RED `job_20260805_115511_14d81020` failed exactly because the non-suspending recording store
+  received a write after cancellation; tests=1, failures=1, errors=0.
+- `CertificateRepository.unlock()` now checks `currentCoroutineContext().ensureActive()` after
+  blocking loading and before successful reference-summary persistence. Original cancellation and
+  all non-cancelled certificate semantics are preserved.
+- GREEN `job_20260805_120103_a7e93b2b` and complete repository Debug+QA
+  `job_20260805_120546_d5ea1fd2` PASS. Full Android `job_20260805_121301_ef67a622` PASS:
+  Debug 522/522, QA 522/522, zero failures/errors/skips, pins and all three assemblies.
+- Forced lint `job_20260805_123048_ba6c0459` PASS: 55/55 tasks, 0 errors / 27 warnings per
+  variant. Python `job_20260805_123629_7317943c` PASS: 100 tests, one environmental hardlink
+  skip. Artifact `job_20260805_123802_8de46e94`, release fail-closed
+  `job_20260805_124233_27c083ee`, and Go `job_20260805_123929_9870b5cf` all PASS. Release APK
+  count zero; generated relay binary absent.
+- APK SHA-256: Debug
+  `5f7ccda5ed3aafc1800f8ec2e6190ff263f5c07d3abb01f67ced74104c863fe5`, QA
+  `f89f4f5a8009ced7cb5eb97777d7a6e6ac99a4416908e45dd3fb303328d46146`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Final source/test whitespace, scope, secret, personal/certificate-literal and unsafe
+  WebView/TLS/backup scans PASS. Threat-model wording remains unchanged.
+- No APK/device/portal/credential/certificate/real-signing/upload/payment/submission action
+  occurred. Physical AEAT F-03 and supported-Linux Go race remain external gates.
+
+After remote verification of the containing G8-02 commit, continue a fresh independent
+architecture/lifecycle/concurrency or UX/CI audit. Do not repeat G7-02, G8-01 or G8-02. Any new
+behavior change requires a separate subordinate design/plan and observed TDD RED.

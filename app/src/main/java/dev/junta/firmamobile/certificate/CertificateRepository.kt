@@ -5,6 +5,8 @@ import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 enum class CertificateSelectionErrorCode {
@@ -74,6 +76,7 @@ class CertificateRepository(
             CertificateLoadResult.Failure(CertificateErrorCode.DOCUMENT_UNAVAILABLE)
         }
 
+        currentCoroutineContext().ensureActive()
         if (result is CertificateLoadResult.Success) {
             try {
                 referenceStore.write(reference.copy(summary = result.identity.summary))

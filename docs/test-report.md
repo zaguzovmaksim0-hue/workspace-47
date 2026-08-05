@@ -2147,3 +2147,44 @@ No APK installation/launch, device control, portal request, credential/certifica
 real signing, upload, payment or administrative submission occurred. The threat-model wording
 is unchanged because this milestone tightens cleanup within the existing certificate-document
 permission/reference lifecycle rather than introducing a new asset or trust boundary.
+
+## Autonomous G8-02 — cancelled unlock stale reference-summary write — 2026-08-05
+
+A deterministic repository regression blocked a valid synthetic PKCS#12 stream after loading had
+started, cancelled the unlock, then released the blocking read. Its reference store records
+`write()` immediately without suspension. On unchanged production, RED job
+`job_20260805_115511_14d81020` failed because a stale reference-summary write was observed after
+cancellation (tests=1, failures=1, errors=0).
+
+The minimum repair adds `currentCoroutineContext().ensureActive()` after blocking certificate
+loading returns and before the successful-result summary persistence branch. This guarantees that
+an already-cancelled old unlock cannot initiate that subsequent write while preserving the
+original cancellation and all non-cancelled behavior.
+
+Verification evidence:
+
+- exact GREEN: `job_20260805_120103_a7e93b2b`, PASS;
+- complete `CertificateRepositoryTest` Debug+QA: `job_20260805_120546_d5ea1fd2`, PASS;
+- full Android: `job_20260805_121301_ef67a622`, pin checks PASS, Debug 522/522 and QA 522/522
+  with zero failures/errors/skips, Debug/QA/QA-AndroidTest assembly PASS, 127/127 tasks;
+- forced lint: `job_20260805_123048_ba6c0459`, `BUILD SUCCESSFUL`, 55/55 tasks,
+  0 errors / 27 warnings per variant;
+- Python: `job_20260805_123629_7317943c`, 100 tests, zero failures/errors, one environmental
+  hardlink skip;
+- Android artifacts: `job_20260805_123802_8de46e94`, PASS;
+- release without private signing inputs: `job_20260805_124233_27c083ee`, expected fail-closed
+  PASS; release APK count zero;
+- Go test/vet/build: `job_20260805_123929_9870b5cf`, PASS; generated relay binary removed;
+- exact-scope, `git diff --check`, high-confidence secret, personal/certificate-literal and unsafe
+  WebView/TLS/backup added-line scans: PASS.
+
+APK SHA-256:
+
+- Debug: `5f7ccda5ed3aafc1800f8ec2e6190ff263f5c07d3abb01f67ced74104c863fe5`;
+- QA: `f89f4f5a8009ced7cb5eb97777d7a6e6ac99a4416908e45dd3fb303328d46146`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK installation/launch, device control, portal request, credential/certificate material use,
+real signing, upload, payment or administrative submission occurred. Threat-model wording is
+unchanged because the remediation closes a cancellation ordering gap inside the existing selected
+certificate-reference lifecycle rather than creating or broadening a trust boundary.

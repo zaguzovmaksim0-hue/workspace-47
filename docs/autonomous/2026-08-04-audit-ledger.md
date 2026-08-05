@@ -618,3 +618,47 @@ APK SHA-256:
 No APK was installed or launched; no ADB/device control, portal interaction,
 credential/certificate material use, real signature, upload, payment or administrative
 submission occurred. Physical AEAT F-03 and supported-Linux Go race remain external gates.
+
+## Finding G8-02 — cancelled certificate unlock stale-reference write
+
+**Reproduction.** `CertificateRepository.unlock()` performs blocking document/PKCS#12 loading
+inside the IO context and then persists a safe certificate summary into the selected reference.
+Cancellation is not observed while that blocking loader is running. A deterministic regression
+blocked a valid synthetic PKCS#12 read, cancelled the unlock, released the read, and used a
+non-suspending reference store to observe the first side effect. On unchanged production, RED
+job `job_20260805_115511_14d81020` failed exactly because `store.writes` was non-empty
+(tests=1, failures=1, errors=0): the cancelled unlock initiated a stale old-reference summary
+write after blocking load returned.
+
+**Remediation.** `CertificateRepository.unlock()` now calls
+`currentCoroutineContext().ensureActive()` immediately after blocking certificate loading and
+before any successful-result reference-summary persistence. Cancellation therefore remains the
+original coroutine cancellation and is observed before a stale write can begin. Non-cancelled
+success, certificate validation/error mapping, summary contents, selection, password/cache,
+signing, WebView/network/TLS, portal-profile, release and dependency behavior are unchanged.
+The existing threat model already treats the selected certificate reference and coroutine/session
+lifecycle as protected state; no new asset or trust boundary was introduced, so threat-model
+wording is unchanged.
+
+**TDD and fresh verification.** Exact GREEN job `job_20260805_120103_a7e93b2b` passed; complete
+`CertificateRepositoryTest` Debug+QA job `job_20260805_120546_d5ea1fd2` passed. Full Android
+job `job_20260805_121301_ef67a622` passed pin checks, Debug 522/522 and QA 522/522 JVM tests
+with zero failures/errors/skips, Debug/QA/QA-AndroidTest assembly, and 127/127 tasks. Forced lint
+`job_20260805_123048_ba6c0459` passed 55/55 tasks with 0 errors / 27 warnings per variant.
+Python `job_20260805_123629_7317943c` passed 100 tests with one environmental hardlink skip.
+Android artifact verification `job_20260805_123802_8de46e94` passed. Release fail-closed
+`job_20260805_124233_27c083ee` passed with zero release APK. Go test/vet/build
+`job_20260805_123929_9870b5cf` passed and the generated relay binary was removed. Final
+whitespace, exact-scope, high-confidence secret, personal/certificate-literal and unsafe
+WebView/TLS/backup added-line scans passed. The earlier scan-wrapper command failure was traced
+to shell quoting and rerun successfully with a Python regex wrapper; it was not a product failure.
+
+APK SHA-256:
+
+- Debug: `5f7ccda5ed3aafc1800f8ec2e6190ff263f5c07d3abb01f67ced74104c863fe5`;
+- QA: `f89f4f5a8009ced7cb5eb97777d7a6e6ac99a4416908e45dd3fb303328d46146`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate material use, real signature, upload, payment or administrative
+submission occurred. Physical AEAT F-03 and supported-Linux Go race remain external gates.

@@ -505,3 +505,24 @@ requires a separate design/plan and observed TDD RED.
 - Next autonomous priority: continue the lifecycle/concurrency audit for reference selection,
   repository cancellation and other stale ownership boundaries; require a new design/plan and
   observed RED before another behavior change.
+
+## Autonomous cancelled certificate-unlock stale-reference write barrier — 2026-08-05 (G8-02)
+
+- A cancelled unlock could outlive blocking PKCS#12/document loading and, after that blocking
+  work returned, initiate a safe-summary write using the old selected certificate reference.
+- Deterministic RED used a blocked valid synthetic PKCS#12 read plus a non-suspending reference
+  store and observed the stale write after cancellation.
+- `CertificateRepository.unlock()` now explicitly checks coroutine activity immediately after
+  blocking loading and before any successful-result reference-summary write.
+- Cancellation propagation, non-cancelled success/error mapping, certificate validation,
+  password/cache/session/signing, WebView/network/TLS/profile/release/dependency policy are
+  otherwise unchanged; no threat-model wording change was required.
+- Fresh gates PASS: Debug 522/522, QA 522/522, pins and Debug/QA/QA-AndroidTest builds, lint
+  0 errors / 27 warnings per variant, Python 100 with one environmental hardlink skip, Android
+  artifacts, release fail-closed and Go test/vet/build. Release APK and relay binary are absent.
+- APK SHA-256: Debug
+  `5f7ccda5ed3aafc1800f8ec2e6190ff263f5c07d3abb01f67ced74104c863fe5`, QA
+  `f89f4f5a8009ced7cb5eb97777d7a6e6ac99a4416908e45dd3fb303328d46146`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Next autonomous priority: move to a fresh independent architecture/lifecycle/concurrency or
+  UX/CI audit. Do not repeat G8-02; any new behavior change requires its own design/plan and RED.

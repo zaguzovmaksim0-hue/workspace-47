@@ -5,7 +5,10 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.time.Clock
 import java.time.ZoneOffset
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -278,6 +281,44 @@ class CertificateRepositoryTest {
     }
 
     @Test
+    fun cancelledUnlockAfterBlockingLoadDoesNotWriteStaleReferenceSummary() = runTest {
+        val bytes = TestCertificateFactory.validRsa()
+        val uri = Uri.parse("content://documents/cancelled-unlock")
+        val reference = StoredCertificateReference(
+            uri,
+            "cancelled-unlock.p12",
+            "application/x-pkcs12",
+            bytes.size.toLong(),
+            summary = null,
+        )
+        val readStarted = CountDownLatch(1)
+        val allowRead = CountDownLatch(1)
+        val access = validAccess().apply {
+            content = bytes
+            openOverride = BlockingInputStream(bytes, readStarted, allowRead)
+        }
+        val store = RecordingReferenceStore(reference)
+        val repository = CertificateRepository(
+            documentAccess = access,
+            referenceStore = store,
+            loader = Pkcs12Loader(
+                clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
+            ),
+            ioDispatcher = Dispatchers.Default,
+        )
+        val password = TestCertificateFactory.password()
+        val unlock = async(Dispatchers.Default) { repository.unlock(password) }
+
+        assertTrue(readStarted.await(5, TimeUnit.SECONDS))
+        unlock.cancel()
+        allowRead.countDown()
+        unlock.cancelAndJoin()
+
+        assertTrue(store.writes.isEmpty())
+        assertEquals(reference, store.reference)
+    }
+
+    @Test
     fun unlockWithoutSelectionAndUnavailableDocumentUseClosedErrors() = runTest {
         assertFailure(
             CertificateErrorCode.NO_CERTIFICATE_SELECTED,
@@ -368,6 +409,7 @@ class CertificateRepositoryTest {
         var persistFailure = false
         var releaseFailure = false
         var openFailure = false
+        var openOverride: InputStream? = null
         var metadataCalls = 0
         val persisted = mutableListOf<Uri>()
         val released = mutableListOf<Uri>()
@@ -394,7 +436,53 @@ class CertificateRepositoryTest {
         override fun open(uri: Uri): InputStream {
             opened += uri
             if (openFailure) throw SecurityException("open canary")
-            return ByteArrayInputStream(content)
+            return openOverride ?: ByteArrayInputStream(content)
+        }
+    }
+
+    private class BlockingInputStream(
+        bytes: ByteArray,
+        private val readStarted: CountDownLatch,
+        private val allowRead: CountDownLatch,
+    ) : InputStream() {
+        private val delegate = ByteArrayInputStream(bytes)
+        private var blocked = false
+
+        override fun read(): Int {
+            blockOnce()
+            return delegate.read()
+        }
+
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+            blockOnce()
+            return delegate.read(buffer, offset, length)
+        }
+
+        override fun close() = delegate.close()
+
+        private fun blockOnce() {
+            if (blocked) return
+            blocked = true
+            readStarted.countDown()
+            check(allowRead.await(5, TimeUnit.SECONDS))
+        }
+    }
+
+    private class RecordingReferenceStore(
+        initial: StoredCertificateReference,
+    ) : CertificateReferenceStore {
+        var reference: StoredCertificateReference? = initial
+        val writes = mutableListOf<StoredCertificateReference>()
+
+        override suspend fun read(): StoredCertificateReference? = reference
+
+        override suspend fun write(reference: StoredCertificateReference) {
+            writes += reference
+            this.reference = reference
+        }
+
+        override suspend fun clear() {
+            reference = null
         }
     }
 
