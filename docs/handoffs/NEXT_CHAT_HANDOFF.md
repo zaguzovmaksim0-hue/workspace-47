@@ -741,3 +741,30 @@ After remote verification of the containing G7-01 commit, continue a fresh
 lifecycle/concurrency audit for other delayed UI deliveries and ownership transfers.
 Any behavior change requires a separate subordinate design/plan and observed TDD RED.
 Physical AEAT F-03 and supported-Linux Go race remain external acceptance gates.
+
+## Autonomous audit G7-02 — certificate unlock invalidation linearization — 2026-08-05
+
+- Reproduced cache resurrection after explicit clear: a blocked store could complete
+  later, return success and recreate the encrypted unlock record.
+- Reproduced premature session publication: while cache persistence was suspended,
+  `CertificateSession.identityForSigning()` already exposed the new identity.
+- Cache clear now advances an atomic invalidation generation before deleting storage;
+  any pre-clear store that writes late detects the mismatch, removes the stale record
+  and returns failure.
+- ViewModel unlock now awaits cache store and checks cancellation before session
+  publication; session and `Unlocked` UI commit have no suspension between them.
+- Final gates PASS: Debug 520/520, QA 520/520, pins and Debug/QA/QA-AndroidTest builds,
+  lint 0 errors / 27 warnings per variant, Python 100 with one environmental hardlink
+  skip, Android artifacts, release fail-closed and Go test/vet/build. Release APK and
+  relay binary are absent.
+- APK SHA-256: Debug
+  `b2d414f4a74eb3f42dbf4cb6c63a4403e82a3e199b5b4fcd2d3c111a62345547`, QA
+  `833081836caf0feb5060f9daee90ce4a0ee00646fb136006c8181aba1d1a376e`, QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- No device/app/portal/credential/certificate/real-signing/upload/payment/submission
+  action occurred. Physical AEAT F-03 and supported-Linux Go race remain external
+  gates.
+
+After remote verification of the containing G7-02 commit, continue a fresh independent
+architecture/lifecycle/concurrency audit. Do not repeat G7-02. Any new behavior change
+requires its own subordinate design/plan and observed TDD RED.

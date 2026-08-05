@@ -529,3 +529,52 @@ No APK was installed or launched; no ADB/device control, portal interaction,
 credential/certificate material use, real signature, upload, payment or
 administrative submission occurred. Physical AEAT F-03 and supported-Linux Go race
 remain external gates.
+
+## Finding G7-02 — certificate unlock invalidation linearization
+
+**Reproduction.** Explicit certificate-cache invalidation was not linearizable with an
+already-started blocking store. The corrected deterministic cache regression first
+failed in `job_20260804_203419_2ce1ec18`: after `clear()` completed while the physical
+writer remained blocked, the late writer recreated the record and `store.await()`
+returned `true`. A separate ViewModel regression was freshly reconfirmed RED in
+`job_20260804_215510_e95834c9`: while cache persistence was suspended,
+`CertificateSession.identityForSigning()` already exposed the new identity
+(`expected null, but was UnlockedIdentity`).
+
+**Remediation.** `EncryptedCertificateUnlockCache` now owns an `AtomicLong`
+invalidation generation. Every store captures the generation before entering its IO
+work; `clear()` increments it before deleting storage. A successful physical write
+must still match the captured generation or the late record is cleared and the store
+returns `false`. `CertificateViewModel.unlock()` now awaits cache persistence and then
+checks coroutine cancellation before publishing `session.unlock`; the matching
+`Unlocked` state follows immediately with no suspension between session and UI commit.
+Retention duration, AES-GCM/Keystore policy, cache payload, password zeroization,
+certificate selection, signing, WebView, portal and release policy are unchanged. The
+existing threat-model contract already required manual lock/session clear to eliminate
+the persisted record, so no threat-model wording change was required.
+
+**TDD and fresh verification.** Both exact regressions passed together in
+`job_20260804_220006_94a6661d` (`BUILD SUCCESSFUL`, 30/30 tasks). The relevant
+`CertificateUnlockCacheTest`, `CertificateViewModelTest` and
+`CertificateSessionTest` suites passed Debug+QA in `job_20260804_220546_1789baad`
+(`BUILD SUCCESSFUL`, 60/60 tasks). Full Android job
+`job_20260804_221205_041a15fa` passed pin checks, Debug 520/520 and QA 520/520 JVM
+tests with zero failures/errors/skips, plus Debug/QA/QA-AndroidTest assembly
+(`BUILD SUCCESSFUL`, 127/127 tasks). Forced lint job
+`job_20260805_103210_50f11051` passed 55/55 tasks with 0 errors and 27 warnings per
+variant. Python passed 100 tests with one environmental hardlink skip. Android artifact
+verification and release-signing fail-closed passed; no release APK remained. Go
+test/vet/build passed and the generated relay binary was removed. `git diff --check`,
+exact dirty-scope review, high-confidence secret scan and unsafe WebView/TLS/backup
+added-line scan passed before evidence mutation.
+
+APK SHA-256:
+
+- Debug: `b2d414f4a74eb3f42dbf4cb6c63a4403e82a3e199b5b4fcd2d3c111a62345547`;
+- QA: `833081836caf0feb5060f9daee90ce4a0ee00646fb136006c8181aba1d1a376e`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+No APK was installed or launched; no ADB/device control, portal interaction,
+credential/certificate material use, real signature, upload, payment or administrative
+submission occurred. Physical AEAT F-03 and supported-Linux Go race remain external
+acceptance gates.

@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicLong
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
@@ -75,13 +76,18 @@ class EncryptedCertificateUnlockCache internal constructor(
     private val keyProvider: CertificateUnlockKeyProvider,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : CertificateUnlockCache {
+    private val invalidationGeneration = AtomicLong(0)
+
     override suspend fun store(
         reference: StoredCertificateReference,
         password: CharArray,
         issuedAt: Instant,
         expiresAt: Instant,
-    ): Boolean = withContext(ioDispatcher) {
-        storeOnIo(reference, password, issuedAt, expiresAt)
+    ): Boolean {
+        val storeGeneration = invalidationGeneration.get()
+        return withContext(ioDispatcher) {
+            storeOnIo(reference, password, issuedAt, expiresAt, storeGeneration)
+        }
     }
 
     override suspend fun restore(
@@ -92,6 +98,7 @@ class EncryptedCertificateUnlockCache internal constructor(
     }
 
     override fun clear() {
+        invalidationGeneration.incrementAndGet()
         runCatching(storage::clear)
     }
 
@@ -100,6 +107,7 @@ class EncryptedCertificateUnlockCache internal constructor(
         password: CharArray,
         issuedAt: Instant,
         expiresAt: Instant,
+        storeGeneration: Long,
     ): Boolean {
         if (!validRetention(issuedAt, expiresAt) || password.isEmpty() ||
             password.size > MAX_PASSWORD_CHARS
@@ -132,7 +140,18 @@ class EncryptedCertificateUnlockCache internal constructor(
             cipherText = cipher.doFinal(plainBytes)
             require(cipherText.size in MIN_CIPHERTEXT_BYTES..MAX_CIPHERTEXT_BYTES)
             record = createRecord(authenticatedHeader, iv, cipherText)
-            storage.write(record).also { written -> if (!written) clear() }
+            val written = storage.write(record)
+            when {
+                !written -> {
+                    clear()
+                    false
+                }
+                invalidationGeneration.get() != storeGeneration -> {
+                    clear()
+                    false
+                }
+                else -> true
+            }
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {

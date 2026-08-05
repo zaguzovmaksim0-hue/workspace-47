@@ -90,7 +90,6 @@ class CertificateViewModel(
                         ensureActive()
                         val issuedAt = clock.instant()
                         val expiresAt = issuedAt.plus(unlockDuration)
-                        session.unlock(result.identity, expiresAt)
                         unlockCache.store(
                             reference = locked.reference,
                             password = password,
@@ -98,6 +97,7 @@ class CertificateViewModel(
                             expiresAt = expiresAt,
                         )
                         ensureActive()
+                        session.unlock(result.identity, expiresAt)
                         mutableState.value = CertificateUiState.Unlocked(
                             reference = locked.reference,
                             summary = result.identity.summary,

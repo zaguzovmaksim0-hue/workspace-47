@@ -16,13 +16,17 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -170,6 +174,41 @@ class CertificateViewModelTest {
         assertArrayEquals(expectedPassphrase, cache.storedPassword)
         assertEquals(TestCertificateFactory.now, cache.storedIssuedAt)
         assertEquals(TestCertificateFactory.now.plus(Duration.ofHours(24)), cache.storedExpiry)
+    }
+
+    @Test
+    fun sessionUnlockIsNotPublishedBeforeCacheCommitCompletes() = runTest(dispatcher) {
+        val selected = reference()
+        val identity = validIdentity()
+        val gateway = FakeCertificateGateway().apply {
+            current = selected
+            unlockResult = CertificateLoadResult.Success(identity)
+        }
+        val session = CertificateSession(
+            clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
+            unlockDuration = Duration.ofHours(24),
+        )
+        val cache = BlockingCertificateUnlockCache()
+        val viewModel = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        val passphrase = "commit-order-password".toCharArray()
+        var identityBeforeCommit: dev.junta.firmamobile.certificate.UnlockedIdentity? = null
+
+        try {
+            viewModel.unlock(passphrase)
+            runCurrent()
+            assertTrue(cache.storeStarted.isCompleted)
+            identityBeforeCommit = session.identityForSigning()
+        } finally {
+            viewModel.lock()
+            cache.finishStore.complete(Unit)
+            advanceUntilIdle()
+        }
+
+        assertNull(identityBeforeCommit)
+        assertNull(session.identityForSigning())
+        assertEquals(CertificateUiState.Locked(selected, null, null), viewModel.state.value)
+        assertArrayEquals(CharArray(passphrase.size), passphrase)
     }
 
     @Test
@@ -343,6 +382,32 @@ class CertificateViewModelTest {
         return (result as CertificateLoadResult.Success).identity
     }
 
+
+    private class BlockingCertificateUnlockCache : CertificateUnlockCache {
+        val storeStarted = CompletableDeferred<Unit>()
+        val finishStore = CompletableDeferred<Unit>()
+        var clearCalls = 0
+
+        override suspend fun store(
+            reference: StoredCertificateReference,
+            password: CharArray,
+            issuedAt: Instant,
+            expiresAt: Instant,
+        ): Boolean {
+            storeStarted.complete(Unit)
+            withContext(NonCancellable) { finishStore.await() }
+            return true
+        }
+
+        override suspend fun restore(
+            reference: StoredCertificateReference,
+            now: Instant,
+        ): CachedCertificateUnlock? = null
+
+        override fun clear() {
+            clearCalls += 1
+        }
+    }
 
     private class FakeCertificateUnlockCache : CertificateUnlockCache {
         var restoredPassword: CharArray? = null

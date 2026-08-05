@@ -2058,3 +2058,52 @@ APK SHA-256:
 No APK installation/launch, device control, portal request, credential/certificate
 use, real signing, upload, payment or administrative submission occurred. Physical
 AEAT F-03 and Go race remain external gates.
+
+## Autonomous G7-02 — certificate unlock invalidation race — 2026-08-05
+
+Two independent deterministic regressions established the race before production
+mutation. `CertificateUnlockCacheTest.clearDuringBlockingWriteCannotResurrectUnlockRecord`
+failed in `job_20260804_203419_2ce1ec18` because an in-flight physical write completed
+after `clear()`, returned success and recreated the persisted record.
+`CertificateViewModelTest.sessionUnlockIsNotPublishedBeforeCacheCommitCompletes` was
+freshly reconfirmed RED in `job_20260804_215510_e95834c9`; its XML reported
+`expected null, but was <UnlockedIdentity>` while the cache store was still suspended.
+
+The cache now captures an atomic invalidation generation before IO, advances the
+generation at the start of every clear, and rejects/clears a successful late write if
+the generation changed. The ViewModel now awaits cache persistence and checks
+cancellation before publishing `CertificateSession`; session unlock and the matching
+`Unlocked` UI update have no suspension between them.
+
+Verification evidence:
+
+- exact dual-regression GREEN: `job_20260804_220006_94a6661d`, `BUILD SUCCESSFUL`,
+  30/30 tasks executed;
+- relevant cache/ViewModel/session Debug+QA gate:
+  `job_20260804_220546_1789baad`, `BUILD SUCCESSFUL`, 60/60 tasks executed;
+- full Android: `job_20260804_221205_041a15fa`, pin checks PASS, Debug 520/520 and
+  QA 520/520 with zero failures/errors/skips, Debug/QA/QA-AndroidTest assembly PASS,
+  `BUILD SUCCESSFUL`, 127/127 tasks executed;
+- forced `lintDebug`/`lintQa`: `job_20260805_103210_50f11051`, `BUILD SUCCESSFUL`,
+  55/55 tasks, 0 errors / 27 warnings per variant;
+- Python discovery: 100 tests, zero failures/errors, one environmental hardlink skip;
+- Android artifact verification: PASS;
+- release without private signing inputs: expected fail-closed PASS; release APK count
+  zero;
+- Go `test ./... -count=1`, `go vet ./...`, `go build ./cmd/ws024-relay`: PASS;
+  generated relay binary removed;
+- pre-evidence `git diff --check`, exact-scope, high-confidence secret and unsafe
+  WebView/TLS/backup scans: PASS.
+
+APK SHA-256:
+
+- Debug: `b2d414f4a74eb3f42dbf4cb6c63a4403e82a3e199b5b4fcd2d3c111a62345547`;
+- QA: `833081836caf0feb5060f9daee90ce4a0ee00646fb136006c8181aba1d1a376e`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+The threat-model semantics did not change: explicit manual lock/session clear was
+already specified to eliminate the persisted record. This milestone makes that
+existing contract hold under an in-flight blocking store. No APK installation,
+application launch, device control, portal request, credential/certificate use, real
+signing, upload, payment or administrative submission occurred. Go race remains an
+external supported-Linux CI gate and AEAT F-03 remains manual.

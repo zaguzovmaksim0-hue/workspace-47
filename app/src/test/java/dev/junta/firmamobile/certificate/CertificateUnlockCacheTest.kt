@@ -3,8 +3,12 @@ package dev.junta.firmamobile.certificate
 import android.net.Uri
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -121,6 +125,27 @@ class CertificateUnlockCacheTest {
     }
 
     @Test
+    fun clearDuringBlockingWriteCannotResurrectUnlockRecord() = runTest {
+        val storage = BlockingWriteStorage()
+        val cache = cache(storage)
+        val store = async(Dispatchers.Default) {
+            cache.store(
+                reference,
+                "secret".toCharArray(),
+                now,
+                now.plus(Duration.ofHours(24)),
+            )
+        }
+
+        assertTrue(storage.writeStarted.await(5, TimeUnit.SECONDS))
+        cache.clear()
+        storage.allowWrite.countDown()
+
+        assertFalse(store.await())
+        assertNull(storage.read())
+    }
+
+    @Test
     fun futureIssuedTimestampAndOverlongRetentionFailClosed() = runTest {
         val futureStorage = MemoryRecordStorage()
         val futureCache = cache(futureStorage)
@@ -148,7 +173,7 @@ class CertificateUnlockCacheTest {
         assertNull(longStorage.bytes)
     }
 
-    private fun cache(storage: MemoryRecordStorage): EncryptedCertificateUnlockCache =
+    private fun cache(storage: CertificateUnlockRecordStorage): EncryptedCertificateUnlockCache =
         EncryptedCertificateUnlockCache(
             storage = storage,
             keyProvider = FixedKeyProvider(testKey()),
@@ -158,6 +183,28 @@ class CertificateUnlockCacheTest {
 
     private class FixedKeyProvider(private val key: SecretKey) : CertificateUnlockKeyProvider {
         override fun getOrCreate(): SecretKey = key
+    }
+
+    private class BlockingWriteStorage : CertificateUnlockRecordStorage {
+        val writeStarted = CountDownLatch(1)
+        val allowWrite = CountDownLatch(1)
+
+        @Volatile
+        private var bytes: ByteArray? = null
+
+        override fun read(): ByteArray? = bytes?.copyOf()
+
+        override fun write(record: ByteArray): Boolean {
+            writeStarted.countDown()
+            check(allowWrite.await(5, TimeUnit.SECONDS))
+            bytes = record.copyOf()
+            return true
+        }
+
+        override fun clear() {
+            bytes?.fill(0)
+            bytes = null
+        }
     }
 
     private class MemoryRecordStorage : CertificateUnlockRecordStorage {

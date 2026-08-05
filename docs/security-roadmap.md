@@ -460,3 +460,29 @@ requires a separate design/plan and observed TDD RED.
 - Next autonomous priority: continue the lifecycle/concurrency audit for delayed UI
   deliveries and ownership transfer; require a separate design/plan and observed TDD
   RED before any further behavior change.
+
+## Autonomous certificate unlock invalidation linearization — 2026-08-05 (G7-02)
+
+- A blocked encrypted-cache store could previously finish after explicit `clear()` and
+  recreate the 24-hour unlock record; the deterministic RED showed the store returning
+  success after the clear.
+- The ViewModel also published `CertificateSession` identity before awaiting cache
+  persistence; a separate RED observed a signing identity while store remained
+  suspended and UI was still unlocking.
+- `EncryptedCertificateUnlockCache` now uses a monotonic atomic invalidation generation:
+  clear advances it before storage deletion and every successful write validates the
+  generation before becoming committed. A stale late write is deleted and reports
+  failure.
+- `CertificateViewModel.unlock()` persists first, checks cancellation, then publishes
+  session and `Unlocked` UI without another suspension. Cache availability failure
+  still does not prevent an in-memory unlock; explicit invalidation/cancellation cannot
+  publish the cancelled identity.
+- The intended 24-hour retention, AES-GCM/Android Keystore design, cache contents,
+  signing/profile/network/WebView/release boundaries and dependency pins are unchanged.
+- Fresh final gates: Debug 520/520, QA 520/520, pins and Debug/QA/QA-AndroidTest builds,
+  lint 0 errors / 27 warnings per variant, Python 100 with one environmental hardlink
+  skip, Android artifacts, release fail-closed and Go test/vet/build all PASS. Release
+  APK and generated relay binary are absent.
+- Next autonomous priority: continue a fresh architecture/lifecycle/concurrency pass for
+  other asynchronous ownership or invalidation boundaries; require a separate design,
+  plan and observed RED before another behavior change.
