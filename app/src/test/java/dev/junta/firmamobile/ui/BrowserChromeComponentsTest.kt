@@ -1,6 +1,10 @@
 package dev.junta.firmamobile.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -24,6 +28,26 @@ import org.robolectric.annotation.SQLiteMode
 class BrowserChromeComponentsTest {
     @get:Rule
     val rule = createComposeRule()
+
+    @Test
+    fun noticeBannerIsAnAssertiveLiveRegion() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserNoticeBanner(
+                    message = "No se pudo cargar el portal.",
+                    onRetry = {},
+                )
+            }
+        }
+
+        rule.onNodeWithTag(BROWSER_NOTICE_TAG)
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.LiveRegion,
+                    LiveRegionMode.Assertive,
+                ),
+            )
+    }
 
     @Test
     fun chromeShowsOnlyRealActionsAndStyledStatusElements() {

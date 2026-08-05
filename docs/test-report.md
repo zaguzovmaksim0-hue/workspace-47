@@ -2234,3 +2234,43 @@ commands; an actual GitHub-hosted run is not claimed unless separately observed 
 push. No APK installation/launch, device control, portal request, credential/certificate use,
 real signing, upload, payment or administrative submission occurred. Physical AEAT F-03 and Go
 race on supported Linux remain external gates.
+## Autonomous G10-01 — browser notice assertive live region — 2026-08-05
+
+`BrowserNoticeBanner` can appear dynamically when browser or portal loading fails. Before this
+milestone, the tagged banner exposed visible descendants but no `SemanticsProperties.LiveRegion`,
+so the UI carried no Compose instruction to announce the newly appearing error while focus remained
+elsewhere.
+
+TDD evidence:
+
+- RED `job_20260805_191209_05c712cb`: one focused Debug test failed after 30/30 executed tasks; the
+  XML assertion explicitly showed the `browser_notice` node lacked expected
+  `LiveRegion = 'Assertive'`;
+- minimum implementation: one `LiveRegionMode.Assertive` semantics property on the existing banner
+  `Surface`, with no focus request, copy, layout or action change;
+- exact GREEN `job_20260805_191610_b601f0fe`: PASS, 30/30 tasks;
+- focused Debug+QA `job_20260805_191930_64b43357`: two tests per variant, zero
+  failures/errors/skips, 60/60 tasks.
+
+Full verification:
+
+- Android `job_20260805_192433_0a9882e0`: pins/AAPT2 PASS; Debug 523/523 and QA 523/523 with zero
+  failures/errors/skips; Debug/QA/QA-AndroidTest assemblies PASS; 127/127 tasks;
+- lint `job_20260805_193250_fbcb35e0`: 55/55 tasks, zero errors and 27 warnings per variant;
+- Python `job_20260805_192440_7b0b9c8e`: 101 tests PASS, one environmental hardlink skip;
+- Go `job_20260805_192506_91c193e3`: test/vet/build PASS; generated relay binary removed;
+- artifacts `job_20260805_193317_e2ccbe58`: alignment/signature/manifest/canary checks PASS;
+- release `job_20260805_193923_b5015fe3`: expected private-signing rejection PASS and release APK
+  count zero.
+
+APK SHA-256:
+
+- Debug: `340114fc16b6603bb972d9f409fa4f0d3b4aa1a0eeb8ec0a177ffbea530788f9`;
+- QA: `d951d33a6f616242348a16a3ff3ae9017165a480253cffd8848a8e4bd4cc8061`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+Automated tests validate the semantics tree; they do not prove physical TalkBack timing, speech
+interruption behavior or real-device visual correctness. Those remain manual acceptance gates. No
+APK installation/launch, device control, portal request, credential/certificate use, real signing,
+upload, payment or administrative submission occurred. Threat-model wording is unchanged because
+this accessibility change creates no application trust boundary.

@@ -542,3 +542,18 @@ requires a separate design/plan and observed TDD RED.
   an actual GitHub-hosted run unless separately observed after push.
 - Next autonomous priority: continue a fresh independent UX/accessibility, lifecycle/concurrency
   or CI/supply-chain audit. Any behavior change requires its own subordinate design/plan and RED.
+## Browser notice live-region semantics — 2026-08-05 (G10-01)
+
+- Dynamic portal/network error notices previously had no live-region semantics, so assistive
+  technology was not instructed to announce a newly appearing blocking failure.
+- TDD RED observed the exact absent `LiveRegion` property; the minimum fix adds only
+  `LiveRegionMode.Assertive` to the existing banner container without moving focus.
+- Message copy, layout, retry action/touch target, descendant semantics and all WebView/network/TLS/
+  certificate/signing boundaries remain unchanged.
+- Fresh gates PASS: focused Debug+QA 2/2 per variant; full Debug 523/523 and QA 523/523; three
+  assemblies; lint 0 errors / 27 warnings per variant; Python 101 with one environmental hardlink
+  skip; Go test/vet/build; Android artifacts; release fail-closed with zero release APK.
+- Robolectric proves the semantics contract only. Physical TalkBack announcement timing remains a
+  manual acceptance gate and is not promoted to automated evidence.
+- Next autonomous priority: continue a fresh lifecycle/concurrency, accessibility or supply-chain
+  audit. Any behavior change requires its own subordinate design/plan and observed RED.

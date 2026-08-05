@@ -851,3 +851,28 @@ behavior change requires a separate subordinate design/plan and observed TDD RED
 After remote verification of the containing G9-01 commit, continue a fresh independent
 UX/accessibility, lifecycle/concurrency or CI/supply-chain audit. Do not repeat G9-01. Any new
 behavior change requires a separate subordinate design/plan and observed TDD RED.
+## Autonomous audit G10-01 — browser notice assertive live region — 2026-08-05
+
+- `BrowserNoticeBanner` lacked a live-region property, so a newly appearing blocking portal/network
+  error had no Compose instruction for immediate assistive-technology announcement.
+- RED `job_20260805_191209_05c712cb` failed exactly because the tagged node lacked
+  `LiveRegion = 'Assertive'`. The minimum change adds only that semantics property to the existing
+  banner container; it does not move focus or alter text, layout, retry, WebView or security logic.
+- Exact GREEN `job_20260805_191610_b601f0fe` PASS. Focused Debug+QA
+  `job_20260805_191930_64b43357` PASS: 2/2 tests per variant, 60/60 tasks.
+- Full Android `job_20260805_192433_0a9882e0` PASS: Debug 523/523, QA 523/523, zero
+  failures/errors/skips, pins and all three assemblies, 127/127 tasks. Lint
+  `job_20260805_193250_fbcb35e0` PASS: 55/55 tasks, 0 errors / 27 warnings per variant.
+- Python `job_20260805_192440_7b0b9c8e`, Go `job_20260805_192506_91c193e3`, artifacts
+  `job_20260805_193317_e2ccbe58` and release fail-closed `job_20260805_193923_b5015fe3` PASS;
+  release APK count zero and relay binary absent.
+- APK SHA-256: Debug `340114fc16b6603bb972d9f409fa4f0d3b4aa1a0eeb8ec0a177ffbea530788f9`, QA
+  `d951d33a6f616242348a16a3ff3ae9017165a480253cffd8848a8e4bd4cc8061`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Robolectric proves semantics, not physical TalkBack timing or visual correctness; those remain
+  manual gates. No APK/device/portal/credential/certificate/real-signing/upload/payment/submission
+  action occurred. Threat model is unchanged.
+
+After remote verification of the containing G10-01 commit, continue a fresh independent
+lifecycle/concurrency, accessibility or supply-chain audit. Do not repeat G10-01. Any new behavior
+change requires a separate subordinate design/plan and observed TDD RED.

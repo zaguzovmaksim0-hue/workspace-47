@@ -706,3 +706,39 @@ it does not by itself claim that GitHub executed a server-side workflow run. No 
 or launched; no ADB/device control, portal interaction, credential/certificate material use, real
 signature, upload, payment or administrative submission occurred. Physical AEAT F-03 and the
 supported-Linux Go race gate remain external.
+## Finding G10-01 — browser notice accessibility announcement
+
+**Reproduction.** `BrowserNoticeBanner` rendered dynamic portal/network failures and the optional
+retry action without a Compose live-region property. The focused regression was added before
+production mutation. RED job `job_20260805_191209_05c712cb` executed 30/30 tasks and failed its
+single test exactly because the node tagged `browser_notice` did not contain
+`LiveRegion = 'Assertive'`; the XML reported one test, one failure, zero errors/skips.
+
+**Remediation.** The existing banner `Surface` now adds only
+`.semantics { liveRegion = LiveRegionMode.Assertive }`. Existing message text, visual hierarchy,
+retry behavior, test tag, 48 dp retry touch target and descendant semantics remain unchanged. The
+change does not request or transfer focus and does not alter WebView lifecycle, navigation,
+network/TLS, Client TLS, certificate, signing, portal-profile, dependency, release or workflow
+behavior.
+
+**Verification.** Exact GREEN job `job_20260805_191610_b601f0fe` passed 30/30 tasks. Focused
+Debug+QA job `job_20260805_191930_64b43357` passed the complete two-test class in each variant and
+60/60 tasks. Full Android job `job_20260805_192433_0a9882e0` passed pin/AAPT2 checks, Debug 523/523
+and QA 523/523 JVM tests with zero failures/errors/skips, all Debug/QA/QA-AndroidTest assemblies
+and 127/127 tasks. Forced lint job `job_20260805_193250_fbcb35e0` passed 55/55 tasks with zero
+errors and 27 warnings per variant. Python job `job_20260805_192440_7b0b9c8e` passed 101 tests with
+one environmental hardlink skip. Go job `job_20260805_192506_91c193e3` passed test/vet/build and
+removed the generated relay binary. Artifact job `job_20260805_193317_e2ccbe58` passed alignment,
+signature, manifest and forbidden-canary checks. Release job `job_20260805_193923_b5015fe3`
+passed the expected fail-closed gate and confirmed `release_apk_count=0`.
+
+APK SHA-256:
+
+- Debug: `340114fc16b6603bb972d9f409fa4f0d3b4aa1a0eeb8ec0a177ffbea530788f9`;
+- QA: `d951d33a6f616242348a16a3ff3ae9017165a480253cffd8848a8e4bd4cc8061`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+Robolectric verifies the semantics property, not actual announcement timing or assistive-technology
+interaction on hardware. Physical TalkBack behavior remains an explicit manual acceptance gate.
+No APK was installed or launched; no ADB/device control, portal interaction, credential or
+certificate material use, real signature, upload, payment or administrative submission occurred.
