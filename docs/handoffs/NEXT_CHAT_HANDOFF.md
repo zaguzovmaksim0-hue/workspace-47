@@ -1059,3 +1059,25 @@ repeat G13-01/G13-02.
   YAML↔roadmap consistency PASS, `git diff --check` PASS, sensitive-pattern scan PASS.
 - Continue with a fresh runtime logging/privacy, lifecycle/concurrency, accessibility
   or supply-chain audit after remote verification. Do not repeat G14-01.
+
+
+## Autonomous audit G14-02 — Client TLS issuer-filter hardening — 2026-08-06
+
+- Reproduced a Client TLS CA-filter expansion: non-empty Android client-certificate
+  principals are issuer constraints, but the handler also accepted certificate subjects.
+  A two-certificate test fixture with distinct leaf subject/issuer failed RED in both
+  Debug and QA before production mutation.
+- Minimum fix retains DER constant-time comparison but matches only
+  `issuerX500Principal`; all other Client TLS/profile/release boundaries are unchanged.
+- Focused GREEN: 7/7 per variant; adjacent regression 55/55 per variant; fresh isolated
+  full JVM 529/529 per variant; lint 0 errors / 27 warnings per variant; dependency,
+  Debug/QA/QA-AndroidTest build, Python, Go, artifact and release-fail-closed gates PASS.
+- Infrastructure note: one overlapping full-JVM connector retry produced broad Gradle
+  test-executor class-execution failures, and two duplicate lint retries timed out. None
+  are counted as pass evidence; isolated durable reruns supplied the successful evidence.
+- APK SHA-256: Debug `a31bb8cdfdb05af38a26c3ec32bddf5415e6991d00453553e61f54bb01f32fa9`;
+  QA `53dd0a15d69fc59a0fa70dde0032005ddf2f6425c9758d745e31d60b8e71f6e9`; QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Release APK count remains zero and the generated relay binary was removed. Physical
+  AEAT F-03, real-device TalkBack/visual behavior and supported-Linux Go race remain
+  external/manual gates.

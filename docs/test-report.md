@@ -2464,3 +2464,40 @@ APK SHA-256:
 
 Automated evidence covers Compose semantics, not physical TalkBack announcement
 timing/interruption or real-device visual correctness; those remain manual gates.
+
+
+## G14-02 — Client TLS issuer-filter hardening — 2026-08-06
+
+- RED `job_20260805_230810_b70c1333` / XML confirmation
+  `job_20260805_231028_8c556d8a`: Debug and QA each ran 7
+  `ClientAuthRequestHandlerTest` cases with exactly one expected failure,
+  `aeatLeafSubjectIsNotAcceptedAsAnIssuer` (`expected:<0> but was:<1>`); production
+  source was unchanged.
+- Focused GREEN `job_20260805_231054_95780151`: 7/7 Debug and 7/7 QA. Adjacent
+  Client TLS/browser/profile regression `job_20260805_231253_bce0565d`: 55/55 per
+  variant, zero failures/errors/skips.
+- Runtime dependency lock, core-version and portable AAPT2 verification
+  `job_20260805_231523_b4599725`: PASS.
+- Fresh full JVM `--rerun-tasks` `job_20260805_232254_97d24413`: all 60 tasks
+  executed; Debug 529/529 and QA 529/529, zero failures/errors/skips. Earlier
+  `job_20260805_232044_edd244d7` is excluded from pass evidence because overlapping
+  connector retries produced broad Gradle test-executor class-execution failures; the
+  isolated rerun above is the replacement evidence.
+- Lint `job_20260805_233550_b6edf4ed`: PASS, 0 errors / 27 warnings for Debug and
+  QA. Duplicate connector-retry lint jobs `job_20260805_232800_8d0a4b2b` and
+  `job_20260805_233008_31f68385` reached their 300-second infrastructure timeout and
+  are not counted.
+- Build `job_20260805_233933_8242422b`: `assembleDebug`, `assembleQa`,
+  `assembleQaAndroidTest` PASS. APK SHA-256: Debug
+  `a31bb8cdfdb05af38a26c3ec32bddf5415e6991d00453553e61f54bb01f32fa9`; QA
+  `53dd0a15d69fc59a0fa70dde0032005ddf2f6425c9758d745e31d60b8e71f6e9`; QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Python/Go `job_20260805_234055_b7910c71`: Python 101 tests PASS with one
+  environmental hardlink skip; `go test ./... -count=1`, `go vet ./...`, and relay
+  build PASS. Generated relay executable removed afterwards.
+- Android artifact/release `job_20260805_234127_1ff5af35`: artifact checks PASS;
+  release without private signing inputs rejected fail-closed as required; release APK
+  count zero.
+- No APK was installed or launched and no device-control, authenticated portal,
+  credential/certificate-private-material, real-signature, upload, payment or
+  administrative-submission action occurred.

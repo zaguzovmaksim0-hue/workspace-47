@@ -3,6 +3,8 @@ package dev.junta.firmamobile.browser
 import android.webkit.ClientCertRequest
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.certificate.UnlockedIdentity
+import dev.junta.firmamobile.signing.issuedSyntheticIdentity
 import dev.junta.firmamobile.signing.nonExportableSyntheticIdentity
 import java.security.Principal
 import java.security.PrivateKey
@@ -13,6 +15,7 @@ import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicInteger
 import javax.security.auth.x500.X500Principal
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -40,6 +43,28 @@ class ClientAuthRequestHandlerTest {
         assertEquals(0, request.ignores)
         assertEquals(0, clears.get())
         assertEquals(0, synthetic.encodedReads.get())
+    }
+
+    @Test
+    fun aeatLeafSubjectIsNotAcceptedAsAnIssuer() {
+        val issuedIdentity = issuedSyntheticIdentity()
+        assertNotEquals(
+            issuedIdentity.certificate.subjectX500Principal,
+            issuedIdentity.certificate.issuerX500Principal,
+        )
+        val clears = AtomicInteger()
+        val handler = aeatHandler(epoch = 32, clears = clears, identity = issuedIdentity)
+        val request = RecordingRequest(
+            host = "www1.agenciatributaria.gob.es",
+            keyTypes = arrayOf("RSA"),
+            principals = arrayOf(issuedIdentity.certificate.subjectX500Principal),
+        )
+
+        handler.handle(request)
+
+        assertEquals(0, request.proceeds)
+        assertEquals(1, request.ignores)
+        assertEquals(1, clears.get())
     }
 
     @Test
@@ -164,6 +189,7 @@ class ClientAuthRequestHandlerTest {
         currentEpoch: () -> Long = { epoch },
         clears: AtomicInteger = AtomicInteger(),
         clock: Clock = this.clock,
+        identity: UnlockedIdentity = this.identity,
     ) = ClientAuthRequestHandler(
         grant = ClientAuthGrant(authorizedAeat(), epoch),
         identityProvider = { identity },

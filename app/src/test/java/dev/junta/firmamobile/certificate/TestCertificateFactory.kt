@@ -60,6 +60,41 @@ internal object TestCertificateFactory {
         return identityStore("fresh-identidad", identity)
     }
 
+    fun issuedRsa(): ByteArray {
+        val issuerKeyPair = generateKeyPair("RSA")
+        val issuerName = X500Name("CN=CA de Prueba,O=Junta Firma Mobile Tests,C=ES")
+        val issuerCertificate = certificate(
+            subject = issuerName,
+            subjectKeyPair = issuerKeyPair,
+            issuer = issuerName,
+            issuerKeyPair = issuerKeyPair,
+            notBefore = defaultNotBefore,
+            notAfter = defaultNotAfter,
+            keyUsage = KeyUsage.keyCertSign or KeyUsage.cRLSign,
+            isCertificateAuthority = true,
+        )
+        val leafKeyPair = generateKeyPair("RSA")
+        val leafName = X500Name("CN=Persona Emitida,O=Junta Firma Mobile Tests,C=ES")
+        val leafCertificate = certificate(
+            subject = leafName,
+            subjectKeyPair = leafKeyPair,
+            issuer = issuerName,
+            issuerKeyPair = issuerKeyPair,
+            notBefore = defaultNotBefore,
+            notAfter = defaultNotAfter,
+            keyUsage = KeyUsage.digitalSignature,
+            isCertificateAuthority = false,
+        )
+        return store {
+            setKeyEntry(
+                "issued-identidad",
+                leafKeyPair.private,
+                password(),
+                arrayOf(leafCertificate, issuerCertificate),
+            )
+        }
+    }
+
     fun certificateOnly(): ByteArray = store {
         setCertificateEntry("certificado", validIdentity.certificate)
     }

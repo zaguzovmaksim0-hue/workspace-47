@@ -998,3 +998,45 @@ documentation-only reconciliation, so a TDD RED is not applicable.
 `/tools`, confirmed both roadmap summaries name that coverage and reject both stale
 phrasings, passed `git diff --check`, and found no sensitive-material pattern in added
 lines.
+
+
+## Finding G14-02 — Client TLS issuer-filter hardening — 2026-08-06
+
+**Reproduction.** Android `ClientCertRequest.getPrincipals()` defines a non-empty
+principal list as acceptable certificate issuers, and Android Conscrypt
+`KeyManagerImpl.chooseAlias()` matches that list against each chain certificate's
+`issuerX500Principal`. `ClientAuthRequestHandler.isValidFor()` additionally accepted
+`subjectX500Principal`, broadening the platform CA-filter contract. A new two-certificate
+RSA fixture made leaf subject and issuer distinct. RED job
+`job_20260805_230810_b70c1333`, confirmed by XML in
+`job_20260805_231028_8c556d8a`, failed Debug and QA exactly in
+`aeatLeafSubjectIsNotAcceptedAsAnIssuer`: 7 tests per variant, one failure,
+`expected:<0> but was:<1>`. Production source was unchanged at RED.
+
+**Remediation.** Non-empty Client TLS principal matching now compares only each chain
+certificate's `issuerX500Principal.encoded` with the requested principal DER using the
+existing `MessageDigest.isEqual`. Exact host/443, navigation epoch, grant TTL, key type,
+certificate validity, digital-signature key usage, EKU, one-shot handling, preference
+cleanup, empty-issuer profile policy and profile/release activation are unchanged.
+
+**Verification.** Focused GREEN `job_20260805_231054_95780151` passed 7/7 Debug and
+7/7 QA. Adjacent browser/profile regression `job_20260805_231253_bce0565d` passed
+55/55 per variant. Dependency/toolchain job `job_20260805_231523_b4599725` passed
+`:app:verifyRuntimeDependencyLocks`, `verifyResolvedCoreVersion` and
+`verifyPortableAapt2Configuration`. Fresh isolated full JVM rerun
+`job_20260805_232254_97d24413` executed all 60 tasks and passed 529/529 Debug and
+529/529 QA with zero failures/errors/skips. An earlier overlapping retry
+`job_20260805_232044_edd244d7` was not counted: concurrent connector-triggered reruns
+caused the Gradle test executor to report broad class-execution failures rather than
+assertion failures. Durable lint `job_20260805_233550_b6edf4ed` passed with 0 errors /
+27 warnings per variant; two earlier duplicate lint jobs timed out by infrastructure and
+were not counted. Build `job_20260805_233933_8242422b` passed Debug, QA and QA
+AndroidTest; SHA-256 values are Debug
+`a31bb8cdfdb05af38a26c3ec32bddf5415e6991d00453553e61f54bb01f32fa9`, QA
+`53dd0a15d69fc59a0fa70dde0032005ddf2f6425c9758d745e31d60b8e71f6e9`, and QA
+AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+Python/Go job `job_20260805_234055_b7910c71` passed 101 Python tests with one
+environmental hardlink skip plus Go test/vet/build. Artifact/release job
+`job_20260805_234127_1ff5af35` passed Android artifact verification and expected
+release-signing fail-closed with zero release APKs. The generated relay executable was
+removed in `job_20260805_234305_6a9be3dc`.

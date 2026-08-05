@@ -25,6 +25,10 @@ internal fun freshSyntheticIdentity(): UnlockedIdentity = runBlocking {
     loadSyntheticIdentity(TestCertificateFactory.freshValidRsa())
 }
 
+internal fun issuedSyntheticIdentity(): UnlockedIdentity = runBlocking {
+    loadSyntheticIdentity(TestCertificateFactory.issuedRsa())
+}
+
 private suspend fun loadSyntheticIdentity(bytes: ByteArray): UnlockedIdentity {
     val password = TestCertificateFactory.password()
     return try {

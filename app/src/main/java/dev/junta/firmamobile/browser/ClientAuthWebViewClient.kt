@@ -114,13 +114,8 @@ internal class ClientAuthRequestHandler(
         if (acceptableIssuerDer.size != principals.size) return false
         val chain = identity.chain.ifEmpty { listOf(certificate) }
         return chain.any { chainCertificate ->
-            val candidates = listOf(
-                chainCertificate.subjectX500Principal.encoded,
-                chainCertificate.issuerX500Principal.encoded,
-            )
-            candidates.any { candidate ->
-                acceptableIssuerDer.any { acceptable -> MessageDigest.isEqual(candidate, acceptable) }
-            }
+            val issuer = chainCertificate.issuerX500Principal.encoded
+            acceptableIssuerDer.any { acceptable -> MessageDigest.isEqual(issuer, acceptable) }
         }
     }
 

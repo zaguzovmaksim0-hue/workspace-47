@@ -650,3 +650,18 @@ requires a separate design/plan and observed TDD RED.
 - Threat-model wording is unchanged because no asset, credential flow or trust edge
   changed. Continue independent logging/privacy, lifecycle/concurrency or
   supply-chain review after remote verification of the containing commit.
+
+
+### G14-02 — Client TLS issuer filter — 2026-08-06
+
+- A non-empty `ClientCertRequest.principals` list is now enforced strictly as an
+  issuer allowlist: only `issuerX500Principal` values from the selected identity chain
+  may satisfy it. Leaf/chain subjects no longer broaden the platform CA filter.
+- Existing exact host/port, navigation-epoch, grant-TTL, key-algorithm, certificate
+  validity, key-usage, EKU, one-shot cleanup, empty-issuer profile policy and release
+  activation boundaries are unchanged.
+- TDD RED reproduced the prior subject acceptance in both Debug and QA. Focused and
+  adjacent Client TLS regression suites passed after the minimum fix; the fresh full
+  JVM rerun is 529/529 per variant. Lint remains 0 errors / 27 warnings per variant;
+  builds, Python 101 with one environmental hardlink skip, Go test/vet/build, Android
+  artifact verification and release fail-closed also pass.
