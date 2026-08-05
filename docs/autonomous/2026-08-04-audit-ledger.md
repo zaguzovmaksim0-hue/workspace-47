@@ -912,3 +912,26 @@ tool version was changed, no runtime trust boundary was changed, and threat-mode
 wording remains unchanged. No APK was installed/launched; no device control, portal
 interaction, credential/certificate material use, real signing, upload, payment or
 administrative submission occurred.
+
+## Finding G13-01 — authoritative test-plan Dependabot reconciliation — 2026-08-06
+
+**Reproduction.** G12-02 had already added and policy-tested a fourth weekly Dependabot
+entry for the Python `pip` ecosystem at `/tools`, while the authoritative
+`docs/test-plan.md` still stated that weekly Dependabot covered only Gradle, Go
+modules and GitHub Actions. Runtime code, workflows, dependency manifests and pins
+were already correct; the stale sentence made the required test plan disagree with
+the verified supply-chain configuration.
+
+**Remediation.** The single stale test-plan bullet now names the existing weekly
+`pip` coverage at `/tools`. No dependency, tool, Action, workflow, runtime source,
+lockfile, verification metadata, portal/profile or release rule changed. This is a
+documentation reconciliation, not a behavior change, so no TDD RED was applicable.
+
+**Verification.** `python -m unittest tools.tests.test_ci_policy -v` passed 19/19.
+An independent YAML/document consistency assertion confirmed exactly one weekly
+`pip` entry scoped to `/tools` and the matching test-plan statement. The initial
+attempt to invoke `python -m pytest` failed before test collection because the
+Termux system Python has no `pytest`; the repository's documented `unittest` runner
+was then used without installing or changing any package. `tools/requirements.txt`,
+`.github/dependabot.yml` and `tools/tests/test_ci_policy.py` remain unchanged from
+HEAD. `git diff --check` passed on the direct test-plan edit.

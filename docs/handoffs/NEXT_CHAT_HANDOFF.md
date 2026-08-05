@@ -989,3 +989,29 @@ audit. Do not repeat G12-01/G12-02. Physical AEAT F-03, physical TalkBack/visual
 validation and supported-Linux Go race remain external gates. Treat the existing
 `ProfileHttpCallPhaseTracker` parameter-name warning only as low-risk cleanup unless a
 separate reproducible transport/API defect is found.
+
+## Autonomous audit G13-01 — authoritative test-plan Dependabot reconciliation — 2026-08-06
+
+- Reconciled one stale authoritative-doc statement left after G12-02: the actual
+  Dependabot v2 config and policy test already cover weekly `pip` updates at `/tools`,
+  but `docs/test-plan.md` still listed only Gradle, Go modules and GitHub Actions.
+- The test-plan now names the existing `/tools` `pip` coverage. No dependency/tool/
+  Action version, workflow, manifest, lockfile, verification metadata, runtime,
+  profile/catalog or release behavior changed; no TDD RED applies to this docs-only
+  correction.
+- `python -m unittest tools.tests.test_ci_policy -v`: 19/19 PASS. Independent YAML
+  and documentation assertions confirmed exactly one weekly `pip` entry at `/tools`
+  and the matching plan text. A first `python -m pytest` attempt failed before
+  collection because system Termux Python has no pytest; no package was installed,
+  and the repository's documented unittest runner passed.
+- Fresh G13 read-only audits found no justified change in Client TLS cleanup ownership,
+  signing job/expiry ownership or certificate ViewModel cancellation: current exact-
+  owner/generation/terminal controls cover the inspected paths. A privacy review of
+  content-derived diagnostic short hashes remains a research lead because current
+  test-plan/threat-model explicitly require truncated hashes; do not remove that
+  observability contract without a narrow evidence-backed design and RED.
+
+After remote verification of the containing G13-01 commit, continue an independent
+architecture/lifecycle, accessibility, logging/privacy or supply-chain pass. Physical
+AEAT F-03, physical TalkBack/visual validation and supported-Linux Go race remain
+external gates.

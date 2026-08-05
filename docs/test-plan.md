@@ -349,7 +349,7 @@ Cada `push`, pull request y ejecución manual debe conservar estos límites:
   task de verificación materializa artifacts y falla ante lock ausente o stale;
 - OSV-Scanner 2.3.8: solo `app/gradle.lockfile`,
   `tools/requirements.txt` y `ws024-relay/go.mod` como inputs explícitos;
-- Dependabot semanal para Gradle, Go modules y GitHub Actions.
+- Dependabot semanal para Gradle, Go modules, GitHub Actions y `pip` en `/tools`.
 
 Separación explícita de claims: `app/gradle.lockfile` fija versiones de los
 runtime graphs instalables; `gradle/verification-metadata.xml` autentica metadata
