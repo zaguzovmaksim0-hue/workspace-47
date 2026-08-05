@@ -823,3 +823,31 @@ subordinate design/plan and observed RED.
 After remote verification of the containing G8-02 commit, continue a fresh independent
 architecture/lifecycle/concurrency or UX/CI audit. Do not repeat G7-02, G8-01 or G8-02. Any new
 behavior change requires a separate subordinate design/plan and observed TDD RED.
+
+## Autonomous audit G9-01 — autonomous branch CI push coverage — 2026-08-05
+
+- Both workflows previously excluded mandatory `agent/**` pushes while the autonomous contract
+  requires every completed milestone on `agent/workspace-47-autonomous-20260803` to be pushed.
+- TDD RED `job_20260805_132116_bf00a316` failed against unchanged workflows because `agent/**`
+  was absent. The minimum change adds only that branch glob to `ci.yml` and `security.yml`, with a
+  policy regression requiring `main`, `feature/**` and `agent/**` in both.
+- GREEN/policy/Python `job_20260805_132135_fe5674af` PASS: `CiPolicyTest` 19/19, Python 101 with
+  one environmental hardlink skip. Full Android `job_20260805_132209_da78308f` PASS: Debug
+  522/522, QA 522/522, zero failures/errors/skips, pins and all three assemblies, 127/127 tasks.
+- Lint `job_20260805_133103_ecb4c60e` PASS: 55/55 tasks, 0 errors / 27 warnings per variant.
+  Artifact `job_20260805_133111_c4ee32c9`, Go `job_20260805_132223_437dc850`, and release
+  fail-closed `job_20260805_133814_d06bfb4e` PASS; release APK count zero and relay binary absent.
+- Permissions remain read-only; checkout credentials remain disabled; jobs, schedules, commands,
+  immutable action pins, dependency versions and release policy are unchanged. Threat-model text
+  is unchanged because this is CI trigger coverage, not an application trust-boundary change.
+- APK SHA-256: Debug
+  `5f7ccda5ed3aafc1800f8ec2e6190ff263f5c07d3abb01f67ced74104c863fe5`, QA
+  `f89f4f5a8009ced7cb5eb97777d7a6e6ac99a4416908e45dd3fb303328d46146`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Local evidence does not claim a GitHub-hosted workflow run. No APK/device/portal/credential/
+  certificate/real-signing/upload/payment/submission action occurred. Physical AEAT F-03 and the
+  supported-Linux Go race gate remain external.
+
+After remote verification of the containing G9-01 commit, continue a fresh independent
+UX/accessibility, lifecycle/concurrency or CI/supply-chain audit. Do not repeat G9-01. Any new
+behavior change requires a separate subordinate design/plan and observed TDD RED.

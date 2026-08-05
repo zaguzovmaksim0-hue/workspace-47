@@ -2188,3 +2188,49 @@ No APK installation/launch, device control, portal request, credential/certifica
 real signing, upload, payment or administrative submission occurred. Threat-model wording is
 unchanged because the remediation closes a cancellation ordering gap inside the existing selected
 certificate-reference lifecycle rather than creating or broadening a trust boundary.
+
+## Autonomous G9-01 — autonomous branch CI push coverage — 2026-08-05
+
+The repository contract requires each completed autonomous milestone to be pushed to the
+`agent/workspace-47-autonomous-20260803` branch. Before this milestone, both GitHub Actions
+workflows accepted pushes only from `main` and `feature/**`; therefore an autonomous branch push
+could exist remotely without triggering either the ordinary CI workflow or the security workflow.
+
+A policy regression was added first and run against unchanged workflows. RED job
+`job_20260805_132116_bf00a316` failed exactly because `.github/workflows/ci.yml` did not contain
+the `agent/**` push branch entry. The minimum workflow change adds `agent/**` to the existing
+explicit branch list in both workflows. The regression now requires `main`, `feature/**` and
+`agent/**` in each file.
+
+Verification evidence:
+
+- exact GREEN plus complete CI policy and Python discovery:
+  `job_20260805_132135_fe5674af`, policy 19/19 and Python 101 tests, zero failures/errors, one
+  environmental hardlink skip;
+- full Android: `job_20260805_132209_da78308f`, pin/AAPT2 checks PASS, Debug 522/522 and QA
+  522/522 with zero failures/errors/skips, Debug/QA/QA-AndroidTest assemblies PASS, 127/127 tasks;
+- forced lint: `job_20260805_133103_ecb4c60e`, 55/55 tasks, zero errors and 27 warnings per
+  variant;
+- Go: `job_20260805_132223_437dc850`, `go test ./... -count=1`, `go vet ./...` and relay build
+  PASS; generated binary removed;
+- Android artifacts: `job_20260805_133111_c4ee32c9`, alignment/signature/manifest/canary checks
+  PASS;
+- release without private signing inputs: `job_20260805_133814_d06bfb4e`, expected fail-closed
+  PASS, exit 0, release APK count zero;
+- pre-evidence scope/security policy scan: `job_20260805_132521_00581e82`, exact five-file scope,
+  no high-confidence secret or personal identifier, no write-all permission,
+  `pull_request_target` or enabled checkout credential persistence, and all action uses still
+  pinned to the existing 40-character SHAs.
+
+APK SHA-256:
+
+- Debug: `5f7ccda5ed3aafc1800f8ec2e6190ff263f5c07d3abb01f67ced74104c863fe5`;
+- QA: `f89f4f5a8009ced7cb5eb97777d7a6e6ac99a4416908e45dd3fb303328d46146`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+The workflow change does not modify permissions, jobs, schedules, commands, action pins,
+dependencies, credentials or release policy. Local testing validates policy syntax and the gate
+commands; an actual GitHub-hosted run is not claimed unless separately observed after the branch
+push. No APK installation/launch, device control, portal request, credential/certificate use,
+real signing, upload, payment or administrative submission occurred. Physical AEAT F-03 and Go
+race on supported Linux remain external gates.

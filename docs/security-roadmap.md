@@ -526,3 +526,19 @@ requires a separate design/plan and observed TDD RED.
   `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
 - Next autonomous priority: move to a fresh independent architecture/lifecycle/concurrency or
   UX/CI audit. Do not repeat G8-02; any new behavior change requires its own design/plan and RED.
+
+## Autonomous agent-branch CI trigger coverage — 2026-08-05 (G9-01)
+
+- Mandatory milestone pushes to `agent/**` were outside both GitHub Actions push allowlists, so a
+  remotely present autonomous commit did not necessarily start ordinary CI or security workflows.
+- Policy TDD observed RED against unchanged workflows, then GREEN after adding only `agent/**` to
+  both explicit `push.branches` lists.
+- Permissions remain `contents: read`; checkout credentials remain disabled; action SHAs, jobs,
+  schedules, commands, timeouts, dependency pins and release-signing behavior are unchanged.
+- Fresh gates PASS: `CiPolicyTest` 19/19; Python 101 with one environmental hardlink skip; Debug
+  522/522 and QA 522/522; all three assemblies; lint 0 errors / 27 warnings per variant; Android
+  artifacts; release fail-closed with zero release APK; Go test/vet/build with relay binary removed.
+- Local verification establishes trigger syntax/policy and referenced gate behavior. Do not claim
+  an actual GitHub-hosted run unless separately observed after push.
+- Next autonomous priority: continue a fresh independent UX/accessibility, lifecycle/concurrency
+  or CI/supply-chain audit. Any behavior change requires its own subordinate design/plan and RED.

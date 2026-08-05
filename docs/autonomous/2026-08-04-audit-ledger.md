@@ -662,3 +662,47 @@ APK SHA-256:
 No APK was installed or launched; no ADB/device control, portal interaction,
 credential/certificate material use, real signature, upload, payment or administrative
 submission occurred. Physical AEAT F-03 and supported-Linux Go race remain external gates.
+
+## Finding G9-01 — autonomous branch CI push coverage
+
+**Reproduction.** The autonomous execution contract requires every completed milestone to be
+pushed to `agent/workspace-47-autonomous-20260803`, but both GitHub Actions workflows limited
+`push.branches` to `main` and `feature/**`. A new policy regression first ran against unchanged
+workflow files. RED job `job_20260805_132116_bf00a316` failed exactly because `ci.yml` lacked
+`      - agent/**`; no workflow production content had changed before that run.
+
+**Remediation.** The ordinary CI and security workflow push allowlists now each include only one
+additional namespace, `agent/**`, next to the existing `main` and `feature/**` entries. The policy
+suite requires all three entries in both workflows. Workflow permissions remain `contents: read`;
+checkout retains `persist-credentials: false`; all action references remain pinned to the same
+40-character SHAs; jobs, commands, schedules, concurrency, timeouts, dependency pins, credentials
+and release-signing policy are unchanged. No `pull_request_target`, write permission, secret,
+artifact upload or broad all-branch trigger was added.
+
+**TDD and fresh verification.** GREEN/policy/Python job `job_20260805_132135_fe5674af` passed the
+exact regression, complete `CiPolicyTest` 19/19 and Python discovery 101 tests with zero
+failures/errors and one environmental hardlink skip. Full Android job
+`job_20260805_132209_da78308f` passed pin/AAPT2 checks, Debug 522/522 and QA 522/522 JVM tests with
+zero failures/errors/skips, all Debug/QA/QA-AndroidTest assemblies and 127/127 tasks. Forced lint
+job `job_20260805_133103_ecb4c60e` passed 55/55 tasks with zero errors and 27 warnings per variant.
+Go job `job_20260805_132223_437dc850` passed `go test ./... -count=1`, `go vet ./...` and
+`go build ./cmd/ws024-relay`; the generated relay binary was removed. Artifact job
+`job_20260805_133111_c4ee32c9` passed alignment, signature, manifest and forbidden-canary checks.
+Release job `job_20260805_133814_d06bfb4e` completed with exit 0, reported
+`Release signing fail-closed verification passed`, and confirmed `release_apk_count=0`.
+Pre-evidence scan job `job_20260805_132521_00581e82` confirmed the exact five-file pre-evidence
+scope, no high-confidence secrets or personal identifiers, no workflow write-all permission,
+`pull_request_target` or `persist-credentials: true`, and unchanged immutable pins for all 7 CI and
+5 security action uses.
+
+APK SHA-256 remained:
+
+- Debug: `5f7ccda5ed3aafc1800f8ec2e6190ff263f5c07d3abb01f67ced74104c863fe5`;
+- QA: `f89f4f5a8009ced7cb5eb97777d7a6e6ac99a4416908e45dd3fb303328d46146`;
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+
+Local evidence verifies workflow policy and every command referenced by the changed trigger scope;
+it does not by itself claim that GitHub executed a server-side workflow run. No APK was installed
+or launched; no ADB/device control, portal interaction, credential/certificate material use, real
+signature, upload, payment or administrative submission occurred. Physical AEAT F-03 and the
+supported-Linux Go race gate remain external.

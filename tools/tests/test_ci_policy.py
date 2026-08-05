@@ -72,6 +72,16 @@ class CiPolicyTest(unittest.TestCase):
             self.assertTrue({name for name, _ in pinned}.issubset(allowed))
             self.assertIn("persist-credentials: false", source)
 
+    def test_workflows_cover_autonomous_push_branches(self) -> None:
+        for path in (CI, SECURITY):
+            source = self.read(path)
+            for branch in ("main", "feature/**", "agent/**"):
+                self.assertIn(
+                    f"      - {branch}\n",
+                    source,
+                    f"missing push branch {branch} in {path.name}",
+                )
+
     def test_ci_runs_android_python_go_and_release_fail_closed_gates(self) -> None:
         source = self.read(CI)
         for required in (
