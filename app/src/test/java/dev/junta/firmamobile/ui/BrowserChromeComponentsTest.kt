@@ -50,6 +50,27 @@ class BrowserChromeComponentsTest {
     }
 
     @Test
+    fun noticeBannerSupportsPoliteLiveRegionForStatusUpdates() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserNoticeBanner(
+                    message = "Se borraron los datos del sitio actual.",
+                    onRetry = null,
+                    liveRegionMode = LiveRegionMode.Polite,
+                )
+            }
+        }
+
+        rule.onNodeWithTag(BROWSER_NOTICE_TAG)
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.LiveRegion,
+                    LiveRegionMode.Polite,
+                ),
+            )
+    }
+
+    @Test
     fun chromeShowsOnlyRealActionsAndStyledStatusElements() {
         val events = mutableListOf<String>()
         rule.setContent {

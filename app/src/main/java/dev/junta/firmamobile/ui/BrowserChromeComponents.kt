@@ -377,6 +377,7 @@ internal fun BrowserNoticeBanner(
     message: String,
     onRetry: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    liveRegionMode: LiveRegionMode = LiveRegionMode.Assertive,
 ) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
@@ -387,7 +388,7 @@ internal fun BrowserNoticeBanner(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 6.dp)
             .testTag(BROWSER_NOTICE_TAG)
-            .semantics { liveRegion = LiveRegionMode.Assertive },
+            .semantics { liveRegion = liveRegionMode },
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),

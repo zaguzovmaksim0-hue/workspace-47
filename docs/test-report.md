@@ -2420,3 +2420,47 @@ The automated evidence proves repository configuration and policy shape only. It
 not prove that GitHub Dependabot executed or opened a PR from this autonomous branch.
 No dependency was upgraded. No APK/device/portal/credential/certificate/real-signing/
 upload/payment/submission action occurred. Threat-model wording is unchanged.
+
+## G13-02 — browser notice live-region severity — 2026-08-06
+
+`BrowserNoticeBanner` previously used an assertive live region for every browser
+notice, including non-error Client TLS preparation and successful browser-data clear
+status. The regression tests were added before production mutation. RED
+`job_20260805_222337_0803500c` failed exactly on the absent explicit live-region API
+and absent state policy helper. The minimum change keeps the banner default
+assertive, assigns `Polite` only to `CLEARING` and exact site/global clear success,
+and keeps failures, warnings, navigation blocks and browser/compatibility errors
+assertive.
+
+Focused GREEN `job_20260805_222533_f589b871` passed both variants; XML
+`job_20260805_222740_d7eee693`: 11 tests per variant, zero failures/errors/skips.
+Fresh final split gates after connector diagnostics:
+
+- dependency/toolchain: `job_20260805_224216_debaec44`, 3/3 tasks PASS;
+- full JVM: `job_20260805_224421_3aee3897` PASS; XML
+  `job_20260805_224616_c849f08f`: Debug 528/528 and QA 528/528, zero
+  failures/errors/skips;
+- lint/build: `job_20260805_224514_53d85d71`, 124 tasks PASS; lint is 0 errors / 27
+  warnings for both Debug and QA; Debug, QA and QA AndroidTest assemblies PASS;
+- Python/Go: `job_20260805_224626_7301ac9b`, Python 101 PASS with one environmental
+  hardlink skip; Go test/vet/build PASS;
+- Android artifacts: `job_20260805_224646_40ff453a` PASS;
+- release without private signing inputs: `job_20260805_224658_b2416ba2` PASS
+  fail-closed; zero release APK retained;
+- generated relay executable removed by `job_20260805_224803_03dcec46` after
+  `job_20260805_224754_055676e0` identified it as the expected ARM64 Go build output.
+
+Two earlier monolithic Android-gate requests lost the connector response with HTTP
+502 while Gradle wrappers continued. Their unknown request-level result is not used
+as verification evidence; the observed split commands above supply the pass evidence.
+No APK was installed or launched and no device, portal, credential, certificate,
+real-signing, upload, payment or submission action occurred.
+
+APK SHA-256:
+
+- Debug: `cd499662a3fafc00f5b9370b5deaf604393611b0071b36487e47fba7aa13c2ae`
+- QA: `c9732852c88117ab09b49f786bf2adc8f03c2144174534a7ee100ec6c84be098`
+- QA AndroidTest: `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`
+
+Automated evidence covers Compose semantics, not physical TalkBack announcement
+timing/interruption or real-device visual correctness; those remain manual gates.

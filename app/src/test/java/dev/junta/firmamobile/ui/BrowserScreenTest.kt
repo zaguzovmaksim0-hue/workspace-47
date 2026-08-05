@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -14,10 +15,15 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import dev.junta.firmamobile.browser.BrowserErrorCode
+import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
+import dev.junta.firmamobile.browser.NavigationBlockReason
+import dev.junta.firmamobile.browser.SiteClearResult
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import org.junit.Rule
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +50,71 @@ class BrowserScreenTest {
         assertTrue(profileRequiresWebMessageBridge(profile("reg-age-redsara")))
         assertTrue(profileRequiresWebMessageBridge(profile("unizar-tramitador")))
         assertTrue(!profileRequiresWebMessageBridge(profile("carne-joven-andalucia")))
+    }
+
+    @Test
+    fun browserNoticeLiveRegionSeverityMatchesDisplayedNoticePrecedence() {
+        fun mode(
+            compatibilityError: Boolean = false,
+            blockedReason: NavigationBlockReason? = null,
+            browserError: BrowserErrorCode? = null,
+            clientCertPreferenceState: ClientCertPreferenceBarrierState =
+                ClientCertPreferenceBarrierState.IDLE,
+            siteClearResult: SiteClearResult? = null,
+            globalClearResult: Boolean? = null,
+        ) = browserNoticeLiveRegionMode(
+            compatibilityError = compatibilityError,
+            blockedReason = blockedReason,
+            browserError = browserError,
+            clientCertPreferenceState = clientCertPreferenceState,
+            siteClearResult = siteClearResult,
+            globalClearResult = globalClearResult,
+        )
+
+        assertEquals(
+            LiveRegionMode.Polite,
+            mode(clientCertPreferenceState = ClientCertPreferenceBarrierState.CLEARING),
+        )
+        assertEquals(LiveRegionMode.Polite, mode(globalClearResult = true))
+        assertEquals(
+            LiveRegionMode.Polite,
+            mode(siteClearResult = SiteClearResult.CLEARED_EXACTLY),
+        )
+
+        assertEquals(
+            LiveRegionMode.Assertive,
+            mode(clientCertPreferenceState = ClientCertPreferenceBarrierState.FAILED),
+        )
+        assertEquals(
+            LiveRegionMode.Assertive,
+            mode(
+                compatibilityError = true,
+                siteClearResult = SiteClearResult.CLEARED_EXACTLY,
+            ),
+        )
+        assertEquals(
+            LiveRegionMode.Assertive,
+            mode(browserError = BrowserErrorCode.NETWORK_ERROR, globalClearResult = true),
+        )
+        assertEquals(
+            LiveRegionMode.Assertive,
+            mode(
+                blockedReason = NavigationBlockReason.CROSS_PROFILE_NAVIGATION,
+                globalClearResult = true,
+            ),
+        )
+        assertEquals(LiveRegionMode.Assertive, mode(globalClearResult = false))
+        assertEquals(
+            LiveRegionMode.Assertive,
+            mode(
+                siteClearResult =
+                    SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE,
+            ),
+        )
+        assertEquals(
+            LiveRegionMode.Assertive,
+            mode(siteClearResult = SiteClearResult.FAILED),
+        )
     }
 
     @Test

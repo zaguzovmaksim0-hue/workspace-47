@@ -935,3 +935,45 @@ Termux system Python has no `pytest`; the repository's documented `unittest` run
 was then used without installing or changing any package. `tools/requirements.txt`,
 `.github/dependabot.yml` and `tools/tests/test_ci_policy.py` remain unchanged from
 HEAD. `git diff --check` passed on the direct test-plan edit.
+
+## Finding G13-02 — browser notice live-region severity — 2026-08-06
+
+**Reproduction.** `BrowserNoticeBanner` applied `LiveRegionMode.Assertive` to every
+notice. `BrowserScreen` uses that same banner for urgent failures and for non-error
+states including Client TLS preference `CLEARING` and successful exact site/global
+browser-data deletion. The new tests were written first. RED
+`job_20260805_222337_0803500c` failed at `compileDebugUnitTestKotlin` exactly because
+the banner had no explicit `liveRegionMode` parameter and the state policy helper did
+not exist; production sources were unchanged at RED.
+
+**Remediation.** `BrowserNoticeBanner` now accepts an explicit `LiveRegionMode` while
+retaining `Assertive` as its default. `BrowserScreen` uses one pure precedence policy:
+Client TLS preference `CLEARING`, exact current-site clear success and global clear
+success are `Polite`; Client TLS preference failure, compatibility/browser errors,
+navigation blocks, global clear failure and limited/failed site clear remain
+`Assertive`. Error precedence wins over a lower-priority success state. Strings,
+visual styling, Retry behavior, WebView/network/TLS/Client TLS/certificate/signing/
+data-clear/profile/release behavior and dependencies are unchanged.
+
+**Verification.** Focused GREEN `job_20260805_222533_f589b871` passed Debug+QA;
+XML aggregation `job_20260805_222740_d7eee693` confirmed 11/11 tests per variant,
+zero failures/errors/skips. Two attempted monolithic full-Android invocations lost
+the Termux connector transport with HTTP 502 while their Gradle wrappers continued;
+those calls are not used as pass evidence. Kati_Stable also returned 502 and Kati a
+network error during diagnosis. Fresh observed split gates then passed:
+`job_20260805_224216_debaec44` (resolved-core, portable AAPT2 and runtime locks),
+`job_20260805_224421_3aee3897` (full Debug+QA JVM), and
+`job_20260805_224514_53d85d71` (lint and Debug/QA/QA-AndroidTest assemblies).
+`job_20260805_224616_c849f08f` read 528/528 Debug and 528/528 QA JVM tests with zero
+failures/errors/skips, lint zero errors and 27 warnings per variant, and APK SHA-256
+Debug `cd499662a3fafc00f5b9370b5deaf604393611b0071b36487e47fba7aa13c2ae`, QA
+`c9732852c88117ab09b49f786bf2adc8f03c2144174534a7ee100ec6c84be098`, QA
+AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+Python/Go `job_20260805_224626_7301ac9b` passed 101 Python tests with one environmental
+hardlink skip plus Go test/vet/build. Android artifact verification
+`job_20260805_224646_40ff453a` and release fail-closed
+`job_20260805_224658_b2416ba2` passed. The generated ARM64 relay executable identified
+in `job_20260805_224754_055676e0` was removed by
+`job_20260805_224803_03dcec46`; release APK count is zero. Robolectric proves Compose
+semantics only; physical TalkBack timing/interruption and visual correctness remain
+manual gates. Threat-model wording is unchanged because no new trust edge was added.

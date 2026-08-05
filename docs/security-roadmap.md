@@ -632,3 +632,21 @@ requires a separate design/plan and observed TDD RED.
   `ProfileHttpCallPhaseTracker` override-parameter-name compiler warning is low-risk
   cleanup and must not be used to change transport semantics without a separate
   reproducible reason.
+
+## Autonomous browser notice live-region severity — 2026-08-06 (G13-02)
+
+- Browser notices previously inherited `LiveRegionMode.Assertive` regardless of
+  severity, so Client TLS preparation and successful browser-data clears could
+  interrupt assistive-technology speech like an urgent failure.
+- `BrowserNoticeBanner` now keeps `Assertive` as the fail-safe default but accepts an
+  explicit mode. One pure browser-state policy marks only Client TLS `CLEARING` and
+  exact site/global clear success `Polite`; failures, warnings, navigation blocks and
+  browser/compatibility errors remain assertive with error precedence preserved.
+- This is accessibility semantics only: strings, visuals, WebView/network/TLS/Client
+  TLS/certificate/signing/data-clear/profile/release/dependency behavior are unchanged.
+- TDD RED and focused/full automated gates passed; Debug/QA are 528/528 JVM tests,
+  lint remains 0 errors / 27 warnings per variant, and artifact/release/Python/Go
+  gates passed. Physical TalkBack behavior and visual correctness remain manual gates.
+- Threat-model wording is unchanged because no asset, credential flow or trust edge
+  changed. Continue independent logging/privacy, lifecycle/concurrency or
+  supply-chain review after remote verification of the containing commit.

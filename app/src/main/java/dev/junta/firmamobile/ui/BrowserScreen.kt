@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.junta.firmamobile.R
@@ -547,6 +548,14 @@ fun BrowserScreen(
             notice?.let { message ->
                 BrowserNoticeBanner(
                     message = message,
+                    liveRegionMode = browserNoticeLiveRegionMode(
+                        compatibilityError = compatibilityError,
+                        blockedReason = blockedReason,
+                        browserError = browserError,
+                        clientCertPreferenceState = clientCertPreferenceState,
+                        siteClearResult = siteClearResult,
+                        globalClearResult = globalClearResult,
+                    ),
                     onRetry = when {
                         clientCertPreferenceState == ClientCertPreferenceBarrierState.FAILED ||
                             browserError == BrowserErrorCode.CLIENT_CERT_PREFERENCES -> {
@@ -922,6 +931,26 @@ private fun browserNotice(
     blockedReason != null -> stringResource(R.string.browser_navigation_blocked)
     dataNotice != null -> dataNotice
     else -> null
+}
+
+internal fun browserNoticeLiveRegionMode(
+    compatibilityError: Boolean,
+    blockedReason: NavigationBlockReason?,
+    browserError: BrowserErrorCode?,
+    clientCertPreferenceState: ClientCertPreferenceBarrierState,
+    siteClearResult: SiteClearResult?,
+    globalClearResult: Boolean?,
+): LiveRegionMode = when {
+    clientCertPreferenceState == ClientCertPreferenceBarrierState.CLEARING -> LiveRegionMode.Polite
+    clientCertPreferenceState == ClientCertPreferenceBarrierState.FAILED -> LiveRegionMode.Assertive
+    compatibilityError -> LiveRegionMode.Assertive
+    browserError != null -> LiveRegionMode.Assertive
+    blockedReason != null -> LiveRegionMode.Assertive
+    globalClearResult == true -> LiveRegionMode.Polite
+    globalClearResult == false -> LiveRegionMode.Assertive
+    siteClearResult == SiteClearResult.CLEARED_EXACTLY -> LiveRegionMode.Polite
+    siteClearResult != null -> LiveRegionMode.Assertive
+    else -> LiveRegionMode.Assertive
 }
 
 @Composable

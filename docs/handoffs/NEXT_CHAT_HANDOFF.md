@@ -1015,3 +1015,34 @@ After remote verification of the containing G13-01 commit, continue an independe
 architecture/lifecycle, accessibility, logging/privacy or supply-chain pass. Physical
 AEAT F-03, physical TalkBack/visual validation and supported-Linux Go race remain
 external gates.
+
+## Autonomous audit G13-02 — browser notice live-region severity — 2026-08-06
+
+- Reproduced an accessibility-semantics defect: the shared browser notice banner was
+  always `Assertive`, including non-error Client TLS `CLEARING` and successful exact
+  site/global data-clear status.
+- RED `job_20260805_222337_0803500c` failed exactly on the two missing desired
+  contracts before production mutation. The fix keeps the component default
+  assertive, passes an explicit mode from a pure state policy, makes only progress and
+  exact success polite, and preserves assertive failure/warning/error precedence.
+- Focused GREEN `job_20260805_222533_f589b871` plus XML
+  `job_20260805_222740_d7eee693`: 11/11 Debug and 11/11 QA, zero failures/errors/skips.
+- Fresh split full gates PASS after two monolithic Termux calls lost HTTP-502 transport
+  responses and were deliberately not counted as pass evidence: pins/locks
+  `job_20260805_224216_debaec44`; full JVM `job_20260805_224421_3aee3897`; lint and
+  three assemblies `job_20260805_224514_53d85d71`; counts/hashes
+  `job_20260805_224616_c849f08f`; Python/Go `job_20260805_224626_7301ac9b`; Android
+  artifacts `job_20260805_224646_40ff453a`; release fail-closed
+  `job_20260805_224658_b2416ba2`.
+- Full JVM is 528/528 per variant, lint 0 errors / 27 warnings per variant. APK SHA-256:
+  Debug `cd499662a3fafc00f5b9370b5deaf604393611b0071b36487e47fba7aa13c2ae`, QA
+  `c9732852c88117ab09b49f786bf2adc8f03c2144174534a7ee100ec6c84be098`, QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Generated relay binary was identified and removed; release APK count is zero.
+  Strings/visuals and all browser/security/signing/profile/release behavior are
+  otherwise unchanged; threat model unchanged. Physical TalkBack/visual validation,
+  AEAT F-03 and supported-Linux Go race remain external gates.
+
+After remote verification of the containing G13-02 commit, continue a fresh independent
+logging/privacy, lifecycle/concurrency, accessibility or supply-chain audit. Do not
+repeat G13-01/G13-02.
