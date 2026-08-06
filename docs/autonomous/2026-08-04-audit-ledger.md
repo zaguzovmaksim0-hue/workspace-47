@@ -1165,3 +1165,44 @@ per variant, relay absent and zero release APKs. Commit
 `1e6b7a611635476185ca819d7d2641580a3d5c91` was pushed and exact remote SHA verified.
 No current-user TalkBack/visual improvement is claimed; no threat-model change is
 required because no runtime trust edge changed.
+## Finding G18-01 — remove dormant manual-URL browser surface — 2026-08-06
+
+**Reproduction.** The live `BrowserLayout` was already read-only, but exact symbol audit
+`job_20260806_214058_9ef9999b` showed main-source still retained an unreferenced
+`BrowserAddressBar` containing `BasicTextField` and arbitrary `onSubmit(String)`, plus
+unused `IndustrialBrowserTopBar.onIdentityClick` / `editingContent` slots. No production
+consumer existed, so this was dormant attack surface rather than a current navigation
+bypass. RED `job_20260806_214334_dbb2fc34`, parsed by
+`job_20260806_214501_7a424a95`, ran the new source-policy test once and failed exactly
+with `Production main source must not retain the dormant manual URL editor`; production
+sources were unchanged at RED.
+
+**Remediation.** The dead `BrowserAddressBar` composable, editor state/callbacks/imports,
+editor-only resource strings, `BrowserToolbarHeight`, production
+`BROWSER_ADDRESS_FIELD_TAG`, and the dormant `onIdentityClick` / `editingContent` slots
+were removed. `BrowserAddressPresentation.hostOf`, the read-only profile/host identity,
+current browser tags and every actual navigation/security boundary remain. Existing
+negative UI checks use the exact removed tag as a test-local literal, so their
+no-editor assertion is not weakened. G17-01 remains historical evidence for the hook
+while it existed; G18-01 removes that hook structurally.
+
+**Verification.** Focused GREEN `job_20260806_214656_e8869677` passed browser security,
+chrome and screen suites in Debug and QA; `job_20260806_215018_c60f84a6` parsed 27/27
+per variant with zero failures/errors/skips and confirmed
+`toolbarIdentityCannotOpenManualUrlEditor` remains present. Dependency/toolchain plus
+fresh full JVM `job_20260806_215028_a94e7588` executed 63/63 tasks; XML aggregation
+`job_20260806_215812_66037d60` reported Debug 533/533 and QA 533/533, zero
+failures/errors/skips. Lint/build `job_20260806_215827_fe79aaec` passed 124 tasks and all
+three assemblies; `job_20260806_220447_5a1738c0` parsed 0 errors / 26 warnings per
+variant. APK SHA-256: Debug
+`39fded02c7dcd0280ace68ec02083615dabb774e79786685e56c3b4912d143c3`, QA
+`b20a394f812b7d7718c0724508a17c7c513b8cd97b183df25e1a6072a7048705`, QA AndroidTest
+`08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+Python/Go/artifact/release `job_20260806_220500_65771d83` passed 102 Python tests with
+one environmental hardlink skip, Go test/vet/build, Android artifact verification and
+release-signing fail-closed. `job_20260806_220857_877aaf8f` confirmed relay absent,
+release APK count zero and autonomous divergence 0/0 before evidence edits. Complete
+pre-evidence review `job_20260806_220924_691a63aa` passed exact scope, `git diff
+--check`, structural-absence, sensitive-data and unsafe WebView/TLS scans. No current
+runtime navigation was broadened, no threat edge was added, and no physical/device or
+portal claim is made.

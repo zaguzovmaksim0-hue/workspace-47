@@ -208,7 +208,7 @@ class BrowserScreenTest {
         rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
 
         rule.onNodeWithText(LONG_URL).assertDoesNotExist()
-        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
+        rule.onNodeWithTag("browser_address_field").assertDoesNotExist()
         rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
     }
 
@@ -294,10 +294,10 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
+        rule.onNodeWithTag("browser_address_field").assertDoesNotExist()
         rule.onNodeWithContentDescription("Inicio de la aplicación").performClick()
 
-        rule.onNodeWithTag(BROWSER_ADDRESS_FIELD_TAG).assertDoesNotExist()
+        rule.onNodeWithTag("browser_address_field").assertDoesNotExist()
         rule.onNodeWithText("www.juntadeandalucia.es", substring = true).assertIsDisplayed()
     }
 

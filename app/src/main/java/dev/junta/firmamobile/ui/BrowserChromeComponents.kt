@@ -39,7 +39,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -78,10 +77,8 @@ internal fun IndustrialBrowserTopBar(
     onClearCurrentSiteRequested: () -> Unit,
     onClearSessionRequested: () -> Unit,
     onDeleteAllBrowserDataRequested: () -> Unit,
-    onIdentityClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
-    editingContent: (@Composable () -> Unit)? = null,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -115,27 +112,12 @@ internal fun IndustrialBrowserTopBar(
                         .weight(1f)
                         .padding(horizontal = 4.dp),
                 ) {
-                    if (editingContent == null) {
-                        BrowserServiceIdentity(
-                            profileName = profileName,
-                            host = host,
-                            trustLabel = trustLabel,
-                            modifier = Modifier
-                                .then(
-                                    if (onIdentityClick != null) {
-                                        Modifier.clickable(
-                                            role = Role.Button,
-                                            onClick = onIdentityClick,
-                                        )
-                                    } else {
-                                        Modifier
-                                    },
-                                )
-                                .testTag(BROWSER_ADDRESS_LABEL_TAG),
-                        )
-                    } else {
-                        editingContent()
-                    }
+                    BrowserServiceIdentity(
+                        profileName = profileName,
+                        host = host,
+                        trustLabel = trustLabel,
+                        modifier = Modifier.testTag(BROWSER_ADDRESS_LABEL_TAG),
+                    )
                 }
 
                 BrowserChromeIconButton(

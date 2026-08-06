@@ -48,8 +48,6 @@
     <string name="error_storage">No se pudo actualizar la referencia segura del certificado.</string>
     <string name="error_not_selected">Selecciona primero un certificado.</string>
     <string name="error_not_usable">El archivo contiene una identidad que no se puede usar.</string>
-    <string name="browser_address_current_description">Dirección actual: %1$s</string>
-    <string name="browser_address_edit_description">Editar dirección web</string>
     <string name="browser_action_back">Atrás</string>
     <string name="browser_action_home">Inicio de la aplicación</string>
     <string name="browser_action_reload">Recargar</string>

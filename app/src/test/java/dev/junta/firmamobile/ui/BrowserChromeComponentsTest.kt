@@ -2,8 +2,6 @@ package dev.junta.firmamobile.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -15,7 +13,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,65 +71,6 @@ class BrowserChromeComponentsTest {
     }
 
     @Test
-    fun clickableServiceIdentityHasButtonRole() {
-        val events = mutableListOf<String>()
-        rule.setContent {
-            JuntaFirmaTheme {
-                IndustrialBrowserTopBar(
-                    profileName = "Registro Electrónico General",
-                    host = "reg.redsara.es",
-                    trustLabel = "Firma protegida",
-                    onBack = {},
-                    onHome = {},
-                    onReload = {},
-                    onChangeCertificate = {},
-                    onLockCertificate = {},
-                    onClearCurrentSiteRequested = {},
-                    onClearSessionRequested = {},
-                    onDeleteAllBrowserDataRequested = {},
-                    onIdentityClick = { events += "identity" },
-                )
-            }
-        }
-
-        rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG)
-            .assert(
-                SemanticsMatcher.expectValue(
-                    SemanticsProperties.Role,
-                    Role.Button,
-                ),
-            )
-            .performClick()
-        rule.runOnIdle { assertEquals(listOf("identity"), events) }
-    }
-
-    @Test
-    fun passiveServiceIdentityHasNoClickActionOrButtonRole() {
-        rule.setContent {
-            JuntaFirmaTheme {
-                IndustrialBrowserTopBar(
-                    profileName = "Registro Electrónico General",
-                    host = "reg.redsara.es",
-                    trustLabel = "Firma protegida",
-                    onBack = {},
-                    onHome = {},
-                    onReload = {},
-                    onChangeCertificate = {},
-                    onLockCertificate = {},
-                    onClearCurrentSiteRequested = {},
-                    onClearSessionRequested = {},
-                    onDeleteAllBrowserDataRequested = {},
-                    onIdentityClick = null,
-                )
-            }
-        }
-
-        val config = rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG).fetchSemanticsNode().config
-        assertFalse(config.contains(SemanticsActions.OnClick))
-        assertFalse(config.contains(SemanticsProperties.Role))
-    }
-
-    @Test
     fun chromeShowsOnlyRealActionsAndStyledStatusElements() {
         val events = mutableListOf<String>()
         rule.setContent {
@@ -150,7 +88,6 @@ class BrowserChromeComponentsTest {
                         onClearCurrentSiteRequested = { events += "clear-site" },
                         onClearSessionRequested = { events += "close-session" },
                         onDeleteAllBrowserDataRequested = { events += "clear-all" },
-                        onIdentityClick = { events += "identity" },
                     )
                     BrowserLoadingIndicator(visible = true)
                     BrowserNoticeBanner("No se pudo cargar el portal.", onRetry = { events += "retry" })

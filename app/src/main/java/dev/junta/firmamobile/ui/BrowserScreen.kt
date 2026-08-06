@@ -821,7 +821,6 @@ internal fun BrowserLayout(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                 ),
                 modifier = Modifier.testTag(BROWSER_TOOLBAR_TAG),
-                editingContent = null,
             )
         },
         bottomBar = {

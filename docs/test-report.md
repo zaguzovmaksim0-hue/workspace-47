@@ -2596,3 +2596,34 @@ timing/interruption or real-device visual correctness; those remain manual gates
   change. Commit `1e6b7a611635476185ca819d7d2641580a3d5c91` is remotely verified.
 - No APK/device/portal/credential/private-certificate/real-signing/upload/payment/
   submission action occurred.
+## G18-01 — dormant manual-URL surface removal — 2026-08-06
+
+- Symbol audit `job_20260806_214058_9ef9999b` found the live browser read-only but
+  main-source still contained an unused `BrowserAddressBar` (`BasicTextField` plus
+  arbitrary `onSubmit`) and unused `onIdentityClick` / `editingContent` slots.
+- RED `job_20260806_214334_dbb2fc34` / parser `job_20260806_214501_7a424a95`: one
+  source-policy test, one expected failure, zero errors/skips, exactly on retained
+  dormant manual URL editor; production source unchanged.
+- Minimum removal deletes only the dead editor, its editor-only strings/imports/tag and
+  dormant slots. `BrowserAddressPresentation.hostOf` and actual read-only browser chrome
+  remain. Negative `browser_address_field` UI assertions remain test-local.
+- Focused GREEN `job_20260806_214656_e8869677` / `job_20260806_215018_c60f84a6`:
+  browser security 16/16, chrome 3/3 and screen 8/8 = 27/27 per variant, zero
+  failures/errors/skips; existing no-manual-editor regression is still present.
+- Dependency/toolchain/full JVM `job_20260806_215028_a94e7588`: 63/63 tasks;
+  `job_20260806_215812_66037d60`: Debug 533/533 and QA 533/533, zero
+  failures/errors/skips. Known `ProfileHttpCallPhaseTracker` parameter-name and legacy
+  WebView-test deprecation warnings remain.
+- Lint/build `job_20260806_215827_fe79aaec`: 124 tasks PASS and three APK assemblies;
+  parser `job_20260806_220447_5a1738c0`: 0 errors / 26 warnings per variant. APK
+  SHA-256: Debug `39fded02c7dcd0280ace68ec02083615dabb774e79786685e56c3b4912d143c3`,
+  QA `b20a394f812b7d7718c0724508a17c7c513b8cd97b183df25e1a6072a7048705`, QA
+  AndroidTest `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+- Python/Go/artifact/release `job_20260806_220500_65771d83`: Python 102 PASS with one
+  environmental hardlink skip; Go test/vet/build, Android artifact and release
+  fail-closed checks PASS. `job_20260806_220857_877aaf8f`: relay absent and release APK
+  count zero. Pre-evidence structural/scope/security scan
+  `job_20260806_220924_691a63aa` PASS.
+- This is structural attack-surface reduction, not evidence of a previously reachable
+  arbitrary-navigation exploit. No APK/device/portal/credential/private-certificate/
+  real-signing/upload/payment/submission action occurred.

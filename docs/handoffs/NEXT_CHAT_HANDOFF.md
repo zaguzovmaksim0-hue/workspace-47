@@ -1163,3 +1163,26 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
 - Continue a fresh lifecycle/concurrency, security/storage, WebView/network or
   supply-chain audit. The persisted-unlock cross-restart trust-time decision remains
   separate and unresolved.
+## Autonomous audit G18-01 — dormant manual-URL surface removal — 2026-08-06
+
+- Exact symbol audit found `BrowserAddressBar` had no production caller, while live
+  `BrowserLayout` was already read-only. Main-source nevertheless retained a complete
+  `BasicTextField`/`onSubmit` URL editor and dormant `onIdentityClick` /
+  `editingContent` hooks; this was latent attack surface, not a current bypass.
+- RED `job_20260806_214334_dbb2fc34` failed exactly on retained manual-editor source.
+  Minimum remediation removes the dead editor/hooks/resources while preserving
+  `BrowserAddressPresentation.hostOf`, current read-only chrome and all navigation/
+  WebView/TLS/Client TLS/certificate/signing/profile/release boundaries.
+- Focused browser/security GREEN 27/27 per variant; fresh full JVM 533/533 per variant;
+  lint 0 errors / 26 warnings per variant; dependency/toolchain, Debug/QA/QA-AndroidTest
+  assemblies, Python 102 with one environmental hardlink skip, Go test/vet/build,
+  Android artifacts and release fail-closed all PASS. APK SHA-256: Debug
+  `39fded02c7dcd0280ace68ec02083615dabb774e79786685e56c3b4912d143c3`, QA
+  `b20a394f812b7d7718c0724508a17c7c513b8cd97b183df25e1a6072a7048705`, QA AndroidTest
+  `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+- Relay binary and release APK are absent; pre-evidence exact-scope/structural/sensitive/
+  unsafe-pattern scan passed. G17's dormant optional role hook is superseded by removal.
+- After remote verification, continue a fresh independent security/lifecycle/network/
+  supply-chain pass. Persisted-unlock cross-restart trust-time semantics remain a
+  separate product decision; physical AEAT F-03, TalkBack/visual and Linux Go race
+  remain external/manual gates.

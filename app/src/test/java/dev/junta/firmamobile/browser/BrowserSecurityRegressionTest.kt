@@ -476,6 +476,39 @@ class BrowserSecurityRegressionTest {
         )
     }
 
+    @Test
+    fun manualUrlEditorSurfaceIsAbsentFromProductionBrowserChrome() {
+        val addressSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserAddressBar.kt",
+        )
+        val chromeSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserChromeComponents.kt",
+        )
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+
+        assertTrue(
+            "Sanitized host presentation must remain available",
+            "object BrowserAddressPresentation" in addressSource,
+        )
+        assertFalse(
+            "Production main source must not retain the dormant manual URL editor",
+            "internal fun BrowserAddressBar(" in addressSource ||
+                "BasicTextField" in addressSource ||
+                "onEditingChange" in addressSource ||
+                "onSubmit" in addressSource,
+        )
+        assertFalse(
+            "Browser chrome must not retain dormant hooks that can expose arbitrary address UI",
+            "onIdentityClick" in chromeSource || "editingContent" in chromeSource,
+        )
+        assertFalse(
+            "BrowserLayout must not configure a dormant manual-editor slot",
+            "editingContent = null" in screenSource,
+        )
+    }
+
     private fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {
         it.profileId == ProfileId(id)
     }

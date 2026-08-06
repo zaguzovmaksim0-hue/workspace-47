@@ -722,3 +722,18 @@ requires a separate design/plan and observed TDD RED.
   artifact and release fail-closed gates passed. Commit
   `1e6b7a611635476185ca819d7d2641580a3d5c91` is pushed/verified. Threat-model wording
   remains unchanged because no runtime trust edge changed.
+## Autonomous dormant manual-URL surface removal — 2026-08-06 (G18-01)
+
+- Production had already kept browser identity read-only, but unused main-source still
+  carried a complete manual address editor and two dormant chrome extension hooks.
+  G18-01 deletes that latent input/navigation surface instead of relying on future call
+  sites to keep it unwired.
+- `BrowserAddressPresentation.hostOf`, profile-bound navigation, origin/path policy,
+  WebView/TLS/Client TLS, certificate/signing/cookie and release behavior are unchanged.
+  No generic URL entry point replaces the removed code.
+- TDD RED failed exactly on the retained editor. Focused browser suites passed 27/27 per
+  variant; fresh full JVM passed 533/533 per variant; lint improved to 0 errors / 26
+  warnings per variant; dependency/toolchain, three assemblies, Python 102 with one
+  environmental hardlink skip, Go, artifact and release-fail-closed gates passed.
+- G17-01's optional button-role hook is now historical: G18-01 removes the dormant hook
+  entirely. No current runtime accessibility claim from G17 remains applicable.
