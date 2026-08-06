@@ -704,3 +704,18 @@ requires a separate design/plan and observed TDD RED.
 - Post-preference-clear and final `ClientCertRequest` revalidation enforce the same monotonic lifetime. Civil time remains only for X.509 `certificate.checkValidity(...)`.
 - Existing profile/origin/path/host/port, navigation epoch, issuer/key/usage/EKU, one-shot cleanup, QA-only profile and release boundaries are unchanged.
 - RED reproduced the clock-rollback extension. Fresh focused/dependency, JVM 532/532 per variant, lint 0 errors / 27 warnings per variant, three assemblies, Python 102 with one environmental hardlink skip, Go test/vet/build, Android artifact and release fail-closed gates pass. Physical AEAT F-03 remains separate E2E acceptance.
+## Autonomous browser identity button role — 2026-08-06 (G17-01)
+
+- The clickable portal service identity/address affordance now exposes explicit
+  `Role.Button` semantics through its existing `Modifier.clickable`; the passive state
+  remains non-clickable and role-free.
+- The initial touch-target suspicion was disproved by focused RED evidence: the tagged
+  node measured 69 px high. No height, padding, toolbar, typography or other layout
+  change was made.
+- TDD RED reproduced only the absent role; focused Debug/QA passed 5/5 per variant,
+  fresh full JVM passed 534/534 per variant, lint remains 0 errors / 27 warnings per
+  variant, and Debug/QA/QA-AndroidTest, Python 102 with one environmental hardlink skip,
+  Go test/vet/build, Android artifact and release fail-closed gates passed.
+- WebView/network/TLS/Client TLS/certificate/signing/profile/release/dependency behavior
+  is unchanged. Physical TalkBack interaction and visual correctness remain manual
+  gates; threat-model wording is unchanged.

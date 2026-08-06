@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -122,7 +123,10 @@ internal fun IndustrialBrowserTopBar(
                             modifier = Modifier
                                 .then(
                                     if (onIdentityClick != null) {
-                                        Modifier.clickable(onClick = onIdentityClick)
+                                        Modifier.clickable(
+                                            role = Role.Button,
+                                            onClick = onIdentityClick,
+                                        )
                                     } else {
                                         Modifier
                                     },

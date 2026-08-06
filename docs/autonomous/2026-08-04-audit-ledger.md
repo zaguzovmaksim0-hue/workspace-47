@@ -1128,3 +1128,41 @@ A fresh trust-boundary pass found no separate logging/export defect: the only pr
 The certificate expiry pass identified an unresolved clock-model risk that is intentionally **not remediated in this audit step**. `CertificateSession` expires the in-memory `UnlockedIdentity` from civil `Clock/Instant`, so a backward system-clock adjustment after unlock can extend same-process signing availability relative to elapsed time. The encrypted persisted unlock cache also validates authenticated `issuedAt`/`expiresAt` UTC timestamps against current civil time. It rejects a clock earlier than `issuedAt`, but a partial rollback that remains after `issuedAt` can lengthen the apparent validity window. This matters because the documented product contract promises restoration for at most 24 hours across process death and device restart, while process-monotonic time is not persistent across a device restart.
 
 A same-process monotonic cap is feasible but does not by itself solve the persisted/device-restart guarantee. A complete remediation therefore requires an explicit trust-time/product decision: preserve device-restart restoration and document the residual civil-clock assumption, fail closed across device restarts/clock anomalies at the cost of that restoration promise, or introduce a separately justified trusted-time mechanism. No runtime/test mutation was made, no guarantee was broadened, and G15-01's short Client TLS monotonic boundary is unaffected.
+## Finding G17-01 — browser identity button-role semantics — 2026-08-06
+
+**Reproduction.** `IndustrialBrowserTopBar` made the service-identity/address block
+clickable when address editing was available, but the merged Compose semantics node
+exposed `OnClick` without an explicit role. The initial focused RED
+`job_20260806_204953_52915fe0` also tested a suspected touch-target-size defect; that
+hypothesis was rejected because the tagged node measured 69 px high and reached the
+role assertion. The narrowed RED `job_20260806_205704_31ea5f2a`, independently parsed
+in `job_20260806_210524_6ad34925`, ran 5 tests with exactly one failure, zero errors and
+zero skips: `clickableServiceIdentityHasButtonRole` failed only because
+`SemanticsProperties.Role` was absent while `OnClick` remained present. Production
+source was unchanged at RED.
+
+**Remediation.** The existing conditional `Modifier.clickable` now supplies
+`role = Role.Button` only when `onIdentityClick` is non-null. The passive identity stays
+non-clickable and role-free. No height, padding, toolbar dimension, typography, string,
+color, navigation, WebView, network/TLS, Client TLS, certificate, signing, profile,
+release, resource or dependency behavior changed.
+
+**Verification.** Focused GREEN `job_20260806_210559_522f6433` passed all 5/5 Debug
+and 5/5 QA component tests; XML confirmation `job_20260806_210824_af3bae02` reported
+zero failures/errors/skips. Dependency/toolchain plus fresh full JVM
+`job_20260806_210837_45835074` passed runtime dependency locks, resolved-core and
+portable-AAPT2 gates and executed all 63 tasks; XML aggregation
+`job_20260806_211559_f3df9f5b` reported Debug 534/534 and QA 534/534 with zero
+failures/errors/skips. Lint/build `job_20260806_211608_f9af0293` passed 124 tasks,
+`lintDebug`/`lintQa` and Debug/QA/QA-AndroidTest assemblies; parsed lint in
+`job_20260806_212122_622207d7` was 0 errors / 27 warnings per variant. APK SHA-256:
+Debug `16a334f13900d06559dbf56e8736976255712e2d5345cbc2fc6b2bff800d309a`, QA
+`e96e72c3902e4d6c9d8d7eeb04aacf48c760d2fd65a4b799ea58621ba1192230`, QA AndroidTest
+`08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+Python/Go/artifact/release `job_20260806_212150_46b3db2d` passed 102 Python tests with
+one environmental hardlink skip, Go test/vet/build, Android artifact verification and
+release-signing fail-closed. `job_20260806_212553_ebbefc3f` confirmed the relay
+executable absent, zero release APKs, branch divergence 0/0 and unchanged remote HEAD
+before evidence updates. Automated evidence covers Compose semantics only; physical
+TalkBack interaction and visual correctness remain manual gates. No threat-model change
+is required because no asset, sensitive-data path or trust edge changed.

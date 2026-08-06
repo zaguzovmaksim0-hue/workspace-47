@@ -2567,3 +2567,36 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - APK SHA-256: Debug `cb361265a636712ed584d6235ee0a877b7268b486074558874d32cb6dc841dc4`; QA `f97b5f4ac075ab70729b77d365b67d7698c53ef0cf66be176196078f6577f5fb`; QA AndroidTest `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`. Generated relay SHA-256 `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed.
 - Local `govulncheck`, `osv-scanner` and `gitleaks` executables were unavailable; pinned scanner/workflow policy is covered by passing CI-policy tests, but no local vulnerability-scan execution is claimed.
 - No APK launch/install, device control, authenticated portal use, credentials/private certificate material, real signature, upload, payment or submission occurred. Physical AEAT F-03, real-device TalkBack/visual and supported-Linux Go race remain external gates.
+## G17-01 — browser identity button-role semantics — 2026-08-06
+
+- Initial RED `job_20260806_204953_52915fe0`: `BrowserChromeComponentsTest` ran 5
+  tests with one expected failure. The tagged clickable identity node measured 69 px
+  high, so the suspected size defect was rejected; the failure was missing
+  `Role.Button` while `OnClick` was present.
+- Narrowed RED `job_20260806_205704_31ea5f2a`, parsed in
+  `job_20260806_210524_6ad34925`: 5 tests, 1 failure, 0 errors/skips, exactly
+  `clickableServiceIdentityHasButtonRole`; production Kotlin was unchanged.
+- Minimum fix: only the non-null `onIdentityClick` branch now calls
+  `Modifier.clickable(role = Role.Button, ...)`; passive identity remains role-free and
+  non-clickable. No layout/string/browser/security behavior changed.
+- Focused GREEN `job_20260806_210559_522f6433` plus XML
+  `job_20260806_210824_af3bae02`: 5/5 Debug and 5/5 QA, zero failures/errors/skips.
+- Dependency/toolchain and fresh full JVM `job_20260806_210837_45835074`: runtime
+  locks, resolved-core, portable AAPT2 PASS; 63/63 tasks executed. XML
+  `job_20260806_211559_f3df9f5b`: Debug 534/534 and QA 534/534, zero
+  failures/errors/skips. Only previously known compiler/deprecation warnings appeared.
+- Lint/build `job_20260806_211608_f9af0293`: 124 tasks PASS; Debug, QA and QA
+  AndroidTest assemblies PASS. Parsed lint `job_20260806_212122_622207d7`: 0 errors /
+  27 warnings for both Debug and QA. APK SHA-256: Debug
+  `16a334f13900d06559dbf56e8736976255712e2d5345cbc2fc6b2bff800d309a`; QA
+  `e96e72c3902e4d6c9d8d7eeb04aacf48c760d2fd65a4b799ea58621ba1192230`; QA
+  AndroidTest `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+- Python/Go/artifact/release `job_20260806_212150_46b3db2d`: Python 102 PASS with one
+  environmental hardlink skip; Go test/vet/build PASS; Android artifact verification
+  PASS; release without private signing inputs rejected fail-closed as required.
+- `job_20260806_212553_ebbefc3f`: generated relay executable absent, release APK count
+  zero, autonomous local/remote still equal with divergence 0/0 before evidence edits.
+- No APK installation/launch, device control, authenticated portal interaction,
+  credential/private-certificate use, real signature, upload, payment or administrative
+  submission occurred. Automated tests prove Compose semantics only; physical TalkBack
+  interaction and visual correctness remain manual acceptance gates.
