@@ -1247,3 +1247,47 @@ scan `job_20260806_224602_80996800` passed. No APK installation/launch, device
 control, authenticated portal interaction, credential/private-certificate use, real
 signature, upload, payment or administrative submission occurred; physical portal E2E
 is not claimed.
+
+## Finding G20-01 — external-browser main-frame native-delivery boundary — 2026-08-07
+
+**Reproduction.** `JuntaWebViewClient` received authoritative modern
+`WebResourceRequest.isForMainFrame` metadata, but `NavigationDecision.OpenExternal`
+called `callbacks.openExternal(...)` for every frame and the deprecated String callback
+could reach the same branch without frame ownership. In production that callback clears
+pending Client TLS/Afirma state, abandons Client TLS, advances the navigation epoch,
+cancels signing and then reaches the Activity external-browser handoff. RED
+`job_20260806_231912_7675aebf` ran two Debug regressions against unchanged production
+and failed 2/2 as expected: direct external HTTPS from subframe plus legacy callbacks
+produced `[external:example.org, external:example.org]`, while a validated `intent:`
+HTTPS browser fallback from a subframe produced `[external:example.org]`. The same
+fallback's modern main-frame positive control passed before the negative assertion.
+
+**Remediation.** `NavigationDecision.OpenExternal` native delivery now requires
+`isModernMainFrame`. Non-main and deprecated-callback paths are consumed, emit only the
+existing sanitized `NAVIGATION_BLOCKED` diagnostic with typed reason
+`UNTRUSTED_EXTERNAL_NAVIGATION`, and call neither `openExternal` nor
+`onNavigationBlocked`. Modern main-frame direct HTTPS and validated browser-fallback
+handoff are unchanged. `JuntaNavigationPolicy.decide*`, URL validation/allowlists,
+profiles/releases, Client TLS, WebMessage, Afirma parsing/signing, certificate/cookie
+handling and dependencies are unchanged. No user-gesture requirement was added.
+
+**Verification.** Focused GREEN `job_20260806_232243_54481b9e` passed 42/42 Debug
+and 42/42 QA with zero failures/errors/skips. Fresh runtime-lock/core/AAPT2 plus full
+JVM `job_20260806_232842_a997f44f` executed 63/63 tasks and passed Debug 537/537 and
+QA 537/537, zero failures/errors/skips. Lint/build
+`job_20260806_233635_8c200dbd` executed 124/124 tasks, passed all Debug/QA/
+QA-AndroidTest assemblies and reported 0 lint errors / 26 warnings per variant. APK
+SHA-256: Debug `eac33d40a71eb3a01d4af8be4dc48ef504e2617a72c3fda891f759b59c4b5b8b`, QA
+`8b451a495c43bce6ed3bbc934986c092564f4d784e4d20afc037c84a269579c9`, QA
+AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Python/Go/artifact/release `job_20260806_234613_6d1f3271` passed 102 Python tests
+with one environmental hardlink skip, Go test/vet/build, Android artifact verification
+and release-signing fail-closed; generated relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed
+and release APK count is zero. Pre-evidence review
+`job_20260806_234851_95328bfb` passed exact five-file scope, `git diff --check`,
+sensitive-data and unsafe WebView/TLS scans. The direct-HTTPS query canary remains
+absent from sanitized diagnostics. No APK installation/launch, device control,
+authenticated portal interaction, credential/private-certificate use, real signature,
+upload, payment or administrative submission occurred; physical portal/device E2E is
+not claimed.

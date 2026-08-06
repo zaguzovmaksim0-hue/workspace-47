@@ -96,17 +96,22 @@ El E2E debe confirmar qué se firma y el UI debe describirlo con precisión.
 
 ### T3. Intent/Play fallback escapa a AutoFirma externa o un frame ambiguo alcanza native
 
-**Riesgo:** confusión de app, envío de datos a otro paquete o entrega de una petición
-Afirma nativa iniciada por un subframe/callback legacy sin propiedad top-level probada.
+**Riesgo:** confusión de app, envío de datos a otro paquete, entrega de una petición
+Afirma nativa o lanzamiento del handoff a navegador externo desde un subframe/callback
+legacy sin propiedad top-level probada. El handoff externo además puede invalidar
+estado Client TLS/Afirma/firma de nivel superior antes de abrir la Activity.
 **Controles:** interceptar `afirma://`, `intent://`, `market://` y URLs Play; rechazar
 package/component explícitos no aprobados; nunca usar `es.gob.afirma`; evento
 sanitizado de fallback. Solo una navegación Afirma directa o embedded-Afirma recibida
 por el callback moderno y marcada `isForMainFrame=true` puede llegar a
 `onAfirmaRequest`; subframes y el callback String deprecated se consumen con
-`UNTRUSTED_AFIRMA_ORIGIN`.
-**Verificación:** regressions Debug/QA con controles positivos direct/embedded en
-main-frame y negativos subframe/legacy; instrumentation sin resolución de
-Play/AutoFirma. La cobertura automatizada no sustituye el E2E físico del portal.
+`UNTRUSTED_AFIRMA_ORIGIN`. De forma independiente, `OpenExternal` solo puede llegar a
+la aplicación desde un callback moderno main-frame; subframe/legacy se consume con
+`UNTRUSTED_EXTERNAL_NAVIGATION` y sin `openExternal` ni callback UI de bloqueo.
+**Verificación:** regressions Debug/QA con controles positivos main-frame y negativos
+subframe/legacy para Afirma, HTTPS externo e `intent:` con browser fallback;
+instrumentation sin resolución de Play/AutoFirma. La cobertura automatizada no
+sustituye el E2E físico del portal/dispositivo.
 
 ### T4. Callback, server URL o DNS produce SSRF
 

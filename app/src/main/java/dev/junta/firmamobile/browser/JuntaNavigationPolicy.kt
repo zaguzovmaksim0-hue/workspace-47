@@ -15,6 +15,7 @@ import java.util.Locale
 enum class NavigationBlockReason {
     INVALID_URL,
     UNTRUSTED_AFIRMA_ORIGIN,
+    UNTRUSTED_EXTERNAL_NAVIGATION,
     INVALID_AFIRMA_URI,
     PLAY_STORE_FALLBACK,
     UNSUPPORTED_SCHEME,

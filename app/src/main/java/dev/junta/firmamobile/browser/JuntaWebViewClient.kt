@@ -124,11 +124,21 @@ class JuntaWebViewClient(
                 true
             }
             is NavigationDecision.OpenExternal -> {
-                logger.recordBrowserEvent(
-                    DiagnosticEventCode.EXTERNAL_NAVIGATION,
-                    decision.uri.host,
-                )
-                callbacks.openExternal(decision.uri)
+                if (!isModernMainFrame) {
+                    logger.recordNavigationEvent(
+                        code = DiagnosticEventCode.NAVIGATION_BLOCKED,
+                        rawUrl = targetUrl,
+                        reason = NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION.name,
+                        isMainFrame = false,
+                        method = method,
+                    )
+                } else {
+                    logger.recordBrowserEvent(
+                        DiagnosticEventCode.EXTERNAL_NAVIGATION,
+                        decision.uri.host,
+                    )
+                    callbacks.openExternal(decision.uri)
+                }
                 true
             }
             is NavigationDecision.HandleAfirma -> {

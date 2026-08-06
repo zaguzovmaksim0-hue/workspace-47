@@ -2660,3 +2660,34 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - Claim is limited to automated WebView callback frame ownership. No physical portal
   E2E, automatic-signature exploit, APK/device execution, credential/private-certificate
   use, real signing, upload, payment or submission is claimed.
+
+## G20-01 — external-browser main-frame native-delivery boundary — 2026-08-07
+
+- RED `job_20260806_231912_7675aebf`: two Debug regressions, two expected failures,
+  zero errors/skips. Direct external HTTPS from subframe plus legacy callback produced
+  `[external:example.org, external:example.org]`; validated `intent:` HTTPS browser
+  fallback from a subframe produced `[external:example.org]`. Its modern main-frame
+  positive control passed before the negative assertion.
+- Minimum fix adds typed `UNTRUSTED_EXTERNAL_NAVIGATION` and gates only
+  `NavigationDecision.OpenExternal` native delivery on `isModernMainFrame`.
+  Non-main/legacy paths are consumed with sanitized diagnostics and no application
+  callbacks; modern main-frame direct/fallback handoff remains. No policy decision,
+  allowlist, profile/release, Client TLS, WebMessage, Afirma/signing or dependency
+  behavior changed.
+- Focused GREEN `job_20260806_232243_54481b9e`: 42/42 Debug and 42/42 QA, zero
+  failures/errors/skips.
+- Runtime-lock/core/AAPT2 + full JVM `job_20260806_232842_a997f44f`: 63/63 tasks;
+  Debug 537/537 and QA 537/537, zero failures/errors/skips.
+- Lint/build `job_20260806_233635_8c200dbd`: 124/124 tasks; 0 errors / 26 warnings
+  per variant; Debug, QA and QA AndroidTest assemblies PASS. APK SHA-256: Debug
+  `eac33d40a71eb3a01d4af8be4dc48ef504e2617a72c3fda891f759b59c4b5b8b`, QA
+  `8b451a495c43bce6ed3bbc934986c092564f4d784e4d20afc037c84a269579c9`, QA
+  AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Python/Go/artifact/release `job_20260806_234613_6d1f3271`: Python 102 PASS with one
+  environmental hardlink skip; Go test/vet/build, Android artifact verification and
+  release fail-closed PASS; generated relay removed; release APK count zero.
+  Pre-evidence scope/whitespace/sensitive/unsafe-pattern review
+  `job_20260806_234851_95328bfb` PASS.
+- Claim is limited to automated WebView frame ownership before native external-browser
+  handoff. No APK/device execution, physical portal E2E, credential/private-certificate
+  use, real signing, upload, payment or submission is claimed.

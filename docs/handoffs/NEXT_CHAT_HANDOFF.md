@@ -1211,3 +1211,31 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   supply-chain audit. Do not fold the separate persisted-unlock cross-restart
   trust-time decision into this milestone. Physical AEAT F-03, real-device
   TalkBack/visual validation and supported-Linux Go race remain external/manual gates.
+
+## Autonomous audit G20-01 — external-browser main-frame native-delivery boundary — 2026-08-07
+
+- Reproduced a distinct frame-ownership defect after G19: `OpenExternal` still allowed
+  direct HTTPS from a subframe/deprecated String callback and a validated `intent:`
+  browser fallback from a subframe to reach `openExternal`. RED
+  `job_20260806_231912_7675aebf` failed 2/2 exactly on those native deliveries while
+  the modern main-frame fallback control passed.
+- Minimum remediation gates only `NavigationDecision.OpenExternal` delivery on
+  `isModernMainFrame`; ambiguous/non-main paths are consumed with sanitized
+  `UNTRUSTED_EXTERNAL_NAVIGATION` diagnostics and no `openExternal` or
+  `onNavigationBlocked` callback. Normal modern main-frame direct/fallback handoff is
+  preserved. Policy decisions/allowlists, profiles/releases, Client TLS, WebMessage,
+  Afirma/signing, certificate/cookie boundaries and dependencies are unchanged.
+- Focused GREEN passed 42/42 per variant; fresh full JVM 537/537 per variant; lint
+  0 errors / 26 warnings per variant; runtime dependency/toolchain and all three
+  non-release assemblies passed. Python 102 with one environmental hardlink skip,
+  Go test/vet/build, Android artifacts and release fail-closed passed. APK SHA-256:
+  Debug `eac33d40a71eb3a01d4af8be4dc48ef504e2617a72c3fda891f759b59c4b5b8b`, QA
+  `8b451a495c43bce6ed3bbc934986c092564f4d784e4d20afc037c84a269579c9`, QA
+  AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Pre-evidence exact-scope/diff/sensitive/unsafe-pattern scan passed; generated relay is
+  removed and release APK count is zero. After exact remote verification of the
+  containing milestone, continue a fresh independent lifecycle/concurrency,
+  WebView/network, UX/accessibility, certificate/storage/logging or supply-chain audit.
+  Persisted-unlock cross-restart trust-time semantics remain a separate product choice;
+  physical AEAT F-03, real-device TalkBack/visual and supported-Linux Go race remain
+  external/manual gates.

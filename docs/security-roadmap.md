@@ -755,3 +755,24 @@ requires a separate design/plan and observed TDD RED.
   WebMessage, Client TLS, certificate/signing, profile/release and dependency behavior
   did not change. This closes native request delivery from ambiguous/non-main frames;
   it does not establish physical portal E2E or an automatic-signature exploit.
+
+## Autonomous external-browser main-frame boundary — 2026-08-07 (G20-01)
+
+- `OpenExternal` previously accepted subframe and deprecated String callbacks despite
+  lacking authoritative top-level ownership. In production that path can invalidate
+  pending Client TLS/Afirma/signing state and launch the Android external-browser
+  Activity, so the issue crossed a native side-effect boundary rather than merely
+  choosing where content renders.
+- `JuntaWebViewClient` now permits `OpenExternal` native delivery only from a modern
+  main-frame callback. Subframe/legacy ambiguity is consumed with sanitized
+  `UNTRUSTED_EXTERNAL_NAVIGATION` diagnostics and no application/UI callback; normal
+  main-frame direct HTTPS and validated browser fallback are preserved.
+- TDD RED reproduced direct HTTPS and `intent:` fallback bypasses. Focused GREEN passed
+  42/42 per variant; fresh full JVM 537/537 per variant; lint 0 errors / 26 warnings
+  per variant; runtime dependency/toolchain, three assemblies, Python 102 with one
+  environmental hardlink skip, Go, Android artifacts and release fail-closed gates
+  passed.
+- Scope is deliberately narrow: URL decision/allowlist semantics, profiles/releases,
+  Client TLS, WebMessage, Afirma/signing, certificate/cookie boundaries, dependencies
+  and user-gesture policy did not change. Automated evidence establishes callback frame
+  ownership only, not physical browser/portal/device E2E.

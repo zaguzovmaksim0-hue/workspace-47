@@ -259,6 +259,68 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
+    fun subframeAndLegacyExternalHttpsCannotReachNativeHandoff() {
+        val frameCallbacks = RecordingBrowserCallbacks()
+        val frameLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        val frameClient = JuntaWebViewClient(
+            callbacks = frameCallbacks,
+            logger = frameLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+        )
+        val external = "https://example.org/help?token=external-frame-secret#fragment"
+
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(external)))
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, external))
+
+        assertEquals(emptyList<String>(), frameCallbacks.events)
+        val exported = frameLogger.exportText()
+        assertTrue(exported.contains("reason=UNTRUSTED_EXTERNAL_NAVIGATION"))
+        assertTrue(exported.contains("main_frame=false"))
+        assertFalse(exported.contains("event=EXTERNAL_NAVIGATION"))
+        assertFalse(exported.contains("external-frame-secret"))
+    }
+
+    @Test
+    fun subframeExternalIntentFallbackCannotReachNativeHandoff() {
+        val fallbackIntent =
+            "intent://scan/#Intent;scheme=zxing;" +
+                "S.browser_fallback_url=https%3A%2F%2Fexample.org%2Fhelp;end"
+        val mainCallbacks = RecordingBrowserCallbacks()
+        val mainClient = JuntaWebViewClient(
+            callbacks = mainCallbacks,
+            logger = SanitizedLogger(
+                Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+            ),
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+        )
+        val frameCallbacks = RecordingBrowserCallbacks()
+        val frameLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        val frameClient = JuntaWebViewClient(
+            callbacks = frameCallbacks,
+            logger = frameLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+        )
+
+        assertTrue(mainClient.shouldOverrideUrlLoading(webView, request(fallbackIntent)))
+        assertEquals(listOf("external:example.org"), mainCallbacks.events)
+
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(fallbackIntent)))
+        assertEquals(emptyList<String>(), frameCallbacks.events)
+        val exported = frameLogger.exportText()
+        assertTrue(exported.contains("reason=UNTRUSTED_EXTERNAL_NAVIGATION"))
+        assertTrue(exported.contains("main_frame=false"))
+        assertFalse(exported.contains("event=EXTERNAL_NAVIGATION"))
+    }
+
+    @Test
     fun subframeAfirmaAndEmbeddedIntentCannotReachNativeCallbacks() {
         val frameCallbacks = RecordingBrowserCallbacks()
         val frameClient = JuntaWebViewClient(
