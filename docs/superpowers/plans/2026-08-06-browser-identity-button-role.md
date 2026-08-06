@@ -2,142 +2,89 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give the existing clickable portal identity/address affordance explicit `Role.Button` semantics without changing layout or browser behavior.
+**Goal:** Harden the dormant optional identity-click branch with explicit `Role.Button`
+semantics while preserving the current production read-only toolbar contract.
 
-**Architecture:** Keep the current `BrowserServiceIdentity`, toolbar dimensions and click callback. Add the role through the existing `Modifier.clickable` API and pin interactive/passive semantics with Compose/Robolectric tests.
+**Architecture:** Keep `BrowserServiceIdentity`, toolbar layout and the existing optional
+callback API. Add role metadata through the existing `Modifier.clickable` only for an
+explicit non-null callback. Production `BrowserLayout` currently leaves the callback
+null and keeps manual URL editing unreachable.
 
-**Tech Stack:** Kotlin, Jetpack Compose Foundation semantics, Compose UI test APIs, Robolectric, Gradle JVM/lint/build gates.
+**Tech Stack:** Kotlin, Jetpack Compose Foundation semantics, Compose UI test APIs,
+Robolectric, Gradle JVM/lint/build gates.
 
 ## Global Constraints
 
-- Preserve toolbar dimensions, typography, strings, colors, host/trust text and address-editing behavior.
-- Do not add `heightIn`, padding, or another layout change: focused RED measured the current tagged interactive node at 69 px.
-- Preserve all WebView/network/TLS/Client TLS/certificate/signing/profile/release behavior.
-- Only the `onIdentityClick != null` branch gains `Role.Button`.
-- The passive identity remains non-clickable and role-free.
-- No dependency or resource change.
-- Automated evidence covers Compose semantics only; physical TalkBack/visual validation remains manual.
+- Production `BrowserLayout` must remain read-only: it does not wire `onIdentityClick`
+  and uses `editingContent = null`.
+- Preserve toolbar dimensions, typography, strings, colors, host/trust text and current
+  navigation behavior.
+- Do not add `heightIn`, padding or another layout change: focused RED measured the
+  tagged optional interactive node at 69 px.
+- Only an explicitly non-null `onIdentityClick` branch gains `Role.Button`; the current
+  production/default identity remains non-clickable and role-free.
+- Preserve all WebView/network/TLS/Client TLS/certificate/signing/profile/release
+  behavior and dependencies.
+- Automated evidence covers Compose semantics only; no current production TalkBack or
+  visual improvement is claimed from this dormant branch.
 
 ---
 
-### Task 1: Pin the role contract with RED tests
+### Task 1: Pin the optional-branch role contract with RED tests
 
 **Files:**
 - Modify: `app/src/test/java/dev/junta/firmamobile/ui/BrowserChromeComponentsTest.kt`
 
 **Interfaces:**
 - Consumes: `IndustrialBrowserTopBar(...)` and `BROWSER_ADDRESS_LABEL_TAG`.
-- Produces: regression contract that the interactive identity has `Role.Button` and remains clickable, while the passive identity has neither click action nor role.
+- Produces: a regression that an explicitly wired identity click has `Role.Button` and
+  remains clickable, while the null/default path has neither click action nor role.
 
-- [ ] **Step 1: Add the interactive role regression**
-
-Render the top bar with non-null `onIdentityClick`, assert:
-
-```kotlin
-rule.onNodeWithTag(BROWSER_ADDRESS_LABEL_TAG)
-    .assert(
-        SemanticsMatcher.expectValue(
-            SemanticsProperties.Role,
-            Role.Button,
-        ),
-    )
-    .performClick()
-```
-
-and verify the callback runs exactly once.
-
-- [ ] **Step 2: Add the passive control**
-
-Render with `onIdentityClick = null`; fetch the node semantics config and assert it contains neither `SemanticsActions.OnClick` nor `SemanticsProperties.Role`.
-
-- [ ] **Step 3: Observe exact RED before production mutation**
-
-Run:
-
-```bash
-./gradlew testDebugUnitTest \
-  --tests dev.junta.firmamobile.ui.BrowserChromeComponentsTest
-```
-
-Expected product RED: the interactive test fails on missing `(Role = 'Button')` while the node still exposes `OnClick`; passive control passes. The already-observed RED also reports node bounds `b=69.0 px`, so no touch-target/layout fix is part of this milestone.
+- [ ] Add an interactive test using non-null `onIdentityClick`; assert
+  `SemanticsProperties.Role == Role.Button`, perform the click and verify one callback.
+- [ ] Add a passive control with `onIdentityClick = null`; assert no
+  `SemanticsActions.OnClick` and no role.
+- [ ] Run `./gradlew testDebugUnitTest --tests dev.junta.firmamobile.ui.BrowserChromeComponentsTest`.
+  Expected RED: only the missing button role fails; the node remains clickable. Treat
+  the observed 69 px bounds as evidence against a separate size remediation.
 
 ---
 
-### Task 2: Implement the minimum semantics fix
+### Task 2: Implement the minimum dormant-branch semantics fix
 
 **Files:**
 - Modify: `app/src/main/java/dev/junta/firmamobile/ui/BrowserChromeComponents.kt`
 
 **Interfaces:**
-- Consumes: RED role test from Task 1.
-- Produces: existing conditional clickable with explicit `Role.Button`.
+- Consumes: Task 1 RED.
+- Produces: `Modifier.clickable(role = Role.Button, onClick = onIdentityClick)` only in
+  the non-null branch.
 
-- [ ] **Step 1: Import the role type**
-
-Add `import androidx.compose.ui.semantics.Role`.
-
-- [ ] **Step 2: Change only the interactive branch**
-
-Replace:
-
-```kotlin
-Modifier.clickable(onClick = onIdentityClick)
-```
-
-with:
-
-```kotlin
-Modifier.clickable(
-    role = Role.Button,
-    onClick = onIdentityClick,
-)
-```
-
-Do not change the null branch, layout modifiers, toolbar dimensions, `BrowserServiceIdentity`, strings, styling or callbacks.
-
-- [ ] **Step 3: Run focused GREEN in Debug and QA**
-
-Run:
-
-```bash
-./gradlew testDebugUnitTest testQaUnitTest \
-  --tests dev.junta.firmamobile.ui.BrowserChromeComponentsTest
-```
-
-Expected: both variants pass, including the passive control and existing browser notice/chrome tests.
+- [ ] Import `androidx.compose.ui.semantics.Role`.
+- [ ] Add `role = Role.Button` to the existing conditional clickable. Do not change the
+  null branch, layout, toolbar dimensions, strings or callbacks.
+- [ ] Run focused Debug+QA `BrowserChromeComponentsTest`; require both variants green.
 
 ---
 
-### Task 3: Full verification, evidence, commit, and push
+### Task 3: Verify runtime scope, full gates, evidence, commit and push
 
 **Files:**
-- Modify: `docs/autonomous/2026-08-04-audit-ledger.md`
-- Modify: `docs/test-report.md`
-- Modify: `docs/security-roadmap.md`
-- Modify: `docs/handoffs/NEXT_CHAT_HANDOFF.md`
-- Include: `docs/superpowers/specs/2026-08-06-browser-identity-button-role-design.md`
-- Include: `docs/superpowers/plans/2026-08-06-browser-identity-button-role.md`
+- Verify: `app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt`
+- Verify: `app/src/test/java/dev/junta/firmamobile/ui/BrowserScreenTest.kt`
+- Modify evidence: `docs/autonomous/2026-08-04-audit-ledger.md`,
+  `docs/test-report.md`, `docs/security-roadmap.md`,
+  `docs/handoffs/NEXT_CHAT_HANDOFF.md`.
 
-**Interfaces:**
-- Consumes: final production/test diff and observed job outputs.
-- Produces: one atomic pushed accessibility milestone with exact evidence.
-
-- [ ] **Step 1: Run dependency/toolchain and complete Android gates**
-
-Run `verifyRuntimeDependencyLocks`, `verifyResolvedCoreVersion`, `verifyPortableAapt2Configuration`, fresh Debug/QA JVM unit suites, `lintDebug`, `lintQa`, `assembleDebug`, `assembleQa`, and `assembleQaAndroidTest`. Parse XML/lint output for exact counts.
-
-- [ ] **Step 2: Run non-Android and artifact gates**
-
-Run complete Python `unittest` discovery, Go `test ./... -count=1`, `go vet ./...`, relay build, Android artifact verification, and release-without-private-signing-inputs fail-closed. Use explicit Termux `bash` for unchanged CI scripts if `/usr/bin/env` remains unavailable.
-
-- [ ] **Step 3: Clean generated artifacts and inspect the exact diff**
-
-Remove only generated `ws024-relay/ws024-relay` if present and confirm zero release APKs. Run `git diff --check`, inspect every changed file, and scan added/changed content for credentials, private certificate material, personal data, unsafe WebView/TLS weakening and unrelated edits.
-
-- [ ] **Step 4: Update evidence documents from observed output only**
-
-Record RED/GREEN job IDs, exact focused/full test counts, lint results, APK hashes, Python/Go results, environmental skips, artifact cleanup, and manual physical TalkBack/visual gate. Explicitly note that the initial size hypothesis was disproved by the 69 px RED node bounds and no layout change was made.
-
-- [ ] **Step 5: Fresh pre-commit verification and atomic push**
-
-Re-run the focused Debug/QA regression, `CiPolicyTest` if authoritative checked docs changed, `git diff --check`, stage exactly milestone files, run `git diff --cached --check` plus staged scope/sensitive/unsafe scans. Fetch and require divergence `0/0`, commit `fix: classify browser identity as button`, push without force, fetch again, and verify exact local/remote SHA equality plus unchanged canonical SHA.
+- [ ] Verify production `BrowserLayout` does not pass `onIdentityClick`, uses
+  `editingContent = null`, and the existing `toolbarIdentityCannotOpenManualUrlEditor`
+  contract remains intact. Classify the milestone as dormant internal API hardening.
+- [ ] Run runtime dependency locks, resolved-core, portable-AAPT2, fresh full Debug/QA
+  JVM, lintDebug/lintQa and Debug/QA/QA-AndroidTest assemblies; parse exact counts.
+- [ ] Run full Python unittest discovery, Go test/vet/build, Android artifact checks and
+  release-signing fail-closed; confirm zero release APKs and no generated relay remains.
+- [ ] Inspect exact scope, run `git diff --check`, sensitive-data and unsafe-WebView/TLS
+  scans, then update evidence with observed jobs and the dormant-runtime limitation.
+- [ ] Re-run focused Debug/QA and `CiPolicyTest`, stage only milestone files, run staged
+  checks, fetch with zero remote-behind divergence, commit atomically and push without
+  force; verify exact local/remote SHA and unchanged canonical SHA.

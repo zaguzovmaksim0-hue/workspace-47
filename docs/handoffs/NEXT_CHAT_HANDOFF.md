@@ -1140,22 +1140,26 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
 - Unresolved clock-model lead: `CertificateSession` uses civil `Clock/Instant` for in-memory unlock expiry, so backward wall-clock adjustment can extend same-process signing availability. `EncryptedCertificateUnlockCache` also evaluates authenticated UTC issue/expiry against civil `now`; it rejects `now < issuedAt`, but a partial rollback after `issuedAt` can lengthen apparent validity.
 - Do not apply an isolated same-process fix and then claim the documented cross-device-restart “at most 24 hours” contract is monotonic. Process monotonic time resets across a device restart, so the persisted-cache policy needs an explicit trust-time/product choice before behavior mutation.
 - Candidate next design options: preserve device-restart restoration and document the civil-clock residual; fail closed on device restart/clock anomalies and narrow restoration semantics; or justify a trusted-time source. Any selected runtime change requires a narrow approved design/plan and observed TDD RED.
+
 ## Autonomous audit G17-01 — browser identity button-role semantics — 2026-08-06
 
-- Reproduced a local accessibility-semantics defect: the clickable browser service
-  identity/address node exposed `OnClick` but no `Role.Button`. Initial RED also tested
-  target size; the node measured 69 px, so no layout/touch-target mutation was justified.
-- Narrowed RED `job_20260806_205704_31ea5f2a` failed exactly on missing button role;
-  passive identity remained non-clickable/role-free. Minimum production change adds
-  only `role = Role.Button` to the existing non-null `onIdentityClick` clickable.
-- Focused GREEN 5/5 per variant; fresh full JVM 534/534 per variant; lint 0 errors / 27
-  warnings per variant; dependency/toolchain, Debug/QA/QA-AndroidTest builds, Python 102
-  with one environmental hardlink skip, Go test/vet/build, Android artifacts and release
-  fail-closed gates PASS. APK SHA-256: Debug
+- Reproduced missing `Role.Button` only in the internal optional `onIdentityClick`
+  branch; the node already exposed `OnClick`. The initial 69 px measurement disproved a
+  separate touch-target-size defect, so no layout mutation was made.
+- Minimum change adds `role = Role.Button` only to that non-null optional branch. Focused
+  5/5 per variant, fresh full JVM 534/534 per variant, lint 0 errors / 27 warnings per
+  variant, dependency/toolchain, three assemblies, Python 102 with one environmental
+  hardlink skip, Go, artifact and release-fail-closed gates all passed.
+- Commit `1e6b7a611635476185ca819d7d2641580a3d5c91` was pushed and exact remote SHA
+  verified. APK SHA-256: Debug
   `16a334f13900d06559dbf56e8736976255712e2d5345cbc2fc6b2bff800d309a`, QA
   `e96e72c3902e4d6c9d8d7eeb04aacf48c760d2fd65a4b799ea58621ba1192230`, QA AndroidTest
   `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
-- No layout, string, WebView/network/TLS/Client TLS/certificate/signing/profile/release
-  or dependency behavior changed. Physical TalkBack/visual validation remains manual.
-  Continue a fresh independent lifecycle/concurrency, security/storage, WebView/network
-  or supply-chain audit after remote verification; do not repeat G17-01.
+- Post-commit runtime audit `job_20260806_213403_11ab2535` and history/blame
+  `job_20260806_213437_188b61c4` established that production `BrowserLayout` does not
+  wire `onIdentityClick`, supplies `editingContent = null`, and already pins a read-only
+  toolbar/no-manual-URL-editor contract. Do not claim a current production TalkBack or
+  visual improvement from G17-01; it hardens a dormant internal API only.
+- Continue a fresh lifecycle/concurrency, security/storage, WebView/network or
+  supply-chain audit. The persisted-unlock cross-restart trust-time decision remains
+  separate and unresolved.

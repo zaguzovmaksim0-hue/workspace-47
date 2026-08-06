@@ -704,18 +704,21 @@ requires a separate design/plan and observed TDD RED.
 - Post-preference-clear and final `ClientCertRequest` revalidation enforce the same monotonic lifetime. Civil time remains only for X.509 `certificate.checkValidity(...)`.
 - Existing profile/origin/path/host/port, navigation epoch, issuer/key/usage/EKU, one-shot cleanup, QA-only profile and release boundaries are unchanged.
 - RED reproduced the clock-rollback extension. Fresh focused/dependency, JVM 532/532 per variant, lint 0 errors / 27 warnings per variant, three assemblies, Python 102 with one environmental hardlink skip, Go test/vet/build, Android artifact and release fail-closed gates pass. Physical AEAT F-03 remains separate E2E acceptance.
+
 ## Autonomous browser identity button role — 2026-08-06 (G17-01)
 
-- The clickable portal service identity/address affordance now exposes explicit
-  `Role.Button` semantics through its existing `Modifier.clickable`; the passive state
+- A dormant optional `IndustrialBrowserTopBar.onIdentityClick` branch now exposes
+  `Role.Button` whenever an internal caller explicitly wires it; its null/default state
   remains non-clickable and role-free.
-- The initial touch-target suspicion was disproved by focused RED evidence: the tagged
-  node measured 69 px high. No height, padding, toolbar, typography or other layout
-  change was made.
-- TDD RED reproduced only the absent role; focused Debug/QA passed 5/5 per variant,
-  fresh full JVM passed 534/534 per variant, lint remains 0 errors / 27 warnings per
-  variant, and Debug/QA/QA-AndroidTest, Python 102 with one environmental hardlink skip,
-  Go test/vet/build, Android artifact and release fail-closed gates passed.
-- WebView/network/TLS/Client TLS/certificate/signing/profile/release/dependency behavior
-  is unchanged. Physical TalkBack interaction and visual correctness remain manual
-  gates; threat-model wording is unchanged.
+- Initial RED rejected a separate size hypothesis because the optional interactive node
+  measured 69 px. No height, padding, toolbar, typography or other layout change was
+  made.
+- Runtime call-site audit after the pushed change confirmed production `BrowserLayout`
+  does not supply `onIdentityClick`, uses `editingContent = null`, and retains the
+  existing regression that toolbar identity cannot open manual URL editing. G17-01 is
+  therefore latent internal API hardening and does not alter the current user path.
+- Focused 5/5 per variant, full JVM 534/534 per variant, lint 0 errors / 27 warnings per
+  variant, Debug/QA/QA-AndroidTest, Python 102 with one environmental hardlink skip, Go,
+  artifact and release fail-closed gates passed. Commit
+  `1e6b7a611635476185ca819d7d2641580a3d5c91` is pushed/verified. Threat-model wording
+  remains unchanged because no runtime trust edge changed.
