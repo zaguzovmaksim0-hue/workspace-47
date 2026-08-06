@@ -2529,3 +2529,30 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - No APK installation/launch, device control, authenticated portal interaction, private
   certificate/credential use, real signature, upload, payment or administrative submission
   occurred.
+
+## G14-04 — complete Android backup/D2D domain exclusion — 2026-08-06
+
+- RED `job_20260806_002638_74b167aa`: the new parser-based policy test failed exactly
+  because `backup_rules.xml` contained only `root` and lacked `file`, `database`,
+  `sharedpref`, `external`, `device_root`, `device_file`, `device_database` and
+  `device_sharedpref`; both production XML resources were unchanged at RED.
+- Focused GREEN `job_20260806_002711_d709b2b3`: exact regression PASS and complete
+  `CiPolicyTest` 20/20 PASS.
+- Dependency/toolchain + fresh full JVM `job_20260806_002722_41fae726`: runtime locks,
+  resolved-core and portable-AAPT2 PASS; all 60 JVM tasks executed; Debug 530/530 and QA
+  530/530, zero failures/errors/skips.
+- Lint/build `job_20260806_003314_e0f0f679`: lint 0 errors / 27 warnings per variant;
+  `assembleDebug`, `assembleQa`, `assembleQaAndroidTest` PASS. APK SHA-256: Debug
+  `2885b12708dd3e25beebf04fed55a76c945d09fc59ceca78821312b3c86ef40a`, QA
+  `f1252cbaefcb16063e1006558c4b03c630fe4b401f9a7a9723b52444d92a0842`, QA AndroidTest
+  `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Python/Go/artifact/release `job_20260806_003806_d8526dbe`: Python 101 PASS with one
+  environmental hardlink skip; Go test/vet/build PASS; Android artifact verification
+  PASS; release without private signing inputs rejected fail-closed; release APK count
+  zero. Generated relay SHA-256
+  `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed
+  before final staging.
+- This is backup/transfer policy evidence only. No APK installation/launch, device
+  control, portal interaction, credential/private-certificate use, real signing, upload,
+  payment or administrative submission occurred. Physical AEAT F-03, real-device
+  TalkBack/visual validation and supported-Linux Go race remain external gates.

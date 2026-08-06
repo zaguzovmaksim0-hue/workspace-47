@@ -131,8 +131,12 @@ como ciphertext autenticado AES-256-GCM en `noBackupFilesDir`, nunca en texto
 plano ni Preferences/logs. El registro queda ligado mediante AAD a la referencia
 del certificado y a los timestamps originales de emisión/expiración. La clave AES
 es material no exportable de Android Keystore; en API 28+ el provider actual exige
-que el dispositivo esté desbloqueado para usarla. `allowBackup=false` y
-`noBackupFilesDir` excluyen el registro del backup/transfer de la app. La
+que el dispositivo esté desbloqueado para usarla. `noBackupFilesDir` excluye el
+registro cifrado del backup/transfer. Además, el manifest mantiene `allowBackup=false`
+y los recursos legacy/Android 12+ excluyen
+explícitamente `root`, `file`, `database`, `sharedpref`, `external` y los cuatro
+dominios device-protected, tanto para cloud backup como para device transfer; por tanto
+`allowBackup=false` no es la única barrera D2D. La
 restauración automática conserva la expiración original y no renueva la ventana.
 Los buffers temporales `CharArray`/`ByteArray` en claro se limpian best-effort.
 
@@ -217,8 +221,10 @@ las tres acciones; instrumentation de capabilities sin iniciar la UI.
 **Controles:** logger con esquema allowlist, hashes truncados, almacenamiento
 privado y export sanitizado; `FLAG_SECURE` state-driven en `MainActivity` durante
 password, unlock, certificado desbloqueado, catálogo asociado, WebView de portal
-y cualquier estado de firma no idle; no copiar secreto; backup desactivado. La
-pantalla inicial sin certificado y el probe debug aislado no heredan el flag.
+y cualquier estado de firma no idle; no copiar secreto; `allowBackup=false` y
+exclusiones explícitas completas por dominio en legacy/cloud/D2D. La pantalla inicial
+sin certificado y el probe debug
+aislado no heredan el flag.
 **Verificación:** tests del redactor y de la policy de estados, instrumentation
 sobre unlock/recreate/lock, inspección de exports/logcat/manifest y `dumpsys
 window` en dispositivo físico para certificado restaurado y WebView activo.

@@ -1100,3 +1100,26 @@ repeat G13-01/G13-02.
 - Generated relay binary is removed and release APK count is zero. Physical AEAT F-03,
   real-device TalkBack/visual validation and supported-Linux Go race remain external/manual
   gates.
+
+## Autonomous audit G14-04 — complete Android backup/D2D domain exclusion — 2026-08-06
+
+- Reproduced an app backup/D2D policy gap: both explicit resources excluded only
+  `root`, although Android backup domains are independent and Android 12+ D2D can ignore
+  `allowBackup=false`. The persisted unlock ciphertext itself remains under
+  `noBackupFilesDir`; the finding protects app-domain metadata/files and future storage.
+- RED `job_20260806_002638_74b167aa` failed exactly on the eight missing domains before
+  either resource changed. Minimum fix adds `path="."` exclusions for exactly all nine
+  supported app domains in legacy backup and independently in Android 12+ cloud backup
+  and device transfer; no include rules or runtime storage changes.
+- Focused GREEN/CiPolicy 20/20; full JVM 530/530 per variant; lint 0 errors / 27 warnings
+  per variant; Debug/QA/QA-AndroidTest builds, dependency/toolchain, Python 101 with one
+  environmental hardlink skip, Go test/vet/build, Android artifact and release
+  fail-closed gates PASS. Release APK count is zero.
+- Generated relay binary from the Go build was removed before final staging. Physical
+  AEAT F-03, real-device TalkBack/visual validation and supported-Linux Go race remain
+  external/manual gates.
+
+After remote verification of the containing G14-04 commit, continue a fresh independent
+certificate/signing/storage/logging, lifecycle/concurrency, accessibility or supply-chain
+audit. Do not repeat G14-01 through G14-04. Any new behavior change requires a narrow
+subordinate design/plan and observed TDD RED.

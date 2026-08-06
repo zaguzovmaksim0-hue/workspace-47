@@ -679,3 +679,21 @@ requires a separate design/plan and observed TDD RED.
   per variant, adjacent certificate/session/ViewModel tests 45/45 per variant, fresh full
   JVM 530/530 per variant, lint 0 errors / 27 warnings per variant, and all build, Python,
   Go, artifact and release-fail-closed gates passed.
+
+### G14-04 — complete Android backup/D2D domain exclusion — 2026-08-06
+
+- The legacy backup resource and Android 12+ cloud/D2D resource previously excluded only
+  the `root` domain; Android treats app backup domains independently, so this did not
+  establish the intended no-backup/no-transfer contract for `file`, database,
+  shared-preference, external or device-protected domains.
+- Both resources now fail closed with `path="."` exclusions for all nine supported app
+  domains, independently under Android 12+ `cloud-backup` and `device-transfer`, with no
+  include rules. `android:allowBackup="false"` remains defense in depth rather than the
+  sole D2D boundary.
+- The encrypted unlock cache remains under `noBackupFilesDir`; runtime storage,
+  certificate/signing, WebView/network/TLS, profiles/catalog and release behavior are
+  unchanged.
+- TDD RED reproduced the incomplete domain set. Focused CI policy 20/20, fresh full JVM
+  530/530 per variant, lint 0 errors / 27 warnings per variant, Debug/QA/QA-AndroidTest
+  builds, Python 101 with one environmental hardlink skip, Go test/vet/build, Android
+  artifact checks and release fail-closed all passed.

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +20,19 @@ GRADLE_WRAPPER_JAR = ROOT / "gradle/wrapper/gradle-wrapper.jar"
 GO_MOD = ROOT / "ws024-relay/go.mod"
 APP_BUILD = ROOT / "app" / "build.gradle.kts"
 APP_RUNTIME_LOCK = ROOT / "app" / "gradle.lockfile"
+BACKUP_RULES = ROOT / "app" / "src" / "main" / "res" / "xml" / "backup_rules.xml"
+DATA_EXTRACTION_RULES = ROOT / "app" / "src" / "main" / "res" / "xml" / "data_extraction_rules.xml"
+BACKUP_DOMAINS = {
+    "root",
+    "file",
+    "database",
+    "sharedpref",
+    "external",
+    "device_root",
+    "device_file",
+    "device_database",
+    "device_sharedpref",
+}
 APP_RUNTIME_CONFIGURATIONS = {
     "debugRuntimeClasspath",
     "qaRuntimeClasspath",
@@ -51,6 +65,28 @@ class CiPolicyTest(unittest.TestCase):
             APP_RUNTIME_LOCK,
         ):
             self.assertTrue(path.is_file(), f"missing {path.relative_to(ROOT)}")
+
+    def test_backup_rules_exclude_every_supported_app_domain(self) -> None:
+        legacy = ET.parse(BACKUP_RULES).getroot()
+        self.assertEqual("full-backup-content", legacy.tag)
+        self.assertFalse(legacy.findall("include"))
+        legacy_excludes = legacy.findall("exclude")
+        self.assertEqual(BACKUP_DOMAINS, {item.attrib.get("domain") for item in legacy_excludes})
+        self.assertEqual(len(BACKUP_DOMAINS), len(legacy_excludes))
+        self.assertTrue(all(item.attrib.get("path") == "." for item in legacy_excludes))
+
+        modern = ET.parse(DATA_EXTRACTION_RULES).getroot()
+        self.assertEqual("data-extraction-rules", modern.tag)
+        self.assertEqual(["cloud-backup", "device-transfer"], [child.tag for child in modern])
+        for section_name in ("cloud-backup", "device-transfer"):
+            section = modern.find(section_name)
+            self.assertIsNotNone(section)
+            assert section is not None
+            self.assertFalse(section.findall("include"))
+            excludes = section.findall("exclude")
+            self.assertEqual(BACKUP_DOMAINS, {item.attrib.get("domain") for item in excludes})
+            self.assertEqual(len(BACKUP_DOMAINS), len(excludes))
+            self.assertTrue(all(item.attrib.get("path") == "." for item in excludes))
 
     def test_workflows_are_read_only_and_sha_pinned(self) -> None:
         allowed = {

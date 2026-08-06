@@ -1074,3 +1074,41 @@ environmental hardlink skip, Go test/vet/build, Android artifact checks and rele
 signing fail-closed with zero release APKs. Generated relay executable SHA-256
 `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed in
 `job_20260806_001604_23dbe0ac`.
+
+## Finding G14-04 — complete Android backup/D2D domain exclusion — 2026-08-06
+
+**Reproduction.** The manifest already set `android:allowBackup="false"` and referenced
+both legacy `backup_rules.xml` and Android 12+ `data_extraction_rules.xml`, but each
+resource excluded only `domain="root" path="."`. Android backup domains are distinct;
+`file`, `database`, `sharedpref`, `external` and device-protected domains are not covered
+by a root-domain exclusion. Android 12+ device-to-device behavior can also ignore
+`allowBackup=false`, making the explicit `<device-transfer>` rules the relevant
+fail-closed boundary. Junta Firma Mobile persists non-secret certificate-reference
+metadata through Preferences DataStore under app files storage, while the encrypted
+unlock record remains in `noBackupFilesDir`. RED `job_20260806_002638_74b167aa` failed
+exactly because the legacy policy lacked eight required domains; production resources
+were unchanged at RED.
+
+**Remediation.** Legacy `full-backup-content` and both Android 12+ `cloud-backup` and
+`device-transfer` now exclude `path="."` independently for exactly `root`, `file`,
+`database`, `sharedpref`, `external`, `device_root`, `device_file`, `device_database`
+and `device_sharedpref`. No include rules were added. Runtime storage, certificate
+selection/persisted URI permission, AES-GCM/Keystore unlock cache, diagnostics, signing,
+network/TLS, profile/catalog and release behavior are unchanged.
+
+**Verification.** Focused GREEN `job_20260806_002711_d709b2b3` passed the new
+parser-based policy regression and complete `CiPolicyTest` 20/20. Dependency/toolchain
+and fresh full JVM `job_20260806_002722_41fae726` passed runtime locks, resolved-core,
+portable AAPT2 and all 60 JVM tasks with Debug 530/530 and QA 530/530, zero
+failures/errors/skips. Lint/build `job_20260806_003314_e0f0f679` passed at 0 errors / 27
+warnings per variant and built Debug, QA and QA AndroidTest. APK SHA-256: Debug
+`2885b12708dd3e25beebf04fed55a76c945d09fc59ceca78821312b3c86ef40a`, QA
+`f1252cbaefcb16063e1006558c4b03c630fe4b401f9a7a9723b52444d92a0842`, QA AndroidTest
+`5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+Python/Go/artifact/release `job_20260806_003806_d8526dbe` passed 101 Python tests with
+one environmental hardlink skip, Go test/vet/build, Android artifact verification and
+expected release-signing fail-closed; release APK count was zero. The generated relay
+executable SHA-256 was `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` and was
+removed before final staging. No APK was installed/launched and no device control,
+authenticated portal interaction, credential/private-certificate use, real signature,
+upload, payment or administrative submission occurred.

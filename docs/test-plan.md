@@ -371,3 +371,18 @@ el job Linux debe seguir siendo obligatorio.
 - **Blocked by human/external state:** se identifica el paso exacto, pero no se
   sustituye por una afirmación de éxito.
 - **Not run:** nunca se presenta como implícitamente aprobado.
+
+## G14-04 — Android backup/D2D domain exclusion gate — 2026-08-06
+
+- Parse `app/src/main/res/xml/backup_rules.xml`; require exactly nine `<exclude>` entries,
+  one for each supported app backup domain, every `path="."`, and no `<include>`.
+- Parse `app/src/main/res/xml/data_extraction_rules.xml`; require exactly
+  `<cloud-backup>` and `<device-transfer>`, each with the same exact nine-domain
+  exclusion set, every `path="."`, and no `<include>`.
+- Keep `android:allowBackup="false"`, `android:fullBackupContent` and
+  `android:dataExtractionRules` wired in the manifest; do not treat `allowBackup=false`
+  alone as proof of Android 12+ D2D exclusion.
+- Regression gate: `python -m unittest tools.tests.test_ci_policy.CiPolicyTest -v` plus
+  the existing full Android JVM/lint/build, Python/Go, APK-artifact and release
+  fail-closed gates. Physical device/portal execution is not required for this policy
+  resource contract.
