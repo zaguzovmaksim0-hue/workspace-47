@@ -1123,3 +1123,13 @@ After remote verification of the containing G14-04 commit, continue a fresh inde
 certificate/signing/storage/logging, lifecycle/concurrency, accessibility or supply-chain
 audit. Do not repeat G14-01 through G14-04. Any new behavior change requires a narrow
 subordinate design/plan and observed TDD RED.
+
+## Autonomous audit G15-01 — Client TLS monotonic grant TTL — 2026-08-06
+
+- Reproduced a security-time defect: Client TLS pending/direct/grant expiry used civil `Clock`/`Instant`, so a backward system-clock change could prolong a short authorization window. RED failed before production mutation.
+- Minimum remediation moves pending-transition, direct-replay and granted Client TLS TTL to existing process-local `MonotonicSecurityTime`; preference-clear and final `ClientCertRequest` revalidation use the same boundary. Civil time remains only for X.509 certificate validity.
+- Fresh focused/dependency, JVM 532/532 per variant, lint 0 errors / 27 warnings per variant, Debug/QA/QA-AndroidTest builds, Python 102 with one environmental hardlink skip, Go test/vet/build, Android artifact and release-signing fail-closed gates PASS. Zero release APKs; generated relay removed.
+- Direct execution of unchanged CI shell scripts is unavailable on Termux because their shebang uses `/usr/bin/env`; explicit Termux `bash` invocation passed syntax/artifact/release checks. No CI-script mutation was made.
+- Local pinned vulnerability-scanner binaries were unavailable; no local scanner execution is claimed. CI scanner/pinning policy remained covered by `CiPolicyTest`.
+
+After remote verification of the containing G15-01 commit, continue a fresh independent certificate/signing/storage/logging, architecture/lifecycle, accessibility or supply-chain audit. Do not repeat G14-01 through G15-01. Physical AEAT F-03 Client TLS E2E, real-device TalkBack/visual and supported-Linux Go race remain external gates.

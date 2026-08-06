@@ -282,7 +282,10 @@ fragment, userinfo, non-443, path alternativo y repetición del mismo grant fall
 cerrados. Carné Joven conserva separadamente `REDIRECT_AFTER_SOURCE`. El profile
 AEAT es `VERIFIED_CONTRACT / QA_ONLY`; release no lo carga antes del E2E físico.
 La entrega final vuelve a validar host/port, epoch, TTL, key type, validez,
-keyUsage, EKU e issuer no vacío antes de `ClientCertRequest.proceed`.
+keyUsage, EKU e issuer no vacío antes de `ClientCertRequest.proceed`. El TTL de la
+transición pendiente, la supresión de replay directo y el grant confirmado usan tiempo
+monotónico de proceso; un rollback del reloj civil falla cerrado y no prolonga el grant.
+El reloj civil se conserva únicamente para comprobar la vigencia X.509 del certificado.
 **Verificación:** tests hostiles de transición directa, query vacía, suffix-host,
 encoded path, legacy/subframe/wrong-source y consumo único; tests del request
 handler para RSA con issuer coincidente y rechazo de issuer vacío; registry tests

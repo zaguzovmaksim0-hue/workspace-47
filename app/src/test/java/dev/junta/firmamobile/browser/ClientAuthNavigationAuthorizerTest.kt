@@ -11,19 +11,16 @@ import dev.junta.firmamobile.profile.ProfileActivation
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.ProfileId
 import java.net.URI
-import java.time.Clock
 import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ClientAuthNavigationAuthorizerTest {
-    private val clock = MutableClock(Instant.parse("2030-01-01T00:00:00Z"))
+    private val monotonic = MutableMonotonicClock(1_000_000_000L)
     private val authorizer = ClientAuthNavigationAuthorizer(
         BuiltInSiteProfiles.qaRegistry,
-        clock,
+        monotonic::nowNanos,
     )
 
     @Test
@@ -165,7 +162,7 @@ class ClientAuthNavigationAuthorizerTest {
         assertNull(authorize(TARGET, epoch = 12))
 
         arm(epoch = 20)
-        clock.advance(Duration.ofSeconds(16))
+        monotonic.advance(Duration.ofSeconds(16))
         assertNull(authorize(TARGET, epoch = 21))
 
         assertNull(
@@ -305,6 +302,32 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun pendingClientAuthTtlUsesMonotonicTime() {
+        val shortLived = shortTtlAuthorizer(ttlSeconds = 1)
+        assertNull(
+            shortLived.observeTopLevelNavigation(
+                PROFILE,
+                INDEX,
+                SOURCE,
+                800,
+                true,
+            ),
+        )
+
+        monotonic.advance(Duration.ofSeconds(1))
+
+        assertNull(
+            shortLived.observeTopLevelNavigation(
+                PROFILE,
+                SOURCE,
+                TARGET,
+                800,
+                true,
+            ),
+        )
+    }
+
+    @Test
     fun subframeRequestClearsPendingAndFailsClosed() {
         arm(700)
         assertNull(
@@ -318,6 +341,20 @@ class ClientAuthNavigationAuthorizerTest {
         )
         assertNull(authorize(TARGET, 700))
         assertNull(authorize(TARGET, 701))
+    }
+
+    private fun shortTtlAuthorizer(ttlSeconds: Int): ClientAuthNavigationAuthorizer {
+        val base = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == PROFILE }
+        val profile = base.copy(
+            clientAuthPolicy = checkNotNull(base.clientAuthPolicy).copy(
+                grantTtlSeconds = ttlSeconds,
+            ),
+        )
+        val registry = SiteProfileRegistry(
+            BuiltInSiteProfiles.catalog.copy(profiles = listOf(profile)),
+            BuildTrustPolicy.QA,
+        )
+        return ClientAuthNavigationAuthorizer(registry, monotonic::nowNanos)
     }
 
     private fun aeatAuthorizer(): ClientAuthNavigationAuthorizer {
@@ -351,7 +388,7 @@ class ClientAuthNavigationAuthorizerTest {
             BuiltInSiteProfiles.catalog.copy(profiles = listOf(profile)),
             BuildTrustPolicy.QA,
         )
-        return ClientAuthNavigationAuthorizer(registry, clock)
+        return ClientAuthNavigationAuthorizer(registry, monotonic::nowNanos)
     }
 
     private fun arm(epoch: Long) = authorizer.observeTopLevelNavigation(
@@ -370,12 +407,11 @@ class ClientAuthNavigationAuthorizerTest {
         isModernMainFrameRequest = true,
     )
 
-    private class MutableClock(private var instant: Instant) : Clock() {
-        override fun getZone(): ZoneId = ZoneId.of("UTC")
-        override fun withZone(zone: ZoneId): Clock = this
-        override fun instant(): Instant = instant
+    private class MutableMonotonicClock(private var nanos: Long) {
+        fun nowNanos(): Long = nanos
+
         fun advance(duration: Duration) {
-            instant = instant.plus(duration)
+            nanos += duration.toNanos()
         }
     }
 

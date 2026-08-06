@@ -2,6 +2,7 @@ package dev.junta.firmamobile.browser
 
 import android.webkit.ClientCertRequest
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.signing.issuedSyntheticIdentity
@@ -10,7 +11,9 @@ import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicInteger
 import javax.security.auth.x500.X500Principal
@@ -24,6 +27,7 @@ class ClientAuthRequestHandlerTest {
     private val identity = synthetic.identity
     private val now = identity.summary.validFrom.plusSeconds(60)
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
+    private val monotonic = MutableMonotonicClock(1_000_000_000L)
 
     @Test
     fun aeatMatchingRsaIdentityAndIssuerProceedOnce() {
@@ -136,10 +140,45 @@ class ClientAuthRequestHandlerTest {
 
         val expired = RecordingRequest()
         val expiredClears = AtomicInteger()
-        val expiredClock = Clock.fixed(now.plusSeconds(16), ZoneOffset.UTC)
-        handler(epoch = 12, clock = expiredClock, clears = expiredClears).handle(expired)
+        val expiredMonotonic = MutableMonotonicClock(2_000_000_000L)
+        val expiredHandler = handler(
+            epoch = 12,
+            clears = expiredClears,
+            monotonic = expiredMonotonic,
+        )
+        expiredMonotonic.advance(Duration.ofSeconds(16))
+        expiredHandler.handle(expired)
         assertEquals(1, expired.ignores)
         assertEquals(1, expiredClears.get())
+    }
+
+    @Test
+    fun civilClockRollbackCannotExtendAcceptedClientAuthGrantTtl() {
+        val mutableClock = MutableClock(now)
+        val localMonotonic = MutableMonotonicClock(3_000_000_000L)
+        val grant = ClientAuthGrant(
+            shortTtlAuthorized(monotonic = localMonotonic, ttlSeconds = 1),
+            13,
+        )
+        val clears = AtomicInteger()
+        val handler = ClientAuthRequestHandler(
+            grant = grant,
+            identityProvider = { identity },
+            currentNavigationEpoch = { 13 },
+            clearClientCertPreferences = { clears.incrementAndGet() },
+            clock = mutableClock,
+            monotonicNanos = localMonotonic::nowNanos,
+        )
+
+        mutableClock.rewind(Duration.ofSeconds(30))
+        localMonotonic.advance(Duration.ofSeconds(1))
+
+        val request = RecordingRequest()
+        handler.handle(request)
+
+        assertEquals(0, request.proceeds)
+        assertEquals(1, request.ignores)
+        assertEquals(1, clears.get())
     }
 
     @Test
@@ -171,11 +210,12 @@ class ClientAuthRequestHandlerTest {
 
         val missingClears = AtomicInteger()
         val missing = ClientAuthRequestHandler(
-            grant = ClientAuthGrant(authorized(), 21),
+            grant = ClientAuthGrant(authorized(monotonic), 21),
             identityProvider = { null },
             currentNavigationEpoch = { 21 },
             clearClientCertPreferences = { missingClears.incrementAndGet() },
             clock = clock,
+            monotonicNanos = monotonic::nowNanos,
         )
         val missingRequest = RecordingRequest()
         missing.handle(missingRequest)
@@ -184,22 +224,49 @@ class ClientAuthRequestHandlerTest {
         assertEquals(1, missingClears.get())
     }
 
+    private fun shortTtlAuthorized(
+        monotonic: MutableMonotonicClock,
+        ttlSeconds: Int,
+    ): AuthorizedClientAuthTarget {
+        val base = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == PROFILE }
+        val profile = base.copy(
+            clientAuthPolicy = checkNotNull(base.clientAuthPolicy).copy(
+                grantTtlSeconds = ttlSeconds,
+            ),
+        )
+        val registry = dev.junta.firmamobile.profile.SiteProfileRegistry(
+            BuiltInSiteProfiles.catalog.copy(profiles = listOf(profile)),
+            BuildTrustPolicy.QA,
+        )
+        val authorizer = ClientAuthNavigationAuthorizer(registry, monotonic::nowNanos)
+        authorizer.observeTopLevelNavigation(PROFILE, INDEX, SOURCE, 4, true)
+        authorizer.onTopLevelPageStarted(SOURCE, 5)
+        return checkNotNull(
+            authorizer.observeTopLevelNavigation(PROFILE, SOURCE, TARGET, 5, true),
+        )
+    }
+
     private fun aeatHandler(
         epoch: Long,
         currentEpoch: () -> Long = { epoch },
         clears: AtomicInteger = AtomicInteger(),
         clock: Clock = this.clock,
         identity: UnlockedIdentity = this.identity,
+        monotonic: MutableMonotonicClock = this.monotonic,
     ) = ClientAuthRequestHandler(
-        grant = ClientAuthGrant(authorizedAeat(), epoch),
+        grant = ClientAuthGrant(authorizedAeat(monotonic), epoch),
         identityProvider = { identity },
         currentNavigationEpoch = currentEpoch,
         clearClientCertPreferences = { clears.incrementAndGet() },
         clock = clock,
+        monotonicNanos = monotonic::nowNanos,
     )
 
-    private fun authorizedAeat(): AuthorizedClientAuthTarget {
-        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, clock)
+    private fun authorizedAeat(monotonic: MutableMonotonicClock = this.monotonic): AuthorizedClientAuthTarget {
+        val authorizer = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
         return checkNotNull(
             authorizer.observeTopLevelNavigation(
                 AEAT_PROFILE,
@@ -216,21 +283,44 @@ class ClientAuthRequestHandlerTest {
         currentEpoch: () -> Long = { epoch },
         clears: AtomicInteger = AtomicInteger(),
         clock: Clock = this.clock,
+        monotonic: MutableMonotonicClock = this.monotonic,
     ) = ClientAuthRequestHandler(
-        grant = ClientAuthGrant(authorized(), epoch),
+        grant = ClientAuthGrant(authorized(monotonic), epoch),
         identityProvider = { identity },
         currentNavigationEpoch = currentEpoch,
         clearClientCertPreferences = { clears.incrementAndGet() },
         clock = clock,
+        monotonicNanos = monotonic::nowNanos,
     )
 
-    private fun authorized(): AuthorizedClientAuthTarget {
-        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, clock)
+    private fun authorized(monotonic: MutableMonotonicClock = this.monotonic): AuthorizedClientAuthTarget {
+        val authorizer = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
         authorizer.observeTopLevelNavigation(PROFILE, INDEX, SOURCE, 4, true)
         authorizer.onTopLevelPageStarted(SOURCE, 5)
         return checkNotNull(
             authorizer.observeTopLevelNavigation(PROFILE, SOURCE, TARGET, 5, true),
         )
+    }
+
+    private class MutableMonotonicClock(private var nanos: Long) {
+        fun nowNanos(): Long = nanos
+
+        fun advance(duration: Duration) {
+            nanos += duration.toNanos()
+        }
+    }
+
+    private class MutableClock(private var instant: Instant) : Clock() {
+        override fun getZone(): ZoneId = ZoneOffset.UTC
+        override fun withZone(zone: ZoneId): Clock = this
+        override fun instant(): Instant = instant
+
+        fun rewind(duration: Duration) {
+            instant = instant.minus(duration)
+        }
     }
 
     private class RecordingRequest(

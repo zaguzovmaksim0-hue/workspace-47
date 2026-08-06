@@ -386,3 +386,10 @@ el job Linux debe seguir siendo obligatorio.
   the existing full Android JVM/lint/build, Python/Go, APK-artifact and release
   fail-closed gates. Physical device/portal execution is not required for this policy
   resource contract.
+
+## G15-01 — Client TLS monotonic TTL regression gate — 2026-08-06
+
+- Exercise pending redirect authorization, direct-transition replay suppression and granted Client TLS lifetime against injected monotonic time, including exact TTL expiry and civil-clock rollback.
+- Revalidate the same monotonic grant after asynchronous client-certificate preference clearing and immediately before `ClientCertRequest.proceed`; civil time is permitted only for X.509 validity.
+- Preserve hostile profile/origin/path, host/port, epoch, issuer, key algorithm, keyUsage/EKU and one-shot cleanup regressions.
+- Run focused Debug/QA Client TLS suites plus full Debug/QA JVM, lint, Debug/QA/QA-AndroidTest assemblies, dependency/toolchain gates, full Python, Go test/vet/build, Android artifact verification and release-signing fail-closed.

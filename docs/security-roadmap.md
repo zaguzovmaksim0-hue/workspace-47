@@ -697,3 +697,10 @@ requires a separate design/plan and observed TDD RED.
   530/530 per variant, lint 0 errors / 27 warnings per variant, Debug/QA/QA-AndroidTest
   builds, Python 101 with one environmental hardlink skip, Go test/vet/build, Android
   artifact checks and release fail-closed all passed.
+
+### G15-01 — Client TLS monotonic grant TTL — 2026-08-06
+
+- Pending-transition, direct-replay and confirmed Client TLS grant expiry now use process-local `MonotonicSecurityTime`; civil-clock rollback cannot prolong authorization.
+- Post-preference-clear and final `ClientCertRequest` revalidation enforce the same monotonic lifetime. Civil time remains only for X.509 `certificate.checkValidity(...)`.
+- Existing profile/origin/path/host/port, navigation epoch, issuer/key/usage/EKU, one-shot cleanup, QA-only profile and release boundaries are unchanged.
+- RED reproduced the clock-rollback extension. Fresh focused/dependency, JVM 532/532 per variant, lint 0 errors / 27 warnings per variant, three assemblies, Python 102 with one environmental hardlink skip, Go test/vet/build, Android artifact and release fail-closed gates pass. Physical AEAT F-03 remains separate E2E acceptance.

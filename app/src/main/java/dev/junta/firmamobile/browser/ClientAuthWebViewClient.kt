@@ -10,6 +10,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
 import java.security.MessageDigest
 import java.time.Clock
@@ -28,6 +29,7 @@ internal class ClientAuthRequestHandler(
     private val currentNavigationEpoch: () -> Long,
     private val clearClientCertPreferences: () -> Unit,
     private val clock: Clock = Clock.systemUTC(),
+    private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
     private val terminal = AtomicBoolean(false)
     private val preferencesCleared = AtomicBoolean(false)
@@ -38,7 +40,7 @@ internal class ClientAuthRequestHandler(
             return
         }
         val identity = identityProvider()
-        if (identity == null || !grant.isValidFor(request, identity, clock)) {
+        if (identity == null || !grant.isValidFor(request, identity, clock, monotonicNanos())) {
             request.ignore()
             clearPreferencesOnce()
             return
@@ -70,8 +72,9 @@ internal class ClientAuthRequestHandler(
         request: ClientCertRequest,
         identity: UnlockedIdentity,
         clock: Clock,
+        nowNanos: Long,
     ): Boolean {
-        if (currentNavigationEpoch() != navigationEpoch || !clock.instant().isBefore(authorized.expiresAt)) {
+        if (currentNavigationEpoch() != navigationEpoch || authorized.isExpiredOrInvalid(nowNanos)) {
             return false
         }
         val requestOrigin = authorized.policy.requestOrigins.singleOrNull() ?: return false

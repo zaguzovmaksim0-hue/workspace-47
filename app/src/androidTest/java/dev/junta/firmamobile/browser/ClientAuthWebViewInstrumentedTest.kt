@@ -127,7 +127,7 @@ class ClientAuthWebViewInstrumentedTest {
     }
 
     private fun grant(): ClientAuthGrant {
-        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, clock)
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
         authorizer.observeTopLevelNavigation(PROFILE, INDEX, SOURCE, 4, true)
         authorizer.onTopLevelPageStarted(SOURCE, 5)
         val authorized = checkNotNull(

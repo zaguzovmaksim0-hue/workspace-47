@@ -240,7 +240,7 @@ fun BrowserScreen(
                     ClientCertPreferenceClearResult.CLEARED -> {
                         if (grant.authorized.profileId != effectiveTopLevelProfileId ||
                             grant.navigationEpoch != navigationEpoch.longValue ||
-                            !java.time.Instant.now().isBefore(grant.authorized.expiresAt)
+                            grant.authorized.isExpiredOrInvalid()
                         ) {
                             recoverClientAuthPreparationFailure(requestAnotherClear = true)
                             return@post

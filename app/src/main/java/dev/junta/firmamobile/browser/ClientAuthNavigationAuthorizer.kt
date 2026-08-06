@@ -6,11 +6,11 @@ import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.SiteProfileRegistry
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import java.time.Clock
-import java.time.Instant
+import java.time.Duration
 
 @ConsistentCopyVisibility
 data class AuthorizedClientAuthTarget internal constructor(
@@ -18,8 +18,17 @@ data class AuthorizedClientAuthTarget internal constructor(
     internal val target: URI,
     internal val policy: ClientAuthPolicy,
     internal val certificateRules: dev.junta.firmamobile.profile.CertificateFilterRules,
-    internal val expiresAt: Instant,
-)
+    internal val observedAtMonotonicNanos: Long,
+    internal val lifetimeNanos: Long,
+) {
+    internal fun isExpiredOrInvalid(
+        nowNanos: Long = MonotonicSecurityTime.nowNanos(),
+    ): Boolean = MonotonicSecurityTime.isExpiredOrInvalid(
+        observedAtMonotonicNanos,
+        lifetimeNanos,
+        nowNanos,
+    )
+}
 
 /**
  * Authorizes Client TLS only for an explicit profile transition contract:
@@ -29,7 +38,7 @@ data class AuthorizedClientAuthTarget internal constructor(
  */
 class ClientAuthNavigationAuthorizer internal constructor(
     private val registry: SiteProfileRegistry,
-    private val clock: Clock = Clock.systemUTC(),
+    private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
     private var pending: PendingSource? = null
     private var consumedDirect: DirectConsumption? = null
@@ -58,7 +67,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             clearPending()
             return null
         }
-        val now = clock.instant()
+        val nowNanos = monotonicNanos()
 
         return when (policy.transitionMode) {
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> authorizeDirectTransition(
@@ -67,7 +76,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
                 currentUrl = currentUrl,
                 target = target,
                 currentEpoch = currentEpoch,
-                now = now,
+                nowNanos = nowNanos,
             )
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> authorizeRedirectTransition(
                 profile = profile,
@@ -75,7 +84,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
                 currentUrl = currentUrl,
                 target = target,
                 currentEpoch = currentEpoch,
-                now = now,
+                nowNanos = nowNanos,
             )
         }
     }
@@ -86,7 +95,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         currentUrl: String?,
         target: URI,
         currentEpoch: Long,
-        now: Instant,
+        nowNanos: Long,
     ): AuthorizedClientAuthTarget? {
         pending = null
         val source = currentUrl?.let(::strictHttpsUri) ?: run {
@@ -101,19 +110,20 @@ class ClientAuthNavigationAuthorizer internal constructor(
             previous.source == source &&
             previous.target == target &&
             previous.epoch == currentEpoch &&
-            now.isBefore(previous.expiresAt)
+            !previous.isExpiredOrInvalid(nowNanos)
         ) {
             return null
         }
-        val expiresAt = now.plusSeconds(policy.grantTtlSeconds.toLong())
+        val lifetimeNanos = grantLifetimeNanos(policy)
         consumedDirect = DirectConsumption(
             profileId = profile.profileId,
             source = source,
             target = target,
             epoch = currentEpoch,
-            expiresAt = expiresAt,
+            observedAtMonotonicNanos = nowNanos,
+            lifetimeNanos = lifetimeNanos,
         )
-        return authorized(profile, policy, target, expiresAt)
+        return authorized(profile, policy, target, nowNanos, lifetimeNanos)
     }
 
     private fun authorizeRedirectTransition(
@@ -122,14 +132,15 @@ class ClientAuthNavigationAuthorizer internal constructor(
         currentUrl: String?,
         target: URI,
         currentEpoch: Long,
-        now: Instant,
+        nowNanos: Long,
     ): AuthorizedClientAuthTarget? {
         if (target in policy.sourceUrls && currentBelongsTo(profile, currentUrl)) {
             pending = PendingSource(
                 profileId = profile.profileId,
                 source = target,
                 armingEpoch = currentEpoch,
-                expiresAt = now.plusSeconds(policy.grantTtlSeconds.toLong()),
+                observedAtMonotonicNanos = nowNanos,
+                lifetimeNanos = grantLifetimeNanos(policy),
             )
             return null
         }
@@ -138,14 +149,15 @@ class ClientAuthNavigationAuthorizer internal constructor(
         pending = null
         if (source == null || source.profileId != profile.profileId) return null
         if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) return null
-        if (!now.isBefore(source.expiresAt)) return null
+        if (source.isExpiredOrInvalid(nowNanos)) return null
         if (source.source !in policy.sourceUrls || !target.matches(policy)) return null
 
         return authorized(
             profile = profile,
             policy = policy,
             target = target,
-            expiresAt = now.plusSeconds(policy.grantTtlSeconds.toLong()),
+            observedAtMonotonicNanos = nowNanos,
+            lifetimeNanos = grantLifetimeNanos(policy),
         )
     }
 
@@ -153,13 +165,15 @@ class ClientAuthNavigationAuthorizer internal constructor(
         profile: SiteProfile,
         policy: ClientAuthPolicy,
         target: URI,
-        expiresAt: Instant,
+        observedAtMonotonicNanos: Long,
+        lifetimeNanos: Long,
     ) = AuthorizedClientAuthTarget(
         profileId = profile.profileId,
         target = target,
         policy = policy,
         certificateRules = profile.certificateRules,
-        expiresAt = expiresAt,
+        observedAtMonotonicNanos = observedAtMonotonicNanos,
+        lifetimeNanos = lifetimeNanos,
     )
 
     @Synchronized
@@ -167,7 +181,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         val source = pending ?: return
         val uri = strictHttpsUri(url)
         if (uri != source.source || currentEpoch != source.armingEpoch + 1 ||
-            !clock.instant().isBefore(source.expiresAt)
+            source.isExpiredOrInvalid(monotonicNanos())
         ) {
             pending = null
         }
@@ -261,16 +275,33 @@ class ClientAuthNavigationAuthorizer internal constructor(
         val profileId: ProfileId,
         val source: URI,
         val armingEpoch: Long,
-        val expiresAt: Instant,
-    )
+        val observedAtMonotonicNanos: Long,
+        val lifetimeNanos: Long,
+    ) {
+        fun isExpiredOrInvalid(nowNanos: Long): Boolean = MonotonicSecurityTime.isExpiredOrInvalid(
+            observedAtMonotonicNanos,
+            lifetimeNanos,
+            nowNanos,
+        )
+    }
 
     private data class DirectConsumption(
         val profileId: ProfileId,
         val source: URI,
         val target: URI,
         val epoch: Long,
-        val expiresAt: Instant,
-    )
+        val observedAtMonotonicNanos: Long,
+        val lifetimeNanos: Long,
+    ) {
+        fun isExpiredOrInvalid(nowNanos: Long): Boolean = MonotonicSecurityTime.isExpiredOrInvalid(
+            observedAtMonotonicNanos,
+            lifetimeNanos,
+            nowNanos,
+        )
+    }
+
+    private fun grantLifetimeNanos(policy: ClientAuthPolicy): Long =
+        MonotonicSecurityTime.durationNanos(Duration.ofSeconds(policy.grantTtlSeconds.toLong()))
 
     private companion object {
         const val MAX_URL_CHARS = 8_192

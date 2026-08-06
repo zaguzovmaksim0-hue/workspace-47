@@ -2556,3 +2556,14 @@ timing/interruption or real-device visual correctness; those remain manual gates
   control, portal interaction, credential/private-certificate use, real signing, upload,
   payment or administrative submission occurred. Physical AEAT F-03, real-device
   TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## G15-01 — Client TLS monotonic grant TTL — 2026-08-06
+
+- RED `job_20260806_180534_6ae3e8d9`: civil-clock rollback regressions failed as intended in the Client TLS authorizer and request handler before production change.
+- Focused/dependency `job_20260806_194539_847585e9`: runtime locks, resolved-core, portable-AAPT2 and Debug/QA authorizer/request-handler/WebView-client suites PASS.
+- Full JVM `job_20260806_195244_56763d36`: 60 tasks executed; Debug 532/532 and QA 532/532, zero failures/errors/skips. Only previously known compile/deprecation warnings observed.
+- Build `job_20260806_194307_a1adf27b`: Debug, QA, QA AndroidTest PASS. Lint `job_20260806_200521_58fbcc2f`: 0 errors / 27 warnings for Debug and QA.
+- Python/Go `job_20260806_201618_656cbb46`: Python 102 PASS with one environmental hardlink skip; Go test/vet/build PASS. The wrapper then exited 126 solely because Termux lacks `/usr/bin/env` for unchanged CI-script shebangs. Explicit Termux-bash artifact verification `job_20260806_201734_39e57c20` PASS; release-signing fail-closed itself passed in `job_20260806_201817_7ccfec9b`; `job_20260806_202036_f8686d7a` confirmed zero release APKs.
+- APK SHA-256: Debug `cb361265a636712ed584d6235ee0a877b7268b486074558874d32cb6dc841dc4`; QA `f97b5f4ac075ab70729b77d365b67d7698c53ef0cf66be176196078f6577f5fb`; QA AndroidTest `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`. Generated relay SHA-256 `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed.
+- Local `govulncheck`, `osv-scanner` and `gitleaks` executables were unavailable; pinned scanner/workflow policy is covered by passing CI-policy tests, but no local vulnerability-scan execution is claimed.
+- No APK launch/install, device control, authenticated portal use, credentials/private certificate material, real signature, upload, payment or submission occurred. Physical AEAT F-03, real-device TalkBack/visual and supported-Linux Go race remain external gates.
