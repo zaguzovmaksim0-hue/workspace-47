@@ -1133,3 +1133,10 @@ subordinate design/plan and observed TDD RED.
 - Local pinned vulnerability-scanner binaries were unavailable; no local scanner execution is claimed. CI scanner/pinning policy remained covered by `CiPolicyTest`.
 
 After remote verification of the containing G15-01 commit, continue a fresh independent certificate/signing/storage/logging, architecture/lifecycle, accessibility or supply-chain audit. Do not repeat G14-01 through G15-01. Physical AEAT F-03 Client TLS E2E, real-device TalkBack/visual and supported-Linux Go race remain external gates.
+
+## G16 read-only certificate/session clock and logging audit — 2026-08-06
+
+- Logging/export pass found no separate defect: Android `Log.i` use is limited to sanitized QA diagnostics and the DUMP-protected QA smoke hook; release disables QA profiles/sink, and production has no `snapshot()`/`exportText()` caller.
+- Unresolved clock-model lead: `CertificateSession` uses civil `Clock/Instant` for in-memory unlock expiry, so backward wall-clock adjustment can extend same-process signing availability. `EncryptedCertificateUnlockCache` also evaluates authenticated UTC issue/expiry against civil `now`; it rejects `now < issuedAt`, but a partial rollback after `issuedAt` can lengthen apparent validity.
+- Do not apply an isolated same-process fix and then claim the documented cross-device-restart “at most 24 hours” contract is monotonic. Process monotonic time resets across a device restart, so the persisted-cache policy needs an explicit trust-time/product choice before behavior mutation.
+- Candidate next design options: preserve device-restart restoration and document the civil-clock residual; fail closed on device restart/clock anomalies and narrow restoration semantics; or justify a trusted-time source. Any selected runtime change requires a narrow approved design/plan and observed TDD RED.
