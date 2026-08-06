@@ -1040,3 +1040,37 @@ environmental hardlink skip plus Go test/vet/build. Artifact/release job
 `job_20260805_234127_1ff5af35` passed Android artifact verification and expected
 release-signing fail-closed with zero release APKs. The generated relay executable was
 removed in `job_20260805_234305_6a9be3dc`.
+
+
+## Finding G14-03 — persisted unlock stale-restore invalidation — 2026-08-06
+
+**Reproduction.** `EncryptedCertificateUnlockCache.store()` already bound an in-flight
+write to `invalidationGeneration`, but `restore()` did not. A test storage captured an
+owned encrypted-record snapshot inside `read()`, blocked, then allowed `clear()` to
+complete before returning the snapshot. RED job `job_20260805_235400_7d3f1417` failed
+identically in Debug and QA: one test, one failure per variant, because
+`clearDuringBlockingRestoreCannotReturnCachedUnlock` expected null but received a
+password-backed `CachedCertificateUnlock`. Production source was unchanged at RED.
+
+**Remediation.** Restore now captures the invalidation generation before entering IO. It
+rejects a stale generation immediately after obtaining the owned record snapshot and
+checks again after password decoding, zeroing the decoded password before returning null
+if a concurrent clear occurred during cryptographic work. AES-GCM record format/AAD,
+Android Keystore key handling, reference digest, retention bounds, cancellation
+propagation, store invalidation behavior and ViewModel/session policy are unchanged.
+
+**Verification.** Focused GREEN `job_20260805_235700_940d2cca` passed 9/9
+`CertificateUnlockCacheTest` cases per variant. Adjacent certificate/session/ViewModel
+regression plus dependency/toolchain job `job_20260805_235934_6f90c772` passed 45/45 per
+variant and passed runtime locks, resolved-core and portable-AAPT2 gates. Fresh full JVM
+`job_20260806_000346_09dda276` executed all 60 tasks and passed 530/530 Debug plus
+530/530 QA with zero failures/errors/skips. Lint/build `job_20260806_000750_feb3c236`
+passed with 0 errors / 27 warnings per variant and built Debug, QA and QA AndroidTest. APK
+SHA-256: Debug `b771e02dacc454a0f83c0e6049d73de09e0a231dd318a48469b5a2a8545e7daf`; QA
+`c717d9c212566c372331a68365c9b75006af92f2f3f503c37d3a66651896e660`; QA AndroidTest
+`5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`. Python/Go/
+artifact/release job `job_20260806_001426_21a0f58a` passed 101 Python tests with one
+environmental hardlink skip, Go test/vet/build, Android artifact checks and release
+signing fail-closed with zero release APKs. Generated relay executable SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed in
+`job_20260806_001604_23dbe0ac`.

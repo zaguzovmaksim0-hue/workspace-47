@@ -125,6 +125,35 @@ class CertificateUnlockCacheTest {
     }
 
     @Test
+    fun clearDuringBlockingRestoreCannotReturnCachedUnlock() = runTest {
+        val storage = BlockingReadStorage()
+        val cache = cache(storage)
+        assertTrue(
+            cache.store(
+                reference,
+                "secret".toCharArray(),
+                now,
+                now.plus(Duration.ofHours(24)),
+            ),
+        )
+        val restored = async(Dispatchers.Default) {
+            cache.restore(reference, now.plusSeconds(1))
+        }
+
+        assertTrue(storage.readStarted.await(5, TimeUnit.SECONDS))
+        cache.clear()
+        storage.allowRead.countDown()
+
+        val result = restored.await()
+        try {
+            assertNull(result)
+            assertTrue(storage.isEmpty())
+        } finally {
+            result?.close()
+        }
+    }
+
+    @Test
     fun clearDuringBlockingWriteCannotResurrectUnlockRecord() = runTest {
         val storage = BlockingWriteStorage()
         val cache = cache(storage)
@@ -183,6 +212,33 @@ class CertificateUnlockCacheTest {
 
     private class FixedKeyProvider(private val key: SecretKey) : CertificateUnlockKeyProvider {
         override fun getOrCreate(): SecretKey = key
+    }
+
+    private class BlockingReadStorage : CertificateUnlockRecordStorage {
+        val readStarted = CountDownLatch(1)
+        val allowRead = CountDownLatch(1)
+
+        @Volatile
+        private var bytes: ByteArray? = null
+
+        override fun read(): ByteArray? {
+            val snapshot = bytes?.copyOf()
+            readStarted.countDown()
+            check(allowRead.await(5, TimeUnit.SECONDS))
+            return snapshot
+        }
+
+        override fun write(record: ByteArray): Boolean {
+            bytes = record.copyOf()
+            return true
+        }
+
+        override fun clear() {
+            bytes?.fill(0)
+            bytes = null
+        }
+
+        fun isEmpty(): Boolean = bytes == null
     }
 
     private class BlockingWriteStorage : CertificateUnlockRecordStorage {

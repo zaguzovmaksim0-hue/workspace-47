@@ -665,3 +665,17 @@ requires a separate design/plan and observed TDD RED.
   JVM rerun is 529/529 per variant. Lint remains 0 errors / 27 warnings per variant;
   builds, Python 101 with one environmental hardlink skip, Go test/vet/build, Android
   artifact verification and release fail-closed also pass.
+
+
+### G14-03 — persisted unlock stale-restore invalidation — 2026-08-06
+
+- `EncryptedCertificateUnlockCache.clear()` now invalidates an already-running restore
+  that owns an older encrypted-record snapshot; that stale work cannot return a cached
+  unlock after observing the generation change.
+- Restore checks the captured generation after record read and again after password decode;
+  the decoded password is zeroed on the latter stale path. AES-GCM/Keystore format and
+  existing persisted-unlock policy are unchanged.
+- TDD RED reproduced the stale restore in both variants. Focused cache tests passed 9/9
+  per variant, adjacent certificate/session/ViewModel tests 45/45 per variant, fresh full
+  JVM 530/530 per variant, lint 0 errors / 27 warnings per variant, and all build, Python,
+  Go, artifact and release-fail-closed gates passed.

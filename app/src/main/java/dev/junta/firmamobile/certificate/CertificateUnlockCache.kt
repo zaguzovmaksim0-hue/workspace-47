@@ -93,8 +93,11 @@ class EncryptedCertificateUnlockCache internal constructor(
     override suspend fun restore(
         reference: StoredCertificateReference,
         now: Instant,
-    ): CachedCertificateUnlock? = withContext(ioDispatcher) {
-        restoreOnIo(reference, now)
+    ): CachedCertificateUnlock? {
+        val restoreGeneration = invalidationGeneration.get()
+        return withContext(ioDispatcher) {
+            restoreOnIo(reference, now, restoreGeneration)
+        }
     }
 
     override fun clear() {
@@ -169,6 +172,7 @@ class EncryptedCertificateUnlockCache internal constructor(
     private fun restoreOnIo(
         reference: StoredCertificateReference,
         now: Instant,
+        restoreGeneration: Long,
     ): CachedCertificateUnlock? {
         val rawRecord = try {
             storage.read()
@@ -182,6 +186,7 @@ class EncryptedCertificateUnlockCache internal constructor(
         var expectedDigest: ByteArray? = null
         var plainBytes: ByteArray? = null
         return try {
+            if (invalidationGeneration.get() != restoreGeneration) return null
             parsed = parseRecord(rawRecord)
             val issuedAt = Instant.ofEpochMilli(parsed.issuedAtEpochMillis)
             val expiresAt = Instant.ofEpochMilli(parsed.expiresAtEpochMillis)
@@ -212,6 +217,10 @@ class EncryptedCertificateUnlockCache internal constructor(
             if (password.isEmpty() || password.size > MAX_PASSWORD_CHARS) {
                 password.fill('\u0000')
                 clear()
+                return null
+            }
+            if (invalidationGeneration.get() != restoreGeneration) {
+                password.fill('\u0000')
                 return null
             }
             CachedCertificateUnlock(password, expiresAt)

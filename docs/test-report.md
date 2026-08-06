@@ -2501,3 +2501,31 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - No APK was installed or launched and no device-control, authenticated portal,
   credential/certificate-private-material, real-signature, upload, payment or
   administrative-submission action occurred.
+
+
+## G14-03 — persisted unlock stale-restore invalidation — 2026-08-06
+
+- RED `job_20260805_235400_7d3f1417`: exact stale-restore test ran once in Debug and
+  once in QA; both failed as intended with `expected null, but was
+  CachedCertificateUnlock`. Production source was unchanged at RED.
+- Focused GREEN `job_20260805_235700_940d2cca`: `CertificateUnlockCacheTest` 9/9
+  Debug and 9/9 QA, zero failures/errors/skips.
+- Adjacent regression/dependency `job_20260805_235934_6f90c772`: cache, session,
+  PKCS#12 loader and CertificateViewModel suites 45/45 per variant; runtime dependency
+  locks, resolved-core version and portable AAPT2 gates PASS.
+- Fresh full JVM `job_20260806_000346_09dda276`: all 60 tasks executed; Debug 530/530
+  and QA 530/530, zero failures/errors/skips. The known internal
+  `ProfileHttpCallPhaseTracker.connectStart` parameter-name warning remains; no new
+  compile/test warning was introduced by this milestone.
+- Lint/build `job_20260806_000750_feb3c236`: lint PASS at 0 errors / 27 warnings per
+  variant; `assembleDebug`, `assembleQa`, `assembleQaAndroidTest` PASS. APK SHA-256:
+  Debug `b771e02dacc454a0f83c0e6049d73de09e0a231dd318a48469b5a2a8545e7daf`; QA
+  `c717d9c212566c372331a68365c9b75006af92f2f3f503c37d3a66651896e660`; QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Python/Go/artifact/release `job_20260806_001426_21a0f58a`: Python 101 PASS with one
+  environmental hardlink skip; Go test/vet/build PASS; Android artifact verification
+  PASS; release without private signing inputs rejected fail-closed; release APK count
+  zero. Generated relay executable removed by `job_20260806_001604_23dbe0ac`.
+- No APK installation/launch, device control, authenticated portal interaction, private
+  certificate/credential use, real signature, upload, payment or administrative submission
+  occurred.

@@ -1081,3 +1081,22 @@ repeat G13-01/G13-02.
 - Release APK count remains zero and the generated relay binary was removed. Physical
   AEAT F-03, real-device TalkBack/visual behavior and supported-Linux Go race remain
   external/manual gates.
+
+
+## Autonomous audit G14-03 — persisted unlock stale-restore invalidation — 2026-08-06
+
+- Reproduced a cache-level concurrency defect: after `read()` owned an encrypted snapshot,
+  a concurrent `clear()` could complete yet that stale restore still returned a
+  password-backed unlock. RED failed exactly in Debug and QA before production mutation.
+- Minimum fix binds restore to `invalidationGeneration`, rejects a stale snapshot after
+  read and checks again after password decode, zeroing the decoded password on mismatch.
+  Record format, Keystore/AES-GCM policy and ViewModel/session behavior are unchanged.
+- Focused GREEN 9/9 per variant; adjacent certificate/session/ViewModel 45/45 per variant;
+  fresh full JVM 530/530 per variant; lint 0 errors / 27 warnings per variant; dependency,
+  build, Python, Go, artifact and release-fail-closed gates PASS.
+- APK SHA-256: Debug `b771e02dacc454a0f83c0e6049d73de09e0a231dd318a48469b5a2a8545e7daf`;
+  QA `c717d9c212566c372331a68365c9b75006af92f2f3f503c37d3a66651896e660`; QA
+  AndroidTest `5ee3e2350e958293e0e822d55042c4182630bb51efd748d3d8b336d3c26dc81a`.
+- Generated relay binary is removed and release APK count is zero. Physical AEAT F-03,
+  real-device TalkBack/visual validation and supported-Linux Go race remain external/manual
+  gates.
