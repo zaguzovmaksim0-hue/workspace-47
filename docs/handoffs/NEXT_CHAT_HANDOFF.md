@@ -1186,3 +1186,28 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   supply-chain pass. Persisted-unlock cross-restart trust-time semantics remain a
   separate product decision; physical AEAT F-03, TalkBack/visual and Linux Go race
   remain external/manual gates.
+
+## Autonomous audit G19-01 — Afirma main-frame native-delivery boundary — 2026-08-06
+
+- Reproduced a WebView frame-ownership defect: valid direct/embedded Afirma navigation
+  from a subframe, and Afirma through the deprecated String callback, could reach native
+  `onAfirmaRequest` while the top-level page was trusted. RED
+  `job_20260806_222113_c06f171b` / `job_20260806_222241_725e79f7` failed exactly on
+  those two negative paths; modern main-frame routing was the passing control.
+- Minimum remediation gates only `NavigationDecision.HandleAfirma` native delivery on
+  `isModernMainFrame`; non-main/legacy ambiguity is consumed as
+  `UNTRUSTED_AFIRMA_ORIGIN`. `JuntaNavigationPolicy`, WebMessage, Client TLS,
+  certificate/signing, external HTTPS routing, profiles/releases and dependencies are
+  unchanged.
+- Focused GREEN passed 40/40 per variant; fresh full JVM 535/535 per variant; lint
+  0 errors / 26 warnings per variant; runtime dependency/toolchain, Debug/QA/
+  QA-AndroidTest assemblies, Python 102 with one environmental hardlink skip, Go,
+  Android artifact and release-fail-closed gates all passed. APK SHA-256: Debug
+  `16589a5492c7b689a7492791d3fe22a71dbb69873b46db27f2305750553fb1e2`, QA
+  `f4c8f34765debdfdcb4bfe73712819939996e8ee791b71e8da7ea84679088df8`, QA
+  AndroidTest `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+- After exact remote verification of the containing milestone, continue a fresh
+  independent lifecycle/concurrency, WebView/network, UX/accessibility or
+  supply-chain audit. Do not fold the separate persisted-unlock cross-restart
+  trust-time decision into this milestone. Physical AEAT F-03, real-device
+  TalkBack/visual validation and supported-Linux Go race remain external/manual gates.

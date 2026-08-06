@@ -94,13 +94,19 @@ advertencia adicional.
 **Riesgo residual:** el usuario no ve el documento completo del login challenge.
 El E2E debe confirmar qué se firma y el UI debe describirlo con precisión.
 
-### T3. Intent/Play fallback escapa a AutoFirma externa
+### T3. Intent/Play fallback escapa a AutoFirma externa o un frame ambiguo alcanza native
 
-**Riesgo:** confusión de app o envío de datos a otro paquete.
-**Controles:** interceptar `afirma://`, `intent://`, `market://` y URLs Play;
-rechazar package/component explícitos no aprobados; nunca usar
-`es.gob.afirma`; evento sanitizado de fallback.
-**Verificación:** instrumentation tests sin resolución de Play/AutoFirma.
+**Riesgo:** confusión de app, envío de datos a otro paquete o entrega de una petición
+Afirma nativa iniciada por un subframe/callback legacy sin propiedad top-level probada.
+**Controles:** interceptar `afirma://`, `intent://`, `market://` y URLs Play; rechazar
+package/component explícitos no aprobados; nunca usar `es.gob.afirma`; evento
+sanitizado de fallback. Solo una navegación Afirma directa o embedded-Afirma recibida
+por el callback moderno y marcada `isForMainFrame=true` puede llegar a
+`onAfirmaRequest`; subframes y el callback String deprecated se consumen con
+`UNTRUSTED_AFIRMA_ORIGIN`.
+**Verificación:** regressions Debug/QA con controles positivos direct/embedded en
+main-frame y negativos subframe/legacy; instrumentation sin resolución de
+Play/AutoFirma. La cobertura automatizada no sustituye el E2E físico del portal.
 
 ### T4. Callback, server URL o DNS produce SSRF
 

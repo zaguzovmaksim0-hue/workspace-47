@@ -125,6 +125,19 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - requestId duplicado o consumido se rechaza;
 - navegación/origin cambiado invalida pending request.
 
+### JuntaWebViewClient Afirma frame-boundary regressions
+
+- callback moderno main-frame permite `afirma://sign` válido desde el signing origin;
+- callback moderno main-frame permite embedded-Afirma `intent:` válido;
+- subframe directo `afirma:` se consume como `UNTRUSTED_AFIRMA_ORIGIN` y no entrega
+  `onAfirmaRequest`;
+- subframe embedded-Afirma `intent:` falla cerrado del mismo modo;
+- callback String deprecated no puede probar main-frame y no entrega Afirma a native;
+- los negativos anteriores conservan top-level trusted como control para aislar el
+  límite de frame ownership;
+- ejecutar la familia WebView/navigation/WebMessage en Debug y QA; el E2E físico del
+  portal sigue siendo un gate separado.
+
 ### TriPhaseClientTest
 
 - request exacto derivado de fixture observada;

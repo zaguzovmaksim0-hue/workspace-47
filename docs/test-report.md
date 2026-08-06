@@ -2627,3 +2627,36 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - This is structural attack-surface reduction, not evidence of a previously reachable
   arbitrary-navigation exploit. No APK/device/portal/credential/private-certificate/
   real-signing/upload/payment/submission action occurred.
+
+## G19-01 — Afirma main-frame native-delivery boundary — 2026-08-06
+
+- RED `job_20260806_222113_c06f171b` / parser
+  `job_20260806_222241_725e79f7`: three Debug regressions with two expected failures;
+  valid direct/embedded Afirma subframe routing emitted two `afirma:sign` callbacks and
+  the deprecated String callback emitted one, while the modern main-frame positive
+  control passed before production mutation.
+- Minimum fix gates only `NavigationDecision.HandleAfirma` delivery on
+  `isModernMainFrame`. Subframe/legacy frame ambiguity is consumed and reported as
+  `UNTRUSTED_AFIRMA_ORIGIN`; modern main-frame direct and embedded-Afirma behavior is
+  preserved. No generic navigation, WebMessage, Client TLS, certificate/signing,
+  profile/release or dependency behavior changed.
+- Focused GREEN `job_20260806_222530_6d61bc8c` / parser
+  `job_20260806_222921_23a53387`: 40/40 Debug and 40/40 QA, zero
+  failures/errors/skips.
+- Dependency/toolchain/full JVM `job_20260806_222931_bb0d28b8`: runtime locks,
+  resolved-core and portable-AAPT2 PASS; 63/63 rerun tasks. XML aggregation
+  `job_20260806_223615_f97d9406`: Debug 535/535 and QA 535/535, zero
+  failures/errors/skips.
+- Lint/build `job_20260806_223624_b4579b73`: 124 tasks PASS including
+  `lintDebug`, `lintQa`, `assembleDebug`, `assembleQa`, `assembleQaAndroidTest`;
+  parser `job_20260806_224214_259200f6`: 0 errors / 26 warnings per variant. APK
+  SHA-256: Debug `16589a5492c7b689a7492791d3fe22a71dbb69873b46db27f2305750553fb1e2`, QA
+  `f4c8f34765debdfdcb4bfe73712819939996e8ee791b71e8da7ea84679088df8`, QA
+  AndroidTest `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+- Python/Go/artifact/release `job_20260806_224224_6882554f`: Python 102 PASS with
+  one environmental hardlink skip; Go test/vet/build, Android artifact verification
+  and release-signing fail-closed PASS. Pre-evidence exact-scope/diff/sensitive/
+  unsafe-pattern scan `job_20260806_224602_80996800` PASS.
+- Claim is limited to automated WebView callback frame ownership. No physical portal
+  E2E, automatic-signature exploit, APK/device execution, credential/private-certificate
+  use, real signing, upload, payment or submission is claimed.

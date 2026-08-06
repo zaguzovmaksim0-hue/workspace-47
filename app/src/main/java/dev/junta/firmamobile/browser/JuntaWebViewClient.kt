@@ -132,8 +132,19 @@ class JuntaWebViewClient(
                 true
             }
             is NavigationDecision.HandleAfirma -> {
-                logger.recordAfirmaRequest(decision.request)
-                callbacks.onAfirmaRequest(decision.request)
+                if (!isModernMainFrame) {
+                    logger.recordNavigationEvent(
+                        code = DiagnosticEventCode.NAVIGATION_BLOCKED,
+                        rawUrl = targetUrl,
+                        reason = NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN.name,
+                        isMainFrame = false,
+                        method = method,
+                    )
+                    callbacks.onNavigationBlocked(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
+                } else {
+                    logger.recordAfirmaRequest(decision.request)
+                    callbacks.onAfirmaRequest(decision.request)
+                }
                 true
             }
             is NavigationDecision.Block -> {

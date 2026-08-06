@@ -1206,3 +1206,44 @@ pre-evidence review `job_20260806_220924_691a63aa` passed exact scope, `git diff
 --check`, structural-absence, sensitive-data and unsafe WebView/TLS scans. No current
 runtime navigation was broadened, no threat edge was added, and no physical/device or
 portal claim is made.
+
+## Finding G19-01 — Afirma main-frame native-delivery boundary — 2026-08-06
+
+**Reproduction.** `JuntaWebViewClient` already received authoritative modern
+`WebResourceRequest.isForMainFrame` metadata, but `NavigationDecision.HandleAfirma`
+did not enforce it before `callbacks.onAfirmaRequest(...)`. A trusted top-level page
+could therefore cause a valid direct `afirma:` or embedded-Afirma `intent:` subframe
+navigation to reach the native Afirma request surface, and the deprecated String
+callback could do the same without proving frame ownership. RED
+`job_20260806_222113_c06f171b`, parsed by `job_20260806_222241_725e79f7`, ran three
+Debug regressions with two expected failures: subframe routing produced
+`[afirma:sign, afirma:sign]` and the legacy callback produced `[afirma:sign]`; the
+modern main-frame positive control already passed. This establishes a native request
+trust-boundary bypass, not an automatic-signature exploit.
+
+**Remediation.** `HandleAfirma` now requires `isModernMainFrame` before native request
+delivery. Subframe and deprecated-callback Afirma decisions are consumed, logged only
+through the existing sanitized blocked-navigation event, report
+`UNTRUSTED_AFIRMA_ORIGIN`, and never call `recordAfirmaRequest` or
+`onAfirmaRequest`. Modern main-frame direct and embedded-Afirma routing remains
+unchanged. `JuntaNavigationPolicy`, ordinary HTTPS/external navigation, WebMessage,
+Client TLS, certificate/signing execution, profile/release policy and dependencies are
+unchanged.
+
+**Verification.** Focused GREEN `job_20260806_222530_6d61bc8c` / parser
+`job_20260806_222921_23a53387` passed 40/40 Debug and 40/40 QA. Fresh
+runtime-lock/core/AAPT2 plus full JVM `job_20260806_222931_bb0d28b8` executed 63/63
+tasks; XML aggregation `job_20260806_223615_f97d9406` reported Debug 535/535 and QA
+535/535, zero failures/errors/skips. Lint/build `job_20260806_223624_b4579b73`
+passed 124 tasks including all three assemblies; parser
+`job_20260806_224214_259200f6` reported 0 errors / 26 warnings per variant. APK
+SHA-256: Debug `16589a5492c7b689a7492791d3fe22a71dbb69873b46db27f2305750553fb1e2`, QA
+`f4c8f34765debdfdcb4bfe73712819939996e8ee791b71e8da7ea84679088df8`, QA
+AndroidTest `08ed3f916acb55c5586a52a93dfdb2c2c66c7832b385b9f74a1d7182d9cba449`.
+Python/Go/artifact/release `job_20260806_224224_6882554f` passed 102 Python tests
+with one environmental hardlink skip, Go test/vet/build, Android artifact verification
+and release-signing fail-closed. Pre-evidence exact-scope/diff/sensitive/unsafe-pattern
+scan `job_20260806_224602_80996800` passed. No APK installation/launch, device
+control, authenticated portal interaction, credential/private-certificate use, real
+signature, upload, payment or administrative submission occurred; physical portal E2E
+is not claimed.

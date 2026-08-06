@@ -243,9 +243,67 @@ class JuntaWebViewClientTest {
                 request("afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc"),
             ),
         )
+        assertTrue(
+            client.shouldOverrideUrlLoading(
+                webView,
+                request(
+                    "intent://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc" +
+                        "#Intent;scheme=afirma;package=es.gob.afirma;end",
+                ),
+            ),
+        )
 
         assertEquals("external:example.org", callbacks.events[0])
         assertEquals("afirma:sign", callbacks.events[1])
+        assertEquals("afirma:sign", callbacks.events[2])
+    }
+
+    @Test
+    fun subframeAfirmaAndEmbeddedIntentCannotReachNativeCallbacks() {
+        val frameCallbacks = RecordingBrowserCallbacks()
+        val frameClient = JuntaWebViewClient(
+            callbacks = frameCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+        )
+        val afirma = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc"
+        val embeddedIntent =
+            "intent://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc" +
+                "#Intent;scheme=afirma;package=es.gob.afirma;end"
+
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(afirma)))
+        assertTrue(
+            frameClient.shouldOverrideUrlLoading(webView, subframeRequest(embeddedIntent)),
+        )
+
+        assertEquals(
+            listOf(
+                "blocked:UNTRUSTED_AFIRMA_ORIGIN",
+                "blocked:UNTRUSTED_AFIRMA_ORIGIN",
+            ),
+            frameCallbacks.events,
+        )
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun legacyAfirmaCallbackCannotReachNativeCallbacks() {
+        val legacyCallbacks = RecordingBrowserCallbacks()
+        val legacyClient = JuntaWebViewClient(
+            callbacks = legacyCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+        )
+        val afirma = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=abc"
+
+        assertTrue(legacyClient.shouldOverrideUrlLoading(webView, afirma))
+
+        assertEquals(
+            listOf("blocked:UNTRUSTED_AFIRMA_ORIGIN"),
+            legacyCallbacks.events,
+        )
     }
 
     @Test

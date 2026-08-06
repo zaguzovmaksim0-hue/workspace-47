@@ -737,3 +737,21 @@ requires a separate design/plan and observed TDD RED.
   environmental hardlink skip, Go, artifact and release-fail-closed gates passed.
 - G17-01's optional button-role hook is now historical: G18-01 removes the dormant hook
   entirely. No current runtime accessibility claim from G17 remains applicable.
+
+## Autonomous Afirma main-frame routing boundary — 2026-08-06 (G19-01)
+
+- A trusted top-level page could previously drive a valid direct `afirma:` or embedded
+  Afirma `intent:` through a subframe, and the deprecated String WebView callback could
+  route Afirma without authoritative frame metadata. Both paths reached the native
+  `onAfirmaRequest` surface even though only modern main-frame routing is approved.
+- `JuntaWebViewClient` now requires `isModernMainFrame` at the `HandleAfirma` delivery
+  boundary. Subframe and legacy ambiguity fail closed as `UNTRUSTED_AFIRMA_ORIGIN`;
+  modern main-frame direct/embedded routing is preserved.
+- TDD RED reproduced both bypass paths; focused GREEN passed 40/40 per variant. Fresh
+  full JVM passed 535/535 per variant; lint remained 0 errors / 26 warnings per
+  variant; dependency/toolchain, three assemblies, Python 102 with one environmental
+  hardlink skip, Go, Android artifacts and release fail-closed gates passed.
+- Scope is deliberately narrow: generic navigation policy, external HTTPS handoff,
+  WebMessage, Client TLS, certificate/signing, profile/release and dependency behavior
+  did not change. This closes native request delivery from ambiguous/non-main frames;
+  it does not establish physical portal E2E or an automatic-signature exploit.
