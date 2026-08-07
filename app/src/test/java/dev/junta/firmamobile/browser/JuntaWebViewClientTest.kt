@@ -486,6 +486,20 @@ class JuntaWebViewClientTest {
         assertFalse(response.interstitialCalled)
         assertEquals(listOf("error:SAFE_BROWSING"), callbacks.events)
         assertTrue(logger.exportText().contains("event=SAFE_BROWSING_BLOCKED"))
+
+        callbacks.events.clear()
+        val subframeResponse = RecordingSafeBrowsingResponse()
+        client.onSafeBrowsingHit(
+            webView,
+            subframeRequest("https://www.juntadeandalucia.es/suspicious-frame"),
+            0,
+            subframeResponse,
+        )
+
+        assertTrue(subframeResponse.backToSafetyCalled)
+        assertFalse(subframeResponse.proceedCalled)
+        assertFalse(subframeResponse.interstitialCalled)
+        assertEquals(emptyList<String>(), callbacks.events)
     }
 
     @Test

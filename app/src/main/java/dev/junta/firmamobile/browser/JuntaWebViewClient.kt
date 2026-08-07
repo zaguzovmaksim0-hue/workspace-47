@@ -244,7 +244,9 @@ class JuntaWebViewClient(
     ) {
         callback.backToSafety(true)
         logger.recordBrowserEvent(DiagnosticEventCode.SAFE_BROWSING_BLOCKED)
-        if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.SAFE_BROWSING)
+        if (isCurrentWebView(view) && request.isForMainFrame) {
+            callbacks.onBrowserError(BrowserErrorCode.SAFE_BROWSING)
+        }
     }
 
     override fun onReceivedError(

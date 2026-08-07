@@ -1282,3 +1282,9 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   generated relay removed and release APK count is zero. After exact remote verification
   of the containing commit, continue another independent audit line. Physical AEAT F-03
   and TalkBack/visual gates remain external/manual.
+
+## Autonomous audit G23-01 — Safe Browsing frame UI isolation — 2026-08-07
+
+- RED reproduced subframe `SAFE_BROWSING` top-level UI delivery while platform rejection already succeeded.
+- Minimum fix gates only application error delivery on `request.isForMainFrame`; `backToSafety(true)` remains unconditional and first.
+- Focused 43/43 per variant, full JVM 539/539 per variant, lint/build, Python/Go/artifact/release gates passed; relay removed and release APK count zero.

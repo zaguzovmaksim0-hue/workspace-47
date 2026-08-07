@@ -177,6 +177,14 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - ejecutar source/settings regressions en Debug y QA. El comportamiento físico de
   geolocalización queda fuera del claim automatizado.
 
+
+### JuntaWebViewClient Safe Browsing frame ownership regressions
+
+- main-frame hit siempre llama `backToSafety(true)` y publica `SAFE_BROWSING`;
+- subframe hit llama `backToSafety(true)` pero no publica error de aplicación;
+- stale WebView también vuelve a seguridad sin mutar UI;
+- `proceed` e interstitial permanecen prohibidos.
+
 ### TriPhaseClientTest
 
 - request exacto derivado de fixture observada;

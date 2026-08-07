@@ -1371,3 +1371,11 @@ scans, proved `JuntaNavigationPolicy` unchanged and production scope limited to 
 callback gates with main-frame callbacks retained. No APK installation/launch, device
 control, portal interaction, credential/certificate use, real signing, upload, payment or
 submission occurred.
+
+## Finding G23-01 — Safe Browsing frame UI isolation — 2026-08-07
+
+**Finding.** `onSafeBrowsingHit` always returned to safety, but an active subframe hit also published `SAFE_BROWSING` to top-level application UI. Android's request contract distinguishes iframe/subresource requests with `isForMainFrame=false`. This was UI/frame ownership, not a Safe Browsing bypass.
+
+**TDD.** RED `job_20260807_202101_b4a1c845` failed 1/1 because the subframe produced `[error:SAFE_BROWSING]` while `backToSafety` succeeded. Minimum production change adds `request.isForMainFrame` only to the application-error predicate; `callback.backToSafety(true)` remains unconditional and first, diagnostic logging unchanged. Focused GREEN `job_20260807_202432_3e0878c4` passed 43/43 Debug and QA.
+
+**Verification.** Full dependency/toolchain/JVM `job_20260807_202910_d5948958` passed 63/63 tasks and 539/539 Debug + 539/539 QA. Lint/build `job_20260807_203651_fe397862` passed 124/124 tasks, 0 errors / 26 warnings per variant; APK SHA-256 Debug `011909d3945c7e62c3e1240d008a26fe5d679e59cf19cc3492d2cce2c2715176`, QA `d546cc59b2f2b376f605b62ecd535b4ee933242a7fde02826f49ce61bc5a7af7`, QA AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`. Python/Go/artifact/release `job_20260807_204415_280a3cff` passed 102 Python tests with one environmental hardlink skip, Go test/vet/build, Android artifact verification and release fail-closed; relay removed and release APK count zero.

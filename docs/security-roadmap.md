@@ -810,3 +810,9 @@ requires a separate design/plan and observed TDD RED.
   dependency/toolchain, three assemblies, Python 102 with one environmental hardlink
   skip, Go, Android artifacts and release fail-closed gates passed.
 - This is UI/trust-boundary isolation, not evidence of a prior navigation-policy bypass.
+
+## Autonomous Safe Browsing frame UI isolation — 2026-08-07 (G23-01)
+
+- Safe Browsing rejection was already fail-closed, but iframe hits could surface a top-level browser error.
+- `backToSafety(true)` remains unconditional; only active main-frame hits now publish `SAFE_BROWSING` to application UI.
+- Navigation/TLS/signing/profile/dependency policies are unchanged; full automated gates passed.

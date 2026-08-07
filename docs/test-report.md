@@ -2742,3 +2742,10 @@ timing/interruption or real-device visual correctness; those remain manual gates
   checks PASS.
 - Claim is limited to application/UI callback ownership. The underlying subframe/legacy
   navigation was already blocked fail-closed before this remediation.
+
+## G23-01 — Safe Browsing frame UI isolation — 2026-08-07
+
+- RED `job_20260807_202101_b4a1c845`: subframe Safe Browsing was rejected but still emitted top-level `SAFE_BROWSING` error.
+- Fix: only active main-frame Safe Browsing hits publish application error; `backToSafety(true)` remains unconditional.
+- Focused GREEN 43/43 per variant; full JVM 539/539 per variant; lint/build 0 errors / 26 warnings; Python 102 with one environmental skip; Go/artifact/release fail-closed PASS.
+- APK SHA-256: Debug `011909d3945c7e62c3e1240d008a26fe5d679e59cf19cc3492d2cce2c2715176`; QA `d546cc59b2f2b376f605b62ecd535b4ee933242a7fde02826f49ce61bc5a7af7`; QA AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.

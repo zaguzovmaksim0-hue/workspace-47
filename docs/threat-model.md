@@ -329,6 +329,13 @@ Afirma y tampoco modifican `blockedReason`. `JuntaNavigationPolicy` permanece si
 no soportado y callback String deprecated; controles main-frame conservan los callbacks
 positivos y los diagnósticos negativos no retienen query/fragment canaries.
 
+
+### T16. Safe Browsing de un subframe altera el UI superior
+
+**Riesgo:** un iframe malicioso es bloqueado por Safe Browsing pero provoca estado de error de nivel superior.
+**Controles:** `backToSafety(true)` es incondicional; `SAFE_BROWSING` solo llega a la aplicación para el WebView activo y `isForMainFrame=true`. Subframes siguen bloqueados y diagnosticados sin `proceed`.
+**Verificación:** main-frame positivo, subframe negativo y stale-owner fail-closed; full Android/Python/Go gates.
+
 ## 5. Decisiones explícitas
 
 - No localhost WSS, puertos 63117/63118/63119/17629, CA local ni trust bypass.
