@@ -2691,3 +2691,29 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - Claim is limited to automated WebView frame ownership before native external-browser
   handoff. No APK/device execution, physical portal E2E, credential/private-certificate
   use, real signing, upload, payment or submission is claimed.
+
+## G21-01 — explicit WebView geolocation disable — 2026-08-07
+
+- RED `job_20260807_000337_d952a714`: 1 Debug regression, 1 expected failure, zero
+  errors/skips; production lacked the required `setGeolocationEnabled(false)` call.
+- Minimum production change: one `setGeolocationEnabled(false)` line in
+  `TrustedJuntaWebView.configureSettings()`. Existing manifest location-permission
+  absence and `JuntaWebChromeClient` geolocation denial were preserved; no other
+  WebView setting or production file changed.
+- Focused GREEN `job_20260807_000642_b53b1105`: 19/19 Debug and 19/19 QA, zero
+  failures/errors/skips.
+- Runtime-lock/core/AAPT2 + full JVM `job_20260807_001123_3f7a18b3`: 63/63 tasks;
+  Debug 538/538 and QA 538/538, zero failures/errors/skips.
+- Lint/build `job_20260807_001945_02964833`: 124/124 tasks; 0 errors / 26 warnings
+  per variant; Debug, QA and QA AndroidTest assemblies PASS. APK SHA-256: Debug
+  `d5c403511ebf626653294765af932ecd1af15130dd0d375cdfd2252b1226fc3f`, QA
+  `1bc8cba1c9f5cda1152ec81de0edd1b9144196405501aa5cb621bf66b04aa5a0`, QA
+  AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Python/Go/artifact/release `job_20260807_002844_33f907ea`: Python 102 PASS with one
+  environmental hardlink skip; Go test/vet/build, Android artifact verification and
+  release fail-closed PASS; generated relay removed; release APK count zero.
+- Pre-evidence `job_20260807_003157_3a70d376`: exact scope, whitespace,
+  sensitive/unsafe-pattern, one-setter production scope, no-location-permission and
+  Chrome geolocation-deny checks PASS.
+- Claim is defense in depth only: automated evidence proves the explicit WebSettings
+  disablement. It does not prove a prior location leak or physical-device behavior.

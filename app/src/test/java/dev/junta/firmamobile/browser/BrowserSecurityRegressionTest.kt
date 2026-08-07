@@ -477,6 +477,18 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun trustedWebViewExplicitlyDisablesGeolocation() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/TrustedJuntaWebView.kt",
+        )
+
+        assertTrue(
+            "WebView geolocation must be explicitly disabled in production settings",
+            "setGeolocationEnabled(false)" in source,
+        )
+    }
+
+    @Test
     fun manualUrlEditorSurfaceIsAbsentFromProductionBrowserChrome() {
         val addressSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserAddressBar.kt",

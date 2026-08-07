@@ -1239,3 +1239,26 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   Persisted-unlock cross-restart trust-time semantics remain a separate product choice;
   physical AEAT F-03, real-device TalkBack/visual and supported-Linux Go race remain
   external/manual gates.
+
+## Autonomous audit G21-01 — explicit WebView geolocation disable — 2026-08-07
+
+- Reconciled an original browser-hardening requirement that had never been encoded in
+  `TrustedJuntaWebView`: geolocation was not explicitly disabled at WebSettings level.
+  Existing layers already denied practical use (no coarse/fine location permission and
+  a `JuntaWebChromeClient` geolocation prompt denial), so the finding is defense in
+  depth rather than a demonstrated location disclosure.
+- RED `job_20260807_000337_d952a714` failed 1/1 on the missing setter. The production
+  fix is exactly one `setGeolocationEnabled(false)` line. Focused GREEN passed 19/19
+  Debug and 19/19 QA.
+- Fresh full JVM passed 538/538 per variant; lint 0 errors / 26 warnings per variant;
+  dependency/toolchain and all three non-release assemblies passed. Python 102 with one
+  environmental hardlink skip, Go test/vet/build, Android artifact and release
+  fail-closed gates passed. APK SHA-256: Debug
+  `d5c403511ebf626653294765af932ecd1af15130dd0d375cdfd2252b1226fc3f`, QA
+  `1bc8cba1c9f5cda1152ec81de0edd1b9144196405501aa5cb621bf66b04aa5a0`, QA
+  AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Pre-evidence exact-scope/diff/security and independent geolocation-blocker checks
+  passed; generated relay removed and release APK count is zero. After exact remote
+  verification of the containing commit, continue another independent privacy,
+  lifecycle/concurrency, certificate/storage/logging, UX/accessibility or supply-chain
+  audit. Physical AEAT F-03 and TalkBack/visual gates remain manual/external.

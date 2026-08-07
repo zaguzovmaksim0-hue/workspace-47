@@ -776,3 +776,22 @@ requires a separate design/plan and observed TDD RED.
   Client TLS, WebMessage, Afirma/signing, certificate/cookie boundaries, dependencies
   and user-gesture policy did not change. Automated evidence establishes callback frame
   ownership only, not physical browser/portal/device E2E.
+
+## Autonomous WebView geolocation hardening — 2026-08-07 (G21-01)
+
+- The browser hardening design required geolocation disabled, while
+  `TrustedJuntaWebView` relied on two other fail-closed layers: no Android location
+  permission and an explicit denied geolocation prompt. Android documents the
+  `WebSettings` geolocation flag as enabled by default, so the configuration itself did
+  not satisfy the intended invariant even though practical location use was already
+  blocked by those independent controls.
+- `TrustedJuntaWebView` now explicitly calls `setGeolocationEnabled(false)`. No location
+  permission was added; `JuntaWebChromeClient` still denies geolocation and generic
+  WebView permission requests. JavaScript, DOM storage, cookies, Safe Browsing,
+  mixed-content, file/content access, media, popup, navigation, TLS/signing and profile
+  behavior are unchanged.
+- TDD RED reproduced the missing setter; focused GREEN passed 19/19 per variant; fresh
+  full JVM passed 538/538 per variant; lint remained 0 errors / 26 warnings per
+  variant; dependency/toolchain, three assemblies, Python 102 with one environmental
+  hardlink skip, Go, Android artifacts and release fail-closed gates passed.
+- No physical geolocation, portal or device E2E is claimed.

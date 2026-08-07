@@ -38,6 +38,7 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
             allowUniversalAccessFromFileURLs = false
             javaScriptCanOpenWindowsAutomatically = false
             setSupportMultipleWindows(false)
+            setGeolocationEnabled(false)
             mediaPlaybackRequiresUserGesture = true
         }
     }

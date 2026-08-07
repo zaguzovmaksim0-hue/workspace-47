@@ -153,6 +153,18 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - ejecutar la familia WebView/navigation/WebMessage en Debug y QA y mantener el E2E
   físico del navegador/portal como gate separado.
 
+### TrustedJuntaWebView capability-hardening regressions
+
+- production source contiene explícitamente `setGeolocationEnabled(false)`;
+- el manifest principal no declara `ACCESS_COARSE_LOCATION` ni
+  `ACCESS_FINE_LOCATION`;
+- `JuntaWebChromeClient.onGeolocationPermissionsShowPrompt` conserva
+  `callback.invoke(origin, false, false)` y `onPermissionRequest` conserva `deny()`;
+- `TrustedJuntaWebViewTest` mantiene mixed content, file/content access, ventanas y
+  media autoplay en sus estados fail-closed existentes;
+- ejecutar source/settings regressions en Debug y QA. El comportamiento físico de
+  geolocalización queda fuera del claim automatizado.
+
 ### TriPhaseClientTest
 
 - request exacto derivado de fixture observada;

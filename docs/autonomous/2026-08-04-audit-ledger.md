@@ -1291,3 +1291,43 @@ absent from sanitized diagnostics. No APK installation/launch, device control,
 authenticated portal interaction, credential/private-certificate use, real signature,
 upload, payment or administrative submission occurred; physical portal/device E2E is
 not claimed.
+
+## Finding G21-01 — explicit WebView geolocation disable — 2026-08-07
+
+**Finding.** The approved browser hardening plan requires WebView geolocation to be
+disabled, but `TrustedJuntaWebView.configureSettings()` did not call
+`WebSettings.setGeolocationEnabled(false)`. Android's `WebSettings` API documents the
+geolocation setting default as `true` and separately requires app location permission
+plus a `WebChromeClient.onGeolocationPermissionsShowPrompt(...)` implementation for a
+page to use the API. The application already requested neither
+`ACCESS_COARSE_LOCATION` nor `ACCESS_FINE_LOCATION`, and `JuntaWebChromeClient`
+explicitly replied to the geolocation prompt with `allow=false, retain=false`.
+Accordingly this was a missing defense-in-depth/configuration invariant, not evidence of
+a current location disclosure.
+
+**TDD.** RED `job_20260807_000337_d952a714` ran only
+`BrowserSecurityRegressionTest.trustedWebViewExplicitlyDisablesGeolocation` against
+unchanged production and failed 1/1 on the missing explicit setter. The minimum fix adds
+exactly `setGeolocationEnabled(false)` inside the existing `settings.apply` block; no
+other production file or WebView setting changed. Focused GREEN
+`job_20260807_000642_b53b1105` passed 19/19 Debug and 19/19 QA across
+`BrowserSecurityRegressionTest` and `TrustedJuntaWebViewTest`.
+
+**Verification.** Fresh runtime-lock/core/AAPT2 plus full JVM
+`job_20260807_001123_3f7a18b3` executed 63/63 tasks and passed Debug 538/538 and QA
+538/538, zero failures/errors/skips. Lint/build `job_20260807_001945_02964833`
+executed 124/124 tasks, reported 0 lint errors / 26 warnings per variant, and passed
+Debug/QA/QA-AndroidTest assemblies. APK SHA-256: Debug
+`d5c403511ebf626653294765af932ecd1af15130dd0d375cdfd2252b1226fc3f`, QA
+`1bc8cba1c9f5cda1152ec81de0edd1b9144196405501aa5cb621bf66b04aa5a0`, QA
+AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Python/Go/artifact/release `job_20260807_002844_33f907ea` passed 102 Python tests
+with one environmental hardlink skip, Go test/vet/build, Android artifact verification
+and release-signing fail-closed; generated relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed
+and release APK count is zero. Pre-evidence review `job_20260807_003157_3a70d376`
+passed exact four-file scope, `git diff --check`, sensitive-data and unsafe WebView/TLS
+scans, proved the production diff is one setter only, confirmed location permissions
+remain absent and the WebChrome geolocation deny callback remains present. No APK was
+installed/launched and no device, portal, credential, certificate or signing action was
+performed.

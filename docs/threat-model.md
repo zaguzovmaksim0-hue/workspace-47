@@ -302,6 +302,20 @@ encoded path, legacy/subframe/wrong-source y consumo único; tests del request
 handler para RSA con issuer coincidente y rechazo de issuer vacío; registry tests
 que demuestran ausencia completa del profile/origins en release.
 
+### T14. Contenido WebView solicita geolocalización o capacidad del dispositivo
+
+**Riesgo:** contenido remoto intenta convertir una capacidad WebView opcional en acceso
+a ubicación u otros recursos del dispositivo.
+**Controles:** `TrustedJuntaWebView` desactiva explícitamente geolocalización con
+`setGeolocationEnabled(false)`; el manifest no declara `ACCESS_COARSE_LOCATION` ni
+`ACCESS_FINE_LOCATION`; `JuntaWebChromeClient` rechaza tanto el prompt específico de
+geolocalización como `PermissionRequest` genérico. File/content access y ventanas
+múltiples siguen desactivados de forma independiente.
+**Verificación:** source regression exige el setter explícito; pre-commit scan comprueba
+la ausencia de permisos location y conserva el callback `allow=false, retain=false`;
+lint/build compilan también el contrato instrumentado. No se afirma E2E físico de
+geolocalización.
+
 ## 5. Decisiones explícitas
 
 - No localhost WSS, puertos 63117/63118/63119/17629, CA local ni trust bypass.
