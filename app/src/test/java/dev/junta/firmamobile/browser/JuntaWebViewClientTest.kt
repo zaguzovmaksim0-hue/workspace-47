@@ -133,10 +133,46 @@ class JuntaWebViewClientTest {
         assertTrue(ofvirtualClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
 
         assertEquals(
-            listOf("blocked:INSECURE_HTTP", "blocked:INSECURE_HTTP"),
+            listOf("blocked:INSECURE_HTTP"),
             ofvirtualCallbacks.events,
         )
         assertTrue(shadowOf(webView).lastLoadedUrl.isNullOrEmpty())
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun subframeAndLegacyBlockedNavigationCannotReachApplicationCallback() {
+        val frameCallbacks = RecordingBrowserCallbacks()
+        val frameLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        val frameClient = JuntaWebViewClient(
+            callbacks = frameCallbacks,
+            logger = frameLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-ofvirtual")),
+            currentPageUrl = {
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+            },
+        )
+        val insecure =
+            "http://ws072.juntadeandalucia.es/ofvirtual/auth/legacyReturn?token=frame-secret"
+        val crossProfile = "https://reg.redsara.es/es/?token=cross-frame-secret#fragment"
+        val unsupported = "custom-scheme://host/path?token=scheme-frame-secret"
+        val legacy = "https://reg.redsara.es/es/?token=legacy-frame-secret"
+
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(insecure)))
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(crossProfile)))
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(unsupported)))
+        assertTrue(frameClient.shouldOverrideUrlLoading(webView, legacy))
+
+        assertEquals(emptyList<String>(), frameCallbacks.events)
+        assertTrue(shadowOf(webView).lastLoadedUrl.isNullOrEmpty())
+        val exported = frameLogger.exportText()
+        assertTrue(exported.contains("reason=INSECURE_HTTP"))
+        assertTrue(exported.contains("reason=CROSS_PROFILE_NAVIGATION"))
+        assertTrue(exported.contains("reason=UNSUPPORTED_SCHEME"))
+        assertTrue(exported.contains("main_frame=false"))
+        assertFalse(exported.contains("frame-secret"))
     }
 
     @Test
@@ -585,7 +621,7 @@ class JuntaWebViewClientTest {
         val subframeResult = carneJovenClient.shouldOverrideUrlLoading(webView, subframeRequest(ws235Target))
         assertTrue(subframeResult)
         assertEquals(null, capturedAuthorizedTarget)
-        assertEquals(listOf("blocked:CROSS_PROFILE_NAVIGATION"), carneJovenCallbacks.events)
+        assertEquals(emptyList<String>(), carneJovenCallbacks.events)
 
         val legacyCallbacks = RecordingBrowserCallbacks()
         val legacyClient = JuntaWebViewClient(
@@ -601,7 +637,7 @@ class JuntaWebViewClientTest {
         @Suppress("DEPRECATION")
         val legacyResult = legacyClient.shouldOverrideUrlLoading(webView, ws235Target)
         assertTrue(legacyResult)
-        assertEquals(listOf("blocked:CROSS_PROFILE_NAVIGATION"), legacyCallbacks.events)
+        assertEquals(emptyList<String>(), legacyCallbacks.events)
     }
 
     private fun request(rawUrl: String, method: String = "GET") = object : WebResourceRequest {

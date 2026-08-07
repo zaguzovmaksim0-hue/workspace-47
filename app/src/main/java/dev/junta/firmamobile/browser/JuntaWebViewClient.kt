@@ -110,7 +110,9 @@ class JuntaWebViewClient(
                         isMainFrame = isModernMainFrame,
                         method = method,
                     )
-                    callbacks.onNavigationBlocked(NavigationBlockReason.INSECURE_HTTP)
+                    if (isModernMainFrame) {
+                        callbacks.onNavigationBlocked(NavigationBlockReason.INSECURE_HTTP)
+                    }
                 } else {
                     val upgradedUrl = decision.uri.toString()
                     logger.recordNavigationEvent(
@@ -170,7 +172,9 @@ class JuntaWebViewClient(
                     isMainFrame = isModernMainFrame,
                     method = method,
                 )
-                callbacks.onNavigationBlocked(decision.reason)
+                if (isModernMainFrame) {
+                    callbacks.onNavigationBlocked(decision.reason)
+                }
                 true
             }
         }

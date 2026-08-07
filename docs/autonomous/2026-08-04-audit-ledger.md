@@ -1331,3 +1331,43 @@ scans, proved the production diff is one setter only, confirmed location permiss
 remain absent and the WebChrome geolocation deny callback remains present. No APK was
 installed/launched and no device, portal, credential, certificate or signing action was
 performed.
+
+## Finding G22-01 — blocked subframe callback isolation — 2026-08-07
+
+**Finding.** `JuntaWebViewClient` already consumed disallowed subframe navigation, but
+`NavigationDecision.UpgradeToHttps` and generic `NavigationDecision.Block` still called
+`onNavigationBlocked(...)` without modern main-frame ownership. `BrowserScreen` maps
+that callback to the assertive browser-level blocked notice, so iframe or deprecated
+String-callback input could alter top-level UI state despite being unable to navigate,
+launch an external activity, or reach signing. This was a frame-ownership/UI-confusion
+boundary, not an allowlist bypass.
+
+**TDD.** RED `job_20260807_194449_951b1e66` ran only
+`subframeAndLegacyBlockedNavigationCannotReachApplicationCallback` and failed 1/1 with
+actual application callbacks `[INSECURE_HTTP, CROSS_PROFILE_NAVIGATION,
+UNSUPPORTED_SCHEME, CROSS_PROFILE_NAVIGATION]`. The minimum production change adds two
+`isModernMainFrame` gates around application callback delivery; policy decisions,
+logging and consumed return values are unchanged. Existing regressions were reconciled so
+modern main-frame POST/cross-profile blocks remain positive callback controls while
+subframe/legacy paths remain consumed and silent. Focused GREEN
+`job_20260807_194829_53f2ca45` passed 43/43 Debug and 43/43 QA, zero
+failures/errors/skips.
+
+**Verification.** Fresh dependency/toolchain/full JVM
+`job_20260807_195356_8e29be36` executed 63/63 tasks and passed Debug 539/539 and QA
+539/539, zero failures/errors/skips. Lint/build `job_20260807_200103_7951a70e`
+executed 124/124 tasks, reported 0 lint errors / 26 warnings per variant and passed
+Debug/QA/QA-AndroidTest assemblies. APK SHA-256: Debug
+`00eb14ac71858a1d4900246113b8521a5777a6d43c1f4860156208b82d373884`, QA
+`8f7adf449a078b5bb025a25489a102779fe5177abce5bdb165e11de46ed31ed7`, QA
+AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Python/Go/artifact/release `job_20260807_200735_f0f9c26a` passed 102 Python tests
+with one environmental hardlink skip, Go test/vet/build, Android artifact verification
+and release-signing fail-closed; generated relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed
+and release APK count is zero. Pre-evidence review `job_20260807_200936_9ca16e8c`
+passed exact four-file scope, `git diff --check`, sensitive-data and unsafe WebView/TLS
+scans, proved `JuntaNavigationPolicy` unchanged and production scope limited to two
+callback gates with main-frame callbacks retained. No APK installation/launch, device
+control, portal interaction, credential/certificate use, real signing, upload, payment or
+submission occurred.

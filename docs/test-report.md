@@ -2717,3 +2717,28 @@ timing/interruption or real-device visual correctness; those remain manual gates
   Chrome geolocation-deny checks PASS.
 - Claim is defense in depth only: automated evidence proves the explicit WebSettings
   disablement. It does not prove a prior location leak or physical-device behavior.
+
+## G22-01 — blocked subframe callback isolation — 2026-08-07
+
+- RED `job_20260807_194449_951b1e66`: 1 Debug regression, 1 expected failure; four
+  non-main-frame blocked paths reached `onNavigationBlocked` while remaining consumed.
+- Minimum production change: two `isModernMainFrame` callback gates in
+  `JuntaWebViewClient`; `JuntaNavigationPolicy`, URL decisions, diagnostic logging and
+  block/consume return values are unchanged.
+- Focused GREEN `job_20260807_194829_53f2ca45`: 43/43 Debug and 43/43 QA, zero
+  failures/errors/skips. Modern main-frame block callbacks remain positive controls.
+- Runtime-lock/core/AAPT2 + full JVM `job_20260807_195356_8e29be36`: 63/63 tasks;
+  Debug 539/539 and QA 539/539, zero failures/errors/skips.
+- Lint/build `job_20260807_200103_7951a70e`: 124/124 tasks; 0 errors / 26 warnings
+  per variant; Debug, QA and QA AndroidTest assemblies PASS. APK SHA-256: Debug
+  `00eb14ac71858a1d4900246113b8521a5777a6d43c1f4860156208b82d373884`, QA
+  `8f7adf449a078b5bb025a25489a102779fe5177abce5bdb165e11de46ed31ed7`, QA
+  AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Python/Go/artifact/release `job_20260807_200735_f0f9c26a`: Python 102 PASS with one
+  environmental hardlink skip; Go test/vet/build, Android artifact verification and
+  release fail-closed PASS; generated relay removed; release APK count zero.
+- Pre-evidence `job_20260807_200936_9ca16e8c`: exact scope, whitespace,
+  sensitive/unsafe-pattern, unchanged-navigation-policy and two-gate production-scope
+  checks PASS.
+- Claim is limited to application/UI callback ownership. The underlying subframe/legacy
+  navigation was already blocked fail-closed before this remediation.

@@ -316,6 +316,19 @@ la ausencia de permisos location y conserva el callback `allow=false, retain=fal
 lint/build compilan también el contrato instrumentado. No se afirma E2E físico de
 geolocalización.
 
+### T15. Un subframe bloqueado altera el estado UI de nivel superior
+
+**Riesgo:** iframe o callback WebView legacy no puede navegar por una decisión fail-closed,
+pero provoca `onNavigationBlocked` y con ello un aviso assertive de nivel superior que el
+usuario puede interpretar como fallo de su navegación principal.
+**Controles:** `JuntaWebViewClient` consume y registra todos los blocks como antes, pero
+solo una petición moderna `isForMainFrame=true` puede publicar `onNavigationBlocked` a la
+aplicación. Los paths subframe/legacy no reciben `loadUrl`, external handoff ni native
+Afirma y tampoco modifican `blockedReason`. `JuntaNavigationPolicy` permanece sin cambios.
+**Verificación:** regression cubre HTTP downgrade subframe, cross-profile HTTPS, scheme
+no soportado y callback String deprecated; controles main-frame conservan los callbacks
+positivos y los diagnósticos negativos no retienen query/fragment canaries.
+
 ## 5. Decisiones explícitas
 
 - No localhost WSS, puertos 63117/63118/63119/17629, CA local ni trust bypass.

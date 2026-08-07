@@ -1262,3 +1262,23 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   verification of the containing commit, continue another independent privacy,
   lifecycle/concurrency, certificate/storage/logging, UX/accessibility or supply-chain
   audit. Physical AEAT F-03 and TalkBack/visual gates remain manual/external.
+
+## Autonomous audit G22-01 — blocked subframe callback isolation — 2026-08-07
+
+- Reproduced a frame-ownership/UI side effect after G19/G20: blocked subframe and legacy
+  navigation remained consumed, but `UpgradeToHttps`/generic `Block` could still reach
+  `onNavigationBlocked`, which drives the top-level assertive browser notice.
+- RED `job_20260807_194449_951b1e66` failed 1/1 with four blocked callbacks. Minimum
+  fix adds two `isModernMainFrame` gates; `JuntaNavigationPolicy` and navigation return
+  behavior are unchanged. Focused GREEN passed 43/43 Debug and 43/43 QA.
+- Fresh full JVM passed 539/539 per variant; lint 0 errors / 26 warnings per variant;
+  dependency/toolchain and all three non-release assemblies passed. Python 102 with one
+  environmental hardlink skip, Go test/vet/build, Android artifact and release
+  fail-closed gates passed. APK SHA-256: Debug
+  `00eb14ac71858a1d4900246113b8521a5777a6d43c1f4860156208b82d373884`, QA
+  `8f7adf449a078b5bb025a25489a102779fe5177abce5bdb165e11de46ed31ed7`, QA
+  AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Pre-evidence exact-scope/diff/security checks passed; policy remained unchanged;
+  generated relay removed and release APK count is zero. After exact remote verification
+  of the containing commit, continue another independent audit line. Physical AEAT F-03
+  and TalkBack/visual gates remain external/manual.

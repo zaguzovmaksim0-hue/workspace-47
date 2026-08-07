@@ -795,3 +795,18 @@ requires a separate design/plan and observed TDD RED.
   variant; dependency/toolchain, three assemblies, Python 102 with one environmental
   hardlink skip, Go, Android artifacts and release fail-closed gates passed.
 - No physical geolocation, portal or device E2E is claimed.
+
+## Autonomous blocked-subframe callback isolation — 2026-08-07 (G22-01)
+
+- Blocked subframe and deprecated-callback navigation could not escape the navigation
+  policy, but could still publish `onNavigationBlocked(...)`, allowing iframe input to
+  create a top-level assertive blocked-navigation notice.
+- `JuntaWebViewClient` now publishes blocked-navigation application callbacks only for
+  modern main-frame requests. Non-main-frame paths remain consumed and sanitized-log
+  the original reason. `JuntaNavigationPolicy`, G19 Afirma delivery, G20 external
+  handoff, TLS, WebMessage and signing behavior are unchanged.
+- RED reproduced four callback deliveries; focused GREEN passed 43/43 per variant; fresh
+  full JVM passed 539/539 per variant; lint remained 0 errors / 26 warnings per variant;
+  dependency/toolchain, three assemblies, Python 102 with one environmental hardlink
+  skip, Go, Android artifacts and release fail-closed gates passed.
+- This is UI/trust-boundary isolation, not evidence of a prior navigation-policy bypass.

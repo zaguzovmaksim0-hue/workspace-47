@@ -153,6 +153,18 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - ejecutar la familia WebView/navigation/WebMessage en Debug y QA y mantener el E2E
   físico del navegador/portal como gate separado.
 
+### JuntaWebViewClient blocked-navigation callback ownership regressions
+
+- main-frame POST que no puede usar el upgrade HTTPS sigue publicando
+  `INSECURE_HTTP`;
+- main-frame cross-profile/invalid/Play block mantiene el callback de aplicación;
+- HTTP downgrade subframe, cross-profile HTTPS subframe y scheme no soportado subframe
+  se consumen y registran sin `onNavigationBlocked`;
+- callback String deprecated tampoco puede publicar un blocked-navigation callback;
+- los negativos conservan `main_frame=false` y la razón original en diagnóstico
+  sanitizado sin query/fragment canaries;
+- `JuntaNavigationPolicy` debe permanecer fuera del diff de esta familia.
+
 ### TrustedJuntaWebView capability-hardening regressions
 
 - production source contiene explícitamente `setGeolocationEnabled(false)`;
