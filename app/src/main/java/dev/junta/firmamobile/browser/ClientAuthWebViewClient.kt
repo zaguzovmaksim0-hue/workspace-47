@@ -192,7 +192,6 @@ internal class ClientAuthWebViewClient(
     override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
         handler.cancel()
         requestHandler.abandon()
-        if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
     }
 
     override fun onRenderProcessGone(

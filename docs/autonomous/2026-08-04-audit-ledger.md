@@ -1379,3 +1379,49 @@ submission occurred.
 **TDD.** RED `job_20260807_202101_b4a1c845` failed 1/1 because the subframe produced `[error:SAFE_BROWSING]` while `backToSafety` succeeded. Minimum production change adds `request.isForMainFrame` only to the application-error predicate; `callback.backToSafety(true)` remains unconditional and first, diagnostic logging unchanged. Focused GREEN `job_20260807_202432_3e0878c4` passed 43/43 Debug and QA.
 
 **Verification.** Full dependency/toolchain/JVM `job_20260807_202910_d5948958` passed 63/63 tasks and 539/539 Debug + 539/539 QA. Lint/build `job_20260807_203651_fe397862` passed 124/124 tasks, 0 errors / 26 warnings per variant; APK SHA-256 Debug `011909d3945c7e62c3e1240d008a26fe5d679e59cf19cc3492d2cce2c2715176`, QA `d546cc59b2f2b376f605b62ecd535b4ee933242a7fde02826f49ce61bc5a7af7`, QA AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`. Python/Go/artifact/release `job_20260807_204415_280a3cff` passed 102 Python tests with one environmental hardlink skip, Go test/vet/build, Android artifact verification and release fail-closed; relay removed and release APK count zero.
+
+## Finding G24-01 — SSL error UI ownership isolation — 2026-08-08
+
+**Finding.** Android `WebViewClient.onReceivedSslError(WebView, SslErrorHandler,
+SslError)` exposes no `WebResourceRequest` and therefore no authoritative
+`isForMainFrame` signal. The platform contract describes an SSL error while loading a
+resource and requires the host to choose `cancel()` or `proceed()`; the secure choice is
+always `cancel()`. Both active-WebView clients nevertheless promoted every such callback
+to `BrowserErrorCode.SSL_ERROR`, and `BrowserScreen` maps that application callback to a
+top-level assertive error/retry state. Active WebView ownership does not prove top-level
+frame ownership, and `SslError.url` is not a frame-ownership primitive. This is a
+frame/UI ownership hardening defect, not a TLS-validation bypass.
+
+**TDD.** RED `job_20260808_065907_5c6f66a3` ran two Debug regressions against unchanged
+production and failed 2/2 exactly on `expected:<[]> but was:<[error:SSL_ERROR]>`. The
+preceding assertions established normal `handler.cancel()`/no `proceed()` and dedicated
+Client TLS cancellation/cleanup behavior. The minimum production fix removes only the
+two `callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)` deliveries. Normal
+`handler.cancel()` remains unconditional and first; its sanitized
+`SSL_ERROR_CANCELLED` diagnostic remains. Dedicated Client TLS still calls
+`handler.cancel()` first and then unconditionally `requestHandler.abandon()`, so an SSL
+error cannot preserve the one-shot grant. No URL heuristic was added.
+
+**Verification.** Focused GREEN `job_20260808_070120_e4fa34e2`, with exact class-report
+aggregation `job_20260808_070439_a2246eef`, passed 28/28 Debug and 28/28 QA. Fresh
+runtime-lock/core/AAPT2 plus full JVM `job_20260808_070459_04773656` executed 63/63
+tasks and passed Debug 540/540 and QA 540/540, zero failures/errors/skips. Lint/build
+`job_20260808_070942_1ac8fa05` executed 124/124 tasks, reported 0 lint errors / 26
+warnings per variant, and passed Debug/QA/QA-AndroidTest assemblies. APK SHA-256: Debug
+`b97fe660c4444fd5b9f2be810a07bd919a6ee491b978d154ec540bd60b61032d`, QA
+`cb731a7a5e4ba143a42502a3a7c9c76a9b92510a8fbec1e6fa92918903d150d4`, QA
+AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Python/Go/artifact/release `job_20260808_071433_6302eb28` substantively passed 102
+Python tests with one environmental hardlink skip, Go test/vet/build, Android artifact
+verification and release-signing fail-closed. That wrapper's exit 1 was diagnosed as its
+post-check calling `find` on the intentionally absent release directory under
+`pipefail`, after all substantive gates had passed; cleanup
+`job_20260808_071710_97062e0e` removed generated relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` and confirmed
+release APK count zero. Pre-evidence review `job_20260808_071753_187af180` passed exact
+scope, `git diff --check`, cancel-first/Client-TLS-abandon invariants, no SSL `proceed`,
+no navigation-policy diff, sensitive-addition scan, relay absence and zero release APKs.
+Post-evidence focused/policy `job_20260808_071939_62390312` passed 28/28 Debug and 28/28 QA plus CiPolicyTest 20/20.
+No APK installation/launch, device control, authenticated portal interaction,
+credential/private-certificate use, real signing, upload, payment or administrative
+submission occurred.

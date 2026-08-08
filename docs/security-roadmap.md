@@ -816,3 +816,17 @@ requires a separate design/plan and observed TDD RED.
 - Safe Browsing rejection was already fail-closed, but iframe hits could surface a top-level browser error.
 - `backToSafety(true)` remains unconditional; only active main-frame hits now publish `SAFE_BROWSING` to application UI.
 - Navigation/TLS/signing/profile/dependency policies are unchanged; full automated gates passed.
+
+## Autonomous SSL error UI ownership isolation — 2026-08-08 (G24-01)
+
+- `onReceivedSslError` has no authoritative main-frame metadata, so active-WebView
+  ownership alone no longer promotes the callback into top-level browser error state.
+- Both WebView clients still call `SslErrorHandler.cancel()` unconditionally and first;
+  the normal client keeps its sanitized cancellation diagnostic and the dedicated Client
+  TLS client still abandons the one-shot grant unconditionally.
+- RED reproduced both top-level UI deliveries; focused GREEN passed 28/28 per variant,
+  full JVM 540/540 per variant, lint remained 0 errors / 26 warnings, and all Android,
+  Python, Go, artifact and release fail-closed gates passed.
+- No TLS validation, hostname/origin/path policy, navigation, signing, profile, release or
+  dependency rule was weakened. Main-frame-specific UI must not be inferred from
+  `SslError.url`; physical WebView error rendering remains a manual/device observation.

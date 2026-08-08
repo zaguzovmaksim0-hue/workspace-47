@@ -336,6 +336,24 @@ positivos y los diagnósticos negativos no retienen query/fragment canaries.
 **Controles:** `backToSafety(true)` es incondicional; `SAFE_BROWSING` solo llega a la aplicación para el WebView activo y `isForMainFrame=true`. Subframes siguen bloqueados y diagnosticados sin `proceed`.
 **Verificación:** main-frame positivo, subframe negativo y stale-owner fail-closed; full Android/Python/Go gates.
 
+
+### T17. Un SSL error sin ownership de frame altera el UI superior
+
+**Riesgo:** `onReceivedSslError` no entrega `WebResourceRequest` ni
+`isForMainFrame`; si una aplicación trata cualquier callback del WebView activo como
+error top-level, un recurso con ownership no demostrada puede activar un aviso/retry de
+nivel superior.
+**Controles:** ambos clientes llaman `SslErrorHandler.cancel()` de forma incondicional y
+antes de cualquier otra acción. El cliente normal conserva solo diagnóstico sanitizado;
+el cliente Client TLS además abandona incondicionalmente el grant one-shot. El callback
+SSL no publica `BrowserErrorCode.SSL_ERROR` a la aplicación porque no puede demostrar
+main-frame ownership, y no se usa `SslError.url` como sustituto. Los callbacks modernos
+con `WebResourceRequest` conservan gates explícitos `isForMainFrame`.
+**Verificación:** RED en ambos clientes, asserts de `cancel`/no-`proceed`, abandono del
+grant y request posterior rechazado; full Android/Python/Go/artifact/release gates. La
+renderización física de error WebView sigue siendo gate manual y no modifica el
+fail-closed TLS contract.
+
 ## 5. Decisiones explícitas
 
 - No localhost WSS, puertos 63117/63118/63119/17629, CA local ni trust bypass.

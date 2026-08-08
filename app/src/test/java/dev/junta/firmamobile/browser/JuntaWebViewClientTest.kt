@@ -446,7 +446,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun sslErrorsAlwaysCancelAndNeverProceed() {
+    fun sslErrorsAlwaysCancelWithoutUnownedApplicationError() {
         val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
         val sslError = Shadow.newInstanceOf(SslError::class.java)
 
@@ -455,7 +455,7 @@ class JuntaWebViewClientTest {
         val shadowHandler = shadowOf(handler)
         assertTrue(shadowHandler.wasCancelCalled())
         assertFalse(shadowHandler.wasProceedCalled())
-        assertEquals(listOf("error:SSL_ERROR"), callbacks.events)
+        assertEquals(emptyList<String>(), callbacks.events)
         assertTrue(logger.exportText().contains("event=SSL_ERROR_CANCELLED"))
     }
 

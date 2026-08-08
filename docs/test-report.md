@@ -2749,3 +2749,34 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - Fix: only active main-frame Safe Browsing hits publish application error; `backToSafety(true)` remains unconditional.
 - Focused GREEN 43/43 per variant; full JVM 539/539 per variant; lint/build 0 errors / 26 warnings; Python 102 with one environmental skip; Go/artifact/release fail-closed PASS.
 - APK SHA-256: Debug `011909d3945c7e62c3e1240d008a26fe5d679e59cf19cc3492d2cce2c2715176`; QA `d546cc59b2f2b376f605b62ecd535b4ee933242a7fde02826f49ce61bc5a7af7`; QA AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+
+## G24-01 — SSL error UI ownership isolation — 2026-08-08
+
+- API/implementation audit established that `onReceivedSslError` provides no
+  `WebResourceRequest.isForMainFrame`; both active clients nevertheless emitted
+  `BrowserErrorCode.SSL_ERROR` into top-level application state.
+- RED `job_20260808_065907_5c6f66a3`: 2 Debug regressions, 2 expected failures, both
+  exactly `expected:<[]> but was:<[error:SSL_ERROR]>`; cancellation/cleanup assertions
+  preceding the UI assertion passed.
+- Minimum fix deletes only the two SSL application-error deliveries. `handler.cancel()`
+  remains first in both clients; normal sanitized logging and dedicated Client TLS
+  `requestHandler.abandon()` remain.
+- Focused GREEN `job_20260808_070120_e4fa34e2` / exact parser
+  `job_20260808_070439_a2246eef`: 28/28 Debug and 28/28 QA, zero failures/errors/skips.
+- Dependency/toolchain/full JVM `job_20260808_070459_04773656`: 63/63 tasks; Debug
+  540/540 and QA 540/540, zero failures/errors/skips.
+- Lint/build `job_20260808_070942_1ac8fa05`: 124/124 tasks; 0 errors / 26 warnings per
+  variant; all three non-release assemblies PASS. APK SHA-256: Debug
+  `b97fe660c4444fd5b9f2be810a07bd919a6ee491b978d154ec540bd60b61032d`, QA
+  `cb731a7a5e4ba143a42502a3a7c9c76a9b92510a8fbec1e6fa92918903d150d4`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Python/Go/artifact/release `job_20260808_071433_6302eb28`: Python 102 PASS with one
+  environmental hardlink skip; Go test/vet/build, Android artifact verification and
+  release-signing fail-closed PASS. The job's final exit 1 was post-gate wrapper logic:
+  `find` targeted the absent release directory under `pipefail`; no substantive check
+  failed. `job_20260808_071710_97062e0e` removed the generated relay and confirmed zero
+  release APKs. Pre-evidence `job_20260808_071753_187af180` passed exact-scope,
+  whitespace, sensitive-addition and unsafe TLS/WebView checks.
+- Post-evidence focused/policy `job_20260808_071939_62390312` passed 28/28 Debug, 28/28 QA and CiPolicyTest 20/20.
+- No APK/device/portal/credential/private-certificate/real-signing/upload/payment/
+  submission action occurred. Physical error-page/visual behavior is not claimed.

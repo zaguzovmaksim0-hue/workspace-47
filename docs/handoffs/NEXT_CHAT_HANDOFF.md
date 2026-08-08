@@ -1288,3 +1288,24 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
 - RED reproduced subframe `SAFE_BROWSING` top-level UI delivery while platform rejection already succeeded.
 - Minimum fix gates only application error delivery on `request.isForMainFrame`; `backToSafety(true)` remains unconditional and first.
 - Focused 43/43 per variant, full JVM 539/539 per variant, lint/build, Python/Go/artifact/release gates passed; relay removed and release APK count zero.
+
+## Autonomous audit G24-01 — SSL error UI ownership isolation — 2026-08-08
+
+- Android's SSL callback has no `WebResourceRequest.isForMainFrame`. Both normal and
+  dedicated Client TLS WebView clients previously converted every active-WebView SSL
+  callback into top-level `SSL_ERROR` UI; this was ownership ambiguity, not a TLS bypass.
+- RED `job_20260808_065907_5c6f66a3` failed 2/2 exactly on `[error:SSL_ERROR]`. Minimum
+  remediation removes only those two application callbacks. `handler.cancel()` stays
+  unconditional/first; normal sanitized logging and Client TLS grant abandonment remain.
+- Focused GREEN 28/28 per variant; fresh full JVM 540/540 per variant; lint 0 errors /
+  26 warnings; dependency/toolchain and all three non-release assemblies passed. Python
+  102 with one environmental hardlink skip, Go test/vet/build, Android artifact and
+  release-signing fail-closed all passed. Generated relay removed; release APK count zero.
+- The combined Python/Go wrapper exited 1 only in a post-gate `find` against an absent
+  release directory under `pipefail`; all substantive checks had already passed and the
+  cleanup/zero-release state was separately verified.
+- Post-evidence focused/policy `job_20260808_071939_62390312` passed 28/28 per Android variant and CiPolicyTest 20/20.
+- After remote verification of the containing commit, start a fresh independent audit
+  line rather than extending this SSL callback change. Preserve the persisted-unlock
+  cross-restart trust-time decision, physical AEAT F-03 Client TLS E2E, real-device
+  TalkBack/visual checks and supported-Linux Go race as separate external/manual gates.

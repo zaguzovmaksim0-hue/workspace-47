@@ -453,3 +453,17 @@ el job Linux debe seguir siendo obligatorio.
 - Revalidate the same monotonic grant after asynchronous client-certificate preference clearing and immediately before `ClientCertRequest.proceed`; civil time is permitted only for X.509 validity.
 - Preserve hostile profile/origin/path, host/port, epoch, issuer, key algorithm, keyUsage/EKU and one-shot cleanup regressions.
 - Run focused Debug/QA Client TLS suites plus full Debug/QA JVM, lint, Debug/QA/QA-AndroidTest assemblies, dependency/toolchain gates, full Python, Go test/vet/build, Android artifact verification and release-signing fail-closed.
+
+## G24-01 — SSL callback UI ownership gate — 2026-08-08
+
+- For normal WebView SSL callbacks, require unconditional `handler.cancel()`, forbid
+  `handler.proceed()`, retain sanitized cancellation diagnostics, and forbid promotion to
+  top-level `onBrowserError` because this callback has no `isForMainFrame` metadata.
+- For dedicated Client TLS SSL callbacks, additionally require unconditional grant
+  abandonment/one-shot cleanup before any later certificate request can proceed.
+- Do not substitute `SslError.url` equality for frame ownership. Modern resource/error
+  callbacks that expose `WebResourceRequest` keep their existing explicit
+  `isForMainFrame` UI gates.
+- Run focused Debug/QA browser + Client TLS suites, full Debug/QA JVM,
+  dependency/toolchain, lint, Debug/QA/QA-AndroidTest assemblies, Python, Go
+  test/vet/build, Android artifact verification and release-signing fail-closed.

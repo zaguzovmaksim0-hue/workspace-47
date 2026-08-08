@@ -2,8 +2,10 @@ package dev.junta.firmamobile.browser
 
 import android.content.Context
 import android.net.Uri
+import android.net.http.SslError
 import android.webkit.ClientCertRequest
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.SslErrorHandler
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
@@ -22,9 +24,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
+import org.robolectric.shadow.api.Shadow
 
 @RunWith(RobolectricTestRunner::class)
 @ConscryptMode(ConscryptMode.Mode.OFF)
@@ -91,6 +95,30 @@ class ClientAuthWebViewClientTest {
         client.onReceivedClientCertRequest(webView, secondRequest)
         assertEquals(0, secondRequest.proceeds)
         assertEquals(1, secondRequest.ignores)
+        assertEquals(1, clears.get())
+    }
+
+    @Test
+    fun sslErrorCancelsAndAbandonsGrantWithoutUnownedApplicationError() {
+        val epoch = AtomicInteger(20)
+        val clears = AtomicInteger()
+        val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
+        val client = client(epoch, callbacks, clears)
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val sslError = Shadow.newInstanceOf(SslError::class.java)
+
+        client.onReceivedSslError(webView, handler, sslError)
+
+        val shadowHandler = shadowOf(handler)
+        assertTrue(shadowHandler.wasCancelCalled())
+        assertFalse(shadowHandler.wasProceedCalled())
+        assertEquals(1, clears.get())
+        assertEquals(emptyList<String>(), callbacks.events)
+
+        val request = RecordingRequest()
+        client.onReceivedClientCertRequest(webView, request)
+        assertEquals(0, request.proceeds)
+        assertEquals(1, request.ignores)
         assertEquals(1, clears.get())
     }
 
@@ -175,7 +203,9 @@ class ClientAuthWebViewClientTest {
         override fun onNavigationBlocked(reason: NavigationBlockReason) {
             events += "blocked:${reason.name}"
         }
-        override fun onBrowserError(error: BrowserErrorCode) = Unit
+        override fun onBrowserError(error: BrowserErrorCode) {
+            events += "error:${error.name}"
+        }
         override fun onRenderProcessGone(view: WebView) {
             events += "renderer"
         }

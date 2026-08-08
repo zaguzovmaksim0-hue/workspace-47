@@ -232,7 +232,6 @@ class JuntaWebViewClient(
     ) {
         handler.cancel()
         logger.recordBrowserEvent(DiagnosticEventCode.SSL_ERROR_CANCELLED)
-        if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
     }
 
     @RequiresApi(Build.VERSION_CODES.O_MR1)
