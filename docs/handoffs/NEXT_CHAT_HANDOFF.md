@@ -1362,3 +1362,23 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   supported-Linux Go race. Persisted certificate-unlock cross-restart trust-time semantics
   remains a product/security design decision.
 - Post-evidence `job_20260808_104522_fbc787af` passed focused Debug/QA Client TLS tests; exact class XML `job_20260808_104912_d8e853c1` was 6/6 per variant, `CiPolicyTest` passed 20/20 and `git diff --check` passed.
+
+## Autonomous audit G27-01 — certificate error live-region semantics — 2026-08-08
+
+- Reproduced a separate accessibility defect on the home/certificate surface: dynamic
+  certificate-selection/unlock error text had no live-region semantics. RED
+  `job_20260808_110244_d42572e9` failed exactly on the absent `LiveRegion` property.
+- Minimum remediation adds only `LiveRegionMode.Assertive` semantics to `CertificateError`;
+  there is no focus request, copy/layout/state/validation/storage/password/signing/network/
+  WebView/profile/release/dependency change.
+- Focused Debug+QA passed 5/5 per variant. Fresh full JVM passed 547/547 per variant; lint/build
+  passed with 0 errors / 26 warnings per variant and all three non-release assemblies.
+  Python 102 with one environmental hardlink skip, Go test/vet/build, artifact verification and
+  release-signing fail-closed all passed; relay was removed and release APK count is zero.
+- APK SHA-256: Debug `3206584a8aee6767a7bdaabae044b9c1fac0c9848bff49b1c7f6c7c81c0b2dda`;
+  QA `c005843d77c092217bd3c60c7605eeddc5216ef93a0fa801cc631997865c7214`;
+  QA AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Physical TalkBack/visual behavior remains manual evidence. After remote verification, continue
+  a fresh independent lifecycle/concurrency, accessibility or supply-chain audit; do not repeat
+  G10/G13/G27 live-region work without a new surface-specific defect.
+- Post-evidence `job_20260808_112600_4bc9515f` passed focused Debug/QA `AppRootTest` 5/5 per variant, `CiPolicyTest` 20/20 and `git diff --check`.

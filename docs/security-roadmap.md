@@ -864,3 +864,17 @@ requires a separate design/plan and observed TDD RED.
   preference barrier, certificate storage, TLS verification, signing rule or dependency
   changed. Full Android/Python/Go/artifact/release automated gates pass; physical portal
   compatibility and E2E scope remain unchanged.
+
+## Autonomous certificate-error live region — 2026-08-08 (G27-01)
+
+- Dynamic certificate-selection and unlock errors on `AppRoot` previously had no Compose
+  live-region property, so the UI provided no semantics instruction to announce the new blocking
+  failure while focus remained on the initiating action.
+- `CertificateError` now adds only `LiveRegionMode.Assertive`. Error copy, focus, visual layout,
+  certificate validation/state/storage/password handling, signing, network/WebView, portal
+  profiles, release policy and dependencies are unchanged.
+- TDD RED and focused/full gates passed: Debug/QA 547/547 JVM, lint 0 errors / 26 warnings per
+  variant, all three non-release assemblies, Python 102 with one environmental hardlink skip,
+  Go test/vet/build, Android artifacts and release fail-closed with zero release APKs.
+- Automated evidence covers the Compose semantics tree only. Physical TalkBack announcement
+  timing/interruption and visual correctness remain manual gates; no E2E/security claim expands.

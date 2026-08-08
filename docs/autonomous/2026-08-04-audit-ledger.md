@@ -1522,3 +1522,46 @@ authenticated portal interaction, credential/private-certificate use, real signi
 payment or administrative submission occurred. Physical Client TLS/portal compatibility
 claims are unchanged.
 Post-evidence verification `job_20260808_104522_fbc787af` passed focused Debug/QA Client TLS tests (6/6 per variant by `job_20260808_104912_d8e853c1`), `CiPolicyTest` 20/20 and `git diff --check`.
+
+## Finding G27-01 — certificate error announcement semantics — 2026-08-08
+
+**Reproduction.** `AppRoot` renders certificate-selection and unlock failures through
+`CertificateError`, but that dynamic `Text` had no Compose live-region property. A failed
+selection or unlock therefore changed visible state without a semantics instruction for
+assistive technology to announce the new blocking error while focus remained on the action.
+This is a distinct home/certificate surface from the G10/G13 browser-notice live-region work.
+
+**TDD and remediation.** The narrow design/plan are
+`docs/superpowers/specs/2026-08-08-certificate-error-live-region-design.md` and
+`docs/superpowers/plans/2026-08-08-certificate-error-live-region.md`. RED
+`job_20260808_110244_d42572e9` executed 30/30 Gradle tasks against unchanged production and
+failed the new `AppRootTest` at line 117 because the error node lacked the expected
+`LiveRegion`. The minimum production change adds only
+`Modifier.semantics { liveRegion = LiveRegionMode.Assertive }` to `CertificateError`.
+No focus request, copy/resource, layout, certificate state, validation, persistence, password,
+signing, network/WebView, profile/release or dependency behavior changed.
+
+**Verification.** Focused Debug+QA `job_20260808_110529_8196a66e` exited 0; XML
+`job_20260808_110936_430a3fbb` confirmed `AppRootTest` 5/5 per variant. Fresh
+runtime-lock/core/AAPT2 plus full JVM `job_20260808_110944_0ab85eb4` exited 0; XML
+aggregation `job_20260808_111518_48dd183f` confirmed Debug 547/547 and QA 547/547 with zero
+failures/errors/skips. Lint/build `job_20260808_111524_3e428e52` exited 0; summary/hash
+`job_20260808_112235_a830b108` recorded 0 errors / 26 warnings per variant and successful
+Debug, QA and QA AndroidTest assemblies. APK SHA-256: Debug
+`3206584a8aee6767a7bdaabae044b9c1fac0c9848bff49b1c7f6c7c81c0b2dda`, QA
+`c005843d77c092217bd3c60c7605eeddc5216ef93a0fa801cc631997865c7214`, QA AndroidTest
+`fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Non-Android gate `job_20260808_112245_c9471347` exited 0: Python 102 PASS with one
+environmental hardlink skip, Go test/vet/build PASS, relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` then removed,
+Android artifact verification PASS, release-signing fail-closed PASS and release APK count
+zero. Pre-evidence review `job_20260808_112427_c4088aa7` passed `git diff --check`, exact
+production/test semantic scope, protected-boundary scan, sensitive/unsafe-addition scan, relay
+absence and zero release APKs.
+
+Robolectric proves only the Compose semantics tree. Physical TalkBack announcement timing,
+interruption behavior and visual correctness remain manual gates. Threat-model wording is
+unchanged because no asset, credential flow, trust edge or externally reachable behavior was
+added. No APK installation/launch, device control, portal interaction, credential/private-
+certificate use, real signing, upload, payment or administrative submission occurred.
+Post-evidence verification `job_20260808_112600_4bc9515f` exited 0 with focused Debug/QA `AppRootTest` still 5/5 per variant, `CiPolicyTest` 20/20 and `git diff --check` PASS.

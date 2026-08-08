@@ -1,5 +1,9 @@
 package dev.junta.firmamobile.ui
 
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -92,6 +96,30 @@ class AppRootTest {
             check(submitted.contentEquals("secret-canary".toCharArray()))
         }
         rule.onNodeWithText("secret-canary").assertDoesNotExist()
+    }
+
+    @Test
+    fun certificateErrorIsAnAssertiveLiveRegion() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                AppRoot(
+                    state = CertificateUiState.Locked(
+                        reference(),
+                        null,
+                        CertificateUiError.PASSWORD_INVALID_OR_FILE,
+                    ),
+                )
+            }
+        }
+
+        rule.onNodeWithText(
+            "La contraseña no es correcta o el archivo PKCS#12 no es válido.",
+        ).assert(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.LiveRegion,
+                LiveRegionMode.Assertive,
+            ),
+        )
     }
 
     @Test

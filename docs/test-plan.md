@@ -501,3 +501,15 @@ el job Linux debe seguir siendo obligatorio.
   Debug/QA Client TLS tests plus fresh full Debug/QA JVM, runtime lock/core/AAPT2, lint,
   Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact and
   release-signing fail-closed gates.
+
+## G27-01 — certificate error live-region gate — 2026-08-08
+
+- Render `AppRoot` with a synthetic locked certificate state containing
+  `PASSWORD_INVALID_OR_FILE`; the existing visible error node must expose
+  `SemanticsProperties.LiveRegion == LiveRegionMode.Assertive`.
+- Preserve existing certificate-selection, password consumption/clearing, safe summary and action
+  tests. The accessibility change must not request focus, change error copy/layout, or alter
+  certificate state/validation/storage/signing/network/WebView/profile/release behavior.
+- Run focused Debug/QA `AppRootTest`, fresh full Debug/QA JVM plus runtime-lock/core/AAPT2 checks,
+  lint, Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact and
+  release-signing fail-closed gates. Physical TalkBack timing/interruption remains a manual gate.
