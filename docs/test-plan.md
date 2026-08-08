@@ -129,10 +129,12 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 
 - callback moderno main-frame permite `afirma://sign` válido desde el signing origin;
 - callback moderno main-frame permite embedded-Afirma `intent:` válido;
-- subframe directo `afirma:` se consume como `UNTRUSTED_AFIRMA_ORIGIN` y no entrega
-  `onAfirmaRequest`;
-- subframe embedded-Afirma `intent:` falla cerrado del mismo modo;
-- callback String deprecated no puede probar main-frame y no entrega Afirma a native;
+- subframe directo `afirma:` se consume como `UNTRUSTED_AFIRMA_ORIGIN`, no entrega
+  `onAfirmaRequest` y no publica `onNavigationBlocked` a la UI top-level;
+- subframe embedded-Afirma `intent:` falla cerrado y permanece igualmente silencioso para la
+  UI de aplicación;
+- callback String deprecated no puede probar main-frame, no entrega Afirma a native y no
+  publica un callback UI de bloqueo;
 - los negativos anteriores conservan top-level trusted como control para aislar el
   límite de frame ownership;
 - ejecutar la familia WebView/navigation/WebMessage en Debug y QA; el E2E físico del

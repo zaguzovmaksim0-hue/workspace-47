@@ -2866,3 +2866,28 @@ timing/interruption or real-device visual correctness; those remain manual gates
   `git diff --check`, sensitive/unsafe addition scan, protected-boundary scan, relay absence and
   zero release APKs all PASS. Physical TalkBack/visual behavior is not claimed by Robolectric.
 - Post-evidence `job_20260808_112600_4bc9515f`: focused Debug/QA `AppRootTest` 5/5 per variant, `CiPolicyTest` 20/20 and `git diff --check` PASS.
+
+## G28-01 — Afirma frame UI isolation — 2026-08-08
+
+- RED `job_20260808_113324_cc1c7bad`: expected Debug failures at
+  `JuntaWebViewClientTest.kt:378` and `:399`; subframe and legacy Afirma rejection still
+  emitted `blocked:UNTRUSTED_AFIRMA_ORIGIN` before production mutation.
+- Minimum fix removes only the non-main-frame Afirma `onNavigationBlocked` application
+  callback. Requests remain consumed; sanitized `UNTRUSTED_AFIRMA_ORIGIN` / `main_frame=false`
+  diagnostics remain; modern main-frame native Afirma delivery is unchanged.
+- Focused GREEN `job_20260808_113729_37d51c56`; XML parser
+  `job_20260808_114130_af278f04`: `JuntaWebViewClientTest` 23/23 per variant.
+- Fresh full JVM `job_20260808_121723_ad7a78a4` PASS; aggregation
+  `job_20260808_122208_ea86d9cc`: Debug 547/547 and QA 547/547, zero
+  failures/errors/skips.
+- Lint/build `job_20260808_114918_257f34ca` PASS; current report/hash review
+  `job_20260808_121552_89de2c70`: 0 errors / 26 warnings per variant. APK SHA-256:
+  Debug `747cf2df7dfa234d6b915d2e76b54d186a1ffd8f9fb8133912da515ebb762c01`, QA
+  `fe0723fcf202e4b8f112dbd052624e362f770575ea0be5de68dc5c0bc9a2a284`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Non-Android `job_20260808_121533_e7361b19`: Python 102 PASS with one environmental
+  hardlink skip; Go test/vet/build, Android artifact verifier and release fail-closed PASS;
+  relay removed and release APK count zero.
+- Pre-evidence `job_20260808_121552_89de2c70`: `git diff --check`, protected-scope and
+  unsafe-addition scans PASS. No device/portal/credential/private-certificate/real-signing/
+  upload/payment/submission action occurred; no physical UI/E2E claim is made.

@@ -1382,3 +1382,23 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   a fresh independent lifecycle/concurrency, accessibility or supply-chain audit; do not repeat
   G10/G13/G27 live-region work without a new surface-specific defect.
 - Post-evidence `job_20260808_112600_4bc9515f` passed focused Debug/QA `AppRootTest` 5/5 per variant, `CiPolicyTest` 20/20 and `git diff --check`.
+
+## Autonomous audit G28-01 — Afirma frame UI isolation — 2026-08-08
+
+- G19 native-delivery hardening was correct but retained one top-level UI side effect:
+  rejected subframe/legacy Afirma navigation still emitted
+  `onNavigationBlocked(UNTRUSTED_AFIRMA_ORIGIN)`.
+- G28 removes only that application callback from the non-main-frame `HandleAfirma` branch.
+  Fail-closed consumption and sanitized diagnostics remain; modern main-frame
+  `onAfirmaRequest` remains unchanged.
+- RED `job_20260808_113324_cc1c7bad`; focused GREEN 23/23 per variant; fresh full JVM
+  `job_20260808_121723_ad7a78a4` + `job_20260808_122208_ea86d9cc` = 547/547 per variant.
+  Lint/build is 0 errors / 26 warnings per variant; Python 102 with one environmental skip,
+  Go/artifact/release fail-closed gates PASS; relay removed and release APK count zero.
+- APK SHA-256: Debug `747cf2df7dfa234d6b915d2e76b54d186a1ffd8f9fb8133912da515ebb762c01`,
+  QA `fe0723fcf202e4b8f112dbd052624e362f770575ea0be5de68dc5c0bc9a2a284`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Next after atomic commit/push verification: start a fresh independent audit line; do not
+  widen this change into Afirma parser/signing/navigation policy. Persisted-unlock cross-restart
+  trust-time semantics, physical AEAT F-03, portal JavaScript-dialog compatibility,
+  real-device TalkBack/visual validation and supported-Linux Go race remain separate gates.

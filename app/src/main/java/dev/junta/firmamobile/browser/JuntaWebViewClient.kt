@@ -152,7 +152,6 @@ class JuntaWebViewClient(
                         isMainFrame = false,
                         method = method,
                     )
-                    callbacks.onNavigationBlocked(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
                 } else {
                     logger.recordAfirmaRequest(decision.request)
                     callbacks.onAfirmaRequest(decision.request)

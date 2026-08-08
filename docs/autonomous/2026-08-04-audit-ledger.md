@@ -1565,3 +1565,42 @@ unchanged because no asset, credential flow, trust edge or externally reachable 
 added. No APK installation/launch, device control, portal interaction, credential/private-
 certificate use, real signing, upload, payment or administrative submission occurred.
 Post-evidence verification `job_20260808_112600_4bc9515f` exited 0 with focused Debug/QA `AppRootTest` still 5/5 per variant, `CiPolicyTest` 20/20 and `git diff --check` PASS.
+
+## Finding G28-01 — Afirma frame UI isolation — 2026-08-08
+
+**Finding.** G19 already prevented modern subframe and deprecated String-callback Afirma
+navigation from reaching native `onAfirmaRequest`, but its rejection branch still published
+`onNavigationBlocked(UNTRUSTED_AFIRMA_ORIGIN)`. `BrowserScreen` maps that application
+callback to the top-level assertive browser notice, so a valid-looking `afirma:` or embedded
+Afirma `intent:` in an iframe could still mutate application UI despite native delivery being
+correctly denied. This is a frame/UI ownership residual, not a signing or allowlist bypass.
+
+**TDD and remediation.** Narrow design/plan:
+`docs/superpowers/specs/2026-08-08-afirma-frame-ui-isolation-design.md` and
+`docs/superpowers/plans/2026-08-08-afirma-frame-ui-isolation.md`. RED
+`job_20260808_113324_cc1c7bad` failed the two targeted Debug regressions at
+`JuntaWebViewClientTest.kt:378` and `:399` because subframe/legacy rejection still populated
+`blocked:UNTRUSTED_AFIRMA_ORIGIN`. Minimum production change deletes only that application
+callback from the non-main-frame `NavigationDecision.HandleAfirma` branch. Fail-closed
+consumption, sanitized `NAVIGATION_BLOCKED` diagnostics with `main_frame=false`, and modern
+main-frame `onAfirmaRequest` delivery are preserved. Focused GREEN
+`job_20260808_113729_37d51c56`; parser `job_20260808_114130_af278f04` confirmed
+`JuntaWebViewClientTest` 23/23 Debug and 23/23 QA, zero failures/errors/skips.
+
+**Verification.** Fresh runtime-lock/core/AAPT2 + full JVM
+`job_20260808_121723_ad7a78a4` exited 0; XML aggregation
+`job_20260808_122208_ea86d9cc` confirmed Debug 547/547 and QA 547/547, zero
+failures/errors/skips, with `JuntaWebViewClientTest` 23/23 per variant. Lint/build
+`job_20260808_114918_257f34ca` exited 0 with all Debug/QA/QA-AndroidTest assemblies;
+current-report/hash review `job_20260808_121552_89de2c70` recorded 0 lint errors / 26
+warnings per variant and APK SHA-256 Debug
+`747cf2df7dfa234d6b915d2e76b54d186a1ffd8f9fb8133912da515ebb762c01`, QA
+`fe0723fcf202e4b8f112dbd052624e362f770575ea0be5de68dc5c0bc9a2a284`, QA AndroidTest
+`fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Non-Android/artifact/release `job_20260808_121533_e7361b19` exited 0: Python 102 PASS
+with one environmental hardlink skip, Go test/vet/build PASS, Android artifact verification
+PASS, release-signing fail-closed PASS, generated relay removed and release APK count zero.
+Pre-evidence `job_20260808_121552_89de2c70` also passed `git diff --check`, protected-file
+scope and unsafe-addition scans. No APK installation/launch, device control, portal interaction,
+credential/private-certificate use, real signing, upload, payment or administrative submission
+occurred. Physical portal/TalkBack behavior is not claimed.

@@ -878,3 +878,15 @@ requires a separate design/plan and observed TDD RED.
   Go test/vet/build, Android artifacts and release fail-closed with zero release APKs.
 - Automated evidence covers the Compose semantics tree only. Physical TalkBack announcement
   timing/interruption and visual correctness remain manual gates; no E2E/security claim expands.
+
+Latest autonomous hardening — Afirma frame UI isolation (G28-01):
+
+- Subframe and deprecated String-callback Afirma requests were already consumed and barred
+  from native signing delivery, but still could publish the top-level
+  `UNTRUSTED_AFIRMA_ORIGIN` blocked-navigation notice.
+- The non-main-frame `HandleAfirma` branch is now application-UI silent while retaining
+  fail-closed consumption and sanitized diagnostics. Modern main-frame Afirma delivery,
+  navigation policy, parser/signing, Client TLS, profiles/releases and dependencies are unchanged.
+- Automated evidence: focused 23/23 per variant; full JVM 547/547 per variant; lint/build,
+  Python/Go, Android artifacts and release fail-closed gates pass. Physical portal/UI validation
+  is not inferred from these tests.

@@ -375,13 +375,11 @@ class JuntaWebViewClientTest {
             frameClient.shouldOverrideUrlLoading(webView, subframeRequest(embeddedIntent)),
         )
 
-        assertEquals(
-            listOf(
-                "blocked:UNTRUSTED_AFIRMA_ORIGIN",
-                "blocked:UNTRUSTED_AFIRMA_ORIGIN",
-            ),
-            frameCallbacks.events,
-        )
+        assertEquals(emptyList<String>(), frameCallbacks.events)
+        val exported = logger.exportText()
+        assertTrue(exported.contains("reason=UNTRUSTED_AFIRMA_ORIGIN"))
+        assertTrue(exported.contains("main_frame=false"))
+        assertFalse(exported.contains("dat=abc"))
     }
 
     @Test
@@ -398,10 +396,7 @@ class JuntaWebViewClientTest {
 
         assertTrue(legacyClient.shouldOverrideUrlLoading(webView, afirma))
 
-        assertEquals(
-            listOf("blocked:UNTRUSTED_AFIRMA_ORIGIN"),
-            legacyCallbacks.events,
-        )
+        assertEquals(emptyList<String>(), legacyCallbacks.events)
     }
 
     @Test
