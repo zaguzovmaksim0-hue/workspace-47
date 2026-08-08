@@ -890,3 +890,20 @@ Latest autonomous hardening — Afirma frame UI isolation (G28-01):
 - Automated evidence: focused 23/23 per variant; full JVM 547/547 per variant; lint/build,
   Python/Go, Android artifacts and release fail-closed gates pass. Physical portal/UI validation
   is not inferred from these tests.
+
+## Autonomous browser data-clear epoch isolation — 2026-08-08 (G29-01)
+
+- Confirmed current-site/global browser-data clear actions previously waited for a later
+  top-level reload callback before advancing the native navigation generation. The still-active
+  trusted document could therefore race a fresh WebMessage/MiniApplet signing request after
+  clear confirmation.
+- Both confirmed handlers now call the existing `advanceNavigationEpoch()` immediately after
+  Client TLS abandonment and before signing cancellation/data deletion. Pending MiniApplet
+  replies are abandoned through the same existing primitive; the later page-start may advance
+  again exactly as explicit reload already does.
+- Cookie/storage deletion scope, navigation/WebMessage parsers, network/TLS/Client TLS,
+  certificate/signing, profiles/releases and dependencies are unchanged.
+- TDD RED reproduced the missing boundary. Focused adjacent tests passed 44/44 per variant;
+  fresh full JVM 548/548 per variant; lint/build 0 errors / 26 warnings; Python 102 with one
+  environmental hardlink skip, Go, artifacts and release fail-closed all PASS. Relay absent and
+  release APK count zero.

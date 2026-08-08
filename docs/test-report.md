@@ -2891,3 +2891,32 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - Pre-evidence `job_20260808_121552_89de2c70`: `git diff --check`, protected-scope and
   unsafe-addition scans PASS. No device/portal/credential/private-certificate/real-signing/
   upload/payment/submission action occurred; no physical UI/E2E claim is made.
+
+## G29-01 — browser data-clear navigation-epoch isolation — 2026-08-08
+
+- RED `job_20260808_123759_3297c0cd`: 30/30 tasks executed; the new Debug regression failed
+  at `BrowserSecurityRegressionTest.kt:257`. XML `job_20260808_124016_a735632c` = 1 test,
+  1 expected failure, zero errors/skips: current-site clear lacked epoch invalidation before
+  `siteDataCleaner.clearOrigin`.
+- Minimum production change: exactly two `advanceNavigationEpoch()` calls, one after
+  `abandonClientAuth()` in each confirmed current-site/global-data clear handler and before
+  signing cancellation/deletion. Existing clear scope and async global-clear owner lease are
+  unchanged.
+- Focused GREEN `job_20260808_124051_04776725` PASS for the new regression Debug+QA.
+  Adjacent bridge/epoch `job_20260808_124317_23ee90cc` PASS; parser
+  `job_20260808_124656_fe3635ac` = 44/44 per variant, zero failures/errors/skips.
+- Runtime-lock/core/AAPT2 + full JVM `job_20260808_124709_0278fa79` PASS;
+  `job_20260808_125353_a51b3ca1` = Debug 548/548 and QA 548/548, zero
+  failures/errors/skips.
+- Lint/build `job_20260808_125402_5d674e68` PASS; `job_20260808_130056_95a51bf3` =
+  0 errors / 26 warnings per variant. APK SHA-256: Debug
+  `ad03b9afe9f20deb6050fb11726022523e13ea014e641ad5e81b9bd85fead5ba`, QA
+  `4b97ad41fff60b256e24c2a5e3e5e6c099ff104bf91414ea1e1e67391063c071`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- `job_20260808_130108_d85546fd`: Python 102 PASS with one environmental hardlink skip;
+  Go test/vet/build, Android artifact verifier and release fail-closed PASS; relay absent after
+  cleanup; release APK count zero.
+- Pre-evidence `job_20260808_130312_b403adcb`: exact four-file scope, production +2/-0,
+  protected-surface and sensitive/unsafe scans, `git diff --check`, relay absence and zero
+  release APKs all PASS. No device/portal/credential/private-certificate/real-signing/upload/
+  payment/submission action occurred.

@@ -1604,3 +1604,51 @@ Pre-evidence `job_20260808_121552_89de2c70` also passed `git diff --check`, prot
 scope and unsafe-addition scans. No APK installation/launch, device control, portal interaction,
 credential/private-certificate use, real signing, upload, payment or administrative submission
 occurred. Physical portal/TalkBack behavior is not claimed.
+
+## Finding G29-01 — browser data-clear navigation-epoch isolation — 2026-08-08
+
+**Finding.** The confirmed `onClearCurrentSite` and `onDeleteAllBrowserData` actions already
+abandoned Client TLS, cancelled the current signing flow and cleared pending UI state, but they
+did not call the browser's existing `advanceNavigationEpoch()` invalidation primitive until a
+later reload produced `onTopLevelNavigationStarted`. During that interval the old main-frame
+document remained the current trusted origin. The ordinary Afirma WebMessage route carries no
+navigation epoch, while a new MiniApplet request snapshots `currentNavigationEpoch()` at
+receipt, so remote JavaScript could create a new native signing request after the user had
+confirmed data clearing but before the reload callback. The global clear path widened that
+window because cookie deletion is asynchronous. No completed signature, TLS/certificate
+bypass or cross-origin navigation was reproduced; the defect is lifecycle invalidation.
+
+**TDD and remediation.** Narrow design/plan:
+`docs/superpowers/specs/2026-08-08-browser-data-clear-epoch-isolation-design.md` and
+`docs/superpowers/plans/2026-08-08-browser-data-clear-epoch-isolation.md`. RED
+`job_20260808_123759_3297c0cd` executed 30/30 Gradle tasks and failed the new Debug regression
+at `BrowserSecurityRegressionTest.kt:257`; XML `job_20260808_124016_a735632c` confirmed 1/1
+failure exactly because current-site clear did not invalidate the epoch before deletion.
+Minimum production remediation adds exactly one `advanceNavigationEpoch()` after
+`abandonClientAuth()` in each confirmed data-clear handler and before signing cancellation or
+any clear operation. This reuses the established primitive that abandons pending MiniApplet
+replies and notifies the signing owner. A later page-start may increment the generation again,
+matching the existing explicit-reload lifecycle. Cookie deletion scope, WebMessage/MiniApplet
+parsers, navigation policy, network/TLS, Client TLS authorization, certificate/signature
+algorithms, profiles/releases and dependencies are unchanged.
+
+**Verification.** Focused GREEN `job_20260808_124051_04776725` exited 0 for the new regression
+in Debug and QA. Adjacent bridge/epoch `job_20260808_124317_23ee90cc` exited 0; parser
+`job_20260808_124656_fe3635ac` confirmed 44/44 per variant across
+`BrowserSecurityRegressionTest`, `MiniAppletReplyRegistryTest`, `MiniAppletBridgeAdapterTest`
+and `WebMessageRouterTest`, zero failures/errors/skips. Fresh runtime-lock/core/AAPT2 + full
+JVM `job_20260808_124709_0278fa79` exited 0; aggregation
+`job_20260808_125353_a51b3ca1` confirmed Debug 548/548 and QA 548/548, zero
+failures/errors/skips. Lint/build `job_20260808_125402_5d674e68` exited 0; summary/hash
+`job_20260808_130056_95a51bf3` recorded 0 lint errors / 26 warnings per variant and APK
+SHA-256 Debug `ad03b9afe9f20deb6050fb11726022523e13ea014e641ad5e81b9bd85fead5ba`, QA
+`4b97ad41fff60b256e24c2a5e3e5e6c099ff104bf91414ea1e1e67391063c071`, QA AndroidTest
+`fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Non-Android/artifact/release `job_20260808_130108_d85546fd` exited 0: Python 102 PASS with one
+environmental hardlink skip, Go test/vet/build PASS, Android artifact verification PASS,
+release-signing fail-closed PASS, generated relay absent after cleanup and release APK count
+zero. Pre-evidence review `job_20260808_130312_b403adcb` proved the exact four-file scope,
+production 0 removals / 2 additions, protected-surface and sensitive/unsafe-addition scans,
+`git diff --check`, relay absence and zero release APKs. No APK installation/launch, device
+control, portal interaction, credential/private-certificate use, real signing, upload, payment
+or administrative submission occurred.

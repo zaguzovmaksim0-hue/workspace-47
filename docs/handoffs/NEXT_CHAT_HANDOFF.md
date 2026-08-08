@@ -1402,3 +1402,22 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   widen this change into Afirma parser/signing/navigation policy. Persisted-unlock cross-restart
   trust-time semantics, physical AEAT F-03, portal JavaScript-dialog compatibility,
   real-device TalkBack/visual validation and supported-Linux Go race remain separate gates.
+
+## Autonomous audit G29-01 — browser data-clear navigation-epoch isolation — 2026-08-08
+
+- Confirmed a lifecycle race in both user-confirmed browser-data clear actions: they cancelled
+  the current request but did not immediately advance navigation epoch, leaving the old trusted
+  document able to originate a new WebMessage/MiniApplet request before reload began.
+- RED `job_20260808_123759_3297c0cd` failed exactly on missing pre-clear epoch invalidation.
+  Minimum runtime change is two calls to existing `advanceNavigationEpoch()`, one per clear
+  handler, after Client TLS abandonment and before signing cancellation/data deletion.
+- Focused/adjacent 44/44 per variant; fresh full JVM 548/548 per variant; lint 0 errors / 26
+  warnings; Debug/QA/QA-AndroidTest assemblies, Python 102 with one environmental skip,
+  Go/artifact/release fail-closed all PASS. Relay absent; release APK count zero.
+- APK SHA-256: Debug `ad03b9afe9f20deb6050fb11726022523e13ea014e641ad5e81b9bd85fead5ba`,
+  QA `4b97ad41fff60b256e24c2a5e3e5e6c099ff104bf91414ea1e1e67391063c071`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- After atomic commit/push verification, continue a different independent lifecycle/network/
+  storage/UX/supply-chain audit. Persisted-unlock cross-restart trust-time semantics, physical
+  AEAT F-03, JavaScript-dialog portal compatibility, real-device TalkBack/visual validation and
+  supported-Linux Go race remain separate gates.

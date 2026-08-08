@@ -289,6 +289,9 @@ Ejecutar en API 36 real o emulador equivalente:
   durante password, unlock, certificado desbloqueado, catálogo/WebView y firma;
 - borrar datos del sitio no afecta otros origins y muestra resultado
   exacto/limitado/fallido;
+- una limpieza confirmada del sitio o global debe avanzar `navigationEpoch` antes de
+  `clearOrigin` / `clearAllConfirmed`, abandonando callbacks MiniApplet y contexto de firma
+  del documento anterior antes de que empiece la eliminación/reload;
 - cerrar sesión bloquea el certificado sin borrar datos de otros portales;
 - borrar todos los datos web requiere una confirmación separada.
 - el callback Android real de `clearClientCertPreferences` produce

@@ -487,6 +487,7 @@ fun BrowserScreen(
         onClearCurrentSite = {
             clientAuthGrant = null
             abandonClientAuth()
+            advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.NAVIGATION, null)
             pendingRequest = null
             globalClearResult = null
@@ -512,6 +513,7 @@ fun BrowserScreen(
         onDeleteAllBrowserData = {
             clientAuthGrant = null
             abandonClientAuth()
+            advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.NAVIGATION, null)
             pendingRequest = null
             siteClearResult = null

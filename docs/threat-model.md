@@ -423,3 +423,23 @@ TTL/epoch, issuer/keyUsage/EKU, host/port, preference barrier, TLS ni release pr
 main-frame, callback legacy UI-silent, full Debug/QA JVM, lint/build, Python, Go, artifact y
 release fail-closed. La evidencia automatizada no demuestra ni amplía E2E de AEAT/Carné
 Joven ni sustituye validación física de compatibilidad del portal.
+
+### T20. Una limpieza confirmada deja activo el contexto bridge anterior hasta reload
+
+**Riesgo:** el usuario confirma borrar datos del sitio o todos los datos WebView, pero la
+invalidez del contexto native se aplaza hasta `onPageStarted`. Mientras el documento remoto
+anterior sigue siendo el main-frame/origin actual, puede emitir una nueva solicitud Afirma o
+MiniApplet después de la confirmación. Cancelar solo la solicitud ya visible no bloquea esa
+nueva entrega; en la limpieza global el callback asíncrono de cookies amplía la ventana.
+
+**Controles:** ambas acciones confirmadas abandonan primero Client TLS y llaman
+`advanceNavigationEpoch()` antes de cancelar signing y antes de `clearOrigin` o
+`clearAllConfirmed`. Ese primitive abandona replies MiniApplet pendientes, incrementa la
+generación native y notifica al owner de firma. Un `onPageStarted` posterior puede avanzar la
+generación otra vez; no se interpreta el epoch como contador de páginas. La lease existente de
+la limpieza global sigue ligando el completion al WebView iniciador.
+
+**Verificación:** regression de source/order RED→GREEN para ambos handlers, controles
+MiniApplet de epoch stale, full Debug/QA JVM, lint/build, Python, Go, artifact y release
+fail-closed. No se modifica la policy de origin, el alcance de cookie deletion ni el protocolo
+de firma; el E2E físico del portal sigue separado.

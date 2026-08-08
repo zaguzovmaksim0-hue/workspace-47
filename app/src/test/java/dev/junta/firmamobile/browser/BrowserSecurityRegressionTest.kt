@@ -241,6 +241,32 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun confirmedBrowserDataClearInvalidatesNavigationEpochBeforeDeletion() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val currentSiteBlock = screenSource
+            .substringAfter("        onClearCurrentSite = {", missingDelimiterValue = "")
+            .substringBefore("        onClearSession = {")
+        val globalClearBlock = screenSource
+            .substringAfter("        onDeleteAllBrowserData = {", missingDelimiterValue = "")
+            .substringBefore("    ) { modifier ->")
+
+        assertTrue("Current-site clear handler must be present", currentSiteBlock.isNotEmpty())
+        assertTrue("Global clear handler must be present", globalClearBlock.isNotEmpty())
+        assertTrue(
+            "Current-site clear must invalidate the navigation epoch before deleting site data",
+            currentSiteBlock.indexOf("advanceNavigationEpoch()") in
+                0 until currentSiteBlock.indexOf("siteDataCleaner.clearOrigin"),
+        )
+        assertTrue(
+            "Global clear must invalidate the navigation epoch before starting global deletion",
+            globalClearBlock.indexOf("advanceNavigationEpoch()") in
+                0 until globalClearBlock.indexOf("siteDataCleaner.clearAllConfirmed"),
+        )
+    }
+
+    @Test
     fun globalDataClearCompletionIsBoundToTheInitiatingWebView() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
