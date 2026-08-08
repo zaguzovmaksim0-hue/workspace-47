@@ -90,14 +90,16 @@ class CertificateViewModel(
                         ensureActive()
                         val issuedAt = clock.instant()
                         val expiresAt = issuedAt.plus(unlockDuration)
+                        val lease = session.createUnlockLease(expiresAt, unlockDuration)
                         unlockCache.store(
                             reference = locked.reference,
                             password = password,
                             issuedAt = issuedAt,
                             expiresAt = expiresAt,
+                            observedAtMonotonicNanos = lease.observedAtMonotonicNanos,
                         )
                         ensureActive()
-                        session.unlock(result.identity, expiresAt)
+                        session.unlock(result.identity, lease)
                         mutableState.value = CertificateUiState.Unlocked(
                             reference = locked.reference,
                             summary = result.identity.summary,
@@ -221,7 +223,7 @@ class CertificateViewModel(
                 when (val result = gateway.unlock(owned.password)) {
                     is CertificateLoadResult.Success -> {
                         currentCoroutineContext().ensureActive()
-                        session.unlock(result.identity, owned.expiresAt)
+                        session.unlock(result.identity, owned.lease)
                         CertificateUiState.Unlocked(reference, result.identity.summary)
                     }
                     is CertificateLoadResult.Failure -> {

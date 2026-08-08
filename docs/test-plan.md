@@ -537,3 +537,12 @@ el job Linux debe seguir siendo obligatorio.
   Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build, Android artifact
   verification and release-signing fail-closed. Review the full diff and sensitive/unsafe added
   lines; require generated relay and release APK absence before commit.
+
+
+## G16-01 — certificate unlock same-boot monotonic lease gate — 2026-08-08
+
+- `CertificateSessionTest`: inject independent civil and monotonic clocks; prove civil rollback cannot keep a signing identity alive after the original monotonic lease, exact boundary expires, and monotonic rollback fails closed.
+- `CertificateUnlockCacheTest`: authenticate deterministic boot count + the **original manual lease elapsed-realtime observation** in `JFMUC002`; prove changed boot, delayed-store non-renewal, elapsed rollback, unavailable boot-time evidence, legacy-record rejection and exact/over retention reject/clear, while same-boot restore carries only the authenticated remaining duration. Preserve encryption, tamper, reference binding, cancellation/invalidation and zeroization regressions.
+- `CertificateViewModelTest`: inject a short restored lease and advance the shared monotonic clock during gateway reload; identity must not be published by renewing from civil expiry. Manual unlock must create the original lease before cache persistence and pass its observation into store.
+- Required acceptance gate: three suites Debug+QA; fresh full Debug/QA JVM plus runtime lock/core/AAPT2; lintDebug/lintQa; Debug/QA/QA-AndroidTest assemblies; Python discovery; Go test/vet/build; Android artifact verification; release-signing fail-closed; APK hashes; generated relay removal; zero release APKs; `git diff --check`; changed-content sensitive/unsafe scans; `CiPolicyTest`.
+- Observed final automated evidence: focused 42/42 per variant, full 562/562 per variant, lint 0 errors / 26 warnings per variant, Python 102 with one environmental hardlink skip, Go/artifact/release PASS. Automated tests establish the injected same-boot/reboot boundary; they do not claim a physical reboot/device run or authenticated portal acceptance. Historical process-cold-launch evidence remains process-recovery evidence only.

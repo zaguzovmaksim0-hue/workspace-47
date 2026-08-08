@@ -4,6 +4,7 @@ import android.net.Uri
 import dev.junta.firmamobile.certificate.CachedCertificateUnlock
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
+import dev.junta.firmamobile.certificate.CertificateUnlockLease
 import dev.junta.firmamobile.certificate.CertificateLoadResult
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSelectionResult
@@ -103,6 +104,44 @@ class CertificateViewModelTest {
 
         val restoredState = session.state() as dev.junta.firmamobile.certificate.CertificateSessionState.Unlocked
         assertEquals(expiresAt, restoredState.expiresAt)
+    }
+
+    @Test
+    fun cachedLeaseExpiringDuringGatewayReloadCannotBeRenewedFromCivilExpiry() = runTest(dispatcher) {
+        val identity = validIdentity()
+        val selected = reference(summary = identity.summary)
+        val monotonic = MutableMonotonicClock(1_000_000_000L)
+        val expiresAt = TestCertificateFactory.now.plus(Duration.ofHours(12))
+        val cache = FakeCertificateUnlockCache().apply {
+            restoredPassword = TestCertificateFactory.password()
+            restoredExpiry = expiresAt
+            restoredLease = CertificateUnlockLease(
+                expiresAt = expiresAt,
+                observedAtMonotonicNanos = monotonic.nowNanos(),
+                lifetimeNanos = Duration.ofMinutes(1).toNanos(),
+            )
+        }
+        val gateway = FakeCertificateGateway().apply {
+            current = selected
+            unlockResult = CertificateLoadResult.Success(identity)
+            beforeUnlockResult = { monotonic.advance(Duration.ofMinutes(2)) }
+        }
+        val session = CertificateSession(
+            clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
+            unlockDuration = Duration.ofHours(24),
+            monotonicNanos = monotonic::nowNanos,
+        )
+
+        val viewModel = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+
+        assertEquals(
+            CertificateUiState.Locked(selected, identity.summary, null),
+            viewModel.state.value,
+        )
+        assertNull(session.identityForSigning())
+        assertTrue(cache.clearCalls >= 1)
+        assertTrue(cache.lastReturnedPassword!!.all { it == '\u0000' })
     }
 
     @Test
@@ -393,6 +432,7 @@ class CertificateViewModelTest {
             password: CharArray,
             issuedAt: Instant,
             expiresAt: Instant,
+            observedAtMonotonicNanos: Long,
         ): Boolean {
             storeStarted.complete(Unit)
             withContext(NonCancellable) { finishStore.await() }
@@ -412,6 +452,7 @@ class CertificateViewModelTest {
     private class FakeCertificateUnlockCache : CertificateUnlockCache {
         var restoredPassword: CharArray? = null
         var restoredExpiry: Instant? = null
+        var restoredLease: CertificateUnlockLease? = null
         var storedPassword: CharArray? = null
         var storedIssuedAt: Instant? = null
         var storedExpiry: Instant? = null
@@ -424,6 +465,7 @@ class CertificateViewModelTest {
             password: CharArray,
             issuedAt: Instant,
             expiresAt: Instant,
+            observedAtMonotonicNanos: Long,
         ): Boolean {
             storedPassword?.fill('\u0000')
             storedPassword = password.copyOf()
@@ -446,8 +488,13 @@ class CertificateViewModelTest {
                 password.fill('\u0000')
                 return null
             }
+            val lease = restoredLease ?: CertificateUnlockLease(
+                expiresAt = expiry,
+                observedAtMonotonicNanos = System.nanoTime(),
+                lifetimeNanos = Duration.between(now, expiry).toNanos(),
+            )
             lastReturnedPassword = password
-            return CachedCertificateUnlock(password, expiry)
+            return CachedCertificateUnlock(password, expiry, lease)
         }
 
         override fun clear() {
@@ -455,6 +502,17 @@ class CertificateViewModelTest {
             restoredPassword?.fill('\u0000')
             restoredPassword = null
             restoredExpiry = null
+            restoredLease = null
+        }
+    }
+
+    private class MutableMonotonicClock(
+        private var current: Long,
+    ) {
+        fun nowNanos(): Long = current
+
+        fun advance(duration: Duration) {
+            current = Math.addExact(current, duration.toNanos())
         }
     }
 
@@ -468,6 +526,7 @@ class CertificateViewModelTest {
             dev.junta.firmamobile.certificate.CertificateErrorCode.NO_CERTIFICATE_SELECTED,
         )
         var receivedPassword: CharArray? = null
+        var beforeUnlockResult: (() -> Unit)? = null
         var forgetCalls = 0
 
         override suspend fun currentReference(): StoredCertificateReference? = current
@@ -476,6 +535,7 @@ class CertificateViewModelTest {
 
         override suspend fun unlock(password: CharArray): CertificateLoadResult {
             receivedPassword = password.copyOf()
+            beforeUnlockResult?.invoke()
             return unlockResult
         }
 

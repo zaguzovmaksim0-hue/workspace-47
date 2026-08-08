@@ -926,3 +926,11 @@ Latest autonomous hardening — Afirma frame UI isolation (G28-01):
 - TDD RED, focused/adjacent GREEN, fresh 550/550 Debug + 550/550 QA JVM, lint/build, Python 102
   with one environmental hardlink skip, Go test/vet/build, Android artifact and release
   fail-closed gates pass. Relay is removed and release APK count is zero. No E2E scope expands.
+
+
+## Autonomous certificate unlock same-boot monotonic lease — 2026-08-08 (G16-01)
+
+- The certificate-unlock civil-clock risk is remediated with a deliberately narrower recovery contract: automatic recovery survives process death/force-stop only within the original remaining lease and only during the same device boot. Device reboot is an explicit lock boundary requiring PKCS#12 password re-entry.
+- `CertificateSession` uses Android `elapsedRealtimeNanos` in production. `JFMUC002` authenticates boot count plus the **original session-lease elapsed observation** together with civil issue/expiry and certificate-reference digest. Delayed cache persistence cannot move the lease origin; changed boot, unavailable/rolled-back elapsed time and exact/over expiry clear/fail closed. Civil expiry remains an additional conservative cap.
+- Cache restore creates only the authenticated remaining session lease before password-backed gateway reload; reload time cannot renew it. Legacy `JFMUC001` lacks same-boot evidence and is intentionally not trusted.
+- Independent review found and drove the delayed-persistence regression RED→GREEN before commit. Final focused tests are 42/42 per variant; fresh full JVM is 562/562 per variant; lint/build, Python/Go, Android artifacts and release-signing fail-closed all pass. No password/PKCS#12/private-key material, network/TLS/profile/release boundary or dependency was broadened; no physical/device/portal E2E claim is added.

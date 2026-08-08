@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
 class CachedCertificateUnlock internal constructor(
     val password: CharArray,
     val expiresAt: Instant,
+    internal val lease: CertificateUnlockLease,
 ) : Closeable {
     @Synchronized
     override fun close() {
@@ -33,6 +34,7 @@ interface CertificateUnlockCache {
         password: CharArray,
         issuedAt: Instant,
         expiresAt: Instant,
+        observedAtMonotonicNanos: Long,
     ): Boolean
 
     suspend fun restore(
@@ -49,6 +51,7 @@ object NoOpCertificateUnlockCache : CertificateUnlockCache {
         password: CharArray,
         issuedAt: Instant,
         expiresAt: Instant,
+        observedAtMonotonicNanos: Long,
     ): Boolean = false
 
     override suspend fun restore(
@@ -71,9 +74,25 @@ fun interface CertificateUnlockKeyProvider {
     fun getOrCreate(): SecretKey
 }
 
+internal data class CertificateUnlockBootTime(
+    val bootCount: Int,
+    val elapsedRealtimeNanos: Long,
+) {
+    init {
+        require(bootCount >= 0)
+        require(elapsedRealtimeNanos >= 0L)
+    }
+}
+
+internal fun interface CertificateUnlockBootTimeSource {
+    fun read(): CertificateUnlockBootTime?
+}
+
 class EncryptedCertificateUnlockCache internal constructor(
     private val storage: CertificateUnlockRecordStorage,
     private val keyProvider: CertificateUnlockKeyProvider,
+    private val bootTimeSource: CertificateUnlockBootTimeSource,
+    private val sessionMonotonicNanos: () -> Long,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : CertificateUnlockCache {
     private val invalidationGeneration = AtomicLong(0)
@@ -83,10 +102,18 @@ class EncryptedCertificateUnlockCache internal constructor(
         password: CharArray,
         issuedAt: Instant,
         expiresAt: Instant,
+        observedAtMonotonicNanos: Long,
     ): Boolean {
         val storeGeneration = invalidationGeneration.get()
         return withContext(ioDispatcher) {
-            storeOnIo(reference, password, issuedAt, expiresAt, storeGeneration)
+            storeOnIo(
+                reference,
+                password,
+                issuedAt,
+                expiresAt,
+                observedAtMonotonicNanos,
+                storeGeneration,
+            )
         }
     }
 
@@ -110,10 +137,11 @@ class EncryptedCertificateUnlockCache internal constructor(
         password: CharArray,
         issuedAt: Instant,
         expiresAt: Instant,
+        observedAtMonotonicNanos: Long,
         storeGeneration: Long,
     ): Boolean {
-        if (!validRetention(issuedAt, expiresAt) || password.isEmpty() ||
-            password.size > MAX_PASSWORD_CHARS
+        if (!validRetention(issuedAt, expiresAt) || observedAtMonotonicNanos < 0L ||
+            password.isEmpty() || password.size > MAX_PASSWORD_CHARS
         ) {
             clear()
             return false
@@ -124,6 +152,23 @@ class EncryptedCertificateUnlockCache internal constructor(
         var cipherText: ByteArray? = null
         var record: ByteArray? = null
         return try {
+            val currentBootTime = bootTimeSource.read() ?: run {
+                clear()
+                return false
+            }
+            if (currentBootTime.elapsedRealtimeNanos < observedAtMonotonicNanos) {
+                clear()
+                return false
+            }
+            val retentionNanos = Duration.between(issuedAt, expiresAt).toNanos()
+            val ageAtStoreNanos = currentBootTime.elapsedRealtimeNanos - observedAtMonotonicNanos
+            if (ageAtStoreNanos >= retentionNanos) {
+                clear()
+                return false
+            }
+            val bootTime = currentBootTime.copy(
+                elapsedRealtimeNanos = observedAtMonotonicNanos,
+            )
             plainBytes = password.toUtf8Bytes()
             if (plainBytes.isEmpty() || plainBytes.size > MAX_PASSWORD_BYTES) {
                 clear()
@@ -133,6 +178,7 @@ class EncryptedCertificateUnlockCache internal constructor(
             authenticatedHeader = createAuthenticatedHeader(
                 issuedAt = issuedAt,
                 expiresAt = expiresAt,
+                bootTime = bootTime,
                 referenceDigest = referenceDigest,
             )
             val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -187,6 +233,7 @@ class EncryptedCertificateUnlockCache internal constructor(
         var plainBytes: ByteArray? = null
         return try {
             if (invalidationGeneration.get() != restoreGeneration) return null
+            val sessionLeaseObservedAtNanos = sessionMonotonicNanos()
             parsed = parseRecord(rawRecord)
             val issuedAt = Instant.ofEpochMilli(parsed.issuedAtEpochMillis)
             val expiresAt = Instant.ofEpochMilli(parsed.expiresAtEpochMillis)
@@ -196,6 +243,29 @@ class EncryptedCertificateUnlockCache internal constructor(
                 clear()
                 return null
             }
+            val currentBootTime = bootTimeSource.read() ?: run {
+                clear()
+                return null
+            }
+            val retentionNanos = Duration.between(issuedAt, expiresAt).toNanos()
+            if (currentBootTime.bootCount != parsed.bootCount ||
+                currentBootTime.elapsedRealtimeNanos < parsed.elapsedRealtimeNanos
+            ) {
+                clear()
+                return null
+            }
+            val monotonicAgeNanos =
+                currentBootTime.elapsedRealtimeNanos - parsed.elapsedRealtimeNanos
+            if (monotonicAgeNanos >= retentionNanos) {
+                clear()
+                return null
+            }
+            val remainingNanos = retentionNanos - monotonicAgeNanos
+            val lease = CertificateUnlockLease(
+                expiresAt = expiresAt,
+                observedAtMonotonicNanos = sessionLeaseObservedAtNanos,
+                lifetimeNanos = remainingNanos,
+            )
             expectedDigest = reference.digest()
             if (!MessageDigest.isEqual(expectedDigest, parsed.referenceDigest)) {
                 clear()
@@ -223,7 +293,7 @@ class EncryptedCertificateUnlockCache internal constructor(
                 password.fill('\u0000')
                 return null
             }
-            CachedCertificateUnlock(password, expiresAt)
+            CachedCertificateUnlock(password, expiresAt, lease)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
@@ -244,6 +314,8 @@ class EncryptedCertificateUnlockCache internal constructor(
     private data class ParsedRecord(
         val issuedAtEpochMillis: Long,
         val expiresAtEpochMillis: Long,
+        val bootCount: Int,
+        val elapsedRealtimeNanos: Long,
         val referenceDigest: ByteArray,
         val iv: ByteArray,
         val cipherText: ByteArray,
@@ -260,7 +332,7 @@ class EncryptedCertificateUnlockCache internal constructor(
     private companion object {
         val MAGIC = byteArrayOf('J'.code.toByte(), 'F'.code.toByte(), 'M'.code.toByte(),
             'U'.code.toByte(), 'C'.code.toByte(), '0'.code.toByte(), '0'.code.toByte(),
-            '1'.code.toByte())
+            '2'.code.toByte())
         val MAX_RETENTION: Duration = Duration.ofHours(24)
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val SHA_256 = "SHA-256"
@@ -271,7 +343,8 @@ class EncryptedCertificateUnlockCache internal constructor(
         const val MAX_CIPHERTEXT_BYTES = 8192
         const val MAX_PASSWORD_CHARS = 2048
         const val MAX_PASSWORD_BYTES = 8192
-        const val AUTHENTICATED_HEADER_BYTES = 8 + 8 + 8 + DIGEST_BYTES
+        const val AUTHENTICATED_HEADER_BYTES =
+            8 + 8 + 8 + Int.SIZE_BYTES + Long.SIZE_BYTES + DIGEST_BYTES
         const val LENGTH_FIELDS_BYTES = 8
         const val MIN_RECORD_BYTES = AUTHENTICATED_HEADER_BYTES + LENGTH_FIELDS_BYTES +
             GCM_IV_BYTES + MIN_CIPHERTEXT_BYTES
@@ -279,6 +352,7 @@ class EncryptedCertificateUnlockCache internal constructor(
         fun createAuthenticatedHeader(
             issuedAt: Instant,
             expiresAt: Instant,
+            bootTime: CertificateUnlockBootTime,
             referenceDigest: ByteArray,
         ): ByteArray {
             require(referenceDigest.size == DIGEST_BYTES)
@@ -286,6 +360,8 @@ class EncryptedCertificateUnlockCache internal constructor(
                 .put(MAGIC)
                 .putLong(issuedAt.toEpochMilli())
                 .putLong(expiresAt.toEpochMilli())
+                .putInt(bootTime.bootCount)
+                .putLong(bootTime.elapsedRealtimeNanos)
                 .put(referenceDigest)
                 .array()
         }
@@ -321,6 +397,10 @@ class EncryptedCertificateUnlockCache internal constructor(
             }
             val issuedAt = buffer.long
             val expiresAt = buffer.long
+            val bootCount = buffer.int
+            val elapsedRealtimeNanos = buffer.long
+            require(bootCount >= 0)
+            require(elapsedRealtimeNanos >= 0L)
             val referenceDigest = ByteArray(DIGEST_BYTES).also(buffer::get)
             val ivLength = buffer.int
             val cipherLength = buffer.int
@@ -333,6 +413,8 @@ class EncryptedCertificateUnlockCache internal constructor(
             return ParsedRecord(
                 issuedAtEpochMillis = issuedAt,
                 expiresAtEpochMillis = expiresAt,
+                bootCount = bootCount,
+                elapsedRealtimeNanos = elapsedRealtimeNanos,
                 referenceDigest = referenceDigest,
                 iv = iv,
                 cipherText = cipherText,
@@ -394,6 +476,8 @@ class AndroidKeystoreCertificateUnlockCache(
             java.io.File(context.noBackupFilesDir, RECORD_FILE_NAME),
         ),
         keyProvider = AndroidKeystoreCertificateUnlockKeyProvider(),
+        bootTimeSource = AndroidCertificateUnlockBootTimeSource(context),
+        sessionMonotonicNanos = android.os.SystemClock::elapsedRealtimeNanos,
         ioDispatcher = ioDispatcher,
     )
 
@@ -402,7 +486,14 @@ class AndroidKeystoreCertificateUnlockCache(
         password: CharArray,
         issuedAt: Instant,
         expiresAt: Instant,
-    ): Boolean = delegate.store(reference, password, issuedAt, expiresAt)
+        observedAtMonotonicNanos: Long,
+    ): Boolean = delegate.store(
+        reference,
+        password,
+        issuedAt,
+        expiresAt,
+        observedAtMonotonicNanos,
+    )
 
     override suspend fun restore(
         reference: StoredCertificateReference,
@@ -414,6 +505,20 @@ class AndroidKeystoreCertificateUnlockCache(
     private companion object {
         const val RECORD_FILE_NAME = "certificate_unlock_v1.bin"
     }
+}
+
+internal class AndroidCertificateUnlockBootTimeSource(
+    private val context: android.content.Context,
+) : CertificateUnlockBootTimeSource {
+    override fun read(): CertificateUnlockBootTime? = runCatching {
+        CertificateUnlockBootTime(
+            bootCount = android.provider.Settings.Global.getInt(
+                context.contentResolver,
+                android.provider.Settings.Global.BOOT_COUNT,
+            ),
+            elapsedRealtimeNanos = android.os.SystemClock.elapsedRealtimeNanos(),
+        )
+    }.getOrNull()
 }
 
 internal class AtomicCertificateUnlockRecordStorage(

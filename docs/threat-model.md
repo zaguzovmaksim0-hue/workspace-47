@@ -141,26 +141,41 @@ esperado durante la ventana de desbloqueo.
 mecanismo y `PrivateKey.encoded` no se consulta. Tras un desbloqueo manual
 correcto, la contraseña puede persistir durante un máximo de 24 horas únicamente
 como ciphertext autenticado AES-256-GCM en `noBackupFilesDir`, nunca en texto
-plano ni Preferences/logs. El registro queda ligado mediante AAD a la referencia
-del certificado y a los timestamps originales de emisión/expiración. La clave AES
-es material no exportable de Android Keystore; en API 28+ el provider actual exige
-que el dispositivo esté desbloqueado para usarla. `noBackupFilesDir` excluye el
+plano ni Preferences/logs. El registro `JFMUC002` queda ligado mediante AAD a la referencia
+del certificado, a los timestamps civiles originales de emisión/expiración y a la
+observación de mismo arranque (`Settings.Global.BOOT_COUNT` +
+`SystemClock.elapsedRealtimeNanos()`). La clave AES es material no exportable de
+Android Keystore; en API 28+ el provider actual exige que el dispositivo esté
+desbloqueado para usarla. `noBackupFilesDir` excluye el
 registro cifrado del backup/transfer. Además, el manifest mantiene `allowBackup=false`
 y los recursos legacy/Android 12+ excluyen
 explícitamente `root`, `file`, `database`, `sharedpref`, `external` y los cuatro
 dominios device-protected, tanto para cloud backup como para device transfer; por tanto
 `allowBackup=false` no es la única barrera D2D. La
-restauración automática conserva la expiración original y no renueva la ventana.
-Los buffers temporales `CharArray`/`ByteArray` en claro se limpian best-effort.
+persistencia autentica la observación monotónica de la lease creada antes del IO, por
+lo que un retraso de escritura no desplaza el origen de autorización. La restauración
+automática conserva la expiración civil original, **no renueva** la ventana y, además,
+solo es válida durante el mismo arranque del dispositivo y durante el tiempo monotónico
+restante autenticado. Un rollback de `elapsedRealtime`, un cambio de `BOOT_COUNT`,
+una fuente de tiempo/boot no disponible o el límite exacto/ulterior de la lease
+fallan cerrados. Un rollback del reloj civil no amplía la lease; un salto civil hacia
+adelante puede acortarla como límite conservador. Los registros legacy `JFMUC001`
+carecen de evidencia de mismo arranque y se eliminan en restore, lo que puede exigir
+una única reentrada de contraseña tras la actualización. Los buffers temporales
+`CharArray`/`ByteArray` en claro se limpian best-effort.
 
 **Semántica lifecycle:** bloqueo manual, clear session, cambio u olvido del
 certificado, expiración, reference mismatch, ciphertext malformado/manipulado o
-unlock cacheado fallido eliminan el registro. Background, process death,
-force-stop, reinicio del dispositivo y actualización ordinaria no eliminan por sí
-solos un registro todavía válido. Ante memory pressure, `CertificateSession`
-suelta primero la identidad en memoria, pero el ViewModel puede restaurarla desde
-el cache válido; por tanto memory pressure o process death no garantizan un estado
-locked persistente dentro de la ventana de 24 horas.
+unlock cacheado fallido eliminan el registro. Background, process death y force-stop
+no eliminan por sí solos un registro todavía válido **durante el mismo device boot**;
+una actualización ordinaria tampoco lo invalida si el boot y la lease siguen siendo
+válidos. En cambio, un reinicio del dispositivo cambia `BOOT_COUNT`: la siguiente
+restauración elimina el registro y exige introducir de nuevo la contraseña PKCS#12.
+Ante memory pressure, `CertificateSession` suelta primero la identidad en memoria,
+pero el ViewModel puede restaurarla desde el cache válido del mismo boot y solo por
+la duración monotónica restante. Por tanto memory pressure o process death no
+garantizan un estado locked persistente dentro de esa lease; **device reboot sí es
+una frontera de bloqueo para la restauración automática**.
 
 **Riesgo residual:** antes de expirar el registro, código que ejecute con los
 privilegios de la app en un dispositivo elegible y desbloqueado puede intentar
@@ -172,11 +187,13 @@ firma. La correspondencia de clave se prueba firmando un nonce, no exportando
 bytes.
 
 **Verificación:** tests de `CertificateUnlockCache`, `CertificateSession` y
-`CertificateViewModel` cubren cifrado/tamper/expiración, limpieza, process
+`CertificateViewModel` cubren cifrado/tamper/expiración, limpieza, rollback civil,
+cambio de boot, rollback monotónico, límite exacto, lease restante, process
 recreation y memory-pressure recovery; búsquedas estáticas cubren APIs/campos
-prohibidos; se inspeccionan backup config y logs. La evidencia física P07C confirma
-un cold launch tras terminación del proceso sin nuevo password prompt y sin
-registrar el secreto.
+prohibidos; se inspeccionan backup config y logs. La evidencia física histórica P07C
+confirma únicamente un cold launch tras terminación del proceso sin nuevo password
+prompt y sin registrar el secreto; **no prueba restauración tras reboot**. El contrato
+actual exige reentrada de contraseña después de un reboot.
 
 ### T6. P12 malicioso agota recursos o selecciona identidad equivocada
 

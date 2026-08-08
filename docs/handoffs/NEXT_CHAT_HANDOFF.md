@@ -1449,10 +1449,22 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
 - Pre-evidence `job_20260808_180738_392984fb`: `git diff --check`, full diff,
   sensitive/certificate-material and unsafe-addition review PASS. Local pinned vulnerability
   scanner executables remain unavailable; no local scanner run is claimed.
-- After atomic commit/push verification, continue G16 monotonic same-boot certificate-unlock
-  lease before G31 global browser-data erasure unless a fresh higher-priority reproducible
-  security defect is found. Existing external gates remain: physical AEAT F-03 Client TLS,
+- The G16 monotonic same-boot certificate-unlock milestone is resolved in the later section
+  below. After its atomic commit/push verification, continue G31 global browser-data erasure
+  unless a fresh higher-priority reproducible security defect is found. Existing external gates remain: physical AEAT F-03 Client TLS,
   real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux
   Go race. No device/portal/credential/signing/upload/payment/submission action occurred.
 
 - Post-evidence `job_20260808_181212_a67641dd` + `job_20260808_182000_b760b566`: focused G30 Android set 39/39 per variant, zero failures/errors/skips; `job_20260808_181217_771655c9`: `CiPolicyTest` 20/20 and `git diff --check` PASS.
+
+
+## Autonomous audit G16-01 — certificate unlock same-boot monotonic lease — 2026-08-08
+
+- G16 is implementation/gate complete pending only atomic commit/push verification. Persisted automatic unlock is deliberately **same-device-boot only**. `JFMUC002` authenticates `BOOT_COUNT`, civil issue/expiry, certificate-reference digest and the original manual-session `elapsedRealtimeNanos` observation. Reboot, elapsed rollback, unavailable boot time and exact/over expiry fail closed; the user must re-enter the PKCS#12 password. Legacy `JFMUC001` is not trusted.
+- Independent review caught a real delayed-persistence lease-reset defect before commit. RED `job_20260808_214657_077bd47b`; the fix passes the original manual lease observation into cache persistence, so slow IO cannot move the authorization horizon. Focused cache GREEN `job_20260808_215055_9273b77a`; final focused Debug+QA `job_20260808_215453_1e468d7f` / `job_20260808_215957_d4b95a4f` = 42/42 per variant (Session 12, Cache 17, ViewModel 13), zero failures/errors/skips.
+- The review's separate generation-clear interleaving was classified non-defect at the restore linearization point plus production ViewModel cancellation-before-clear behavior. A second reviewer timed out without verdict and is not counted as evidence; deterministic diff/clock-domain review `job_20260808_220813_0e4b1017` + `job_20260808_220821_aa67dcfe` found no blocking issue.
+- `CiPolicyTest` initially failed in `job_20260808_215458_febb05c4` only because T5 prose lost the literal `no renueva` marker; compatible wording was restored and `job_20260808_215517_6eecde70` passed 20/20.
+- Fresh post-review Android `job_20260808_220015_d81bd713` = 63/63 tasks; XML `job_20260808_221818_30afbe69` = Debug 562/562 + QA 562/562, zero failures/errors/skips. Fresh lint/build `job_20260808_220756_9bfd9ab5` = 124/124 tasks, 0 errors / 26 warnings per variant, all three non-release APKs.
+- Final APK SHA-256: Debug `af911e7665a1f2df50edc6ce8db33c08a1c98d9087dc1ea573c29982f28a3cd9`; QA `7a259e1357a134352d559481062c77f4e7eb9de20ab6926381ff6f91f59bfeda`; QA AndroidTest `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`. Artifact `job_20260808_221623_3b8ce21e` PASS.
+- Fresh non-Android `job_20260808_220021_1e46b313`: Python 102 PASS with one environmental hardlink skip; Go test/vet/build PASS; relay SHA-256 `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Release fail-closed `job_20260808_221629_e10f293d` PASS with zero release APKs; cleanup `job_20260808_221737_935fc2da` removed relay.
+- No APK/device/portal/credential/private-certificate/real-signing/upload/payment/submission action occurred. After exact staged review and remote commit/push verification, continue G31 global browser-data erasure unless a new higher-priority reproducible security defect is found. External gates remain physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race.

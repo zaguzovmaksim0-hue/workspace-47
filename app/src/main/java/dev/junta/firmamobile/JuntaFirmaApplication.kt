@@ -1,6 +1,7 @@
 package dev.junta.firmamobile
 
 import android.app.Application
+import android.os.SystemClock
 import android.util.Log
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
 import dev.junta.firmamobile.certificate.AndroidKeystoreCertificateUnlockCache
@@ -48,7 +49,7 @@ class JuntaFirmaApplication : Application() {
         )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
         clientCertPreferenceCoordinator = ClientCertPreferenceCoordinator()
-        certificateSession = CertificateSession()
+        certificateSession = CertificateSession(monotonicNanos = SystemClock::elapsedRealtimeNanos)
         certificateUnlockCache = AndroidKeystoreCertificateUnlockCache(this)
         certificateGateway = CertificateRepository(
             documentAccess = ContentResolverCertificateDocumentAccess(contentResolver),

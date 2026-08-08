@@ -49,6 +49,62 @@ class CertificateSessionTest {
     }
 
     @Test
+    fun civilClockRollbackCannotExtendUnlockPastMonotonicDuration() = runTest {
+        val identity = validIdentity()
+        val monotonic = MutableMonotonicClock(1_000_000_000L)
+        val session = CertificateSession(
+            clock = mutableClock,
+            unlockDuration = Duration.ofMinutes(10),
+            monotonicNanos = monotonic::nowNanos,
+        )
+        session.unlock(identity)
+
+        mutableClock.advance(Duration.ofMinutes(9))
+        monotonic.advance(Duration.ofMinutes(9))
+        mutableClock.rewind(Duration.ofMinutes(8))
+        monotonic.advance(Duration.ofMinutes(1).plusMillis(1))
+
+        assertNull(session.identityForSigning())
+        assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
+    }
+
+    @Test
+    fun exactMonotonicLeaseBoundaryExpiresIdentity() = runTest {
+        val identity = validIdentity()
+        val monotonic = MutableMonotonicClock(2_000_000_000L)
+        val session = CertificateSession(
+            clock = mutableClock,
+            unlockDuration = Duration.ofMinutes(10),
+            monotonicNanos = monotonic::nowNanos,
+        )
+        session.unlock(identity)
+        mutableClock.advance(Duration.ofMinutes(9))
+
+        monotonic.advance(Duration.ofMinutes(10))
+
+        assertNull(session.identityForSigning())
+        assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
+    }
+
+    @Test
+    fun monotonicClockRollbackFailsClosed() = runTest {
+        val identity = validIdentity()
+        val monotonic = MutableMonotonicClock(3_000_000_000L)
+        val session = CertificateSession(
+            clock = mutableClock,
+            unlockDuration = Duration.ofMinutes(10),
+            monotonicNanos = monotonic::nowNanos,
+        )
+        session.unlock(identity)
+        mutableClock.advance(Duration.ofMinutes(1))
+
+        monotonic.rewind(Duration.ofNanos(1))
+
+        assertNull(session.identityForSigning())
+        assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
+    }
+
+    @Test
     fun backgroundKeepsIdentityButMemoryPressureLocksImmediately() = runTest {
         val identity = validIdentity()
         val session = CertificateSession(mutableClock, Duration.ofMinutes(10))
@@ -182,6 +238,24 @@ class CertificateSessionTest {
 
         fun advance(duration: Duration) {
             current = current.plus(duration)
+        }
+
+        fun rewind(duration: Duration) {
+            current = current.minus(duration)
+        }
+    }
+
+    private class MutableMonotonicClock(
+        private var current: Long,
+    ) {
+        fun nowNanos(): Long = current
+
+        fun advance(duration: Duration) {
+            current = Math.addExact(current, duration.toNanos())
+        }
+
+        fun rewind(duration: Duration) {
+            current = Math.subtractExact(current, duration.toNanos())
         }
     }
 }

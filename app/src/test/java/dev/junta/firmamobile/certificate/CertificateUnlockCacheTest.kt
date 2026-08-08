@@ -67,7 +67,7 @@ class CertificateUnlockCacheTest {
         val cache = cache(storage)
 
         assertFalse(
-            cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24))),
+            cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24)), 1_000_000_000L),
         )
         assertNull(storage.bytes)
         assertTrue(storage.clearCalls > 0)
@@ -81,7 +81,7 @@ class CertificateUnlockCacheTest {
         val original = password.copyOf()
         val expiresAt = now.plus(Duration.ofHours(24))
 
-        assertTrue(cache.store(reference, password, now, expiresAt))
+        assertTrue(cache.store(reference, password, now, expiresAt, 1_000_000_000L))
         val restored = checkNotNull(cache.restore(reference, now.plus(Duration.ofHours(23))))
 
         restored.use {
@@ -93,10 +93,163 @@ class CertificateUnlockCacheTest {
     }
 
     @Test
+    fun civilClockRollbackCannotRestoreAfterOriginalMonotonicRetention() = runTest {
+        val storage = MemoryRecordStorage()
+        val bootTime = MutableBootTimeSource(7, 1_000_000_000L)
+        val sessionMonotonic = MutableSessionMonotonicClock(10_000_000_000L)
+        val cache = cache(storage, bootTime, sessionMonotonic)
+        val expiresAt = now.plus(Duration.ofHours(24))
+        assertTrue(cache.store(reference, "secret".toCharArray(), now, expiresAt, bootTime.nowNanos()))
+        bootTime.advance(Duration.ofHours(25))
+        assertNull(cache.restore(reference, now.plus(Duration.ofHours(1))))
+        assertNull(storage.bytes)
+    }
+
+    @Test
+    fun elapsedRealtimeRollbackRejectsAndClearsPersistedUnlock() = runTest {
+        val storage = MemoryRecordStorage()
+        val bootTime = MutableBootTimeSource(12, 8_000_000_000L)
+        val sessionMonotonic = MutableSessionMonotonicClock(25_000_000_000L)
+        val cache = cache(storage, bootTime, sessionMonotonic)
+        val expiresAt = now.plus(Duration.ofHours(24))
+        assertTrue(cache.store(reference, "secret".toCharArray(), now, expiresAt, bootTime.nowNanos()))
+
+        bootTime.rewind(Duration.ofSeconds(1))
+
+        assertNull(cache.restore(reference, now.plusSeconds(1)))
+        assertNull(storage.bytes)
+    }
+
+    @Test
+    fun unavailableBootTimeFailsClosedForStoreAndRestore() = runTest {
+        val storeStorage = MemoryRecordStorage()
+        val unavailable = MutableBootTimeSource(13, 9_000_000_000L).apply { available = false }
+        val storeCache = cache(storeStorage, unavailable, MutableSessionMonotonicClock())
+        assertFalse(
+            storeCache.store(
+                reference,
+                "secret".toCharArray(),
+                now,
+                now.plus(Duration.ofHours(24)),
+                unavailable.nowNanos(),
+            ),
+        )
+        assertNull(storeStorage.bytes)
+
+        val restoreStorage = MemoryRecordStorage()
+        val bootTime = MutableBootTimeSource(14, 10_000_000_000L)
+        val restoreCache = cache(restoreStorage, bootTime, MutableSessionMonotonicClock())
+        assertTrue(
+            restoreCache.store(
+                reference,
+                "secret".toCharArray(),
+                now,
+                now.plus(Duration.ofHours(24)),
+                bootTime.nowNanos(),
+            ),
+        )
+        bootTime.available = false
+
+        assertNull(restoreCache.restore(reference, now.plusSeconds(1)))
+        assertNull(restoreStorage.bytes)
+    }
+
+    @Test
+    fun legacyRecordMagicIsRejectedAndCleared() = runTest {
+        val storage = MemoryRecordStorage()
+        val cache = cache(storage)
+        assertTrue(
+            cache.store(
+                reference,
+                "secret".toCharArray(),
+                now,
+                now.plus(Duration.ofHours(24)),
+                1_000_000_000L,
+            ),
+        )
+        val legacyMagic = "JFMUC001".toByteArray(Charsets.US_ASCII)
+        legacyMagic.copyInto(checkNotNull(storage.bytes), destinationOffset = 0)
+
+        assertNull(cache.restore(reference, now.plusSeconds(1)))
+        assertNull(storage.bytes)
+    }
+
+    @Test
+    fun changedBootCountRejectsAndClearsPersistedUnlock() = runTest {
+        val storage = MemoryRecordStorage()
+        val bootTime = MutableBootTimeSource(11, 5_000_000_000L)
+        val sessionMonotonic = MutableSessionMonotonicClock(20_000_000_000L)
+        val cache = cache(storage, bootTime, sessionMonotonic)
+        val expiresAt = now.plus(Duration.ofHours(24))
+        assertTrue(cache.store(reference, "secret".toCharArray(), now, expiresAt, bootTime.nowNanos()))
+        bootTime.bootCount += 1
+        bootTime.advance(Duration.ofMinutes(5))
+        assertNull(cache.restore(reference, now.plus(Duration.ofMinutes(5))))
+        assertNull(storage.bytes)
+    }
+
+    @Test
+    fun sameBootRestoreCarriesOnlyAuthenticatedRemainingMonotonicLease() = runTest {
+        val storage = MemoryRecordStorage()
+        val bootTime = MutableBootTimeSource(3, 2_000_000_000L)
+        val sessionMonotonic = MutableSessionMonotonicClock(30_000_000_000L)
+        val cache = cache(storage, bootTime, sessionMonotonic)
+        val expiresAt = now.plus(Duration.ofHours(24))
+        assertTrue(cache.store(reference, "secret".toCharArray(), now, expiresAt, bootTime.nowNanos()))
+        bootTime.advance(Duration.ofHours(23))
+        val restored = checkNotNull(cache.restore(reference, now.plus(Duration.ofHours(23))))
+        restored.use {
+            assertEquals(expiresAt, it.expiresAt)
+            val lease = checkNotNull(it.lease)
+            assertFalse(lease.isExpiredOrInvalid(sessionMonotonic.nowNanos()))
+            sessionMonotonic.advance(Duration.ofHours(1))
+            assertTrue(lease.isExpiredOrInvalid(sessionMonotonic.nowNanos()))
+        }
+    }
+
+    @Test
+    fun delayedStoreCannotMovePersistedLeaseOriginLaterThanManualUnlock() = runTest {
+        val storage = MemoryRecordStorage()
+        val bootTime = MutableBootTimeSource(9, 6_000_000_000L)
+        val sessionMonotonic = MutableSessionMonotonicClock(50_000_000_000L)
+        val cache = cache(storage, bootTime, sessionMonotonic)
+        val expiresAt = now.plus(Duration.ofHours(24))
+        val originalObservation = bootTime.nowNanos()
+        bootTime.advance(Duration.ofHours(2))
+
+        assertTrue(
+            cache.store(
+                reference,
+                "secret".toCharArray(),
+                now,
+                expiresAt,
+                observedAtMonotonicNanos = originalObservation,
+            ),
+        )
+        bootTime.advance(Duration.ofHours(22))
+
+        assertNull(cache.restore(reference, now.plus(Duration.ofHours(1))))
+        assertNull(storage.bytes)
+    }
+
+    @Test
+    fun exactElapsedRetentionBoundaryFailsClosed() = runTest {
+        val storage = MemoryRecordStorage()
+        val bootTime = MutableBootTimeSource(5, 4_000_000_000L)
+        val sessionMonotonic = MutableSessionMonotonicClock(40_000_000_000L)
+        val cache = cache(storage, bootTime, sessionMonotonic)
+        val expiresAt = now.plus(Duration.ofHours(24))
+        assertTrue(cache.store(reference, "secret".toCharArray(), now, expiresAt, bootTime.nowNanos()))
+        bootTime.advance(Duration.ofHours(24))
+        assertNull(cache.restore(reference, now.plus(Duration.ofHours(23))))
+        assertNull(storage.bytes)
+    }
+
+    @Test
     fun expiredRecordIsClearedAndNeverRestored() = runTest {
         val storage = MemoryRecordStorage()
         val cache = cache(storage)
-        cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24)))
+        cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24)), 1_000_000_000L)
 
         assertNull(cache.restore(reference, now.plus(Duration.ofHours(24))))
         assertNull(storage.bytes)
@@ -106,7 +259,7 @@ class CertificateUnlockCacheTest {
     fun differentCertificateReferenceCannotReuseCachedPassword() = runTest {
         val storage = MemoryRecordStorage()
         val cache = cache(storage)
-        cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24)))
+        cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24)), 1_000_000_000L)
         val replacement = reference.copy(uri = Uri.parse("content://documents/replacement"))
 
         assertNull(cache.restore(replacement, now.plusSeconds(1)))
@@ -117,7 +270,7 @@ class CertificateUnlockCacheTest {
     fun tamperedCiphertextFailsClosedAndClearsRecord() = runTest {
         val storage = MemoryRecordStorage()
         val cache = cache(storage)
-        cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24)))
+        cache.store(reference, "secret".toCharArray(), now, now.plus(Duration.ofHours(24)), 1_000_000_000L)
         storage.bytes!![storage.bytes!!.lastIndex] = (storage.bytes!!.last().toInt() xor 1).toByte()
 
         assertNull(cache.restore(reference, now.plusSeconds(1)))
@@ -134,6 +287,7 @@ class CertificateUnlockCacheTest {
                 "secret".toCharArray(),
                 now,
                 now.plus(Duration.ofHours(24)),
+                1_000_000_000L,
             ),
         )
         val restored = async(Dispatchers.Default) {
@@ -163,6 +317,7 @@ class CertificateUnlockCacheTest {
                 "secret".toCharArray(),
                 now,
                 now.plus(Duration.ofHours(24)),
+                1_000_000_000L,
             )
         }
 
@@ -184,6 +339,7 @@ class CertificateUnlockCacheTest {
                 "secret".toCharArray(),
                 now.plusSeconds(60),
                 now.plus(Duration.ofHours(24)),
+                1_000_000_000L,
             ),
         )
         assertNull(futureCache.restore(reference, now))
@@ -197,16 +353,56 @@ class CertificateUnlockCacheTest {
                 "secret".toCharArray(),
                 now,
                 now.plus(Duration.ofHours(24)).plusMillis(1),
+                1_000_000_000L,
             ),
         )
         assertNull(longStorage.bytes)
     }
 
-    private fun cache(storage: CertificateUnlockRecordStorage): EncryptedCertificateUnlockCache =
-        EncryptedCertificateUnlockCache(
-            storage = storage,
-            keyProvider = FixedKeyProvider(testKey()),
-        )
+    private fun cache(
+        storage: CertificateUnlockRecordStorage,
+        bootTime: MutableBootTimeSource = MutableBootTimeSource(),
+        sessionMonotonic: MutableSessionMonotonicClock = MutableSessionMonotonicClock(),
+    ): EncryptedCertificateUnlockCache = EncryptedCertificateUnlockCache(
+        storage = storage,
+        keyProvider = FixedKeyProvider(testKey()),
+        bootTimeSource = bootTime::read,
+        sessionMonotonicNanos = sessionMonotonic::nowNanos,
+    )
+
+    private class MutableBootTimeSource(
+        var bootCount: Int = 1,
+        private var elapsedRealtimeNanos: Long = 1_000_000_000L,
+        var available: Boolean = true,
+    ) {
+        fun read(): CertificateUnlockBootTime? = if (available) {
+            CertificateUnlockBootTime(
+                bootCount = bootCount,
+                elapsedRealtimeNanos = elapsedRealtimeNanos,
+            )
+        } else {
+            null
+        }
+
+        fun nowNanos(): Long = elapsedRealtimeNanos
+
+        fun advance(duration: Duration) {
+            elapsedRealtimeNanos = Math.addExact(elapsedRealtimeNanos, duration.toNanos())
+        }
+
+        fun rewind(duration: Duration) {
+            elapsedRealtimeNanos = Math.subtractExact(elapsedRealtimeNanos, duration.toNanos())
+        }
+    }
+
+    private class MutableSessionMonotonicClock(
+        private var current: Long = 10_000_000_000L,
+    ) {
+        fun nowNanos(): Long = current
+        fun advance(duration: Duration) {
+            current = Math.addExact(current, duration.toNanos())
+        }
+    }
 
     private fun testKey(): SecretKey = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
 
