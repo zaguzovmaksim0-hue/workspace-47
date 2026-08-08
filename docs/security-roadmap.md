@@ -907,3 +907,22 @@ Latest autonomous hardening — Afirma frame UI isolation (G28-01):
   fresh full JVM 548/548 per variant; lint/build 0 errors / 26 warnings; Python 102 with one
   environmental hardlink skip, Go, artifacts and release fail-closed all PASS. Relay absent and
   release APK count zero.
+
+
+## Autonomous tunnel-route diagnostic ownership — 2026-08-08 (G30-01)
+
+- The signing coordinator already rejected route callbacks that did not belong to its active
+  request, but the activity-level sanitized logger previously ignored that ownership result and
+  recorded every callback. Late executor completion after cancellation/completion could therefore
+  repopulate route diagnostics with stale provenance.
+- `SigningCoordinator.onTunnelRouteEvent` now returns a closed ownership boolean. Absent,
+  foreign and cancelled/non-active requests return `false`; active matching callbacks return
+  `true`. Only secure-tunnel stages keep the existing UI state transitions, while owned direct
+  fallback events remain diagnostic observations without UI mutation.
+- `MainActivity` records `TUNNEL_ROUTE` only after the coordinator accepts ownership. Event
+  contents remain unchanged and still contain no request ID, URL, host, credential or payload.
+  Transport/fallback/retry, TLS/origin/path, certificate/signing, profile/release and dependency
+  policies are unchanged.
+- TDD RED, focused/adjacent GREEN, fresh 550/550 Debug + 550/550 QA JVM, lint/build, Python 102
+  with one environmental hardlink skip, Go test/vet/build, Android artifact and release
+  fail-closed gates pass. Relay is removed and release APK count is zero. No E2E scope expands.

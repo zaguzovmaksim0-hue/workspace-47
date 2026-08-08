@@ -518,3 +518,22 @@ el job Linux debe seguir siendo obligatorio.
 - Run focused Debug/QA `AppRootTest`, fresh full Debug/QA JVM plus runtime-lock/core/AAPT2 checks,
   lint, Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact and
   release-signing fail-closed gates. Physical TalkBack timing/interruption remains a manual gate.
+
+
+## G30-01 — tunnel-route diagnostic ownership gate — 2026-08-08
+
+- For `MainActivity.onTunnelRouteEvent`, require `SanitizedLogger.recordTunnelRouteEvent` to be
+  reachable only after `SigningCoordinator.onTunnelRouteEvent(requestId, event)` returns an
+  affirmative ownership decision.
+- `SigningCoordinator` must reject ownership for no active operation, wrong request ID,
+  pre-confirmation/non-active ownership and cancelled/post-completion callbacks. Active matching
+  direct-fallback events remain accepted without changing signing UI; secure-tunnel connecting /
+  established / failed stages keep the existing UI transitions.
+- Preserve the closed `TunnelRouteEvent` schema: do not add request IDs, URLs, hosts,
+  exceptions, credentials or payloads to diagnostics; do not change transport fallback, timeout,
+  TLS/origin/path, signing/certificate, profile/release or dependency policy.
+- Run focused Debug/QA `BrowserSecurityRegressionTest` + `SigningCoordinatorTest`, adjacent route
+  coverage, then fresh runtime-lock/core/AAPT2, complete Debug/QA JVM, lint,
+  Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build, Android artifact
+  verification and release-signing fail-closed. Review the full diff and sensitive/unsafe added
+  lines; require generated relay and release APK absence before commit.

@@ -443,3 +443,26 @@ la limpieza global sigue ligando el completion al WebView iniciador.
 MiniApplet de epoch stale, full Debug/QA JVM, lint/build, Python, Go, artifact y release
 fail-closed. No se modifica la policy de origin, el alcance de cookie deletion ni el protocolo
 de firma; el E2E físico del portal sigue separado.
+
+
+### T21. Поздний transport callback загрязняет diagnostic provenance после потери owner
+
+**Риск:** tri-phase HTTP выполняется вне lifecycle owner и может завершить transport callback
+после cancellation, timeout, completion или замены signing request. Координатор уже умел
+игнорировать такой callback для UI/signing state, но activity-level logger ранее записывал
+санитизированный route event безусловно. В результате diagnostic mirror мог содержать
+наблюдение от уже неактивной операции и ошибочно выглядеть относящимся к текущему состоянию.
+Событие не содержит request ID, URL, host, credential или payload, поэтому утечка raw secret не
+воспроизведена; риск — происхождение/корреляция diagnostics.
+
+**Контроли:** `SigningCoordinator.onTunnelRouteEvent` является единственным owner-decision для
+route observation и возвращает `false` при отсутствии active operation, несовпадающем request
+или cancellation/non-active state. `MainActivity` вызывает
+`SanitizedLogger.recordTunnelRouteEvent` только после `true`. Owned direct-fallback observation
+сохраняется без UI mutation; secure-tunnel stages сохраняют прежние `Signing` /
+`ConnectingSecurely` transitions. Схема события и network/TLS/signing policies не расширены.
+
+**Верификация:** source regression RED→GREEN, state/ownership tests для foreign,
+pre-confirmation, active, cancelled и post-completion cases, adjacent route tests, full
+Debug/QA JVM, lint/build, Python, Go, Android artifact и release fail-closed gates. Реальный
+portal/device E2E не требуется и из этих тестов не выводится.

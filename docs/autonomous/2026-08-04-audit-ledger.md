@@ -1652,3 +1652,52 @@ production 0 removals / 2 additions, protected-surface and sensitive/unsafe-addi
 `git diff --check`, relay absence and zero release APKs. No APK installation/launch, device
 control, portal interaction, credential/private-certificate use, real signing, upload, payment
 or administrative submission occurred.
+
+
+## Finding G30-01 — tunnel-route diagnostic request ownership — 2026-08-08
+
+**Finding.** `SigningCoordinator.onTunnelRouteEvent` already ignored callbacks that no longer
+belonged to the active signing operation, but `MainActivity.onTunnelRouteEvent` recorded the
+same sanitized `TunnelRouteEvent` unconditionally afterwards. A cancelled, completed, foreign
+or otherwise stale tri-phase transport callback could therefore repopulate application/QA
+route diagnostics after its signing owner had disappeared. The event schema remains closed and
+contains no request ID, URL, host, credential or payload, so no raw-secret disclosure was
+reproduced; the defect is diagnostic provenance/lifecycle ownership.
+
+**TDD and remediation.** Narrow design/plan:
+`docs/superpowers/specs/2026-08-08-tunnel-route-diagnostic-ownership-design.md` and
+`docs/superpowers/plans/2026-08-08-tunnel-route-diagnostic-ownership.md`. RED
+`job_20260808_133736_97b71ce3` failed the new source regression against the pre-fix activity
+callback. Minimum remediation changes `SigningCoordinator.onTunnelRouteEvent` to return an
+ownership `Boolean`: absent, wrong-request and cancelled/non-active operations return `false`;
+an active matching event returns `true`, while only secure-tunnel stages retain the existing UI
+state transitions. `MainActivity` records the sanitized route diagnostic only after `true`.
+Direct-fallback observations therefore remain diagnostic-visible for the owning request without
+changing UI. No route-event fields, transport/fallback/retry/timeout semantics, network/TLS,
+origin/path policy, certificate/signing behavior, portal profile, release status or dependency
+changed. Focused GREEN `job_20260808_135551_c54e52e6` passed
+`BrowserSecurityRegressionTest` 20/20 and `SigningCoordinatorTest` 19/19; adjacent
+`job_20260808_140501_f1fccc18` passed 39/39.
+
+**Verification.** Fresh runtime-lock/core/AAPT2 + complete JVM
+`job_20260808_174353_866492dd` exited 0 with 63/63 tasks; XML aggregation
+`job_20260808_175618_12626cee` confirmed Debug 550/550 and QA 550/550 with zero
+failures/errors/skips. Fresh lint/build `job_20260808_175625_6cba0329` exited 0 with 124/124
+tasks; `job_20260808_180708_c0599793` recorded 0 lint errors / 26 warnings per variant and APK
+SHA-256 Debug `8f856038e86eed7124636cd21fae73220b2acff154058f924fa18321fe965232`, QA
+`78de84ec090e4dc075e7f5cdb6fbde10012d480ca6b4ab03c18bef9bf7f1ef9b`, QA AndroidTest
+`fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`; Android artifact
+verification passed. Non-Android `job_20260808_174358_0d8b0fab` exited 0: Python 102 PASS with
+one environmental hardlink skip and Go test/vet/build PASS; generated relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed.
+Release fail-closed `job_20260808_180721_ca2abb4a` passed without private signing inputs and
+left zero release APKs. Pre-evidence review `job_20260808_180738_392984fb` passed
+`git diff --check`, complete production/test diff review, sensitive/certificate-material and
+unsafe-added-line scans; only expected ownership/logging/request-ID control lines matched the
+broad diagnostic grep. Local `govulncheck`, `osv-scanner` and `gitleaks` executables remain
+unavailable, so no local scanner execution is claimed; the unchanged pinned CI policy remains
+covered by `CiPolicyTest`. No APK installation/launch, device control, authenticated portal
+interaction, credential/private-certificate use, real signing, upload, payment or administrative
+submission occurred.
+
+Post-evidence verification `job_20260808_181212_a67641dd` exited 0; XML `job_20260808_182000_b760b566` confirmed the focused `BrowserSecurityRegressionTest` + `SigningCoordinatorTest` set at 39/39 Debug and 39/39 QA with zero failures/errors/skips. `job_20260808_181217_771655c9` passed `CiPolicyTest` 20/20 and `git diff --check`.

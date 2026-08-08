@@ -2920,3 +2920,37 @@ timing/interruption or real-device visual correctness; those remain manual gates
   protected-surface and sensitive/unsafe scans, `git diff --check`, relay absence and zero
   release APKs all PASS. No device/portal/credential/private-certificate/real-signing/upload/
   payment/submission action occurred.
+
+
+## G30-01 — tunnel-route diagnostic request ownership — 2026-08-08
+
+- RED `job_20260808_133736_97b71ce3`: the new activity source regression failed against the
+  unconditional `sanitizedLogger.recordTunnelRouteEvent(event)` path before production mutation.
+- Minimum implementation: `SigningCoordinator.onTunnelRouteEvent` returns a Boolean ownership
+  decision; no active request, wrong request and cancelled/non-active requests return `false`.
+  An active matching event returns `true`; only secure-tunnel stages perform the prior UI state
+  transitions. `MainActivity` records the sanitized route event only when ownership is accepted.
+- Focused GREEN `job_20260808_135551_c54e52e6`: `BrowserSecurityRegressionTest` 20/20 and
+  `SigningCoordinatorTest` 19/19. Adjacent `job_20260808_140501_f1fccc18`: 39/39 PASS.
+- Fresh runtime-lock/core/AAPT2 + full JVM `job_20260808_174353_866492dd`: 63/63 tasks PASS;
+  XML `job_20260808_175618_12626cee`: Debug 550/550 and QA 550/550, zero
+  failures/errors/skips.
+- Lint/build `job_20260808_175625_6cba0329`: 124/124 tasks PASS. Summary/artifacts
+  `job_20260808_180708_c0599793`: 0 lint errors / 26 warnings per variant, Android artifact
+  verifier PASS. APK SHA-256: Debug
+  `8f856038e86eed7124636cd21fae73220b2acff154058f924fa18321fe965232`, QA
+  `78de84ec090e4dc075e7f5cdb6fbde10012d480ca6b4ab03c18bef9bf7f1ef9b`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Non-Android `job_20260808_174358_0d8b0fab`: Python 102 PASS with one environmental hardlink
+  skip; Go `test ./... -count=1`, `vet ./...` and relay build PASS. Relay SHA-256
+  `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed.
+- Release fail-closed `job_20260808_180721_ca2abb4a` PASS without private signing inputs;
+  release APK count zero. Pre-evidence `job_20260808_180738_392984fb`: full code/test diff,
+  `git diff --check`, sensitive/certificate-material and unsafe-added-line scan PASS. Broad
+  diagnostic matching found only expected ownership/logging/request-ID control lines.
+- Local `govulncheck`, `osv-scanner` and `gitleaks` executables were unavailable, so no local
+  vulnerability/secret scanner execution is claimed. No APK install/launch, device control,
+  authenticated portal interaction, credential/private-certificate use, real signing, upload,
+  payment or administrative submission occurred.
+
+- Post-evidence `job_20260808_181212_a67641dd`: focused Debug/QA G30 tests PASS; exact XML `job_20260808_182000_b760b566` = 39/39 per variant, zero failures/errors/skips. `job_20260808_181217_771655c9`: `CiPolicyTest` 20/20 and `git diff --check` PASS.

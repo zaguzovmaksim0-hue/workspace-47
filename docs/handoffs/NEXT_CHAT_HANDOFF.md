@@ -1421,3 +1421,38 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   storage/UX/supply-chain audit. Persisted-unlock cross-restart trust-time semantics, physical
   AEAT F-03, JavaScript-dialog portal compatibility, real-device TalkBack/visual validation and
   supported-Linux Go race remain separate gates.
+
+
+## Autonomous audit G30-01 — tunnel-route diagnostic request ownership — 2026-08-08
+
+- Confirmed a lifecycle/provenance defect: the coordinator rejected stale/foreign route events,
+  but `MainActivity` still recorded every sanitized route event unconditionally after that call.
+  No raw secret or request identifier was present in the event; the defect was stale diagnostic
+  ownership after cancellation/completion/request replacement.
+- RED `job_20260808_133736_97b71ce3`; focused GREEN
+  `job_20260808_135551_c54e52e6` = `BrowserSecurityRegressionTest` 20/20 and
+  `SigningCoordinatorTest` 19/19; adjacent `job_20260808_140501_f1fccc18` = 39/39.
+- Minimum runtime change: `SigningCoordinator.onTunnelRouteEvent` now returns `false` when no
+  matching live operation owns the callback and `true` for an active matching event;
+  `MainActivity` records `TUNNEL_ROUTE` only after that positive ownership decision. Existing
+  secure-tunnel UI transitions remain; owned direct-fallback diagnostics remain accepted.
+- Fresh full runtime-lock/core/AAPT2 + JVM `job_20260808_174353_866492dd` = 63/63 tasks;
+  `job_20260808_175618_12626cee` = Debug 550/550 and QA 550/550, zero
+  failures/errors/skips. Lint/build `job_20260808_175625_6cba0329` = 124/124 tasks, 0 errors /
+  26 warnings per variant, all three non-release APKs.
+- APK SHA-256: Debug `8f856038e86eed7124636cd21fae73220b2acff154058f924fa18321fe965232`, QA
+  `78de84ec090e4dc075e7f5cdb6fbde10012d480ca6b4ab03c18bef9bf7f1ef9b`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Python/Go `job_20260808_174358_0d8b0fab`: Python 102 PASS with one environmental hardlink
+  skip; Go test/vet/build PASS. Android artifact verification PASS; release fail-closed
+  `job_20260808_180721_ca2abb4a` PASS; relay removed; release APK count zero.
+- Pre-evidence `job_20260808_180738_392984fb`: `git diff --check`, full diff,
+  sensitive/certificate-material and unsafe-addition review PASS. Local pinned vulnerability
+  scanner executables remain unavailable; no local scanner run is claimed.
+- After atomic commit/push verification, continue G16 monotonic same-boot certificate-unlock
+  lease before G31 global browser-data erasure unless a fresh higher-priority reproducible
+  security defect is found. Existing external gates remain: physical AEAT F-03 Client TLS,
+  real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux
+  Go race. No device/portal/credential/signing/upload/payment/submission action occurred.
+
+- Post-evidence `job_20260808_181212_a67641dd` + `job_20260808_182000_b760b566`: focused G30 Android set 39/39 per variant, zero failures/errors/skips; `job_20260808_181217_771655c9`: `CiPolicyTest` 20/20 and `git diff --check` PASS.

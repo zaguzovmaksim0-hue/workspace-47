@@ -95,25 +95,32 @@ class SigningCoordinatorTest {
             stage = TunnelRouteStage.TUNNEL_CONNECTING,
             durationBucket = TunnelRouteDurationBucket.NOT_AVAILABLE,
         )
-        localCoordinator.onTunnelRouteEvent(WRONG_REQUEST_ID, connecting)
+        assertFalse(localCoordinator.onTunnelRouteEvent(WRONG_REQUEST_ID, connecting))
         assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
 
-        localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting)
+        val directFallback = connecting.copy(
+            route = ProfileHttpRoute.DIRECT,
+            stage = TunnelRouteStage.DIRECT_FAILED_PRE_HTTP,
+        )
+        assertTrue(localCoordinator.onTunnelRouteEvent(REQUEST_ID, directFallback))
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        assertTrue(localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting))
         assertEquals(SigningUiState.ConnectingSecurely(REQUEST_ID), localCoordinator.state.value)
 
-        localCoordinator.onTunnelRouteEvent(
+        assertFalse(localCoordinator.onTunnelRouteEvent(
             WRONG_REQUEST_ID,
             connecting.copy(stage = TunnelRouteStage.TUNNEL_ESTABLISHED),
-        )
+        ))
         assertEquals(SigningUiState.ConnectingSecurely(REQUEST_ID), localCoordinator.state.value)
 
-        localCoordinator.onTunnelRouteEvent(
+        assertTrue(localCoordinator.onTunnelRouteEvent(
             REQUEST_ID,
             connecting.copy(
                 stage = TunnelRouteStage.TUNNEL_ESTABLISHED,
                 durationBucket = TunnelRouteDurationBucket.UNDER_ONE_SECOND,
             ),
-        )
+        ))
         assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
 
         blockingAdapter.releasePrepare.countDown()
@@ -121,7 +128,7 @@ class SigningCoordinatorTest {
         assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), result.get())
         assertEquals(SigningUiState.Completed(REQUEST_ID), localCoordinator.state.value)
 
-        localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting)
+        assertFalse(localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting))
         assertEquals(SigningUiState.Completed(REQUEST_ID), localCoordinator.state.value)
     }
 
@@ -131,15 +138,54 @@ class SigningCoordinatorTest {
         coordinator.prepare(request(), reply)
         val before = coordinator.state.value
 
-        coordinator.onTunnelRouteEvent(
+        assertFalse(coordinator.onTunnelRouteEvent(
             REQUEST_ID,
             TunnelRouteEvent(
                 route = ProfileHttpRoute.SECURE_TUNNEL,
                 stage = TunnelRouteStage.TUNNEL_CONNECTING,
             ),
-        )
+        ))
 
         assertEquals(before, coordinator.state.value)
+    }
+
+    @Test
+    fun cancelledActiveRequestRejectsLateTunnelProgressOwnership() {
+        val blockingAdapter = BlockingPrepareAdapter()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = blockingAdapter,
+            localSignatureEngine = RecordingEngine(),
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request(), reply))
+
+        val result = AtomicReference<SigningExecutionResult>()
+        val confirmThread = thread(start = true) {
+            result.set(runBlocking { localCoordinator.confirm(REQUEST_ID) })
+        }
+        assertTrue(blockingAdapter.prepareEntered.await(5, TimeUnit.SECONDS))
+        assertTrue(localCoordinator.cancel(SigningCancelReason.BACKGROUND, REQUEST_ID))
+
+        assertFalse(
+            localCoordinator.onTunnelRouteEvent(
+                REQUEST_ID,
+                TunnelRouteEvent(
+                    route = ProfileHttpRoute.SECURE_TUNNEL,
+                    stage = TunnelRouteStage.TUNNEL_ESTABLISHED,
+                ),
+            ),
+        )
+
+        blockingAdapter.releasePrepare.countDown()
+        confirmThread.join(5_000)
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.CERTIFICATE_LOCKED),
+            result.get(),
+        )
     }
 
     @Test

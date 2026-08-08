@@ -349,9 +349,10 @@ class MainActivity : ComponentActivity() {
     private fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent) {
         lifecycleScope.launch(Dispatchers.Main.immediate) {
             if (::signingCoordinator.isInitialized) {
-                signingCoordinator.onTunnelRouteEvent(requestId, event)
+                if (signingCoordinator.onTunnelRouteEvent(requestId, event)) {
+                    (application as JuntaFirmaApplication).sanitizedLogger.recordTunnelRouteEvent(event)
+                }
             }
-            (application as JuntaFirmaApplication).sanitizedLogger.recordTunnelRouteEvent(event)
         }
     }
 

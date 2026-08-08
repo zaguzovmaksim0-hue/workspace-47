@@ -548,6 +548,26 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun tunnelRouteDiagnosticsRequireActiveSigningRequestOwnership() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+        val callbackBlock = source
+            .substringAfter(
+                "private fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent) {",
+                missingDelimiterValue = "",
+            )
+            .substringBefore("\n    private fun activeWebViewMatches")
+
+        assertTrue(
+            "Tunnel route diagnostics must be emitted only after active request ownership is accepted",
+            callbackBlock.isNotEmpty() &&
+                "if (signingCoordinator.onTunnelRouteEvent(requestId, event)) {" in callbackBlock &&
+                "sanitizedLogger.recordTunnelRouteEvent(event)" in callbackBlock,
+        )
+    }
+
+    @Test
     fun javascriptDialogsNeverUsePlatformDefaultWindows() {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/browser/JuntaWebChromeClient.kt",

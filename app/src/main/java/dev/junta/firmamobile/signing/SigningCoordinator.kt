@@ -304,32 +304,36 @@ class SigningCoordinator internal constructor(
     }
 
     @Synchronized
-    internal fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent) {
-        val operation = active ?: return
-        if (operation.summary.requestId != requestId || operation.cancellationCode() != null) return
-        if (event.route != ProfileHttpRoute.SECURE_TUNNEL) return
-
-        mutableState.value = when (event.stage) {
-            TunnelRouteStage.TUNNEL_CONNECTING -> when (val current = mutableState.value) {
-                is SigningUiState.Signing -> if (current.requestId == requestId) {
-                    SigningUiState.ConnectingSecurely(requestId)
-                } else {
-                    current
-                }
-                else -> current
-            }
-            TunnelRouteStage.TUNNEL_ESTABLISHED,
-            TunnelRouteStage.TUNNEL_FAILED,
-            -> when (val current = mutableState.value) {
-                is SigningUiState.ConnectingSecurely -> if (current.requestId == requestId) {
-                    SigningUiState.Signing(requestId)
-                } else {
-                    current
-                }
-                else -> current
-            }
-            TunnelRouteStage.DIRECT_FAILED_PRE_HTTP -> mutableState.value
+    internal fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent): Boolean {
+        val operation = active ?: return false
+        if (operation.summary.requestId != requestId || operation.cancellationCode() != null) {
+            return false
         }
+
+        if (event.route == ProfileHttpRoute.SECURE_TUNNEL) {
+            mutableState.value = when (event.stage) {
+                TunnelRouteStage.TUNNEL_CONNECTING -> when (val current = mutableState.value) {
+                    is SigningUiState.Signing -> if (current.requestId == requestId) {
+                        SigningUiState.ConnectingSecurely(requestId)
+                    } else {
+                        current
+                    }
+                    else -> current
+                }
+                TunnelRouteStage.TUNNEL_ESTABLISHED,
+                TunnelRouteStage.TUNNEL_FAILED,
+                -> when (val current = mutableState.value) {
+                    is SigningUiState.ConnectingSecurely -> if (current.requestId == requestId) {
+                        SigningUiState.Signing(requestId)
+                    } else {
+                        current
+                    }
+                    else -> current
+                }
+                TunnelRouteStage.DIRECT_FAILED_PRE_HTTP -> mutableState.value
+            }
+        }
+        return true
     }
 
     fun cancel(
