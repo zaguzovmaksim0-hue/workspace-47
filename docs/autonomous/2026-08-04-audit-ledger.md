@@ -1469,3 +1469,56 @@ dialogs remains an external/manual acceptance gate. No APK installation/launch, 
 control, authenticated portal interaction, credential/private-certificate use, real signing,
 upload, payment or administrative submission occurred.
 Post-evidence `job_20260808_081630_1ba06e79` reran the focused Android contract with no build cache and passed Debug 22/22 reported focused tests, QA 5/5, plus `CiPolicyTest` 20/20.
+
+## Finding G26-01 — dedicated Client TLS subframe navigation confinement — 2026-08-08
+
+**Finding.** `ClientAuthWebViewClient.shouldOverrideUrlLoading(WebView, WebResourceRequest)`
+returned `false` for every `isForMainFrame=false` request before applying the existing
+`isAllowed()` origin predicate. A dedicated one-shot Client TLS WebView could therefore load
+an arbitrary off-origin subframe even though main-frame navigation was confined to the
+profile's Client TLS request/source origins. This did not reproduce certificate disclosure,
+TLS-validation bypass or profile escalation; it unnecessarily enlarged the remote-content
+surface inside a certificate-authenticated dedicated WebView. The same callback boundary
+also needed UI ownership discipline: consuming a hostile subframe must not let that frame
+publish a top-level `onNavigationBlocked`, and the deprecated String callback cannot prove
+main-frame ownership.
+
+**TDD.** Narrow design and implementation plan are
+`docs/superpowers/specs/2026-08-08-client-tls-subframe-navigation-confinement-design.md` and
+`docs/superpowers/plans/2026-08-08-client-tls-subframe-navigation-confinement.md`. RED
+`job_20260808_101639_d1700821` ran the new Debug regression against unchanged production and
+failed at `ClientAuthWebViewClientTest.kt:156`: the off-origin subframe returned `false`
+instead of being consumed. Minimum production change applies the pre-existing `isAllowed()`
+origin predicate to every modern request. Allowed request/source-origin subframes still
+return `false`; disallowed modern requests abandon the one-shot handler and return `true`;
+only authoritative modern main-frame requests publish `INVALID_URL`. A disallowed deprecated
+String callback remains consumed/abandoned but is UI-silent because frame ownership is
+unknown. No allowlist or certificate rule changed.
+
+**Verification.** Focused Debug+QA `job_20260808_102029_d1a3fa55` completed successfully.
+Fresh AAPT2/runtime-lock/core plus full JVM `job_20260808_102415_d6343e1f` executed 63/63
+tasks; XML aggregation `job_20260808_103110_53ac7cc8` confirmed Debug 546/546 and QA
+546/546 with zero failures/errors/skips, including `ClientAuthWebViewClientTest` 6/6 per
+variant. Lint/build `job_20260808_103119_f0920883` executed 124/124 tasks; lint summaries
+`job_20260808_103907_b151ecd0` reported 0 errors / 26 warnings per variant and all
+Debug/QA/QA-AndroidTest assemblies passed. APK SHA-256: Debug
+`ec5f461e5994a9314f2cbc7a8bbf68731250eaee84a31422fd40e36754820c03`, QA
+`74570f5f5f11cb94d182f076fc306df88da75a807b23ccf3e0ca574177231964`, QA AndroidTest
+`fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+
+The first combined Python/Go/artifact/release wrapper `job_20260808_103918_cd9b8365`
+completed every substantive gate successfully but exited 1 only after them: its final
+`find app/build/outputs/apk/release ...` ran under `pipefail` while the intentionally absent
+release directory did not exist. Diagnostic `job_20260808_104105_e4ac2a50` confirmed
+`find_rc=1`, relay absent, release directory absent and only the three expected non-release
+APKs. Corrected wrapper `job_20260808_104117_fd61de5c` exited 0: Python 102 PASS with one
+environmental hardlink skip, Go test/vet/build PASS, relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` then removed,
+Android artifact verification PASS, release-signing fail-closed PASS and release APK count
+zero. Pre-evidence review `job_20260808_104257_46e521a3` passed `git diff --check`, exact
+production/test scope, sensitive/unsafe-addition scans, no profile/release/allowlist diff,
+relay absence and zero release APKs. No APK installation/launch, device control,
+authenticated portal interaction, credential/private-certificate use, real signing, upload,
+payment or administrative submission occurred. Physical Client TLS/portal compatibility
+claims are unchanged.
+Post-evidence verification `job_20260808_104522_fbc787af` passed focused Debug/QA Client TLS tests (6/6 per variant by `job_20260808_104912_d8e853c1`), `CiPolicyTest` 20/20 and `git diff --check`.

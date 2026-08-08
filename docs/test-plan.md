@@ -484,3 +484,20 @@ el job Linux debe seguir siendo obligatorio.
   Go test/vet/build, Android artifact verification and release-signing fail-closed.
 - Automated success proves suppression of the platform-default modal path, not physical
   compatibility with a public portal that intentionally depends on JavaScript dialogs.
+
+## G26-01 — dedicated Client TLS subframe confinement gate — 2026-08-08
+
+- A modern off-origin `WebResourceRequest` with `isForMainFrame=false` must be consumed,
+  abandon/clear the one-shot Client TLS grant, and publish no application/UI callback.
+- A modern subframe on an already allowed Client TLS source/request origin remains allowed
+  (`false`) and must not abandon the grant; this is the compatibility control against an
+  over-broad iframe ban.
+- A disallowed modern main-frame request remains consumed, abandons the grant and publishes
+  exactly `INVALID_URL`; this is the positive ownership control.
+- A disallowed deprecated String callback remains consumed and abandons the grant but
+  publishes no top-level callback because frame ownership is unavailable.
+- Preserve exact Client TLS transition/target, host/port, TTL/epoch, issuer, key type,
+  keyUsage/EKU, preference-clearing, profile/release and one-shot regressions. Run focused
+  Debug/QA Client TLS tests plus fresh full Debug/QA JVM, runtime lock/core/AAPT2, lint,
+  Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact and
+  release-signing fail-closed gates.

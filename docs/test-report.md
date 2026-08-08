@@ -2810,3 +2810,33 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - Pre-evidence `job_20260808_081400_9994048c`: `git diff --check` and production unsafe
   WebView/TLS/default-dialog scans PASS. No physical device/portal claim is made.
 - Post-evidence `job_20260808_081630_1ba06e79`: focused Debug reports 22/22, QA 5/5, and `CiPolicyTest` 20/20; zero failures/errors/skips.
+
+## G26-01 — dedicated Client TLS subframe navigation confinement — 2026-08-08
+
+- RED `job_20260808_101639_d1700821`: the new Debug regression failed at line 156 because
+  an off-origin subframe returned `false` and escaped the dedicated client's existing
+  origin predicate.
+- Minimum production fix: evaluate the existing `isAllowed()` for every modern navigation;
+  disallowed requests abandon and return `true`, while application `INVALID_URL` delivery
+  is gated by `request.isForMainFrame`. Deprecated disallowed navigation is consumed and
+  UI-silent. Allowed-origin subframes remain unchanged.
+- Focused Debug+QA `job_20260808_102029_d1a3fa55`: BUILD SUCCESSFUL. Fresh full
+  runtime-lock/core/AAPT2 + JVM `job_20260808_102415_d6343e1f`: 63/63 tasks;
+  `job_20260808_103110_53ac7cc8` aggregated Debug 546/546 and QA 546/546, zero
+  failures/errors/skips; dedicated client class 6/6 per variant.
+- Lint/build `job_20260808_103119_f0920883`: 124/124 tasks; 0 errors / 26 warnings per
+  variant; Debug, QA and QA AndroidTest assemblies PASS. APK SHA-256: Debug
+  `ec5f461e5994a9314f2cbc7a8bbf68731250eaee84a31422fd40e36754820c03`, QA
+  `74570f5f5f11cb94d182f076fc306df88da75a807b23ccf3e0ca574177231964`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Initial non-Android wrapper `job_20260808_103918_cd9b8365` had all substantive PASS
+  outputs but final exit 1 from `find` on the absent release directory under `pipefail`.
+  Diagnostic `job_20260808_104105_e4ac2a50` proved that classification. Corrected
+  `job_20260808_104117_fd61de5c` exited 0: Python 102 PASS with one environmental hardlink
+  skip; Go test/vet/build PASS; Android artifacts PASS; release signing fail-closed PASS;
+  generated relay removed; release APK count zero.
+- Pre-evidence `job_20260808_104257_46e521a3`: exact production/test scope,
+  `git diff --check`, sensitive/unsafe pattern scan, no profile/release/allowlist file diff,
+  relay absence and zero release APKs all PASS. No device/portal/credential/real-signing
+  action occurred; no E2E scope is expanded.
+- Post-evidence `job_20260808_104522_fbc787af`: focused Debug/QA Client TLS suite PASS; exact XML `job_20260808_104912_d8e853c1` = 6/6 per variant; `CiPolicyTest` 20/20 PASS; `git diff --check` PASS.

@@ -6,6 +6,7 @@ import android.net.http.SslError
 import android.webkit.ClientCertRequest
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
@@ -146,7 +147,66 @@ class ClientAuthWebViewClientTest {
     }
 
     @Test
-    fun subsequentNavigationAbandonsGrantAndOffOriginMainFrameIsBlocked() {
+    fun dedicatedClientTlsNavigationConfinesSubframesAndOwnsUiOnlyForMainFrame() {
+        val subframeEpoch = AtomicInteger(12)
+        val subframeClears = AtomicInteger()
+        val subframeCallbacks = RecordingCallbacks { subframeEpoch.incrementAndGet() }
+        val subframeClient = client(subframeEpoch, subframeCallbacks, subframeClears)
+
+        assertTrue(
+            subframeClient.shouldOverrideUrlLoading(
+                webView,
+                navigationRequest("https://example.org/untrusted-frame", isMainFrame = false),
+            ),
+        )
+        assertEquals(1, subframeClears.get())
+        assertEquals(emptyList<String>(), subframeCallbacks.events)
+
+        val allowedEpoch = AtomicInteger(12)
+        val allowedClears = AtomicInteger()
+        val allowedCallbacks = RecordingCallbacks { allowedEpoch.incrementAndGet() }
+        val allowedClient = client(allowedEpoch, allowedCallbacks, allowedClears)
+
+        assertFalse(
+            allowedClient.shouldOverrideUrlLoading(
+                webView,
+                navigationRequest(RETURN, isMainFrame = false),
+            ),
+        )
+        assertEquals(0, allowedClears.get())
+        assertEquals(emptyList<String>(), allowedCallbacks.events)
+
+        val mainFrameEpoch = AtomicInteger(12)
+        val mainFrameClears = AtomicInteger()
+        val mainFrameCallbacks = RecordingCallbacks { mainFrameEpoch.incrementAndGet() }
+        val mainFrameClient = client(mainFrameEpoch, mainFrameCallbacks, mainFrameClears)
+
+        assertTrue(
+            mainFrameClient.shouldOverrideUrlLoading(
+                webView,
+                navigationRequest("https://example.org/untrusted-main", isMainFrame = true),
+            ),
+        )
+        assertEquals(1, mainFrameClears.get())
+        assertEquals(listOf("blocked:INVALID_URL"), mainFrameCallbacks.events)
+
+        val legacyEpoch = AtomicInteger(12)
+        val legacyClears = AtomicInteger()
+        val legacyCallbacks = RecordingCallbacks { legacyEpoch.incrementAndGet() }
+        val legacyClient = client(legacyEpoch, legacyCallbacks, legacyClears)
+
+        @Suppress("DEPRECATION")
+        val legacyBlocked = legacyClient.shouldOverrideUrlLoading(
+            webView,
+            "https://example.org/untrusted-legacy",
+        )
+        assertTrue(legacyBlocked)
+        assertEquals(1, legacyClears.get())
+        assertEquals(emptyList<String>(), legacyCallbacks.events)
+    }
+
+    @Test
+    fun subsequentNavigationAbandonsGrantAndLegacyOffOriginNavigationStaysUiSilent() {
         val epoch = AtomicInteger(12)
         val clears = AtomicInteger()
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
@@ -163,8 +223,18 @@ class ClientAuthWebViewClientTest {
         assertEquals(1, request.ignores)
         assertTrue(client.shouldOverrideUrlLoading(webView, "https://example.org/"))
         assertFalse(client.shouldOverrideUrlLoading(webView, RETURN))
-        assertTrue(callbacks.events.contains("blocked:INVALID_URL"))
+        assertFalse(callbacks.events.contains("blocked:INVALID_URL"))
     }
+
+    private fun navigationRequest(rawUrl: String, isMainFrame: Boolean) =
+        object : WebResourceRequest {
+            override fun getUrl(): Uri = Uri.parse(rawUrl)
+            override fun isForMainFrame(): Boolean = isMainFrame
+            override fun isRedirect(): Boolean = false
+            override fun hasGesture(): Boolean = true
+            override fun getMethod(): String = "GET"
+            override fun getRequestHeaders(): Map<String, String> = emptyMap()
+        }
 
     private fun client(
         epoch: AtomicInteger,

@@ -151,8 +151,8 @@ internal class ClientAuthWebViewClient(
             requestHandler.abandon()
             return true
         }
-        if (!request.isForMainFrame || isAllowed(request.url.toString())) return false
-        blockNavigation()
+        if (isAllowed(request.url.toString())) return false
+        blockNavigation(notifyApplication = request.isForMainFrame)
         return true
     }
 
@@ -163,7 +163,7 @@ internal class ClientAuthWebViewClient(
             return true
         }
         if (isAllowed(url)) return false
-        blockNavigation()
+        blockNavigation(notifyApplication = false)
         return true
     }
 
@@ -211,9 +211,11 @@ internal class ClientAuthWebViewClient(
         false
     }
 
-    private fun blockNavigation() {
+    private fun blockNavigation(notifyApplication: Boolean) {
         requestHandler.abandon()
-        callbacks.onNavigationBlocked(NavigationBlockReason.INVALID_URL)
+        if (notifyApplication) {
+            callbacks.onNavigationBlocked(NavigationBlockReason.INVALID_URL)
+        }
     }
 
     private fun isAllowed(rawUrl: String): Boolean {

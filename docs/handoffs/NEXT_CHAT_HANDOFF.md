@@ -1333,3 +1333,32 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   remote verification; do not broaden this change into custom dialog UI without separate
   design/evidence.
 - Post-evidence `job_20260808_081630_1ba06e79` passed focused Debug 22/22 reported tests, QA 5/5 and `CiPolicyTest` 20/20.
+
+## Autonomous audit G26-01 — dedicated Client TLS subframe navigation confinement — 2026-08-08
+
+- Reproduced a dedicated Client TLS navigation-confinement defect: the modern callback
+  returned `false` for every subframe before checking its existing source/request-origin
+  allowlist, so an arbitrary off-origin iframe could load inside the dedicated one-shot
+  Client TLS WebView. No certificate disclosure or TLS bypass was demonstrated.
+- RED `job_20260808_101639_d1700821` failed on the off-origin subframe return value.
+  Minimum remediation reuses `isAllowed()` for all modern requests: allowed-origin
+  subframes remain compatible; disallowed subframes are consumed and abandon/clear the
+  grant without top-level UI; disallowed modern main-frame navigation keeps the existing
+  `INVALID_URL` callback. Deprecated blocked navigation stays consumed/abandoned but is
+  UI-silent because frame ownership is unknown.
+- Focused Debug+QA passed. Fresh full JVM/toolchain `job_20260808_102415_d6343e1f` passed
+  546/546 per variant; lint/build passed 124/124 tasks with 0 errors / 26 warnings per
+  variant and all three non-release assemblies. Python 102 with one environmental
+  hardlink skip, Go test/vet/build, Android artifact and release fail-closed gates passed
+  in corrected wrapper `job_20260808_104117_fd61de5c`; relay removed and release APK count
+  zero. Initial wrapper exit 1 was only a post-gate `find` on the absent release directory
+  under `pipefail`, diagnosed by `job_20260808_104105_e4ac2a50`.
+- APK SHA-256: Debug `ec5f461e5994a9314f2cbc7a8bbf68731250eaee84a31422fd40e36754820c03`;
+  QA `74570f5f5f11cb94d182f076fc306df88da75a807b23ccf3e0ca574177231964`;
+  QA AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- After atomic commit/push and exact remote verification, continue a different independent
+  audit line. Preserve existing manual gates: physical AEAT F-03 Client TLS, any real
+  portal compatibility affected by authenticated subframes, TalkBack/visual checks, and
+  supported-Linux Go race. Persisted certificate-unlock cross-restart trust-time semantics
+  remains a product/security design decision.
+- Post-evidence `job_20260808_104522_fbc787af` passed focused Debug/QA Client TLS tests; exact class XML `job_20260808_104912_d8e853c1` was 6/6 per variant, `CiPolicyTest` passed 20/20 and `git diff --check` passed.

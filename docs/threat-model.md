@@ -399,3 +399,25 @@ geolocalización permanecen.
 callbacks, scan que prohíbe `Dialog`/`AlertDialog` y `super.onJs*`, y full Android/Python/
 Go/artifact/release gates. La compatibilidad física con portales que dependan de modales
 JavaScript sigue siendo gate manual; no se infiere E2E.
+
+### T19. Un subframe externo amplía la superficie del WebView Client TLS dedicado
+
+**Riesgo:** el WebView one-shot usado para Client TLS aplica una allowlist estricta a la
+navegación principal, pero un callback moderno de subframe omite esa validación y permite
+contenido de otro origin dentro de la vista autenticada. Aunque `ClientCertRequest` sigue
+revalidando host/port/certificado y no se demostró divulgación de credenciales, esa carga
+amplía innecesariamente la superficie remota y un frame no propietario tampoco debe poder
+crear estado UI top-level.
+
+**Controles:** `ClientAuthWebViewClient` evalúa el mismo `isAllowed()` para toda navegación
+moderna. Un subframe en los origins source/request ya autorizados conserva compatibilidad;
+un subframe fuera de esos origins se consume, abandona/limpia el grant y no publica
+`onNavigationBlocked`. Solo una petición moderna `isForMainFrame=true` puede publicar el
+block `INVALID_URL`. El callback String deprecated sigue bloqueando/abandonando URLs no
+permitidas, pero no publica UI porque no expone ownership de frame. No cambian allowlists,
+TTL/epoch, issuer/keyUsage/EKU, host/port, preference barrier, TLS ni release profiles.
+
+**Verificación:** RED directo sobre subframe off-origin, controles positivos same-origin y
+main-frame, callback legacy UI-silent, full Debug/QA JVM, lint/build, Python, Go, artifact y
+release fail-closed. La evidencia automatizada no demuestra ni amplía E2E de AEAT/Carné
+Joven ni sustituye validación física de compatibilidad del portal.

@@ -847,3 +847,20 @@ requires a separate design/plan and observed TDD RED.
 - RED reproduced the inherited default path; full automated Android/Python/Go/artifact/
   release gates pass. Portal behavior that semantically requires JavaScript modals is not
   claimed compatible until separate physical evidence exists.
+
+## Autonomous dedicated Client TLS subframe confinement — 2026-08-08 (G26-01)
+
+- The dedicated Client TLS modern navigation callback previously skipped its origin check
+  for every `isForMainFrame=false` request, permitting arbitrary off-origin subframe
+  content inside the one-shot certificate-authenticated WebView. Main-frame confinement
+  and `ClientCertRequest` host/port/certificate checks were not bypassed, so no credential
+  disclosure is claimed.
+- Every modern navigation now reuses the existing source/request-origin predicate. Allowed
+  subframes are unchanged; disallowed subframes are consumed and abandon the grant without
+  publishing top-level blocked-navigation UI. Disallowed modern main-frame requests retain
+  the existing UI callback. Deprecated blocked navigation remains fail-closed and is
+  UI-silent because its frame ownership is unknowable.
+- No Client TLS origin, path, profile, release status, issuer/keyUsage/EKU rule, TTL/epoch,
+  preference barrier, certificate storage, TLS verification, signing rule or dependency
+  changed. Full Android/Python/Go/artifact/release automated gates pass; physical portal
+  compatibility and E2E scope remain unchanged.
