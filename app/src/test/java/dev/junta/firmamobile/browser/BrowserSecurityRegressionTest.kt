@@ -267,14 +267,76 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun globalBrowserDataClearRemovesResourceCacheWithoutWideningCurrentSiteClear() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val currentSiteBlock = screenSource
+            .substringAfter("        onClearCurrentSite = {", missingDelimiterValue = "")
+            .substringBefore("        onClearSession = {")
+        val globalClearBlock = screenSource
+            .substringAfter("        onDeleteAllBrowserData = {", missingDelimiterValue = "")
+            .substringBefore("    ) { modifier ->")
+        val stopLoadingIndex = globalClearBlock.indexOf("stopLoading()")
+        val clearCacheIndex = globalClearBlock.indexOf("clearCache(true)")
+        val globalDeletionIndex = globalClearBlock.indexOf("siteDataCleaner.clearAllConfirmed")
+
+        assertTrue("Current-site clear handler must be present", currentSiteBlock.isNotEmpty())
+        assertTrue("Global clear handler must be present", globalClearBlock.isNotEmpty())
+        assertFalse(
+            "Current-site clear must not widen into application-wide WebView resource-cache deletion",
+            "clearCache(true)" in currentSiteBlock,
+        )
+        assertTrue(
+            "Global clear must remove the WebView resource cache after stopping the initiating view and before global cookie/storage deletion",
+            stopLoadingIndex >= 0 && clearCacheIndex in (stopLoadingIndex + 1) until globalDeletionIndex,
+        )
+    }
+
+    @Test
+    fun globalBrowserDataClearFailsClosedWithoutActiveWebViewOwner() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val globalClearBlock = screenSource
+            .substringAfter("        onDeleteAllBrowserData = {", missingDelimiterValue = "")
+            .substringBefore("    ) { modifier ->")
+        val ownerLookupIndex = globalClearBlock.indexOf("val webView = webViewRef.get()")
+        val missingOwnerBranchIndex = globalClearBlock.indexOf("if (webView == null) {")
+        val invalidateIndex = globalClearBlock.indexOf("globalDataClearLease.invalidate()")
+        val failureIndex = globalClearBlock.indexOf("globalClearResult = false")
+        val nonNullBranchIndex = globalClearBlock.indexOf("} else {")
+        val beginIndex = globalClearBlock.indexOf("globalDataClearLease.begin(webView)")
+        val globalDeletionIndex = globalClearBlock.indexOf("siteDataCleaner.clearAllConfirmed")
+
+        assertTrue(
+            "Global clear completion ownership must be typed to a non-null WebView",
+            "BrowserDataClearCompletionLease<WebView>()" in screenSource &&
+                "BrowserDataClearCompletionLease<WebView?>()" !in screenSource,
+        )
+        assertTrue("Global clear handler must expose the fail-closed owner boundary", globalClearBlock.isNotEmpty())
+        assertTrue(
+            "A missing WebView must invalidate stale completion ownership and publish failure",
+            ownerLookupIndex >= 0 &&
+                missingOwnerBranchIndex in (ownerLookupIndex + 1) until invalidateIndex &&
+                invalidateIndex in (missingOwnerBranchIndex + 1) until failureIndex,
+        )
+        assertTrue(
+            "Global cookie/WebStorage deletion must live only in the admitted non-null-owner branch",
+            nonNullBranchIndex in (failureIndex + 1) until beginIndex &&
+                beginIndex in (nonNullBranchIndex + 1) until globalDeletionIndex,
+        )
+    }
+
+    @Test
     fun globalDataClearCompletionIsBoundToTheInitiatingWebView() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
         )
 
         assertTrue(
-            "Global clear must use a one-shot completion lease",
-            "BrowserDataClearCompletionLease<WebView?>" in screenSource &&
+            "Global clear must use a one-shot non-null completion lease",
+            "BrowserDataClearCompletionLease<WebView>()" in screenSource &&
                 "globalDataClearLease.begin(webView)" in screenSource &&
                 "globalDataClearLease.consume(clearRequest)" in screenSource,
         )

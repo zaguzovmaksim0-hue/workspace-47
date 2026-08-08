@@ -1460,7 +1460,7 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
 
 ## Autonomous audit G16-01 — certificate unlock same-boot monotonic lease — 2026-08-08
 
-- G16 is implementation/gate complete pending only atomic commit/push verification. Persisted automatic unlock is deliberately **same-device-boot only**. `JFMUC002` authenticates `BOOT_COUNT`, civil issue/expiry, certificate-reference digest and the original manual-session `elapsedRealtimeNanos` observation. Reboot, elapsed rollback, unavailable boot time and exact/over expiry fail closed; the user must re-enter the PKCS#12 password. Legacy `JFMUC001` is not trusted.
+- G16 is complete and pushed as `79bd84d7d2b8747390d86442a55c0aafbca4aa79`. Persisted automatic unlock is deliberately **same-device-boot only**. `JFMUC002` authenticates `BOOT_COUNT`, civil issue/expiry, certificate-reference digest and the original manual-session `elapsedRealtimeNanos` observation. Reboot, elapsed rollback, unavailable boot time and exact/over expiry fail closed; the user must re-enter the PKCS#12 password. Legacy `JFMUC001` is not trusted.
 - Independent review caught a real delayed-persistence lease-reset defect before commit. RED `job_20260808_214657_077bd47b`; the fix passes the original manual lease observation into cache persistence, so slow IO cannot move the authorization horizon. Focused cache GREEN `job_20260808_215055_9273b77a`; final focused Debug+QA `job_20260808_215453_1e468d7f` / `job_20260808_215957_d4b95a4f` = 42/42 per variant (Session 12, Cache 17, ViewModel 13), zero failures/errors/skips.
 - The review's separate generation-clear interleaving was classified non-defect at the restore linearization point plus production ViewModel cancellation-before-clear behavior. A second reviewer timed out without verdict and is not counted as evidence; deterministic diff/clock-domain review `job_20260808_220813_0e4b1017` + `job_20260808_220821_aa67dcfe` found no blocking issue.
 - `CiPolicyTest` initially failed in `job_20260808_215458_febb05c4` only because T5 prose lost the literal `no renueva` marker; compatible wording was restored and `job_20260808_215517_6eecde70` passed 20/20.
@@ -1468,3 +1468,37 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
 - Final APK SHA-256: Debug `af911e7665a1f2df50edc6ce8db33c08a1c98d9087dc1ea573c29982f28a3cd9`; QA `7a259e1357a134352d559481062c77f4e7eb9de20ab6926381ff6f91f59bfeda`; QA AndroidTest `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`. Artifact `job_20260808_221623_3b8ce21e` PASS.
 - Fresh non-Android `job_20260808_220021_1e46b313`: Python 102 PASS with one environmental hardlink skip; Go test/vet/build PASS; relay SHA-256 `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Release fail-closed `job_20260808_221629_e10f293d` PASS with zero release APKs; cleanup `job_20260808_221737_935fc2da` removed relay.
 - No APK/device/portal/credential/private-certificate/real-signing/upload/payment/submission action occurred. After exact staged review and remote commit/push verification, continue G31 global browser-data erasure unless a new higher-priority reproducible security defect is found. External gates remain physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race.
+
+## Autonomous audit G31-01 — global browser resource-cache erasure — 2026-08-08
+
+- Confirmed privacy/completeness gap: global `Borrar todos los datos web` cleared cookies,
+  WebStorage, history and form UI state but not the app-wide WebView resource/disk cache.
+- Initial RED `job_20260808_224058_08008908`; first targeted GREEN
+  `job_20260808_224303_a464c145`. Independent review then found a reachable null-WebView
+  false-success path before commit; refined RED `job_20260808_230414_c766a918` reproduced it.
+- Final runtime boundary: `BrowserDataClearCompletionLease<WebView>` is non-null. Missing active
+  owner invalidates stale completion ownership, publishes failure and does not begin partial
+  global deletion. With an owner, global clear calls `stopLoading()` → `clearCache(true)` before
+  cookie/WebStorage deletion. Current-site clear remains origin-scoped and never clears the
+  application-wide resource cache. G29 navigation epoch, Client TLS and signing boundaries remain.
+- Final targeted Debug+QA `job_20260808_230630_b944e90a` PASS. Fresh full Android
+  `job_20260808_231000_b61cad9d` / `job_20260808_231858_9dd1bfe1`: Debug 564/564 + QA 564/564,
+  zero failures/errors/skips. Lint/build `job_20260808_231915_400eab46`: 124/124 tasks, 0 errors /
+  26 warnings per variant.
+- APK SHA-256: Debug `33c87e4b9c3516194d24f78b87a3e5cd9088a4de1b6e959a9ef5c58be91a2f15`; QA
+  `77d362dd6ae31ce6f577f27b3a77e4d72499dba87b46cdff873355da361b8e00`; QA AndroidTest
+  `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`.
+- Python/Go `job_20260808_231008_213b2f22`: Python 102 PASS with one environmental hardlink skip;
+  Go test/vet/build PASS. Android artifact `job_20260808_233525_2b71b527` PASS; release
+  fail-closed `job_20260808_233551_f86bb662` PASS with zero release APKs; generated relay removed
+  by `job_20260808_233748_dea2c6c6`.
+- Post-evidence `BrowserSecurityRegressionTest` rerun `job_20260808_234001_3b18dcf8`: Debug
+  22/22 + QA 22/22, zero failures/errors/skips, 60/60 tasks. `CiPolicyTest` + `git diff --check`
+  `job_20260808_234015_16462724`: 20/20 PASS. Pre-publication exact-scope/security scan
+  `job_20260808_234935_a863235e` confirms exactly 10 intended files, clean `git diff --check`,
+  no debug/unsafe production additions, relay absent and zero release APKs. Publication is one
+  atomic G31 commit to the autonomous branch; the exact pushed SHA is recorded by the Watchdog
+  handoff. External manual gates remain
+  physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility, TalkBack/visual
+  validation and supported-Linux Go race. No device/portal/credential/private-signing/upload/
+  payment/submission action occurred.

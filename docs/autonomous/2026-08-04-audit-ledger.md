@@ -1724,3 +1724,52 @@ Fresh non-Android `job_20260808_220021_1e46b313` passed Python 102 tests with on
 Pre-evidence `job_20260808_213421_e2ba21c3` had already passed `git diff --check`, production/test diff and sensitive/unsafe-added-line review before the reviewer follow-up; final staged review is performed immediately before commit. The earlier wrapper `job_20260808_213348_179f0b94` was diagnosed by `job_20260808_213507_c5351007` as only an added `find`/absent-release-directory `pipefail` artifact; the actual release script passed then and the fresh final release gate above also exits 0.
 
 No APK installation/launch, ADB/device control, authenticated portal interaction, credential/private-certificate use, real signing, upload, payment or administrative submission occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## Finding G31-01 — global browser resource-cache erasure — 2026-08-08
+
+**Finding.** The confirmed global `Borrar todos los datos web` path removed all WebView cookies,
+WebStorage, the initiating WebView history and the visible form-autocomplete popup, but did not
+call `WebView.clearCache(true)`. Android documents that call as the resource-cache erasure API and
+that `includeDiskFiles=true` also deletes disk cache files. Because the command is global and its
+success state represents deletion of the app's web data, retaining cacheable portal resources was
+a privacy/completeness gap. The current-site command must not inherit this call because WebView
+resource-cache deletion is application-wide rather than exact-origin scoped.
+
+**TDD and review.** Narrow design/plan:
+`docs/superpowers/specs/2026-08-08-global-browser-resource-cache-erasure-design.md` and
+`docs/superpowers/plans/2026-08-08-global-browser-resource-cache-erasure.md`. Initial RED
+`job_20260808_224058_08008908` failed 1/1 exactly on the absent global `clearCache(true)` contract;
+the first minimum GREEN candidate passed Debug+QA in `job_20260808_224303_a464c145`. Independent
+read-only review then found a real second defect before commit: `webViewRef` can be null after
+renderer death/disposal/barrier while the global menu remains reachable, so the first candidate
+could skip resource-cache deletion yet still execute cookie/WebStorage deletion and publish
+success. Main-path lifecycle inspection confirmed reachability. Refined follow-up RED
+`job_20260808_230414_c766a918` again failed 1/1 on nullable completion ownership. The final fix
+types the completion lease to non-null `WebView`; a missing active owner invalidates any stale
+lease, publishes the existing failure state and does not start partial global deletion. With an
+owner, the handler stops the view, calls `clearCache(true)`, clears history/form UI state, then
+starts cookie/WebStorage deletion; completion reload remains bound to the exact initiating view.
+Targeted final GREEN `job_20260808_230630_b944e90a` passed the resource-cache scope, null-owner
+fail-closed and exact completion-owner regressions in Debug+QA. G29 epoch invalidation, Client TLS
+abandonment, signing cancellation and current-site origin scope are unchanged.
+
+**Verification.** Fresh post-review runtime-lock/core/AAPT2 + complete JVM
+`job_20260808_231000_b61cad9d` passed 63/63 executed tasks; XML aggregation
+`job_20260808_231858_9dd1bfe1` confirms Debug 564/564 and QA 564/564 with zero
+failures/errors/skips. Fresh lint/build `job_20260808_231915_400eab46` passed 124/124 executed
+tasks; `job_20260808_233512_211243c6` recorded 0 lint errors / 26 warnings per variant and APK
+SHA-256 Debug `33c87e4b9c3516194d24f78b87a3e5cd9088a4de1b6e959a9ef5c58be91a2f15`, QA
+`77d362dd6ae31ce6f577f27b3a77e4d72499dba87b46cdff873355da361b8e00`, QA AndroidTest
+`93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`. Fresh non-Android
+`job_20260808_231008_213b2f22` passed Python 102 tests with one environmental hardlink skip plus
+Go `test ./... -count=1`, `vet ./...` and relay build; relay SHA-256 remained
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Android artifact
+verification `job_20260808_233525_2b71b527` passed. Release-signing fail-closed
+`job_20260808_233551_f86bb662` passed without private signing inputs and left release APK count
+zero. Cleanup `job_20260808_233748_dea2c6c6` removed the generated relay and reconfirmed zero
+release APKs. Post-evidence `BrowserSecurityRegressionTest` rerun `job_20260808_234001_3b18dcf8`
+passed Debug 22/22 + QA 22/22 (zero failures/errors/skips; 60/60 tasks), and final policy/diff
+recheck `job_20260808_234015_16462724` passed `CiPolicyTest` 20/20 plus `git diff --check`. No APK installation/launch, device control, authenticated portal interaction,
+credential/private-certificate use, real signing, upload, payment or administrative submission
+occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility,
+TalkBack/visual validation and supported-Linux Go race remain external gates.

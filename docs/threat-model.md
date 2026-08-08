@@ -483,3 +483,26 @@ route observation и возвращает `false` при отсутствии ac
 pre-confirmation, active, cancelled и post-completion cases, adjacent route tests, full
 Debug/QA JVM, lint/build, Python, Go, Android artifact и release fail-closed gates. Реальный
 portal/device E2E не требуется и из этих тестов не выводится.
+
+### T22. La limpieza global deja la caché WebView o informa éxito sin owner activo
+
+**Riesgo:** la acción confirmada de borrar todos los datos web elimina cookies y WebStorage,
+pero si no borra la caché de recursos de WebView pueden sobrevivir respuestas o recursos de
+portales ya abiertos. Además, si el WebView iniciador desaparece por lifecycle/render process o
+una barrera de preferencia, un owner nullable puede omitir el borrado de caché y aun así iniciar
+la eliminación asíncrona de cookies/WebStorage, terminando con un éxito parcial engañoso.
+
+**Controles:** solo la acción global confirmada usa `WebView.clearCache(true)`, después de
+`stopLoading()` y antes de la eliminación global de cookies/WebStorage. La acción de sitio actual
+no usa esa API porque su alcance es application-wide, no por origin. La lease de completion está
+tipada como `WebView` no nullable. Si `webViewRef` no tiene owner activo, se invalida cualquier
+lease anterior, se publica el estado de fallo existente y no se inicia una eliminación parcial.
+Con owner válido, el callback final solo se consume una vez y la recarga se ejecuta únicamente si
+ese mismo WebView sigue siendo el owner actual. Se conservan la invalidación de navigation epoch,
+el abandono Client TLS y la cancelación de firma previos al borrado.
+
+**Verificación:** dos RED→GREEN específicos, incluido el caso null-owner hallado por review
+independiente antes del commit; full Debug/QA JVM 564/564 por variante; lint/build, Python, Go,
+Android artifact y release fail-closed pasan. `clearCache(true)` cubre la caché de recursos y sus
+archivos de disco según la API, pero esta evidencia no afirma el borrado de todas las clases de
+persistencia WebView ni sustituye E2E físico del portal.

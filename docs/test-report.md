@@ -2975,3 +2975,35 @@ Fresh non-Android `job_20260808_220021_1e46b313` passed Python 102 tests with on
 The first post-evidence policy run `job_20260808_215458_febb05c4` is retained as diagnostic evidence, not a product regression: only the established threat-model marker `no renueva` had been omitted in prose. The corrected policy rerun `job_20260808_215517_6eecde70` passed 20/20. Historical P07C cold-launch evidence covers process termination, not device reboot; the current contract intentionally requires password re-entry after reboot.
 
 No APK was installed or launched; no ADB/device control, authenticated portal interaction, credential/private-certificate use, real signing, upload, payment or administrative submission occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## Autonomous G31-01 — global browser resource-cache erasure — 2026-08-08
+
+- Initial RED `job_20260808_224058_08008908`: one Debug regression, one expected failure, zero
+  errors/skips; the global clear handler lacked `clearCache(true)`. First candidate targeted
+  Debug+QA GREEN `job_20260808_224303_a464c145` exited 0.
+- Independent review found a reachable second defect before commit: nullable `webViewRef` could
+  skip cache deletion while global cookies/WebStorage still cleared and success was published.
+  Refined follow-up RED `job_20260808_230414_c766a918`: one test, one expected failure, zero
+  errors/skips on nullable completion-owner contract. Final targeted Debug+QA GREEN
+  `job_20260808_230630_b944e90a` passed resource-cache scope, null-owner fail-closed and exact
+  completion-owner regressions.
+- Final implementation uses a non-null `BrowserDataClearCompletionLease<WebView>`. Missing owner
+  invalidates a stale lease and publishes failure without partial global deletion. Admitted owner
+  executes stop → `clearCache(true)` → history/form UI clear → cookie/WebStorage deletion; reload
+  remains conditional on exact owner identity. Current-site clear never calls the app-wide cache
+  API.
+- Fresh final runtime-lock/core/AAPT2 + full JVM `job_20260808_231000_b61cad9d`: 63/63 tasks;
+  `job_20260808_231858_9dd1bfe1`: Debug 564/564 + QA 564/564, zero failures/errors/skips.
+- Fresh lint/build `job_20260808_231915_400eab46`: 124/124 tasks; lint Debug/QA 0 errors / 26
+  warnings. APK SHA-256: Debug `33c87e4b9c3516194d24f78b87a3e5cd9088a4de1b6e959a9ef5c58be91a2f15`, QA
+  `77d362dd6ae31ce6f577f27b3a77e4d72499dba87b46cdff873355da361b8e00`, QA AndroidTest
+  `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`.
+- Non-Android `job_20260808_231008_213b2f22`: Python 102 PASS with one environmental hardlink
+  skip; Go test/vet/build PASS. Android artifact `job_20260808_233525_2b71b527` PASS; release
+  fail-closed `job_20260808_233551_f86bb662` PASS with zero release APKs; cleanup
+  `job_20260808_233748_dea2c6c6` removed the generated relay.
+- Post-evidence recheck: `job_20260808_234001_3b18dcf8` passed fresh
+  `BrowserSecurityRegressionTest` Debug 22/22 + QA 22/22, zero failures/errors/skips, 60/60 tasks;
+  `job_20260808_234015_16462724` passed `CiPolicyTest` 20/20 and `git diff --check`.
+- No APK install/launch, device control, authenticated portal interaction, credential/private-key
+  use, real signing, upload, payment or administrative submission occurred.

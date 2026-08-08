@@ -934,3 +934,19 @@ Latest autonomous hardening — Afirma frame UI isolation (G28-01):
 - `CertificateSession` uses Android `elapsedRealtimeNanos` in production. `JFMUC002` authenticates boot count plus the **original session-lease elapsed observation** together with civil issue/expiry and certificate-reference digest. Delayed cache persistence cannot move the lease origin; changed boot, unavailable/rolled-back elapsed time and exact/over expiry clear/fail closed. Civil expiry remains an additional conservative cap.
 - Cache restore creates only the authenticated remaining session lease before password-backed gateway reload; reload time cannot renew it. Legacy `JFMUC001` lacks same-boot evidence and is intentionally not trusted.
 - Independent review found and drove the delayed-persistence regression RED→GREEN before commit. Final focused tests are 42/42 per variant; fresh full JVM is 562/562 per variant; lint/build, Python/Go, Android artifacts and release-signing fail-closed all pass. No password/PKCS#12/private-key material, network/TLS/profile/release boundary or dependency was broadened; no physical/device/portal E2E claim is added.
+
+## Autonomous global browser resource-cache erasure — 2026-08-08 (G31-01)
+
+- Confirmed global browser-data deletion previously omitted the application-wide WebView
+  resource/disk cache. The global handler now requires a non-null active WebView owner and calls
+  `clearCache(true)` after `stopLoading()` and before cookie/WebStorage deletion.
+- Independent review caught a reachable null-owner false-success path in the first GREEN
+  candidate. The completion lease is now `BrowserDataClearCompletionLease<WebView>`; missing
+  owner invalidates stale ownership, publishes failure and does not start partial global deletion.
+- Current-site deletion remains exact-origin scoped and deliberately never calls the
+  application-wide cache API. Existing navigation-epoch, Client TLS, signing-cancellation,
+  stale-completion and reload-owner boundaries remain unchanged; no dependency changed.
+- Automated evidence: two defect-specific RED→GREEN cycles; final full Debug/QA JVM 564/564 per
+  variant; lint/build 0 errors / 26 warnings per variant; Python 102 with one environmental skip;
+  Go test/vet/build, Android artifacts and release fail-closed PASS. Automated evidence does not
+  claim that `clearCache(true)` deletes every WebView persistence class or any physical portal E2E.

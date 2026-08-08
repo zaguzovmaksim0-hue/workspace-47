@@ -546,3 +546,20 @@ el job Linux debe seguir siendo obligatorio.
 - `CertificateViewModelTest`: inject a short restored lease and advance the shared monotonic clock during gateway reload; identity must not be published by renewing from civil expiry. Manual unlock must create the original lease before cache persistence and pass its observation into store.
 - Required acceptance gate: three suites Debug+QA; fresh full Debug/QA JVM plus runtime lock/core/AAPT2; lintDebug/lintQa; Debug/QA/QA-AndroidTest assemblies; Python discovery; Go test/vet/build; Android artifact verification; release-signing fail-closed; APK hashes; generated relay removal; zero release APKs; `git diff --check`; changed-content sensitive/unsafe scans; `CiPolicyTest`.
 - Observed final automated evidence: focused 42/42 per variant, full 562/562 per variant, lint 0 errors / 26 warnings per variant, Python 102 with one environmental hardlink skip, Go/artifact/release PASS. Automated tests establish the injected same-boot/reboot boundary; they do not claim a physical reboot/device run or authenticated portal acceptance. Historical process-cold-launch evidence remains process-recovery evidence only.
+
+## G31-01 — global browser resource-cache erasure gate — 2026-08-08
+
+- Source/order regression: the confirmed global clear handler must call `clearCache(true)` after
+  `stopLoading()` and before `SiteDataCleaner.clearAllConfirmed`; the current-site handler must
+  not call application-wide `clearCache(true)`.
+- Lifecycle regression: global completion ownership is `BrowserDataClearCompletionLease<WebView>`.
+  If `webViewRef.get()` is null, the handler must invalidate stale completion ownership, publish
+  failure and remain outside the branch that begins cache/cookie/WebStorage deletion.
+- Preserve G29 pre-clear navigation-epoch invalidation, Client TLS abandonment, signing
+  cancellation, exact initiating-WebView completion ownership and owner-checked reload.
+- Run focused Debug/QA browser/data-clear suites, then fresh runtime lock/core/AAPT2 + complete
+  Debug/QA JVM, lint, Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build,
+  Android artifact verification, release-signing fail-closed, relay cleanup, `git diff --check`,
+  sensitive/unsafe scans and `CiPolicyTest`.
+- Automated scope does not assert physical WebView/portal acceptance and does not claim that
+  `clearCache(true)` erases persistence classes outside the documented resource cache.

@@ -112,7 +112,7 @@ fun BrowserScreen(
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
-    val globalDataClearLease = remember { BrowserDataClearCompletionLease<WebView?>() }
+    val globalDataClearLease = remember { BrowserDataClearCompletionLease<WebView>() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
         checkNotNull(
@@ -518,21 +518,24 @@ fun BrowserScreen(
             pendingRequest = null
             siteClearResult = null
             val webView = webViewRef.get()
-            val clearRequest = globalDataClearLease.begin(webView)
-            webView?.apply {
-                stopLoading()
-                clearHistory()
-                clearFormData()
-            }
-            siteDataCleaner.clearAllConfirmed { cleared ->
-                mainHandler.post {
-                    if (!globalDataClearLease.consume(clearRequest)) return@post
-                    globalClearResult = cleared
-                    if (cleared &&
-                        clearRequest.owner != null &&
-                        webViewRef.get() === clearRequest.owner
-                    ) {
-                        clearRequest.owner.loadUrl(validatedEntryUrl)
+            if (webView == null) {
+                globalDataClearLease.invalidate()
+                globalClearResult = false
+            } else {
+                val clearRequest = globalDataClearLease.begin(webView)
+                webView.apply {
+                    stopLoading()
+                    clearCache(true)
+                    clearHistory()
+                    clearFormData()
+                }
+                siteDataCleaner.clearAllConfirmed { cleared ->
+                    mainHandler.post {
+                        if (!globalDataClearLease.consume(clearRequest)) return@post
+                        globalClearResult = cleared
+                        if (cleared && webViewRef.get() === clearRequest.owner) {
+                            clearRequest.owner.loadUrl(validatedEntryUrl)
+                        }
                     }
                 }
             }
