@@ -521,6 +521,50 @@ class BrowserSecurityRegressionTest {
         )
     }
 
+    @Test
+    fun javascriptDialogsNeverUsePlatformDefaultWindows() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/JuntaWebChromeClient.kt",
+        )
+
+        fun callbackBlock(name: String): String = source
+            .substringAfter("override fun $name(", missingDelimiterValue = "")
+            .substringBefore("\n    override fun ")
+
+        val alertBlock = callbackBlock("onJsAlert")
+        val beforeUnloadBlock = callbackBlock("onJsBeforeUnload")
+        val confirmBlock = callbackBlock("onJsConfirm")
+        val promptBlock = callbackBlock("onJsPrompt")
+
+        assertTrue(
+            "JavaScript alert must be resolved without the platform default dialog",
+            alertBlock.contains("result.confirm()") && alertBlock.contains("return true"),
+        )
+        assertTrue(
+            "JavaScript before-unload must resume without the platform default dialog",
+            beforeUnloadBlock.contains("result.confirm()") && beforeUnloadBlock.contains("return true"),
+        )
+        assertTrue(
+            "JavaScript confirm must fail closed without the platform default dialog",
+            confirmBlock.contains("result.cancel()") && confirmBlock.contains("return true"),
+        )
+        assertTrue(
+            "JavaScript prompt must fail closed without the platform default dialog",
+            promptBlock.contains("result.cancel()") && promptBlock.contains("return true"),
+        )
+        assertFalse(
+            "The hardened chrome client must not create or delegate JavaScript dialog UI",
+            listOf(
+                "AlertDialog",
+                "Dialog(",
+                "super.onJsAlert",
+                "super.onJsBeforeUnload",
+                "super.onJsConfirm",
+                "super.onJsPrompt",
+            ).any(source::contains),
+        )
+    }
+
     private fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {
         it.profileId == ProfileId(id)
     }

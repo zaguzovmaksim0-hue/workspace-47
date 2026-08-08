@@ -467,3 +467,20 @@ el job Linux debe seguir siendo obligatorio.
 - Run focused Debug/QA browser + Client TLS suites, full Debug/QA JVM,
   dependency/toolchain, lint, Debug/QA/QA-AndroidTest assemblies, Python, Go
   test/vet/build, Android artifact verification and release-signing fail-closed.
+
+## G25-01 — JavaScript modal secure-display gate — 2026-08-08
+
+- Require explicit `JuntaWebChromeClient` overrides for `onJsAlert`, `onJsBeforeUnload`,
+  `onJsConfirm` and `onJsPrompt`; none may delegate to `super` or create `Dialog`/
+  `AlertDialog` UI.
+- `alert` and `beforeunload` must resolve with `JsResult.confirm()` and return `true` so
+  execution/navigation cannot remain suspended. `confirm` and `prompt` must resolve with
+  `cancel()` and return `true`, preserving fail-closed false/null semantics.
+- Callback `url`, `message` and prompt `defaultValue` must not be shown, logged, persisted
+  or forwarded. Existing popup, generic-permission, geolocation, navigation, TLS,
+  Client-TLS and signing gates remain unchanged.
+- Run focused Debug/QA runtime + source-contract regressions, full Debug/QA JVM,
+  runtime dependency/core/AAPT2 gates, lint, Debug/QA/QA-AndroidTest assemblies, Python,
+  Go test/vet/build, Android artifact verification and release-signing fail-closed.
+- Automated success proves suppression of the platform-default modal path, not physical
+  compatibility with a public portal that intentionally depends on JavaScript dialogs.

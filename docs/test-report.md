@@ -2780,3 +2780,33 @@ timing/interruption or real-device visual correctness; those remain manual gates
 - Post-evidence focused/policy `job_20260808_071939_62390312` passed 28/28 Debug, 28/28 QA and CiPolicyTest 20/20.
 - No APK/device/portal/credential/private-certificate/real-signing/upload/payment/
   submission action occurred. Physical error-page/visual behavior is not claimed.
+
+## G25-01 — JavaScript dialog secure-display boundary — 2026-08-08
+
+- Android API review: the default WebView JavaScript modal windows do not inherit the
+  parent secure-display flag. `JuntaWebChromeClient` previously inherited all four JS modal
+  callbacks, so their default return path remained available inside the sensitive browser.
+- RED `job_20260808_074356_4a7ea42f`: five targeted Debug assertions failed as expected on
+  unchanged production (four runtime callback defaults plus one explicit source contract).
+- Minimum fix: explicit `alert=confirm`, `beforeunload=confirm`, `confirm=cancel`,
+  `prompt=cancel`, all returning handled; no callback text is consumed by application UI.
+- Harness diagnostic `job_20260808_074612_e2fbd115`: only alert/before-unload failed with
+  `JsResult.mReceiver == null` in the synthetic no-arg fixture. Instrumented runtime
+  inspection identified the hidden `JsResult(ResultReceiver)` constructor; only the test
+  fixture changed, not production behavior.
+- Focused GREEN `job_20260808_075020_27f778b0`: exit 0. Debug reports passed chrome-client
+  4/4 plus BrowserSecurityRegressionTest 18/18; QA passed chrome-client 4/4 plus the selected
+  source regression 1/1, zero failures/errors/skips.
+- Dependency/toolchain/full JVM `job_20260808_075543_13f562c7`: 63/63 tasks; Debug 545/545
+  and QA 545/545, zero failures/errors/skips.
+- Lint/build `job_20260808_080300_d47d142d`: 124/124 tasks; 0 errors / 26 warnings per
+  variant; Debug, QA and QA AndroidTest assemblies PASS. APK SHA-256: Debug
+  `343cab768435e7c348f553597a0989f7152afa2c7cbf6643c5314218296d072f`, QA
+  `d2f270433688f28fbc891e3ff76976bf2f68485bab8a74cbba95f60e50e59323`, QA AndroidTest
+  `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Python/Go/artifact/release `job_20260808_081051_288402b5`: Python 102 PASS with one
+  environmental hardlink skip; Go test/vet/build, Android artifact verification and
+  release-signing fail-closed PASS; relay removed; release APK count zero.
+- Pre-evidence `job_20260808_081400_9994048c`: `git diff --check` and production unsafe
+  WebView/TLS/default-dialog scans PASS. No physical device/portal claim is made.
+- Post-evidence `job_20260808_081630_1ba06e79`: focused Debug reports 22/22, QA 5/5, and `CiPolicyTest` 20/20; zero failures/errors/skips.

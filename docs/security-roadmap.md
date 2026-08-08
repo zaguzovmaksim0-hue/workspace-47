@@ -830,3 +830,20 @@ requires a separate design/plan and observed TDD RED.
 - No TLS validation, hostname/origin/path policy, navigation, signing, profile, release or
   dependency rule was weakened. Main-frame-specific UI must not be inferred from
   `SslError.url`; physical WebView error rendering remains a manual/device observation.
+
+## Autonomous JavaScript-dialog privacy hardening — 2026-08-08 (G25-01)
+
+- Android's `WebChromeClient` contract explicitly warns that its platform-default JavaScript
+  modal dialogs do not inherit the parent's secure-display flag. Because the privileged
+  browser is `FLAG_SECURE` while its `JuntaWebChromeClient` previously inherited those
+  callbacks, remote page text could be rendered in a separate non-inheriting modal surface.
+- `JuntaWebChromeClient` now explicitly suppresses all four default JavaScript dialogs.
+  `alert` and `beforeunload` are immediately confirmed/continued; `confirm` and `prompt`
+  are immediately cancelled; every callback returns handled. URL, message and prompt
+  default text are ignored rather than displayed, logged or persisted.
+- No custom dialog/lifecycle state, profile exception, dependency, navigation, TLS,
+  Client-TLS, certificate, signing, release or allowlist behavior was added or weakened.
+  Existing popup, permission and geolocation denials remain unchanged.
+- RED reproduced the inherited default path; full automated Android/Python/Go/artifact/
+  release gates pass. Portal behavior that semantically requires JavaScript modals is not
+  claimed compatible until separate physical evidence exists.

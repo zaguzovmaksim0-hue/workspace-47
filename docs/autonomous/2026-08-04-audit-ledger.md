@@ -1425,3 +1425,47 @@ Post-evidence focused/policy `job_20260808_071939_62390312` passed 28/28 Debug a
 No APK installation/launch, device control, authenticated portal interaction,
 credential/private-certificate use, real signing, upload, payment or administrative
 submission occurred.
+
+## Finding G25-01 — JavaScript dialog secure-display boundary — 2026-08-08
+
+**Finding.** The privileged browser already applies `FLAG_SECURE`, but `TrustedJuntaWebView`
+installs `JuntaWebChromeClient` and that client inherited all four JavaScript modal callbacks.
+Android's current `WebChromeClient` contract states that the platform-default `alert`,
+`confirm`, `prompt` and `beforeunload` dialogs do not inherit the parent's secure-display
+flag. Returning `false` therefore allowed remote JavaScript to create a modal surface outside
+the browser window's screenshot/screen-share protection. This is a privacy/UI boundary;
+no navigation, TLS, Client TLS, certificate-validation or signing bypass was reproduced.
+
+**TDD.** RED `job_20260808_074356_4a7ea42f` failed 5/5 targeted Debug checks on unchanged
+production: the four inherited callbacks returned the default-dialog path and the source
+contract was absent. Minimum production handling is explicit and immediate:
+`onJsAlert -> confirm()+true`, `onJsBeforeUnload -> confirm()+true`,
+`onJsConfirm -> cancel()+true`, and `onJsPrompt -> cancel()+true`. Callback URL/message/
+default prompt text is not displayed, logged, persisted or forwarded. A first GREEN attempt
+`job_20260808_074612_e2fbd115` exposed only a Robolectric fixture defect: synthetic no-arg
+`JsResult` had `mReceiver=null`, so `confirm()` threw before the assertion; the production
+mapping was unchanged and the fixture was corrected to instantiate the instrumented hidden
+`ResultReceiver` constructor. Focused GREEN `job_20260808_075020_27f778b0` then passed;
+Debug reports passed `JuntaWebChromeClientTest` 4/4 and `BrowserSecurityRegressionTest`
+18/18, while QA passed 4/4 plus the selected source regression 1/1.
+
+**Verification.** Fresh runtime-lock/core/AAPT2 + full JVM
+`job_20260808_075543_13f562c7` executed 63/63 tasks and passed Debug 545/545 and QA
+545/545 with zero failures/errors/skips. Lint/build `job_20260808_080300_d47d142d`
+executed 124/124 tasks, reported 0 lint errors / 26 warnings per variant and passed
+Debug/QA/QA-AndroidTest assemblies. APK SHA-256: Debug
+`343cab768435e7c348f553597a0989f7152afa2c7cbf6643c5314218296d072f`, QA
+`d2f270433688f28fbc891e3ff76976bf2f68485bab8a74cbba95f60e50e59323`, QA AndroidTest
+`fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+Python/Go/artifact/release `job_20260808_081051_288402b5` passed 102 Python tests with
+one environmental hardlink skip, Go test/vet/build, Android artifact verification and
+release-signing fail-closed; relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6` was removed
+and release APK count is zero. Pre-evidence diff/security review
+`job_20260808_081400_9994048c` found no default-dialog delegation/UI construction,
+`addJavascriptInterface`, TLS trust/hostname bypass or SSL proceed path in the changed
+production file. Physical portal compatibility with pages that require JavaScript modal
+dialogs remains an external/manual acceptance gate. No APK installation/launch, device
+control, authenticated portal interaction, credential/private-certificate use, real signing,
+upload, payment or administrative submission occurred.
+Post-evidence `job_20260808_081630_1ba06e79` reran the focused Android contract with no build cache and passed Debug 22/22 reported focused tests, QA 5/5, plus `CiPolicyTest` 20/20.

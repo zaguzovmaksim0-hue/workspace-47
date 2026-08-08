@@ -381,3 +381,21 @@ fail-closed TLS contract.
 
 Estos puntos no se cerrarán por inferencia de código estático. Se consideran
 resueltos únicamente con capture sanitizado y ejecución real autorizada.
+
+### T18. JavaScript remoto crea un modal fuera de la protección de pantalla
+
+**Riesgo:** el navegador privilegiado aplica `FLAG_SECURE`, pero Android documenta que los
+modales JavaScript por defecto de `WebChromeClient` no heredan esa protección del parent.
+Si `alert`, `confirm`, `prompt` u `onbeforeunload` caen al comportamiento por defecto,
+contenido controlado por la página puede aparecer en otra ventana fuera de la frontera de
+captura/screen-share protegida.
+**Controles:** `JuntaWebChromeClient` maneja explícitamente los cuatro callbacks y devuelve
+`true` siempre. `alert` y `beforeunload` llaman `confirm()` inmediatamente para no dejar
+JavaScript/navegación suspendidos; `confirm` y `prompt` llaman `cancel()` para resolver de
+forma fail-closed. No se crea UI custom ni se muestra, registra, persiste o reenvía
+`url`, `message` o `defaultValue`. Las denegaciones existentes de popup, permisos y
+geolocalización permanecen.
+**Verificación:** RED sobre el path heredado, runtime/source regressions para los cuatro
+callbacks, scan que prohíbe `Dialog`/`AlertDialog` y `super.onJs*`, y full Android/Python/
+Go/artifact/release gates. La compatibilidad física con portales que dependan de modales
+JavaScript sigue siendo gate manual; no se infiere E2E.

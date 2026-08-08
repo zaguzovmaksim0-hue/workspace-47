@@ -1309,3 +1309,27 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   line rather than extending this SSL callback change. Preserve the persisted-unlock
   cross-restart trust-time decision, physical AEAT F-03 Client TLS E2E, real-device
   TalkBack/visual checks and supported-Linux Go race as separate external/manual gates.
+
+## Autonomous audit G25-01 — JavaScript dialog secure-display boundary — 2026-08-08
+
+- Android documents that WebView's platform-default JavaScript `alert`, `confirm`, `prompt`
+  and `beforeunload` dialogs do not inherit the parent window's secure-display flag. The
+  privileged browser already applies `FLAG_SECURE`, but `JuntaWebChromeClient` inherited
+  those callbacks and therefore returned the platform-default path.
+- RED `job_20260808_074356_4a7ea42f` failed all five targeted checks. Minimum production
+  handling suppresses all four modal windows immediately: alert/before-unload confirm and
+  continue; confirm/prompt cancel fail-closed; every callback returns `true`. Untrusted
+  callback text is neither displayed nor logged/persisted/forwarded.
+- Focused GREEN `job_20260808_075020_27f778b0` passed after correcting only a synthetic
+  Robolectric `JsResult` fixture receiver. Fresh full JVM passed 545/545 per variant;
+  lint/build passed with 0 errors / 26 warnings; Python 102 with one environmental skip,
+  Go test/vet/build, Android artifact and release fail-closed gates passed. Generated relay
+  was removed and release APK count is zero.
+- APK SHA-256: Debug `343cab768435e7c348f553597a0989f7152afa2c7cbf6643c5314218296d072f`;
+  QA `d2f270433688f28fbc891e3ff76976bf2f68485bab8a74cbba95f60e50e59323`;
+  QA AndroidTest `fcb913bd40aca5802141bdfecd5c92701f86e0499eade634e64b6a487fc41664`.
+- Physical portal compatibility for any procedure that depends on JavaScript modal dialogs
+  remains an external/manual gate. Continue a different independent audit line after exact
+  remote verification; do not broaden this change into custom dialog UI without separate
+  design/evidence.
+- Post-evidence `job_20260808_081630_1ba06e79` passed focused Debug 22/22 reported tests, QA 5/5 and `CiPolicyTest` 20/20.
