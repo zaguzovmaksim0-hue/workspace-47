@@ -38,7 +38,9 @@ class PreferencesCertificateReferenceStore(
     override suspend fun read(): StoredCertificateReference? {
         val preferences = dataStore.data.first()
         val rawUri = preferences[Keys.URI] ?: return null
-        val displayName = preferences[Keys.DISPLAY_NAME] ?: return null
+        val displayName = CertificateDisplayNamePolicy.sanitize(
+            preferences[Keys.DISPLAY_NAME] ?: return null,
+        )
         val mimeType = preferences[Keys.MIME_TYPE] ?: return null
         val summary = readSummary(preferences)
         return StoredCertificateReference(

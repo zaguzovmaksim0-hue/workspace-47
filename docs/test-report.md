@@ -3081,3 +3081,36 @@ No APK was installed or launched; no ADB/device control, authenticated portal in
   use, real signing, upload, payment or administrative submission occurred. Physical AEAT F-03,
   real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go
   race remain external gates.
+
+## Autonomous G34-01 — legacy persisted certificate display-name read hardening — 2026-08-09
+
+- RED `job_20260809_072053_79a11036` / parser `job_20260809_072421_6d6cc68d`: one intended
+  failure, zero errors/skips; expected `certevil.p12`, while U+202E/U+2066 survived the legacy
+  persisted `display_name`.
+- Minimum GREEN centralizes the unchanged G33 presentation rule in `CertificateDisplayNamePolicy` and
+  applies it on selection and persisted read. `PreferencesCertificateReferenceStore.read()` contains
+  no `edit()`/migration write. Focused `job_20260809_072506_a0d1a7a2` /
+  `job_20260809_073101_28ecad0c`: Debug 20/20 + QA 20/20.
+- Reviewer `worker-9`: no Critical/Important findings; one Minor that the test does not separately
+  assert DataStore bytes/preferences are unchanged by `read()`. Direct source inspection confirms the
+  current read path has no write. `worker-7`/`worker-8` timed out without usable evidence.
+- Full runtime-lock/core/AAPT2 + JVM `job_20260809_073131_74318c66` /
+  `job_20260809_073943_d784901b`: Debug 570/570 + QA 570/570, zero failures/errors/skips.
+  Lint/build `job_20260809_074007_0d7b0afc`: 124/124 tasks, 0 errors / 26 warnings per variant.
+- Artifact `job_20260809_075044_6379aee6` PASS. APK SHA-256: Debug
+  `6087fb12fd9f4fa26156263df2a27b332cd4259e3299a055043e4396008cb24f`; QA
+  `36f7b37c047c9fc8f1d4712c5f25dbf8c0457966e3050067f330768e9f5dd755`; QA AndroidTest
+  `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`.
+- Non-Android `job_20260809_073139_d5df8daf`: Python 102 PASS with one environmental hardlink
+  skip; Go test/vet/build PASS; relay SHA-256
+  `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Release fail-closed
+  `job_20260809_075113_55f3f9cf` PASS with zero release APKs; cleanup
+  `job_20260809_075219_03557bd7` removed relay.
+- `CiPolicyTest` passed 20/20. A concurrent unrelated portal-priority documentation mutation was
+  detected by exact-scope checking and preserved unstaged; G34-only full-diff/security review
+  `job_20260809_075510_041aaf04` passed.
+- Post-evidence focused `job_20260809_075747_639efd2f` passed 20/20 Debug + 20/20 QA with zero
+  failures/errors/skips. Post-evidence `job_20260809_075808_88ee788e` passed `CiPolicyTest` 20/20,
+  `git diff --check`, exact 12-file G34 scope, zero raw bidi controls and the added-line safety scan;
+  the three portal-priority planning files remained excluded from G34.
+- No APK/device/portal/credential/private-key/real-signing/upload/payment/submission action occurred.

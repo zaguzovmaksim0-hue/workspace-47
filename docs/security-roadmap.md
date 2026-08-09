@@ -987,3 +987,16 @@ Latest autonomous hardening — Afirma frame UI isolation (G28-01):
   review found no Critical/Important issue. Fresh full JVM is 569/569 per variant; lint/build,
   Python/Go, Android artifacts and release fail-closed pass. This is automated UI-integrity
   evidence only and does not claim physical certificate picker or portal E2E validation.
+
+## Autonomous legacy persisted certificate display-name hardening — 2026-08-09 (G34-01)
+
+- Pre-G33 certificate references can no longer reintroduce Unicode bidi controls after upgrade:
+  `PreferencesCertificateReferenceStore.read()` applies the same pure display-name policy used for
+  new selection before returning a `StoredCertificateReference`.
+- The shared policy preserves G33 exactly: C0/DEL and U+061C, U+200E..U+200F, U+202A..U+202E,
+  U+2066..U+2069 are removed; ordinary printable Unicode, 256-character bound, trim and default
+  fallback remain. The read path adds no DataStore migration write.
+- Raw trimmed provider filename remains the octet-stream `.p12`/`.pfx` admission input. URI/MIME,
+  SAF, PKCS#12/password/session/signing, WebView/network/TLS, profiles/releases and dependencies are
+  unchanged. RED→GREEN, independent review, full JVM 570/570 per variant, lint/build, Python/Go,
+  artifact and release fail-closed gates pass. Physical/device/portal E2E is not inferred.

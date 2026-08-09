@@ -2,6 +2,8 @@ package dev.junta.firmamobile.certificate
 
 import android.net.Uri
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import java.io.File
 import java.time.Instant
@@ -83,6 +85,24 @@ class CertificateReferenceStoreTest {
         val serializedValues = raw.asMap().values.joinToString("|")
         assertFalse(serializedValues.contains("PASSWORD_CANARY"))
         assertFalse(serializedValues.contains("PKCS12_BYTES_CANARY"))
+    }
+
+    @Test
+    fun stripsBidiControlsFromLegacyPersistedDisplayName() = runTest {
+        val dataStore = dataStore(temporaryFolder.newFile("legacy-bidi.preferences_pb"))
+        val uri = Uri.parse("content://documents/legacy-bidi")
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("uri")] = uri.toString()
+            preferences[stringPreferencesKey("display_name")] = "cert\u202Eevil\u2066.p12"
+            preferences[stringPreferencesKey("mime_type")] = "application/x-pkcs12"
+        }
+        val store = PreferencesCertificateReferenceStore(dataStore)
+
+        val restored = checkNotNull(store.read())
+
+        assertEquals(uri, restored.uri)
+        assertEquals("certevil.p12", restored.displayName)
+        assertEquals("application/x-pkcs12", restored.mimeType)
     }
 
     @Test

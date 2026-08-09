@@ -545,3 +545,21 @@ URI/SAF, parsing PKCS#12, contraseña o firma.
 independiente sin hallazgos Critical/Important, full JVM 569/569 por variante, lint/build,
 Python/Go, artifact y release fail-closed. La evidencia es automatizada y no sustituye picker SAF,
 certificado físico ni E2E de portal.
+
+### T25. Un nombre de certificado persistido antes de G33 reaparece tras una actualización
+
+**Riesgo:** una versión anterior podía persistir `display_name` con controles bidireccionales. G33
+cerró la selección nueva, pero una referencia antigua seguía entrando por
+`PreferencesCertificateReferenceStore.read()` sin normalización y podía volver a mostrarse en la UI
+nativa después de actualizar la aplicación.
+
+**Controles:** selección y lectura persistida comparten `CertificateDisplayNamePolicy`, que conserva
+el contrato G33 y elimina C0/DEL y `Bidi_Control` U+061C, U+200E..U+200F, U+202A..U+202E y
+U+2066..U+2069, con límite de 256 caracteres, `trim` y fallback. La lectura no ejecuta una migración
+DataStore ni renueva otro estado; sólo normaliza el valor devuelto. La admisión octet-stream sigue
+usando el nombre original trimmed del proveedor antes de la política de presentación.
+
+**Verificación:** RED específico de DataStore legacy; GREEN store/repository 20/20 por variante;
+reviewer sin hallazgos Critical/Important; full JVM 570/570 por variante; lint/build, Python/Go,
+artifact y release fail-closed pasan. La ausencia de escritura en `read()` se verifica por inspección
+de la implementación; el test no hace snapshot separado del DataStore. No se infiere E2E físico.

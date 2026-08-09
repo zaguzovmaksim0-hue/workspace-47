@@ -598,3 +598,19 @@ el job Linux debe seguir siendo obligatorio.
   `git diff --check`, changed-content safety review and `CiPolicyTest`.
 - Automated tests establish the repository/native-string boundary only. They do not establish a
   physical SAF picker, real certificate, TalkBack/visual rendering or portal E2E result.
+
+## G34-01 — legacy persisted certificate display-name read gate — 2026-08-09
+
+- Seed a complete Preferences DataStore certificate reference whose legacy `display_name` contains
+  U+202E/U+2066; `PreferencesCertificateReferenceStore.read()` must return `certevil.p12` with URI
+  and MIME unchanged.
+- Selection and persisted-read paths must share the exact G33 C0/DEL/bidi/256-character/trim/fallback
+  policy. `read()` must not perform a DataStore write. Octet-stream extension admission remains
+  based on the provider's original trimmed filename.
+- Required acceptance: store+repository Debug/QA GREEN, independent review without unresolved
+  Critical/Important issue, runtime locks/resolved core/portable AAPT2 + full Debug/QA JVM,
+  lintDebug/lintQa, Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact
+  verification, APK hashes, release fail-closed, relay cleanup, zero release APKs, `CiPolicyTest`,
+  `git diff --check`, exact owned scope and changed-content sensitive/unsafe review.
+- Automated tests establish the persisted-string/read boundary only; no physical SAF/certificate,
+  TalkBack/visual, authenticated portal or real signing acceptance is claimed.

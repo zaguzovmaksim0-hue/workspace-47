@@ -1555,3 +1555,32 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   and exact staged review. No APK/device/portal/credential/private-signing/upload/payment/
   submission action occurred. External manual gates remain AEAT F-03 Client TLS, real-portal
   JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race.
+
+## Autonomous audit G34-01 — legacy persisted certificate display-name read hardening — 2026-08-09
+
+- G33 is published as `593beb0572081c7d69f4eed421be5e4f66ab6b1f`; do not repeat it.
+- G34 closes the pre-G33 upgrade bypass: legacy persisted certificate `display_name` now crosses the
+  same shared G33 presentation policy on `PreferencesCertificateReferenceStore.read()` as a newly
+  selected provider name. No DataStore write/migration is added to `read()`; raw-name octet-stream
+  extension admission and URI/MIME/SAF/PKCS12/password/session/signing behavior remain unchanged.
+- RED `job_20260809_072053_79a11036` / `job_20260809_072421_6d6cc68d`; focused GREEN
+  `job_20260809_072506_a0d1a7a2` / `job_20260809_073101_28ecad0c` = 20/20 per variant.
+  Reviewer `worker-9` found no Critical/Important issue; one Minor notes no explicit post-read
+  DataStore snapshot assertion. `worker-7`/`worker-8` timed out without evidence.
+- Full JVM `job_20260809_073131_74318c66` / `job_20260809_073943_d784901b` = 570/570 per
+  variant. Lint/build `job_20260809_074007_0d7b0afc` = 124/124 tasks, 0 lint errors / 26 warnings.
+  Python 102 with one environmental hardlink skip + Go PASS; Android artifact and release
+  fail-closed PASS; relay removed and release APK count zero.
+- During pre-evidence exact-scope checking, a separate Termux job
+  `job_20260809_075259_02c00d4f` created the operator-directed portal-first master-plan amendment plus
+  two subordinate docs in the same worktree. They are preserved exactly and excluded from the G34
+  product commit. The current Watchdog envelope still caps `@Termuх` Luna Max workers at two; the
+  separate portal-priority policy is not adopted or published by G34 and must be reconciled before
+  later portal-batch execution.
+- Post-evidence focused `job_20260809_075747_639efd2f` passed 20/20 Debug + 20/20 QA with zero
+  failures/errors/skips. Policy/scope/safety `job_20260809_075808_88ee788e` passed `CiPolicyTest`
+  20/20, `git diff --check`, exact 12-file G34 ownership, zero raw bidi controls and the added-line
+  safety scan while preserving the three portal-priority files as foreign.
+- No APK/device/portal/credential/private-signing/upload/payment/submission action occurred. External
+  manual gates remain AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility,
+  TalkBack/visual validation and supported-Linux Go race.

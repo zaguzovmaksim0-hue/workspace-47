@@ -1873,3 +1873,57 @@ No APK was installed/launched; no device control, authenticated portal interacti
 credential/private-certificate use, real signing, upload, payment or administrative submission
 occurred. Automated evidence proves string-policy behavior only; physical SAF/certificate and
 portal acceptance are not inferred.
+
+## Finding G34-01 — legacy persisted certificate display-name read hardening — 2026-08-09
+
+**Finding.** G33-01 sanitized external `ContentProvider` certificate names at new selection time,
+but `PreferencesCertificateReferenceStore.read()` returned a previously persisted `display_name`
+verbatim. A certificate reference written by a pre-G33 version could therefore retain Unicode bidi
+controls across an app upgrade and re-enter trusted native certificate UI. This is a legacy
+persistence/read-boundary bypass of the G33 presentation invariant; it does not demonstrate exposure
+of certificate bytes, password, private key or signature material.
+
+**TDD and remediation.** Subordinate design/plan:
+`docs/superpowers/specs/2026-08-09-legacy-certificate-display-name-read-hardening-design.md` and
+`docs/superpowers/plans/2026-08-09-legacy-certificate-display-name-read-hardening.md`. RED
+`job_20260809_072053_79a11036`, parsed by `job_20260809_072421_6d6cc68d`, produced exactly one
+failure, zero errors/skips: expected `certevil.p12`, while persisted U+202E/U+2066 survived. The
+minimum fix extracts the exact G33 C0/DEL/bidi/256-character/trim/fallback rule into pure internal
+`CertificateDisplayNamePolicy`, used both by `CertificateRepository.select()` and
+`PreferencesCertificateReferenceStore.read()`. The read path performs no DataStore `edit`; it only
+normalizes the returned reference. Octet-stream `.p12`/`.pfx` admission still uses the original
+trimmed provider filename before presentation sanitization. URI, MIME, size, summary, SAF,
+PKCS#12/password/session/signing, WebView/network/TLS, profiles and dependencies are unchanged.
+Focused Debug+QA `job_20260809_072506_a0d1a7a2`, parsed by
+`job_20260809_073101_28ecad0c`, passed 20/20 per variant.
+
+**Review and verification.** Reviewer `worker-9` found no Critical/Important issue; its only Minor
+note was that the regression asserts the returned value but does not independently snapshot DataStore
+before/after `read()`, so side-effect-free behavior is supported by direct implementation inspection,
+not that assertion alone. Explorers `worker-7` and `worker-8` timed out without results and are not
+counted as evidence. Fresh runtime-lock/core/AAPT2 + complete JVM
+`job_20260809_073131_74318c66`, parsed by `job_20260809_073943_d784901b`, passed Debug 570/570
+and QA 570/570 with zero failures/errors/skips. Fresh lint/build
+`job_20260809_074007_0d7b0afc` passed 124/124 tasks with 0 lint errors / 26 warnings per variant.
+Artifact gate `job_20260809_075044_6379aee6` passed; APK SHA-256: Debug
+`6087fb12fd9f4fa26156263df2a27b332cd4259e3299a055043e4396008cb24f`, QA
+`36f7b37c047c9fc8f1d4712c5f25dbf8c0457966e3050067f330768e9f5dd755`, QA AndroidTest
+`93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`. Non-Android
+`job_20260809_073139_d5df8daf` passed Python 102 tests with one environmental hardlink skip plus
+Go `test ./... -count=1`, `vet ./...` and relay build; relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Release fail-closed
+`job_20260809_075113_55f3f9cf` passed with zero release APKs; cleanup
+`job_20260809_075219_03557bd7` removed the generated relay. `CiPolicyTest` passed 20/20 during
+`job_20260809_075259_40566609`; that command's exact-scope assertion correctly detected a separate
+concurrent portal-priority documentation mutation. G34-only reconciliation/full-diff/security review
+`job_20260809_075510_041aaf04` then confirmed six owned pre-evidence files, three preserved foreign
+documentation files, raw bidi controls zero in G34 files and no sensitive/unsafe addition.
+Post-evidence focused `job_20260809_075747_639efd2f` passed 20/20 Debug and 20/20 QA with zero
+failures/errors/skips. Post-evidence policy/scope/safety `job_20260809_075808_88ee788e` passed
+`CiPolicyTest` 20/20, `git diff --check`, exact 12-file G34 ownership with the three portal-priority
+files preserved foreign, zero raw bidi controls in G34 content and no sensitive/unsafe added line.
+
+No APK was installed/launched; no device control, authenticated portal interaction,
+credential/private-certificate use, real signing, upload, payment or administrative submission
+occurred. Automated evidence establishes the legacy DataStore/string boundary only; physical SAF,
+certificate, TalkBack/visual and portal E2E validation are not inferred.

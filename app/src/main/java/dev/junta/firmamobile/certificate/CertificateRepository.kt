@@ -155,7 +155,7 @@ class CertificateRepository(
 
         val reference = StoredCertificateReference(
             uri = uri,
-            displayName = sanitizeDisplayName(rawDisplayName),
+            displayName = CertificateDisplayNamePolicy.sanitize(rawDisplayName),
             mimeType = checkNotNull(normalizedMime),
             size = metadata.size?.takeIf { it >= 0 },
             summary = null,
@@ -199,30 +199,11 @@ class CertificateRepository(
         return normalized.endsWith(".p12") || normalized.endsWith(".pfx")
     }
 
-    private fun sanitizeDisplayName(displayName: String?): String {
-        val sanitized = displayName
-            ?.filter { character ->
-                character >= ' ' &&
-                    character != '\u007f' &&
-                    !isUnicodeBidiControl(character)
-            }
-            ?.take(MAX_DISPLAY_NAME_LENGTH)
-            ?.trim()
-        return sanitized.orEmpty().ifBlank { DEFAULT_DISPLAY_NAME }
-    }
-
-    private fun isUnicodeBidiControl(character: Char): Boolean =
-        character == '\u061c' ||
-            character in '\u200e'..'\u200f' ||
-            character in '\u202a'..'\u202e' ||
-            character in '\u2066'..'\u2069'
-
     companion object {
-        const val DEFAULT_DISPLAY_NAME = "Certificado seleccionado"
+        const val DEFAULT_DISPLAY_NAME = CertificateDisplayNamePolicy.DEFAULT_DISPLAY_NAME
         const val MIME_X_PKCS12 = "application/x-pkcs12"
         const val MIME_PKCS12 = "application/pkcs12"
         const val MIME_OCTET_STREAM = "application/octet-stream"
-        private const val MAX_DISPLAY_NAME_LENGTH = 256
         private const val MAX_URI_LENGTH = 4096
     }
 }
