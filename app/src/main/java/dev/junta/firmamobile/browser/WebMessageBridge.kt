@@ -356,7 +356,7 @@ class WebMessageBridge(
             miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
             isMainFrame &&
             isExactMelillaSourceOrigin(sourceOrigin)
-        if (!accepted || json.keySet() != DOCUMENT_READY_KEYS) {
+        if (!accepted || json.keys().asSequence().toSet() != DOCUMENT_READY_KEYS) {
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
             return true
         }
