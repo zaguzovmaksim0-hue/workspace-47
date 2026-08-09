@@ -369,6 +369,31 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun jccmProbeAcceptsOnlyTheExactRuntimePageUrl() {
+        val accepted = adapterFor(JCCM_PROFILE_ID).route(
+            rawMessage = jccmMessage(),
+            sourceOrigin = JCCM_ORIGIN,
+            isMainFrame = true,
+            currentPageUrl = JCCM_START_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+        accepted.request.normalized.close()
+
+        listOf(
+            "https://ventanillaelectronica.jccm.es/other",
+            "$JCCM_START_URL?probe=1",
+            "$JCCM_START_URL#fragment",
+        ).forEach { currentPageUrl ->
+            val rejected = adapterFor(JCCM_PROFILE_ID).route(
+                rawMessage = jccmMessage(),
+                sourceOrigin = JCCM_ORIGIN,
+                isMainFrame = true,
+                currentPageUrl = currentPageUrl,
+            )
+            assertTrue(rejected is MiniAppletBridgeRouteResult.Rejected)
+        }
+    }
+
+    @Test
     fun jccmProbeRejectsEveryWrongContractDimensionWithoutGenericCadesBroadening() {
         val valid = jccmMessage()
 
@@ -811,6 +836,9 @@ class MiniAppletBridgeAdapterTest {
         val JCCM_ORIGIN: Uri = Uri.parse("https://ventanillaelectronica.jccm.es")
         const val UGR_PROFILE_ID = "ugr-certificado-login"
         const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
+        const val JCCM_START_URL =
+            "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
+                "formularios/identificacion.phtml"
         const val JCCM_PROTOCOL_ID = "jccm-certificate-login-probe-local-cades-v1"
         const val UGR_PROTOCOL_ID = "ugr-certificado-login-local-cades-v1"
         val UGR_DATA = "Universidad de Granada".encodeToByteArray()
