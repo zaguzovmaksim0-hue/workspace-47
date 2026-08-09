@@ -162,6 +162,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == CANTABRIA_PROFILE_ID) {
                 validateCantabriaProfile(p)
             }
+            if (p.profileId.value == JCCM_PROFILE_ID) {
+                validateJccmProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -227,6 +230,7 @@ object SiteProfileCatalogParser {
                                             "filter" to "nonexpired:",
                                         )
                                         UGR_PROFILE_ID -> emptyMap()
+                                        JCCM_PROFILE_ID -> emptyMap()
                                         else -> null
                                     }
                                     require(
@@ -278,6 +282,40 @@ object SiteProfileCatalogParser {
             }
         }
     }
+    private fun validateJccmProfile(profile: SiteProfile) {
+        require(profile.profileVersion == JCCM_PROFILE_VERSION)
+        require(profile.displayName == JCCM_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == JCCM_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(JCCM_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = JCCM_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+
     private fun validateUgrProfile(profile: SiteProfile) {
         require(profile.profileVersion == UGR_PROFILE_VERSION)
         require(profile.displayName == UGR_DISPLAY_NAME)
@@ -414,6 +452,15 @@ object SiteProfileCatalogParser {
         "mode" to "implicit",
     )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
+    private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
+    private const val JCCM_PROFILE_VERSION = 1
+    private const val JCCM_DISPLAY_NAME =
+        "Junta de Comunidades de Castilla-La Mancha — Probe de acceso con certificado"
+    private const val JCCM_START_URL =
+        "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml"
+    private const val JCCM_ORIGIN = "https://ventanillaelectronica.jccm.es"
+    private const val JCCM_SAFE_DESCRIPTION =
+        "Validación pública de acceso con certificado de Castilla-La Mancha"
     private const val UGR_PROFILE_VERSION = 1
     private const val UGR_DISPLAY_NAME = "Universidad de Granada — Acceso con certificado"
     private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"

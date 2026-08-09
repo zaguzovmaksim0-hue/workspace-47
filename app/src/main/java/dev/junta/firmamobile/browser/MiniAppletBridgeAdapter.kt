@@ -18,6 +18,7 @@ import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
+import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.NormalizedSignRequest
@@ -182,6 +183,17 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == CANTABRIA_PROFILE_ID && !isCantabriaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isJccmContract = isExactJccmContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+        )
+        if (profile.profileId.value == JccmCertificateLoginProbeCadesAdapter.PROFILE_ID &&
+            !isJccmContract
+        ) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -241,6 +253,15 @@ internal class ProfileMiniAppletBridgeAdapter(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
                 )
+        } else if (isJccmContract) {
+            val value = json.opt(EXTRA_PROPERTIES_FIELD)
+            if (value !== JSONObject.NULL && !(value is String && value.isEmpty())) {
+                return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+            }
+            ""
         } else if (operation.fixedExtraProperties.isEmpty()) {
             if (json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
                 return MiniAppletBridgeRouteResult.Rejected(
@@ -288,6 +309,15 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (isCantabriaContract && !decodedData.isExactCantabriaChallenge()) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
+        }
+        if (isJccmContract &&
+            !decodedData.contentEquals(JccmCertificateLoginProbeCadesAdapter.EXPECTED_PAYLOAD)
+        ) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
         }
         val extraProperties = if (isCantabriaContract) {
             CANTABRIA_EXTRA_PROPERTIES
@@ -368,6 +398,45 @@ internal class ProfileMiniAppletBridgeAdapter(
     private fun String.hasSafeControls(): Boolean = all { character ->
         !character.isISOControl() || character == '\n' || character == '\r' || character == '\t'
     }
+    private fun isExactJccmContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+    ): Boolean =
+        profile.profileId.value == JccmCertificateLoginProbeCadesAdapter.PROFILE_ID &&
+            profile.profileVersion == JccmCertificateLoginProbeCadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() ==
+                "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml" &&
+            origin.serialized == JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN),
+            ) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == JccmCertificateLoginProbeCadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.EXPLICIT &&
+            operation.fixedExtraProperties.isEmpty() &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == JccmCertificateLoginProbeCadesAdapter.ID.value
+
+
     private fun isExactUgrContract(
         profile: SiteProfile,
         origin: ExactOrigin,

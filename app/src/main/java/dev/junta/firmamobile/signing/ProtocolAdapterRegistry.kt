@@ -87,6 +87,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = SigningProtocolId("cantabria-rec-cert-login-cades-v1"),
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(JccmCertificateLoginProbeCadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = JccmCertificateLoginProbeCadesAdapter.ID,
+            ),
         ),
     )
 }

@@ -80,6 +80,8 @@ class WebMessageBridge(
                         BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
                     cantabriaCompatibilityEnabled = profileId.value == CANTABRIA_PROFILE_ID &&
                         BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
+                    jccmCompatibilityEnabled = profileId.value == JCCM_PROFILE_ID &&
+                        BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
                 ),
                 originRules,
             )
@@ -271,6 +273,7 @@ class WebMessageBridge(
         const val BRIDGE_NAME = "JuntaFirmaMobile"
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
+        private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
     }
 }

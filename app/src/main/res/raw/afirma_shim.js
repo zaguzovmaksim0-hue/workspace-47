@@ -16,6 +16,7 @@
   const qaDiagnosticsEnabled = __JFM_QA_DIAGNOSTICS_ENABLED__;
   const ugrCompatibilityEnabled = __JFM_UGR_COMPATIBILITY_ENABLED__;
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
+  const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -24,6 +25,8 @@
   const ugrLiteralBase64 = "VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==";
   const ugrStorageUrl = "https://sede.ugr.es/afirma-signature-storage/StorageService";
   const ugrRetrieveUrl = "https://sede.ugr.es/afirma-signature-retriever/RetrieveService";
+  const jccmOrigin = "https://ventanillaelectronica.jccm.es";
+  const jccmPayloadBase64 = "QUJDREU=";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -150,6 +153,14 @@
       args[1] === "SHA512withRSA" &&
       args[2] === "CAdES" &&
       args[3] === cantabriaExtraProperties;
+    const isJccmOrigin =
+      jccmCompatibilityEnabled && window.location.origin === jccmOrigin;
+    const isExactJccmCall =
+      isJccmOrigin &&
+      args[0] === jccmPayloadBase64 &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "CAdES" &&
+      (args[3] === null || args[3] === "");
     const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
         globalThis.btoa(args[0]) : args[0];
@@ -158,20 +169,22 @@
       typeof globalThis.btoa === "function" &&
       base64Pattern.test(dataB64);
     const isJuntaCades =
+      !jccmCompatibilityEnabled &&
       (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
       args[2] === "CAdES" && typeof args[3] === "string" &&
       args[3].length <= maxExtraPropertiesChars;
-    const isRegXades = args[1] === "SHA512withRSA" &&
+    const isRegXades = !jccmCompatibilityEnabled &&
+      args[1] === "SHA512withRSA" &&
       args[2] === "XAdES Detached" && args[3] === null;
     if (args.length !== 6 || typeof successCallback !== "function" ||
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
-        ((!isExactUgrLiteralCall && !isExactCantabriaCall &&
+        ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
           !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
-          !isExactCantabriaCall)) {
+          !isExactCantabriaCall && !isExactJccmCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

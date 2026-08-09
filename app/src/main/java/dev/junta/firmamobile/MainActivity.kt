@@ -44,6 +44,7 @@ import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
+import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -107,6 +108,7 @@ class MainActivity : ComponentActivity() {
         val aragonAdapter = LocalCadesDetachedAdapter()
         val dgtAdapter = DgtVerificationCadesAdapter()
         val ugrAdapter = UgrCadesDetachedAdapter()
+        val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
         signingCoordinator = SigningCoordinator(
             certificateSession = app.certificateSession,
@@ -134,6 +136,7 @@ class MainActivity : ComponentActivity() {
                     aragonAdapter.id -> aragonAdapter
                     dgtAdapter.id -> dgtAdapter
                     ugrAdapter.id -> ugrAdapter
+                    jccmAdapter.id -> jccmAdapter
                     unizarAdapter.id -> unizarAdapter
                     else -> null
                 }
