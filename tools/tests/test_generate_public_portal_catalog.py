@@ -114,6 +114,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("reg-age", us["limitations"].lower())
         self.assertIn("e2e", us["limitations"].lower())
 
+        cantabria = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "cantabria-registro-electronico-comun"
+        )
+        self.assertEqual("cantabria-rec-cert-login", cantabria["profileId"])
+        self.assertEqual("E2E_PENDING", cantabria["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", cantabria["inventoryStatus"])
+        self.assertEqual("2026-08-09", cantabria["reviewedOn"])
+        self.assertIn("miniapplet", cantabria["protocolFamily"].lower())
+        self.assertIn("cades", cantabria["protocolFamily"].lower())
+        self.assertIn("e2e", cantabria["limitations"].lower())
+        self.assertIn("qa", cantabria["limitations"].lower())
+
         aragon = next(entry for entry in catalog["entries"] if entry["portalId"] == "aragon-siraw")
         self.assertEqual("aragon-siraw", aragon["profileId"])
         self.assertEqual("E2E_VERIFIED", aragon["catalogStatus"])

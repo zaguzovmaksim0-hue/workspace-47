@@ -64,7 +64,7 @@ class PortalCatalogRepositoryTest {
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 11, metadataOnly.size)
+        assertEquals(qaPortals.size - 12, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -162,6 +162,28 @@ class PortalCatalogRepositoryTest {
         assertTrue(tamperedPortal.capabilities.isEmpty())
         assertTrue(tamperedPortal.signatureFormats.isEmpty())
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Cantabria REC contract is launchable only from QA registry`() {
+        val portalId = PortalId("cantabria-registro-electronico-comun")
+        val profileId = ProfileId("cantabria-rec-cert-login")
+        val expectedUrl = java.net.URI("https://rec.cantabria.es/rec/bienvenida.htm")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(setOf(SignatureFormat.CADES), qaPortal.signatureFormats)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in qaPortal.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in qaPortal.observedMechanisms)
+        assertEquals(PortalLaunchTarget(profileId, expectedUrl), qaRepository.resolveLaunch(qaPortal))
+        assertTrue(qaPortal.limitations.contains("E2E", ignoreCase = true))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
     }
 
     @Test

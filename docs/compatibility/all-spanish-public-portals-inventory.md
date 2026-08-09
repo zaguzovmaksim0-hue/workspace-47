@@ -3582,22 +3582,22 @@ records:
     e_sede: "https://sede.cantabria.es/sede/"
     entry_url: "https://rec.cantabria.es/rec/bienvenida.htm"
     procedure_page: "https://rec.cantabria.es/rec/bienvenida.htm"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoFirma / MiniApplet"
+    protocol_family: "AUTOFIRMA_MINIAPPLET_LOCAL_CADES"
+    signature_format: "CAdES / DETACHED / IMPLICIT"
+    signature_algorithm: "SHA512withRSA"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Entrada pública al Registro Electrónico Común de Cantabria."
-    protocol_evidence: "La entrada acredita una frontera funcional distinta, no su contrato de firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al REC mediante MiniApplet.sign sobre un reto efímero de 40 caracteres hexadecimales."
+    protocol_evidence: "La página pública y sus scripts first-party fijan SHA512withRSA, CAdES, mode=implicit, filters vacío y callback MiniApplet; el reto se entrega en runtime y no se codifica en la app."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A06A", "A06B", "A06E"]
-    reason: "Identificación, firma, transporte, formato y endpoint no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Delimitar el flujo público hasta antes de la identificación."
+    evidence_ids: ["D03", "A06E", "CANTABRIA-REC-AUTOFIRMA-2026-08-09", "CANTABRIA-REC-AFIRMA-CLIENTE-2026-08-09", "CANTABRIA-REC-MINIAPPLET-2026-08-09"]
+    reason: "Contrato de acceso con certificado implementado solo en QA; no se realizó E2E, autenticación posterior ni envío del formulario del portal."
+    reviewed_at: "2026-08-09"
+    next_gate: "Validar físicamente el callback/login sin presentar trámites; mantener QA_ONLY hasta evidencia E2E sanitizada."
 
   - inventory_id: "ES-PUB-0102"
     surface_key: "castilla-leon-tramita"
@@ -6277,6 +6277,9 @@ Orden de expansión recomendado:
 [A06C]: https://sede.cantabria.es/sede/catalogo-de-tramites/tramite/emision-de-certificados-de-los-datos-que-consten-en-los-registros-de-asociaciones/2645
 [A06D]: https://sede.cantabria.es/sede/informacion/sistemas-de-e-firma-admitidos
 [A06E]: https://rec.cantabria.es/rec/bienvenida.htm
+[CANTABRIA-REC-AUTOFIRMA-2026-08-09]: https://rec.cantabria.es/rec/js/autoFirma.js
+[CANTABRIA-REC-AFIRMA-CLIENTE-2026-08-09]: https://clientefirma.cantabria.es/clientefirma/js/autofirma/afirmaClienteMiniapplet.js
+[CANTABRIA-REC-MINIAPPLET-2026-08-09]: https://clientefirma.cantabria.es/clientefirma/js/autofirma/miniapplet.js
 [A07A]: https://www.tramitacastillayleon.jcyl.es/
 [A07B]: https://www.tramitacastillayleon.jcyl.es/web/es/ayuda-sobre-administracion-electronica/requisitos-tecnicos.html
 [A08A]: https://www.jccm.es/

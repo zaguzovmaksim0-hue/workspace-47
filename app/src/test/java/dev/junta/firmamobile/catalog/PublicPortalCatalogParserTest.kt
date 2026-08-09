@@ -94,6 +94,29 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Cantabria REC catalog exposes only the QA implemented contract pending E2E`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("cantabria-registro-electronico-comun")
+        }
+
+        assertEquals(ProfileId("cantabria-rec-cert-login"), portal.profileId)
+        assertEquals("ES-PUB-0101", portal.inventoryId)
+        assertEquals(
+            "https://rec.cantabria.es/rec/bienvenida.htm",
+            portal.entryUrl.toString(),
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in portal.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOFIRMA in portal.observedMechanisms)
+        assertTrue(PortalMechanism.MINIAPPLET in portal.observedMechanisms)
+        assertTrue(SignatureFormat.CADES in portal.observedSignatureFormats)
+        assertTrue(portal.limitations.contains("E2E", ignoreCase = true))
+    }
+
+    @Test
     fun `US alias retains its official procedure URL while resolving the exact REG-AGE launch URL`() {
         val aliasJson = json
             .replace(
