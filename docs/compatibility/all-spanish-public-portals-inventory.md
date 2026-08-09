@@ -358,7 +358,7 @@ requiera traducción manual.
 | `P10` | Ayuntamiento de Sevilla | [P10][P10A] | Requisito de certificado vigente y AutoFirma. |
 | `P11` | Ayuntamiento de Madrid | [P11] | Procedimiento oficial previamente inspeccionado; revalidación automatizada pendiente. |
 | `P12` | Universidad de Granada | [P12][P12A] | Pantalla AutoFirma y requisitos; transporte exacto no probado. |
-| `P13` | Universidad de Sevilla | [P13] | Requisitos de autenticación/firma de escritorio. |
+| `P13` | Universidad de Sevilla | [P13][P13A] | Requisitos técnicos y ficha pública ISG_01 que delega exactamente a REG-AGE. |
 | `P14` | REG/RedSARA | [P14][P14A][P14B][P14C][P14D] | Entrada, manual y JS público con contrato estático. |
 | `P15` | ACCEDA | [P15][P15A][P15B] | Entrada y helper/AutoScript públicos; uso runtime del helper no observado. |
 | `P16` | Gobierno de Aragón / SIRAW | [P16][P16B][P16C] | Entrada y JS público con MiniApplet y Storage/Retrieve. |
@@ -1016,32 +1016,33 @@ records:
   - inventory_id: "ES-PUB-0019"
     surface_key: "us-sede"
     administrative_level: "UNIVERSIDAD_PUBLICA"
-    autonomous_community: "NO_VERIFICADO"
-    province_or_municipality: "NO_VERIFICADO"
+    autonomous_community: "Andalucía"
+    province_or_municipality: "Sevilla"
     institution_name: "Universidad de Sevilla"
     surface_name: "Sede electrónica de la Universidad de Sevilla"
     surface_type: "SEDE"
     origin: "https://sede.us.es"
     official_site: "https://sede.us.es/"
     e_sede: "https://sede.us.es/"
-    entry_url: "https://sede.us.es/opencms/system/modules/sede/contents/pages/requisitosTecnicos"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01"
     certificate_required: "SI"
     signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Autenticación y firma mediante AutoFirma de escritorio."
-    protocol_evidence: "Los requisitos no publican ABI, formato, callback ni endpoint."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La sede US delega esta presentación al Registro Electrónico de la AGE mediante un enlace público exacto a REG-AGE."
+    protocol_evidence: "La ficha oficial ISG_01 indica que el trámite se realiza en el Registro Electrónico de la AGE y que «Iniciar trámite» conduce exactamente a https://reg.redsara.es/es/; el contrato de firma procede del perfil REG-AGE ya verificado, no de un ABI nuevo de la US."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P13"]
-    reason: "Página de procedimiento y contrato técnico portal-specific no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Identificar la entrada y el contrato de un procedimiento."
+    evidence_ids: ["P13", "P13A", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL; no se realizó E2E físico desde la ficha US ni se infirió un contrato de firma propio de la US."
+    reviewed_at: "2026-08-09"
+    next_gate: "Validar físicamente la transición US → REG-AGE y el flujo de firma antes de cualquier VERIFIED_E2E; mantener QA_ONLY."
 
   - inventory_id: "ES-PUB-0020"
     surface_key: "unizar-tramitador"
@@ -6226,6 +6227,7 @@ Orden de expansión recomendado:
 [P12]: https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp
 [P12A]: https://sede.ugr.es/portal/requisitos/index.html
 [P13]: https://sede.us.es/opencms/system/modules/sede/contents/pages/requisitosTecnicos
+[P13A]: https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01
 [P14]: https://reg.redsara.es/es/
 [P14A]: https://reg.redsara.es/preguntas-frecuentes
 [P14B]: https://reg.redsara.es/es/media/es/REG-ManualUsuario.pdf

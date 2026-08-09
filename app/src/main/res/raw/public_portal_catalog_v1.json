@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "39f640e6ff7a40f9dd8b2b65c077b48baae89569aaea4865ef410e7009f88e7a",
+  "sourceRevision": "b50799a313f566faeefb2b717fc4a997ee6f2e2b3429a002064c57cc65093fe2",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -502,27 +502,30 @@
     {
       "portalId": "us-sede",
       "inventoryId": "ES-PUB-0019",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica de la Universidad de Sevilla",
       "organization": "Universidad de Sevilla",
       "governmentLevel": "UNIVERSITY",
-      "territory": "España",
-      "purpose": "Autenticación y firma mediante AutoFirma de escritorio.",
-      "entryUrl": "https://sede.us.es/opencms/system/modules/sede/contents/pages/requisitosTecnicos",
+      "territory": "Andalucía",
+      "purpose": "La sede US delega esta presentación al Registro Electrónico de la AGE mediante un enlace público exacto a REG-AGE.",
+      "entryUrl": "https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "P13"
+        "P13",
+        "P13A",
+        "P14"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Página de procedimiento y contrato técnico portal-specific no verificados."
+      "reviewedOn": "2026-08-09",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL; no se realizó E2E físico desde la ficha US ni se infirió un contrato de firma propio de la US."
     },
     {
       "portalId": "unizar-tramitador",

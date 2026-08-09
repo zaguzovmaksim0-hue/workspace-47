@@ -101,6 +101,7 @@ def _profile_bindings(
         records_by_entry_url.setdefault(entry_url, []).append(record)
 
     bindings: dict[str, str] = {}
+    profile_by_start_url = {start_url: profile_id for profile_id, start_url in profiles}
     for profile_id, start_url in profiles:
         matches = records_by_entry_url.get(start_url, [])
         if not matches:
@@ -112,6 +113,22 @@ def _profile_bindings(
             raise ValueError(f"profile {profile_id} matched an invalid inventory surface")
         if surface_key in bindings:
             raise ValueError(f"multiple profiles map to inventory surface: {surface_key}")
+        bindings[surface_key] = profile_id
+
+    for record in records:
+        if "launch_url" not in record:
+            continue
+        launch_url = record.get("launch_url")
+        if not isinstance(launch_url, str) or not launch_url or launch_url != launch_url.strip():
+            raise ValueError("invalid alias launch_url")
+        profile_id = profile_by_start_url.get(launch_url)
+        if profile_id is None:
+            raise ValueError(f"alias launch_url does not match a profile startUrl: {launch_url}")
+        surface_key = str(record.get("surface_key", ""))
+        if not surface_key:
+            raise ValueError("alias launch_url belongs to an invalid inventory surface")
+        if surface_key in bindings:
+            raise ValueError(f"redundant alias launch_url on profile-owned surface: {surface_key}")
         bindings[surface_key] = profile_id
     return bindings
 
@@ -189,6 +206,7 @@ def _entry(record: dict[str, object], profile_bindings: dict[str, str]) -> dict[
         "territory": _territory(record),
         "purpose": str(record["operation_summary"]),
         "entryUrl": entry_url,
+        **({"launchUrl": str(record["launch_url"])} if "launch_url" in record else {}),
         "observedMechanisms": _mechanisms(record),
         "observedSignatureFormats": _formats(record),
         "protocolFamily": str(record["protocol_family"]),
@@ -217,8 +235,9 @@ def generate(source: Path, profiles_source: Path) -> dict[str, object]:
         values = [entry[field] for entry in entries]
         if len(values) != len(set(values)):
             raise ValueError(f"duplicate {field}")
-    if sum(entry["profileId"] is not None for entry in entries) != len(profiles):
-        raise ValueError("not all profiles were mapped exactly once")
+    bound_profile_ids = {entry["profileId"] for entry in entries if entry["profileId"] is not None}
+    if bound_profile_ids != {profile_id for profile_id, _ in profiles}:
+        raise ValueError("not all profiles were mapped")
     return {
         "schemaVersion": 1,
         "catalogVersion": 1,

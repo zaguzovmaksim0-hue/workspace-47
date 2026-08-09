@@ -172,11 +172,11 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
 
     def test_unknown_alias_launch_url_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
-        marker = '    surface_key: "us-sede"\n'
-        self.assertIn(marker, inventory)
+        exact = '    launch_url: "https://reg.redsara.es/es/"\n'
+        self.assertIn(exact, inventory)
         mutated = inventory.replace(
-            marker,
-            marker + '    launch_url: "https://example.invalid/not-a-profile"\n',
+            exact,
+            '    launch_url: "https://example.invalid/not-a-profile"\n',
             1,
         )
         with tempfile.TemporaryDirectory() as directory:
