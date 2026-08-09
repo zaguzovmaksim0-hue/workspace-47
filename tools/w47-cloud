@@ -1,0 +1,124 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+
+ENV_ID="${W47_CODEX_CLOUD_ENV_ID:-6a785cdf2c8c8191ba25607f44962899}"
+CACHE_DIR="${W47_CODEX_CLOUD_CACHE_DIR:-$HOME/.cache/codex-cloud-cli}"
+CODEX_BIN="${W47_CODEX_BIN:-codex}"
+FULL_TASKS=(
+  verifyResolvedCoreVersion
+  verifyPortableAapt2Configuration
+  testDebugUnitTest
+  testQaUnitTest
+  lintDebug
+  lintQa
+  assembleDebug
+  assembleQa
+  assembleQaAndroidTest
+)
+
+mkdir -p "$CACHE_DIR"
+chmod 700 "$CACHE_DIR"
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  w47-cloud gradle --branch BRANCH --sha SHA TASK [TASK ...]
+  w47-cloud full   --branch BRANCH --sha SHA
+  w47-cloud status TASK_ID
+  w47-cloud list [LIMIT]
+  w47-cloud diff TASK_ID
+
+Every Gradle submission is read-only and runs in the saved workspace-47-android
+Codex Cloud environment. Both --branch and --sha are mandatory so Cloud can prove
+it tested the explicitly selected pushed candidate commit.
+USAGE
+}
+
+parse_target() {
+  TARGET_BRANCH=""
+  TARGET_SHA=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --branch)
+        [[ $# -ge 2 ]] || { usage >&2; exit 2; }
+        TARGET_BRANCH=$2
+        shift 2
+        ;;
+      --sha)
+        [[ $# -ge 2 ]] || { usage >&2; exit 2; }
+        TARGET_SHA=$2
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+  [[ -n "$TARGET_BRANCH" ]] || { echo 'explicit --branch is required' >&2; exit 2; }
+  [[ "$TARGET_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo 'invalid branch' >&2; exit 2; }
+  [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'exact 40-hex --sha is required' >&2; exit 2; }
+  REMAINING=("$@")
+}
+
+submit_gradle() {
+  local branch=$1 sha=$2
+  shift 2
+  [[ $# -gt 0 ]] || { usage >&2; exit 2; }
+  local tasks prompt
+  tasks=$(printf '%s ' "$@")
+  tasks=${tasks% }
+  prompt=$(cat <<PROMPT
+Read-only Gradle verification for workspace-47. Do not modify repository files, commit, or push.
+Before running Gradle, execute \`git rev-parse HEAD\` and fail the task unless it is exactly:
+\`$sha\`
+Confirm Gradle dependency verification remains enabled.
+Run exactly:
+\`./gradlew $tasks --no-daemon --console=plain\`
+Acceptance evidence must not use \`--dependency-verification=off\` and must not write verification metadata.
+Report the exact observed Git SHA, exit code, BUILD result, test totals when applicable, lint result when applicable, produced artifacts when applicable, and final \`git status --short\`.
+PROMPT
+)
+  cd "$CACHE_DIR"
+  exec "$CODEX_BIN" cloud exec --env "$ENV_ID" --branch "$branch" "$prompt"
+}
+
+cmd=${1:-help}
+shift || true
+case "$cmd" in
+  gradle)
+    parse_target "$@"
+    submit_gradle "$TARGET_BRANCH" "$TARGET_SHA" "${REMAINING[@]}"
+    ;;
+  full)
+    parse_target "$@"
+    [[ ${#REMAINING[@]} -eq 0 ]] || { usage >&2; exit 2; }
+    submit_gradle "$TARGET_BRANCH" "$TARGET_SHA" "${FULL_TASKS[@]}"
+    ;;
+  status)
+    [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+    cd "$CACHE_DIR"
+    exec "$CODEX_BIN" cloud status "$1"
+    ;;
+  list)
+    limit=${1:-10}
+    [[ "$limit" =~ ^[0-9]+$ ]] || { usage >&2; exit 2; }
+    cd "$CACHE_DIR"
+    exec "$CODEX_BIN" cloud list --limit "$limit"
+    ;;
+  diff)
+    [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+    cd "$CACHE_DIR"
+    exec "$CODEX_BIN" cloud diff "$1"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

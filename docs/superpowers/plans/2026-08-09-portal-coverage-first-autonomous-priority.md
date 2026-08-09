@@ -1,10 +1,9 @@
 # Portal Coverage First Autonomous Execution Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILLS: use `superpowers:dispatching-parallel-agents` for
-> independent portal batches and `superpowers:subagent-driven-development` principles for bounded
-> implementer ownership. Use `superpowers:test-driven-development` for behavior changes,
-> `superpowers:systematic-debugging` for failures, and
-> `superpowers:verification-before-completion` before commit/push. Steps use checkbox (`- [ ]`).
+> **Agent workflow:** follow `docs/agents/matt-pocock-workflow.md`. Route implementation through
+> Matt Pocock `codex/implement`/`codex/tdd`, failures through `codex/diagnosing-bugs`, and final
+> review through `codex/code-review`. All Gradle verification follows
+> `docs/agents/codex-cloud-gradle.md`. Steps use checkbox (`- [ ]`).
 
 **Goal:** turn the 182-entry public catalog into progressively larger exact, tested portal coverage,
 using the maximum safe GPT-5.6 Luna Max implementation parallelism instead of allowing general audit

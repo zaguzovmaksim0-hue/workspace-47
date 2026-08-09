@@ -1,6 +1,6 @@
 # UGR Certificate Contract Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Agent workflow:** follow `docs/agents/matt-pocock-workflow.md`; use Matt Pocock `codex/implement`/`codex/tdd` and `codex/code-review`. All Gradle verification follows `docs/agents/codex-cloud-gradle.md`. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add the UGR certificate-login contract as a QA-only, fail-closed MiniApplet/AutoScript integration without changing generic, Aragón, or REG behavior.
 
@@ -45,7 +45,10 @@
 Run:
 
 ```bash
-./gradlew :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.AfirmaJavascriptShimTest' --tests 'dev.junta.firmamobile.browser.MiniAppletBridgeAdapterTest' --tests 'dev.junta.firmamobile.profile.SiteProfileCatalogParserTest' --tests 'dev.junta.firmamobile.profile.SiteProfileRegistryTest' --tests 'dev.junta.firmamobile.signing.LocalCadesDetachedAdapterTest' --tests 'dev.junta.firmamobile.signing.ProtocolAdapterRegistryTest' --tests 'dev.junta.firmamobile.catalog.PortalCatalogRepositoryTest' --tests 'dev.junta.firmamobile.catalog.PublicPortalCatalogParserTest'
+BRANCH="$(git branch --show-current)"
+SHA="$(git rev-parse HEAD)"
+git push -u origin "$BRANCH"
+w47-cloud gradle --branch "$BRANCH" --sha "$SHA" :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.AfirmaJavascriptShimTest' --tests 'dev.junta.firmamobile.browser.MiniAppletBridgeAdapterTest' --tests 'dev.junta.firmamobile.profile.SiteProfileCatalogParserTest' --tests 'dev.junta.firmamobile.profile.SiteProfileRegistryTest' --tests 'dev.junta.firmamobile.signing.LocalCadesDetachedAdapterTest' --tests 'dev.junta.firmamobile.signing.ProtocolAdapterRegistryTest' --tests 'dev.junta.firmamobile.catalog.PortalCatalogRepositoryTest' --tests 'dev.junta.firmamobile.catalog.PublicPortalCatalogParserTest'
 ```
 
 Expected: FAIL because the exact UGR profile, shim flag/path, native contract, adapter binding, and generated catalog entry do not exist yet; record the real failure output without changing production/config first.
@@ -72,7 +75,10 @@ Expected: FAIL because the exact UGR profile, shim flag/path, native contract, a
 Run:
 
 ```bash
-./gradlew :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.AfirmaJavascriptShimTest' --tests 'dev.junta.firmamobile.browser.MiniAppletBridgeAdapterTest' --tests 'dev.junta.firmamobile.profile.SiteProfileCatalogParserTest' --tests 'dev.junta.firmamobile.profile.SiteProfileRegistryTest' --tests 'dev.junta.firmamobile.signing.LocalCadesDetachedAdapterTest' --tests 'dev.junta.firmamobile.signing.ProtocolAdapterRegistryTest'
+BRANCH="$(git branch --show-current)"
+SHA="$(git rev-parse HEAD)"
+git push -u origin "$BRANCH"
+w47-cloud gradle --branch "$BRANCH" --sha "$SHA" :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.AfirmaJavascriptShimTest' --tests 'dev.junta.firmamobile.browser.MiniAppletBridgeAdapterTest' --tests 'dev.junta.firmamobile.profile.SiteProfileCatalogParserTest' --tests 'dev.junta.firmamobile.profile.SiteProfileRegistryTest' --tests 'dev.junta.firmamobile.signing.LocalCadesDetachedAdapterTest' --tests 'dev.junta.firmamobile.signing.ProtocolAdapterRegistryTest'
 ```
 
 Expected: PASS, including unchanged generic, Aragón, and REG assertions.
@@ -95,7 +101,10 @@ Expected: PASS, including unchanged generic, Aragón, and REG assertions.
 Run:
 
 ```bash
-./gradlew :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.AfirmaJavascriptShimTest'
+BRANCH="$(git branch --show-current)"
+SHA="$(git rev-parse HEAD)"
+git push -u origin "$BRANCH"
+w47-cloud gradle --branch "$BRANCH" --sha "$SHA" :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.AfirmaJavascriptShimTest'
 ```
 
 Expected: PASS with the exact UGR branch and unchanged generic checks.
@@ -122,7 +131,10 @@ python3 tools/generate_public_portal_catalog.py --source docs/compatibility/all-
 
 ```bash
 python3 tools/tests/test_generate_public_portal_catalog.py
-./gradlew :app:testDebugUnitTest --tests 'dev.junta.firmamobile.catalog.PublicPortalCatalogParserTest' --tests 'dev.junta.firmamobile.catalog.PortalCatalogRepositoryTest'
+BRANCH="$(git branch --show-current)"
+SHA="$(git rev-parse HEAD)"
+git push -u origin "$BRANCH"
+w47-cloud gradle --branch "$BRANCH" --sha "$SHA" :app:testDebugUnitTest --tests 'dev.junta.firmamobile.catalog.PublicPortalCatalogParserTest' --tests 'dev.junta.firmamobile.catalog.PortalCatalogRepositoryTest'
 ```
 
 Expected: UGR is `E2E_PENDING` / `IMPLEMENTED_NOT_E2E`, QA implementation is visible, release launch is unavailable, and all existing catalog invariants remain valid.

@@ -1,9 +1,9 @@
 # Workspace-47 Autonomous Audit Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans`
-> for this master plan. For every behavior-changing remediation, use
-> `superpowers:test-driven-development`, `superpowers:systematic-debugging` on
-> failures, and `superpowers:verification-before-completion` before commit/push.
+> **Agent workflow:** follow `docs/agents/matt-pocock-workflow.md` for this master plan.
+> Use Matt Pocock `codex/implement`/`codex/tdd` for behavior changes,
+> `codex/diagnosing-bugs` for failures, and `codex/code-review` before integration.
+> All Gradle verification follows `docs/agents/codex-cloud-gradle.md`.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Execute a 12-hour confirmed-active-time autonomous audit and remediation
@@ -35,10 +35,10 @@ coverage, not audit-finding count.
 
 ## Global Constraints
 
-- Work only in `/data/data/com.termux/files/home/workspace-47-autonomous-20260803`.
-- Branch is `agent/workspace-47-autonomous-20260803` from exact commit
-  `9c99bbfb36e13f88231d56001ccef8c4cbbce128`.
-- Push each fully verified milestone; never merge or force-push.
+- The orchestrator integrates only in `/data/data/com.termux/files/home/workspace-47-autonomous-20260803` on branch `agent/workspace-47-autonomous-20260803`.
+- Every implementation subagent owns a separate isolated Git worktree/branch based on the current autonomous integration head; never let two workers share a writable worktree.
+- The immutable canonical base remains `9c99bbfb36e13f88231d56001ccef8c4cbbce128`; do not mutate the canonical source branch.
+- Commit and push each worker candidate before Gradle verification, then integrate fully verified milestones sequentially; never force-push.
 - No APK installation, app launch, device automation, authenticated portal use,
   credentials, certificate use, real signing, draft creation, upload, payment, or
   submission.
