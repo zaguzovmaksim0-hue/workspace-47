@@ -12,6 +12,7 @@ import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.SigningErrorCode
 import java.io.StringReader
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONObject
 
 data class MelillaBatchDocument(
@@ -48,6 +49,11 @@ sealed interface MelillaBatchBridgeRouteResult {
 
     data class Accepted(val request: MelillaBatchBridgeRequest) : MelillaBatchBridgeRouteResult
 
+    data class Cancelled(
+        val requestId: UUID,
+        val documentId: UUID,
+    ) : MelillaBatchBridgeRouteResult
+
     data class Rejected(
         val requestId: UUID?,
         val code: SigningErrorCode,
@@ -66,8 +72,12 @@ class MelillaBatchBridgeAdapter(
     private val currentNavigationEpoch: () -> Long? = { null },
     private val currentDocumentId: () -> UUID? = { null },
     private val urlPolicy: MelillaBatchUrlPolicy = MelillaBatchUrlPolicy(),
+    private val currentOrigin: () -> TrustedOrigin? = { null },
 ) {
     private var activeRequestId: UUID? = null
+    private var activeDocumentId: UUID? = null
+    private var lastNavigationEpoch: Long? = null
+    private val invalidatedDocumentIds = linkedSetOf<UUID>()
     private val seenRequestIds = linkedSetOf<UUID>()
 
     @Synchronized
@@ -89,7 +99,8 @@ class MelillaBatchBridgeAdapter(
         } catch (_: Exception) {
             return MelillaBatchBridgeRouteResult.NotApplicable
         }
-        if (json.optString(TYPE_FIELD) != TYPE_MINIAPPLET_BATCH) {
+        val messageType = json.optString(TYPE_FIELD)
+        if (messageType != TYPE && messageType != BATCH_CANCEL_TYPE) {
             return MelillaBatchBridgeRouteResult.NotApplicable
         }
 
@@ -101,11 +112,13 @@ class MelillaBatchBridgeAdapter(
         if (navigationEpoch < 0L || navigationEpoch == Long.MAX_VALUE ||
             currentEpoch?.let { it != navigationEpoch } == true
         ) {
-            if (currentEpoch != null && currentEpoch != navigationEpoch) {
-                activeRequestId = null
-            }
+            invalidateActiveDocument()
             return rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
+        if (lastNavigationEpoch?.let { it != navigationEpoch } == true) {
+            invalidateActiveDocument()
+        }
+        lastNavigationEpoch = navigationEpoch
         if (!isMainFrame) {
             return rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
@@ -120,8 +133,21 @@ class MelillaBatchBridgeAdapter(
             ?: return rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
             ?: return rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
-        if (currentDocumentId()?.let { it != documentId } == true) {
+        if (currentOrigin()?.let { it != MELILLA_ORIGIN } == true) {
             return rejected(canonicalRequestId, SigningErrorCode.NAVIGATION_CHANGED)
+        }
+        if (currentDocumentId()?.let { it != documentId } == true ||
+            documentId in invalidatedDocumentIds
+        ) {
+            return rejected(canonicalRequestId, SigningErrorCode.NAVIGATION_CHANGED)
+        }
+
+        if (messageType == BATCH_CANCEL_TYPE) {
+            if (json.keySet() != BATCH_CANCEL_KEYS) {
+                return rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
+            }
+            invalidateDocument(documentId)
+            return MelillaBatchBridgeRouteResult.Cancelled(canonicalRequestId, documentId)
         }
 
         val keys = json.keySet()
@@ -242,6 +268,7 @@ class MelillaBatchBridgeAdapter(
             return rejected(canonicalRequestId, SigningErrorCode.PROTOCOL_FAILED)
         }
         activeRequestId = canonicalRequestId
+        activeDocumentId = documentId
         seenRequestIds += canonicalRequestId
         while (seenRequestIds.size > MAX_SEEN_REQUESTS) {
             seenRequestIds.iterator().next().let(seenRequestIds::remove)
@@ -270,12 +297,37 @@ class MelillaBatchBridgeAdapter(
         val active = activeRequestId ?: return false
         if (requestId != null && requestId != active) return false
         activeRequestId = null
+        activeDocumentId = null
         return true
     }
 
     @Synchronized
+    fun invalidateDocument(documentId: UUID?) {
+        if (documentId == null) return
+        invalidatedDocumentIds += documentId
+        while (invalidatedDocumentIds.size > MAX_INVALIDATED_DOCUMENTS) {
+            invalidatedDocumentIds.iterator().next().let(invalidatedDocumentIds::remove)
+        }
+        if (activeDocumentId == documentId) {
+            activeRequestId = null
+            activeDocumentId = null
+        }
+    }
+
+    @Synchronized
     fun abandonAll() {
+        invalidateActiveDocument()
+    }
+
+    private fun invalidateActiveDocument() {
+        activeDocumentId?.let { documentId ->
+            invalidatedDocumentIds += documentId
+            while (invalidatedDocumentIds.size > MAX_INVALIDATED_DOCUMENTS) {
+                invalidatedDocumentIds.iterator().next().let(invalidatedDocumentIds::remove)
+            }
+        }
         activeRequestId = null
+        activeDocumentId = null
     }
 
     private fun rejected(
@@ -366,10 +418,12 @@ class MelillaBatchBridgeAdapter(
         const val PROFILE_ID = "melilla-sede"
         const val SOURCE_ORIGIN = "https://sede.melilla.es"
         const val TYPE = "MINIAPPLET_BATCH"
+        const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
         const val MAX_DOCUMENTS = 128
 
         private const val TYPE_FIELD = "type"
+        private const val BATCH_CANCEL_TYPE = "MINIAPPLET_BATCH_CANCEL"
         private const val DOCUMENT_ID_FIELD = "documentId"
         private const val REQUEST_ID_FIELD = "requestId"
         private const val PRE_SIGNER_URL_FIELD = "batchPreSignerUrl"
@@ -394,9 +448,16 @@ class MelillaBatchBridgeAdapter(
         private const val MAX_OPAQUE_VALUE_CHARS = 1_024
         private const val MAX_JSON_DEPTH = 16
         private const val MAX_SEEN_REQUESTS = 64
+        private const val MAX_INVALIDATED_DOCUMENTS = 64
 
         private val MELILLA_PROFILE_ID = ProfileId(PROFILE_ID)
+        private val MELILLA_ORIGIN = TrustedOrigin(HTTPS_SCHEME, MELILLA_HOST, HTTPS_PORT)
         private val SUPPORTED_FORMATS = setOf("CAdES", "PAdES", "XAdES")
+        private val BATCH_CANCEL_KEYS = setOf(
+            TYPE_FIELD,
+            DOCUMENT_ID_FIELD,
+            REQUEST_ID_FIELD,
+        )
         private val REQUIRED_KEYS = setOf(
             TYPE_FIELD,
             DOCUMENT_ID_FIELD,
@@ -422,5 +483,111 @@ class MelillaBatchBridgeAdapter(
         private val UUID_PATTERN = Regex(
             "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
         )
+    }
+}
+
+
+class MelillaBatchReplyChannel internal constructor(
+    val requestId: UUID,
+    private val postMessage: (String) -> Unit,
+    private val onTerminal: () -> Unit = {},
+    private val canDeliver: () -> Boolean = { true },
+) {
+    private val terminal = AtomicBoolean(false)
+
+    fun success(validationResponse: String): Boolean {
+        if (!terminal.compareAndSet(false, true)) return false
+        if (!runCatching(canDeliver).getOrDefault(false) ||
+            validationResponse.length > MelillaBatchBridgeAdapter.MAX_MESSAGE_CHARS ||
+            !isStrictJsonValue(validationResponse)
+        ) {
+            onTerminal()
+            return false
+        }
+        return try {
+            val message = JSONObject()
+                .put("type", MelillaBatchBridgeAdapter.BATCH_RESULT_TYPE)
+                .put("requestId", requestId.toString())
+                .put("status", "success")
+                .put("validationResponse", validationResponse)
+                .toString()
+            if (message.length > MelillaBatchBridgeAdapter.MAX_MESSAGE_CHARS) {
+                return false
+            }
+            postMessage(message)
+            true
+        } catch (_: Exception) {
+            false
+        } finally {
+            onTerminal()
+        }
+    }
+
+    fun failure(code: SigningErrorCode): Boolean {
+        if (!terminal.compareAndSet(false, true)) return false
+        if (!runCatching(canDeliver).getOrDefault(false)) {
+            onTerminal()
+            return false
+        }
+        return try {
+            postMessage(
+                JSONObject()
+                    .put("type", MelillaBatchBridgeAdapter.BATCH_RESULT_TYPE)
+                    .put("requestId", requestId.toString())
+                    .put("status", "error")
+                    .put("errorCode", code.name)
+                    .toString(),
+            )
+            true
+        } catch (_: Exception) {
+            false
+        } finally {
+            onTerminal()
+        }
+    }
+
+    fun abandon(): Boolean {
+        if (!terminal.compareAndSet(false, true)) return false
+        onTerminal()
+        return true
+    }
+
+    private fun isStrictJsonValue(raw: String): Boolean = try {
+        JsonReader(StringReader(raw)).use { reader ->
+            reader.isLenient = false
+            readJsonValue(reader, 0)
+            reader.peek() == JsonToken.END_DOCUMENT
+        }
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun readJsonValue(reader: JsonReader, depth: Int) {
+        require(depth <= MAX_JSON_DEPTH)
+        when (reader.peek()) {
+            JsonToken.BEGIN_OBJECT -> {
+                val names = linkedSetOf<String>()
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    require(names.add(reader.nextName()))
+                    readJsonValue(reader, depth + 1)
+                }
+                reader.endObject()
+            }
+            JsonToken.BEGIN_ARRAY -> {
+                reader.beginArray()
+                while (reader.hasNext()) readJsonValue(reader, depth + 1)
+                reader.endArray()
+            }
+            JsonToken.STRING -> reader.nextString()
+            JsonToken.NUMBER -> reader.nextString()
+            JsonToken.BOOLEAN -> reader.nextBoolean()
+            JsonToken.NULL -> reader.nextNull()
+            else -> error("unexpected JSON token")
+        }
+    }
+
+    private companion object {
+        const val MAX_JSON_DEPTH = 16
     }
 }
