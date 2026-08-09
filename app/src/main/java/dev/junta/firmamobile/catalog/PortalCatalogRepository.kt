@@ -51,8 +51,9 @@ class PortalCatalogRepository(
 
         val profileId = metadata.profileId ?: return null
         val activeProfile = registry.profile(profileId) ?: return null
-        if (activeProfile.startUrl.toASCIIString() != entryUrl.toASCIIString()) return null
-        val resolved = registry.resolve(entryUrl) ?: return null
+        val effectiveLaunchUrl = metadata.launchUrl ?: metadata.entryUrl
+        if (activeProfile.startUrl.toASCIIString() != effectiveLaunchUrl.toASCIIString()) return null
+        val resolved = registry.resolve(effectiveLaunchUrl) ?: return null
         if (resolved.profile.profileId != profileId) return null
 
         return PortalLaunchTarget(profileId = profileId, entryUrl = activeProfile.startUrl)
@@ -65,9 +66,10 @@ class PortalCatalogRepository(
         val profile = metadata.profileId?.let { profileId ->
             profileCatalog.profiles.singleOrNull { it.profileId == profileId }
         }
+        val effectiveLaunchUrl = metadata.launchUrl ?: metadata.entryUrl
         val bindingMatches = profile != null &&
             registry.profileMetadata(profile.profileId) == profile &&
-            profile.startUrl.toASCIIString() == metadata.entryUrl.toASCIIString()
+            effectiveLaunchUrl.toASCIIString() == profile.startUrl.toASCIIString()
         val isImplemented = bindingMatches && profile.isImplementedAndActive()
         val supportStatus = if (bindingMatches) {
             resolvePortalSupportStatus(

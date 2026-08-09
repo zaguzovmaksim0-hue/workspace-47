@@ -24,26 +24,36 @@ object PublicPortalCatalogParser {
         require(entries.map { it.portalId }.toSet().size == entries.size)
         require(entries.mapNotNull { it.inventoryId }.toSet().size == entries.count { it.inventoryId != null })
         require(entries.map { it.entryUrl }.toSet().size == entries.size)
-        require(entries.mapNotNull { it.profileId }.toSet().size == entries.count { it.profileId != null })
+        require(
+            entries.filter { it.profileId != null }
+                .groupBy { it.profileId }
+                .values
+                .all { boundEntries ->
+                    boundEntries.size == 1 || boundEntries.count { it.launchUrl == null } <= 1
+                },
+        )
         return catalog
     }
 
     private fun entry(value: PublicJsonValue): PublicPortalEntry {
         val o = value.obj("entry")
-        o.exact(
+        o.exactWithOptional(
+            setOf("launchUrl"),
             "portalId", "inventoryId", "profileId", "displayName", "organization",
             "governmentLevel", "territory", "purpose", "entryUrl", "observedMechanisms",
             "observedSignatureFormats", "protocolFamily", "catalogStatus", "inventoryStatus",
             "discoveryState", "evidenceIds", "reviewedOn", "limitations",
         )
         val profileId = o.nullableString("profileId")?.let(::ProfileId)
+        val launchUrl = o.optionalNullableString("launchUrl")?.let(::strictHttpsUrl)
         val catalogStatus = enum<PublicCatalogStatus>(o.string("catalogStatus"))
         if (profileId == null) {
             require(
-                catalogStatus == PublicCatalogStatus.DISCOVERED ||
-                    catalogStatus == PublicCatalogStatus.CATALOGED ||
-                    catalogStatus == PublicCatalogStatus.BLOCKED ||
-                    catalogStatus == PublicCatalogStatus.DEPRECATED,
+                launchUrl == null &&
+                    (catalogStatus == PublicCatalogStatus.DISCOVERED ||
+                        catalogStatus == PublicCatalogStatus.CATALOGED ||
+                        catalogStatus == PublicCatalogStatus.BLOCKED ||
+                        catalogStatus == PublicCatalogStatus.DEPRECATED),
             )
         }
         return PublicPortalEntry(
@@ -56,6 +66,7 @@ object PublicPortalCatalogParser {
             territory = bounded(o.string("territory"), 120),
             purpose = bounded(o.string("purpose"), 500),
             entryUrl = strictHttpsUrl(o.string("entryUrl")),
+            launchUrl = launchUrl,
             observedMechanisms = enums(o.array("observedMechanisms")),
             observedSignatureFormats = enums<SignatureFormat>(o.array("observedSignatureFormats")),
             protocolFamily = bounded(o.string("protocolFamily"), 200),
@@ -104,10 +115,19 @@ private sealed interface PublicJsonValue {
 
 private data class PublicJsonObject(val values: LinkedHashMap<String, PublicJsonValue>) : PublicJsonValue {
     fun exact(vararg keys: String) { require(values.keys == keys.toSet()) }
+    fun exactWithOptional(optionalKeys: Set<String>, vararg keys: String) {
+        require(values.keys == keys.toSet() || values.keys == keys.toSet() + optionalKeys)
+    }
     fun string(key: String) = required(key).string()
     fun nullableString(key: String) = when (val value = required(key)) {
         PublicJsonNull -> null
         else -> value.string()
+    }
+    fun optionalNullableString(key: String) = values[key]?.let { value ->
+        when (value) {
+            PublicJsonNull -> null
+            else -> value.string()
+        }
     }
     fun int(key: String): Int = (required(key) as? PublicJsonNumber)?.value?.toIntExact()
         ?: error("integer required")

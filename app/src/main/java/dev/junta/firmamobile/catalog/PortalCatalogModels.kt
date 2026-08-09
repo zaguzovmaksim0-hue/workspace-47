@@ -75,6 +75,7 @@ data class PublicPortalEntry(
     val territory: String,
     val purpose: String,
     val entryUrl: URI,
+    val launchUrl: URI?,
     val observedMechanisms: Set<PortalMechanism>,
     val observedSignatureFormats: Set<SignatureFormat>,
     val protocolFamily: String,
