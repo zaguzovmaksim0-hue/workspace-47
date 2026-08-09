@@ -15,7 +15,11 @@
   const functionalSigningEnabled = __JFM_FUNCTIONAL_SIGNING_ENABLED__;
   const qaDiagnosticsEnabled = __JFM_QA_DIAGNOSTICS_ENABLED__;
   const ugrCompatibilityEnabled = __JFM_UGR_COMPATIBILITY_ENABLED__;
+  const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
+  const cantabriaOrigin = "https://rec.cantabria.es";
+  const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
+  const cantabriaExtraProperties = "filters=\nmode=implicit";
   const ugrLiteral = "Universidad de Granada";
   const ugrLiteralBase64 = "VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==";
   const ugrStorageUrl = "https://sede.ugr.es/afirma-signature-storage/StorageService";
@@ -138,8 +142,21 @@
       args[1] === "SHA1withRSA" &&
       args[2] === "CAdES" &&
       args[3] === "";
-    const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 : args[0];
+    const isExactCantabriaCall =
+      cantabriaCompatibilityEnabled &&
+      window.location.origin === cantabriaOrigin &&
+      typeof args[0] === "string" &&
+      cantabriaChallengePattern.test(args[0]) &&
+      args[1] === "SHA512withRSA" &&
+      args[2] === "CAdES" &&
+      args[3] === cantabriaExtraProperties;
+    const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
+      isExactCantabriaCall && typeof globalThis.btoa === "function" ?
+        globalThis.btoa(args[0]) : args[0];
     const hasValidUgrDataEncoding = base64Pattern.test(dataB64);
+    const hasValidCantabriaDataEncoding = isExactCantabriaCall &&
+      typeof globalThis.btoa === "function" &&
+      base64Pattern.test(dataB64);
     const isJuntaCades =
       (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
       args[2] === "CAdES" && typeof args[3] === "string" &&
@@ -149,9 +166,12 @@
     if (args.length !== 6 || typeof successCallback !== "function" ||
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
-        ((!isExactUgrLiteralCall && !base64Pattern.test(args[0])) ||
-          (isExactUgrLiteralCall && !hasValidUgrDataEncoding)) ||
-        (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall)) {
+        ((!isExactUgrLiteralCall && !isExactCantabriaCall &&
+          !base64Pattern.test(args[0])) ||
+          (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
+          (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
+        (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
+          !isExactCantabriaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

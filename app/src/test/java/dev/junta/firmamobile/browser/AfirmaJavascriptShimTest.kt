@@ -175,19 +175,29 @@ class AfirmaJavascriptShimTest {
     @Test
     fun cantabriaCompatibilityPathDescribesTheExactProfileScopedMiniAppletContract() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val script = AfirmaJavascriptShim.load(
+        val enabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
             ugrCompatibilityEnabled = false,
+            cantabriaCompatibilityEnabled = true,
+        )
+        val generic = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = false,
+            cantabriaCompatibilityEnabled = false,
         )
 
-        assertTrue(script.contains("cantabriaCompatibilityEnabled"))
-        assertTrue(script.contains("https://rec.cantabria.es"))
-        assertTrue(script.contains("[0-9a-f]{40}"))
-        assertTrue(script.contains("SHA512withRSA"))
-        assertTrue(script.contains("CAdES"))
-        assertTrue(script.contains("filters="))
-        assertTrue(script.contains("mode=implicit"))
+        assertTrue(enabled.contains("const cantabriaCompatibilityEnabled = true"))
+        assertTrue(generic.contains("const cantabriaCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("window.location.origin === cantabriaOrigin"))
+        assertTrue(enabled.contains("https://rec.cantabria.es"))
+        assertTrue(enabled.contains("[0-9a-f]{40}"))
+        assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"CAdES\""))
+        assertTrue(enabled.contains("filters=\\nmode=implicit"))
+        assertTrue(enabled.contains("globalThis.btoa(args[0])"))
     }
 }
