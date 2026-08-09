@@ -29,12 +29,15 @@ object SiteProfileCatalogParser {
             "startUrl", "initiatorOrigins", "redirectOrigins", "trustedBrowseOrigins", "endpoints",
             "operationPolicies", "capabilities", "clientAuthPolicy", "certificateRules", "evidence",
         )
+        val profileId = ProfileId(o.string("profileId"))
         val endpoints = o.array("endpoints").map(::endpoint)
         require(endpoints.map { it.endpointId }.toSet().size == endpoints.size)
-        val operations = o.array("operationPolicies").map(::operation)
+        val operations = o.array("operationPolicies").map { value ->
+            operation(value, allowBlankFixedExtraPropertyValues = profileId.value == CANTABRIA_PROFILE_ID)
+        }
         require(operations.map { it.operation }.toSet().size == operations.size)
         return SiteProfile(
-            profileId = ProfileId(o.string("profileId")),
+            profileId = profileId,
             profileVersion = o.int("profileVersion").also { require(it >= 1) },
             displayName = o.string("displayName").also { require(it.isNotBlank() && it.length <= 128) },
             compatibilityStatus = enum(o.string("compatibilityStatus")),
@@ -69,7 +72,10 @@ object SiteProfileCatalogParser {
         )
     }
 
-    private fun operation(value: JValue): OperationPolicy {
+    private fun operation(
+        value: JValue,
+        allowBlankFixedExtraPropertyValues: Boolean,
+    ): OperationPolicy {
         val o = value.obj("operationPolicy")
         o.exact(
             "operation", "safeDescription", "inputAdapterId", "callbackContractId", "capabilities", "endpointId",
@@ -93,7 +99,10 @@ object SiteProfileCatalogParser {
             format = o.nullableString("format")?.let { enum(it) },
             packaging = o.nullableString("packaging")?.let { enum(it) },
             mode = o.nullableString("mode")?.let { enum(it) },
-            fixedExtraProperties = extraProperties(o.objValue("fixedExtraProperties")),
+            fixedExtraProperties = extraProperties(
+                o.objValue("fixedExtraProperties"),
+                allowBlankValues = allowBlankFixedExtraPropertyValues,
+            ),
             allowedExtraProperties = strings(o.array("allowedExtraProperties")),
         )
     }
@@ -349,11 +358,20 @@ object SiteProfileCatalogParser {
         .mapValues { (_, entry) -> entry.string() }
         .also { map -> require(map.keys.all { it.isNotBlank() } && map.values.all { it.isNotBlank() }) }
 
-    private fun extraProperties(value: JValue): Map<String, String> = value.obj("stringMap").values
+    private fun extraProperties(
+        value: JValue,
+        allowBlankValues: Boolean,
+    ): Map<String, String> = value.obj("stringMap").values
         .mapValues { (_, entry) -> entry.string() }
         .also { map ->
             require(map.keys.all { it.isNotBlank() })
-            require(map.values.all { it.length <= MAX_EXTRA_PROPERTY_VALUE_CHARS && it.none(Char::isISOControl) })
+            require(
+                map.values.all { entry ->
+                    entry.length <= MAX_EXTRA_PROPERTY_VALUE_CHARS &&
+                        entry.none(Char::isISOControl) &&
+                        (allowBlankValues || entry.isNotBlank())
+                },
+            )
         }
     private inline fun <reified T : Enum<T>> enums(values: List<JValue>) =
         values.map { enum<T>(it.string()) }.toSet().also { require(it.size == values.size) }
