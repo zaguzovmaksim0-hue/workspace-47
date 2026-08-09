@@ -10,7 +10,7 @@ Legacy `superpowers:*` requirements in historical plans are superseded by that w
 
 Every Gradle command initiated by ChatGPT Watchdog, Codex, or a subagent runs in the saved Codex Cloud environment. See `docs/agents/codex-cloud-gradle.md`.
 
-The Android phone is an orchestrator, not a Gradle build host. Push an isolated worker branch, capture its exact SHA, and use `$HOME/bin/w47-cloud`. A local Gradle incident fallback requires explicit operator authorization for that incident.
+The Android phone is an orchestrator, not a Gradle build host. Push an isolated worker branch, capture its exact SHA, and use `$HOME/bin/w47-cloud`. Once a task is already running inside `workspace-47-android`, run the requested `./gradlew` command directly there and never re-delegate it through `w47-cloud`/`codex cloud`. A local Gradle incident fallback requires explicit operator authorization for that incident.
 
 ## Agent metadata
 

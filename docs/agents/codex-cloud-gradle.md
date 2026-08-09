@@ -12,6 +12,12 @@ Saved environment:
 
 The environment is already configured with Android API 36, Build Tools 36.0.0, Java, Gradle wrapper support, Robolectric Android 15/16 runtimes, and operator-selected unrestricted agent internet.
 
+## Cloud execution boundary
+
+The delegation rule applies before execution enters Codex Cloud. When a task is already inside the saved `workspace-47-android` Codex Cloud environment, the Cloud-only requirement is already satisfied. That Cloud task must run `./gradlew` directly in its Cloud VM for the requested verification. It must not invoke `w47-cloud`, `codex cloud`, or recursively delegate the Gradle command to another Cloud task.
+
+This direct `./gradlew` execution inside `workspace-47-android` is the intended remote build path and is not a local-phone fallback.
+
 ## Worker sequence
 
 1. Work only in the worker's isolated branch/worktree.

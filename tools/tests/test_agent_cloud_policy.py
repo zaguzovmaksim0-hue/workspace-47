@@ -45,6 +45,16 @@ class AgentCloudPolicyTest(unittest.TestCase):
         ):
             self.assertNotIn("./gradlew", self.read(path), path)
 
+
+    def test_cloud_execution_layer_runs_gradle_directly_without_redelegation(self) -> None:
+        policy = self.read("docs/agents/codex-cloud-gradle.md")
+        launcher = self.read("tools/w47-cloud")
+        self.assertIn("already inside", policy.lower())
+        self.assertIn("run `./gradlew` directly", policy)
+        self.assertIn("must not invoke `w47-cloud`", policy)
+        self.assertIn("already running inside the Codex Cloud execution environment", launcher)
+        self.assertIn("Do not invoke w47-cloud or codex cloud from inside this task", launcher)
+
     def test_launcher_requires_exact_sha_and_has_full_gate(self) -> None:
         text = self.read("tools/w47-cloud")
         self.assertIn("exact 40-hex --sha is required", text)
