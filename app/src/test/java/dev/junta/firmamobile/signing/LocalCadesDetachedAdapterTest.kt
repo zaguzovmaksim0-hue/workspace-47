@@ -39,11 +39,32 @@ class LocalCadesDetachedAdapterTest {
         val fingerprint = MessageDigest.getInstance("SHA-256").digest(identity.certificate.encoded)
 
         assertTrue(CMSSignedData(CMSProcessableByteArray(challenge), result).isDetachedSignature)
-        assertTrue(CadesDetachedCodec.validate(result, challenge, fingerprint))
+        assertTrue(
+            CadesDetachedCodec.validate(
+                signatureDocument = result,
+                detachedContent = challenge,
+                expectedContentBytes = LocalCadesDetachedAdapter.CHALLENGE_BYTES,
+                expectedCertificateFingerprint = fingerprint,
+            ),
+        )
         val tamperedContent = challenge.copyOf().also { it[0] = (it[0].toInt() xor 1).toByte() }
-        assertFalse(CadesDetachedCodec.validate(result, tamperedContent, fingerprint))
+        assertFalse(
+            CadesDetachedCodec.validate(
+                signatureDocument = result,
+                detachedContent = tamperedContent,
+                expectedContentBytes = LocalCadesDetachedAdapter.CHALLENGE_BYTES,
+                expectedCertificateFingerprint = fingerprint,
+            ),
+        )
         val tamperedSignature = result.copyOf().also { it[it.lastIndex] = (it.last().toInt() xor 1).toByte() }
-        assertFalse(CadesDetachedCodec.validate(tamperedSignature, challenge, fingerprint))
+        assertFalse(
+            CadesDetachedCodec.validate(
+                signatureDocument = tamperedSignature,
+                detachedContent = challenge,
+                expectedContentBytes = LocalCadesDetachedAdapter.CHALLENGE_BYTES,
+                expectedCertificateFingerprint = fingerprint,
+            ),
+        )
 
         completed.signature.close()
         local.signature.close()

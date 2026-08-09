@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "315b25bc6c6e0091c210ab32a89d56b457d521c4ce55852c2c80d887197bbd0c",
+  "sourceRevision": "f1b8b53f0c8345f775da27f4f206464be528ac559ad2bda8dc6d80a04344b92c",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -201,28 +201,33 @@
     {
       "portalId": "dgt-sede",
       "inventoryId": "ES-PUB-0008",
-      "profileId": null,
+      "profileId": "dgt-verificacion-equipo",
       "displayName": "Sede electrónica de la DGT",
       "organization": "Dirección General de Tráfico",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Identificación con certificado y firma con AutoFirma en servicios que la requieren.",
-      "entryUrl": "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/index.html",
+      "purpose": "Verificación de equipo mediante MiniApplet.sign con payload fijo.",
+      "entryUrl": "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P05",
-        "D11"
+        "DGT-JS-MAIN-2026-08-09",
+        "DGT-JS-CONSTANTES-2026-08-09",
+        "DGT-JS-MINIAPPLET-2026-08-09"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "JS cliente, ABI, formato, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-09",
+      "limitations": "La integración local está implementada solo para QA y el contrato CAdES fijo; no se ha observado aceptación E2E, presentación administrativa ni endpoint portal-specific."
     },
     {
       "portalId": "justicia-sede-judicial",

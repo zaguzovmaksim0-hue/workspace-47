@@ -66,6 +66,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = LocalCadesDetachedAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(DgtVerificationCadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = DgtVerificationCadesAdapter.ID,
+            ),
         ),
     )
 }

@@ -350,7 +350,7 @@ requiera traducción manual.
 | `P02` | AEAT | [P02][P02A][P02B] | Certificado en navegador/Android y fase documental de firma; sin `ClientCertRequest` exacto. |
 | `P03` | Seguridad Social / Import@ss | [P03][P03A] | Ayuda oficial; AutoFirma móvil rechazada en la Sede y métodos de acceso Import@ss. |
 | `P04` | SEPE | [P04] | FAQ oficial de AutoFirma de escritorio. |
-| `P05` | DGT | [P05] | Verificación de equipo, certificado y mención de AutoFirma. |
+| `P05` | DGT | [P05][DGT-JS-MAIN-2026-08-09][DGT-JS-CONSTANTES-2026-08-09][DGT-JS-MINIAPPLET-2026-08-09] | Entrada y scripts oficiales con llamada MiniApplet CAdES exacta; sin endpoint de resultado. |
 | `P06` | Sede Judicial / Ministerio de Justicia | [P06][P06A][P06B][P06C] | Ayuda, guía PDF y trámite oficial; ABI no publicado. |
 | `P07` | Junta de Andalucía / Ovorion | [P07] | Entrada pública portal-specific; contrato detallado en la matriz y observaciones locales redactadas. |
 | `P08` | Comunidad de Madrid / gestiona2 | [P08][P08A][P08B] | Guía local-PDF y frontend que bloquea móvil. |
@@ -692,24 +692,24 @@ records:
     origin: "https://sede.dgt.gob.es"
     official_site: "https://sede.dgt.gob.es/"
     e_sede: "https://sede.dgt.gob.es/"
-    entry_url: "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/index.html"
-    procedure_page: "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/index.html"
+    entry_url: "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/"
+    procedure_page: "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
+    js_client: "MiniApplet"
+    protocol_family: "MINIAPPLET_LOCAL_CADES"
+    signature_format: "CAdES / DETACHED / EXPLICIT"
+    signature_algorithm: "SHA1withRSA"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Identificación con certificado y firma con AutoFirma en servicios que la requieren."
-    protocol_evidence: "La fuente acredita requisitos generales, no un contrato portal-specific."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Verificación de equipo mediante MiniApplet.sign con payload fijo."
+    protocol_evidence: "El JavaScript oficial vigente fija MiniApplet.sign con SHA1withRSA, CAdES, filter=nonexpired:, callback y payload fijo Cadena a firmar; no incluye endpoint de resultado."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P05", "D11"]
-    reason: "JS cliente, ABI, formato, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Localizar un procedimiento concreto y su contrato técnico."
+    evidence_ids: ["P05", "DGT-JS-MAIN-2026-08-09", "DGT-JS-CONSTANTES-2026-08-09", "DGT-JS-MINIAPPLET-2026-08-09"]
+    reason: "La integración local está implementada solo para QA y el contrato CAdES fijo; no se ha observado aceptación E2E, presentación administrativa ni endpoint portal-specific."
+    reviewed_at: "2026-08-09"
+    next_gate: "Realizar una prueba física manual delimitada al contrato fijo y verificar aceptación sin enviar datos administrativos; mantener QA_ONLY hasta evidencia E2E sanitizada."
 
   - inventory_id: "ES-PUB-0009"
     surface_key: "justicia-sede-judicial"
@@ -6206,7 +6206,10 @@ Orden de expansión recomendado:
 [P03]: https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es
 [P03A]: https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda
 [P04]: https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma
-[P05]: https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/index.html
+[P05]: https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/
+[DGT-JS-MAIN-2026-08-09]: https://sede.dgt.gob.es/export/system/modules/es.trafico.dgt.sedeV5/resources/js/padi/main.js
+[DGT-JS-CONSTANTES-2026-08-09]: https://sede.dgt.gob.es/export/system/modules/es.trafico.dgt.sedeV5/resources/js/padi/constantes.js
+[DGT-JS-MINIAPPLET-2026-08-09]: https://sede.dgt.gob.es/export/system/modules/es.trafico.dgt.sedeV5/resources/js/padi/miniapplet.js
 [P06]: https://sedejudicial.justicia.es/firma-y-certificados-electronicos-admitidos
 [P06A]: https://sedejudicial.justicia.es/documents/20142/72138908/202408_Escrito%2Biniciador%2Bde%2Bjurisdicci%C3%B3n%2Bvoluntaria_ciudadan%C3%ADa_V3.pdf/72c096fe-0e01-2293-fb9a-c9862dca89f0?t=1727245303785
 [P06B]: https://sede.mjusticia.gob.es/informacion-ayuda/preguntas-frecuentes

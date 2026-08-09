@@ -346,6 +346,7 @@ class SiteProfileCatalogParserTest {
             junta,
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
+            ProfileId("dgt-verificacion-equipo"),
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
@@ -424,7 +425,7 @@ class SiteProfileCatalogParserTest {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 11", "\"unknown\": true, \"catalogVersion\": 11"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 12", "\"unknown\": true, \"catalogVersion\": 11"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))

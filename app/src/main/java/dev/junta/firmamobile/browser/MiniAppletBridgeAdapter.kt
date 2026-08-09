@@ -11,6 +11,7 @@ import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.LocalSignature
+import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.NormalizedSignRequest
@@ -230,6 +231,15 @@ internal class ProfileMiniAppletBridgeAdapter(
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
                 SigningErrorCode.REQUEST_TOO_LARGE,
+            )
+        }
+        if (binding.signingProtocolId == DgtVerificationCadesAdapter.ID &&
+            !decodedData.contentEquals(DgtVerificationCadesAdapter.EXPECTED_PAYLOAD)
+        ) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
             )
         }
         val extraProperties = if (operation.fixedExtraProperties.isEmpty()) {

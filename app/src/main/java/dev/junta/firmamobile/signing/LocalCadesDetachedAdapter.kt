@@ -60,7 +60,7 @@ class LocalCadesDetachedAdapter internal constructor(
                 MiniAppletPayloadCodec.withDecoded(payload) { challenge, extraProperties ->
                     require(challenge.size == CHALLENGE_BYTES)
                     require(extraProperties == EXPECTED_EXTRA_PROPERTIES)
-                    CadesDetachedCodec.createPreSign(challenge, certificateChain, clock, provider)
+                    CadesDetachedCodec.createPreSign(challenge, CHALLENGE_BYTES, certificateChain, clock, provider)
                 }
             }
             ProtocolPrepareResult.Success(
@@ -95,6 +95,7 @@ class LocalCadesDetachedAdapter internal constructor(
                     CadesDetachedCodec.complete(
                         placeholderCms = ownedState.placeholderCms(),
                         detachedContent = ownedState.detachedContent(),
+                        expectedContentBytes = CHALLENGE_BYTES,
                         signingCertificateFingerprint = ownedState.signingCertificateFingerprint(),
                         signatureValue = signature,
                         provider = provider,
@@ -168,11 +169,12 @@ internal data class CadesPreSignMaterial(
 internal object CadesDetachedCodec {
     fun createPreSign(
         content: ByteArray,
+        expectedContentBytes: Int,
         certificateChain: List<X509Certificate>,
         clock: Clock,
         provider: Provider = BouncyCastleProvider(),
     ): CadesPreSignMaterial {
-        require(content.size == LocalCadesDetachedAdapter.CHALLENGE_BYTES)
+        requireContentSize(content, expectedContentBytes)
         require(certificateChain.isNotEmpty())
         val signingCertificate = certificateChain.first()
         val rsaPublicKey = signingCertificate.publicKey as? RSAPublicKey
@@ -226,12 +228,13 @@ internal object CadesDetachedCodec {
     fun complete(
         placeholderCms: ByteArray,
         detachedContent: ByteArray,
+        expectedContentBytes: Int,
         signingCertificateFingerprint: ByteArray,
         signatureValue: ByteArray,
         provider: Provider = BouncyCastleProvider(),
     ): ByteArray {
         require(placeholderCms.isNotEmpty() && placeholderCms.size <= MAX_CMS_BYTES)
-        require(detachedContent.size == LocalCadesDetachedAdapter.CHALLENGE_BYTES)
+        requireContentSize(detachedContent, expectedContentBytes)
         require(signingCertificateFingerprint.size == SHA_256_BYTES)
         require(signatureValue.isNotEmpty() && signatureValue.size <= MAX_SIGNATURE_BYTES)
 
@@ -260,18 +263,27 @@ internal object CadesDetachedCodec {
             ),
         ).encoded
         require(result.size <= MAX_CMS_BYTES)
-        require(validate(result, detachedContent, signingCertificateFingerprint, provider))
+        require(
+            validate(
+                signatureDocument = result,
+                detachedContent = detachedContent,
+                expectedContentBytes = expectedContentBytes,
+                expectedCertificateFingerprint = signingCertificateFingerprint,
+                provider = provider,
+            ),
+        )
         return result
     }
 
     internal fun validate(
         signatureDocument: ByteArray,
         detachedContent: ByteArray,
+        expectedContentBytes: Int,
         expectedCertificateFingerprint: ByteArray? = null,
         provider: Provider = BouncyCastleProvider(),
     ): Boolean = runCatching {
         require(signatureDocument.isNotEmpty() && signatureDocument.size <= MAX_CMS_BYTES)
-        require(detachedContent.size == LocalCadesDetachedAdapter.CHALLENGE_BYTES)
+        requireContentSize(detachedContent, expectedContentBytes)
         val cms = CMSSignedData(CMSProcessableByteArray(detachedContent), signatureDocument)
         require(cms.isDetachedSignature)
         val signers = cms.signerInfos.signers
@@ -299,6 +311,11 @@ internal object CadesDetachedCodec {
         require(signer.verify(JcaSimpleSignerInfoVerifierBuilder().setProvider(provider).build(holder)))
         true
     }.getOrDefault(false)
+
+    private fun requireContentSize(content: ByteArray, expectedContentBytes: Int) {
+        require(expectedContentBytes in 1..MAX_CONTENT_BYTES)
+        require(content.size == expectedContentBytes)
+    }
 
     private class CapturingContentSigner(rsaBits: Int) : ContentSigner, AutoCloseable {
         private val output = ClearingByteArrayOutputStream()
@@ -329,6 +346,7 @@ internal object CadesDetachedCodec {
         }
     }
 
+    private const val MAX_CONTENT_BYTES = 524_288
     private const val MAX_CMS_BYTES = 2_097_152
     private const val MAX_SIGNATURE_BYTES = 16_384
     private const val MAX_SIGNED_ATTRIBUTES_BYTES = 65_536

@@ -58,11 +58,12 @@ class PortalCatalogRepositoryTest {
                 "educacion-convocatoria",
                 "aragon-siraw",
                 "aeat-mis-datos-censales",
+                "dgt-verificacion-equipo",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 8, metadataOnly.size)
+        assertEquals(qaPortals.size - 9, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })

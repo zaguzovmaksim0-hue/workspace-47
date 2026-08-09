@@ -198,11 +198,19 @@ object SiteProfileCatalogParser {
                             if (op.endpointId == null) {
                                 require(op.mode == SignatureMode.EXPLICIT)
                                 require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
-                                require(
-                                    op.fixedExtraProperties == mapOf(
+                                val expectedLocalCadesProperties = when (p.profileId.value) {
+                                    ARAGON_LOCAL_CADES_PROFILE_ID -> mapOf(
                                         "mode" to "explicit",
                                         "filter" to "nonexpired",
-                                    ),
+                                    )
+                                    DGT_LOCAL_CADES_PROFILE_ID -> mapOf(
+                                        "filter" to "nonexpired:",
+                                    )
+                                    else -> null
+                                }
+                                require(
+                                    expectedLocalCadesProperties != null &&
+                                        op.fixedExtraProperties == expectedLocalCadesProperties,
                                 )
                             } else {
                                 require(op.fixedExtraProperties["serverUrl"] ==
@@ -277,6 +285,8 @@ object SiteProfileCatalogParser {
     private fun validContentType(value: String): Boolean =
         value.length <= 128 && CONTENT_TYPE.matches(value)
 
+    private const val ARAGON_LOCAL_CADES_PROFILE_ID = "aragon-siraw"
+    private const val DGT_LOCAL_CADES_PROFILE_ID = "dgt-verificacion-equipo"
     private val REGISTERED_ADAPTERS = setOf("miniapplet-autoscript-v1")
     private val REGISTERED_CALLBACKS = setOf(
         "miniapplet-sign-callback-v1",
