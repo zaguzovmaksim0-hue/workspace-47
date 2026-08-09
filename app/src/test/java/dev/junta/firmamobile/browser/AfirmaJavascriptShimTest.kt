@@ -171,4 +171,23 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("args[3] === null"))
         assertTrue(script.contains("window.location.origin === ugrOrigin"))
     }
+
+    @Test
+    fun cantabriaCompatibilityPathDescribesTheExactProfileScopedMiniAppletContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = false,
+        )
+
+        assertTrue(script.contains("cantabriaCompatibilityEnabled"))
+        assertTrue(script.contains("https://rec.cantabria.es"))
+        assertTrue(script.contains("[0-9a-f]{40}"))
+        assertTrue(script.contains("SHA512withRSA"))
+        assertTrue(script.contains("CAdES"))
+        assertTrue(script.contains("filters="))
+        assertTrue(script.contains("mode=implicit"))
+    }
 }
