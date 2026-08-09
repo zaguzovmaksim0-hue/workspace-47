@@ -55,9 +55,13 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertGreaterEqual(inventory_count, GENERATOR.MIN_INVENTORY_RECORDS)
         self.assertEqual(inventory_count, len(catalog["entries"]))
         profile_count = len(json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"])
-        self.assertEqual(
-            profile_count,
+        bound_profile_ids = {
+            entry["profileId"] for entry in catalog["entries"] if entry["profileId"] is not None
+        }
+        self.assertEqual(profile_count, len(bound_profile_ids))
+        self.assertGreaterEqual(
             sum(entry["profileId"] is not None for entry in catalog["entries"]),
+            profile_count,
         )
         redsara = next(
             entry for entry in catalog["entries"]
@@ -96,6 +100,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("cades", ugr["protocolFamily"].lower())
         self.assertIn("e2e", ugr["limitations"].lower())
         self.assertIn("storage", ugr["limitations"].lower())
+
+        us = next(entry for entry in catalog["entries"] if entry["portalId"] == "us-sede")
+        self.assertEqual("reg-age-redsara", us["profileId"])
+        self.assertEqual(
+            "https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01",
+            us["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", us["launchUrl"])
+        self.assertEqual("E2E_PENDING", us["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", us["inventoryStatus"])
+        self.assertEqual("2026-08-09", us["reviewedOn"])
+        self.assertIn("reg-age", us["limitations"].lower())
+        self.assertIn("e2e", us["limitations"].lower())
 
         aragon = next(entry for entry in catalog["entries"] if entry["portalId"] == "aragon-siraw")
         self.assertEqual("aragon-siraw", aragon["profileId"])
@@ -151,6 +168,21 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             path = Path(directory) / "inventory.md"
             path.write_text(mutated, encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "no inventory entry"):
+                GENERATOR.generate(path, SITE_PROFILES)
+
+    def test_unknown_alias_launch_url_fails_closed(self) -> None:
+        inventory = SOURCE.read_text(encoding="utf-8")
+        marker = '    surface_key: "us-sede"\n'
+        self.assertIn(marker, inventory)
+        mutated = inventory.replace(
+            marker,
+            marker + '    launch_url: "https://example.invalid/not-a-profile"\n',
+            1,
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "inventory.md"
+            path.write_text(mutated, encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "alias launch_url"):
                 GENERATOR.generate(path, SITE_PROFILES)
 
     def test_duplicate_profile_start_url_fails_closed(self) -> None:
