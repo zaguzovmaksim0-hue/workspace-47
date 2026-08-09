@@ -2,7 +2,10 @@ package dev.junta.firmamobile.catalog
 
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.profile.BuildTrustPolicy
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.SiteProfileRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -14,6 +17,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
+import java.net.URI
 
 @RunWith(RobolectricTestRunner::class)
 @ConscryptMode(ConscryptMode.Mode.OFF)
@@ -87,6 +91,43 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.AUTOSCRIPT in ugr.observedMechanisms)
         assertTrue(PortalMechanism.MINIAPPLET in ugr.observedMechanisms)
         assertTrue(ugr.limitations.contains("E2E", ignoreCase = true))
+    }
+
+    @Test
+    fun `US alias retains its official procedure URL while resolving the exact REG-AGE launch URL`() {
+        val aliasJson = json
+            .replace(
+                "\"inventoryId\": \"ES-PUB-0019\",\n      \"profileId\": null,",
+                "\"inventoryId\": \"ES-PUB-0019\",\n      \"profileId\": \"reg-age-redsara\",",
+            )
+            .replace(
+                "\"entryUrl\": \"https://sede.us.es/opencms/system/modules/sede/contents/pages/requisitosTecnicos\",",
+                "\"entryUrl\": \"https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01\",\n" +
+                    "      \"launchUrl\": \"https://reg.redsara.es/es/\",",
+            )
+        val aliasCatalog = PublicPortalCatalogParser.parse(aliasJson)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = aliasCatalog,
+        )
+
+        val portal = repository.portals().single { it.portalId == PortalId("us-sede") }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01"),
+            portal.entryUrl,
+        )
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
     }
 
     @Test
