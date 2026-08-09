@@ -59,11 +59,12 @@ class PortalCatalogRepositoryTest {
                 "aragon-siraw",
                 "aeat-mis-datos-censales",
                 "dgt-verificacion-equipo",
+                "ugr-certificado-login",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 9, metadataOnly.size)
+        assertEquals(qaPortals.size - 10, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -115,6 +116,29 @@ class PortalCatalogRepositoryTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `UGR is implemented and launchable only from QA registry`() {
+        val profileId = ProfileId("ugr-certificado-login")
+        val expectedUrl = java.net.URI(
+            "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp",
+        )
+
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(setOf(SignatureFormat.CADES), qaPortal.signatureFormats)
+        assertTrue(PortalServiceCapability.ELECTRONIC_SIGNATURE in qaPortal.capabilities)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in qaPortal.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in qaPortal.observedMechanisms)
+        assertEquals(PortalLaunchTarget(profileId, expectedUrl), qaRepository.resolveLaunch(qaPortal))
+        assertTrue(qaPortal.limitations.contains("E2E", ignoreCase = true))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
     }
 
 

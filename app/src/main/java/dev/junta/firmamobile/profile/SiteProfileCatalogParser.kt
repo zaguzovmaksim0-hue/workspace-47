@@ -147,6 +147,9 @@ object SiteProfileCatalogParser {
         val endpointUrlOwners = mutableMapOf<URI, ProfileId>()
         val endpointOwners = mutableMapOf<EndpointId, ProfileId>()
         catalog.profiles.forEach { p ->
+            if (p.profileId.value == UGR_PROFILE_ID) {
+                validateUgrProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -206,6 +209,7 @@ object SiteProfileCatalogParser {
                                     DGT_LOCAL_CADES_PROFILE_ID -> mapOf(
                                         "filter" to "nonexpired:",
                                     )
+                                    UGR_PROFILE_ID -> emptyMap()
                                     else -> null
                                 }
                                 require(
@@ -252,9 +256,43 @@ object SiteProfileCatalogParser {
             }
             p.allOrigins().forEach { origin ->
                 require(navigationOriginOwners.put(origin, p.profileId) == null)
+
             }
         }
     }
+    private fun validateUgrProfile(profile: SiteProfile) {
+        require(profile.profileVersion == UGR_PROFILE_VERSION)
+        require(profile.displayName == UGR_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == UGR_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(UGR_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = UGR_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -295,6 +333,12 @@ object SiteProfileCatalogParser {
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
+    private const val UGR_PROFILE_ID = "ugr-certificado-login"
+    private const val UGR_PROFILE_VERSION = 1
+    private const val UGR_DISPLAY_NAME = "Universidad de Granada — Acceso con certificado"
+    private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
+    private const val UGR_ORIGIN = "https://sede.ugr.es"
+    private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
 }
 
 private sealed interface JValue {

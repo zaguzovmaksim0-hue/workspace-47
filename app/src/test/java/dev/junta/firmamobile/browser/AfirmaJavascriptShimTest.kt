@@ -130,4 +130,45 @@ class AfirmaJavascriptShimTest {
         assertTrue(functional.contains("const uriRequestId = secureRequestId()"))
         assertTrue(functional.contains("if (!uriRequestId)"))
     }
+
+    @Test
+    fun ugrCompatibilityPathIsProfileScopedAndUsesOnlyTheExactObservedContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = true,
+        )
+
+        assertTrue(script.contains("const ugrCompatibilityEnabled = true"))
+        assertTrue(script.contains("https://sede.ugr.es"))
+        assertTrue(script.contains("Universidad de Granada"))
+        assertTrue(script.contains("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ=="))
+        assertTrue(script.contains("SHA1withRSA"))
+        assertTrue(script.contains("CAdES"))
+        assertTrue(script.contains("args[3] === \"\""))
+        assertTrue(script.contains("StorageService"))
+        assertTrue(script.contains("RetrieveService"))
+        assertTrue(script.contains("setForceWSMode"))
+        assertTrue(script.contains("cargarAppAfirma"))
+        assertTrue(script.contains("setServlets"))
+        assertTrue(script.contains("return undefined"))
+    }
+
+    @Test
+    fun nonUgrShimKeepsTheStrictGenericTransportMode() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = false,
+        )
+
+        assertTrue(script.contains("const ugrCompatibilityEnabled = false"))
+        assertTrue(script.contains("!base64Pattern.test(args[0])"))
+        assertTrue(script.contains("args[3] === null"))
+        assertTrue(script.contains("window.location.origin === ugrOrigin"))
+    }
 }

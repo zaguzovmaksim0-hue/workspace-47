@@ -176,6 +176,79 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactUgrAutoScriptCallNormalizesTheLiteralToTheBoundDetachedCadesContract() {
+        val result = adapterFor(UGR_PROFILE_ID).route(
+            rawMessage = ugrMessage(),
+            sourceOrigin = UGR_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 44,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(UGR_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.ugr.es", request.context.origin.host)
+            assertEquals(44, request.context.navigationEpoch)
+            assertEquals(UGR_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(UGR_DATA, data)
+                    assertEquals("", properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun ugrBridgeRejectsWrongOriginProfileTuplePropertiesAndPayloadVariants() {
+        val valid = ugrMessage()
+
+        assertRejected(valid, Uri.parse("https://sede.ugr.es.evil.example"), true, adapterFor(UGR_PROFILE_ID))
+        assertRejected(valid, UGR_ORIGIN, false, adapterFor(UGR_PROFILE_ID))
+        assertRejected(valid, UGR_ORIGIN, true, adapterFor("junta-andalucia"))
+        assertRejected(
+            ugrMessage(algorithm = "SHA256withRSA"),
+            UGR_ORIGIN,
+            true,
+            adapterFor(UGR_PROFILE_ID),
+        )
+        assertRejected(
+            ugrMessage(format = "XAdES Detached"),
+            UGR_ORIGIN,
+            true,
+            adapterFor(UGR_PROFILE_ID),
+        )
+        listOf("filter=", " ", "mode=explicit").forEach { properties ->
+            assertRejected(
+                ugrMessage(extraProperties = properties),
+                UGR_ORIGIN,
+                true,
+                adapterFor(UGR_PROFILE_ID),
+            )
+        }
+        assertRejected(
+            ugrMessage(extraProperties = JSONObject.NULL),
+            UGR_ORIGIN,
+            true,
+            adapterFor(UGR_PROFILE_ID),
+        )
+        assertRejected(
+            ugrMessage(dataB64 = Base64.getEncoder().encodeToString(ByteArray(22) { 7 })),
+            UGR_ORIGIN,
+            true,
+            adapterFor(UGR_PROFILE_ID),
+        )
+        assertRejected(
+            ugrMessage(dataB64 = "Universidad de Granada"),
+            UGR_ORIGIN,
+            true,
+            adapterFor(UGR_PROFILE_ID),
+        )
+    }
+
+    @Test
     fun juntaOfvirtualRejectsWrongActiveProfileAndStaleCallbackClearsFailClosed() {
         val wrongProfile = adapterFor("junta-andalucia").route(
             rawMessage = ofvirtualMessage(),
@@ -500,6 +573,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", OFVIRTUAL_PROPERTIES)
         .toString()
 
+    private fun ugrMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(UGR_DATA),
+        algorithm: String = "SHA1withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = "",
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
@@ -509,6 +597,10 @@ class MiniAppletBridgeAdapterTest {
         val TRUSTED_ORIGIN: Uri = Uri.parse("https://www.juntadeandalucia.es")
         val OFVIRTUAL_ORIGIN: Uri = Uri.parse("https://ws072.juntadeandalucia.es")
         val ARAGON_ORIGIN: Uri = Uri.parse("https://aplicaciones.aragon.es")
+        val UGR_ORIGIN: Uri = Uri.parse("https://sede.ugr.es")
+        const val UGR_PROFILE_ID = "ugr-certificado-login"
+        const val UGR_PROTOCOL_ID = "ugr-certificado-login-local-cades-v1"
+        val UGR_DATA = "Universidad de Granada".encodeToByteArray()
         const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =
             "filters=keyusage.digitalsignature:true;nonexpired:\n" +

@@ -127,7 +127,7 @@ class LocalCadesDetachedAdapter internal constructor(
     }
 }
 
-private class CadesPreSignState(
+internal class CadesPreSignState(
     placeholderCms: ByteArray,
     detachedContent: ByteArray,
     signingCertificateFingerprint: ByteArray,

@@ -3142,3 +3142,40 @@ No APK was installed or launched; no ADB/device control, authenticated portal in
   secret/certificate material, TLS bypass, unsafe WebView enablement or release QA-profile leak.
 - No APK/device/authenticated-portal/credential/private-key/real-signing/upload/payment/submission
   action occurred. Physical DGT acceptance remains manual and no E2E claim is made.
+
+
+## Autonomous Portal G35-P01 — UGR certificate-login contract — 2026-08-09
+
+- Official unauthenticated UGR evidence fixes the local tuple to text `Universidad de Granada`,
+  `SHA1withRSA`, `CAdES`, empty filter, first-party Storage/Retrieve setup and callback form target
+  `/Hades/ValidacionCertificado`. The implementation is strictly `VERIFIED_CONTRACT` / `QA_ONLY`,
+  inventory `IMPLEMENTED_NOT_E2E`, catalog `E2E_PENDING`; no release or `VERIFIED_E2E` promotion.
+- Isolated UGR worker commit: `efbaec48099d59b1a5073c59ac3b0a97358accc5`. Integration compile
+  RED `job_20260809_110346_f4c4c80c` found only a missing merged brace and private shared pre-sign
+  state; minimal repair compiled Debug+QA in `job_20260809_110747_72ac53e2`. Aggregate RED
+  `job_20260809_111214_e09df3ff` then found stale catalog/origin-policy expectations; exclusive
+  regression rerun `job_20260809_111813_594c58d6` passed.
+- Fresh full JVM `job_20260809_112549_86ad3219`: runtime lock/core/AAPT2 guards PASS; Debug
+  590/590 + QA 590/590, zero failures/errors/skips. Non-Android
+  `job_20260809_113452_d6c2fa05`: Python 103 PASS with one environmental hardlink skip;
+  `CiPolicyTest` 20/20; Go test/vet/build PASS; relay SHA-256
+  `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`.
+- Combined fresh lint/build `job_20260809_113545_e83211e4` was terminated only by the connector
+  600-second limit after Debug/QA/QA-AndroidTest assemblies and fresh Debug lint had completed.
+  Dedicated QA recovery `job_20260809_114615_8f54482e` passed; final lint Debug/QA: 0 errors / 26
+  warnings each.
+- Artifact `job_20260809_115034_135469ba` PASS. APK SHA-256: Debug
+  `0fbccd2252e7af13e9df4192671c095413a40347972ebb7d8a217b118d5f8ec7`; QA
+  `d214c133d757af841e10ab52587fc6a8e97a70c402920219f4f7998f55d5f125`; QA AndroidTest
+  `26e3b13c7c021012dcd7f6a44a671e523edcb72b10da5dcb6def858b48ac6af2`.
+- Release fail-closed `job_20260809_115102_4ad9f309` PASS with private signing variables unset and
+  zero release APKs. Generated relay and transient external `error.log` are removed before
+  publication.
+- Current catalog: 182 entries, 10 bound / 172 unbound; inventory 166 BROWSE_ONLY, 5
+  IMPLEMENTED_NOT_E2E, 1 VERIFIED_CONTRACT, 4 VERIFIED_E2E, 4 INACCESSIBLE, 2
+  UNSUPPORTED_PROTOCOL; generated statuses 94 CATALOGED, 73 DISCOVERED, 6 BLOCKED, 5 E2E_PENDING,
+  4 E2E_VERIFIED.
+- No APK install/launch, device control, authenticated portal interaction, credential/private-key
+  use, real signing, upload, payment or administrative submission occurred. UGR/DGT physical E2E,
+  AEAT Client TLS, real-portal JavaScript dialogs, TalkBack/visual validation and supported-Linux Go
+  race remain external/manual gates.

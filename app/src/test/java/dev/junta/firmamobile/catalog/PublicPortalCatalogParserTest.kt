@@ -34,7 +34,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 182)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(9, catalog.entries.count { it.profileId != null })
+        assertEquals(10, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -48,6 +48,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("aragon-siraw"),
                 ProfileId("aeat-mis-datos-censales"),
                 ProfileId("dgt-verificacion-equipo"),
+                ProfileId("ugr-certificado-login"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -66,6 +67,26 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.CERTIFICATE_ACCESS in aeat.observedMechanisms)
         assertTrue(PortalMechanism.CLIENT_TLS_AUTH in aeat.observedMechanisms)
         assertFalse(aeat.observedSignatureFormats.isNotEmpty())
+    }
+
+    @Test
+    fun `UGR catalog entry exposes the implemented contract without E2E promotion`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val ugr = catalog.entries.single { it.portalId == PortalId("ugr-sede") }
+
+        assertEquals(ProfileId("ugr-certificado-login"), ugr.profileId)
+        assertEquals("ES-PUB-0018", ugr.inventoryId)
+        assertEquals(
+            "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp",
+            ugr.entryUrl.toString(),
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, ugr.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, ugr.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in ugr.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in ugr.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in ugr.observedMechanisms)
+        assertTrue(PortalMechanism.MINIAPPLET in ugr.observedMechanisms)
+        assertTrue(ugr.limitations.contains("E2E", ignoreCase = true))
     }
 
     @Test

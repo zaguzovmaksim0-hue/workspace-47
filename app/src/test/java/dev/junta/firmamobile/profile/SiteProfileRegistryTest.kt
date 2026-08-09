@@ -84,4 +84,29 @@ class SiteProfileRegistryTest {
         }
     }
 
+    @Test
+    fun `UGR certificate contract is QA-only and origin exact`() {
+        val profileId = ProfileId("ugr-certificado-login")
+        val startUri = URI("https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUri))
+
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(1, profile?.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(startUri)?.trustMode,
+        )
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ugr.es.evil.example/")),
+        )
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ugr.es:444/")),
+        )
+    }
+
 }

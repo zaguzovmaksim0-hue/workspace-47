@@ -76,6 +76,8 @@ class WebMessageBridge(
                     webView.context,
                     miniAppletMode,
                     qaDiagnosticsEnabled,
+                    ugrCompatibilityEnabled = profileId.value == UGR_PROFILE_ID &&
+                        BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
                 ),
                 originRules,
             )
@@ -265,6 +267,7 @@ class WebMessageBridge(
 
     companion object {
         const val BRIDGE_NAME = "JuntaFirmaMobile"
+        private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
     }
 }

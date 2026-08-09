@@ -14,6 +14,12 @@
   const probe = window.JuntaFirmaProbe;
   const functionalSigningEnabled = __JFM_FUNCTIONAL_SIGNING_ENABLED__;
   const qaDiagnosticsEnabled = __JFM_QA_DIAGNOSTICS_ENABLED__;
+  const ugrCompatibilityEnabled = __JFM_UGR_COMPATIBILITY_ENABLED__;
+  const ugrOrigin = "https://sede.ugr.es";
+  const ugrLiteral = "Universidad de Granada";
+  const ugrLiteralBase64 = "VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==";
+  const ugrStorageUrl = "https://sede.ugr.es/afirma-signature-storage/StorageService";
+  const ugrRetrieveUrl = "https://sede.ugr.es/afirma-signature-retriever/RetrieveService";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -125,6 +131,15 @@
     }
     const successCallback = args[4];
     const errorCallback = args[5];
+    const isExactUgrLiteralCall =
+      ugrCompatibilityEnabled &&
+      window.location.origin === ugrOrigin &&
+      args[0] === ugrLiteral &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "CAdES" &&
+      args[3] === "";
+    const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 : args[0];
+    const hasValidUgrDataEncoding = base64Pattern.test(dataB64);
     const isJuntaCades =
       (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
       args[2] === "CAdES" && typeof args[3] === "string" &&
@@ -134,7 +149,9 @@
     if (args.length !== 6 || typeof successCallback !== "function" ||
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
-        !base64Pattern.test(args[0]) || (!isJuntaCades && !isRegXades)) {
+        ((!isExactUgrLiteralCall && !base64Pattern.test(args[0])) ||
+          (isExactUgrLiteralCall && !hasValidUgrDataEncoding)) ||
+        (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -178,7 +195,7 @@
         type: "MINIAPPLET_SIGN",
         documentId: probeDocumentId,
         requestId: directRequestId,
-        dataB64: args[0],
+        dataB64,
         algorithm: args[1],
         format: args[2],
         extraProperties: args[3]
@@ -188,6 +205,20 @@
       rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
     }
     return true;
+  }
+
+  function interceptUgrSetupCall(call, args) {
+    if (!ugrCompatibilityEnabled || window.location.origin !== ugrOrigin) {
+      return false;
+    }
+    if (call === "UGR_SET_FORCE_WS_MODE") {
+      return args.length === 1 && args[0] === true;
+    }
+    if (call === "UGR_CARGAR_APP_AFIRMA") {
+      return args.length === 0;
+    }
+    return call === "UGR_SET_SERVLETS" && args.length === 2 &&
+      args[0] === ugrStorageUrl && args[1] === ugrRetrieveUrl;
   }
 
   function receiveMiniAppletResult(event) {
@@ -350,12 +381,16 @@
     function wrappedMiniAppletMethod(...args) {
       const observedRequestId = tryObserveMiniAppletCall(call, args);
       if (observedRequestId === null) {
+        if (interceptUgrSetupCall(call, args)) {
+          return undefined;
+        }
         return Reflect.apply(method, this, args);
       }
       const previousRequestId = activeProbeRequestId;
       activeProbeRequestId = observedRequestId;
       try {
-        if (call === "SIGN" && interceptMiniAppletSign(args)) {
+        if ((call === "SIGN" && interceptMiniAppletSign(args)) ||
+            interceptUgrSetupCall(call, args)) {
           return undefined;
         }
         return Reflect.apply(method, this, args);
@@ -389,13 +424,18 @@
     });
   }
 
-  function wrapMiniApplet(value) {
+  function wrapMiniApplet(value, includeUgrSetup = false) {
     if ((typeof value !== "object" || value === null) && typeof value !== "function") {
       return value;
     }
     try {
       installMethodHook(value, "cargarMiniApplet", "LOAD");
       installMethodHook(value, "sign", "SIGN");
+      if (includeUgrSetup) {
+        installMethodHook(value, "setForceWSMode", "UGR_SET_FORCE_WS_MODE");
+        installMethodHook(value, "cargarAppAfirma", "UGR_CARGAR_APP_AFIRMA");
+        installMethodHook(value, "setServlets", "UGR_SET_SERVLETS");
+      }
     } catch (_) {
       // A hostile/non-configurable object remains untouched and signing stays fail-closed.
     }
@@ -424,7 +464,7 @@
 
   const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
   if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
-    let autoScript = wrapMiniApplet(window.AutoScript);
+    let autoScript = wrapMiniApplet(window.AutoScript, true);
     Object.defineProperty(window, "AutoScript", {
       enumerable: true,
       configurable: true,
@@ -432,14 +472,14 @@
         return autoScript;
       },
       set(value) {
-        autoScript = wrapMiniApplet(value);
+        autoScript = wrapMiniApplet(value, true);
       }
     });
     window.addEventListener("DOMContentLoaded", () => {
-      autoScript = wrapMiniApplet(autoScript);
+      autoScript = wrapMiniApplet(autoScript, true);
     }, { once: true });
   } else {
-    wrapMiniApplet(window.AutoScript);
+    wrapMiniApplet(window.AutoScript, true);
   }
 
   if (document.readyState === "loading") {

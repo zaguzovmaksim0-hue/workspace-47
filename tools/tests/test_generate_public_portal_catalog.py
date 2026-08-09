@@ -84,6 +84,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", aeat["limitations"].lower())
         self.assertNotIn("firma aceptada", aeat["limitations"].lower())
 
+        ugr = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "ugr-sede"
+        )
+        self.assertEqual("ugr-certificado-login", ugr["profileId"])
+        self.assertEqual("E2E_PENDING", ugr["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", ugr["inventoryStatus"])
+        self.assertEqual("2026-08-09", ugr["reviewedOn"])
+        self.assertIn("autoscript", ugr["protocolFamily"].lower())
+        self.assertIn("cades", ugr["protocolFamily"].lower())
+        self.assertIn("e2e", ugr["limitations"].lower())
+        self.assertIn("storage", ugr["limitations"].lower())
+
         aragon = next(entry for entry in catalog["entries"] if entry["portalId"] == "aragon-siraw")
         self.assertEqual("aragon-siraw", aragon["profileId"])
         self.assertEqual("E2E_VERIFIED", aragon["catalogStatus"])

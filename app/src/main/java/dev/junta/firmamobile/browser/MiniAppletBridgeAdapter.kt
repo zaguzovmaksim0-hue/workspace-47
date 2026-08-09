@@ -3,10 +3,16 @@ package dev.junta.firmamobile.browser
 import android.net.Uri
 import android.util.JsonReader
 import android.util.JsonToken
+import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.profile.CompatibilityStatus
+import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.OperationPolicy
+import dev.junta.firmamobile.profile.ProfileActivation
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.profile.SignatureAlgorithm
 import dev.junta.firmamobile.profile.SignatureFormat
+import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
@@ -22,6 +28,7 @@ import dev.junta.firmamobile.signing.SigningFormat
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.ProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.ProtocolInputAdapter
+import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import java.io.StringReader
 import java.time.Clock
 import java.util.Base64
@@ -157,6 +164,15 @@ internal class ProfileMiniAppletBridgeAdapter(
                     it.callbackContractId == operation.callbackContractId
             }
             ?: return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        val isUgrContract = isExactUgrContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+        )
+        if (profile.profileId.value == UgrCadesDetachedAdapter.PROFILE_ID && !isUgrContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -202,7 +218,14 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val rawExtraProperties = if (operation.fixedExtraProperties.isEmpty()) {
+        val rawExtraProperties = if (isUgrContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it.isEmpty() }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (operation.fixedExtraProperties.isEmpty()) {
             if (json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
                 return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
@@ -241,6 +264,10 @@ internal class ProfileMiniAppletBridgeAdapter(
                 canonicalRequestId,
                 SigningErrorCode.INVALID_REQUEST,
             )
+        }
+        if (isUgrContract && !decodedData.contentEquals(UGR_PAYLOAD)) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
         }
         val extraProperties = if (operation.fixedExtraProperties.isEmpty()) {
             ""
@@ -319,6 +346,40 @@ internal class ProfileMiniAppletBridgeAdapter(
     private fun String.hasSafeControls(): Boolean = all { character ->
         !character.isISOControl() || character == '\n' || character == '\r' || character == '\t'
     }
+    private fun isExactUgrContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+    ): Boolean =
+        profile.profileId.value == UgrCadesDetachedAdapter.PROFILE_ID &&
+            profile.profileVersion == UgrCadesDetachedAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == UGR_START_URL &&
+            origin.serialized == UgrCadesDetachedAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(UgrCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == UGR_SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.EXPLICIT &&
+            operation.fixedExtraProperties.isEmpty() &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == UgrCadesDetachedAdapter.ID.value
 
     private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
         val observed = linkedMapOf<String, String>()
@@ -358,6 +419,9 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val ALGORITHM_SHA512_RSA = "SHA512withRSA"
         private const val FORMAT_CADES = "CAdES"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
+        private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
+        private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
+        private val UGR_PAYLOAD = "Universidad de Granada".encodeToByteArray()
         private const val MAX_EXTRA_PROPERTY_COUNT = 32
         private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
         private val PROPERTY_KEY = Regex("[A-Za-z][A-Za-z0-9._-]{0,63}")

@@ -40,6 +40,13 @@ class ProtocolAdapterRegistryTest {
         assertEquals(LocalCadesDetachedAdapter.ID, aragon?.signingProtocolId)
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), aragon?.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), aragon?.callbackContractId)
+        val ugr = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("ugr-certificado-login"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals("ugr-certificado-login-local-cades-v1", ugr?.signingProtocolId?.value)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), ugr?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), ugr?.callbackContractId)
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),

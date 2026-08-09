@@ -1967,3 +1967,64 @@ TLS bypass, unsafe WebView bridge enablement or release QA-profile enablement. N
 or launched; no ADB/device control, authenticated portal interaction, credentials/private-certificate
 material, real signing, upload, payment or administrative submission occurred. Physical DGT portal
 acceptance remains a manual E2E gate and is not inferred from static/public evidence or local tests.
+
+
+## Autonomous Portal G35-P01 — UGR certificate-login CAdES contract — 2026-08-09
+
+**Public contract and scope.** Official unauthenticated UGR surface
+`https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp` exposes the exact first-party local-signing
+contract used for certificate login: the fixed text `Universidad de Granada`, `SHA1withRSA`,
+`CAdES`, an empty filter, `setForceWSMode(true)`, `cargarAppAfirma()` and UGR-owned
+Storage/Retrieve service URLs. The public callback form targets `/Hades/ValidacionCertificado`;
+the app does not call or invent that administrative endpoint. The implementation therefore adds
+`ugr-certificado-login` as `VERIFIED_CONTRACT` / `QA_ONLY`, inventory
+`IMPLEMENTED_NOT_E2E`, catalog `E2E_PENDING`. It is not release-enabled and is not
+`VERIFIED_E2E`.
+
+**TDD, integration and debugging.** Isolated worker commit
+`efbaec48099d59b1a5073c59ac3b0a97358accc5` preserved the UGR-first TDD work. Worker focused
+Debug/QA, Python generator and generator-idempotence gates were GREEN before integration. During
+sequential integration with the already-published DGT profile, `job_20260809_110346_f4c4c80c`
+correctly exposed two merge defects: a missing closing brace in the combined MiniApplet payload
+checks and `CadesPreSignState` remaining private to the DGT-era implementation. The minimum repair
+restored the brace and made that shared pre-sign state `internal`; tight Debug+QA compilation
+`job_20260809_110747_72ac53e2` passed. A later combined run
+`job_20260809_111214_e09df3ff` exposed only stale aggregate expectations in
+`PortalCatalogScreenTest` and `JuntaOriginPolicyTest`; they were updated to the intentional tenth
+profile binding and exact UGR host/origin. Exclusive regression rerun
+`job_20260809_111813_594c58d6` passed.
+
+**Fresh verification.** Full runtime-lock/core/AAPT2 + JVM rerun
+`job_20260809_112549_86ad3219` passed Debug 590/590 and QA 590/590 with zero
+failures/errors/skips. Non-Android `job_20260809_113452_d6c2fa05` passed Python discovery 103
+with one known environmental hardlink skip, separate `CiPolicyTest` 20/20, plus Go
+`test ./... -count=1`, `vet ./...` and relay build; relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`.
+The combined `--rerun-tasks` lint/build job `job_20260809_113545_e83211e4` hit the connector's
+600-second execution limit after `assembleDebug`, `assembleQa`, `assembleQaAndroidTest` and fresh
+Debug lint had completed; this timeout is infrastructure evidence, not a product failure. Dedicated
+QA lint recovery `job_20260809_114615_8f54482e` completed successfully; final Debug and QA lint
+reports each contain 0 errors / 26 warnings. Android artifact gate
+`job_20260809_115034_135469ba` passed; APK SHA-256: Debug
+`0fbccd2252e7af13e9df4192671c095413a40347972ebb7d8a217b118d5f8ec7`, QA
+`d214c133d757af841e10ab52587fc6a8e97a70c402920219f4f7998f55d5f125`, QA AndroidTest
+`26e3b13c7c021012dcd7f6a44a671e523edcb72b10da5dcb6def858b48ac6af2`. Release fail-closed
+`job_20260809_115102_4ad9f309` passed without private signing inputs and left zero release APKs.
+Generated relay and external diagnostic `error.log` are cleanup-only and must be absent at
+publication.
+
+**Catalog and next pipeline.** The generated catalog is 182 entries with 10 exact profile bindings
+and 172 unbound. Inventory states are 166 `BROWSE_ONLY`, 5 `IMPLEMENTED_NOT_E2E`, 1
+`VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, 2 `UNSUPPORTED_PROTOCOL`.
+The public catalog has 94 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 5 `E2E_PENDING`, 4
+`E2E_VERIFIED`. Sixteen researched public surfaces are buffered; after UGR there is no currently
+implementation-ready unintegrated candidate. Continue exact public-contract research in order:
+`justicia-sede-judicial`, `age-acceda`, `sepe-sede`, `mjusticia-sede`, `sevilla-sede`, `us-sede`,
+`age-direccion-general-del-catastro`, `asturias-sede-tramite-autofirma`. Do not infer an ABI from a
+loaded AutoFirma library or from descriptive help text.
+
+No APK was installed or launched; no device control, authenticated portal interaction,
+credential/private-certificate use, real signing, upload, payment or administrative submission
+occurred. Physical UGR and DGT acceptance remain manual E2E gates. Existing AEAT Client-TLS,
+real-portal JavaScript-dialog, TalkBack/physical visual and supported-Linux Go-race gates remain
+external.

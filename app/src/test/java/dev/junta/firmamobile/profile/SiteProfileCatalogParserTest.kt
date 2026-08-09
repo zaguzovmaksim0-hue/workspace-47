@@ -91,6 +91,57 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactUgrQaOnlyCertificateContract() {
+        val profileId = ProfileId("ugr-certificado-login")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI("https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"),
+            profile.startUrl,
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://sede.ugr.es")),
+            profile.initiatorOrigins,
+        )
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), profile.capabilities)
+
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(
+            ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+            operation.inputAdapterId,
+        )
+        assertEquals(
+            CallbackContractId("miniapplet-sign-callback-v1"),
+            operation.callbackContractId,
+        )
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), operation.capabilities)
+        assertNull(operation.endpointId)
+        assertEquals(setOf(SignatureAlgorithm.SHA1_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.CADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertEquals(SignatureMode.EXPLICIT, operation.mode)
+        assertTrue(operation.fixedExtraProperties.isEmpty())
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ugr.es.evil.example/")),
+        )
+    }
+
+    @Test
     fun preservesTheExactUnizarAuthenticationContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("unizar-tramitador")
