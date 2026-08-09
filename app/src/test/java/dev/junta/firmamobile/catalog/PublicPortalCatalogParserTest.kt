@@ -140,6 +140,15 @@ class PublicPortalCatalogParserTest {
             json.replaceFirst("https://sede.administracion.gob.es/", "https://sede.administracion.gob.es/#fragment"),
             json.replaceFirst("https://sede.administracion.gob.es/", "https://sede.administracion.gob.es:443/"),
             json.replaceFirst("https://sede.administracion.gob.es/", "https://sede.administracion.gob.es/a/../"),
+            json.replaceFirst("\"launchUrl\": \"https://reg.redsara.es/es/\"", "\"launchUrl\": \"http://reg.redsara.es/es/\""),
+            json.replaceFirst("\"launchUrl\": \"https://reg.redsara.es/es/\"", "\"launchUrl\": \"https://user@reg.redsara.es/es/\""),
+            json.replaceFirst("\"launchUrl\": \"https://reg.redsara.es/es/\"", "\"launchUrl\": \"https://reg.redsara.es:443/es/\""),
+            json.replaceFirst("\"launchUrl\": \"https://reg.redsara.es/es/\"", "\"launchUrl\": \"https://reg.redsara.es/es/#fragment\""),
+            json.replaceFirst("\"launchUrl\": \"https://reg.redsara.es/es/\"", "\"launchUrl\": \"https://reg.redsara.es/a/../es/\""),
+            json.replaceFirst(
+                "\"profileId\": \"reg-age-redsara\",\n      \"displayName\": \"Sede electrónica de la Universidad de Sevilla\"",
+                "\"profileId\": null,\n      \"displayName\": \"Sede electrónica de la Universidad de Sevilla\"",
+            ),
             json.replaceFirst("\"portalId\": \"age-pag-reg\"", "\"portalId\": \"INVALID\""),
             json.replaceFirst("\"portalId\": \"age-reg-redsara\"", "\"portalId\": \"age-pag-reg\""),
             json.replaceFirst(
