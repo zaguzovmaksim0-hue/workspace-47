@@ -2028,3 +2028,55 @@ credential/private-certificate use, real signing, upload, payment or administrat
 occurred. Physical UGR and DGT acceptance remain manual E2E gates. Existing AEAT Client-TLS,
 real-portal JavaScript-dialog, TalkBack/physical visual and supported-Linux Go-race gates remain
 external.
+
+## Portal G36-R01 — priority public-contract research refresh — 2026-08-09
+
+**Repository continuity.** Generation 36 began with `git fetch --prune origin` and discovered that
+both local and remote autonomous HEAD had legitimately advanced beyond the G35 UGR publication
+`ce06961f976c363280988cba81ca89e682dcc3b3` to
+`80b95d3ef8876438156f42b287ff37bfe579e976`. The intervening already-pushed commits are
+`483e917` (dependency verification metadata), `1f969b8` (Cloud Gradle routing), `c578a46`
+(Cloud-side Gradle executor), `599961e` (Cloud launcher policy test), and `80b95d3` (migration
+evidence). They establish the current Matt-Pocock/Codex-Cloud workflow baseline and were preserved.
+At the final pre-documentation check the autonomous branch was 0 ahead / 0 behind its upstream and
+the canonical branch remained exactly `9c99bbfb36e13f88231d56001ccef8c4cbbce128`.
+
+**Public unauthenticated evidence.** Eight priority portals were re-fetched with bounded HTTPS GETs
+and first-party static resources only. `justicia-sede-judicial` still exposes its global theme helper
+with `SHA256withRSA`, `PAdES`, `mode=implicit`, `documentoDeclaracion`, `formFirmaBorrador` and
+same-origin Storage/Retrieve servlets, but neither the generic trámite index nor five selected public
+procedure pages contain the matching form DOM or a `firma()` binding. This remains insufficient for
+a portal profile. `age-acceda` exposes a public `/certificado/valida` form, a server-issued changing
+`afirma.formularioweb`, and `afirma.firmar(callback)`; its first-party helper file contains multiple
+distinct signing functions, including a `SHA1withRSA`/`PAdES` `doSignSolicitud()`, but no public
+source observed this generation proves that the wrapper calls that exact helper. The dynamic field
+must not be hard-coded or inferred. SEPE, Ministerio de Justicia, Sevilla, Universidad de Sevilla and
+Catastro exposed only descriptive/certificate or pre-authentication surfaces without a complete
+algorithm/format/payload/callback contract.
+
+**Asturias near-ready evidence.** The official public utility
+`https://miprincipado.asturias.es/utilidades/comprobacion-firma` contains a concrete inline call
+`MiniApplet.sign('SG9sYQ==', getAlgoritmoFirma(), 'XAdES', getParamsFirma(),
+saveSignatureFunction0, showErrorFunction)` behind its simulated-signature button. The fixed payload
+is Base64 for `Hola`, and the success callback decodes the returned signature into `signoutput0`.
+Algorithm and extra parameters are delegated to first-party
+`https://www30.asturias.es/Esign2/esign.jsp`; bounded retrieval of that host failed through the
+available network path with `CONNECT tunnel failed, response 502`. No stored evidence defines
+`getAlgoritmoFirma()` or `getParamsFirma()`, so the candidate was not promoted and no values were
+guessed.
+
+**Pipeline state.** The catalog remains 182 entries, 10 exact profile bindings and 172 unbound.
+Inventory states remain 166 `BROWSE_ONLY`, 5 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`,
+4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated catalog states remain
+94 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 5 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The preserved
+research buffer is 16 classified public surfaces; no unintegrated candidate is implementation-ready,
+so native Codex/Luna implementation occupancy correctly remains 0/8 and no worker branch was
+created. Generation 36 integrated zero portals. The ignored evidence packet is
+`build/autonomous-evidence/g36-portal-research/CLASSIFICATION.md`, SHA-256
+`c7a7f9d41a108fa0057d37924657624fd08bd82e80e7b6fc3c848cdd5d13496e`.
+
+No Gradle command was run in generation 36 because no product behavior changed. No APK was
+installed/launched; no device control, authenticated portal navigation, credentials, certificate
+unlock/private-key material, real signing, form POST, upload, payment or administrative submission
+occurred. Physical UGR/DGT acceptance and the pre-existing AEAT Client-TLS, JavaScript-dialog,
+TalkBack/visual and supported-Linux Go-race gates remain manual/external.
