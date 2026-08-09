@@ -18,6 +18,7 @@ object AfirmaJavascriptShim {
         mode: MiniAppletBridgeMode,
         qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
         ugrCompatibilityEnabled: Boolean = false,
+        melillaBatchCompatibilityEnabled: Boolean = false,
     ): String {
         val script = context.resources.openRawResource(R.raw.afirma_shim)
             .bufferedReader(Charsets.UTF_8)
@@ -25,6 +26,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(MODE_PLACEHOLDER) == 1)
         check(script.countOccurrences(QA_DIAGNOSTICS_PLACEHOLDER) == 1)
         check(script.countOccurrences(UGR_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         val configured = script
             .replace(
                 MODE_PLACEHOLDER,
@@ -38,6 +40,10 @@ object AfirmaJavascriptShim {
                 UGR_COMPATIBILITY_PLACEHOLDER,
                 if (ugrCompatibilityEnabled) "true" else "false",
             )
+            .replace(
+                MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
+                if (melillaBatchCompatibilityEnabled) "true" else "false",
+            )
         check(configured.isNotBlank() && configured.length <= MAX_SCRIPT_CHARS)
         return configured
     }
@@ -48,6 +54,8 @@ object AfirmaJavascriptShim {
     private const val MODE_PLACEHOLDER = "__JFM_FUNCTIONAL_SIGNING_ENABLED__"
     private const val QA_DIAGNOSTICS_PLACEHOLDER = "__JFM_QA_DIAGNOSTICS_ENABLED__"
     private const val UGR_COMPATIBILITY_PLACEHOLDER = "__JFM_UGR_COMPATIBILITY_ENABLED__"
+    private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
 }
 
 enum class MiniAppletBridgeMode {

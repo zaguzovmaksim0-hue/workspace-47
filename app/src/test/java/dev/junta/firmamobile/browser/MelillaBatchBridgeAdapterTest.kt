@@ -2,9 +2,14 @@ package dev.junta.firmamobile.browser
 
 import android.net.Uri
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.signing.SigningErrorCode
 import org.json.JSONArray
 import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -17,6 +22,94 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class MelillaBatchBridgeAdapterTest {
+    @Test
+    fun dedicatedAdapterAcceptsOnlyTheObservedBoundedBatchContract() {
+        val result = MelillaBatchBridgeAdapter(
+            activeProfileId = { ProfileId(MelillaBatchBridgeAdapter.PROFILE_ID) },
+        ).route(
+            rawMessage = portalOwnedBatchEnvelope(),
+            sourceOrigin = Uri.parse(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
+            isMainFrame = true,
+            navigationEpoch = 7,
+        )
+
+        val accepted = result as MelillaBatchBridgeRouteResult.Accepted
+        assertEquals(REQUEST_ID, accepted.request.requestId.toString())
+        assertEquals(DOCUMENT_ID, accepted.request.documentId.toString())
+        assertEquals(7L, accepted.request.navigationEpoch)
+        assertEquals("SHA256withRSA", accepted.request.algorithm)
+        assertEquals("CAdES", accepted.request.format)
+        assertEquals("sign", accepted.request.suboperation)
+        assertFalse(accepted.request.stopOnError)
+        assertEquals(1, accepted.request.documents.size)
+        assertEquals("runtime-document-1", accepted.request.documents.single().id)
+    }
+
+    @Test
+    fun dedicatedAdapterRejectsBatchBindingChangesBeforeAnyConsumerCanSeeIt() {
+        val changed = portalOwnedBatchEnvelope().replace(
+            "docId=runtime-document-1",
+            "docId=runtime-document-2",
+        )
+
+        val result = MelillaBatchBridgeAdapter(
+            activeProfileId = { ProfileId(MelillaBatchBridgeAdapter.PROFILE_ID) },
+        ).route(
+            rawMessage = changed,
+            sourceOrigin = Uri.parse(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
+            isMainFrame = true,
+            navigationEpoch = 7,
+        )
+
+        val rejected = result as MelillaBatchBridgeRouteResult.Rejected
+        assertEquals(SigningErrorCode.INVALID_REQUEST, rejected.code)
+        assertEquals(REQUEST_ID, rejected.requestId?.toString())
+    }
+
+    @Test
+    fun dedicatedAdapterDoesNotConsumeWrongProfileOriginFrameOrEpoch() {
+        val adapter = MelillaBatchBridgeAdapter(
+            activeProfileId = { ProfileId("another-profile") },
+        )
+
+        assertTrue(
+            adapter.route(
+                portalOwnedBatchEnvelope(),
+                Uri.parse(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
+                isMainFrame = true,
+                navigationEpoch = 7,
+            ) is MelillaBatchBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapter.route(
+                portalOwnedBatchEnvelope(),
+                Uri.parse("https://sede.melilla.es.evil.example"),
+                isMainFrame = true,
+                navigationEpoch = 7,
+            ) is MelillaBatchBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            MelillaBatchBridgeAdapter(
+                activeProfileId = { ProfileId(MelillaBatchBridgeAdapter.PROFILE_ID) },
+            ).route(
+                portalOwnedBatchEnvelope(),
+                Uri.parse(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
+                isMainFrame = false,
+                navigationEpoch = 7,
+            ) is MelillaBatchBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            MelillaBatchBridgeAdapter(
+                activeProfileId = { ProfileId(MelillaBatchBridgeAdapter.PROFILE_ID) },
+            ).route(
+                portalOwnedBatchEnvelope(),
+                Uri.parse(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
+                isMainFrame = true,
+                navigationEpoch = Long.MAX_VALUE,
+            ) is MelillaBatchBridgeRouteResult.Rejected,
+        )
+    }
+
     @Test
     fun portalOwnedJsonBatchRemainsNotApplicableToTheOrdinarySingleSignAdapter() {
         val result = MiniAppletBridgeAdapter(

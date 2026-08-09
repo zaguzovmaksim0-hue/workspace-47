@@ -29,6 +29,7 @@ class WebMessageBridge(
     private val onMiniAppletRequest: ((MiniAppletBridgeRequest, MiniAppletReplyChannel) -> Unit)? =
         null,
     private val onMiniAppletCancel: (UUID) -> Unit = {},
+    private val onMelillaBatchRequest: ((MelillaBatchRequest) -> Unit)? = null,
     private val router: WebMessageRouter = WebMessageRouter(profileId),
     activeProfileId: () -> ProfileId? = { null },
     clock: Clock = Clock.systemUTC(),
@@ -38,11 +39,19 @@ class WebMessageBridge(
         monotonicNanos = monotonicNanos,
         activeProfileId = activeProfileId,
     ),
+    private val melillaBatchAdapter: MelillaBatchBridgeAdapter = MelillaBatchBridgeAdapter(
+        activeProfileId = activeProfileId,
+    ),
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
     private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
 ) {
+    private val melillaBatchEnabled: Boolean
+        get() = profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID &&
+            miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
+            onMelillaBatchRequest != null
+
     private val replyRegistry = MiniAppletReplyRegistry(
         currentNavigationEpoch = currentNavigationEpoch,
         currentOrigin = currentOrigin,
@@ -50,7 +59,14 @@ class WebMessageBridge(
     )
 
     fun attach(webView: WebView): WebMessageBridgeAttachment {
-        val originRules = JuntaOriginPolicy.webMessageOriginRules(profileId)
+        val originRules = (
+            JuntaOriginPolicy.webMessageOriginRules(profileId) +
+                if (melillaBatchEnabled) {
+                    setOf(MelillaBatchBridgeAdapter.SOURCE_ORIGIN)
+                } else {
+                    emptySet()
+                }
+            ).toSet()
         if (originRules.isEmpty()) {
             return WebMessageBridgeAttachment(webView = webView)
         }
@@ -78,6 +94,7 @@ class WebMessageBridge(
                     qaDiagnosticsEnabled,
                     ugrCompatibilityEnabled = profileId.value == UGR_PROFILE_ID &&
                         BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
+                    melillaBatchCompatibilityEnabled = melillaBatchEnabled,
                 ),
                 originRules,
             )
@@ -125,6 +142,31 @@ class WebMessageBridge(
                 return
             }
             PortalCallbackDiagnosticParseResult.NotApplicable -> Unit
+        }
+
+        val batchConsumer = onMelillaBatchRequest
+        if (batchConsumer != null) {
+            when (
+                val batchResult = melillaBatchAdapter.route(
+                    rawMessage = rawMessage,
+                    sourceOrigin = sourceOrigin,
+                    isMainFrame = isMainFrame,
+                    navigationEpoch = currentNavigationEpoch(),
+                )
+            ) {
+                is MelillaBatchBridgeRouteResult.Accepted -> {
+                    runCatching { batchConsumer(batchResult.request) }.onFailure {
+                        melillaBatchAdapter.abandon(batchResult.request.requestId)
+                        logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    }
+                    return
+                }
+                is MelillaBatchBridgeRouteResult.Rejected -> {
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    return
+                }
+                MelillaBatchBridgeRouteResult.NotApplicable -> Unit
+            }
         }
 
         when (
@@ -241,6 +283,7 @@ class WebMessageBridge(
     }
 
     private fun abandonAllMiniAppletRequests() {
+        melillaBatchAdapter.abandonAll()
         replyRegistry.abandonAll().forEach { requestId ->
             runCatching { onMiniAppletCancel(requestId) }
         }

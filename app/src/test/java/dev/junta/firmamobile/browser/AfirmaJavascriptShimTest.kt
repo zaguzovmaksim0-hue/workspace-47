@@ -138,6 +138,7 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
+            melillaBatchCompatibilityEnabled = true,
         )
 
         assertTrue(
@@ -148,6 +149,25 @@ class AfirmaJavascriptShimTest {
             "The document-start shim must emit the dedicated MINIAPPLET_BATCH discriminator",
             functional.contains("MINIAPPLET_BATCH"),
         )
+    }
+
+    @Test
+    fun melillaBatchShimIsDisabledUnlessTheNativeProfileScopeEnablesIt() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            melillaBatchCompatibilityEnabled = true,
+        )
+
+        assertTrue(disabled.contains("const melillaBatchCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("const melillaBatchCompatibilityEnabled = true"))
     }
 
     @Test

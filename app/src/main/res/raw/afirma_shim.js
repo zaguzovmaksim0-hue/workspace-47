@@ -15,7 +15,9 @@
   const functionalSigningEnabled = __JFM_FUNCTIONAL_SIGNING_ENABLED__;
   const qaDiagnosticsEnabled = __JFM_QA_DIAGNOSTICS_ENABLED__;
   const ugrCompatibilityEnabled = __JFM_UGR_COMPATIBILITY_ENABLED__;
+  const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
+  const melillaBatchOrigin = "https://sede.melilla.es";
   const ugrLiteral = "Universidad de Granada";
   const ugrLiteralBase64 = "VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==";
   const ugrStorageUrl = "https://sede.ugr.es/afirma-signature-storage/StorageService";
@@ -25,6 +27,9 @@
   const maxArguments = 32;
   const maxDirectDataChars = 699052;
   const maxExtraPropertiesChars = 65536;
+  const maxBatchUrlChars = 8192;
+  const maxBatchIdentifierChars = 1024;
+  const maxBatchDocuments = 64;
   const signTimeoutMillis = 120000;
   const safeTokenPattern = /^[A-Za-z0-9._+\-]{1,64}$/;
   const canonicalUuidPattern =
@@ -32,6 +37,7 @@
   const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
   const wrappedMethods = new WeakSet();
   const pendingCallbacks = new Map();
+  let activeMelillaBatch = null;
   let activeProbeRequestId = null;
 
   function secureRequestId() {
@@ -207,6 +213,129 @@
     return true;
   }
 
+  function isMelillaBatchPage() {
+    return functionalSigningEnabled && melillaBatchCompatibilityEnabled &&
+      window.location.origin === melillaBatchOrigin;
+  }
+
+  function isSafeBatchIdentifier(value) {
+    return typeof value === "string" && value.length > 0 &&
+      value.length <= maxBatchIdentifierChars &&
+      !Array.from(value).some(character => /\s/.test(character) ||
+        character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f);
+  }
+
+  function batchExtraParams(format) {
+    if (format === "PAdES") {
+      return "signatureSubFilter=ETSI.CAdES.detached";
+    }
+    if (format === "XAdES") {
+      return "mode=implicit";
+    }
+    return null;
+  }
+
+  function isSupportedBatchFormat(value) {
+    return value === "CAdES" || value === "PAdES" || value === "XAdES";
+  }
+
+  function rememberMelillaBatchCreate(args) {
+    if (!isMelillaBatchPage()) {
+      activeMelillaBatch = null;
+      return;
+    }
+    if (args.length !== 4 || args[0] !== "SHA256withRSA" ||
+        !isSupportedBatchFormat(args[1]) || args[2] !== "sign" || args[3] !== null) {
+      activeMelillaBatch = null;
+      return;
+    }
+    activeMelillaBatch = {
+      algorithm: args[0],
+      format: args[1],
+      suboperation: args[2],
+      documents: [],
+      invalid: false
+    };
+  }
+
+  function rememberMelillaBatchDocument(args) {
+    const batch = activeMelillaBatch;
+    if (!isMelillaBatchPage() || !batch) {
+      return;
+    }
+    const documentFormat = args[2];
+    const documentSuboperation = args[3];
+    const effectiveFormat = documentFormat === null ? batch.format : documentFormat;
+    const valid = args.length === 5 && isSafeBatchIdentifier(args[0]) &&
+      typeof args[1] === "string" && args[1].length > 0 &&
+      args[1].length <= maxBatchUrlChars && !args[1].includes("\u0000") &&
+      (documentFormat === null || isSupportedBatchFormat(documentFormat)) &&
+      (documentSuboperation === null || documentSuboperation === "sign") &&
+      args[4] === batchExtraParams(effectiveFormat) &&
+      !batch.documents.some(document => document.id === args[0]) &&
+      batch.documents.length < maxBatchDocuments;
+    if (!valid) {
+      batch.invalid = true;
+      return;
+    }
+    const document = {
+      id: args[0],
+      datareference: args[1]
+    };
+    if (documentFormat !== null) {
+      document.format = documentFormat;
+    }
+    if (documentSuboperation !== null) {
+      document.suboperation = documentSuboperation;
+    }
+    batch.documents.push(document);
+  }
+
+  function interceptMelillaBatchSign(args) {
+    if (!isMelillaBatchPage()) {
+      return false;
+    }
+    const errorCallback = args[5];
+    const batch = activeMelillaBatch;
+    if (args.length !== 6 || args[0] !== false || typeof args[1] !== "string" ||
+        args[1].length === 0 || args[1].length > maxBatchUrlChars ||
+        typeof args[2] !== "string" || args[2].length === 0 ||
+        args[2].length > maxBatchUrlChars || args[3] !== null ||
+        typeof args[4] !== "function" || typeof errorCallback !== "function" ||
+        !batch || batch.invalid || batch.documents.length === 0 || !probeDocumentId) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    if (!bridge || typeof bridge.postMessage !== "function") {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    const batchRequestId = secureRequestId();
+    if (!batchRequestId) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    const message = {
+      type: "MINIAPPLET_BATCH",
+      documentId: probeDocumentId,
+      requestId: batchRequestId,
+      batchPreSignerUrl: args[1],
+      batchPostSignerUrl: args[2],
+      algorithm: batch.algorithm,
+      format: batch.format,
+      suboperation: batch.suboperation,
+      stopOnError: false,
+      documentos: batch.documents.map(document => ({ ...document }))
+    };
+    activeMelillaBatch = null;
+    try {
+      bridge.postMessage(JSON.stringify(message));
+    } catch (_) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+    }
+    return true;
+  }
+
   function interceptUgrSetupCall(call, args) {
     if (!ugrCompatibilityEnabled || window.location.origin !== ugrOrigin) {
       return false;
@@ -273,6 +402,7 @@
       notifyNativeCancel(pendingRequestId);
     }
     pendingCallbacks.clear();
+    activeMelillaBatch = null;
   });
 
   const probeDocumentId = secureRequestId();
@@ -381,6 +511,9 @@
     function wrappedMiniAppletMethod(...args) {
       const observedRequestId = tryObserveMiniAppletCall(call, args);
       if (observedRequestId === null) {
+        if (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) {
+          return undefined;
+        }
         if (interceptUgrSetupCall(call, args)) {
           return undefined;
         }
@@ -390,10 +523,17 @@
       activeProbeRequestId = observedRequestId;
       try {
         if ((call === "SIGN" && interceptMiniAppletSign(args)) ||
+            (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) ||
             interceptUgrSetupCall(call, args)) {
           return undefined;
         }
-        return Reflect.apply(method, this, args);
+        const result = Reflect.apply(method, this, args);
+        if (call === "BATCH_CREATE") {
+          rememberMelillaBatchCreate(args);
+        } else if (call === "BATCH_ADD_DOCUMENT") {
+          rememberMelillaBatchDocument(args);
+        }
+        return result;
       } finally {
         activeProbeRequestId = previousRequestId;
         completeMiniAppletCall(observedRequestId);
@@ -432,6 +572,9 @@
       installMethodHook(value, "cargarMiniApplet", "LOAD");
       installMethodHook(value, "sign", "SIGN");
       if (includeUgrSetup) {
+        installMethodHook(value, "createBatch", "BATCH_CREATE");
+        installMethodHook(value, "addDocumentToBatch", "BATCH_ADD_DOCUMENT");
+        installMethodHook(value, "signBatchProcess", "BATCH_SIGN");
         installMethodHook(value, "setForceWSMode", "UGR_SET_FORCE_WS_MODE");
         installMethodHook(value, "cargarAppAfirma", "UGR_CARGAR_APP_AFIRMA");
         installMethodHook(value, "setServlets", "UGR_SET_SERVLETS");
