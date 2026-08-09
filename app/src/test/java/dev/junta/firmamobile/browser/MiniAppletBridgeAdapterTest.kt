@@ -202,6 +202,100 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactCantabriaRecAutoScriptCallNormalizesTheRuntimeChallengeToTheBoundContract() {
+        val result = adapterFor(CANTABRIA_PROFILE_ID).route(
+            rawMessage = cantabriaMessage(),
+            sourceOrigin = CANTABRIA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 47,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(CANTABRIA_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(CANTABRIA_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("rec.cantabria.es", request.context.origin.host)
+            assertEquals(47, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA512_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(CANTABRIA_CHALLENGE.encodeToByteArray(), data)
+                    assertEquals(CANTABRIA_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun cantabriaRecRejectsWrongProfileOriginChallengeTupleAndPropertiesWithoutGenericBroadening() {
+        assertEquals(
+            SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            cantabriaRejected(activeProfile = "junta-andalucia"),
+        )
+        assertEquals(
+            SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            cantabriaRejected(origin = Uri.parse("https://rec.cantabria.es.evil.example")),
+        )
+        assertEquals(
+            SigningErrorCode.INVALID_REQUEST,
+            cantabriaRejected(
+                cantabriaMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(
+                        CANTABRIA_CHALLENGE.uppercase().encodeToByteArray(),
+                    ),
+                ),
+            ),
+        )
+        assertEquals(
+            SigningErrorCode.INVALID_REQUEST,
+            cantabriaRejected(
+                cantabriaMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(
+                        CANTABRIA_CHALLENGE.dropLast(1).encodeToByteArray(),
+                    ),
+                ),
+            ),
+        )
+        assertEquals(
+            SigningErrorCode.INVALID_REQUEST,
+            cantabriaRejected(
+                cantabriaMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(
+                        (CANTABRIA_CHALLENGE + "a").encodeToByteArray(),
+                    ),
+                ),
+            ),
+        )
+        assertEquals(
+            SigningErrorCode.INVALID_REQUEST,
+            cantabriaRejected(cantabriaMessage(algorithm = "SHA256withRSA")),
+        )
+        assertEquals(
+            SigningErrorCode.INVALID_REQUEST,
+            cantabriaRejected(cantabriaMessage(format = "XAdES Detached")),
+        )
+        listOf(
+            "filters=\nmode=explicit",
+            "filters=\nmode=implicit\nextra=value",
+            JSONObject.NULL,
+        ).forEach { properties ->
+            assertEquals(
+                SigningErrorCode.INVALID_REQUEST,
+                cantabriaRejected(cantabriaMessage(extraProperties = properties)),
+            )
+        }
+        assertEquals(
+            SigningErrorCode.INVALID_REQUEST,
+            (adapterFor("junta-andalucia").route(
+                rawMessage = cantabriaMessage(),
+                sourceOrigin = TRUSTED_ORIGIN,
+                isMainFrame = true,
+            ) as MiniAppletBridgeRouteResult.Rejected).code,
+        )
+    }
+
+    @Test
     fun ugrBridgeRejectsWrongOriginProfileTuplePropertiesAndPayloadVariants() {
         val valid = ugrMessage()
 
@@ -588,6 +682,31 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun cantabriaMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(CANTABRIA_CHALLENGE.encodeToByteArray()),
+        algorithm: String = "SHA512withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = CANTABRIA_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
+    private fun cantabriaRejected(
+        rawMessage: String = cantabriaMessage(),
+        origin: Uri = CANTABRIA_ORIGIN,
+        activeProfile: String = CANTABRIA_PROFILE_ID,
+    ): SigningErrorCode = (adapterFor(activeProfile).route(
+        rawMessage = rawMessage,
+        sourceOrigin = origin,
+        isMainFrame = true,
+    ) as MiniAppletBridgeRouteResult.Rejected).code
+
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
@@ -601,6 +720,11 @@ class MiniAppletBridgeAdapterTest {
         const val UGR_PROFILE_ID = "ugr-certificado-login"
         const val UGR_PROTOCOL_ID = "ugr-certificado-login-local-cades-v1"
         val UGR_DATA = "Universidad de Granada".encodeToByteArray()
+        val CANTABRIA_ORIGIN: Uri = Uri.parse("https://rec.cantabria.es")
+        const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
+        const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"
+        const val CANTABRIA_CHALLENGE = "0123456789abcdef0123456789abcdef01234567"
+        const val CANTABRIA_EXTRA_PROPERTIES = "filters=\nmode=implicit"
         const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =
             "filters=keyusage.digitalsignature:true;nonexpired:\n" +

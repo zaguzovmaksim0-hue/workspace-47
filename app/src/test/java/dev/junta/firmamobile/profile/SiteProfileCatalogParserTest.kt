@@ -142,6 +142,64 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactCantabriaRecQaOnlyCertificateContract() {
+        val profileId = ProfileId("cantabria-rec-cert-login")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI("https://rec.cantabria.es/rec/bienvenida.htm"),
+            profile.startUrl,
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://rec.cantabria.es")),
+            profile.initiatorOrigins,
+        )
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN), profile.capabilities)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(
+            ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+            operation.inputAdapterId,
+        )
+        assertEquals(
+            CallbackContractId("miniapplet-sign-callback-v1"),
+            operation.callbackContractId,
+        )
+        assertEquals(setOf(Capability.SIGN), operation.capabilities)
+        assertEquals(setOf(SignatureAlgorithm.SHA512_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.CADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertEquals(SignatureMode.IMPLICIT, operation.mode)
+        assertNull(operation.endpointId)
+        assertEquals(
+            mapOf("filters" to "", "mode" to "implicit"),
+            operation.fixedExtraProperties,
+        )
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://rec.cantabria.es.evil.example/"),
+            ),
+        )
+    }
+
+    @Test
     fun preservesTheExactUnizarAuthenticationContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("unizar-tramitador")
@@ -476,10 +534,22 @@ class SiteProfileCatalogParserTest {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 12", "\"unknown\": true, \"catalogVersion\": 11"))
+            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 13", "\"unknown\": true, \"catalogVersion\": 12"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))
+        }
+    }
+
+    @Test
+    fun rejectsBlankFixedExtraPropertyOutsideCantabriaProfile() {
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(
+                    "\"filters\": \"keyusage.digitalsignature:true;nonexpired:\"",
+                    "\"filters\": \"\"",
+                ),
+            )
         }
     }
 

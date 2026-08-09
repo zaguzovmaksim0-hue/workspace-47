@@ -46,6 +46,13 @@ class ProtocolAdapterRegistryTest {
         )
         assertEquals("ugr-certificado-login-local-cades-v1", ugr?.signingProtocolId?.value)
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), ugr?.inputAdapterId)
+        val cantabria = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("cantabria-rec-cert-login"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals("cantabria-rec-cert-login-cades-v1", cantabria?.signingProtocolId?.value)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), cantabria?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), cantabria?.callbackContractId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), ugr?.callbackContractId)
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(

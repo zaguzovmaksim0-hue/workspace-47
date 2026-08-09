@@ -93,7 +93,7 @@ object SiteProfileCatalogParser {
             format = o.nullableString("format")?.let { enum(it) },
             packaging = o.nullableString("packaging")?.let { enum(it) },
             mode = o.nullableString("mode")?.let { enum(it) },
-            fixedExtraProperties = stringMap(o.objValue("fixedExtraProperties")),
+            fixedExtraProperties = extraProperties(o.objValue("fixedExtraProperties")),
             allowedExtraProperties = strings(o.array("allowedExtraProperties")),
         )
     }
@@ -150,6 +150,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == UGR_PROFILE_ID) {
                 validateUgrProfile(p)
             }
+            if (p.profileId.value == CANTABRIA_PROFILE_ID) {
+                validateCantabriaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -199,23 +202,29 @@ object SiteProfileCatalogParser {
                     when (op.format) {
                         SignatureFormat.CADES -> {
                             if (op.endpointId == null) {
-                                require(op.mode == SignatureMode.EXPLICIT)
-                                require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
-                                val expectedLocalCadesProperties = when (p.profileId.value) {
-                                    ARAGON_LOCAL_CADES_PROFILE_ID -> mapOf(
-                                        "mode" to "explicit",
-                                        "filter" to "nonexpired",
+                                if (p.profileId.value == CANTABRIA_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.IMPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                                    require(op.fixedExtraProperties == CANTABRIA_EXTRA_PROPERTIES)
+                                } else {
+                                    require(op.mode == SignatureMode.EXPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                    val expectedLocalCadesProperties = when (p.profileId.value) {
+                                        ARAGON_LOCAL_CADES_PROFILE_ID -> mapOf(
+                                            "mode" to "explicit",
+                                            "filter" to "nonexpired",
+                                        )
+                                        DGT_LOCAL_CADES_PROFILE_ID -> mapOf(
+                                            "filter" to "nonexpired:",
+                                        )
+                                        UGR_PROFILE_ID -> emptyMap()
+                                        else -> null
+                                    }
+                                    require(
+                                        expectedLocalCadesProperties != null &&
+                                            op.fixedExtraProperties == expectedLocalCadesProperties,
                                     )
-                                    DGT_LOCAL_CADES_PROFILE_ID -> mapOf(
-                                        "filter" to "nonexpired:",
-                                    )
-                                    UGR_PROFILE_ID -> emptyMap()
-                                    else -> null
                                 }
-                                require(
-                                    expectedLocalCadesProperties != null &&
-                                        op.fixedExtraProperties == expectedLocalCadesProperties,
-                                )
                             } else {
                                 require(op.fixedExtraProperties["serverUrl"] ==
                                     op.endpointId.let(p.endpoints::get)?.url?.toString())
@@ -294,6 +303,39 @@ object SiteProfileCatalogParser {
     }
 
 
+    private fun validateCantabriaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CANTABRIA_PROFILE_VERSION)
+        require(profile.displayName == CANTABRIA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CANTABRIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CANTABRIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = CANTABRIA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.IMPLICIT,
+                fixedExtraProperties = CANTABRIA_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
     private fun URI.origin() = ExactOrigin.parse("https://$host")
@@ -306,6 +348,13 @@ object SiteProfileCatalogParser {
     private fun stringMap(value: JValue): Map<String, String> = value.obj("stringMap").values
         .mapValues { (_, entry) -> entry.string() }
         .also { map -> require(map.keys.all { it.isNotBlank() } && map.values.all { it.isNotBlank() }) }
+
+    private fun extraProperties(value: JValue): Map<String, String> = value.obj("stringMap").values
+        .mapValues { (_, entry) -> entry.string() }
+        .also { map ->
+            require(map.keys.all { it.isNotBlank() })
+            require(map.values.all { it.length <= MAX_EXTRA_PROPERTY_VALUE_CHARS && it.none(Char::isISOControl) })
+        }
     private inline fun <reified T : Enum<T>> enums(values: List<JValue>) =
         values.map { enum<T>(it.string()) }.toSet().also { require(it.size == values.size) }
     private inline fun <reified T : Enum<T>> enum(value: String): T = enumValueOf(value)
@@ -333,6 +382,19 @@ object SiteProfileCatalogParser {
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
+    private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
+    private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
+    private const val CANTABRIA_PROFILE_VERSION = 1
+    private const val CANTABRIA_DISPLAY_NAME =
+        "Registro Electrónico Común de Cantabria — Acceso con certificado"
+    private const val CANTABRIA_START_URL = "https://rec.cantabria.es/rec/bienvenida.htm"
+    private const val CANTABRIA_ORIGIN = "https://rec.cantabria.es"
+    private const val CANTABRIA_SAFE_DESCRIPTION =
+        "Acceso con certificado al Registro Electrónico Común de Cantabria"
+    private val CANTABRIA_EXTRA_PROPERTIES = linkedMapOf(
+        "filters" to "",
+        "mode" to "implicit",
+    )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
     private const val UGR_PROFILE_VERSION = 1
     private const val UGR_DISPLAY_NAME = "Universidad de Granada — Acceso con certificado"

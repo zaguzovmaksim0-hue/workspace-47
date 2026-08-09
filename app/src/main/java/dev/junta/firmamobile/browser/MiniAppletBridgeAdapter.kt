@@ -173,6 +173,15 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == UgrCadesDetachedAdapter.PROFILE_ID && !isUgrContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isCantabriaContract = isExactCantabriaContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+        )
+        if (profile.profileId.value == CANTABRIA_PROFILE_ID && !isCantabriaContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -225,6 +234,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
                 )
+        } else if (isCantabriaContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == CANTABRIA_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (operation.fixedExtraProperties.isEmpty()) {
             if (json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
                 return MiniAppletBridgeRouteResult.Rejected(
@@ -269,7 +285,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
         }
-        val extraProperties = if (operation.fixedExtraProperties.isEmpty()) {
+        if (isCantabriaContract && !decodedData.isExactCantabriaChallenge()) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
+        }
+        val extraProperties = if (isCantabriaContract) {
+            CANTABRIA_EXTRA_PROPERTIES
+        } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
         } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
             ?: run {
@@ -381,6 +403,48 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == UgrCadesDetachedAdapter.ID.value
 
+    private fun isExactCantabriaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+    ): Boolean =
+        profile.profileId.value == CANTABRIA_PROFILE_ID &&
+            profile.profileVersion == CANTABRIA_PROFILE_VERSION &&
+            profile.displayName == CANTABRIA_DISPLAY_NAME &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == CANTABRIA_START_URL &&
+            origin.serialized == CANTABRIA_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(CANTABRIA_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == CANTABRIA_SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.IMPLICIT &&
+            operation.fixedExtraProperties == CANTABRIA_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == CANTABRIA_PROTOCOL_ID
+
+    private fun ByteArray.isExactCantabriaChallenge(): Boolean =
+        size == CANTABRIA_CHALLENGE_BYTES && all { byte ->
+            byte.toInt() in 0x30..0x39 ||
+                byte.toInt() in 0x61..0x66
+        }
+
     private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
         val observed = linkedMapOf<String, String>()
         val lines = raw.split('\n')
@@ -422,6 +486,21 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
         private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
         private val UGR_PAYLOAD = "Universidad de Granada".encodeToByteArray()
+        private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
+        private const val CANTABRIA_PROFILE_VERSION = 1
+        private const val CANTABRIA_DISPLAY_NAME =
+            "Registro Electrónico Común de Cantabria — Acceso con certificado"
+        private const val CANTABRIA_START_URL = "https://rec.cantabria.es/rec/bienvenida.htm"
+        private const val CANTABRIA_ORIGIN = "https://rec.cantabria.es"
+        private const val CANTABRIA_SAFE_DESCRIPTION =
+            "Acceso con certificado al Registro Electrónico Común de Cantabria"
+        private const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"
+        private const val CANTABRIA_EXTRA_PROPERTIES = "filters=\nmode=implicit"
+        private val CANTABRIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "filters" to "",
+            "mode" to "implicit",
+        )
+        private const val CANTABRIA_CHALLENGE_BYTES = 40
         private const val MAX_EXTRA_PROPERTY_COUNT = 32
         private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
         private val PROPERTY_KEY = Regex("[A-Za-z][A-Za-z0-9._-]{0,63}")

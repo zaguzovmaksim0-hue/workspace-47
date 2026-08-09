@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 12,
+  "catalogVersion": 13,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -282,6 +282,61 @@
       "evidence": [
         {
           "url": "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp",
+          "reviewedOn": "2026-08-09"
+        }
+      ]
+    },
+    {
+      "profileId": "cantabria-rec-cert-login",
+      "profileVersion": 1,
+      "displayName": "Registro Electrónico Común de Cantabria — Acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://rec.cantabria.es/rec/bienvenida.htm",
+      "initiatorOrigins": ["https://rec.cantabria.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Acceso con certificado al Registro Electrónico Común de Cantabria",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": ["SIGN"],
+          "endpointId": null,
+          "algorithms": ["SHA512_WITH_RSA"],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": "IMPLICIT",
+          "fixedExtraProperties": {
+            "filters": "",
+            "mode": "implicit"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": ["RSA"],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://rec.cantabria.es/rec/bienvenida.htm",
+          "reviewedOn": "2026-08-09"
+        },
+        {
+          "url": "https://rec.cantabria.es/rec/js/autoFirma.js",
+          "reviewedOn": "2026-08-09"
+        },
+        {
+          "url": "https://clientefirma.cantabria.es/clientefirma/js/autofirma/afirmaClienteMiniapplet.js",
+          "reviewedOn": "2026-08-09"
+        },
+        {
+          "url": "https://clientefirma.cantabria.es/clientefirma/js/autofirma/miniapplet.js",
           "reviewedOn": "2026-08-09"
         }
       ]
