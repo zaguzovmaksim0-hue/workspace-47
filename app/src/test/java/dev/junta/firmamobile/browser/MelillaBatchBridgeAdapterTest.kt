@@ -111,6 +111,70 @@ class MelillaBatchBridgeAdapterTest {
     }
 
     @Test
+    fun dedicatedAdapterBindsMessagesToTheCurrentDocumentLifecycle() {
+        var currentEpoch = 7L
+        var currentDocumentId = java.util.UUID.fromString(DOCUMENT_ID)
+        val adapter = MelillaBatchBridgeAdapter(
+            activeProfileId = { ProfileId(MelillaBatchBridgeAdapter.PROFILE_ID) },
+            currentNavigationEpoch = { currentEpoch },
+            currentDocumentId = { currentDocumentId },
+        )
+
+        assertTrue(
+            adapter.route(
+                portalOwnedBatchEnvelope(),
+                Uri.parse(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
+                isMainFrame = true,
+                navigationEpoch = currentEpoch,
+            ) is MelillaBatchBridgeRouteResult.Accepted,
+        )
+
+        adapter.abandonAll()
+        currentEpoch++
+        currentDocumentId = java.util.UUID.fromString("123e4567-e89b-42d3-a456-426614174002")
+
+        val stale = adapter.route(
+            portalOwnedBatchEnvelope(),
+            Uri.parse(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
+            isMainFrame = true,
+            navigationEpoch = currentEpoch,
+        )
+        assertEquals(
+            SigningErrorCode.NAVIGATION_CHANGED,
+            (stale as MelillaBatchBridgeRouteResult.Rejected).code,
+        )
+    }
+
+    @Test
+    fun batchReplyChannelReturnsTheOpaqueValidationResponseWithoutInventingSubmission() {
+        var posted: String? = null
+        val channel = MelillaBatchReplyChannel(
+            requestId = java.util.UUID.fromString(REQUEST_ID),
+            postMessage = { posted = it },
+        )
+
+        assertTrue(channel.success(validationResponse = "{\"resultado\":\"ok\"}"))
+
+        val result = JSONObject(checkNotNull(posted))
+        assertEquals("MINIAPPLET_BATCH_RESULT", result.getString("type"))
+        assertEquals(REQUEST_ID, result.getString("requestId"))
+        assertEquals("success", result.getString("status"))
+        assertEquals("{\"resultado\":\"ok\"}", result.getString("validationResponse"))
+    }
+
+    @Test
+    fun batchReplyChannelRejectsNonJsonValidationResponses() {
+        var posted: String? = null
+        val channel = MelillaBatchReplyChannel(
+            requestId = java.util.UUID.fromString(REQUEST_ID),
+            postMessage = { posted = it },
+        )
+
+        assertFalse(channel.success(validationResponse = "not-json"))
+        assertEquals(null, posted)
+    }
+
+    @Test
     fun portalOwnedJsonBatchRemainsNotApplicableToTheOrdinarySingleSignAdapter() {
         val result = MiniAppletBridgeAdapter(
             activeProfileId = { ProfileId("melilla-sede") },
