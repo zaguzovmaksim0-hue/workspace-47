@@ -1773,3 +1773,53 @@ recheck `job_20260808_234015_16462724` passed `CiPolicyTest` 20/20 plus `git dif
 credential/private-certificate use, real signing, upload, payment or administrative submission
 occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility,
 TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## Finding G32-01 — global cookie-removal completion semantics — 2026-08-09
+
+**Finding.** `SiteDataCleaner.clearAllConfirmed` used the Boolean from
+`CookieManager.removeAllCookies` as a success bit. Android defines that Boolean as whether any
+cookies were removed. A valid zero-cookie completion therefore produced `false` even though the
+asynchronous removal operation had completed and global WebStorage deletion had succeeded. The UI
+reported failure and withheld its exact-owner reload. No evidence showed retained cookies in this
+case; the defect was completion/status semantics.
+
+**TDD and remediation.** Narrow design/plan:
+`docs/superpowers/specs/2026-08-08-global-cookie-removal-completion-semantics-design.md` and
+`docs/superpowers/plans/2026-08-08-global-cookie-removal-completion-semantics.md`. RED
+`job_20260808_235600_41550741` failed the new Debug regression exactly with expected `true` versus
+actual `false`; XML `job_20260808_235737_4c16fb1a` confirms one test, one intended failure, zero
+errors/skips. Minimum remediation treats callback delivery with `cookiesRemoved=false` as a
+completed no-op and does not flush. When `cookiesRemoved=true`, the existing explicit flush remains
+required. WebStorage exception, synchronous remove-all exception and required-flush exception stay
+failure paths. Targeted Debug+QA GREEN `job_20260808_235805_2207a2e6` passed; adjacent
+`job_20260809_000237_d45fd816` / `job_20260809_000839_58a1d080` passed 34/34 tests per variant
+with zero failures/errors/skips.
+
+**Verification.** Fresh runtime-lock/core/AAPT2 + complete JVM
+`job_20260809_000918_6f64ad07` passed 63/63 executed tasks; XML aggregation
+`job_20260809_001837_6a360eef` confirms Debug 568/568 and QA 568/568 with zero
+failures/errors/skips. Fresh lint/build `job_20260809_001848_27c31a82` passed 124/124 executed
+tasks, with 0 lint errors / 26 warnings per variant. APK SHA-256 from artifact gate
+`job_20260809_055602_c2cc7c42`: Debug
+`8e5d559db59442813436e5a3f971e79ba1a8f2eb55700c543996815c698a938e`, QA
+`26f99e4d1000e52048a7e3bf8d97ad136b1788e786301e8d1d90d4fc0da1eeeb`, QA AndroidTest
+`93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`; Android artifact
+verification passed. Fresh non-Android `job_20260809_000927_2110067c` passed Python 102 with one
+environmental hardlink skip plus Go test/vet/build; relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Release fail-closed
+`job_20260809_055624_6cb60b76` passed with zero release APKs; cleanup
+`job_20260809_055744_db11b800` removed the relay. Pre-evidence review
+`job_20260809_055800_766bc466` passed diff/scope/sensitive/unsafe checks. Independent reviewer
+`worker-2` found no Critical/Important issue; its only Minor note was synchronous fake-callback
+coverage, not an implementation defect. Post-evidence focused rerun
+`job_20260809_060109_5c1beee4`, parsed by `job_20260809_060833_11f7c4a3`, passed Debug 34/34 + QA
+34/34 with zero failures/errors/skips and 60/60 tasks. Policy/scope gate
+`job_20260809_060121_368c3e24` passed `CiPolicyTest` 20/20, `git diff --check`, exact 10-file scope
+and unsafe/sensitive added-line review.
+
+Current-site cookie deletion, G31 resource-cache/non-null-owner admission, G29 navigation epoch,
+Client TLS, signing, origin/path allowlists, profile/release state and dependencies are unchanged.
+No APK installation/launch, device control, authenticated portal interaction,
+credential/private-certificate use, real signing, upload, payment or administrative submission
+occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility,
+TalkBack/visual validation and supported-Linux Go race remain external gates.

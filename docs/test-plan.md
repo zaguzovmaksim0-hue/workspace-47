@@ -563,3 +563,21 @@ el job Linux debe seguir siendo obligatorio.
   sensitive/unsafe scans and `CiPolicyTest`.
 - Automated scope does not assert physical WebView/portal acceptance and does not claim that
   `clearCache(true)` erases persistence classes outside the documented resource cache.
+
+## G32-01 — global cookie-removal completion-semantics gate — 2026-08-09
+
+- RED: with successful `WebStorage.deleteAllData()` and `removeAllCookies` callback `false`, require
+  global completion `true`, one storage clear, one remove-all invocation and zero flushes. The RED
+  must fail only because production misreads the Boolean as success/failure.
+- GREEN/failure controls: callback `false` is a completed no-op; callback `true` requires one
+  successful flush. WebStorage exception, synchronous remove-all exception and required-flush
+  exception must report failure.
+- Adjacent regression set: `SiteDataCleanerTest`, `BrowserDataClearCompletionLeaseTest` and
+  `BrowserSecurityRegressionTest` in Debug+QA, preserving G31 owner/cache and G29 epoch behavior.
+- Full gate: fresh runtime dependency locks/resolved core/portable AAPT2 plus complete Debug/QA JVM,
+  lintDebug/lintQa, Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build,
+  Android artifact verification, release-signing fail-closed, APK hashes, generated relay removal,
+  zero release APKs, `git diff --check`, changed-content safety review and `CiPolicyTest`.
+- Independent review must have no unresolved Critical/Important issue. A synchronous test fake is
+  acceptable for this narrow semantic regression because production simply composes the platform
+  completion callback; physical/device behavior is not inferred from it.

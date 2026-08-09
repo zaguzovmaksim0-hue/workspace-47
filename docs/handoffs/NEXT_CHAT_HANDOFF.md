@@ -1502,3 +1502,35 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility, TalkBack/visual
   validation and supported-Linux Go race. No device/portal/credential/private-signing/upload/
   payment/submission action occurred.
+
+## Autonomous audit G32-01 — global cookie-removal completion semantics — 2026-08-09
+
+- G31 is already published as `f6ce8eb345c95e8321d8263bacc279a050a879ec`; do not repeat it.
+- G32 fixes a distinct completion/status defect: `CookieManager.removeAllCookies` callback `false`
+  means zero cookies were removed, not that removal failed. A delivered `false` now completes
+  successfully when WebStorage cleared, with zero flush; `true` still requires successful flush.
+  WebStorage, synchronous remove-all and required-flush exceptions remain failure.
+- RED `job_20260808_235600_41550741` / `job_20260808_235737_4c16fb1a` failed exactly on
+  `expected true / was false`. Targeted Debug+QA GREEN `job_20260808_235805_2207a2e6`; adjacent
+  `job_20260809_000237_d45fd816` / `job_20260809_000839_58a1d080` = 34/34 per variant.
+- Fresh full JVM `job_20260809_000918_6f64ad07` / `job_20260809_001837_6a360eef` = Debug
+  568/568 + QA 568/568, zero failures/errors/skips. Lint/build `job_20260809_001848_27c31a82`
+  = 124/124 tasks, 0 errors / 26 warnings per variant. Python/Go
+  `job_20260809_000927_2110067c`: Python 102 PASS with one environmental hardlink skip; Go
+  test/vet/build PASS.
+- Android artifact `job_20260809_055602_c2cc7c42` PASS. APK SHA-256: Debug
+  `8e5d559db59442813436e5a3f971e79ba1a8f2eb55700c543996815c698a938e`; QA
+  `26f99e4d1000e52048a7e3bf8d97ad136b1788e786301e8d1d90d4fc0da1eeeb`; QA AndroidTest
+  `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`. Release fail-closed
+  `job_20260809_055624_6cb60b76` PASS with zero release APKs; cleanup
+  `job_20260809_055744_db11b800` removed relay.
+- Independent reviewer `worker-2`: no Critical/Important findings; one non-blocking Minor about
+  synchronous fake-callback coverage. Pre-evidence diff/scope/security review
+  `job_20260809_055800_766bc466` passed.
+- Post-evidence focused rerun `job_20260809_060109_5c1beee4` /
+  `job_20260809_060833_11f7c4a3` passed Debug 34/34 + QA 34/34, 60/60 tasks. Policy/scope
+  `job_20260809_060121_368c3e24` passed `CiPolicyTest` 20/20, `git diff --check` and exact 10-file
+  scope. G32 still requires exact staged review, one atomic commit, push and
+  remote-SHA/clean-worktree verification. No device/portal/credential/private-signing/
+  upload/payment/submission action occurred. External gates remain physical AEAT F-03 Client TLS,
+  real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race.

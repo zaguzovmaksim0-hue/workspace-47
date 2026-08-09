@@ -75,8 +75,8 @@ class SiteDataCleaner(
             false
         }
         try {
-            cookieStore.removeAllCookies { cookiesCleared ->
-                val flushed = if (cookiesCleared) {
+            cookieStore.removeAllCookies { cookiesRemoved ->
+                val cookieDeletionDurable = if (cookiesRemoved) {
                     try {
                         cookieStore.flush()
                         true
@@ -84,9 +84,9 @@ class SiteDataCleaner(
                         false
                     }
                 } else {
-                    false
+                    true
                 }
-                callback(storageCleared && cookiesCleared && flushed)
+                callback(storageCleared && cookieDeletionDurable)
             }
         } catch (_: Exception) {
             callback(false)

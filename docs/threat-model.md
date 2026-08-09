@@ -506,3 +506,22 @@ independiente antes del commit; full Debug/QA JVM 564/564 por variante; lint/bui
 Android artifact y release fail-closed pasan. `clearCache(true)` cubre la caché de recursos y sus
 archivos de disco según la API, pero esta evidencia no afirma el borrado de todas las clases de
 persistencia WebView ni sustituye E2E físico del portal.
+
+### T23. El callback sin cookies se interpreta como fallo del borrado global
+
+**Riesgo:** `CookieManager.removeAllCookies` entrega un Boolean que indica si se eliminó alguna
+cookie. Interpretarlo como éxito/fallo convierte el caso válido «cero cookies presentes» en fallo,
+aunque WebStorage ya se haya borrado. El usuario recibe un estado de limpieza engañoso y se omite
+la recarga normal ligada al owner, sin evidencia de que una cookie haya sobrevivido.
+
+**Controles:** `SiteDataCleaner` considera la llegada del callback como finalización de la operación.
+`cookiesRemoved=false` es un no-op completado y no fuerza `flush`; `cookiesRemoved=true` conserva
+el `flush` explícito y exige que termine sin excepción. Fallo de WebStorage, excepción síncrona al
+iniciar `removeAllCookies` y excepción del `flush` requerido siguen devolviendo fallo. No cambia el
+alcance por origin, la admisión de owner/caché G31 ni los límites de navigation epoch, Client TLS o
+firma.
+
+**Verificación:** RED específico `job_20260808_235600_41550741` con fallo exacto de semántica,
+GREEN Debug+QA, controles negativos, suites adyacentes 34/34 por variante y full JVM 568/568 por
+variante; lint/build, Python, Go, Android artifact y release fail-closed pasan. La evidencia es JVM
+y no sustituye una validación física de WebView/portal.

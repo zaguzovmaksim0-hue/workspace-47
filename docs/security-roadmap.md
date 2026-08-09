@@ -950,3 +950,25 @@ Latest autonomous hardening — Afirma frame UI isolation (G28-01):
   variant; lint/build 0 errors / 26 warnings per variant; Python 102 with one environmental skip;
   Go test/vet/build, Android artifacts and release fail-closed PASS. Automated evidence does not
   claim that `clearCache(true)` deletes every WebView persistence class or any physical portal E2E.
+
+## Autonomous global cookie-removal completion semantics — 2026-08-09 (G32-01)
+
+- Android `CookieManager.removeAllCookies(ValueCallback<Boolean>)` reports whether any cookies
+  were removed; its callback Boolean is not an operation-success flag. The previous global
+  cleaner treated `false` as failure, so an already-cookie-empty browser could report failed
+  deletion after WebStorage had been cleared and skip the normal owner-bound reload.
+- `SiteDataCleaner.clearAllConfirmed` now treats callback delivery with `cookiesRemoved=false` as
+  a completed no-op. When `cookiesRemoved=true`, the existing explicit `flush()` remains required
+  and a flush exception fails the operation. WebStorage failure and synchronous cookie-removal
+  failure also remain fail-closed.
+- Scope is limited to completion semantics. Current-site cookie scope, G31 cache/owner admission,
+  G29 navigation epoch, Client TLS, signing, origin/path allowlists, profile/release state and
+  dependencies are unchanged.
+- Evidence: RED `job_20260808_235600_41550741` / XML
+  `job_20260808_235737_4c16fb1a`; targeted GREEN `job_20260808_235805_2207a2e6`; adjacent
+  Debug+QA 34/34 per variant `job_20260809_000237_d45fd816` /
+  `job_20260809_000839_58a1d080`; fresh full JVM 568/568 per variant
+  `job_20260809_000918_6f64ad07` / `job_20260809_001837_6a360eef`; lint/build 124/124
+  `job_20260809_001848_27c31a82`; Python 102 with one environmental hardlink skip plus Go
+  test/vet/build `job_20260809_000927_2110067c`; Android artifact verification
+  `job_20260809_055602_c2cc7c42` and release fail-closed `job_20260809_055624_6cb60b76` PASS.

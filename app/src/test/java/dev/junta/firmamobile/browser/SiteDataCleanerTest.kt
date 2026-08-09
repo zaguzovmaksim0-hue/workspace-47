@@ -101,6 +101,66 @@ class SiteDataCleanerTest {
     }
 
     @Test
+    fun globalDeletionTreatsNoCookiesRemovedAsSuccessfulCompletion() {
+        val cookies = FakeCookieStore(removeAllResult = false)
+        val storage = FakeSiteWebStorage()
+        val cleaner = SiteDataCleaner(cookies, storage)
+        var callback: Boolean? = null
+
+        cleaner.clearAllConfirmed { callback = it }
+
+        assertEquals(1, cookies.removeAllCalls)
+        assertEquals(1, storage.deleteAllCalls)
+        assertEquals(0, cookies.flushCalls)
+        assertEquals(true, callback)
+    }
+
+    @Test
+    fun globalDeletionStillFailsWhenWebStorageClearThrows() {
+        val cookies = FakeCookieStore(removeAllResult = false)
+        val storage = FakeSiteWebStorage(failDeleteAll = true)
+        val cleaner = SiteDataCleaner(cookies, storage)
+        var callback: Boolean? = null
+
+        cleaner.clearAllConfirmed { callback = it }
+
+        assertEquals(1, storage.deleteAllCalls)
+        assertEquals(1, cookies.removeAllCalls)
+        assertEquals(0, cookies.flushCalls)
+        assertEquals(false, callback)
+    }
+
+    @Test
+    fun globalDeletionStillFailsWhenRemovedCookieFlushThrows() {
+        val cookies = FakeCookieStore(removeAllResult = true, failFlush = true)
+        val storage = FakeSiteWebStorage()
+        val cleaner = SiteDataCleaner(cookies, storage)
+        var callback: Boolean? = null
+
+        cleaner.clearAllConfirmed { callback = it }
+
+        assertEquals(1, storage.deleteAllCalls)
+        assertEquals(1, cookies.removeAllCalls)
+        assertEquals(1, cookies.flushCalls)
+        assertEquals(false, callback)
+    }
+
+    @Test
+    fun globalDeletionStillFailsWhenCookieRemovalCannotStart() {
+        val cookies = FakeCookieStore(failRemoveAll = true)
+        val storage = FakeSiteWebStorage()
+        val cleaner = SiteDataCleaner(cookies, storage)
+        var callback: Boolean? = null
+
+        cleaner.clearAllConfirmed { callback = it }
+
+        assertEquals(1, storage.deleteAllCalls)
+        assertEquals(1, cookies.removeAllCalls)
+        assertEquals(0, cookies.flushCalls)
+        assertEquals(false, callback)
+    }
+
+    @Test
     fun globalDeletionRunsOnlyThroughTheSeparatelyConfirmedMethod() {
         val cookies = FakeCookieStore(removeAllResult = true)
         val storage = FakeSiteWebStorage()
@@ -126,6 +186,7 @@ class SiteDataCleanerTest {
 
     private class FakeSiteWebStorage(
         private val failDeleteOrigin: Boolean = false,
+        private val failDeleteAll: Boolean = false,
     ) : SiteWebStorage {
         val deletedOrigins = mutableListOf<String>()
         var deleteAllCalls = 0
@@ -137,12 +198,15 @@ class SiteDataCleanerTest {
 
         override fun deleteAllData() {
             deleteAllCalls += 1
+            if (failDeleteAll) error("storage unavailable")
         }
     }
 
     private class FakeCookieStore(
         private val cookieInfo: List<String> = emptyList(),
         private val removeAllResult: Boolean = true,
+        private val failFlush: Boolean = false,
+        private val failRemoveAll: Boolean = false,
     ) : WebCookieStore {
         val infoUrls = mutableListOf<String>()
         val writes = mutableListOf<Pair<String, String>>()
@@ -162,10 +226,12 @@ class SiteDataCleanerTest {
 
         override fun flush() {
             flushCalls += 1
+            if (failFlush) error("flush unavailable")
         }
 
         override fun removeAllCookies(callback: (Boolean) -> Unit) {
             removeAllCalls += 1
+            if (failRemoveAll) error("cookie removal unavailable")
             callback(removeAllResult)
         }
     }

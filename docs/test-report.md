@@ -3007,3 +3007,48 @@ No APK was installed or launched; no ADB/device control, authenticated portal in
   `job_20260808_234015_16462724` passed `CiPolicyTest` 20/20 and `git diff --check`.
 - No APK install/launch, device control, authenticated portal interaction, credential/private-key
   use, real signing, upload, payment or administrative submission occurred.
+
+## Autonomous G32-01 — global cookie-removal completion semantics — 2026-08-09
+
+- Finding: `SiteDataCleaner.clearAllConfirmed` previously interpreted the Boolean delivered by
+  `CookieManager.removeAllCookies` as operation success. Android defines it as whether any cookies
+  were removed. Consequently a completed removal with zero cookies plus successful WebStorage
+  deletion was reported as failure and the normal exact-owner reload was skipped.
+- RED `job_20260808_235600_41550741` failed the single Debug regression exactly at
+  `expected:<true> but was:<false>`; XML `job_20260808_235737_4c16fb1a` records 1 test, 1 failure,
+  zero errors/skips. Minimum production GREEN renames the result to `cookiesRemoved`, preserves a
+  required flush only for `true`, and treats callback `false` as completed no-op.
+- Targeted Debug+QA GREEN `job_20260808_235805_2207a2e6` passed. Failure controls added for
+  WebStorage exception, required-flush exception and synchronous remove-all exception. Adjacent
+  `job_20260809_000237_d45fd816`, parsed by `job_20260809_000839_58a1d080`, passed 34/34 per
+  variant: `SiteDataCleanerTest` 9, `BrowserDataClearCompletionLeaseTest` 3 and
+  `BrowserSecurityRegressionTest` 22, zero failures/errors/skips.
+- Fresh full runtime-lock/core/AAPT2 + JVM `job_20260809_000918_6f64ad07` passed 63/63 executed
+  tasks; XML aggregation `job_20260809_001837_6a360eef` confirms Debug 568/568 and QA 568/568,
+  zero failures/errors/skips. Fresh lint/build `job_20260809_001848_27c31a82` passed 124/124
+  tasks with 0 lint errors / 26 warnings per variant.
+- APK SHA-256 from `job_20260809_055602_c2cc7c42`: Debug
+  `8e5d559db59442813436e5a3f971e79ba1a8f2eb55700c543996815c698a938e`, QA
+  `26f99e4d1000e52048a7e3bf8d97ad136b1788e786301e8d1d90d4fc0da1eeeb`, QA AndroidTest
+  `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`; Android artifact
+  verification passed. Fresh non-Android `job_20260809_000927_2110067c` passed Python 102 tests
+  with one environmental hardlink skip plus Go `test ./... -count=1`, `go vet ./...` and relay
+  build; relay SHA-256 was
+  `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`.
+- Release-signing fail-closed `job_20260809_055624_6cb60b76` passed without private signing inputs
+  and left zero release APKs. Cleanup `job_20260809_055744_db11b800` removed the generated relay
+  and reconfirmed zero release APKs. Pre-evidence diff/security review
+  `job_20260809_055800_766bc466` passed `git diff --check`, exact four-file pre-evidence scope,
+  unsafe-production and sensitive-added-line scans.
+- Independent Luna reviewer `worker-2` reported no Critical or Important findings. Its only Minor
+  note was that the fake cookie callback is synchronous and does not independently exercise delayed
+  callback/exactly-once delivery; no implementation defect or trust-boundary regression was found.
+- Post-evidence focused rerun `job_20260809_060109_5c1beee4`, parsed by
+  `job_20260809_060833_11f7c4a3`, passed Debug 34/34 + QA 34/34 with zero
+  failures/errors/skips and 60/60 tasks executed. Post-evidence policy/scope gate
+  `job_20260809_060121_368c3e24` passed `CiPolicyTest` 20/20, `git diff --check`, exact 10-file
+  scope and unsafe/sensitive added-line review.
+- No APK was installed/launched; no ADB/device control, authenticated portal interaction,
+  credential/private-certificate use, real signing, upload, payment or administrative submission
+  occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility,
+  TalkBack/visual validation and supported-Linux Go race remain external gates.
