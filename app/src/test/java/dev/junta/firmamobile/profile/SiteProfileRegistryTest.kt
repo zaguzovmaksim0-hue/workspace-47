@@ -56,6 +56,38 @@ class SiteProfileRegistryTest {
         assertEquals(TrustMode.BROWSE_ONLY, facadeResolved?.trustMode)
     }
     @Test
+    fun `JCCM certificate probe is QA-only and origin exact`() {
+        val profileId = ProfileId("jccm-certificate-login-probe")
+        val startUri = URI(
+            "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
+                "formularios/identificacion.phtml",
+        )
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUri))
+
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(1, profile?.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(startUri)?.trustMode,
+        )
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://ventanillaelectronica.jccm.es.evil.example/"),
+            ),
+        )
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://ventanillaelectronica.jccm.es:444/"),
+            ),
+        )
+    }
+
+    @Test
     fun `release and qa resolve verified aragon siraw login`() {
         val profileId = ProfileId("aragon-siraw")
         val startUri = URI("https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw")

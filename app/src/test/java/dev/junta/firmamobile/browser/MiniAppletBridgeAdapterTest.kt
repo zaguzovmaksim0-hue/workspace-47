@@ -343,6 +343,82 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactJccmProbeNormalizesOnlyTheFiveDecodedAsciiBytes() {
+        val result = adapterFor(JCCM_PROFILE_ID).route(
+            rawMessage = jccmMessage(),
+            sourceOrigin = JCCM_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 45,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(JCCM_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("ventanillaelectronica.jccm.es", request.context.origin.host)
+            assertEquals(45, request.context.navigationEpoch)
+            assertEquals(JCCM_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(JCCM_DATA, data)
+                    assertEquals("", properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun jccmProbeRejectsEveryWrongContractDimensionWithoutGenericCadesBroadening() {
+        val valid = jccmMessage()
+
+        assertRejected(
+            valid,
+            Uri.parse("https://ventanillaelectronica.jccm.es.evil.example"),
+            true,
+            adapterFor(JCCM_PROFILE_ID),
+        )
+        assertRejected(valid, JCCM_ORIGIN, false, adapterFor(JCCM_PROFILE_ID))
+        assertRejected(valid, JCCM_ORIGIN, true, adapterFor("junta-andalucia"))
+        assertRejected(
+            jccmMessage(algorithm = "SHA256withRSA"),
+            JCCM_ORIGIN,
+            true,
+            adapterFor(JCCM_PROFILE_ID),
+        )
+        assertRejected(
+            jccmMessage(format = "XAdES Detached"),
+            JCCM_ORIGIN,
+            true,
+            adapterFor(JCCM_PROFILE_ID),
+        )
+        assertRejected(
+            jccmMessage(dataB64 = Base64.getEncoder().encodeToString("ABCDF".encodeToByteArray())),
+            JCCM_ORIGIN,
+            true,
+            adapterFor(JCCM_PROFILE_ID),
+        )
+        assertRejected(
+            jccmMessage(extraProperties = "unexpected=value"),
+            JCCM_ORIGIN,
+            true,
+            adapterFor(JCCM_PROFILE_ID),
+        )
+        assertRejected(
+            jccmMessage(extraProperties = " "),
+            JCCM_ORIGIN,
+            true,
+            adapterFor(JCCM_PROFILE_ID),
+        )
+        val nullProperties = adapterFor(JCCM_PROFILE_ID).route(
+            rawMessage = jccmMessage(extraProperties = JSONObject.NULL),
+            sourceOrigin = JCCM_ORIGIN,
+            isMainFrame = true,
+        ) as MiniAppletBridgeRouteResult.Accepted
+        nullProperties.request.normalized.close()
+    }
+
+    @Test
     fun juntaOfvirtualRejectsWrongActiveProfileAndStaleCallbackClearsFailClosed() {
         val wrongProfile = adapterFor("junta-andalucia").route(
             rawMessage = ofvirtualMessage(),
@@ -657,6 +733,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", EXTRA_PROPERTIES)
         .toString()
 
+    private fun jccmMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(JCCM_DATA),
+        algorithm: String = "SHA1withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = "",
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private fun ofvirtualMessage(): String = JSONObject()
         .put("type", "MINIAPPLET_SIGN")
         .put("documentId", DOCUMENT_ID)
@@ -717,7 +808,10 @@ class MiniAppletBridgeAdapterTest {
         val OFVIRTUAL_ORIGIN: Uri = Uri.parse("https://ws072.juntadeandalucia.es")
         val ARAGON_ORIGIN: Uri = Uri.parse("https://aplicaciones.aragon.es")
         val UGR_ORIGIN: Uri = Uri.parse("https://sede.ugr.es")
+        val JCCM_ORIGIN: Uri = Uri.parse("https://ventanillaelectronica.jccm.es")
         const val UGR_PROFILE_ID = "ugr-certificado-login"
+        const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
+        const val JCCM_PROTOCOL_ID = "jccm-certificate-login-probe-local-cades-v1"
         const val UGR_PROTOCOL_ID = "ugr-certificado-login-local-cades-v1"
         val UGR_DATA = "Universidad de Granada".encodeToByteArray()
         val CANTABRIA_ORIGIN: Uri = Uri.parse("https://rec.cantabria.es")
@@ -725,6 +819,7 @@ class MiniAppletBridgeAdapterTest {
         const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"
         const val CANTABRIA_CHALLENGE = "0123456789abcdef0123456789abcdef01234567"
         const val CANTABRIA_EXTRA_PROPERTIES = "filters=\nmode=implicit"
+        val JCCM_DATA = "ABCDE".encodeToByteArray()
         const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =
             "filters=keyusage.digitalsignature:true;nonexpired:\n" +

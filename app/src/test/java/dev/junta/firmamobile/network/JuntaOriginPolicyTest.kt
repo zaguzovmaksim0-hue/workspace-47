@@ -28,6 +28,7 @@ class JuntaOriginPolicyTest {
     private val aeat = ProfileId("aeat-mis-datos-censales")
     private val dgt = ProfileId("dgt-verificacion-equipo")
     private val ugr = ProfileId("ugr-certificado-login")
+    private val jccm = ProfileId("jccm-certificate-login-probe")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -49,6 +50,7 @@ class JuntaOriginPolicyTest {
             "www1.agenciatributaria.gob.es",
             "sede.dgt.gob.es",
             "sede.ugr.es",
+            "ventanillaelectronica.jccm.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -106,6 +108,14 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(aeat).isEmpty())
         assertEquals(setOf("https://sede.dgt.gob.es"), JuntaOriginPolicy.webMessageOriginRules(dgt))
         assertEquals(setOf("https://sede.ugr.es"), JuntaOriginPolicy.webMessageOriginRules(ugr))
+        assertEquals(
+            setOf("ventanillaelectronica.jccm.es"),
+            JuntaOriginPolicy.browserAllowedHosts(jccm),
+        )
+        assertEquals(
+            setOf("https://ventanillaelectronica.jccm.es"),
+            JuntaOriginPolicy.webMessageOriginRules(jccm),
+        )
     }
 
     @Test

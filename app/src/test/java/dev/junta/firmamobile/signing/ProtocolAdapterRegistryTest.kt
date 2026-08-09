@@ -54,6 +54,17 @@ class ProtocolAdapterRegistryTest {
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), cantabria?.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), cantabria?.callbackContractId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), ugr?.callbackContractId)
+        val jccm = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("jccm-certificate-login-probe"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(
+            JccmCertificateLoginProbeCadesAdapter.ID,
+            jccm?.signingProtocolId,
+        )
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), jccm?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), jccm?.callbackContractId)
+
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),

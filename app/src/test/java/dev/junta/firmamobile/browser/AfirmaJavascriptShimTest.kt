@@ -157,6 +157,34 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun jccmCompatibilityPathIsProfileScopedToTheExactBase64ProbeContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val jccm = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            jccmCompatibilityEnabled = true,
+        )
+        val generic = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            jccmCompatibilityEnabled = false,
+        )
+
+        assertTrue(jccm.contains("const jccmCompatibilityEnabled = true"))
+        assertTrue(jccm.contains("https://ventanillaelectronica.jccm.es"))
+        assertTrue(jccm.contains("QUJDREU="))
+        assertTrue(jccm.contains("args[0] === jccmPayloadBase64"))
+        assertTrue(jccm.contains("SHA1withRSA"))
+        assertTrue(jccm.contains("CAdES"))
+        assertTrue(jccm.contains("args[3] === null || args[3] === \"\""))
+        assertTrue(jccm.contains("!jccmCompatibilityEnabled"))
+        assertFalse(jccm.contains("FORMPROC.submit()"))
+        assertTrue(generic.contains("const jccmCompatibilityEnabled = false"))
+    }
+
+    @Test
     fun nonUgrShimKeepsTheStrictGenericTransportMode() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(
