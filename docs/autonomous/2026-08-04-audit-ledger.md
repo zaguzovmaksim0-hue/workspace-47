@@ -1927,3 +1927,43 @@ No APK was installed/launched; no device control, authenticated portal interacti
 credential/private-certificate use, real signing, upload, payment or administrative submission
 occurred. Automated evidence establishes the legacy DataStore/string boundary only; physical SAF,
 certificate, TalkBack/visual and portal E2E validation are not inferred.
+
+## Portal G34-P01 — DGT public verification CAdES contract — 2026-08-09
+
+**Evidence and bounded implementation.** Official public unauthenticated DGT evidence at
+`https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/`
+loads DGT-owned `padi/main.js`; the observed exact local verification call is
+`MiniApplet.sign("Q2FkZW5hIGEgZmlybWFy", "SHA1withRSA", "CAdES", "filter=nonexpired:", ...)`,
+where the payload decodes to the fixed 15-byte ASCII text `Cadena a firmar`. The call exposes no
+signing/result endpoint, so none was invented. Local integration commit
+`fc52b0a68348f0f26e4ac368526ba7b58f62972f` adds QA-only profile
+`dgt-verificacion-equipo`, a fail-closed 15-byte detached CAdES adapter/bridge binding and exact
+catalog/inventory contract. The inventory state is `IMPLEMENTED_NOT_E2E`; the public catalog is
+`E2E_PENDING`. Release enablement and `VERIFIED_E2E` were not assigned.
+
+**TDD/debugging and verification.** The post-integration focused command initially exposed one stale
+aggregate catalog assertion: `PublicPortalCatalogParserTest` still expected eight bindings after the
+intentional ninth DGT binding. `job_20260809_093831_1bcb76fb` therefore failed exactly that invariant;
+the minimum follow-up changes only the expected count/set to include `dgt-verificacion-equipo`.
+Focused rerun `job_20260809_094540_9c864d10` passed the DGT/profile/bridge/adapter/catalog scope,
+the DGT/generator Python tests and `git diff --check`. Fresh runtime-lock/core/AAPT2 + full JVM
+`job_20260809_095254_f7473c75` passed Debug 580/580 and QA 580/580 with zero
+failures/errors/skips. Fresh non-Android `job_20260809_095302_c8db4835` passed Python 104 tests
+with one known environmental hardlink skip plus Go `test ./... -count=1`, `vet ./...` and relay
+build; relay SHA-256 was
+`dfc597a3db003d95b2cff09cf01d7ee758c7dc007d1a6187f27b8284441edc1d`.
+Lint/build `job_20260809_100359_43cefa6c` passed `lintDebug`, `lintQa`, `assembleDebug`,
+`assembleQa` and `assembleQaAndroidTest`; lint reports contain zero errors and 26 warnings per
+variant. Android artifact gate `job_20260809_101616_e7db7cc0` passed; APK SHA-256: Debug
+`facddad3559aa157c42beb6a1eefd4b89e8dd7a0beef714f7a4d588a75d13da7`, QA
+`a1fb1345fe9aa3e64a9857a48117f762770b7bb65a4624c724d49f439a1c95ba`, QA AndroidTest
+`efe2df331a82053cdba552ea89d2941757b6b6baec14cdc93169c7329cec9647`. Release fail-closed
+`job_20260809_101643_0c950db9` passed without private signing inputs and left zero release APKs.
+Cleanup `job_20260809_101830_145b9832` removed the generated relay and reconfirmed
+`git diff --check`.
+
+Added-hunk review found no private-key/certificate bodies, high-confidence cloud/token literals,
+TLS bypass, unsafe WebView bridge enablement or release QA-profile enablement. No APK was installed
+or launched; no ADB/device control, authenticated portal interaction, credentials/private-certificate
+material, real signing, upload, payment or administrative submission occurred. Physical DGT portal
+acceptance remains a manual E2E gate and is not inferred from static/public evidence or local tests.

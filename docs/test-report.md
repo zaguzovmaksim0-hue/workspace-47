@@ -3114,3 +3114,31 @@ No APK was installed or launched; no ADB/device control, authenticated portal in
   `git diff --check`, exact 12-file G34 scope, zero raw bidi controls and the added-line safety scan;
   the three portal-priority planning files remained excluded from G34.
 - No APK/device/portal/credential/private-key/real-signing/upload/payment/submission action occurred.
+
+## Autonomous Portal G34-P01 — DGT public verification CAdES contract — 2026-08-09
+
+- Official public DGT verification JS fixes the local tuple to the 15-byte payload `Cadena a firmar`,
+  `SHA1withRSA`, `CAdES` and exact extra properties `filter=nonexpired:`. No result/signing endpoint
+  appears in that invocation, so the QA-only implementation does not invent one.
+- Local integration commit `fc52b0a68348f0f26e4ac368526ba7b58f62972f` adds profile
+  `dgt-verificacion-equipo` as `VERIFIED_CONTRACT` / `QA_ONLY`; inventory is
+  `IMPLEMENTED_NOT_E2E`, public catalog status `E2E_PENDING`, never `VERIFIED_E2E`.
+- Focused post-integration RED `job_20260809_093831_1bcb76fb` isolated one stale aggregate test that
+  still expected eight profile bindings. The minimum test-only correction updates the expected count
+  and exact ID set; focused GREEN `job_20260809_094540_9c864d10` then passed DGT/profile/bridge/
+  adapter/catalog scope, Python DGT/generator tests and `git diff --check`.
+- Full JVM `job_20260809_095254_f7473c75`: Debug 580/580 + QA 580/580, zero
+  failures/errors/skips, with runtime-lock/core/AAPT2 guards. Non-Android
+  `job_20260809_095302_c8db4835`: Python 104 PASS with one environmental hardlink skip; Go
+  test/vet/build PASS; relay SHA-256
+  `dfc597a3db003d95b2cff09cf01d7ee758c7dc007d1a6187f27b8284441edc1d`.
+- Lint/build `job_20260809_100359_43cefa6c` PASS for Debug/QA/QA AndroidTest; lint Debug/QA
+  0 errors / 26 warnings. Artifact `job_20260809_101616_e7db7cc0` PASS. APK SHA-256: Debug
+  `facddad3559aa157c42beb6a1eefd4b89e8dd7a0beef714f7a4d588a75d13da7`; QA
+  `a1fb1345fe9aa3e64a9857a48117f762770b7bb65a4624c724d49f439a1c95ba`; QA AndroidTest
+  `efe2df331a82053cdba552ea89d2941757b6b6baec14cdc93169c7329cec9647`.
+- Release fail-closed `job_20260809_101643_0c950db9` PASS with zero release APKs; cleanup
+  `job_20260809_101830_145b9832` removed the generated relay. Added-hunk safety review found no
+  secret/certificate material, TLS bypass, unsafe WebView enablement or release QA-profile leak.
+- No APK/device/authenticated-portal/credential/private-key/real-signing/upload/payment/submission
+  action occurred. Physical DGT acceptance remains manual and no E2E claim is made.
