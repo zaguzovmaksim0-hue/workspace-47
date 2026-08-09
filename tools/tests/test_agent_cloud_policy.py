@@ -1,5 +1,10 @@
 from pathlib import Path
+import json
+import os
 import re
+import subprocess
+import sys
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -54,6 +59,58 @@ class AgentCloudPolicyTest(unittest.TestCase):
         self.assertIn("must not invoke `w47-cloud`", policy)
         self.assertIn("already running inside the Codex Cloud execution environment", launcher)
         self.assertIn("Do not invoke w47-cloud or codex cloud from inside this task", launcher)
+
+
+    def test_launcher_builds_cloud_prompt_without_shell_substitution(self) -> None:
+        branch = "agent/test-cloud-policy"
+        sha = "a" * 40
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            capture = tmp_path / "args.json"
+            fake_codex = tmp_path / "codex-fake"
+            fake_codex.write_text(
+                f"#!{sys.executable}\n"
+                "import json, os, sys\n"
+                "with open(os.environ['W47_CAPTURE'], 'w', encoding='utf-8') as f:\n"
+                "    json.dump(sys.argv[1:], f)\n",
+                encoding="utf-8",
+            )
+            fake_codex.chmod(0o700)
+            env = os.environ.copy()
+            env.update({
+                "W47_CODEX_BIN": str(fake_codex),
+                "W47_CODEX_CLOUD_CACHE_DIR": str(tmp_path / "cache"),
+                "W47_CAPTURE": str(capture),
+            })
+            result = subprocess.run(
+                [
+                    str(ROOT / "tools/w47-cloud"),
+                    "gradle",
+                    "--branch", branch,
+                    "--sha", sha,
+                    "verifyResolvedCoreVersion",
+                    "testDebugUnitTest",
+                ],
+                cwd=ROOT,
+                env=env,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stderr, "")
+            args = json.loads(capture.read_text(encoding="utf-8"))
+            self.assertEqual(args[:6], [
+                "cloud", "exec", "--env", "6a785cdf2c8c8191ba25607f44962899", "--branch", branch,
+            ])
+            prompt = args[6]
+            self.assertIn("workspace-47-android", prompt)
+            self.assertIn(f"`{sha}`", prompt)
+            self.assertIn(
+                "`./gradlew verifyResolvedCoreVersion testDebugUnitTest --no-daemon --console=plain`",
+                prompt,
+            )
+            self.assertIn("Do not invoke w47-cloud or codex cloud from inside this task", prompt)
 
     def test_launcher_requires_exact_sha_and_has_full_gate(self) -> None:
         text = self.read("tools/w47-cloud")

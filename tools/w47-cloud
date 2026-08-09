@@ -73,7 +73,7 @@ submit_gradle() {
   tasks=${tasks% }
   prompt=$(cat <<PROMPT
 Read-only Gradle verification for workspace-47. Do not modify repository files, commit, or push.
-You are already running inside the Codex Cloud execution environment `workspace-47-android`. The Cloud-only delegation requirement is satisfied at this layer.
+You are already running inside the Codex Cloud execution environment workspace-47-android. The Cloud-only delegation requirement is satisfied at this layer.
 Do not invoke w47-cloud or codex cloud from inside this task. Run the requested ./gradlew command directly in this Cloud VM.
 Before running Gradle, execute \`git rev-parse HEAD\` and fail the task unless it is exactly:
 \`$sha\`
