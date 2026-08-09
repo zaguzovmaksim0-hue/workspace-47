@@ -1823,3 +1823,53 @@ No APK installation/launch, device control, authenticated portal interaction,
 credential/private-certificate use, real signing, upload, payment or administrative submission
 occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility,
 TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## Finding G33-01 — certificate provider display-name bidi hardening — 2026-08-09
+
+**Finding.** `CertificateRepository.select()` accepts `OpenableColumns.DISPLAY_NAME` from an
+external `ContentProvider`, persists it in `StoredCertificateReference` and later presents it in
+trusted native certificate UI. The existing sanitizer removed C0 controls and DEL but retained
+Unicode bidi formatting controls, permitting a provider-supplied PKCS#12 name to visually reorder
+text. This is a UI-integrity/spoofing boundary; no certificate bytes, password, private key or
+signature disclosure was reproduced.
+
+**TDD and remediation.** Subordinate design/plan:
+`docs/superpowers/specs/2026-08-09-certificate-display-name-bidi-hardening-design.md` and
+`docs/superpowers/plans/2026-08-09-certificate-display-name-bidi-hardening.md`. RED
+`job_20260809_061849_7ac334d7`, parsed by `job_20260809_062203_2df5dc47`, failed exactly 1/1
+because U+202E and U+2066 survived the provider display name. The minimum production change removes
+only Unicode `Bidi_Control` U+061C, U+200E..U+200F, U+202A..U+202E and U+2066..U+2069 inside
+`sanitizeDisplayName()`. Ordinary printable Unicode, the 256-character presentation bound, blank
+fallback, URI/SAF policy and PKCS#12 MIME handling are unchanged. Octet-stream extension admission
+continues to use the original trimmed provider filename before presentation sanitization. Returned
+and persisted display names are identical. Focused Debug+QA GREEN
+`job_20260809_062238_b55ea965` passed; adjacent certificate/session/view-model
+`job_20260809_062810_5a8ca124`, parsed by `job_20260809_063542_038903d0`, passed 61/61 per
+variant with zero failures/errors/skips.
+
+**Independent review and verification.** Narrow Luna reviewer `worker-6` reported no Critical or
+Important findings. Its only Minor note was that the regression uses two representative controls
+rather than enumerating every code point; the approved design deliberately requires one repository
+regression while production uses the explicit closed BMP set. Earlier reviewer `worker-5` timed
+out without a verdict and is not counted as evidence. Fresh runtime-lock/core/AAPT2 + complete JVM
+`job_20260809_064502_0a3b3fd4` passed 63/63 Gradle tasks; XML aggregation
+`job_20260809_065218_d0b5d4aa` confirms Debug 569/569 and QA 569/569, zero
+failures/errors/skips. Fresh lint/build `job_20260809_065233_fa7e0074` passed 124/124 tasks with
+0 lint errors / 26 warnings per variant. Android artifact verification
+`job_20260809_070110_c77aadef` passed; APK SHA-256: Debug
+`84849c9626a1b0eefafca87a7e395ce852bf4196e25707d1d2129842f0155c4b`, QA
+`538d8082c187b55a0d3d2d8aec675b5fdaba660409550360ab6595479e6eec36`, QA AndroidTest
+`93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`. Fresh non-Android
+`job_20260809_064534_ce140f90` passed Python 102 tests with one environmental hardlink skip plus
+Go `test ./... -count=1`, `vet ./...` and relay build; relay SHA-256
+`b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Release fail-closed
+`job_20260809_070134_ca0d3d1d` passed with zero release APKs; cleanup
+`job_20260809_070255_f1a08f2f` removed the generated relay. Pre-evidence diff/sensitive/unsafe
+scan `job_20260809_065443_8a005566` passed. One initial `exec_start` transport failure and two
+later connector 502 status reads were transient transport failures; the preserved jobs completed
+successfully and are not product failures.
+
+No APK was installed/launched; no device control, authenticated portal interaction,
+credential/private-certificate use, real signing, upload, payment or administrative submission
+occurred. Automated evidence proves string-policy behavior only; physical SAF/certificate and
+portal acceptance are not inferred.

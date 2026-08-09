@@ -3052,3 +3052,32 @@ No APK was installed or launched; no ADB/device control, authenticated portal in
   credential/private-certificate use, real signing, upload, payment or administrative submission
   occurred. Physical AEAT F-03 Client TLS, real-portal JavaScript-dialog compatibility,
   TalkBack/visual validation and supported-Linux Go race remain external gates.
+
+## Autonomous G33-01 — certificate provider display-name bidi hardening — 2026-08-09
+
+- RED `job_20260809_061849_7ac334d7`, parsed by `job_20260809_062203_2df5dc47`: 1 test,
+  1 intended failure, zero errors/skips; U+202E/U+2066 survived the external provider name.
+- Minimum production policy strips the closed Unicode `Bidi_Control` set U+061C,
+  U+200E..U+200F, U+202A..U+202E and U+2066..U+2069 only. Focused Debug+QA GREEN
+  `job_20260809_062238_b55ea965` passed. Adjacent `job_20260809_062810_5a8ca124` /
+  `job_20260809_063542_038903d0` passed 61/61 per variant.
+- Independent reviewer `worker-6`: no Critical/Important findings; one Minor that the single
+  regression samples two representative bidi controls rather than enumerating the closed set.
+  `worker-5` timed out without result and is not counted as evidence.
+- Fresh full runtime-lock/core/AAPT2 + JVM `job_20260809_064502_0a3b3fd4`: 63/63 tasks;
+  XML `job_20260809_065218_d0b5d4aa`: Debug 569/569 + QA 569/569, zero
+  failures/errors/skips. Fresh lint/build `job_20260809_065233_fa7e0074`: 124/124 tasks,
+  lint 0 errors / 26 warnings per variant.
+- Artifact `job_20260809_070110_c77aadef` PASS. APK SHA-256: Debug
+  `84849c9626a1b0eefafca87a7e395ce852bf4196e25707d1d2129842f0155c4b`, QA
+  `538d8082c187b55a0d3d2d8aec675b5fdaba660409550360ab6595479e6eec36`, QA AndroidTest
+  `93fafec9159e4d229324522587da903147769f2de74e0e8d64fc8b3a422c0302`.
+- Non-Android `job_20260809_064534_ce140f90`: Python 102 PASS with one environmental hardlink
+  skip; Go test/vet/build PASS; relay SHA-256
+  `b1fe3bd217203c920d528259cbd5ae7db2e5d2c7bfaa595ad6fb84dd14d1f5d6`. Release fail-closed
+  `job_20260809_070134_ca0d3d1d` PASS with zero release APKs; cleanup
+  `job_20260809_070255_f1a08f2f` removed relay.
+- No APK install/launch, device control, authenticated portal interaction, credential/private-key
+  use, real signing, upload, payment or administrative submission occurred. Physical AEAT F-03,
+  real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go
+  race remain external gates.

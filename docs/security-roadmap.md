@@ -972,3 +972,18 @@ Latest autonomous hardening — Afirma frame UI isolation (G28-01):
   `job_20260809_001848_27c31a82`; Python 102 with one environmental hardlink skip plus Go
   test/vet/build `job_20260809_000927_2110067c`; Android artifact verification
   `job_20260809_055602_c2cc7c42` and release fail-closed `job_20260809_055624_6cb60b76` PASS.
+
+## Autonomous certificate provider display-name bidi hardening — 2026-08-09 (G33-01)
+
+- External `ContentProvider` certificate display names are presentation-untrusted. The native
+  certificate reference now strips exactly Unicode `Bidi_Control` U+061C, U+200E..U+200F,
+  U+202A..U+202E and U+2066..U+2069 before persistence/display, preventing those controls from
+  visually reordering the trusted certificate-name surface.
+- Ordinary printable Unicode, the 256-character display bound and blank fallback remain. For
+  `application/octet-stream`, `.p12`/`.pfx` admission still uses the original trimmed provider
+  filename before display sanitization; URI, SAF, PKCS#12 loading, password and signing behavior
+  are unchanged.
+- RED proved U+202E/U+2066 survived previously; focused and adjacent GREEN passed. Independent
+  review found no Critical/Important issue. Fresh full JVM is 569/569 per variant; lint/build,
+  Python/Go, Android artifacts and release fail-closed pass. This is automated UI-integrity
+  evidence only and does not claim physical certificate picker or portal E2E validation.

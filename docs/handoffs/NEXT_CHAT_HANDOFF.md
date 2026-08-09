@@ -1534,3 +1534,24 @@ After remote verification of the containing G15-01 commit, continue a fresh inde
   remote-SHA/clean-worktree verification. No device/portal/credential/private-signing/
   upload/payment/submission action occurred. External gates remain physical AEAT F-03 Client TLS,
   real-portal JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race.
+
+## Autonomous audit G33-01 — certificate provider display-name bidi hardening — 2026-08-09
+
+- G32 was already published as `8301f1bce338f18397c06943d8fa476755bb088e`; do not repeat it.
+- G33 reproduces a separate trusted-UI spoofing boundary: an external certificate provider name
+  could retain Unicode bidi controls. The minimum fix strips only U+061C, U+200E..U+200F,
+  U+202A..U+202E and U+2066..U+2069 at display sanitization; ordinary Unicode, 256-character
+  bound, blank fallback, raw-name octet-stream extension admission, URI/SAF, PKCS#12 and signing
+  behavior remain unchanged.
+- RED `job_20260809_061849_7ac334d7` / parser `job_20260809_062203_2df5dc47`; focused GREEN
+  `job_20260809_062238_b55ea965`; adjacent 61/61 per variant
+  `job_20260809_062810_5a8ca124` / `job_20260809_063542_038903d0`.
+- Reviewer `worker-6` found no Critical/Important issue; one Minor test-coverage note only.
+  Fresh full JVM `job_20260809_064502_0a3b3fd4` / `job_20260809_065218_d0b5d4aa` =
+  569/569 per variant; lint/build `job_20260809_065233_fa7e0074` = 124/124 tasks, 0 lint errors /
+  26 warnings; Python 102 with one environmental hardlink skip + Go PASS; artifact and release
+  fail-closed PASS; relay removed and release APK count zero.
+- Publication is one atomic G33 commit on the autonomous branch after post-evidence focused/policy
+  and exact staged review. No APK/device/portal/credential/private-signing/upload/payment/
+  submission action occurred. External manual gates remain AEAT F-03 Client TLS, real-portal
+  JavaScript-dialog compatibility, TalkBack/visual validation and supported-Linux Go race.

@@ -72,6 +72,24 @@ class CertificateRepositoryTest {
     }
 
     @Test
+    fun stripsUnicodeBidiControlsFromProviderDisplayName() = runTest {
+        val access = FakeDocumentAccess().apply {
+            metadata = CertificateDocumentMetadata(
+                displayName = "cert\u202Eevil\u2066.p12",
+                mimeType = "application/pkcs12",
+                size = 1024,
+            )
+        }
+        val store = FakeReferenceStore()
+
+        val result = repository(access, store).select(Uri.parse("content://documents/bidi-name"))
+
+        val success = result as CertificateSelectionResult.Success
+        assertEquals("certevil.p12", success.reference.displayName)
+        assertEquals("certevil.p12", store.reference?.displayName)
+    }
+
+    @Test
     fun officialPkcs12MimeDoesNotDependOnProviderFilename() = runTest {
         val access = FakeDocumentAccess().apply {
             metadata = CertificateDocumentMetadata(

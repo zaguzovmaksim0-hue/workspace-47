@@ -525,3 +525,23 @@ firma.
 GREEN Debug+QA, controles negativos, suites adyacentes 34/34 por variante y full JVM 568/568 por
 variante; lint/build, Python, Go, Android artifact y release fail-closed pasan. La evidencia es JVM
 y no sustituye una validación física de WebView/portal.
+
+### T24. Un nombre de certificado del proveedor reordena visualmente la UI nativa
+
+**Riesgo:** `OpenableColumns.DISPLAY_NAME` procede de un `ContentProvider` externo. Aunque el
+archivo sea admisible como PKCS#12, caracteres Unicode de control bidireccional pueden alterar el
+orden visual del nombre persistido y mostrado dentro de la UI nativa de confianza. El riesgo es
+suplantación/integridad de presentación; no demuestra exposición de bytes del certificado,
+contraseña, clave privada ni firma.
+
+**Controles:** `CertificateRepository` elimina en el límite de presentación exactamente
+`Bidi_Control` U+061C, U+200E..U+200F, U+202A..U+202E y U+2066..U+2069 antes de persistir el
+`displayName`. Se conservan Unicode imprimible ordinario, límite de 256 caracteres y fallback
+vacío. Para `application/octet-stream`, la admisión por extensión sigue usando el nombre original
+trimmed antes de esta sanitización; por tanto el cambio no amplía archivos aceptados ni modifica
+URI/SAF, parsing PKCS#12, contraseña o firma.
+
+**Verificación:** RED específico con U+202E/U+2066, GREEN Debug+QA, suites adyacentes, reviewer
+independiente sin hallazgos Critical/Important, full JVM 569/569 por variante, lint/build,
+Python/Go, artifact y release fail-closed. La evidencia es automatizada y no sustituye picker SAF,
+certificado físico ni E2E de portal.

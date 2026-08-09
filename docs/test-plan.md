@@ -581,3 +581,20 @@ el job Linux debe seguir siendo obligatorio.
 - Independent review must have no unresolved Critical/Important issue. A synchronous test fake is
   acceptable for this narrow semantic regression because production simply composes the platform
   completion callback; physical/device behavior is not inferred from it.
+
+## G33-01 — certificate provider display-name bidi hardening gate — 2026-08-09
+
+- RED: a valid official-PKCS12 provider display name containing U+202E and U+2066 must return and
+  persist the same plain name with those controls removed; unchanged production must fail only on
+  that display-name policy gap.
+- GREEN: remove exactly Unicode `Bidi_Control` U+061C, U+200E..U+200F, U+202A..U+202E and
+  U+2066..U+2069 at `sanitizeDisplayName()`. Preserve ordinary printable Unicode, the existing
+  256-character bound and blank fallback. Octet-stream extension admission must remain based on
+  the original trimmed provider name before display sanitization.
+- Required acceptance: focused/adjacent Debug+QA, independent review with no unresolved
+  Critical/Important finding, fresh runtime lock/core/AAPT2 + full Debug/QA JVM, lintDebug/lintQa,
+  Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build, Android artifact
+  verification, release-signing fail-closed, APK hashes, relay removal, zero release APKs,
+  `git diff --check`, changed-content safety review and `CiPolicyTest`.
+- Automated tests establish the repository/native-string boundary only. They do not establish a
+  physical SAF picker, real certificate, TalkBack/visual rendering or portal E2E result.
