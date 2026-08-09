@@ -20,6 +20,19 @@ Chats carries exact state between 40-minute generations.
 BouncyCastle, OkHttp, XMLSec, Gradle 9.4.1, Python `unittest`, Go 1.26.5, GitHub
 Actions, Gitleaks, OSV-Scanner, and govulncheck where available.
 
+## Binding priority amendment — 2026-08-09: Portal Coverage First
+
+The original task ordering below is retained as historical structure, but its scheduling priority is
+superseded by `docs/superpowers/specs/2026-08-09-portal-coverage-first-autonomous-priority-design.md`
+and `docs/superpowers/plans/2026-08-09-portal-coverage-first-autonomous-priority.md`.
+
+While public-evidence portal candidates remain autonomously actionable, portal contract research,
+profile/adapter implementation, tests, and catalog binding are Priority 1. Generic security,
+architecture, lifecycle, UX, accessibility, CI and fresh-audit milestones may preempt only for a
+concrete P0/P1-equivalent issue or a direct portal/publication blocker. The orchestration target is
+up to eight concurrent isolated native Codex/GPT-5.6 Luna Max implementation subagents whenever eight implementation-ready portal candidates exist. The `@Termuх agent_spawn` gateway cap of 3 is fallback-only and does not limit native Codex multi-agent concurrency. The primary KPI is growth in exact profile bindings and truthful implemented
+coverage, not audit-finding count.
+
 ## Global Constraints
 
 - Work only in `/data/data/com.termux/files/home/workspace-47-autonomous-20260803`.
