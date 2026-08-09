@@ -7,9 +7,9 @@
 ## Goal
 
 Define a fail-closed, QA-only Melilla AutoFirma batch contract without
-changing the existing ordinary `MiniApplet.sign` route. The first tracer
-slice must make the missing dedicated batch route observable through the
-public native-routing seam.
+changing the existing ordinary `MiniApplet.sign` route. The first RED slice
+must pin the ordinary adapter's `NotApplicable` invariant and make the first
+missing batch behavior observable through the closest existing public seam.
 
 ## Global constraints
 
@@ -29,26 +29,37 @@ public native-routing seam.
 **Files changed now:**
 
 - `app/src/test/java/dev/junta/firmamobile/browser/MelillaBatchBridgeAdapterTest.kt`.
+- `app/src/test/java/dev/junta/firmamobile/browser/AfirmaJavascriptShimTest.kt`.
 
-The test sends a synthetic internal batch envelope containing only the
+The adapter test sends a synthetic internal batch envelope containing only the
 evidence-backed `signInfo` fields: `batchPreSignerUrl`, `batchPostSignerUrl`,
 `documentos[].id`, `documentos[].datareference`, the RSA/SHA256 + CAdES + sign
 defaults, and `stopOnError=false`. The URLs use only the evidence-backed
 same-origin `/sta/AutofirmaLote` family and the exact `presign`, `postsign`, and
-`getdata` query shapes.
+`getdata` query shapes. It asserts that the ordinary
+`MiniAppletBridgeAdapter.route` result is exactly
+`MiniAppletBridgeRouteResult.NotApplicable`; this is a permanent single-sign
+boundary invariant, not the RED assertion.
 
-The observable assertions are:
+The separate RED tracer calls the existing public
+`AfirmaJavascriptShim.load` seam in functional mode and requires:
 
-1. the public route is not `MiniAppletBridgeRouteResult.Accepted`; and
-2. the result is not `MiniAppletBridgeRouteResult.NotApplicable`.
+1. the document-start script recognizes `AutoScript.signBatchProcess`; and
+2. it emits the dedicated `MINIAPPLET_BATCH` discriminator.
 
-The second assertion is intentionally RED today: the current single-sign
-adapter does not recognize the dedicated batch discriminator and returns
-`NotApplicable`. A later implementation must add a distinct batch result and
-dispatch it before the ordinary single-sign adapter. It must not make the
-batch envelope satisfy the existing single-sign key set.
+The second tracer is intentionally RED today: `afirma_shim.js` currently hooks
+ordinary `sign` only and emits `MINIAPPLET_SIGN`; it has no batch document-start
+path. This is a deterministic behavioral contract failure, not a missing
+production symbol. The real native composition seam remains
+`WebMessageBridge.receive` (diagnostics → ordinary adapter → generic router),
+but it has no batch adapter/reply injection point today and its private receive
+method cannot expose dedicated acceptance without inventing production API or
+an unproven reply schema. A raw batch envelope therefore currently falls
+through to generic `UNSUPPORTED_TYPE` rejection. The later implementation must
+add the dedicated adapter at that composition boundary, before ordinary
+single-sign routing, and then add a bridge-level behavior test at that seam.
 
-### Cloud-only RED command (orchestrator runs after push)
+### Cloud-only invariant guard (orchestrator may run after push)
 
 ```bash
 BRANCH="$(git branch --show-current)"
@@ -56,10 +67,24 @@ SHA="$(git rev-parse HEAD)"
 w47-cloud gradle --branch "$BRANCH" --sha "$SHA" :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.MelillaBatchBridgeAdapterTest'
 ```
 
-Expected concrete failure: the focused test reaches the current public
-`MiniAppletBridgeAdapter.route` and fails its dedicated-route assertion with
-the actual result `MiniAppletBridgeRouteResult.NotApplicable`; no production
-batch route exists yet. This worker does not run the command.
+Expected result: the invariant test passes with the current source. It must
+remain green after the dedicated composition route is implemented. This worker
+does not run the command.
+
+### Cloud-only RED tracer (orchestrator runs after push)
+
+```bash
+BRANCH="$(git branch --show-current)"
+SHA="$(git rev-parse HEAD)"
+w47-cloud gradle --branch "$BRANCH" --sha "$SHA" :app:testDebugUnitTest --tests 'dev.junta.firmamobile.browser.AfirmaJavascriptShimTest'
+```
+
+Expected concrete failure: `documentStartShimHasTheMissingMelillaBatchBridgeContract`
+fails because the current document-start script does not contain
+`signBatchProcess` (and therefore does not contain the dedicated
+`MINIAPPLET_BATCH` message path). The failure identifies the missing first
+behavioral link before any native batch adapter is added. This worker does not
+run the command.
 
 ## Task 2 — first GREEN vertical slice (later worker phase)
 
@@ -166,9 +191,9 @@ material, E2E claim, or ordinary single-sign relaxation. Commit only the
 candidate-specific files.
 
 For this RED phase, run only `git diff --check`, inspect the complete diff,
-and commit these three files with:
+and commit these four files with:
 
 ```bash
-git add docs/superpowers/specs/2026-08-09-melilla-autofirma-batch-contract-design.md docs/superpowers/plans/2026-08-09-melilla-autofirma-batch-contract.md app/src/test/java/dev/junta/firmamobile/browser/MelillaBatchBridgeAdapterTest.kt
-git commit -m "test(portal): define Melilla batch contract"
+git add docs/superpowers/specs/2026-08-09-melilla-autofirma-batch-contract-design.md docs/superpowers/plans/2026-08-09-melilla-autofirma-batch-contract.md app/src/test/java/dev/junta/firmamobile/browser/MelillaBatchBridgeAdapterTest.kt app/src/test/java/dev/junta/firmamobile/browser/AfirmaJavascriptShimTest.kt
+git commit -m "test(portal): correct Melilla batch RED seam"
 ```

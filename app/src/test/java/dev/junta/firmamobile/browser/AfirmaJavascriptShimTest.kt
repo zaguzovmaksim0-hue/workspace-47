@@ -132,6 +132,25 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun documentStartShimHasTheMissingMelillaBatchBridgeContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val functional = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+
+        assertTrue(
+            "The document-start shim must recognize AutoScript.signBatchProcess",
+            functional.contains("signBatchProcess"),
+        )
+        assertTrue(
+            "The document-start shim must emit the dedicated MINIAPPLET_BATCH discriminator",
+            functional.contains("MINIAPPLET_BATCH"),
+        )
+    }
+
+    @Test
     fun ugrCompatibilityPathIsProfileScopedAndUsesOnlyTheExactObservedContract() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(

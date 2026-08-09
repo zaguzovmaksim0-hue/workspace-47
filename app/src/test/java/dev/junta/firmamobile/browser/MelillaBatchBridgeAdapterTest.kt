@@ -4,8 +4,7 @@ import android.net.Uri
 import dev.junta.firmamobile.profile.ProfileId
 import org.json.JSONArray
 import org.json.JSONObject
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -19,7 +18,7 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class MelillaBatchBridgeAdapterTest {
     @Test
-    fun portalOwnedJsonBatchRequiresDedicatedRouteAndNeverBecomesSingleSign() {
+    fun portalOwnedJsonBatchRemainsNotApplicableToTheOrdinarySingleSignAdapter() {
         val result = MiniAppletBridgeAdapter(
             activeProfileId = { ProfileId("melilla-sede") },
         ).route(
@@ -29,16 +28,9 @@ class MelillaBatchBridgeAdapterTest {
             navigationEpoch = 7,
         )
 
-        assertFalse(
-            "A portal-owned batch must not be interpreted as ordinary MiniApplet.sign",
-            result is MiniAppletBridgeRouteResult.Accepted,
-        )
-        assertFalse(
-            "A portal-owned batch needs a dedicated native route",
-            result is MiniAppletBridgeRouteResult.Rejected,
-        )
-        assertNotEquals(
-            "The dedicated batch route is not implemented in the RED phase",
+        assertSame(
+            "The ordinary single-sign adapter must leave a portal-owned batch to the " +
+                "dedicated composition route",
             MiniAppletBridgeRouteResult.NotApplicable,
             result,
         )

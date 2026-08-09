@@ -22,16 +22,31 @@ entry.
 ## Seam decision
 
 Melilla's portal-owned `signInfo` JSON is a batch contract, not a variant of
-the existing `MiniApplet.sign` request. The minimum safe public seam is a
-dedicated `MelillaBatchBridgeAdapter` with a dedicated
-`MelillaBatchBridgeRouteResult` and `MelillaBatchRequest` interface.
+the existing `MiniApplet.sign` request. There are two seams in the native
+composition, and they must not be conflated:
 
-The existing `MiniAppletBridgeAdapter.route` and
-`MiniAppletBridgeRequest`/`NormalizedSignRequest` path remain single-sign
-only. A batch envelope must be dispatched before that route and must never be
-converted into `MiniAppletBridgeRouteResult.Accepted`. The first tracer test
-therefore asserts both facts: the batch request needs a non-`NotApplicable`
-dedicated result, and it is not an ordinary single-sign acceptance.
+1. `MiniAppletBridgeAdapter.route` is the public ordinary single-sign adapter.
+   Its `MiniAppletBridgeRequest`/`NormalizedSignRequest` path is intentionally
+   single-sign only. For `MINIAPPLET_BATCH` it must return exactly
+   `MiniAppletBridgeRouteResult.NotApplicable`; making it return a dedicated
+   result would couple the ordinary adapter to the batch protocol.
+2. `WebMessageBridge.receive` is the composition boundary. It currently runs
+   portal diagnostics, then the ordinary `miniAppletAdapter`, then the generic
+   `WebMessageRouter`. The eventual `MelillaBatchBridgeAdapter` must be
+   dispatched at this boundary before the ordinary adapter and must own a
+   dedicated `MelillaBatchBridgeRouteResult` / `MelillaBatchRequest` contract.
+
+The current bridge has no batch-adapter injection or batch reply channel, and
+`receive` is private. A unit test cannot observe dedicated acceptance there
+without first inventing a production API or an unproven reply shape. If a raw
+`MINIAPPLET_BATCH` envelope is manually sent to the current bridge, the
+ordinary adapter correctly returns `NotApplicable` and the generic router
+rejects the unsupported type. The closest existing public behavior seam is
+therefore the document-start `AfirmaJavascriptShim.load` contract: its RED
+tracer requires recognition of `AutoScript.signBatchProcess` and emission of
+the `MINIAPPLET_BATCH` discriminator, without asserting an invented result
+schema. A later bridge-level behavioral test belongs at `WebMessageBridge`
+once the dedicated production route exists.
 
 The future batch input adapter id is `melilla-batch-autoscript-v1`; it is an
 internal binding identifier, not a claim about a portal ABI. The future profile
@@ -125,7 +140,8 @@ Only the RED files below are changed in this phase:
 
 - `docs/superpowers/specs/2026-08-09-melilla-autofirma-batch-contract-design.md`;
 - `docs/superpowers/plans/2026-08-09-melilla-autofirma-batch-contract.md`;
-- `app/src/test/java/dev/junta/firmamobile/browser/MelillaBatchBridgeAdapterTest.kt`.
+- `app/src/test/java/dev/junta/firmamobile/browser/MelillaBatchBridgeAdapterTest.kt`;
+- `app/src/test/java/dev/junta/firmamobile/browser/AfirmaJavascriptShimTest.kt`.
 
 The later GREEN implementation is intentionally named here so the RED test
 has a stable public target:
