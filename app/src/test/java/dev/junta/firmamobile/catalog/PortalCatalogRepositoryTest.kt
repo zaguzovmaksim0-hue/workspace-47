@@ -60,11 +60,13 @@ class PortalCatalogRepositoryTest {
                 "aeat-mis-datos-censales",
                 "dgt-verificacion-equipo",
                 "ugr-certificado-login",
+                "cantabria-rec-cert-login",
+                "jccm-certificate-login-probe",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 12, metadataOnly.size)
+        assertEquals(qaPortals.size - 13, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
