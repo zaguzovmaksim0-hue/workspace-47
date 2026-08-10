@@ -2112,8 +2112,14 @@ the referenced `www30.asturias.es/Esign2/esign.jsp` could not be recovered throu
 network path. ACCEDA `/certificado/valida` reconfirmed a real public `afirma.firmar(callback)` hook
 with a changing server-issued `formularioweb`; current first-party helpers expose multiple signing
 branches, including `doSignSolicitud()` with SHA1withRSA/PAdES, but no loaded source proves that the
-wrapper selects that branch. Neither candidate was promoted by inference. Detailed hashes and
-bounded findings are in `docs/autonomous/2026-08-10-g42-portal-research-evidence.md`.
+wrapper selects that branch. Justicia's first-party theme helper proves SHA256withRSA/PAdES/implicit
+mode, but 11 current public procedure pages expose none of its expected DOM/call seam. MJusticia's
+public pre-auth login module exposes an inactive `accAfirma` XAdES Detached certificate-flow branch,
+but the current DOM omits that branch and none of the 10 directly loaded first-party scripts defines
+`accAfirma.signData` or its algorithm. SEPE's official FAQ confirms the certificate-signature
+AutoFirma handoff back to Sede but publishes no algorithm/format/payload/callback contract. No
+candidate was promoted by inference. Detailed hashes and bounded findings are in
+`docs/autonomous/2026-08-10-g42-portal-research-evidence.md`.
 
 **Current catalog accounting.** The committed/reproducible main catalog remains 182 entries with 12
 bound catalog surfaces and 170 unbound surfaces. There are 11 unique profile IDs because `us-sede`

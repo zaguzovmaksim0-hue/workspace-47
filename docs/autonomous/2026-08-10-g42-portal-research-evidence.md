@@ -72,6 +72,56 @@ or links the observed `afirma.firmar` wrapper to one specific AutoScript branch.
 `doSignSolicitud()` is not sufficient to prove that linkage. ACCEDA therefore remains
 `VERIFIED_CONTRACT`, not implementation-ready for a new runtime profile from this evidence alone.
 
+## Justicia Sede Judicial — theme helper versus live procedure binding
+
+The current first-party theme helper
+`https://sedejudicial.justicia.es/o/sedjude-theme/js/libs/firma.js?t=1781026126000` was fetched with
+SHA-256 `df9e4af8777b724a64c7a5fbbb772e5bd88ef99dc1ca504bb879bcb0e14ec1af`. It defines a concrete
+`MiniApplet.sign` helper using `SHA256withRSA`, `PAdES`, `mode=implicit`, the
+`#documentoDeclaracion` payload field, a success callback that obtains a same-origin token, and
+submission of `#formFirmaBorrador`.
+
+That library-level contract is not yet a public-procedure contract. A bounded GET-only crawl of 11
+current procedure pages linked from the official `/tramites` surface returned HTTP 200 for every
+page but found no `documentoDeclaracion`, `formFirmaBorrador`, `firma()` call, or `autofirma` DOM
+binding. The portal therefore remains research-only: the global helper must not be attached to an
+unobserved procedure flow.
+
+## Ministerio de Justicia — public pre-auth login module
+
+Three current public procedure URLs (`idp/75`, `idp/44`, and `idp/63`) redirect unauthenticated GETs
+to their corresponding `https://sede2.mjusticia.gob.es/login/index/idp/<id>` page. The rendered login
+page states that certificate signing may be required and that AutoFirma is required, but its current
+DOM offers only the Cl@ve form and does not contain `#submitBtnCertificate`, `#formCertificate`,
+`#pseudonym-signature`, or `#certificate`.
+
+The same public page nevertheless loads the first-party module
+`/js/modules/default/login/index.js?v2026081017`, SHA-256
+`a9a173e74c2d09781856021856ba40be9d48748aa979cbcb1d9cbc611f6e489c`. That module documents an
+inactive certificate branch which:
+
+- calls `accAfirma.selectCertificate("pseudonym", ...)`;
+- sends the selected certificate to `/login/get-info-from-pseudonym-certificate`;
+- builds an XML payload containing the returned certificate serial number and the current local
+  timestamp;
+- sets `XAdES Detached`, implicit mode, and the returned serial number before
+  `accAfirma.signData(...)`;
+- on success writes the signature into `#pseudonym-signature` and submits `#formCertificate`.
+
+All 10 first-party scripts directly loaded by the login page were scanned. None defines
+`accAfirma`, `signData`, or the signing algorithm, and no first-party dynamic loader for that wrapper
+was found. Because the branch is absent from the current DOM and the underlying wrapper/algorithm is
+not public in the observed surface, `mjusticia-sede` is not implementation-ready.
+
+## SEPE — public AutoFirma boundary
+
+The public pre-auth endpoint redirects to the official FAQ
+`https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma.html`. The current
+page states that AutoFirma is needed when the user identified with a digital certificate performs a
+procedure requiring a signature, and that AutoFirma communicates with the SEPE Sede to deliver the
+completed signature. The page does not expose the algorithm, signature format, payload, callback, or
+transport contract needed for a runtime profile. `sepe-sede` therefore remains research-only.
+
 ## Research queue result
 
 No candidate was promoted to implementation-ready in this research slice. The classified public
