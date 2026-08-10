@@ -2118,7 +2118,12 @@ public pre-auth login module exposes an inactive `accAfirma` XAdES Detached cert
 but the current DOM omits that branch and none of the 10 directly loaded first-party scripts defines
 `accAfirma.signData` or its algorithm. SEPE's official FAQ confirms the certificate-signature
 AutoFirma handoff back to Sede but publishes no algorithm/format/payload/callback contract. No
-candidate was promoted by inference. Detailed hashes and bounded findings are in
+candidate was promoted by inference. Comunidad de Madrid Registro now has an exact public launch URL,
+but the next functional step is an upload/POST that was not crossed. Cuenta Digital exposes a
+`firmar-documentos` microfrontend, but its published `SignsApiService` proves an authenticated
+server-mediated POST boundary rather than a browser-local AutoFirma ABI; credential-like/static
+authorization material observed in the public app configuration was deliberately not retained or
+used. Detailed hashes and bounded findings are in
 `docs/autonomous/2026-08-10-g42-portal-research-evidence.md`.
 
 **Current catalog accounting.** The committed/reproducible main catalog remains 182 entries with 12

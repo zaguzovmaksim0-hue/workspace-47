@@ -122,6 +122,50 @@ procedure requiring a signature, and that AutoFirma communicates with the SEPE S
 completed signature. The page does not expose the algorithm, signature format, payload, callback, or
 transport contract needed for a runtime profile. `sepe-sede` therefore remains research-only.
 
+## Comunidad de Madrid — Registro Electrónico General
+
+The official public Registro page links to the exact unauthenticated launch URL
+`https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm` and explicitly
+recommends AutoFirma for document signing. The launch page returns HTTP 200 and requires the user to
+select a procedure form before POSTing it to `InicioDistribuidorProcesa.icm`. That upload/POST step is
+outside the autonomous safety boundary and was not executed. The page's published equipment-check
+link `https://gestiona.madrid.org/ereg_virtual/run/j/InicioRequisitosAFC.icm` currently returned HTTP
+404. No public algorithm/format/payload/callback contract was recovered before the upload boundary, so
+`comunidad-madrid-sede` remains research-only.
+
+## Comunidad de Madrid — Cuenta Digital / external procedure route
+
+The official public SPA surface `https://digital.comunidad.madrid/ext/53F1` exposes a first-party
+configuration chain. The root shell loads `main.84fe736d0b3d70bb.js`; its first lazy chunk is
+`948.c7e949fb454f7c61.js` (SHA-256
+`92afddd42b59769a0ea02946ea2f3330ed379923d9b0464787ae7c0f86f37fb8`). That chunk points to the
+first-party Cuenta Digital application configuration. Only non-sensitive routing/version metadata was
+used from that configuration: Cuenta Digital v3.0.51 exposes route `firmar-documentos` backed by
+`cudc_mf_procedures` v3.9.1 / `SignatureComponent`, while `ext/:procedure` is marked as requiring
+authentication.
+
+The same public configuration resource also contained credential-like/static authorization material.
+Those values were neither retained, copied into the repository, used for any request, nor included in
+this evidence. No authenticated API was called.
+
+The procedures microfrontend remote entry
+`https://gestiona.comunidad.madrid/cudc_mf_procedures/3.9.1/remoteEntry.js` has SHA-256
+`598903446b7691ddfc593e91c824a24b0bc0b0dce1921177301e465fb922324c` and maps
+`SignatureComponent` to chunk `6900.0b93eaca147e5d5d.js` (SHA-256
+`f124f484f461df73d03962e413e4e9f19ef52f2441ff22c38320ca5e7d2e6e66`). That component is a
+multiple-signature UI for the 2026–2027 school-canteen scholarship flow. It reads `id`/`number` query
+parameters, obtains signer metadata through `SignsApiService.getSigners`, and sends the user's signing
+action through `SignsApiService.sendSign`. It contains no AutoFirma, AutoScript, MiniApplet,
+SHA*withRSA, PAdES, CAdES, or XAdES runtime string.
+
+`@mova3/cudc-lib-data-services/signs` resolves to the published static chunk
+`1191.ab499f58d559a08c.js`, SHA-256
+`19e33f1109fe21c8300963a4d31671d2c4df05c77bd983a4f0c00e6adb6d10da`. That service proves the
+boundary: `getSigners` and `sendSign` obtain an authenticated validation token and issue POST requests
+to signing BFF paths (`/firmantes/get` and `/firmas`) with bearer authorization. Those API calls were
+not executed. The observed surface is therefore an authenticated/server-mediated signing flow, not a
+public browser-local AutoFirma ABI that Junta Firma Mobile can implement autonomously.
+
 ## Research queue result
 
 No candidate was promoted to implementation-ready in this research slice. The classified public

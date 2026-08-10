@@ -33,9 +33,11 @@ Updated: 2026-08-10, generation 42.
   `task_e_6a78dc14b2d48323887a6abf2ad48bce` currently renders `READY` but exposes no terminal PASS/FAIL
   verdict through `w47-cloud status`; do not infer success from that label.
 - Research evidence: `docs/autonomous/2026-08-10-g42-portal-research-evidence.md` records current
-  first-party Asturias, ACCEDA, Justicia, MJusticia and SEPE findings without persisting volatile
-  server-issued values. None of these research candidates has a complete observed runtime binding;
-  do not promote them by inference.
+  first-party Asturias, ACCEDA, Justicia, MJusticia, SEPE and Comunidad de Madrid findings without
+  persisting volatile values or credential-like/static authorization material. Madrid Registro stops
+  at a prohibited upload/POST boundary; Cuenta Digital's published signing service is authenticated
+  and server-mediated, not a browser-local AutoFirma ABI. Do not promote these candidates by
+  inference.
 
 ## Current portal KPI
 
