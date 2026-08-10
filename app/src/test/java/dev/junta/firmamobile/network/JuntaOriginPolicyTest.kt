@@ -28,6 +28,7 @@ class JuntaOriginPolicyTest {
     private val aeat = ProfileId("aeat-mis-datos-censales")
     private val dgt = ProfileId("dgt-verificacion-equipo")
     private val ugr = ProfileId("ugr-certificado-login")
+    private val cantabria = ProfileId("cantabria-rec-cert-login")
     private val jccm = ProfileId("jccm-certificate-login-probe")
 
     @Test
@@ -50,6 +51,7 @@ class JuntaOriginPolicyTest {
             "www1.agenciatributaria.gob.es",
             "sede.dgt.gob.es",
             "sede.ugr.es",
+            "rec.cantabria.es",
             "ventanillaelectronica.jccm.es",
         )
 
@@ -82,6 +84,7 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.agenciatributaria.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aeat))
         assertEquals(setOf("sede.dgt.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgt))
         assertEquals(setOf("sede.ugr.es"), JuntaOriginPolicy.browserAllowedHosts(ugr))
+        assertEquals(setOf("rec.cantabria.es"), JuntaOriginPolicy.browserAllowedHosts(cantabria))
 
         assertEquals(
             setOf("https://www.juntadeandalucia.es"),
@@ -108,6 +111,10 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(aeat).isEmpty())
         assertEquals(setOf("https://sede.dgt.gob.es"), JuntaOriginPolicy.webMessageOriginRules(dgt))
         assertEquals(setOf("https://sede.ugr.es"), JuntaOriginPolicy.webMessageOriginRules(ugr))
+        assertEquals(
+            setOf("https://rec.cantabria.es"),
+            JuntaOriginPolicy.webMessageOriginRules(cantabria),
+        )
         assertEquals(
             setOf("ventanillaelectronica.jccm.es"),
             JuntaOriginPolicy.browserAllowedHosts(jccm),

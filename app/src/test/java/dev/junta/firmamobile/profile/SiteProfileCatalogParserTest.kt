@@ -592,11 +592,13 @@ class SiteProfileCatalogParserTest {
 
     @Test
     fun rejectsBlankFixedExtraPropertyOutsideCantabriaProfile() {
+        val exact = "\"filter\": \"nonexpired:\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(exact))
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(
                 BuiltInSiteProfiles.JSON.replaceFirst(
-                    "\"filters\": \"keyusage.digitalsignature:true;nonexpired:\"",
-                    "\"filters\": \"\"",
+                    exact,
+                    "\"filter\": \"\"",
                 ),
             )
         }
