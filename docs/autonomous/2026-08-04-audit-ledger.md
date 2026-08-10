@@ -2080,3 +2080,53 @@ installed/launched; no device control, authenticated portal navigation, credenti
 unlock/private-key material, real signing, form POST, upload, payment or administrative submission
 occurred. Physical UGR/DGT acceptance and the pre-existing AEAT Client-TLS, JavaScript-dialog,
 TalkBack/visual and supported-Linux Go-race gates remain manual/external.
+
+## Portal G42 — JCCM catalog recovery, Cloud quota blocker, and research refresh — 2026-08-10
+
+**Repository continuity and JCCM catalog slice.** Generation 42 re-established Termux access and
+began from clean autonomous HEAD `6b70856a2740594d169fa85d68276aa0a03ea60d`, exactly synchronized
+with `origin/agent/workspace-47-autonomous-20260803`; canonical remained
+`9c99bbfb36e13f88231d56001ccef8c4cbbce128` and autonomous remained ahead 72 / behind 0 from that
+merge-base. The durable local JCCM catalog branch was recovered rather than recreated. Its preserved
+RED commit is `a9b12c1`; the existing local GREEN `13616f8` was found to have overwritten broad
+JCCM surface `ES-PUB-0103` with the certificate-probe URL. A new red-capable generator test now
+requires the broad `https://www.jccm.es/` surface to remain `BROWSE_ONLY` and binds the exact
+certificate probe as a separate `ES-PUB-0183` surface. The corrected branch is published at
+`cd839875e13b60ea8009bb2c9ab18d3482a8c40e` (`agent/g39-jccm-catalog`). Eight generator tests pass,
+regeneration is byte-for-byte reproducible, `git diff --check` passes, and the added-content scan
+found no secret/TLS-bypass/dependency-verification weakening pattern. This branch is intentionally
+not integrated before the JCCM runtime/product slice is Cloud-verified.
+
+**JCCM exact-page RED and infrastructure result.** The exact-path RED branch remains published at
+`5eaad0966242fa30e35b8011ac3746c0012d9347`. Its `MiniAppletBridgeAdapterTest` requires the JCCM
+profile to accept only the exact public start URL and reject another path, query and fragment. The
+required Cloud-only focused submission was attempted through `$HOME/bin/w47-cloud`; Cloud task
+creation failed before Gradle execution with HTTP 429 `Usage limit exceeded`. No local Gradle
+fallback was used. Production `currentPageUrl` plumbing therefore remains unimplemented pending an
+accepted Cloud RED.
+
+**Public research refresh.** Current first-party Asturias evidence reconfirmed the public
+`MiniApplet.sign('SG9sYQ==', getAlgoritmoFirma(), 'XAdES', getParamsFirma(), ...)` simulation; the
+fixed payload decodes to `Hola`, while the algorithm and extra parameters remain unresolved because
+the referenced `www30.asturias.es/Esign2/esign.jsp` could not be recovered through the available
+network path. ACCEDA `/certificado/valida` reconfirmed a real public `afirma.firmar(callback)` hook
+with a changing server-issued `formularioweb`; current first-party helpers expose multiple signing
+branches, including `doSignSolicitud()` with SHA1withRSA/PAdES, but no loaded source proves that the
+wrapper selects that branch. Neither candidate was promoted by inference. Detailed hashes and
+bounded findings are in `docs/autonomous/2026-08-10-g42-portal-research-evidence.md`.
+
+**Current catalog accounting.** The committed/reproducible main catalog remains 182 entries with 12
+bound catalog surfaces and 170 unbound surfaces. There are 11 unique profile IDs because `us-sede`
+is an intentional QA-only alias to `reg-age-redsara` via its exact `launch_url`; generator logic and
+regression coverage explicitly support that alias. Inventory states are 164 `BROWSE_ONLY`, 7
+`IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2
+`UNSUPPORTED_PROTOCOL`. Generated states are 92 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 7
+`E2E_PENDING`, and 4 `E2E_VERIFIED`. The research buffer remains at least 16 classified public
+surfaces. Generation 42 integrated zero portals; the corrected JCCM P1 work is published only on its
+worker branch.
+
+No APK was installed or launched; no ADB/device control, authenticated portal navigation,
+credentials/private-certificate material, real signing, form POST, upload, payment or administrative
+submission occurred. Physical UGR, DGT and Cantabria portal E2E; AEAT Client-TLS E2E; real-portal
+JavaScript-dialog compatibility; TalkBack/physical visual accessibility; and Go race on supported
+Linux remain manual/external gates.

@@ -1,92 +1,81 @@
 # NEXT CHAT HANDOFF — workspace-47 autonomous portal-first cycle
 
-Updated: 2026-08-09, generation 36.
+Updated: 2026-08-10, generation 42.
 
 ## Repository state to verify first
 
 - Work only in `/data/data/com.termux/files/home/workspace-47-autonomous-20260803` on
   `agent/workspace-47-autonomous-20260803`.
-- G36 research started from published autonomous base
-  `80b95d3ef8876438156f42b287ff37bfe579e976`; this handoff/ledger update is the docs-only successor
-  to that base. Resolve its exact published HEAD with `git rev-parse HEAD` after `git fetch --prune
-  origin` rather than assuming the parent SHA is current.
-- Canonical `origin/feature/ws024-secure-tunnel-20260728` must remain exactly
-  `9c99bbfb36e13f88231d56001ccef8c4cbbce128`.
-- Verify branch, HEAD, upstream, divergence and tracked cleanliness before every mutation. Never
-  merge/rebase/force-push or mutate canonical.
+- Last verified autonomous main before this documentation commit:
+  `6b70856a2740594d169fa85d68276aa0a03ea60d`, clean and 0/0 versus upstream.
+- Canonical `origin/feature/ws024-secure-tunnel-20260728` remained exactly
+  `9c99bbfb36e13f88231d56001ccef8c4cbbce128`; autonomous was ahead 72 / behind 0 with canonical as
+  merge-base.
+- Re-run `prepare_task`, `git fetch --prune origin`, branch/HEAD/upstream/divergence/status/worktree
+  checks before any next mutation; resolve this documentation commit's exact published SHA rather
+  than assuming the pre-commit SHA above.
 
-## Published milestones already complete
+## Generation 42 completed/published state
 
-- Certificate read hardening: `0bf8f5767fa1104fd6d2bb951709484e1009d0e1`.
-- Portal Coverage First planning: `758347a21301313656f106beb02ebbc847f8cb17`.
-- DGT implementation/evidence: `fc52b0a68348f0f26e4ac368526ba7b58f62972f` and
-  `136ae1ca6fc49fb5e877321dc4451e39f1ea0600`.
-- UGR certificate contract: `ce06961f976c363280988cba81ca89e682dcc3b3`; profile remains
-  `VERIFIED_CONTRACT` / `QA_ONLY`, inventory `IMPLEMENTED_NOT_E2E`, catalog `E2E_PENDING`.
-- Current Cloud-Gradle/Matt-Pocock migration baseline above UGR:
-  `483e917` → `1f969b8` → `c578a46` → `599961e` →
-  `80b95d3ef8876438156f42b287ff37bfe579e976`. Preserve these commits and use
-  `docs/agents/matt-pocock-workflow.md` plus `docs/agents/codex-cloud-gradle.md`.
+- JCCM catalog local history was preserved: RED `a9b12c1`, prior incorrect broad-row GREEN
+  `13616f8`, and corrective separate-surface commit
+  `cd839875e13b60ea8009bb2c9ab18d3482a8c40e` on published branch `agent/g39-jccm-catalog`.
+- Correct JCCM P1 semantics: broad `ES-PUB-0103` stays `https://www.jccm.es/` / `BROWSE_ONLY`;
+  certificate probe is separate `ES-PUB-0183` with exact profile start URL and
+  `IMPLEMENTED_NOT_E2E` on that worker branch.
+- JCCM exact-path RED remains published at
+  `5eaad0966242fa30e35b8011ac3746c0012d9347` (`agent/g39-jccm-exact-path`). Focused Cloud task
+  creation failed with HTTP 429 `Usage limit exceeded` before any Gradle execution; no local Gradle
+  fallback occurred.
+- Sevilla remains published at `069c6fd73a19b54b92dc4771867fff712617301d` and needs focused Cloud
+  GREEN before native profile/adapter expansion.
+- Melilla remote branch remains `25df9f7ed5bef0387568d6c2db5c7083f154fa9b`. Existing Cloud task
+  `task_e_6a78dc14b2d48323887a6abf2ad48bce` currently renders `READY` but exposes no terminal PASS/FAIL
+  verdict through `w47-cloud status`; do not infer success from that label.
+- Research evidence: `docs/autonomous/2026-08-10-g42-portal-research-evidence.md` records current
+  first-party Asturias and ACCEDA findings without persisting volatile server-issued values.
 
 ## Current portal KPI
 
-- 182 public entries; 10 exact profile bindings; 172 unbound.
-- Inventory: 166 BROWSE_ONLY, 5 IMPLEMENTED_NOT_E2E, 1 VERIFIED_CONTRACT, 4 VERIFIED_E2E,
-  4 INACCESSIBLE, 2 UNSUPPORTED_PROTOCOL.
-- Generated catalog: 94 CATALOGED, 73 DISCOVERED, 6 BLOCKED, 5 E2E_PENDING, 4 E2E_VERIFIED.
-- Research buffer: 16 classified public surfaces; implementation-ready unintegrated queue 0;
-  native Codex/Luna implementation occupancy 0/8.
-- Portals integrated in generation 36: 0.
+- Main committed catalog: 182 entries; 12 bound catalog surfaces; 170 unbound.
+- Unique profile IDs: 11. The difference from 12 bound surfaces is intentional: `us-sede` aliases
+  `reg-age-redsara` through exact `launch_url`; generator and tests explicitly cover it.
+- Inventory: 164 `BROWSE_ONLY`, 7 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`,
+  4 `INACCESSIBLE`, 2 `UNSUPPORTED_PROTOCOL`.
+- Generated catalog: 92 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 7 `E2E_PENDING`, 4
+  `E2E_VERIFIED`.
+- Research queue: at least 16 classified public surfaces. Generation 42 integrated 0 portals.
 
-## Generation 36 research conclusions
+## Exact next actions
 
-- `justicia-sede-judicial`: global first-party helper is exact
-  SHA256withRSA/PAdES/mode=implicit, but five selected public procedure pages plus the trámite index
-  still lack the matching `documentoDeclaracion`/`formFirmaBorrador` DOM and `firma()` binding.
-  Static global-library presence remains insufficient.
-- `age-acceda`: public `/certificado/valida` form calls `afirma.firmar(callback)` with a changing,
-  server-issued `formularioweb`. First-party helper code includes several signing paths, including
-  SHA1withRSA/PAdES `doSignSolicitud()`, but the defining wrapper linkage was not found. Do not guess
-  the target helper and never hard-code `formularioweb`.
-- `asturias-sede-tramite-autofirma`: official public
-  `https://miprincipado.asturias.es/utilidades/comprobacion-firma` now provides a concrete inline
-  `MiniApplet.sign('SG9sYQ==', getAlgoritmoFirma(), 'XAdES', getParamsFirma(), ...)` call and callback.
-  It is near-ready, but the first-party `www30.asturias.es/Esign2/esign.jsp` helper defining algorithm
-  and parameters could not be retrieved due a bounded `CONNECT ... 502`; do not infer them.
-- SEPE, Ministerio de Justicia, Sevilla, Universidad de Sevilla and Catastro still lack a complete
-  public algorithm/format/payload/callback contract.
+1. When Codex Cloud quota is available, submit focused RED against exact JCCM path SHA
+   `5eaad0966242fa30e35b8011ac3746c0012d9347`; accept only an exact-SHA expected RED with dependency
+   verification and clean checkout.
+2. Implement JCCM runtime `currentPageUrl` plumbing sequentially in the main Watchdog context:
+   `BrowserScreen` -> `WebMessageBridge` -> `MiniAppletBridgeAdapter`; require exact JCCM start URL
+   only for `jccm-certificate-login-probe`, including null/wrong path/query/fragment rejection.
+3. Add the same-document/history-change pending-reply regression only if it demonstrates stale
+   delivery; change reply-registry semantics only if that RED proves the defect.
+4. Commit/push JCCM GREEN before Gradle, run focused Cloud GREEN, perform direct bounded Standards +
+   Spec review, then manually integrate the JCCM product + corrected catalog slice atop current main,
+   preserving the existing `us-sede` REG-AGE alias and regenerating the catalog from current sources.
+5. Run focused Cloud GREEN for Sevilla exact SHA
+   `069c6fd73a19b54b92dc4771867fff712617301d`; only then continue its native adapter/profile/catalog
+   phase.
+6. Resolve a terminal Melilla Cloud verdict without guessing; continue execution/profile/registry/
+   catalog only after verified gate evidence.
+7. Continue exact public unauthenticated research without inference. Priority after in-flight portal
+   slices: `justicia-sede-judicial`, `age-acceda`, `sepe-sede`, `mjusticia-sede`,
+   `asturias-sede-tramite-autofirma`.
 
-## Exact next eight implementation candidates
+## Manual/external gates and prohibitions
 
-1. `justicia-sede-judicial` — find a concrete public procedure page/form that actually binds the
-   known `firma()` helper.
-2. `age-acceda` — locate the first-party definition/runtime linkage of `afirma.firmar()` and its
-   exact treatment of dynamic `formularioweb`.
-3. `sepe-sede` — locate a public pre-auth exact invocation; do not cross the login boundary.
-4. `mjusticia-sede` — locate an exact public signing ABI/callback before authentication.
-5. `sevilla-sede` — locate a public procedure invocation, not FAQ text.
-6. `us-sede` — locate portal-specific signing JS/ABI beyond certificate-access requirements.
-7. `age-direccion-general-del-catastro` — establish exact public signing or Client-TLS contract.
-8. `asturias-sede-tramite-autofirma` — recover the official `esign.jsp` definitions for
-   `getAlgoritmoFirma()` and `getParamsFirma()` through a normal verified public path; do not guess.
-
-When any candidate becomes implementation-ready, create one isolated worker worktree/branch per
-candidate, route implementation through Matt Pocock `codex/implement` + `codex/tdd`, commit and push
-the worker before Gradle, and use `$HOME/bin/w47-cloud` against the exact pushed SHA. Fill every ready
-native Codex/Luna implementation slot up to 8/8; do not use review work to occupy implementation
-capacity while a ready portal waits.
-
-## Verification and manual gates
-
-- Last product full JVM gate remains G35 `job_20260809_112549_86ad3219`: Debug 590/590 and QA
-  590/590, zero failures/errors/skips. Last non-Android gate remains
-  `job_20260809_113452_d6c2fa05`: Python 103 with one known hardlink skip, CiPolicy 20/20, Go
-  test/vet/build PASS. Lint recovery `job_20260809_114615_8f54482e`, artifact gate
-  `job_20260809_115034_135469ba`, and release fail-closed `job_20260809_115102_4ad9f309` passed.
-- G36 made no product/config/catalog behavior change, so it intentionally ran no Gradle command.
-- Physical UGR and DGT portal E2E remain manual. Existing manual/external gates remain AEAT
-  Client-TLS E2E, real-portal JavaScript-dialog compatibility, TalkBack/physical visual accessibility
-  and Go race on supported Linux.
-- No APK installation/launch, ADB/UIAutomator/device control, authenticated portal navigation,
-  credentials/private-certificate use, real signing, form POST, upload, payment or administrative
-  submission occurred in G36.
+- Manual only: UGR, DGT and Cantabria physical portal E2E; AEAT Client-TLS E2E; real-portal
+  JavaScript-dialog compatibility; TalkBack/physical visual accessibility; Go race on supported Linux.
+- Worker delegation remains disabled by operator revision 9: no native Codex/Luna implementation
+  subagents and no `agent_spawn`.
+- All Watchdog-initiated Gradle remains Codex Cloud only. Cloud quota failure is not authorization for
+  local Gradle on the phone.
+- No APK installation/launch, ADB/device control, authenticated portal navigation, credentials,
+  private-certificate material, real signing, upload, payment or administrative submission is
+  authorized.
