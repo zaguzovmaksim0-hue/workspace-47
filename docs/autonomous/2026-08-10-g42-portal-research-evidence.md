@@ -166,9 +166,61 @@ to signing BFF paths (`/firmantes/get` and `/firmas`) with bearer authorization.
 not executed. The observed surface is therefore an authenticated/server-mediated signing flow, not a
 public browser-local AutoFirma ABI that Junta Firma Mobile can implement autonomously.
 
+## Extremadura — Portal Tributario versus current STA portal
+
+`extremadura-portal-tributario` (`ES-PUB-0111`) remains a broad/research-only surface. Its current
+public requirements and model 042/047/044 pages confirm certificate-based access and AutoFirma, but
+the live procedure links hand off to the Junta de Extremadura Sede rather than exposing a portal-
+tributario-specific browser ABI. No form submission, model upload, authentication, or payment was
+performed.
+
+The stronger candidate is the already-catalogued `extremadura-tramites` (`ES-PUB-0109`) surface at
+`https://tramites.juntaex.es`. The public Registro Electrónico General information page
+`https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_REGGENERAL_INFO`
+returns HTTP 200 and directly loads these first-party resources:
+
+- `/sta/resources/js/autoscript.js` — SHA-256
+  `dd77491f6e514ca22d40a1737e6bb13a11f05469c38ddf12ac4a90a7e35f0af5`;
+- `/sta/resources/js/sta-autofirma-lote.js` — SHA-256
+  `03f80b989f04d8f0a7fcbd1500831023f5d332eaed599cb48740c0af12a1706a`;
+- `/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2` — SHA-256
+  `0960256cac00d1aea5f5e496031b37de1207d77683e1ae4e109fa5803c3bf5aa`.
+
+The current public `sta-autofirma-lote.js` defines the exact batch contract rather than merely naming
+AutoFirma. `STAAutofirmaLote.firmarLote(params, onSuccess, onError)` uses AutoScript v1.9.0
+`createBatch`, `addDocumentToBatch`, and `signBatchProcess`. Its evidence-backed defaults are
+`SHA256withRSA`, `CAdES`, suboperation `sign`, and `stopOnError=false`. It accepts per-document
+`CAdES`, `PAdES`, and `XAdES`; PAdES adds `signatureSubFilter=ETSI.CAdES.detached`, XAdES adds
+`mode=implicit`, and CAdES adds no format-specific extra parameter. Runtime batch URLs are supplied
+by the backend through `batchPreSignerUrl`, `batchPostSignerUrl`, and each document's `datareference`;
+they are not constants to invent or persist.
+
+The public `webAppsFwk.js` supplies the missing caller binding. Its `startFirma(signInfo)` invokes
+`STAAutofirmaLote.firmarLote(signInfo, ...)`; the success callback sends the opaque batch result back
+through the portal event `PRESENTAR_FIRMA` as
+`validationResponse=JSON.stringify(resultado)`. The same framework calls `AutoScript.cargarAppAfirma()`
+when the signing dialog opens. A direct unauthenticated GET to the public registry-auth entry was
+redirected to the portal's certificate-required error page; no certificate was selected and the
+authenticated procedure was not entered.
+
+The current Melilla and Extremadura first-party STA resources are byte-for-byte identical for all
+three contract files above: their SHA-256 hashes and bytes match exactly. This independently supports
+a shared STA batch protocol seam with profile/origin-specific fail-closed URL policy rather than a
+second invented protocol. It does **not** broaden Melilla E2E evidence to Extremadura, nor does it
+authorize cross-origin runtime URLs.
+
+`extremadura-tramites` is therefore promoted in the **research queue only** to implementation-ready:
+its public algorithm, formats, input shape, caller, and callback are now directly observed. No product
+profile, inventory status, generated catalog status, release enablement, or E2E claim changes in this
+generation. Implementation must wait for an accepted Cloud RED and for the in-flight Melilla batch
+composition seam to reach a stable verified integration point, after which the shared code can be
+generalized without weakening Melilla's exact-origin/URL constraints.
+
 ## Research queue result
 
-No candidate was promoted to implementation-ready in this research slice. The classified public
-research buffer remains at least 16 surfaces. Current exact priority after the in-flight JCCM,
-Sevilla, and Melilla work is: `justicia-sede-judicial`, `age-acceda`, `sepe-sede`,
-`mjusticia-sede`, then `asturias-sede-tramite-autofirma` among the next researched candidates.
+`extremadura-tramites` is the one new implementation-ready research candidate from this slice. All
+other newly researched candidates in this evidence file remain unpromoted. The classified public
+research buffer remains at least 16 surfaces. Current exact implementation priority after the
+in-flight JCCM, Sevilla, and Melilla work is `extremadura-tramites`; the next research-only candidates
+remain `justicia-sede-judicial`, `age-acceda`, `sepe-sede`, `mjusticia-sede`, and
+`asturias-sede-tramite-autofirma`.

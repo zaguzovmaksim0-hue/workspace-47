@@ -33,11 +33,12 @@ Updated: 2026-08-10, generation 42.
   `task_e_6a78dc14b2d48323887a6abf2ad48bce` currently renders `READY` but exposes no terminal PASS/FAIL
   verdict through `w47-cloud status`; do not infer success from that label.
 - Research evidence: `docs/autonomous/2026-08-10-g42-portal-research-evidence.md` records current
-  first-party Asturias, ACCEDA, Justicia, MJusticia, SEPE and Comunidad de Madrid findings without
-  persisting volatile values or credential-like/static authorization material. Madrid Registro stops
-  at a prohibited upload/POST boundary; Cuenta Digital's published signing service is authenticated
-  and server-mediated, not a browser-local AutoFirma ABI. Do not promote these candidates by
-  inference.
+  first-party Asturias, ACCEDA, Justicia, MJusticia, SEPE, Comunidad de Madrid and Extremadura
+  findings without persisting volatile values or credential-like/static authorization material.
+  `extremadura-tramites` (`ES-PUB-0109`) is now implementation-ready at the research level because
+  its public STA helper and framework directly expose the full batch caller/callback contract; the
+  three relevant public JS resources are byte-identical to Melilla. `extremadura-portal-tributario`
+  remains `BROWSE_ONLY`.
 
 ## Current portal KPI
 
@@ -54,7 +55,8 @@ Updated: 2026-08-10, generation 42.
 
 1. When Codex Cloud quota is available, submit focused RED against exact JCCM path SHA
    `5eaad0966242fa30e35b8011ac3746c0012d9347`; accept only an exact-SHA expected RED with dependency
-   verification and clean checkout.
+   verification and clean checkout. Two generation-42 attempts have failed before Gradle with HTTP
+   429 `Usage limit exceeded`; do not use a local fallback.
 2. Implement JCCM runtime `currentPageUrl` plumbing sequentially in the main Watchdog context:
    `BrowserScreen` -> `WebMessageBridge` -> `MiniAppletBridgeAdapter`; require exact JCCM start URL
    only for `jccm-certificate-login-probe`, including null/wrong path/query/fragment rejection.
@@ -68,9 +70,13 @@ Updated: 2026-08-10, generation 42.
    phase.
 6. Resolve a terminal Melilla Cloud verdict without guessing; continue execution/profile/registry/
    catalog only after verified gate evidence.
-7. Continue exact public unauthenticated research without inference. Priority after in-flight portal
-   slices: `justicia-sede-judicial`, `age-acceda`, `sepe-sede`, `mjusticia-sede`,
-   `asturias-sede-tramite-autofirma`.
+7. After the in-flight JCCM, Sevilla and Melilla slices, take `extremadura-tramites` as the next
+   implementation-ready portal. First inspect the verified integrated Melilla batch seam, then create
+   a narrow Matt Pocock design/plan to generalize that exact STA protocol with separate profile/origin
+   URL policy; do not clone or broaden Melilla allowlists blindly.
+8. Continue exact public unauthenticated research without inference for the remaining research-only
+   candidates: `justicia-sede-judicial`, `age-acceda`, `sepe-sede`, `mjusticia-sede`,
+   `asturias-sede-tramite-autofirma`, then the next ranked `BROWSE_ONLY` surfaces.
 
 ## Manual/external gates and prohibitions
 

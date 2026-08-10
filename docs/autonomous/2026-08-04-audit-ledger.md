@@ -2126,6 +2126,22 @@ authorization material observed in the public app configuration was deliberately
 used. Detailed hashes and bounded findings are in
 `docs/autonomous/2026-08-10-g42-portal-research-evidence.md`.
 
+**Extremadura STA promotion in the research queue.** `extremadura-portal-tributario` remains
+`BROWSE_ONLY`: its current model pages hand off to the common Sede and expose no portal-specific ABI.
+By contrast, public `tramites.juntaex.es` pages directly load the current AutoScript/STA batch helper
+and framework. The helper fixes SHA256withRSA, CAdES defaults, PAdES/XAdES format extras and the
+trifásico pre/post/datareference input shape; `webAppsFwk.js` directly invokes
+`STAAutofirmaLote.firmarLote(signInfo, ...)` and returns the opaque result through
+`PRESENTAR_FIRMA` / `validationResponse`. The current AutoScript, STA batch helper and framework are
+byte-for-byte identical to the same three public resources on `sede.melilla.es`.
+`extremadura-tramites` is therefore implementation-ready in the research queue, with no catalog or
+profile state change yet and no authenticated/E2E claim. It should reuse a generalized STA batch seam
+only after the in-flight Melilla batch implementation is Cloud-verified and integrated.
+
+**Cloud quota recheck.** A second bounded submission of the exact JCCM focused RED against published
+SHA `5eaad0966242fa30e35b8011ac3746c0012d9347` again failed at Cloud task creation with HTTP 429
+`Usage limit exceeded`; Gradle never started and no local fallback was used.
+
 **Current catalog accounting.** The committed/reproducible main catalog remains 182 entries with 12
 bound catalog surfaces and 170 unbound surfaces. There are 11 unique profile IDs because `us-sede`
 is an intentional QA-only alias to `reg-age-redsara` via its exact `launch_url`; generator logic and
