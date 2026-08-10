@@ -6,6 +6,7 @@ import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
+import dev.junta.firmamobile.profile.SignatureFormat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -36,9 +37,9 @@ class PublicPortalCatalogParserTest {
 
         assertEquals(1, catalog.schemaVersion)
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
-        assertTrue(inventoryCount >= 182)
+        assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(10, catalog.entries.count { it.profileId != null })
+        assertEquals(13, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -53,6 +54,8 @@ class PublicPortalCatalogParserTest {
                 ProfileId("aeat-mis-datos-censales"),
                 ProfileId("dgt-verificacion-equipo"),
                 ProfileId("ugr-certificado-login"),
+                ProfileId("cantabria-rec-cert-login"),
+                ProfileId("jccm-certificate-login-probe"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
