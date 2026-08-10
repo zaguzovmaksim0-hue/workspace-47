@@ -187,8 +187,8 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Entradas D06 materializadas | 41/41 del snapshot 2026-07-16 |
 | Entradas D06 ya presentes por exact origin | 1 |
 | Registros nuevos creados desde D06 | 40 |
-| Registros totales del snapshot | 182 |
-| Origins primarios distintos | 180 |
+| Registros totales del snapshot | 183 |
+| Origins primarios distintos | 181 |
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
@@ -202,37 +202,37 @@ Por nivel administrativo:
 | Nivel | Registros |
 | --- | ---: |
 | `ESTATAL` | 82 |
-| `AUTONOMICO` | 31 |
+| `AUTONOMICO` | 32 |
 | `PROVINCIAL` | 41 |
 | `INSULAR` | 22 |
 | `MUNICIPAL` | 2 |
 | `UNIVERSIDAD_PUBLICA` | 4 |
 | `OTRA_INSTITUCION_PUBLICA` | 0 |
-| **Total** | **182** |
+| **Total** | **183** |
 
 Por estado del inventario:
 
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 2 |
+| `IMPLEMENTED_NOT_E2E` | 8 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 169 |
+| `BROWSE_ONLY` | 164 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
-| **Total** | **182** |
+| **Total** | **183** |
 
 Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 104 |
+| `REVIEWED` | 105 |
 | `RECHECK_REQUIRED` | 5 |
 | `DISCOVERED` | 73 |
 | `CANDIDATE`, `RETIRED` | 0 |
-| **Total** | **182** |
+| **Total** | **183** |
 
 ## 5. Método de descubrimiento reproducible
 
@@ -6098,6 +6098,36 @@ records:
     reason: "Transporte downstream de certificado y callback no verificados; firma bloqueada."
     reviewed_at: "2026-07-22"
     next_gate: "Obtener evidencia pública o autenticada controlada del transporte exacto sin realizar presentación jurídica."
+  - inventory_id: "ES-PUB-0183"
+    surface_key: "castilla-la-mancha-certificate-login-probe"
+    administrative_level: "AUTONOMICO"
+    autonomous_community: "Castilla-La Mancha"
+    province_or_municipality: "NO_APLICA"
+    institution_name: "Junta de Comunidades de Castilla-La Mancha"
+    surface_name: "JCCM — acceso público con certificado"
+    surface_type: "PORTAL_AUTENTICACION"
+    origin: "https://ventanillaelectronica.jccm.es"
+    official_site: "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml"
+    e_sede: "https://www.jccm.es/"
+    entry_url: "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml"
+    procedure_page: "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / MiniApplet"
+    protocol_family: "AUTOSCRIPT_MINIAPPLET_LOCAL_CADES"
+    signature_format: "CAdES"
+    signature_algorithm: "SHA1withRSA"
+    endpoint: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Validación pública de acceso con certificado mediante AutoScript/MiniApplet.sign sobre payload fijo ABCDE."
+    protocol_evidence: "La página pública y su MiniApplet first-party fijan AutoScript/MiniApplet.sign con SHA1withRSA, CAdES, propiedades null y payload Base64 QUJDREU= (ABCDE); no se realizó FORMPROC.submit ni autenticación o sesión."
+    client_tls_auth: "NO_VERIFICADO"
+    evidence_ids: ["G38-JCCM-CERTIFICATE-LOGIN-2026-08-09"]
+    reason: "Contrato AutoScript/MiniApplet CAdES SHA1 implementado solo para QA; E2E pendiente y sin FORMPROC.submit, presentación administrativa, autenticación ni sesión."
+    reviewed_at: "2026-08-09"
+    next_gate: "Realizar una prueba física autorizada del login y callback; mantener QA_ONLY mientras E2E pendiente y no ejecutar FORMPROC.submit ni realizar presentación administrativa."
+
 ```
 
 ## 8. Relación con el catálogo de producto

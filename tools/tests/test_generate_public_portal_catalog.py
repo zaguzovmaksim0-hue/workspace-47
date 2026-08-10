@@ -156,6 +156,39 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             catalog["sourceRevision"],
         )
 
+    def test_jccm_certificate_probe_binds_separate_public_catalog_surface(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        broad = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "castilla-la-mancha-sede"
+        )
+        probe = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "castilla-la-mancha-certificate-login-probe"
+        )
+
+        self.assertIsNone(broad["profileId"])
+        self.assertEqual("https://www.jccm.es/", broad["entryUrl"])
+        self.assertEqual("CATALOGED", broad["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", broad["inventoryStatus"])
+
+        self.assertEqual("jccm-certificate-login-probe", probe["profileId"])
+        self.assertEqual("ES-PUB-0183", probe["inventoryId"])
+        self.assertEqual(
+            "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml",
+            probe["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", probe["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", probe["inventoryStatus"])
+        self.assertEqual("2026-08-09", probe["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", probe["observedMechanisms"])
+        self.assertIn("MINIAPPLET", probe["observedMechanisms"])
+        self.assertIn("CADES", probe["observedSignatureFormats"])
+
+        limitations = probe["limitations"].lower()
+        self.assertIn("solo para qa", limitations)
+        self.assertIn("e2e pendiente", limitations)
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}

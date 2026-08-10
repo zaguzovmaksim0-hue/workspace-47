@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "e668324c78e957125a8c057b7d1c0ffc170dad8c8ad718ef6022b184ad497914",
+  "sourceRevision": "a640c4d7a9dc06d73da19947bdc79072d482521860914384a5c867de4943cf6b",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4443,6 +4443,35 @@
       ],
       "reviewedOn": "2026-07-22",
       "limitations": "Transporte downstream de certificado y callback no verificados; firma bloqueada."
+    },
+    {
+      "portalId": "castilla-la-mancha-certificate-login-probe",
+      "inventoryId": "ES-PUB-0183",
+      "profileId": "jccm-certificate-login-probe",
+      "displayName": "JCCM — acceso público con certificado",
+      "organization": "Junta de Comunidades de Castilla-La Mancha",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Castilla-La Mancha",
+      "purpose": "Validación pública de acceso con certificado mediante AutoScript/MiniApplet.sign sobre payload fijo ABCDE.",
+      "entryUrl": "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "G38-JCCM-CERTIFICATE-LOGIN-2026-08-09"
+      ],
+      "reviewedOn": "2026-08-09",
+      "limitations": "Contrato AutoScript/MiniApplet CAdES SHA1 implementado solo para QA; E2E pendiente y sin FORMPROC.submit, presentación administrativa, autenticación ni sesión."
     }
   ]
 }
