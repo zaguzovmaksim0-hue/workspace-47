@@ -655,6 +655,7 @@ fun BrowserScreen(
                                             }.getOrNull()
                                         }
                                     },
+                                    currentPageUrl = { webView.url },
                                 ).attach(webView)
                                 bridgeAttachmentLease.bind(webView, attachment)
                                 if (!attachment.listenerAttached ||

@@ -349,6 +349,7 @@ class MiniAppletBridgeAdapterTest {
             sourceOrigin = JCCM_ORIGIN,
             isMainFrame = true,
             navigationEpoch = 45,
+            currentPageUrl = JCCM_START_URL,
         ) as MiniAppletBridgeRouteResult.Accepted
 
         result.request.normalized.use { request ->
@@ -378,7 +379,8 @@ class MiniAppletBridgeAdapterTest {
         ) as MiniAppletBridgeRouteResult.Accepted
         accepted.request.normalized.close()
 
-        listOf(
+        listOf<String?>(
+            null,
             "https://ventanillaelectronica.jccm.es/other",
             "$JCCM_START_URL?probe=1",
             "$JCCM_START_URL#fragment",
@@ -397,48 +399,24 @@ class MiniAppletBridgeAdapterTest {
     fun jccmProbeRejectsEveryWrongContractDimensionWithoutGenericCadesBroadening() {
         val valid = jccmMessage()
 
-        assertRejected(
-            valid,
-            Uri.parse("https://ventanillaelectronica.jccm.es.evil.example"),
-            true,
-            adapterFor(JCCM_PROFILE_ID),
+        assertJccmRejected(
+            rawMessage = valid,
+            origin = Uri.parse("https://ventanillaelectronica.jccm.es.evil.example"),
         )
-        assertRejected(valid, JCCM_ORIGIN, false, adapterFor(JCCM_PROFILE_ID))
-        assertRejected(valid, JCCM_ORIGIN, true, adapterFor("junta-andalucia"))
-        assertRejected(
-            jccmMessage(algorithm = "SHA256withRSA"),
-            JCCM_ORIGIN,
-            true,
-            adapterFor(JCCM_PROFILE_ID),
-        )
-        assertRejected(
-            jccmMessage(format = "XAdES Detached"),
-            JCCM_ORIGIN,
-            true,
-            adapterFor(JCCM_PROFILE_ID),
-        )
-        assertRejected(
+        assertJccmRejected(rawMessage = valid, isMainFrame = false)
+        assertJccmRejected(rawMessage = valid, activeProfileId = "junta-andalucia")
+        assertJccmRejected(jccmMessage(algorithm = "SHA256withRSA"))
+        assertJccmRejected(jccmMessage(format = "XAdES Detached"))
+        assertJccmRejected(
             jccmMessage(dataB64 = Base64.getEncoder().encodeToString("ABCDF".encodeToByteArray())),
-            JCCM_ORIGIN,
-            true,
-            adapterFor(JCCM_PROFILE_ID),
         )
-        assertRejected(
-            jccmMessage(extraProperties = "unexpected=value"),
-            JCCM_ORIGIN,
-            true,
-            adapterFor(JCCM_PROFILE_ID),
-        )
-        assertRejected(
-            jccmMessage(extraProperties = " "),
-            JCCM_ORIGIN,
-            true,
-            adapterFor(JCCM_PROFILE_ID),
-        )
+        assertJccmRejected(jccmMessage(extraProperties = "unexpected=value"))
+        assertJccmRejected(jccmMessage(extraProperties = " "))
         val nullProperties = adapterFor(JCCM_PROFILE_ID).route(
             rawMessage = jccmMessage(extraProperties = JSONObject.NULL),
             sourceOrigin = JCCM_ORIGIN,
             isMainFrame = true,
+            currentPageUrl = JCCM_START_URL,
         ) as MiniAppletBridgeRouteResult.Accepted
         nullProperties.request.normalized.close()
     }
@@ -743,6 +721,22 @@ class MiniAppletBridgeAdapterTest {
         assertTrue(
             bridgeAdapter.route(rawMessage, origin, isMainFrame) is
                 MiniAppletBridgeRouteResult.Rejected,
+        )
+    }
+
+    private fun assertJccmRejected(
+        rawMessage: String,
+        origin: Uri = JCCM_ORIGIN,
+        isMainFrame: Boolean = true,
+        activeProfileId: String = JCCM_PROFILE_ID,
+    ) {
+        assertTrue(
+            adapterFor(activeProfileId).route(
+                rawMessage = rawMessage,
+                sourceOrigin = origin,
+                isMainFrame = isMainFrame,
+                currentPageUrl = JCCM_START_URL,
+            ) is MiniAppletBridgeRouteResult.Rejected,
         )
     }
 

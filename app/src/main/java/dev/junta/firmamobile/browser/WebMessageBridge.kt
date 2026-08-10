@@ -41,6 +41,7 @@ class WebMessageBridge(
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
+    private val currentPageUrl: () -> String? = { null },
     private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
 ) {
     private val replyRegistry = MiniAppletReplyRegistry(
@@ -137,6 +138,7 @@ class WebMessageBridge(
                 sourceOrigin = sourceOrigin,
                 isMainFrame = isMainFrame,
                 navigationEpoch = currentNavigationEpoch(),
+                currentPageUrl = currentPageUrl(),
             )
         ) {
             is MiniAppletBridgeRouteResult.Accepted -> {

@@ -73,11 +73,13 @@ class MiniAppletBridgeAdapter(
         sourceOrigin: Uri,
         isMainFrame: Boolean,
         navigationEpoch: Long = 0L,
+        currentPageUrl: String? = null,
     ): MiniAppletBridgeRouteResult = delegate.route(
-        rawMessage,
-        sourceOrigin,
-        isMainFrame,
-        navigationEpoch,
+        rawMessage = rawMessage,
+        sourceOrigin = sourceOrigin,
+        isMainFrame = isMainFrame,
+        navigationEpoch = navigationEpoch,
+        currentPageUrl = currentPageUrl,
     )
 
     companion object {
@@ -103,6 +105,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         sourceOrigin: Uri,
         isMainFrame: Boolean,
         navigationEpoch: Long = 0L,
+        currentPageUrl: String? = null,
     ): MiniAppletBridgeRouteResult {
         if (navigationEpoch < 0L) return MiniAppletBridgeRouteResult.NotApplicable
         if (rawMessage.length > WebMessageProtocol.MAX_MESSAGE_CHARS) {
@@ -188,6 +191,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin = resolved.origin,
             operation = operation,
             signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
         )
         if (profile.profileId.value == JccmCertificateLoginProbeCadesAdapter.PROFILE_ID &&
             !isJccmContract
@@ -403,13 +407,14 @@ internal class ProfileMiniAppletBridgeAdapter(
         origin: ExactOrigin,
         operation: OperationPolicy,
         signingProtocolId: String,
+        currentPageUrl: String?,
     ): Boolean =
-        profile.profileId.value == JccmCertificateLoginProbeCadesAdapter.PROFILE_ID &&
+        currentPageUrl == JCCM_START_URL &&
+            profile.profileId.value == JccmCertificateLoginProbeCadesAdapter.PROFILE_ID &&
             profile.profileVersion == JccmCertificateLoginProbeCadesAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() ==
-                "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml" &&
+            profile.startUrl.toASCIIString() == JCCM_START_URL &&
             origin.serialized == JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(
                 ExactOrigin.parse(JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN),
@@ -553,6 +558,9 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val FORMAT_CADES = "CAdES"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
+        private const val JCCM_START_URL =
+            "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
+                "formularios/identificacion.phtml"
         private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
         private val UGR_PAYLOAD = "Universidad de Granada".encodeToByteArray()
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
