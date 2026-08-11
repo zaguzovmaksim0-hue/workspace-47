@@ -683,9 +683,13 @@ class BrowserSecurityRegressionTest {
             "Melilla batch protocol must use the existing direct HTTPS transport stack",
             "MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source,
         )
+        val melillaAdapterBlock = source
+            .substringAfter("melillaBatchSigningAdapter = MelillaBatchSigningAdapter(", missingDelimiterValue = "")
+            .substringBefore("\n        )")
         assertTrue(
             "MainActivity must normalize only against the built-in Melilla profile registry",
-            "MelillaBatchSigningAdapter(registry = BuiltInSiteProfiles.runtimeRegistry)" in source,
+            melillaAdapterBlock.isNotEmpty() &&
+                "registry = BuiltInSiteProfiles.runtimeRegistry" in melillaAdapterBlock,
         )
         assertTrue(
             "BrowserScreen must forward Melilla request and cancellation into MainActivity",
