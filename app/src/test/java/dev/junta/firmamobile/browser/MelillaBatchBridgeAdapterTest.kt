@@ -48,8 +48,8 @@ class MelillaBatchBridgeAdapterTest {
     @Test
     fun dedicatedAdapterRejectsBatchBindingChangesBeforeAnyConsumerCanSeeIt() {
         val changed = portalOwnedBatchEnvelope().replace(
-            "docId=runtime-document-1",
-            "docId=runtime-document-2",
+            "runtime-operation-1/runtime-document-1",
+            "runtime-operation-1/runtime-document-2",
         )
 
         val result = MelillaBatchBridgeAdapter(
