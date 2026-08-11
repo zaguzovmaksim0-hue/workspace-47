@@ -101,6 +101,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = JccmCertificateLoginProbeCadesAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId("melilla-sede"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("melilla-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("melilla-batch-result-v1"),
+                signingProtocolId = MelillaBatchProtocolAdapter.ID,
+            ),
         ),
     )
 }
