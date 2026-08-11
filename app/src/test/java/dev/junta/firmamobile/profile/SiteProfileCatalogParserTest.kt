@@ -638,8 +638,15 @@ class SiteProfileCatalogParserTest {
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"schemaVersion\": 1"))
         }
+        val catalogVersionToken = "\"catalogVersion\": ${BuiltInSiteProfiles.catalog.catalogVersion}"
+        assertTrue(json.contains(catalogVersionToken))
         assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(json.replaceFirst("\"catalogVersion\": 13", "\"unknown\": true, \"catalogVersion\": 12"))
+            SiteProfileCatalogParser.parse(
+                json.replaceFirst(
+                    catalogVersionToken,
+                    "\"unknown\": true, $catalogVersionToken",
+                ),
+            )
         }
         assertThrows(IllegalArgumentException::class.java) {
             SiteProfileCatalogParser.parse(json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 2"))
