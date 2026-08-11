@@ -73,6 +73,26 @@ class ProtocolAdapterRegistryTest {
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), jccm?.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), jccm?.callbackContractId)
 
+        val melilla = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("melilla-sede"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(MelillaBatchProtocolAdapter.ID, melilla?.signingProtocolId)
+        assertEquals(
+            ProtocolInputAdapterId("melilla-batch-autoscript-v1"),
+            melilla?.inputAdapterId,
+        )
+        assertEquals(
+            CallbackContractId("melilla-batch-result-v1"),
+            melilla?.callbackContractId,
+        )
+        assertNull(
+            BuiltInProtocolAdapterRegistry.registry.resolve(
+                ProfileId("melilla-sede"),
+                ProtocolOperation.SELECT_CERTIFICATE,
+            ),
+        )
+
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),
