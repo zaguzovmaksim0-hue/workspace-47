@@ -3064,3 +3064,53 @@ inputs. The shared implementation may factor only internal STA URL grammar; the 
 No phone-local Gradle/JVM/Kotlin execution, worker delegation, APK install/launch, device control,
 authenticated portal action, credential/cookie/bearer use, certificate unlock/private-key material,
 real signing, form submission, upload, payment, or administrative action was used for Slice 1.
+
+## Portal G63 — Extremadura Slice 2 exact STA URL policy acceptance — 2026-08-12
+
+Extremadura (`extremadura-tramites`, `ES-PUB-0109`) Slice 2 is accepted at its bounded automated
+URL-policy boundary. This slice does not add an Extremadura runtime protocol/bridge binding, QA profile,
+registry entry, public-catalog binding, release activation, or E2E claim.
+
+The URL-policy RED tracer `43a3dc288c7e84e7b86e3dc7aad5536745be2441` added an exact
+`ExtremaduraBatchUrlPolicyTest` before production support existed. Cloud task
+`task_e_6a7ba215f6088323a07c80bea83aec0d` verified that exact pushed SHA and produced the intended RED:
+Gradle exit 1, `BUILD FAILED in 6m18s` at `compileDebugUnitTestKotlin` because
+`ExtremaduraBatchUrlPolicy` was unresolved; no tests ran. Dependency verification remained enabled,
+verification metadata was unchanged, and the Cloud checkout was clean.
+
+GREEN commit `39a726986c727d9c0ba9354104576c78cc2334c9` factors the existing STA URL grammar into a private
+fixed-host engine, keeps the public `MelillaBatchUrlPolicy` wrapper fixed to `sede.melilla.es`, and adds
+a distinct `ExtremaduraBatchUrlPolicy` wrapper fixed to `tramites.juntaex.es`. The focused tests prove
+both profiles accept their own exact HTTPS `/sta/AutofirmaLote/{presign,postsign,getdata}` bindings and
+reject cross-host, cross-operation, cross-id, HTTP, userinfo, alternate-port, query, fragment, and path-
+alias inputs. No runtime host list or caller-supplied host configuration was introduced.
+
+Focused Cloud GREEN `task_e_6a7ba503d4508323aa465cb26b2b1872` accepted exact `39a7269...` with
+Gradle exit 0, `BUILD SUCCESSFUL in 5m08s`, 5/5 Debug tests passed (Extremadura 2 + Melilla 3), zero
+failures/errors/skips, dependency verification enabled, unchanged verification metadata, and a clean
+Cloud checkout. The Debug+QA gate `task_e_6a7ba6e33e308323a7cb3e6c87fe2733` accepted the same exact
+SHA with Gradle exit 0, `BUILD SUCCESSFUL in 7m`, Debug 5/5 plus QA 5/5 = 10/10, zero
+failures/errors/skips, 60 actionable tasks (51 executed, 9 from cache), dependency verification enabled,
+unchanged verification metadata, and a clean Cloud checkout.
+
+`git diff --check` and bounded changed-content scans passed. The only `http://` addition is the negative
+URL-policy test case; no dependency-verification bypass, trust-all/hostname-verifier weakening,
+credential/bearer/private-key material, redirect/retry widening, or unrelated path change was found.
+Direct main-Watchdog Standards + Spec review found no Critical or Important defect: Melilla's public
+class boundary remains fixed to its original host/path semantics, Extremadura has an independent fixed
+host, and the shared implementation is private grammar only.
+
+Catalog accounting remains unchanged: 183 entries, 15 bound surfaces, 14 unique profile IDs, 168
+unbound; inventory remains 162 `BROWSE_ONLY`, 10 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4
+`VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated states remain 90
+`CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 10 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The classified
+research queue remains at least 16 surfaces. Extremadura remains implementation-in-progress and is not
+yet counted as integrated.
+
+Next is Slice 3 from the existing Extremadura plan: introduce the smallest shared internal STA protocol
+execution/bridge-normalization contract needed for a distinct Extremadura adapter while keeping profile
+id/version, origin, protocol id, runtime URL policy, request/reply ownership, navigation/document
+bindings, and Melilla behavior exact. No phone-local Gradle/JVM/Kotlin execution, worker delegation,
+APK install/launch, device control, authenticated portal action, credential/cookie/bearer use,
+certificate unlock/private-key material, real signing, form submission, upload, payment, or
+administrative action occurred.

@@ -3,7 +3,7 @@
 Date: 2026-08-12
 Task: `workspace-47-autonomous-20260803-01`
 Last Cloud-accepted product/test checkpoint before this documentation publication:
-`cea8a1cce1fe799af20f5d44c2f5c541c3ca1e32` on
+`39a726986c727d9c0ba9354104576c78cc2334c9` on
 `agent/workspace-47-autonomous-20260803`. The commit containing this handoff is a newer documentation
 checkpoint; continuation must begin with `git fetch --prune origin` and exact local/remote HEAD,
 upstream-divergence, cleanliness, and canonical-SHA verification. Canonical
@@ -51,8 +51,28 @@ not yet been profile/catalog promoted.
 - Debug+QA Cloud GREEN `task_e_6a7b9da85e408323b4a995a865976efc`: exact `cea8a1c...`,
   `BUILD SUCCESSFUL in 7m37s`, Debug 4/4 + QA 4/4 = 8/8, zero failures/errors/skips, dependency
   verification enabled, verification metadata unchanged, Cloud checkout clean.
-- Slice 2 is next: shared internal STA URL grammar with fixed profile wrappers; Melilla behavior/origin
-  may not be widened. RED must cover own-host success and cross-host/cross-operation/cross-id failure.
+- Slice 2 is complete; do not repeat it.
+
+## Extremadura Slice 2 accepted automated boundary
+
+- RED `43a3dc288c7e84e7b86e3dc7aad5536745be2441`; Cloud
+  `task_e_6a7ba215f6088323a07c80bea83aec0d` verified exact SHA and failed as intended at
+  `compileDebugUnitTestKotlin` because `ExtremaduraBatchUrlPolicy` did not exist: Gradle exit 1,
+  `BUILD FAILED in 6m18s`, no tests executed, dependency verification enabled, clean checkout.
+- GREEN `39a726986c727d9c0ba9354104576c78cc2334c9` factors only private STA URL grammar and keeps two
+  fixed wrappers: Melilla `sede.melilla.es`, Extremadura `tramites.juntaex.es`. Tests reject cross-host,
+  cross-operation, cross-id, HTTP, userinfo, alternate port, query, fragment, and path aliases.
+- Focused Cloud GREEN `task_e_6a7ba503d4508323aa465cb26b2b1872`: exact `39a7269...`,
+  `BUILD SUCCESSFUL in 5m08s`, Debug 5/5 (Extremadura 2 + Melilla 3), zero failures/errors/skips,
+  dependency verification enabled, verification metadata unchanged, Cloud checkout clean.
+- Debug+QA Cloud GREEN `task_e_6a7ba6e33e308323a7cb3e6c87fe2733`: exact `39a7269...`,
+  `BUILD SUCCESSFUL in 7m`, Debug 5/5 + QA 5/5 = 10/10, zero failures/errors/skips, 60 actionable tasks,
+  dependency verification enabled, verification metadata unchanged, Cloud checkout clean.
+- `git diff --check`, bounded unsafe-content scan, and direct Standards + Spec review passed; the only
+  new `http://` literal is a rejection test. No Critical/Important defect was found in Slice 2.
+- Slice 3 is next: smallest shared internal STA protocol execution + exact bridge/normalization contract;
+  keep profile id/version, origin, protocol id, URL policy, request/reply ownership, navigation/document
+  bindings, and Melilla behavior exact.
 
 ## Portal KPI and queue
 
@@ -62,14 +82,15 @@ not yet been profile/catalog promoted.
 - Generated catalog: 90 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 10 `E2E_PENDING`, 4
   `E2E_VERIFIED`; classified public research buffer remains at least 16 surfaces.
 - Portals accepted in generation 62: Melilla (`ES-PUB-0107`) = 1.
+- Portals integrated in generation 63 so far: 0; Extremadura remains implementation-in-progress.
 - Manual/physical E2E remains pending for Melilla, Sevilla, UGR, DGT, Cantabria, JCCM, and AEAT
   Client-TLS.
 
 ## Exact next portal implementation order
 
-1. `extremadura-tramites` (`ES-PUB-0109`). Slice 1 coordinator ownership is already accepted. Continue
-   only with Slice 2 of the existing subordinate design/plan: exact fixed Melilla/Extremadura STA URL
-   policies over shared internal grammar, with cross-host/cross-operation/cross-id fail-closed tests.
+1. `extremadura-tramites` (`ES-PUB-0109`). Slices 1-2 are accepted. Continue only with Slice 3 of the
+   existing subordinate design/plan: shared STA protocol execution plus exact profile-bound bridge/
+   normalization, preserving Melilla behavior and all ownership/origin/navigation boundaries.
 2. La Palma (`ES-PUB-0130`) after Extremadura is integrated and accepted.
 3. Eivissa (`ES-PUB-0122`) and Formentera (`ES-PUB-0124`) remain research-only until their public
    evidence becomes implementation-ready.
