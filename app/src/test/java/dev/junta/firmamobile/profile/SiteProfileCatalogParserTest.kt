@@ -191,6 +191,62 @@ class SiteProfileCatalogParserTest {
 
 
     @Test
+    fun preservesTheExactSevillaAtseQaOnlyCertificateLoginContract() {
+        val profileId = ProfileId("sevilla-atse-certificate-login")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Agencia Tributaria de Sevilla — Acceso con certificado", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI("https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"),
+            profile.startUrl,
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://www.sevilla.org")),
+            profile.initiatorOrigins,
+        )
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), profile.capabilities)
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertTrue(profile.evidence.isNotEmpty())
+
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(
+            ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+            operation.inputAdapterId,
+        )
+        assertEquals(
+            CallbackContractId("autoscript-sign-callback-v1"),
+            operation.callbackContractId,
+        )
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), operation.capabilities)
+        assertNull(operation.endpointId)
+        assertEquals(setOf(SignatureAlgorithm.SHA1_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.XADES, operation.format)
+        assertEquals(SignaturePackaging.ATTACHED, operation.packaging)
+        assertNull(operation.mode)
+        assertTrue(operation.fixedExtraProperties.isEmpty())
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.sevilla.org.evil.example/")),
+        )
+    }
+
+    @Test
     fun preservesTheExactCantabriaRecQaOnlyCertificateContract() {
         val profileId = ProfileId("cantabria-rec-cert-login")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
