@@ -185,6 +185,27 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun sevillaAtseCompatibilityIsProfileScopedToTheExactXadesChallengeTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            sevillaAtseCompatibilityEnabled = true,
+        )
+
+        assertTrue(script.contains("const sevillaAtseCompatibilityEnabled = true"))
+        assertTrue(script.contains("https://www.sevilla.org"))
+        assertTrue(script.contains("sevillaAtseChallengePattern"))
+        assertTrue(script.contains("atob(value)"))
+        assertTrue(script.contains("args[1] === \"SHA1withRSA\""))
+        assertTrue(script.contains("args[2] === \"XAdES\""))
+        assertTrue(script.contains("args[3] == null"))
+        assertTrue(script.contains("if (isSevillaAtseOrigin && !isExactSevillaAtseCall)"))
+        assertFalse(script.contains("authenticate("))
+    }
+
+    @Test
     fun nonUgrShimKeepsTheStrictGenericTransportMode() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(

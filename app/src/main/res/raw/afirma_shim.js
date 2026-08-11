@@ -17,6 +17,7 @@
   const ugrCompatibilityEnabled = __JFM_UGR_COMPATIBILITY_ENABLED__;
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
+  const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -27,6 +28,8 @@
   const ugrRetrieveUrl = "https://sede.ugr.es/afirma-signature-retriever/RetrieveService";
   const jccmOrigin = "https://ventanillaelectronica.jccm.es";
   const jccmPayloadBase64 = "QUJDREU=";
+  const sevillaAtseOrigin = "https://www.sevilla.org";
+  const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -132,12 +135,39 @@
       pending.errorCallback === args[5];
   }
 
+  function isValidSevillaAtseChallenge(value) {
+    if (typeof value !== "string") {
+      return false;
+    }
+    try {
+      const decoded = atob(value);
+      return decoded.length === 40 && sevillaAtseChallengePattern.test(decoded);
+    } catch (_) {
+      return false;
+    }
+  }
+
   function interceptMiniAppletSign(args) {
     if (!functionalSigningEnabled) {
       return false;
     }
     const successCallback = args[4];
     const errorCallback = args[5];
+    const isSevillaAtseOrigin =
+      sevillaAtseCompatibilityEnabled && window.location.origin === sevillaAtseOrigin;
+    const isExactSevillaAtseCall =
+      isSevillaAtseOrigin &&
+      args.length === 6 &&
+      isValidSevillaAtseChallenge(args[0]) &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "XAdES" &&
+      args[3] == null &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isSevillaAtseOrigin && !isExactSevillaAtseCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isExactUgrLiteralCall =
       ugrCompatibilityEnabled &&
       window.location.origin === ugrOrigin &&
@@ -180,11 +210,11 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !base64Pattern.test(args[0])) ||
+          !isExactSevillaAtseCall && !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
-          !isExactCantabriaCall && !isExactJccmCall)) {
+          !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

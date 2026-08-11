@@ -20,6 +20,7 @@ object AfirmaJavascriptShim {
         ugrCompatibilityEnabled: Boolean = false,
         cantabriaCompatibilityEnabled: Boolean = false,
         jccmCompatibilityEnabled: Boolean = false,
+        sevillaAtseCompatibilityEnabled: Boolean = false,
     ): String {
         val script = context.resources.openRawResource(R.raw.afirma_shim)
             .bufferedReader(Charsets.UTF_8)
@@ -29,6 +30,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(UGR_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(CANTABRIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(JCCM_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
         val configured = script
             .replace(
                 MODE_PLACEHOLDER,
@@ -50,6 +52,10 @@ object AfirmaJavascriptShim {
                 JCCM_COMPATIBILITY_PLACEHOLDER,
                 if (jccmCompatibilityEnabled) "true" else "false",
             )
+            .replace(
+                SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER,
+                if (sevillaAtseCompatibilityEnabled) "true" else "false",
+            )
         check(configured.isNotBlank() && configured.length <= MAX_SCRIPT_CHARS)
         return configured
     }
@@ -63,6 +69,8 @@ object AfirmaJavascriptShim {
     private const val CANTABRIA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_CANTABRIA_COMPATIBILITY_ENABLED__"
     private const val JCCM_COMPATIBILITY_PLACEHOLDER = "__JFM_JCCM_COMPATIBILITY_ENABLED__"
+    private const val SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__"
 }
 
 enum class MiniAppletBridgeMode {
