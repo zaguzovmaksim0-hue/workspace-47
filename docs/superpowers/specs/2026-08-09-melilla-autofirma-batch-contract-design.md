@@ -89,36 +89,41 @@ submission endpoint.
 
 ## Exact URL policy for runtime-issued batch URLs
 
-The two batch URLs and every per-document `datareference` are accepted only
-after the same policy. Runtime/server-issued identifiers are opaque values;
-the client never guesses, hard-codes, or rewrites them.
+Generation-51 live public servlet evidence supersedes the query-style URL examples in the currently
+served `sta-autofirma-lote.js` comments. The direct servlet rejects
+`/sta/AutofirmaLote?op=...&operacionId=...` and reports that `/{op}/{operacionId}` is required. With
+synthetic identifiers, the path form reaches operation-specific validation, and adding synthetic
+`json`/`certs` parameters to the pre-sign path reaches JSON validation. The bounded evidence is
+recorded in `docs/autonomous/2026-08-11-g51-melilla-live-servlet-contract.md`.
 
-1. The effective origin is exactly `https://sede.melilla.es` with HTTPS and
-   port 443. Reject every other host, scheme, port, user-info, or fragment.
-2. The raw path is exactly `/sta/AutofirmaLote`. Reject a trailing slash,
-   path parameters, encoded path separators, dot segments, or any other raw
-   path spelling.
-3. The query must contain exactly one occurrence of each required name, no
-   unknown names, and no fragment. The allowlisted key sets are:
-   - `op=presign` with `operacionId`;
-   - `op=postsign` with `operacionId`;
-   - `op=getdata` with `operacionId` and `docId`.
-4. `op` values are exact lowercase values from that allowlist. Every
-   `operacionId` and `docId` is required, non-empty, control-free, and within
-   the existing bounded URL/query policy (`URL <= 8192`, raw query `<= 4096`,
-   ephemeral value `<= 1024` characters). Duplicate parameters, malformed
-   percent-encoding, empty pairs, whitespace/control values, and over-limit
-   values fail closed.
-5. The accepted pre-sign, post-sign, and data URLs are bound to the same
-   active profile, source origin, navigation epoch, and runtime batch
-   operation. A mismatched `operacionId` or document binding is rejected; no
-   identifier is synthesized. The transport denies redirects and validates
-   the final request URL again before use.
+The two batch service URLs and every per-document `datareference` are therefore accepted only after
+the following fail-closed policy. Runtime/server-issued identifiers are opaque values; the client
+never guesses, hard-codes, or rewrites them.
 
-The URL policy is a dedicated public module, planned as
-`app/src/main/java/dev/junta/firmamobile/network/MelillaBatchUrlPolicy.kt`.
-It must be tested through its public validation interface or through the
-batch adapter, not through private parsing helpers.
+1. The effective origin is exactly `https://sede.melilla.es` with HTTPS and port 443. Reject every
+   other host, scheme, port, user-info, or fragment.
+2. Runtime base URLs use exact path routing and contain no query:
+   - `/sta/AutofirmaLote/presign/{operacionId}`;
+   - `/sta/AutofirmaLote/postsign/{operacionId}`;
+   - `/sta/AutofirmaLote/getdata/{operacionId}/{docId}`.
+3. The path prefix and operation segment are exact and lowercase. Reject a trailing slash, path
+   parameters, empty segments, dot segments, encoded path separators, alternate operation spelling,
+   extra segments, or any other raw path shape.
+4. `operacionId` and `docId` are required, non-empty, control-free opaque identifiers within the
+   existing URL/value bounds (`URL <= 8192`, identifier `<= 1024` characters). Percent-decoding must
+   fail closed on malformed UTF-8 or encodings that produce a slash, query/fragment delimiter,
+   whitespace/control character, or dot-segment ambiguity.
+5. Accepted pre-sign, post-sign, and data URLs are bound to the same active profile, source origin,
+   navigation epoch, and runtime batch operation. A mismatched `operacionId` or document binding is
+   rejected; no identifier is synthesized.
+6. The later execution adapter may add only the official AutoFirma request parameters to an already
+   validated base URL: `json` and `certs` for pre-sign, and `json`, `certs`, and `tridata` for
+   post-sign. It must revalidate the final URL immediately before transport, deny redirects, and must
+   not accept arbitrary portal-supplied query parameters.
+
+The URL policy remains the dedicated public module
+`app/src/main/java/dev/junta/firmamobile/network/MelillaBatchUrlPolicy.kt`. It must be tested through
+its public validation interface or through the batch adapter, not through private parsing helpers.
 
 ## Lifecycle and callback boundary
 

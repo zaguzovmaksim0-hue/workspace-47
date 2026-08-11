@@ -9,19 +9,18 @@ class MelillaBatchUrlPolicyTest {
     private val policy = MelillaBatchUrlPolicy()
 
     @Test
-    fun acceptsOnlyTheThreeExactOperationQueryShapes() {
+    fun acceptsOnlyTheThreeExactLiveServletPathShapes() {
         val operationId = "runtime-operation-1"
         val documentId = "runtime-document-1"
 
         val pre = policy.validatePreSignerUrl(
-            "https://sede.melilla.es/sta/AutofirmaLote?op=presign&operacionId=$operationId",
+            "https://sede.melilla.es/sta/AutofirmaLote/presign/$operationId",
         )
         val post = policy.validatePostSignerUrl(
-            "https://sede.melilla.es:443/sta/AutofirmaLote?operacionId=$operationId&op=postsign",
+            "https://sede.melilla.es:443/sta/AutofirmaLote/postsign/$operationId",
         )
         val data = policy.validateDataReference(
-            "https://sede.melilla.es/sta/AutofirmaLote?op=getdata&operacionId=$operationId" +
-                "&docId=$documentId",
+            "https://sede.melilla.es/sta/AutofirmaLote/getdata/$operationId/$documentId",
         )
 
         assertNotNull(pre)
@@ -37,19 +36,20 @@ class MelillaBatchUrlPolicyTest {
     fun rejectsOriginPathQueryAndOpaqueBindingViolations() {
         val operationId = "runtime-operation-1"
         val documentId = "runtime-document-1"
-        val validData = "https://sede.melilla.es/sta/AutofirmaLote?op=getdata" +
-            "&operacionId=$operationId&docId=$documentId"
+        val validData = "https://sede.melilla.es/sta/AutofirmaLote/getdata/$operationId/$documentId"
 
         listOf(
             validData.replace("https://sede.melilla.es", "http://sede.melilla.es"),
             validData.replace("sede.melilla.es", "evil.sede.melilla.es"),
             validData.replace("/sta/AutofirmaLote", "/sta/AutofirmaLote/"),
-            "$validData&unexpected=value",
-            validData.replace("docId=$documentId", "docId="),
-            validData.replace("op=getdata", "op=GETDATA"),
-            validData.replace("&docId=$documentId", "&docId=$documentId&docId=duplicate"),
-            validData.replace("$operationId", "bad%ZZoperation"),
+            "$validData?unexpected=value",
+            validData.replace("/$documentId", "/"),
+            validData.replace("/getdata/", "/GETDATA/"),
+            "$validData/extra",
+            validData.replace("$operationId", "bad%2Foperation"),
             validData.replace("$operationId", "bad%20operation"),
+            "https://sede.melilla.es/sta/AutofirmaLote?op=getdata" +
+                "&operacionId=$operationId&docId=$documentId",
         ).forEach { candidate ->
             assertNull(candidate, policy.validateDataReference(candidate))
         }
@@ -60,14 +60,13 @@ class MelillaBatchUrlPolicyTest {
         val operationId = "runtime-operation-1"
         val documentId = "runtime-document-1"
         val pre = policy.validatePreSignerUrl(
-            "https://sede.melilla.es/sta/AutofirmaLote?op=presign&operacionId=$operationId",
+            "https://sede.melilla.es/sta/AutofirmaLote/presign/$operationId",
         )
         val post = policy.validatePostSignerUrl(
-            "https://sede.melilla.es/sta/AutofirmaLote?op=postsign&operacionId=$operationId",
+            "https://sede.melilla.es/sta/AutofirmaLote/postsign/$operationId",
         )
         val data = policy.validateDataReference(
-            "https://sede.melilla.es/sta/AutofirmaLote?op=getdata&operacionId=$operationId" +
-                "&docId=$documentId",
+            "https://sede.melilla.es/sta/AutofirmaLote/getdata/$operationId/$documentId",
         )
 
         assertEquals(pre?.operacionId, post?.operacionId)
@@ -75,16 +74,14 @@ class MelillaBatchUrlPolicyTest {
         assertEquals(documentId, data?.docId)
         assertNull(
             policy.validateDataReference(
-                "https://sede.melilla.es/sta/AutofirmaLote?op=getdata" +
-                    "&operacionId=other-operation&docId=$documentId",
+                "https://sede.melilla.es/sta/AutofirmaLote/getdata/other-operation/$documentId",
                 expectedOperacionId = pre?.operacionId,
                 expectedDocId = documentId,
             ),
         )
         assertNull(
             policy.validateDataReference(
-                "https://sede.melilla.es/sta/AutofirmaLote?op=getdata" +
-                    "&operacionId=$operationId&docId=other-document",
+                "https://sede.melilla.es/sta/AutofirmaLote/getdata/$operationId/other-document",
                 expectedOperacionId = operationId,
                 expectedDocId = documentId,
             ),

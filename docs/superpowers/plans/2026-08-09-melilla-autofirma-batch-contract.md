@@ -104,15 +104,24 @@ exact active profile/origin/main-frame/navigation epoch before dispatching to
 the batch adapter. The existing single-sign route remains the fallback only
 for its exact `MINIAPPLET_SIGN` key set and never consumes the batch envelope.
 
-The URL policy must enforce exactly:
+The URL policy must enforce the generation-51 live servlet contract exactly:
 
 - effective origin `https://sede.melilla.es`, HTTPS/443, no user-info or
   fragment;
-- raw path `/sta/AutofirmaLote` with no alternate spelling;
-- `presign`/`postsign` query keys `{op, operacionId}` and `getdata` keys
-  `{op, operacionId, docId}`;
-- exact lowercase `op` values, unique names, no unknown parameters, and
-  non-empty bounded control-free opaque identifiers;
+- runtime base URLs have no query and use exact paths
+  `/sta/AutofirmaLote/presign/{operacionId}`,
+  `/sta/AutofirmaLote/postsign/{operacionId}`, and
+  `/sta/AutofirmaLote/getdata/{operacionId}/{docId}`;
+- exact lowercase operation segments, no alternate path spelling, no extra or
+  empty segments, no dot-segment/encoded-separator ambiguity, and non-empty
+  bounded control-free opaque identifiers;
+- the legacy query-style `/sta/AutofirmaLote?op=...&operacionId=...` shape is
+  rejected because the live servlet returns HTTP 400 and requires
+  `/{op}/{operacionId}`;
+- the later execution adapter may append only the official AutoFirma
+  `json`/`certs` parameters for pre-sign and `json`/`certs`/`tridata` for
+  post-sign to an already validated base URL, followed by final URL
+  revalidation;
 - no redirects and no URL outside the current active batch binding.
 
 ### Cloud-only first GREEN command

@@ -199,11 +199,11 @@ class MelillaBatchBridgeAdapterTest {
         .put("requestId", REQUEST_ID)
         .put(
             "batchPreSignerUrl",
-            "https://sede.melilla.es/sta/AutofirmaLote?op=presign&operacionId=runtime-operation-1",
+            "https://sede.melilla.es/sta/AutofirmaLote/presign/runtime-operation-1",
         )
         .put(
             "batchPostSignerUrl",
-            "https://sede.melilla.es/sta/AutofirmaLote?op=postsign&operacionId=runtime-operation-1",
+            "https://sede.melilla.es/sta/AutofirmaLote/postsign/runtime-operation-1",
         )
         .put("algorithm", "SHA256withRSA")
         .put("format", "CAdES")
@@ -216,8 +216,8 @@ class MelillaBatchBridgeAdapterTest {
                     .put("id", "runtime-document-1")
                     .put(
                         "datareference",
-                        "https://sede.melilla.es/sta/AutofirmaLote?op=getdata" +
-                            "&operacionId=runtime-operation-1&docId=runtime-document-1",
+                        "https://sede.melilla.es/sta/AutofirmaLote/getdata/" +
+                            "runtime-operation-1/runtime-document-1",
                     ),
             ),
         )
