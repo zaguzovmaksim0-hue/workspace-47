@@ -11,6 +11,13 @@ Copyright (c) 2010 Dharma Type
 License: SIL Open Font License, Version 1.1
 License text: docs/licenses/BebasNeue-OFL.txt
 
+Gradle Wrapper
+--------------
+The repository contains generated Gradle Wrapper material for Gradle 9.4.1.
+The generated `gradlew` script carries the upstream Apache License 2.0 header
+and SPDX identifier. Gradle documents the Wrapper and Gradle Build Tool as
+licensed under Apache License 2.0; upstream license metadata must remain intact.
+
 Third-party services, names and domains
 ---------------------------------------
 References to Junta de Andalucia, AutoFirma, Cliente @firma, Spanish public
