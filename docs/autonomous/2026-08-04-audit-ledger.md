@@ -2799,3 +2799,60 @@ coordinator/runtime completion, `extremadura-tramites` (`ES-PUB-0109`), then La 
 No APK was installed/launched; no ADB/device control, authenticated portal navigation, credentials,
 cookies/bearer data, certificate unlock/private-key material, real signing, form submission, upload,
 payment, or administrative action occurred.
+
+## Portal G54/G55 — Melilla batch coordinator and PRE-ownership acceptance — 2026-08-11
+
+The Melilla batch coordinator is now accepted at its bounded automated boundary. Generation 54
+published the coordinator prepare/confirm lifecycle through
+`2d89c2592564920b6e57664ef2c13dc5861faf0c`: explicit certificate snapshot ownership, safe user
+confirmation, ordered PRE signing, repeated origin/navigation/certificate revalidation, one-shot
+terminal delivery, cancellation/expiry handling, and deterministic sensitive cleanup. Its focused
+Cloud GREEN `task_e_6a7b3555442c8323a4d9ac81349dfa33` passed 2/2 tests on that exact SHA.
+
+Generation 55 then closed a fail-closed ownership gap at the private-key boundary. The first published
+regression `a290ca726f90da5e53b9ebe5393711b9ad1a37f4` did not establish RED because its test fixture used an
+invalid Kotlin SAM-style construction for the ordinary `LocalSignatureEngine` interface; Cloud task
+`task_e_6a7b391ea4488323b5cbaf4990ffc252` failed during test-source compilation before executing tests.
+Test-only commit `6b1b0931a33580b8456006de44b8f7df4c5c7ca7` corrected only that harness construction. Cloud task
+`task_e_6a7b3c7b461483239c8de9a1dd304692` then produced the intended deterministic RED at exact `6b1b...`:
+3 tests ran, 1 failed, and the foreign PRE trace was `[prepare, sign:pre-one, complete,
+failure:PROTOCOL_FAILED]` instead of the required `[prepare, failure:PROTOCOL_FAILED]`. This proved that
+`BatchPreSignResult` ownership was checked only later during protocol completion, after private-key use.
+
+Production commit `35b2c1084f003f8e97a5cb610045c05e1b83838e` adds an internal identity-based
+`BatchPreSignResult.isOwnedBy` check and rejects a foreign PRE immediately after protocol prepare,
+before `withInput`, `LocalSignatureEngine.sign`, or adapter completion. The change is batch-only and
+does not alter ordinary `SigningCoordinator` behavior or consume one-shot prepared state early.
+The first focused GREEN attempt, Cloud task `task_e_6a7b3e828acc8323b1f177ab0834f99a`, was non-acceptance
+infrastructure evidence only: the exact checkout was clean but `services.gradle.org` returned HTTP 503
+while the wrapper tried to obtain Gradle 9.4.1, so no tests ran and no local fallback was used. Bounded
+retry `task_e_6a7b3ef125bc8323a83846a6022db832` verified exact `35b2c...` with Gradle exit 0,
+`BUILD SUCCESSFUL in 4m 2s`, and 3/3 coordinator tests passing.
+
+Coordinator acceptance Cloud task `task_e_6a7b40692674832395efc1143bd08ac3` then verified the same exact
+pushed SHA with dependency verification enabled and unchanged. The direct Cloud command ran Debug+QA
+coverage across `MelillaBatchUrlPolicyTest`, `MelillaBatchBridgeAdapterTest`,
+`MelillaBatchProtocolAdapterTest`, and `BatchSigningCoordinatorTest`; Gradle exited 0 with
+`BUILD SUCCESSFUL in 12m 25s`. The Debug report contained the broader 636-test suite, all passing, and
+QA contained 17/17 focused tests (7 bridge, 3 URL policy, 4 protocol adapter, 3 coordinator), for
+653/653 observed tests with zero failures/errors/skips. The Cloud checkout finished clean.
+
+Direct main-Watchdog Standards + Spec review found no Critical or Important defect in the bounded
+coordinator hardening. The ownership check is synchronized and identity-based, precedes all local
+private-key signing, preserves one-shot `consumeState`, and remains inside the existing `try/finally`
+cleanup that closes PRE/signatures and clears request/certificate ownership. `git diff --check` and
+bounded changed-content scans found no private-key/certificate body, bearer material,
+dependency-verification bypass, trust-all/hostname-verifier weakening, insecure HTTP widening, or retry
+addition. No worker, `agent_spawn`, delegated code review, phone-local Gradle/JVM/Kotlin, device control,
+real signing, authenticated portal action, upload, payment, or submission was used.
+
+This still does not integrate Melilla into the product catalog. Runtime request/reply adaptation,
+explicit JavaScript batch-cancel propagation, `BrowserScreen`/`MainActivity` composition, shared UI
+state arbitration, and final profile/public-catalog promotion remain separate slices. Catalog accounting
+therefore remains 183 entries, 14 bound surfaces, 13 unique profile IDs, 169 unbound; inventory remains
+163 `BROWSE_ONLY`, 9 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4
+`INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated states remain 91 `CATALOGED`, 73
+`DISCOVERED`, 6 `BLOCKED`, 9 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The classified research queue
+remains at least 16 surfaces. Portals newly integrated in generations 54/55 remain zero. Exact next
+implementation order remains finish Melilla runtime/profile/catalog, then `extremadura-tramites`
+(`ES-PUB-0109`), then La Palma (`ES-PUB-0130`); Eivissa and Formentera remain research-only.
