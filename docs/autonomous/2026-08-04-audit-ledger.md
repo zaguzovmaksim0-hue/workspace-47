@@ -2456,3 +2456,47 @@ than the previous general-help evidence, but actual document/config state and th
 algorithm remain unresolved behind stateful/server processing. `euskadi-sede-electronica`
 (`ES-PUB-0115`) stays `BROWSE_ONLY`. Exact static hashes and boundaries are recorded in
 `docs/autonomous/2026-08-11-g45-euskadi-registro-research.md`.
+
+## Portal G45 continuation — Cloud evidence boundary and research expansion — 2026-08-11
+
+The autonomous main remained portal-first while Sevilla Gradle evidence was unavailable through the
+supported Codex Cloud surfaces. The published Sevilla QA profile implementation is
+`9d0b2b6b5f26fc5957edf8e4fa4d3bb55532e62e`; the subsequent exact protocol-registry RED is
+`d8a688cac666bd9f9d1c4af7f8ed20bda28519fc`. Cloud task
+`task_e_6a7aa66cc13c83238c4f423d292cdc15` is the focused profile-GREEN submission for exact SHA
+`9d0b2b6...`, and `task_e_6a7aa844258c832389f97744737e5fcc` is the focused registry-RED
+submission for exact SHA `d8a688c...`. Both are lifecycle `READY`; the earlier profile RED
+`task_e_6a7aa3b8def08323970f6b302ea0ad64` and XAdES adapter task
+`task_e_6a7aa19ae4a08323b0f8200f3f9584bc` are also only lifecycle `READY`. The installed supported CLI
+still exposes no terminal Gradle stdout, exit code, observed checkout SHA or conclusion, so none of
+these lifecycle states is accepted as RED/GREEN evidence. No local Gradle/JVM/Kotlin fallback was
+used.
+
+Four additional portal-first research checkpoints were published without product/catalog promotion:
+
+- `4dfb52d82588f1ece33807a11be1bdda929da03b`: Navarra Registro General remains pre-auth ABI-incomplete;
+  La Rioja's exact public file-signing utility reaches a file-input/POST boundary before a local ABI.
+- `8fc5ca3aa3bd2dec0986e715c0746270c7f29099`: Castilla y León's official technical checker exposes an
+  exact default AutoScript `SHA512withRSA`/PAdES simulator contract, but its post-sign server actions
+  and lack of a current citizen-procedure binding keep broad `ES-PUB-0102` `BROWSE_ONLY`.
+- `31f895d5e237b98730a2df5e69030b7aeeeb3530`: Galicia live generic-request procedure PR004A is bound
+  to the exact public launch, whose next GET returns HTTP 302 to `/identificate/login`; no signing ABI
+  is public before authentication.
+- `7924ffb3ca37a21369d3ba15fe4f62c22c98d0ed`: Euskadi live Registro General procedure `1017701`
+  exposes a publicly GET-readable form and active `firmaGiltza` integration. Current first-party code
+  proves the new-signing path uses XAdES Enveloping with `mecanismo_firma=auto`, but actual document
+  state/server initialization and the exact cryptographic algorithm remain unresolved without crossing
+  the form-state/server boundary; `ES-PUB-0115` remains `BROWSE_ONLY`.
+
+All research remained unauthenticated GET-only. No form field was filled, no signing component or
+certificate selector was launched, and no POST, upload, credential/cookie use, authentication,
+payment or administrative submission occurred. Raw ignored research artifacts were removed after
+bounded extraction; recurring generated Cloud CLI `error.log` files were scanned for key/token/auth
+patterns and removed.
+
+Catalog accounting remains unchanged at 183 entries, 13 bound surfaces, 12 unique profile IDs and 170
+unbound surfaces. Inventory states remain 164 `BROWSE_ONLY`, 8 `IMPLEMENTED_NOT_E2E`, 1
+`VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated
+states remain 92 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 8 `E2E_PENDING`, and 4 `E2E_VERIFIED`.
+The classified research buffer remains at least 16 surfaces. Portals fully integrated in generation 45
+remain zero because Sevilla is still in-flight behind the Cloud evidence boundary.
