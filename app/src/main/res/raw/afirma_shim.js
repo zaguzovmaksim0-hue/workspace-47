@@ -18,6 +18,7 @@
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
+  const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -30,11 +31,16 @@
   const jccmPayloadBase64 = "QUJDREU=";
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
+  const melillaBatchOrigin = "https://sede.melilla.es";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
   const maxDirectDataChars = 699052;
   const maxExtraPropertiesChars = 65536;
+  const maxBatchUrlChars = 8192;
+  const maxBatchIdentifierChars = 1024;
+  const maxBatchDocuments = 64;
+  const maxBatchResultChars = 786432;
   const signTimeoutMillis = 120000;
   const safeTokenPattern = /^[A-Za-z0-9._+\-]{1,64}$/;
   const canonicalUuidPattern =
@@ -42,6 +48,8 @@
   const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
   const wrappedMethods = new WeakSet();
   const pendingCallbacks = new Map();
+  const pendingBatchCallbacks = new Map();
+  let activeMelillaBatch = null;
   let activeProbeRequestId = null;
 
   function secureRequestId() {
@@ -100,13 +108,23 @@
     return pending;
   }
 
-  function notifyNativeCancel(requestIdValue) {
+  function clearPendingBatch(requestIdValue) {
+    const pending = pendingBatchCallbacks.get(requestIdValue);
+    if (!pending) {
+      return null;
+    }
+    pendingBatchCallbacks.delete(requestIdValue);
+    clearTimeout(pending.timeoutId);
+    return pending;
+  }
+
+  function notifyNativeCancel(requestIdValue, messageType = "MINIAPPLET_CANCEL") {
     if (!bridge || typeof bridge.postMessage !== "function") {
       return;
     }
     try {
       bridge.postMessage(JSON.stringify({
-        type: "MINIAPPLET_CANCEL",
+        type: messageType,
         documentId: probeDocumentId,
         requestId: requestIdValue
       }));
@@ -270,6 +288,146 @@
     return true;
   }
 
+  function isMelillaBatchPage() {
+    return functionalSigningEnabled && melillaBatchCompatibilityEnabled &&
+      window.location.origin === melillaBatchOrigin;
+  }
+
+  function isSafeBatchIdentifier(value) {
+    return typeof value === "string" && value.length > 0 &&
+      value.length <= maxBatchIdentifierChars &&
+      !Array.from(value).some(character => /\s/.test(character) ||
+        character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f);
+  }
+
+  function batchExtraParams(format) {
+    if (format === "PAdES") {
+      return "signatureSubFilter=ETSI.CAdES.detached";
+    }
+    if (format === "XAdES") {
+      return "mode=implicit";
+    }
+    return null;
+  }
+
+  function isSupportedBatchFormat(value) {
+    return value === "CAdES" || value === "PAdES" || value === "XAdES";
+  }
+
+  function rememberMelillaBatchCreate(args) {
+    if (!isMelillaBatchPage()) {
+      activeMelillaBatch = null;
+      return;
+    }
+    if (args.length !== 4 || args[0] !== "SHA256withRSA" ||
+        !isSupportedBatchFormat(args[1]) || args[2] !== "sign" || args[3] !== null) {
+      activeMelillaBatch = null;
+      return;
+    }
+    activeMelillaBatch = {
+      algorithm: args[0],
+      format: args[1],
+      suboperation: args[2],
+      documents: [],
+      invalid: false
+    };
+  }
+
+  function rememberMelillaBatchDocument(args) {
+    const batch = activeMelillaBatch;
+    if (!isMelillaBatchPage() || !batch) {
+      return;
+    }
+    const documentFormat = args[2];
+    const documentSuboperation = args[3];
+    const effectiveFormat = documentFormat === null ? batch.format : documentFormat;
+    const valid = args.length === 5 && isSafeBatchIdentifier(args[0]) &&
+      typeof args[1] === "string" && args[1].length > 0 &&
+      args[1].length <= maxBatchUrlChars && !args[1].includes("\u0000") &&
+      (documentFormat === null || isSupportedBatchFormat(documentFormat)) &&
+      (documentSuboperation === null || documentSuboperation === "sign") &&
+      args[4] === batchExtraParams(effectiveFormat) &&
+      !batch.documents.some(document => document.id === args[0]) &&
+      batch.documents.length < maxBatchDocuments;
+    if (!valid) {
+      batch.invalid = true;
+      return;
+    }
+    const document = {
+      id: args[0],
+      datareference: args[1]
+    };
+    if (documentFormat !== null) {
+      document.format = documentFormat;
+    }
+    if (documentSuboperation !== null) {
+      document.suboperation = documentSuboperation;
+    }
+    batch.documents.push(document);
+  }
+
+  function interceptMelillaBatchSign(args) {
+    if (!isMelillaBatchPage()) {
+      return false;
+    }
+    const errorCallback = args[5];
+    const batch = activeMelillaBatch;
+    if (args.length !== 6 || args[0] !== false || typeof args[1] !== "string" ||
+        args[1].length === 0 || args[1].length > maxBatchUrlChars ||
+        typeof args[2] !== "string" || args[2].length === 0 ||
+        args[2].length > maxBatchUrlChars || args[3] !== null ||
+        typeof args[4] !== "function" || typeof errorCallback !== "function" ||
+        !batch || batch.invalid || batch.documents.length === 0 || !probeDocumentId) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    if (!bridge || typeof bridge.postMessage !== "function") {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    if (pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    const batchRequestId = secureRequestId();
+    if (!batchRequestId) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    const timeoutId = setTimeout(() => {
+      const expired = clearPendingBatch(batchRequestId);
+      if (expired) {
+        notifyNativeCancel(batchRequestId, "MINIAPPLET_BATCH_CANCEL");
+        rejectDirectCall(expired.errorCallback, "REQUEST_EXPIRED");
+      }
+    }, signTimeoutMillis);
+    pendingBatchCallbacks.set(batchRequestId, {
+      successCallback: args[4],
+      errorCallback,
+      timeoutId
+    });
+    const message = {
+      type: "MINIAPPLET_BATCH",
+      documentId: probeDocumentId,
+      requestId: batchRequestId,
+      batchPreSignerUrl: args[1],
+      batchPostSignerUrl: args[2],
+      algorithm: batch.algorithm,
+      format: batch.format,
+      suboperation: batch.suboperation,
+      stopOnError: false,
+      documentos: batch.documents.map(document => ({ ...document }))
+    };
+    activeMelillaBatch = null;
+    try {
+      bridge.postMessage(JSON.stringify(message));
+    } catch (_) {
+      clearPendingBatch(batchRequestId);
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+    }
+    return true;
+  }
+
   function interceptUgrSetupCall(call, args) {
     if (!ugrCompatibilityEnabled || window.location.origin !== ugrOrigin) {
       return false;
@@ -284,6 +442,37 @@
       args[0] === ugrStorageUrl && args[1] === ugrRetrieveUrl;
   }
 
+  function receiveMelillaBatchResult(result) {
+    postQaPortalDiagnostic("RESULT_RECEIVED", result.requestId);
+    const pending = clearPendingBatch(result.requestId);
+    if (!pending) {
+      postQaPortalDiagnostic("RESULT_IGNORED", result.requestId);
+      return;
+    }
+    if (result.status === "success" && typeof result.validationResponse === "string" &&
+        result.validationResponse.length <= maxBatchResultChars) {
+      let validationResponse;
+      try {
+        validationResponse = JSON.parse(result.validationResponse);
+      } catch (_) {
+        rejectDirectCall(pending.errorCallback, "PROTOCOL_FAILED");
+        return;
+      }
+      postQaPortalDiagnostic("CALLBACK_STARTED", result.requestId);
+      try {
+        pending.successCallback(validationResponse);
+        postQaPortalDiagnostic("CALLBACK_RETURNED", result.requestId);
+      } catch (_) {
+        postQaPortalDiagnostic("CALLBACK_THROWN", result.requestId);
+        // The portal callback is terminal; no submission is attempted here.
+      }
+      return;
+    }
+    const errorCode = typeof result.errorCode === "string" &&
+      safeTokenPattern.test(result.errorCode) ? result.errorCode : "PROTOCOL_FAILED";
+    rejectDirectCall(pending.errorCallback, errorCode);
+  }
+
   function receiveMiniAppletResult(event) {
     if (!functionalSigningEnabled || !event || typeof event.data !== "string") {
       return;
@@ -294,9 +483,15 @@
     } catch (_) {
       return;
     }
-    if (!result || result.type !== "MINIAPPLET_RESULT" ||
-        typeof result.requestId !== "string" ||
+    if (!result || typeof result.requestId !== "string" ||
         !canonicalUuidPattern.test(result.requestId)) {
+      return;
+    }
+    if (result.type === "MINIAPPLET_BATCH_RESULT") {
+      receiveMelillaBatchResult(result);
+      return;
+    }
+    if (result.type !== "MINIAPPLET_RESULT") {
       return;
     }
     postQaPortalDiagnostic("RESULT_RECEIVED", result.requestId);
@@ -335,7 +530,13 @@
       clearTimeout(pending.timeoutId);
       notifyNativeCancel(pendingRequestId);
     }
+    for (const [pendingRequestId, pending] of pendingBatchCallbacks.entries()) {
+      clearTimeout(pending.timeoutId);
+      notifyNativeCancel(pendingRequestId, "MINIAPPLET_BATCH_CANCEL");
+    }
     pendingCallbacks.clear();
+    pendingBatchCallbacks.clear();
+    activeMelillaBatch = null;
   });
 
   const probeDocumentId = secureRequestId();
@@ -344,6 +545,25 @@
     writable: false,
     configurable: false
   });
+
+  function notifyNativeDocumentReady() {
+    if (!functionalSigningEnabled || !melillaBatchCompatibilityEnabled ||
+        window.location.origin !== melillaBatchOrigin ||
+        !bridge || typeof bridge.postMessage !== "function" ||
+        !probeDocumentId) {
+      return;
+    }
+    try {
+      bridge.postMessage(JSON.stringify({
+        type: "MINIAPPLET_DOCUMENT_READY",
+        documentId: probeDocumentId
+      }));
+    } catch (_) {
+      // Native lifecycle binding remains fail-closed if registration is unavailable.
+    }
+  }
+
+  notifyNativeDocumentReady();
 
   function safeToken(value) {
     return typeof value === "string" && safeTokenPattern.test(value) ? value : null;
@@ -444,6 +664,9 @@
     function wrappedMiniAppletMethod(...args) {
       const observedRequestId = tryObserveMiniAppletCall(call, args);
       if (observedRequestId === null) {
+        if (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) {
+          return undefined;
+        }
         if (interceptUgrSetupCall(call, args)) {
           return undefined;
         }
@@ -453,10 +676,17 @@
       activeProbeRequestId = observedRequestId;
       try {
         if ((call === "SIGN" && interceptMiniAppletSign(args)) ||
+            (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) ||
             interceptUgrSetupCall(call, args)) {
           return undefined;
         }
-        return Reflect.apply(method, this, args);
+        const result = Reflect.apply(method, this, args);
+        if (call === "BATCH_CREATE") {
+          rememberMelillaBatchCreate(args);
+        } else if (call === "BATCH_ADD_DOCUMENT") {
+          rememberMelillaBatchDocument(args);
+        }
+        return result;
       } finally {
         activeProbeRequestId = previousRequestId;
         completeMiniAppletCall(observedRequestId);
@@ -487,13 +717,22 @@
     });
   }
 
-  function wrapMiniApplet(value, includeUgrSetup = false) {
+  function wrapMiniApplet(
+    value,
+    includeUgrSetup = false,
+    includeMelillaBatch = false
+  ) {
     if ((typeof value !== "object" || value === null) && typeof value !== "function") {
       return value;
     }
     try {
       installMethodHook(value, "cargarMiniApplet", "LOAD");
       installMethodHook(value, "sign", "SIGN");
+      if (includeMelillaBatch) {
+        installMethodHook(value, "createBatch", "BATCH_CREATE");
+        installMethodHook(value, "addDocumentToBatch", "BATCH_ADD_DOCUMENT");
+        installMethodHook(value, "signBatchProcess", "BATCH_SIGN");
+      }
       if (includeUgrSetup) {
         installMethodHook(value, "setForceWSMode", "UGR_SET_FORCE_WS_MODE");
         installMethodHook(value, "cargarAppAfirma", "UGR_CARGAR_APP_AFIRMA");
@@ -527,7 +766,7 @@
 
   const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
   if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
-    let autoScript = wrapMiniApplet(window.AutoScript, true);
+    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled);
     Object.defineProperty(window, "AutoScript", {
       enumerable: true,
       configurable: true,
@@ -535,14 +774,26 @@
         return autoScript;
       },
       set(value) {
-        autoScript = wrapMiniApplet(value, true);
+        autoScript = wrapMiniApplet(
+          value,
+          ugrCompatibilityEnabled,
+          melillaBatchCompatibilityEnabled,
+        );
       }
     });
     window.addEventListener("DOMContentLoaded", () => {
-      autoScript = wrapMiniApplet(autoScript, true);
+      autoScript = wrapMiniApplet(
+        autoScript,
+        ugrCompatibilityEnabled,
+        melillaBatchCompatibilityEnabled,
+      );
     }, { once: true });
   } else {
-    wrapMiniApplet(window.AutoScript, true);
+    wrapMiniApplet(
+      window.AutoScript,
+      ugrCompatibilityEnabled,
+      melillaBatchCompatibilityEnabled,
+    );
   }
 
   if (document.readyState === "loading") {

@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.browser
 
+import android.net.Uri
 import android.webkit.WebView
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.ScriptHandler
@@ -21,6 +22,7 @@ import dev.junta.firmamobile.signing.SigningContext
 import java.time.Clock
 import java.time.Duration
 import java.util.UUID
+import org.json.JSONObject
 
 class WebMessageBridge(
     private val profileId: ProfileId,
@@ -29,8 +31,10 @@ class WebMessageBridge(
     private val onMiniAppletRequest: ((MiniAppletBridgeRequest, MiniAppletReplyChannel) -> Unit)? =
         null,
     private val onMiniAppletCancel: (UUID) -> Unit = {},
+    private val onMelillaBatchRequest:
+        ((MelillaBatchRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     private val router: WebMessageRouter = WebMessageRouter(profileId),
-    activeProfileId: () -> ProfileId? = { null },
+    private val activeProfileId: () -> ProfileId? = { null },
     clock: Clock = Clock.systemUTC(),
     monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     private val miniAppletAdapter: MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(
@@ -42,16 +46,53 @@ class WebMessageBridge(
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
     private val currentPageUrl: () -> String? = { null },
+    private val currentDocumentId: () -> UUID? = { null },
     private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
+    melillaBatchAdapter: MelillaBatchBridgeAdapter? = null,
 ) {
+    private var batchDocumentId: UUID? = null
+    private var batchDocumentEpoch: Long? = null
+
+    private val batchAdapter: MelillaBatchBridgeAdapter =
+        melillaBatchAdapter ?: MelillaBatchBridgeAdapter(
+            activeProfileId = activeProfileId,
+            currentNavigationEpoch = currentNavigationEpoch,
+            currentDocumentId = { batchCurrentDocumentId() },
+            currentOrigin = currentOrigin,
+        )
+
+    private val melillaBatchEnabled: Boolean
+        get() = profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID &&
+            miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
+            onMelillaBatchRequest != null
+
     private val replyRegistry = MiniAppletReplyRegistry(
         currentNavigationEpoch = currentNavigationEpoch,
         currentOrigin = currentOrigin,
         monotonicNanos = monotonicNanos,
     )
 
+    private val melillaBatchReplyRegistry = MelillaBatchReplyRegistry(
+        activeProfileId = activeProfileId,
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentOrigin = currentOrigin,
+        currentDocumentId = { batchCurrentDocumentId() },
+        monotonicNanos = monotonicNanos,
+        onTerminal = { requestId ->
+            batchAdapter.abandon(requestId)
+            Unit
+        },
+    )
+
     fun attach(webView: WebView): WebMessageBridgeAttachment {
-        val originRules = JuntaOriginPolicy.webMessageOriginRules(profileId)
+        val originRules = (
+            JuntaOriginPolicy.webMessageOriginRules(profileId) +
+                if (melillaBatchEnabled) {
+                    setOf(MelillaBatchBridgeAdapter.SOURCE_ORIGIN)
+                } else {
+                    emptySet()
+                }
+            ).toSet()
         if (originRules.isEmpty()) {
             return WebMessageBridgeAttachment(webView = webView)
         }
@@ -83,6 +124,7 @@ class WebMessageBridge(
                         BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
                     jccmCompatibilityEnabled = profileId.value == JCCM_PROFILE_ID &&
                         BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
+                    melillaBatchCompatibilityEnabled = melillaBatchEnabled,
                 ),
                 originRules,
             )
@@ -110,6 +152,9 @@ class WebMessageBridge(
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
             return
         }
+        if (receiveMelillaDocumentReady(rawMessage, sourceOrigin, isMainFrame)) {
+            return
+        }
 
         when (
             val diagnostic = PortalCallbackDiagnosticProtocol.parse(
@@ -130,6 +175,63 @@ class WebMessageBridge(
                 return
             }
             PortalCallbackDiagnosticParseResult.NotApplicable -> Unit
+        }
+
+        if (
+            profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID &&
+            miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
+            onMelillaBatchRequest != null
+        ) {
+            val batchConsumer = checkNotNull(onMelillaBatchRequest)
+            when (
+                val batchResult = batchAdapter.route(
+                    rawMessage = rawMessage,
+                    sourceOrigin = sourceOrigin,
+                    isMainFrame = isMainFrame,
+                    navigationEpoch = currentNavigationEpoch(),
+                )
+            ) {
+                is MelillaBatchBridgeRouteResult.Accepted -> {
+                    val reply = melillaBatchReplyRegistry.create(
+                        request = batchResult.request,
+                        postMessage = replyProxy::postMessage,
+                    )
+                    if (reply == null) {
+                        batchAdapter.abandon(batchResult.request.requestId)
+                        replyMelillaBatchFailure(
+                            replyProxy = replyProxy,
+                            sourceOrigin = sourceOrigin,
+                            isMainFrame = isMainFrame,
+                            requestId = batchResult.request.requestId,
+                            code = SigningErrorCode.PROTOCOL_FAILED,
+                        )
+                        logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                        return
+                    }
+                    runCatching { batchConsumer(batchResult.request, reply) }.onFailure {
+                        logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                        reply.failure(SigningErrorCode.PROTOCOL_FAILED)
+                    }
+                    return
+                }
+                is MelillaBatchBridgeRouteResult.Cancelled -> {
+                    melillaBatchReplyRegistry.abandon(batchResult.requestId)
+                    batchAdapter.abandon(batchResult.requestId)
+                    return
+                }
+                is MelillaBatchBridgeRouteResult.Rejected -> {
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    replyMelillaBatchFailure(
+                        replyProxy = replyProxy,
+                        sourceOrigin = sourceOrigin,
+                        isMainFrame = isMainFrame,
+                        requestId = batchResult.requestId,
+                        code = batchResult.code,
+                    )
+                    return
+                }
+                MelillaBatchBridgeRouteResult.NotApplicable -> Unit
+            }
         }
 
         when (
@@ -246,10 +348,90 @@ class WebMessageBridge(
         }
     }
 
+    @Synchronized
+    private fun receiveMelillaDocumentReady(
+        rawMessage: String,
+        sourceOrigin: Uri,
+        isMainFrame: Boolean,
+    ): Boolean {
+        val json = runCatching { JSONObject(rawMessage) }.getOrNull()
+            ?: return false
+        if (json.optString(DOCUMENT_READY_FIELD) != DOCUMENT_READY_TYPE) return false
+
+        val accepted = profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID &&
+            miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
+            isMainFrame &&
+            isExactMelillaSourceOrigin(sourceOrigin)
+        if (!accepted || json.keys().asSequence().toSet() != DOCUMENT_READY_KEYS) {
+            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+            return true
+        }
+
+        val rawDocumentId = json.opt("documentId") as? String
+        val documentId = rawDocumentId
+            ?.takeIf { DOCUMENT_UUID_PATTERN.matches(it) }
+            ?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+            ?.takeIf { it.toString() == rawDocumentId?.lowercase() }
+        val epoch = currentNavigationEpoch()
+        if (documentId == null || epoch < 0L || epoch == Long.MAX_VALUE ||
+            currentDocumentId()?.let { it != documentId } == true
+        ) {
+            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+            return true
+        }
+        if (batchDocumentId != null && batchDocumentId != documentId) {
+            batchAdapter.invalidateDocument(batchDocumentId)
+        }
+        batchDocumentId = documentId
+        batchDocumentEpoch = epoch
+        return true
+    }
+
+    @Synchronized
+    private fun batchCurrentDocumentId(): UUID? {
+        val externallyBound = runCatching { currentDocumentId() }.getOrNull()
+        if (externallyBound != null) return externallyBound
+        return batchDocumentEpoch
+            ?.takeIf { it == runCatching { currentNavigationEpoch() }.getOrNull() }
+            ?.let { batchDocumentId }
+    }
+
     private fun abandonAllMiniAppletRequests() {
+        batchAdapter.invalidateDocument(batchCurrentDocumentId())
+        batchAdapter.abandonAll()
+        melillaBatchReplyRegistry.abandonAll()
+        batchDocumentId = null
+        batchDocumentEpoch = null
         replyRegistry.abandonAll().forEach { requestId ->
             runCatching { onMiniAppletCancel(requestId) }
         }
+    }
+
+    private fun isExactMelillaSourceOrigin(uri: Uri): Boolean =
+        uri.scheme == "https" &&
+            uri.host == "sede.melilla.es" &&
+            uri.port in setOf(-1, 443) &&
+            uri.encodedUserInfo == null &&
+            uri.path.isNullOrEmpty() &&
+            uri.query == null &&
+            uri.fragment == null
+
+    private fun replyMelillaBatchFailure(
+        replyProxy: JavaScriptReplyProxy,
+        sourceOrigin: Uri,
+        isMainFrame: Boolean,
+        requestId: UUID?,
+        code: SigningErrorCode,
+    ) {
+        if (!isMainFrame || requestId == null ||
+            !isExactMelillaSourceOrigin(sourceOrigin)
+        ) {
+            return
+        }
+        MelillaBatchReplyChannel(
+            requestId = requestId,
+            postMessage = replyProxy::postMessage,
+        ).failure(code)
     }
 
     private fun reply(
@@ -277,6 +459,13 @@ class WebMessageBridge(
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
+        private const val DOCUMENT_READY_FIELD = "type"
+        private const val DOCUMENT_READY_TYPE = "MINIAPPLET_DOCUMENT_READY"
+        private val DOCUMENT_READY_KEYS = setOf("type", "documentId")
+        private val DOCUMENT_UUID_PATTERN = Regex(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-" +
+                "[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}",
+        )
     }
 }
 
@@ -408,4 +597,97 @@ internal class MiniAppletReplyRegistry(
         val navigationEpoch: Long,
         val observedAtMonotonicNanos: Long,
     )
+}
+
+
+internal class MelillaBatchReplyRegistry(
+    private val activeProfileId: () -> ProfileId?,
+    private val currentNavigationEpoch: () -> Long,
+    private val currentOrigin: () -> TrustedOrigin?,
+    private val currentDocumentId: () -> UUID?,
+    private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
+    private val onTerminal: (UUID) -> Unit = {},
+) {
+    private val pending = linkedMapOf<UUID, PendingReply>()
+    private val replyTtlNanos = MonotonicSecurityTime.durationNanos(REPLY_TTL)
+
+    @Synchronized
+    fun create(
+        request: MelillaBatchRequest,
+        postMessage: (String) -> Unit,
+    ): MelillaBatchReplyChannel? {
+        expireInvalidPending()
+        if (pending.isNotEmpty()) return null
+        val binding = PendingBinding(
+            profileId = request.profileId.value,
+            origin = request.sourceOrigin,
+            documentId = request.documentId,
+            navigationEpoch = request.navigationEpoch,
+            observedAtMonotonicNanos = monotonicNanos(),
+        )
+        if (!isCurrent(binding)) return null
+        lateinit var channel: MelillaBatchReplyChannel
+        channel = MelillaBatchReplyChannel(
+            requestId = request.requestId,
+            postMessage = postMessage,
+            onTerminal = {
+                remove(request.requestId, channel)
+                onTerminal(request.requestId)
+            },
+            canDeliver = { isCurrent(binding) },
+        )
+        pending[request.requestId] = PendingReply(binding, channel)
+        return channel
+    }
+
+    @Synchronized
+    fun abandon(requestId: UUID): Boolean =
+        pending[requestId]?.channel?.abandon() == true
+
+    fun abandonAll() {
+        val replies = synchronized(this) { pending.toMap() }
+        replies.values.forEach { it.channel.abandon() }
+    }
+
+    @Synchronized
+    private fun remove(requestId: UUID, channel: MelillaBatchReplyChannel) {
+        if (pending[requestId]?.channel === channel) {
+            pending.remove(requestId)
+        }
+    }
+
+    private fun expireInvalidPending() {
+        pending.values
+            .filterNot { isCurrent(it.binding) }
+            .forEach { it.channel.abandon() }
+    }
+
+    private fun isCurrent(binding: PendingBinding): Boolean = runCatching {
+        activeProfileId()?.value == binding.profileId &&
+            currentNavigationEpoch() == binding.navigationEpoch &&
+            currentOrigin() == binding.origin &&
+            currentDocumentId()?.let { it == binding.documentId } != false &&
+            !MonotonicSecurityTime.isExpiredOrInvalid(
+                binding.observedAtMonotonicNanos,
+                replyTtlNanos,
+                monotonicNanos(),
+            )
+    }.getOrDefault(false)
+
+    private data class PendingReply(
+        val binding: PendingBinding,
+        val channel: MelillaBatchReplyChannel,
+    )
+
+    private data class PendingBinding(
+        val profileId: String,
+        val origin: TrustedOrigin,
+        val documentId: UUID,
+        val navigationEpoch: Long,
+        val observedAtMonotonicNanos: Long,
+    )
+
+    private companion object {
+        val REPLY_TTL: Duration = Duration.ofMinutes(2)
+    }
 }

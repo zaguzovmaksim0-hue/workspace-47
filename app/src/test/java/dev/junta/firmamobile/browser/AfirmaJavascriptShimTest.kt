@@ -132,6 +132,56 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun documentStartShimHasTheMissingMelillaBatchBridgeContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val functional = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            melillaBatchCompatibilityEnabled = true,
+        )
+
+        assertTrue(
+            "The document-start shim must recognize AutoScript.signBatchProcess",
+            functional.contains("signBatchProcess"),
+        )
+        assertTrue(
+            "The document-start shim must emit the dedicated MINIAPPLET_BATCH discriminator",
+            functional.contains("MINIAPPLET_BATCH"),
+        )
+        assertTrue(functional.contains("pendingBatchCallbacks"))
+        assertTrue(functional.contains("MINIAPPLET_BATCH_RESULT"))
+        assertTrue(functional.contains("validationResponse"))
+        assertTrue(functional.contains("pending.successCallback(validationResponse)"))
+        assertTrue(functional.contains("MINIAPPLET_DOCUMENT_READY"))
+        assertTrue(functional.contains("notifyNativeDocumentReady"))
+    }
+
+    @Test
+    fun melillaBatchShimIsDisabledUnlessTheNativeProfileScopeEnablesIt() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            melillaBatchCompatibilityEnabled = true,
+        )
+
+        assertTrue(disabled.contains("const melillaBatchCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("const melillaBatchCompatibilityEnabled = true"))
+        assertTrue(enabled.contains(
+            "wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, " +
+                "melillaBatchCompatibilityEnabled",
+        ))
+        assertTrue(enabled.contains("if (includeMelillaBatch)"))
+    }
+
+    @Test
     fun ugrCompatibilityPathIsProfileScopedAndUsesOnlyTheExactObservedContract() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(
