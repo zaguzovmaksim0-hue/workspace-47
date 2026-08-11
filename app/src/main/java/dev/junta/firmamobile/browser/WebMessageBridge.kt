@@ -41,6 +41,7 @@ class WebMessageBridge(
     private val onMiniAppletCancel: (UUID) -> Unit = {},
     private val onMelillaBatchRequest:
         ((MelillaBatchRequest, MelillaBatchReplyChannel) -> Unit)? = null,
+    private val onMelillaBatchCancel: (UUID) -> Unit = {},
     private val router: WebMessageRouter = WebMessageRouter(profileId),
     private val activeProfileId: () -> ProfileId? = { null },
     clock: Clock = Clock.systemUTC(),
@@ -226,8 +227,11 @@ class WebMessageBridge(
                     return
                 }
                 is MelillaBatchBridgeRouteResult.Cancelled -> {
-                    melillaBatchReplyRegistry.abandon(batchResult.requestId)
+                    val owned = melillaBatchReplyRegistry.abandon(batchResult.requestId)
                     batchAdapter.abandon(batchResult.requestId)
+                    if (owned) {
+                        runCatching { onMelillaBatchCancel(batchResult.requestId) }
+                    }
                     return
                 }
                 is MelillaBatchBridgeRouteResult.Rejected -> {
@@ -410,7 +414,9 @@ class WebMessageBridge(
     private fun abandonAllMiniAppletRequests() {
         batchAdapter.invalidateDocument(batchCurrentDocumentId())
         batchAdapter.abandonAll()
-        melillaBatchReplyRegistry.abandonAll()
+        melillaBatchReplyRegistry.abandonAll().forEach { requestId ->
+            runCatching { onMelillaBatchCancel(requestId) }
+        }
         batchDocumentId = null
         batchDocumentEpoch = null
         replyRegistry.abandonAll().forEach { requestId ->
