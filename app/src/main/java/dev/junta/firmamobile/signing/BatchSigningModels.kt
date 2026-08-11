@@ -128,6 +128,16 @@ sealed interface BatchProtocolCompletionResult {
     data class Failure(val code: SigningErrorCode) : BatchProtocolCompletionResult
 }
 
+interface BatchSigningReplySink {
+    val requestId: UUID
+
+    fun success(response: BatchProtocolResponse): Boolean
+
+    fun failure(code: SigningErrorCode): Boolean
+
+    fun abandon(): Boolean
+}
+
 private fun String.isSafeBatchValue(): Boolean =
     isNotEmpty() &&
         length <= MAX_BATCH_VALUE_CHARS &&
