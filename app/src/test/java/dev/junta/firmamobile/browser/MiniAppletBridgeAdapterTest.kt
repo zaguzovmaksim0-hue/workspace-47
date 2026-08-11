@@ -9,7 +9,28 @@ import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningFormat
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
+import dev.junta.firmamobile.signing.ProtocolAdapterBinding
+import dev.junta.firmamobile.signing.ProtocolAdapterRegistry
+import dev.junta.firmamobile.signing.SigningProtocolId
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.BuildTrustPolicy
+import dev.junta.firmamobile.profile.CallbackContractId
+import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.profile.CertificateFilterRules
+import dev.junta.firmamobile.profile.CompatibilityStatus
+import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.OperationPolicy
+import dev.junta.firmamobile.profile.ProfileActivation
+import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.ProtocolInputAdapterId
+import dev.junta.firmamobile.profile.ProtocolOperation
+import dev.junta.firmamobile.profile.SignatureAlgorithm
+import dev.junta.firmamobile.profile.SignatureFormat
+import dev.junta.firmamobile.profile.SignaturePackaging
+import dev.junta.firmamobile.profile.SiteProfile
+import dev.junta.firmamobile.profile.SiteProfileCatalog
+import dev.junta.firmamobile.profile.SiteProfileRegistry
+import java.net.URI
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -339,6 +360,74 @@ class MiniAppletBridgeAdapterTest {
             UGR_ORIGIN,
             true,
             adapterFor(UGR_PROFILE_ID),
+        )
+    }
+
+    @Test
+    fun exactSevillaAtseAutoScriptCallNormalizesTheDynamicChallengeToXades() {
+        val result = sevillaAdapter().route(
+            rawMessage = sevillaMessage(),
+            sourceOrigin = SEVILLA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 48,
+            currentPageUrl = SEVILLA_START_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(SEVILLA_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("www.sevilla.org", request.context.origin.host)
+            assertEquals(48, request.context.navigationEpoch)
+            assertEquals(SEVILLA_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.XADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(SEVILLA_CHALLENGE.encodeToByteArray(), data)
+                    assertEquals("", properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun sevillaAtseBridgeKeepsWrongPageOriginChallengeTupleAndPropertiesFailClosed() {
+        val adapter = sevillaAdapter()
+        fun rejected(
+            rawMessage: String = sevillaMessage(),
+            origin: Uri = SEVILLA_ORIGIN,
+            pageUrl: String? = SEVILLA_START_URL,
+        ) = adapter.route(
+            rawMessage = rawMessage,
+            sourceOrigin = origin,
+            isMainFrame = true,
+            currentPageUrl = pageUrl,
+        ) is MiniAppletBridgeRouteResult.Rejected
+
+        assertTrue(rejected(origin = Uri.parse("https://www.sevilla.org.evil.example")))
+        assertTrue(rejected(pageUrl = null))
+        assertTrue(rejected(pageUrl = "https://www.sevilla.org/ovweb/"))
+        assertTrue(rejected(pageUrl = "$SEVILLA_START_URL&unexpected=1"))
+        assertTrue(rejected(rawMessage = sevillaMessage(algorithm = "SHA256withRSA")))
+        assertTrue(rejected(rawMessage = sevillaMessage(format = "XAdES Detached")))
+        assertTrue(rejected(rawMessage = sevillaMessage(extraProperties = "")))
+        assertTrue(
+            rejected(
+                rawMessage = sevillaMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(
+                        SEVILLA_CHALLENGE.dropLast(1).encodeToByteArray(),
+                    ),
+                ),
+            ),
+        )
+        assertTrue(
+            rejected(
+                rawMessage = sevillaMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(
+                        (SEVILLA_CHALLENGE.dropLast(1) + "!").encodeToByteArray(),
+                    ),
+                ),
+            ),
         )
     }
 
@@ -707,6 +796,60 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
+    private fun sevillaAdapter(): ProfileMiniAppletBridgeAdapter {
+        val profile = SiteProfile(
+            profileId = ProfileId(SEVILLA_PROFILE_ID),
+            profileVersion = 1,
+            displayName = "Agencia Tributaria de Sevilla — Acceso con certificado",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
+            activation = ProfileActivation.QA_ONLY,
+            startUrl = URI(SEVILLA_START_URL),
+            initiatorOrigins = setOf(ExactOrigin.parse(SEVILLA_ORIGIN.toString())),
+            redirectOrigins = emptySet(),
+            trustedBrowseOrigins = emptySet(),
+            endpoints = emptyMap(),
+            operationPolicies = mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = SEVILLA_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                    format = SignatureFormat.XADES,
+                    packaging = SignaturePackaging.ATTACHED,
+                    mode = null,
+                    fixedExtraProperties = emptyMap(),
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+            capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+            clientAuthPolicy = null,
+            certificateRules = CertificateFilterRules(setOf("RSA"), true),
+            evidence = emptyList(),
+        )
+        return ProfileMiniAppletBridgeAdapter(
+            clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+            profileRegistry = SiteProfileRegistry(
+                SiteProfileCatalog(schemaVersion = 1, catalogVersion = 1, profiles = listOf(profile)),
+                BuildTrustPolicy.QA,
+            ),
+            adapterRegistry = ProtocolAdapterRegistry(
+                listOf(
+                    ProtocolAdapterBinding(
+                        profileId = profile.profileId,
+                        operation = ProtocolOperation.SIGN,
+                        inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                        callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                        signingProtocolId = SigningProtocolId(SEVILLA_PROTOCOL_ID),
+                    ),
+                ),
+            ),
+            activeProfileId = { profile.profileId },
+        )
+    }
+
     private fun adapterFor(profileId: String): MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(
         clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
         activeProfileId = { dev.junta.firmamobile.profile.ProfileId(profileId) },
@@ -750,6 +893,21 @@ class MiniAppletBridgeAdapterTest {
         .put("algorithm", "SHA1withRSA")
         .put("format", "CAdES")
         .put("extraProperties", EXTRA_PROPERTIES)
+        .toString()
+
+    private fun sevillaMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(SEVILLA_CHALLENGE.encodeToByteArray()),
+        algorithm: String = "SHA1withRSA",
+        format: String = "XAdES",
+        extraProperties: Any = JSONObject.NULL,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
         .toString()
 
     private fun jccmMessage(
@@ -828,6 +986,14 @@ class MiniAppletBridgeAdapterTest {
         val ARAGON_ORIGIN: Uri = Uri.parse("https://aplicaciones.aragon.es")
         val UGR_ORIGIN: Uri = Uri.parse("https://sede.ugr.es")
         val JCCM_ORIGIN: Uri = Uri.parse("https://ventanillaelectronica.jccm.es")
+        val SEVILLA_ORIGIN: Uri = Uri.parse("https://www.sevilla.org")
+        const val SEVILLA_PROFILE_ID = "sevilla-atse-certificate-login"
+        const val SEVILLA_PROTOCOL_ID = "sevilla-atse-xades-enveloping-v1"
+        const val SEVILLA_START_URL =
+            "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
+        const val SEVILLA_SAFE_DESCRIPTION =
+            "Acceso con certificado a la Agencia Tributaria de Sevilla"
+        const val SEVILLA_CHALLENGE = "0123456789abcdef0123456789abcdefABCDEFGH"
         const val UGR_PROFILE_ID = "ugr-certificado-login"
         const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         const val JCCM_START_URL =
