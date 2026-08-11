@@ -135,6 +135,9 @@ internal class BatchSigningCoordinator(
                 is BatchProtocolPrepareResult.Success -> prepared.preSign
             }
             preSign = ownedPreSign
+            if (!ownedPreSign.isOwnedBy(operation.request)) {
+                return fail(operation, SigningErrorCode.PROTOCOL_FAILED)
+            }
             operationValidationError(operation, identity)?.let { code ->
                 return fail(operation, code)
             }

@@ -77,6 +77,10 @@ class BatchPreSignResult internal constructor(
     }
 
     @Synchronized
+    internal fun isOwnedBy(expectedOwner: NormalizedBatchSigningRequest): Boolean =
+        requestOwner === expectedOwner
+
+    @Synchronized
     internal fun consumeState(
         expectedOwner: NormalizedBatchSigningRequest,
         expectedInputCount: Int,
