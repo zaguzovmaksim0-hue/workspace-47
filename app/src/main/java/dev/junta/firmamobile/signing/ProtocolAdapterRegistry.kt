@@ -81,6 +81,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = UgrCadesDetachedAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(SevillaAtseXadesEnvelopingAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                signingProtocolId = SevillaAtseXadesEnvelopingAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("cantabria-rec-cert-login"),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
