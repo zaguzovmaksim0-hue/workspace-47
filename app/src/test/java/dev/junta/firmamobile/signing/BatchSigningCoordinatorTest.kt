@@ -65,6 +65,53 @@ class BatchSigningCoordinatorTest {
     }
 
     @Test
+    fun prepareAndConfirmResolveTheExactAdapterForTheOwnedRequest() = runBlocking {
+        val secondaryTimeline = mutableListOf<String>()
+        val secondaryId = SigningProtocolId("extremadura-sta-batch-v1")
+        val secondaryAdapter = RecordingBatchAdapter(secondaryTimeline, secondaryId)
+        val secondaryCoordinator = BatchSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            adapterResolver = { id ->
+                when (id) {
+                    adapter.id -> adapter
+                    secondaryAdapter.id -> secondaryAdapter
+                    else -> null
+                }
+            },
+            localSignatureEngine = RecordingBatchEngine(secondaryTimeline),
+            currentOrigin = { MELILLA_ORIGIN },
+            currentNavigationEpoch = { NAVIGATION_EPOCH },
+            expiryScheduler = RecordingExpiryScheduler(),
+            profileDisplayName = "STA batch test",
+            supportLevel = "VERIFIED_CONTRACT",
+        )
+        val secondaryRequestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174199")
+        val secondaryRequest = request(
+            requestId = secondaryRequestId,
+            protocolId = secondaryId,
+        )
+        val reply = RecordingBatchReply(secondaryRequestId, secondaryTimeline)
+
+        try {
+            assertEquals(
+                SigningPreparationResult.Ready(secondaryRequestId),
+                secondaryCoordinator.prepare(secondaryRequest, reply),
+            )
+            assertTrue(adapter.events.isEmpty())
+
+            assertEquals(
+                SigningExecutionResult.Delivered(secondaryRequestId),
+                secondaryCoordinator.confirm(secondaryRequestId),
+            )
+            assertEquals(listOf("prepare", "complete"), secondaryAdapter.events)
+            assertTrue(adapter.events.isEmpty())
+        } finally {
+            secondaryCoordinator.close()
+        }
+    }
+
+    @Test
     fun confirmSignsEveryPresignInputInOrderAndDeliversOneFinalResponse() = runBlocking {
         val reply = RecordingBatchReply(REQUEST_ID, timeline)
         assertEquals(SigningPreparationResult.Ready(REQUEST_ID), coordinator.prepare(request(), reply))
@@ -170,9 +217,12 @@ class BatchSigningCoordinatorTest {
         }
     }
 
-    private fun request(): NormalizedBatchSigningRequest = NormalizedBatchSigningRequest(
-        requestId = REQUEST_ID,
-        protocolId = MelillaBatchProtocolAdapter.ID,
+    private fun request(
+        requestId: UUID = REQUEST_ID,
+        protocolId: SigningProtocolId = MelillaBatchProtocolAdapter.ID,
+    ): NormalizedBatchSigningRequest = NormalizedBatchSigningRequest(
+        requestId = requestId,
+        protocolId = protocolId,
         context = SigningContext(
             profileId = "melilla-sede",
             profileVersion = 1,
@@ -204,10 +254,10 @@ class BatchSigningCoordinatorTest {
 
     private class RecordingBatchAdapter(
         private val timeline: MutableList<String>,
+        override val id: SigningProtocolId = MelillaBatchProtocolAdapter.ID,
     ) : BatchSigningProtocolAdapter {
         val events = mutableListOf<String>()
         val completedSignatures = mutableListOf<List<String>>()
-        override val id: SigningProtocolId = MelillaBatchProtocolAdapter.ID
 
         override fun prepare(
             request: NormalizedBatchSigningRequest,
