@@ -2908,3 +2908,45 @@ DGT, Cantabria, JCCM, and AEAT Client-TLS.
 No phone-local Gradle/JVM/Kotlin compilation, worker delegation, APK install/launch, ADB/device control,
 authenticated portal navigation, credentials/cookies/bearer data, certificate unlock/private-key
 material, real signing, form submission, upload, payment, or administrative action was used.
+
+## Portal G58 — Melilla runtime cancellation acceptance — 2026-08-11
+
+Melilla runtime-wiring Slice 2 is now accepted at its bounded automated boundary. The reply registry
+ownership RED was published as `7fe8a1bb600c64f355dab3374cd01a9278552530`; Cloud task
+`task_e_6a7b59ae03e88323946b512e16f3f7de` produced the intended single failure. Production
+`0c9f11d87ed5ed1e7a7806f1826a60a2cdff8729` made `MelillaBatchReplyRegistry.abandonAll` return only
+request ids whose reply channels actually won terminal abandonment; focused Cloud task
+`task_e_6a7b5ba4ee6c8323a558f6f04a9993c2` passed 1/1.
+
+The first bridge-callback RED attempt `bf9c5882e53be76cf7614a6f012b9a8a97e78aea` exposed unrelated
+test-harness compilation defects and was rejected as acceptance evidence. Test-only correction
+`6b1e59ef6862b12010ea1bd02d3d462a702d3c61` produced the valid intended RED in
+`task_e_6a7b604765788323ab2bf300294a940a`: exact SHA matched, dependency verification remained enabled,
+and Kotlin compilation failed only because `WebMessageBridge` lacked the planned
+`onMelillaBatchCancel` seam. Production `60325e5bae1e8ba4315e6d4cd59c90bf224432bf` added the callback
+and fires it only when a validated single-request cancellation actually wins reply ownership, or for
+exact ids returned by bridge-wide terminal abandonment. Focused Cloud task
+`task_e_6a7b62c88a9c8323b506c89023c3167b` verified exact `60325e5...` with Gradle exit 0,
+`BUILD SUCCESSFUL in 5m 37s`, 1/1 test passing, dependency verification enabled, unchanged verification
+metadata, and a clean Cloud checkout.
+
+A second tracer bullet `351554e0f69fd2ebf758386ca4d83baeb064d561` proves repeated bridge-wide
+document/navigation/WebView abandonment notifies runtime exactly once for the same owned Melilla
+request and leaves the reply terminal. Cloud task `task_e_6a7b65953d38832381228db34634c769` verified exact
+`351554e...` with Gradle exit 0, `BUILD SUCCESSFUL in 4m 35s`, 2/2 cancellation tests passing, dependency
+verification enabled with no verification-metadata mutation, and final `git status --short` empty.
+
+Direct main-Watchdog Standards + Spec review found no remaining Critical or Important issue in Slice 2.
+The callback is ownership-gated, adds no JS message type/origin/endpoint/retry/network path, and leaves
+ordinary MiniApplet cancellation semantics unchanged. `git diff --check` and bounded sensitive/TLS/
+dependency-verification scans passed. No phone-local Gradle/JVM/Kotlin, worker delegation, device
+control, authenticated portal action, credential/private-key use, real signing, upload, payment, or
+submission occurred.
+
+Catalog accounting remains unchanged at 183 entries, 14 bound surfaces, 13 unique profile IDs and 169
+unbound. Inventory remains 163 `BROWSE_ONLY`, 9 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4
+`VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated states remain 91
+`CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 9 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The classified
+research queue remains at least 16 surfaces. Portals integrated in generation 58 remain zero. Next is
+Slice 3 runtime composition/arbitration, then separate Melilla profile/catalog promotion, followed by
+`extremadura-tramites` (`ES-PUB-0109`) and La Palma (`ES-PUB-0130`).

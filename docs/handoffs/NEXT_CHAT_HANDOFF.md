@@ -3,7 +3,7 @@
 Date: 2026-08-11
 Task: `workspace-47-autonomous-20260803-01`
 Last Cloud-accepted product/test checkpoint before this documentation publication:
-`cf5e1475270fdc48c009f6c460cab1b9e5c367fc` on
+`351554e0f69fd2ebf758386ca4d83baeb064d561` on
 `agent/workspace-47-autonomous-20260803`. The commit containing this handoff is a newer documentation
 checkpoint; continuation must begin with `git fetch --prune origin` and exact local/remote HEAD,
 upstream-divergence, cleanliness, and canonical-SHA verification. Canonical
@@ -12,46 +12,33 @@ upstream-divergence, cleanliness, and canonical-SHA verification. Canonical
 
 ## Melilla current automated boundary
 
-The execution core, certificate/user-confirmation coordinator, PRE-ownership hardening, and runtime
-request/reply adapter are independently Cloud-accepted. Do not repeat them and do not promote Melilla
-yet.
+Execution core, coordinator/PRE ownership, runtime request/reply adaptation, and explicit bridge batch
+cancellation are Cloud-accepted. Do not repeat them and do not promote Melilla yet.
 
-- Runtime adapter design/plan: `bc842fb818d7d81296425b7bf98bd442a315b2f5`.
-- Request normalization: valid RED `b956c9dbda5161093e098a4c21c42495a9623aee`; production
-  `87171e24d4ca01f89dffc3464da74a58f40740ae`; Cloud GREEN
-  `task_e_6a7b4b61633c83239a7ab0c924c9f5ef` passed 1/1.
-- Reply sink: valid RED `815c30c14974efbf2e2a0849b2821ce7305a12cd`; production
-  `efbf0c0381a905ff2424598519a449c7f9ac9b25`; Cloud GREEN
-  `task_e_6a7b4f8a27a88323a30e826331450419` passed 2/2.
-- Malformed UTF-8 ownership: regression `9072248837d75c744dcd06856388bcdf503cc003` produced the
-  intended Cloud RED in `task_e_6a7b51f4651483238cd9c4551322e78d`; production repair is
-  `cf5e1475270fdc48c009f6c460cab1b9e5c367fc`.
-- Final focused Cloud GREEN `task_e_6a7b53772a308323b4440ff56e93c3e8` verified exact `cf5e147...`,
-  dependency verification enabled, verification metadata unchanged, Gradle exit 0,
-  `BUILD SUCCESSFUL in 6m 31s`, 3/3 focused tests passed, final Cloud worktree clean.
-- Direct Standards + Spec review found no remaining Critical/Important defect in the bounded adapter
-  slice. `git diff --check` and bounded sensitive/TLS/retry/HTTP/debug scans passed.
+- Slice-2 production callback commit: `60325e5bae1e8ba4315e6d4cd59c90bf224432bf`; focused Cloud
+  GREEN `task_e_6a7b62c88a9c8323b506c89023c3167b` passed 1/1 at that exact SHA.
+- Bridge-wide teardown tracer bullet: `351554e0f69fd2ebf758386ca4d83baeb064d561`; Cloud acceptance
+  `task_e_6a7b65953d38832381228db34634c769` passed 2/2 at that exact SHA with dependency verification
+  enabled, no verification-metadata mutation, and a clean Cloud checkout.
+- Direct Standards + Spec review found no remaining Critical/Important Slice-2 defect.
 
-## Exact next Melilla slice — explicit batch cancellation
+## Exact next Melilla slice — BrowserScreen/MainActivity composition + arbitration
 
-Use the existing `docs/superpowers/plans/2026-08-11-melilla-runtime-wiring.md`; do not create a new
-runtime design.
+Use Slice 3 of `docs/superpowers/plans/2026-08-11-melilla-runtime-wiring.md`; do not create a new design.
 
-1. Add RED coverage proving bridge-owned Melilla cancellation is one-shot: a validated
-   `MINIAPPLET_BATCH_CANCEL` notifies the runtime exactly once for the owned request and bridge-wide
-   teardown returns/notifies that same owned request exactly once.
-2. Commit and push the RED-only SHA before any Gradle execution; run the exact focused test only in
-   Codex Cloud `workspace-47-android` through `$HOME/bin/w47-cloud`.
-3. Minimally add `onMelillaBatchCancel: (UUID) -> Unit` to `WebMessageBridge`; invoke it only when the
-   Melilla reply registry actually wins terminal abandonment. Change `MelillaBatchReplyRegistry.abandonAll`
-   to return the successfully abandoned request ids, mirroring the ordinary reply registry. Do not add a
-   JS message type, origin, endpoint, retry, or new network/TLS path.
-4. Commit/push production GREEN and run focused Cloud verification. Inspect complete diff, run local
-   non-Gradle `git diff --check` plus bounded scans, and perform direct Standards + Spec review.
-5. Then continue Slice 3: BrowserScreen/MainActivity composition plus fail-closed shared
-   ordinary-versus-batch signing arbitration. Only after complete runtime acceptance perform a separate
-   profile/public-catalog promotion; keep Melilla `VERIFIED_CONTRACT` / `QA_ONLY` and at most
-   `IMPLEMENTED_NOT_E2E` / `E2E_PENDING` until user-supplied physical evidence exists.
+1. Add one bounded runtime-wiring RED tracer bullet at a time. First prove `BrowserScreen` exposes and
+   forwards Melilla batch request/cancel callbacks into `WebMessageBridge`. Commit/push the test-only
+   SHA before Cloud Gradle and accept RED only for the missing runtime wiring.
+2. Implement only that forwarding seam, commit/push, and Cloud-verify GREEN.
+3. Then add the MainActivity composition/arbitration RED: construct `MelillaBatchProtocolAdapter` over
+   existing `HttpsProfileHttpTransport`, own one dedicated `BatchSigningCoordinator`, and enforce one
+   fail-closed ordinary-versus-batch signing owner before either coordinator can reach certificate/
+   private-key confirmation. Route confirm/cancel/UI state only to the current owner.
+4. Commit/push every exact RED/GREEN SHA before Cloud Gradle. After focused acceptance, run the
+   applicable broader Cloud Android gate and direct Standards + Spec review.
+5. Only after complete runtime acceptance perform separate Melilla profile/public-catalog promotion;
+   retain `VERIFIED_CONTRACT` / `QA_ONLY` and at most `IMPLEMENTED_NOT_E2E` / `E2E_PENDING` until
+   user-supplied physical evidence exists.
 
 ## Portal KPI and queue
 
@@ -60,7 +47,7 @@ runtime design.
   4 `INACCESSIBLE`, 2 `UNSUPPORTED_PROTOCOL`.
 - Generated catalog: 91 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 9 `E2E_PENDING`, 4
   `E2E_VERIFIED`; classified public research buffer remains at least 16 surfaces.
-- Portals newly integrated in generation 57 so far: zero; Melilla runtime work is not yet a catalog
+- Portals newly integrated in generation 58 so far: zero; Melilla runtime work is not yet a catalog
   integration.
 - Exact implementation order: finish Melilla runtime/profile/catalog, then `extremadura-tramites`
   (`ES-PUB-0109`), then La Palma (`ES-PUB-0130`). Eivissa (`ES-PUB-0122`) and Formentera
