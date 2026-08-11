@@ -413,3 +413,26 @@ private sealed interface AppDestination {
         val entryUrl: URI,
     ) : AppDestination
 }
+
+internal enum class SigningFlowKind {
+    ORDINARY,
+    BATCH,
+}
+
+internal class SigningFlowOwnershipGate {
+    private var owner: Pair<SigningFlowKind, UUID>? = null
+
+    @Synchronized
+    fun acquire(kind: SigningFlowKind, requestId: UUID): Boolean {
+        if (owner != null) return false
+        owner = kind to requestId
+        return true
+    }
+
+    @Synchronized
+    fun release(kind: SigningFlowKind, requestId: UUID): Boolean {
+        if (owner != kind to requestId) return false
+        owner = null
+        return true
+    }
+}
