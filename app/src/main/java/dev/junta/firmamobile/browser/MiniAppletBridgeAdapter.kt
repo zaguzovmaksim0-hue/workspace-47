@@ -198,6 +198,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isSevillaAtseContract = isExactSevillaAtseContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == SEVILLA_ATSE_PROFILE_ID && !isSevillaAtseContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -220,7 +230,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_XADES_DETACHED -> SigningFormat.XADES to SignatureFormat.XADES
+            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract) {
+                null
+            } else {
+                SigningFormat.XADES to SignatureFormat.XADES
+            }
+            FORMAT_XADES -> if (isSevillaAtseContract) {
+                SigningFormat.XADES to SignatureFormat.XADES
+            } else {
+                null
+            }
             else -> null
         }
         if (algorithm.second !in operation.algorithms || format == null ||
@@ -260,6 +279,14 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isJccmContract) {
             val value = json.opt(EXTRA_PROPERTIES_FIELD)
             if (value !== JSONObject.NULL && !(value is String && value.isEmpty())) {
+                return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+            }
+            ""
+        } else if (isSevillaAtseContract) {
+            if (json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
                 return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -317,6 +344,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (isJccmContract &&
             !decodedData.contentEquals(JccmCertificateLoginProbeCadesAdapter.EXPECTED_PAYLOAD)
         ) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
+        if (isSevillaAtseContract && !decodedData.isExactSevillaAtseChallenge()) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
@@ -442,6 +476,53 @@ internal class ProfileMiniAppletBridgeAdapter(
             signingProtocolId == JccmCertificateLoginProbeCadesAdapter.ID.value
 
 
+    private fun isExactSevillaAtseContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == SEVILLA_ATSE_START_URL &&
+            profile.profileId.value == SEVILLA_ATSE_PROFILE_ID &&
+            profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == SEVILLA_ATSE_START_URL &&
+            origin.serialized == SEVILLA_ATSE_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(SEVILLA_ATSE_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == SEVILLA_ATSE_SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.XADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties.isEmpty() &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == SEVILLA_ATSE_PROTOCOL_ID
+
+    private fun ByteArray.isExactSevillaAtseChallenge(): Boolean =
+        size == SEVILLA_ATSE_CHALLENGE_BYTES && all { byte ->
+            val value = byte.toInt() and 0xff
+            value in 0x30..0x39 ||
+                value in 0x41..0x5a ||
+                value in 0x61..0x7a ||
+                value == 0x5f ||
+                value == 0x2d
+        }
+
     private fun isExactUgrContract(
         profile: SiteProfile,
         origin: ExactOrigin,
@@ -557,6 +638,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val ALGORITHM_SHA512_RSA = "SHA512withRSA"
         private const val FORMAT_CADES = "CAdES"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
+        private const val FORMAT_XADES = "XAdES"
+        private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+        private const val SEVILLA_ATSE_PROFILE_VERSION = 1
+        private const val SEVILLA_ATSE_START_URL =
+            "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
+        private const val SEVILLA_ATSE_ORIGIN = "https://www.sevilla.org"
+        private const val SEVILLA_ATSE_SAFE_DESCRIPTION =
+            "Acceso con certificado a la Agencia Tributaria de Sevilla"
+        private const val SEVILLA_ATSE_PROTOCOL_ID = "sevilla-atse-xades-enveloping-v1"
+        private const val SEVILLA_ATSE_CHALLENGE_BYTES = 40
         private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
         private const val JCCM_START_URL =
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
