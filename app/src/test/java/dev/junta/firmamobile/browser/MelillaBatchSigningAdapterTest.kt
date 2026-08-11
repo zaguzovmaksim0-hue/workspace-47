@@ -6,15 +6,28 @@ import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.signing.BatchSigningFormat
+import dev.junta.firmamobile.signing.BatchProtocolResponse
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
+import org.robolectric.annotation.GraphicsMode
+import org.robolectric.annotation.SQLiteMode
 
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
+@SQLiteMode(SQLiteMode.Mode.LEGACY)
 class MelillaBatchSigningAdapterTest {
     @Test
     fun convertsValidatedBridgeRequestIntoExactNormalizedSigningRequest() {
@@ -80,6 +93,31 @@ class MelillaBatchSigningAdapterTest {
             normalized.documents.map { it.suboperation },
         )
         normalized.close()
+    }
+
+    @Test
+    fun wrapsProtocolResponseIntoTheExistingOneShotBatchReplyChannel() {
+        var posted: String? = null
+        val channel = MelillaBatchReplyChannel(
+            requestId = REQUEST_ID,
+            postMessage = { posted = it },
+        )
+        val adapter = MelillaBatchSigningAdapter(
+            registry = SiteProfileRegistry(BuiltInSiteProfiles.catalog, BuildTrustPolicy.QA),
+        )
+        val reply = adapter.replySink(channel)
+        val response = BatchProtocolResponse("{\"resultado\":\"ok\"}".encodeToByteArray())
+
+        assertEquals(REQUEST_ID, reply.requestId)
+        assertTrue(reply.success(response))
+        val envelope = JSONObject(checkNotNull(posted))
+        assertEquals(MelillaBatchBridgeAdapter.BATCH_RESULT_TYPE, envelope.getString("type"))
+        assertEquals(REQUEST_ID.toString(), envelope.getString("requestId"))
+        assertEquals("success", envelope.getString("status"))
+        assertEquals("{\"resultado\":\"ok\"}", envelope.getString("validationResponse"))
+        assertFalse(reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED))
+
+        response.close()
     }
 
     private companion object {
