@@ -89,6 +89,79 @@ class BatchSigningCoordinatorTest {
         assertEquals(SigningUiState.Completed(REQUEST_ID), coordinator.state.value)
     }
 
+    @Test
+    fun confirmRejectsForeignPresignOwnerBeforePrivateKeyOrCompletion() = runBlocking {
+        val acceptedRequest = request()
+        val foreignOwner = request()
+        val ownershipTimeline = mutableListOf<String>()
+        val ownershipAdapter = object : BatchSigningProtocolAdapter {
+            override val id: SigningProtocolId = MelillaBatchProtocolAdapter.ID
+
+            override fun prepare(
+                request: NormalizedBatchSigningRequest,
+                certificateChain: List<X509Certificate>,
+            ): BatchProtocolPrepareResult {
+                ownershipTimeline += "prepare"
+                return BatchProtocolPrepareResult.Success(
+                    BatchPreSignResult(
+                        requestOwner = foreignOwner,
+                        inputs = listOf(PRE_ONE.encodeToByteArray()),
+                        state = RecordingBatchPreSignState(),
+                    ),
+                )
+            }
+
+            override fun complete(
+                request: NormalizedBatchSigningRequest,
+                preSign: BatchPreSignResult,
+                localSignatures: List<LocalSignature>,
+            ): BatchProtocolCompletionResult {
+                ownershipTimeline += "complete"
+                return BatchProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
+            }
+        }
+        val ownershipEngine = LocalSignatureEngine { input, _, _ ->
+            ownershipTimeline += "sign:${input.decodeToString()}"
+            LocalSignatureResult.Success(LocalSignature("must-not-exist".encodeToByteArray()))
+        }
+        val ownershipCoordinator = BatchSigningCoordinator(
+            certificateSession = session,
+            adapter = ownershipAdapter,
+            localSignatureEngine = ownershipEngine,
+            currentOrigin = { MELILLA_ORIGIN },
+            currentNavigationEpoch = { NAVIGATION_EPOCH },
+            expiryScheduler = RecordingExpiryScheduler(),
+            profileDisplayName = "Sede Electrónica de Melilla",
+            supportLevel = "VERIFIED_CONTRACT",
+        )
+        val reply = RecordingBatchReply(REQUEST_ID, ownershipTimeline)
+
+        try {
+            assertEquals(
+                SigningPreparationResult.Ready(REQUEST_ID),
+                ownershipCoordinator.prepare(acceptedRequest, reply),
+            )
+
+            val result = ownershipCoordinator.confirm(REQUEST_ID)
+
+            assertEquals(
+                SigningExecutionResult.Failed(SigningErrorCode.PROTOCOL_FAILED),
+                result,
+            )
+            assertEquals(
+                listOf("prepare", "failure:PROTOCOL_FAILED"),
+                ownershipTimeline,
+            )
+            assertEquals(
+                SigningUiState.Failed(REQUEST_ID, SigningErrorCode.PROTOCOL_FAILED),
+                ownershipCoordinator.state.value,
+            )
+        } finally {
+            ownershipCoordinator.close()
+            foreignOwner.close()
+        }
+    }
+
     private fun request(): NormalizedBatchSigningRequest = NormalizedBatchSigningRequest(
         requestId = REQUEST_ID,
         protocolId = MelillaBatchProtocolAdapter.ID,
