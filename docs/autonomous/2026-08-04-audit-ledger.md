@@ -2435,3 +2435,12 @@ actions were not executed. This is strong technical-simulator evidence but still
 procedure binding, so broad `castilla-leon-tramita` (`ES-PUB-0102`) remains `BROWSE_ONLY` and no
 profile/catalog promotion was made. Exact hashes and boundaries are recorded in
 `docs/autonomous/2026-08-11-g45-castilla-leon-checker-research.md`.
+
+**Galicia generic-request pre-auth boundary.** The current Xunta `Solicitude xenérica` page returns
+HTTP 200 and binds live procedure PR004A to the exact "Tramitar en liña" start
+`/presenta/novo/PR004A_2025_1`. Public procedure/signing-information pages expose admitted
+certificate/@firma, Chave365 and Cl@ve mechanisms but no AutoScript/MiniApplet algorithm/format/
+payload/callback contract. A bounded GET of the exact PR004A start returns HTTP 302 to same-origin
+`/identificate/login`; the authenticated route was not followed and redirect query details were not
+retained. `galicia-sede` (`ES-PUB-0112`) therefore remains `BROWSE_ONLY`. Detailed evidence is in
+`docs/autonomous/2026-08-11-g45-galicia-research.md`.
