@@ -2667,3 +2667,71 @@ All insular research stayed within bounded public unauthenticated GET-only acces
 authentication, certificate selection, Cl@ve flow, POST/form submission, signing component launch,
 real signature, upload, payment, administrative submission, APK install/launch, ADB, or device-control
 workflow occurred. Temporary public response bodies were deleted after the research checkpoint.
+
+## Portal G48/G49 — Sevilla ATSE automated acceptance — 2026-08-11
+
+The Sevilla ATSE slice is now accepted for the repository's automated boundary. Generation 48
+published the exact QA-only implementation through `8dc623e250031ef97c1e71e56284c59ee83d3a45`:
+profile `sevilla-atse-certificate-login`, exact start URL
+`https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente`, exact initiator
+origin `https://www.sevilla.org`, the 40-character URL-safe decoded challenge,
+`SHA1withRSA` + `XAdES` + null extra properties, dedicated XAdES Enveloping signing adapter,
+protocol registry/runtime resolver wiring, and separate public inventory surface `ES-PUB-0016`.
+The profile remains `VERIFIED_CONTRACT` / `QA_ONLY`; release stays disabled and the public surface is
+truthfully `IMPLEMENTED_NOT_E2E` / `E2E_PENDING`. No `VERIFIED_E2E` claim is inferred.
+
+The prior canonical full Cloud run on `8ddea897e60f85cc68b08319394ade037706260b` exposed four stale
+exhaustive regression expectations after the legitimate Sevilla promotion: compatible count 12→13,
+bound catalog count 13→14 plus the Sevilla profile id, missing `www.sevilla.org` in the exhaustive
+origin-policy expectation, and literal catalogVersion 13 instead of the current catalog version 14.
+Commit `8dc623e250031ef97c1e71e56284c59ee83d3a45` changes only those four test expectations and was
+verified pushed/clean/remote-identical before the acceptance reruns.
+
+Final focused Codex Cloud task `task_e_6a7ad2628604832393f3ebfe5816d53e` checked exact SHA
+`8dc623e250031ef97c1e71e56284c59ee83d3a45` with dependency verification enabled and passed
+`PortalCatalogScreenTest`, `PublicPortalCatalogParserTest`, `JuntaOriginPolicyTest`, and
+`SiteProfileCatalogParserTest`: 40/40 tests, zero failures/errors/skips, Gradle exit 0,
+`BUILD SUCCESSFUL in 7m25s`, final Cloud `git status --short` empty.
+
+Canonical full Android Codex Cloud task `task_e_6a7ad4aaa5d48323a9aaaee668bc0a02` then verified the same
+exact pushed SHA and ran
+`verifyResolvedCoreVersion verifyPortableAapt2Configuration testDebugUnitTest testQaUnitTest
+lintDebug lintQa assembleDebug assembleQa assembleQaAndroidTest` directly inside
+`workspace-47-android`. Gradle exited 0 with `BUILD SUCCESSFUL in 16m`; 142 actionable tasks were
+reported (123 executed, 19 from cache). Debug unit tests passed 614/614 across 90 suites and QA unit
+tests passed 614/614 across 90 suites, for 1,228/1,228 total with zero failures, errors, or skips.
+`lintDebug` and `lintQa` each completed with 0 errors and 26 warnings. Debug, QA, and QA AndroidTest
+APKs were produced for static build evidence only. Dependency verification remained enabled,
+`gradle/verification-metadata.xml` was unchanged, no verification-disabling option was used, and the
+final Cloud checkout was clean.
+
+Direct main-Watchdog Standards + Spec review found no Critical or Important defect in the bounded
+Sevilla slice. The JavaScript and native bridge paths independently enforce the profile/origin/page/
+challenge/algorithm/format/property tuple; the dedicated signing adapter revalidates the exact profile
+and signature contract; release registry exclusion remains intact; catalog promotion is limited to the
+exact Sevilla surface. `node --check app/src/main/res/raw/afirma_shim.js`, static profile/catalog
+invariants, `git diff --check`, and bounded sensitive/unsafe-pattern scans also passed. No local
+Gradle/JVM/Kotlin command was used.
+
+Post-Sevilla catalog accounting is 183 entries, 14 bound surfaces, 13 unique profile IDs, and 169
+unbound surfaces. Inventory states are 163 `BROWSE_ONLY`, 9 `IMPLEMENTED_NOT_E2E`, 1
+`VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated
+catalog states are 91 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 9 `E2E_PENDING`, and 4
+`E2E_VERIFIED`; discovery states are 105 `REVIEWED`, 5 `RECHECK_REQUIRED`, and 73 `DISCOVERED`.
+The classified research buffer remains at least 16 public surfaces. Sevilla is the portal accepted by
+this G48/G49 publication slice; physical Sevilla E2E remains a separate manual gate.
+
+The next exact implementation order is the preserved Melilla STA batch slice, then
+`extremadura-tramites` (`ES-PUB-0109`), then La Palma (`ES-PUB-0130`) through the verified shared STA
+seam. Melilla's preserved worker is clean at local
+`ce1b1639b322b616fb71cce12c73305db26e6a1a`, one commit ahead of remote
+`25df9f7ed5bef0387568d6c2db5c7083f154fa9b`; its sole local fix replaces Android-incompatible
+`JSONObject.keySet()` with `JSONObject.keys().asSequence().toSet()` while preserving exact key-set
+validation. Its focused GREEN command is the Debug+QA pair for `MelillaBatchBridgeAdapterTest` and
+`AfirmaJavascriptShimTest`. Because current main has newer Cantabria/JCCM/Sevilla edits in four shared
+shim/bridge files, later Melilla integration must resolve those overlaps additively rather than replay
+or overwrite current main files.
+
+No APK was installed or launched; no ADB/device control, authenticated portal navigation, cookie or
+credential replay, certificate unlock/private-key use, signing-component launch, real signature,
+form POST, upload, payment, or administrative submission occurred.
