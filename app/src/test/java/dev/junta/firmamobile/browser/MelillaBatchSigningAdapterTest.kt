@@ -120,6 +120,27 @@ class MelillaBatchSigningAdapterTest {
         response.close()
     }
 
+    @Test
+    fun malformedUtf8ResponseStillTerminatesReplyOwnership() {
+        var terminalCount = 0
+        val channel = MelillaBatchReplyChannel(
+            requestId = REQUEST_ID,
+            postMessage = { error("malformed response must not be delivered") },
+            onTerminal = { terminalCount += 1 },
+        )
+        val adapter = MelillaBatchSigningAdapter(
+            registry = SiteProfileRegistry(BuiltInSiteProfiles.catalog, BuildTrustPolicy.QA),
+        )
+        val reply = adapter.replySink(channel)
+        val response = BatchProtocolResponse(byteArrayOf(0xC3.toByte(), 0x28))
+
+        assertFalse(reply.success(response))
+        assertEquals(1, terminalCount)
+        assertFalse(reply.abandon())
+
+        response.close()
+    }
+
     private companion object {
         val REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174000")
         val DOCUMENT_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174001")
