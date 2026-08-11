@@ -646,7 +646,10 @@ fun BrowserScreen(
                                         onMiniAppletRequest(request, reply)
                                     },
                                     onMiniAppletCancel = onMiniAppletCancel,
-                                    onMelillaBatchRequest = { request, reply ->
+                                    onMelillaBatchRequest = {
+                                        request: MelillaBatchBridgeRequest,
+                                        reply: MelillaBatchReplyChannel,
+                                        ->
                                         if (onMelillaBatchRequest != null) {
                                             onMelillaBatchRequest(request, reply)
                                         }
