@@ -14,13 +14,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.runBlocking
 
 class BatchSigningCoordinatorTest {
     private val clock = Clock.fixed(NOW, ZoneOffset.UTC)
     private val identity = syntheticIdentity()
     private val session = CertificateSession(clock).apply { unlock(identity) }
-    private val adapter = RecordingBatchAdapter()
-    private val engine = RecordingBatchEngine()
+    private val timeline = mutableListOf<String>()
+    private val adapter = RecordingBatchAdapter(timeline)
+    private val engine = RecordingBatchEngine(timeline)
     private val expiryScheduler = RecordingExpiryScheduler()
     private val coordinator = BatchSigningCoordinator(
         certificateSession = session,
@@ -35,7 +37,7 @@ class BatchSigningCoordinatorTest {
 
     @Test
     fun preparePublishesSafeBatchConfirmationWithoutNetworkOrPrivateKeyUse() {
-        val reply = RecordingBatchReply(REQUEST_ID)
+        val reply = RecordingBatchReply(REQUEST_ID, timeline)
 
         val result = coordinator.prepare(request(), reply)
 
@@ -60,6 +62,31 @@ class BatchSigningCoordinatorTest {
         assertFalse(rendered.contains(POST_URL))
         assertFalse(rendered.contains("doc-a"))
         assertFalse(rendered.contains("doc-b"))
+    }
+
+    @Test
+    fun confirmSignsEveryPresignInputInOrderAndDeliversOneFinalResponse() = runBlocking {
+        val reply = RecordingBatchReply(REQUEST_ID, timeline)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), coordinator.prepare(request(), reply))
+
+        val result = coordinator.confirm(REQUEST_ID)
+
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), result)
+        assertEquals(
+            listOf("prepare", "sign:pre-one", "sign:pre-two", "complete", "success"),
+            timeline,
+        )
+        assertEquals(
+            listOf("pk1-pre-one", "pk1-pre-two"),
+            adapter.completedSignatures.single(),
+        )
+        assertTrue(engine.identities.all { it === identity })
+        assertEquals(
+            listOf(SigningAlgorithm.SHA256_WITH_RSA, SigningAlgorithm.SHA256_WITH_RSA),
+            engine.algorithms,
+        )
+        assertEquals(FINAL_RESPONSE, reply.deliveredResponse)
+        assertEquals(SigningUiState.Completed(REQUEST_ID), coordinator.state.value)
     }
 
     private fun request(): NormalizedBatchSigningRequest = NormalizedBatchSigningRequest(
@@ -94,8 +121,11 @@ class BatchSigningCoordinatorTest {
         ),
     )
 
-    private class RecordingBatchAdapter : BatchSigningProtocolAdapter {
+    private class RecordingBatchAdapter(
+        private val timeline: MutableList<String>,
+    ) : BatchSigningProtocolAdapter {
         val events = mutableListOf<String>()
+        val completedSignatures = mutableListOf<List<String>>()
         override val id: SigningProtocolId = MelillaBatchProtocolAdapter.ID
 
         override fun prepare(
@@ -103,7 +133,14 @@ class BatchSigningCoordinatorTest {
             certificateChain: List<X509Certificate>,
         ): BatchProtocolPrepareResult {
             events += "prepare"
-            error("prepare must not run before explicit confirmation")
+            timeline += "prepare"
+            return BatchProtocolPrepareResult.Success(
+                BatchPreSignResult(
+                    requestOwner = request,
+                    inputs = listOf(PRE_ONE.encodeToByteArray(), PRE_TWO.encodeToByteArray()),
+                    state = RecordingBatchPreSignState(),
+                ),
+            )
         }
 
         override fun complete(
@@ -112,40 +149,66 @@ class BatchSigningCoordinatorTest {
             localSignatures: List<LocalSignature>,
         ): BatchProtocolCompletionResult {
             events += "complete"
-            error("complete must not run before explicit confirmation")
+            timeline += "complete"
+            completedSignatures += localSignatures.map { signature ->
+                signature.withBytes { it.decodeToString() }
+            }
+            return BatchProtocolCompletionResult.Success(
+                BatchProtocolResponse(FINAL_RESPONSE.encodeToByteArray()),
+            )
         }
     }
 
-    private class RecordingBatchEngine : LocalSignatureEngine {
+    private class RecordingBatchPreSignState : BatchPreSignState {
+        override fun close() = Unit
+    }
+
+    private class RecordingBatchEngine(
+        private val timeline: MutableList<String>,
+    ) : LocalSignatureEngine {
         val events = mutableListOf<String>()
+        val identities = mutableListOf<UnlockedIdentity>()
+        val algorithms = mutableListOf<SigningAlgorithm>()
 
         override fun sign(
             input: ByteArray,
             identity: UnlockedIdentity,
             algorithm: SigningAlgorithm,
         ): LocalSignatureResult {
-            events += "sign"
-            error("private-key use must not run before explicit confirmation")
+            val value = input.decodeToString()
+            events += "sign:$value"
+            identities += identity
+            algorithms += algorithm
+            timeline += "sign:$value"
+            return LocalSignatureResult.Success(
+                LocalSignature("pk1-$value".encodeToByteArray()),
+            )
         }
     }
 
     private class RecordingBatchReply(
         override val requestId: UUID,
+        private val timeline: MutableList<String>,
     ) : BatchSigningReplySink {
         val events = mutableListOf<String>()
+        var deliveredResponse: String? = null
 
         override fun success(response: BatchProtocolResponse): Boolean {
             events += "success"
+            timeline += "success"
+            deliveredResponse = response.withBytes { it.decodeToString() }
             return true
         }
 
         override fun failure(code: SigningErrorCode): Boolean {
             events += "failure:$code"
+            timeline += "failure:$code"
             return true
         }
 
         override fun abandon(): Boolean {
             events += "abandon"
+            timeline += "abandon"
             return true
         }
     }
@@ -168,5 +231,8 @@ class BatchSigningCoordinatorTest {
         const val OPERATION_ID = "op-g54-a"
         const val PRE_URL = "https://sede.melilla.es/sta/AutofirmaLote/presign/op-g54-a"
         const val POST_URL = "https://sede.melilla.es/sta/AutofirmaLote/postsign/op-g54-a"
+        const val PRE_ONE = "pre-one"
+        const val PRE_TWO = "pre-two"
+        const val FINAL_RESPONSE = "{\"result\":\"DONE_AND_SAVED\"}"
     }
 }
