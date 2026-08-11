@@ -661,6 +661,57 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun mainActivityComposesMelillaBatchThroughOneOwnedSigningFlow() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+        val browserBlock = source
+            .substringAfter("BrowserScreen(", missingDelimiterValue = "")
+            .substringBefore("\n                        )")
+        val ordinaryPrepareBlock = source
+            .substringAfter("private fun prepareMiniAppletSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    private fun confirmSigning")
+        val batchPrepareBlock = source
+            .substringAfter("private fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    private fun confirmSigning")
+
+        assertTrue(
+            "MainActivity must own a dedicated Melilla batch coordinator",
+            "private lateinit var batchSigningCoordinator: BatchSigningCoordinator" in source,
+        )
+        assertTrue(
+            "Melilla batch protocol must use the existing direct HTTPS transport stack",
+            "MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source,
+        )
+        assertTrue(
+            "MainActivity must normalize only against the built-in Melilla profile registry",
+            "MelillaBatchSigningAdapter(registry = BuiltInSiteProfiles.runtimeRegistry)" in source,
+        )
+        assertTrue(
+            "BrowserScreen must forward Melilla request and cancellation into MainActivity",
+            browserBlock.isNotEmpty() &&
+                "onMelillaBatchRequest = ::prepareMelillaBatchSigning" in browserBlock &&
+                "onMelillaBatchCancel = { requestId ->" in browserBlock,
+        )
+        assertTrue(
+            "Ordinary signing must claim shared ownership before coordinator prepare",
+            ordinaryPrepareBlock.isNotEmpty() &&
+                "signingFlowOwnership.acquire(SigningFlowKind.ORDINARY, requestId)" in ordinaryPrepareBlock,
+        )
+        assertTrue(
+            "Batch signing must claim the same shared ownership before coordinator prepare",
+            batchPrepareBlock.isNotEmpty() &&
+                "signingFlowOwnership.acquire(SigningFlowKind.BATCH, requestId)" in batchPrepareBlock,
+        )
+        assertTrue(
+            "Confirm, cancel, and terminal dismissal must route through the current owner",
+            "signingFlowOwnership.current()" in source &&
+                "when (owner.kind)" in source &&
+                "onDismissSigningState = ::dismissSigningState" in browserBlock,
+        )
+    }
+
+    @Test
     fun tunnelRouteDiagnosticsRequireActiveSigningRequestOwnership() {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
