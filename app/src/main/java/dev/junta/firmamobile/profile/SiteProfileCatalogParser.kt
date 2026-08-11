@@ -168,6 +168,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
                 validateSevillaAtseProfile(p)
             }
+            if (p.profileId.value == MELILLA_PROFILE_ID) {
+                validateMelillaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -297,6 +300,39 @@ object SiteProfileCatalogParser {
             }
         }
     }
+    private fun validateMelillaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MELILLA_PROFILE_VERSION)
+        require(profile.displayName == MELILLA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MELILLA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MELILLA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = MELILLA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("melilla-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("melilla-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -478,15 +514,27 @@ object SiteProfileCatalogParser {
 
     private const val ARAGON_LOCAL_CADES_PROFILE_ID = "aragon-siraw"
     private const val DGT_LOCAL_CADES_PROFILE_ID = "dgt-verificacion-equipo"
-    private val REGISTERED_ADAPTERS = setOf("miniapplet-autoscript-v1")
+    private val REGISTERED_ADAPTERS = setOf(
+        "miniapplet-autoscript-v1",
+        "melilla-batch-autoscript-v1",
+    )
     private val REGISTERED_CALLBACKS = setOf(
         "miniapplet-sign-callback-v1",
         "autoscript-sign-callback-v1",
+        "melilla-batch-result-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
     private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
+    private const val MELILLA_PROFILE_ID = "melilla-sede"
+    private const val MELILLA_PROFILE_VERSION = 1
+    private const val MELILLA_DISPLAY_NAME = "Ciudad Autónoma de Melilla — Sede Electrónica"
+    private const val MELILLA_START_URL =
+        "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+            "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
+    private const val MELILLA_ORIGIN = "https://sede.melilla.es"
+    private const val MELILLA_SAFE_DESCRIPTION = "Firma por lotes en la Sede Electrónica de Melilla"
     private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
     private const val SEVILLA_ATSE_PROFILE_VERSION = 1
     private const val SEVILLA_ATSE_DISPLAY_NAME =

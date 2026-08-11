@@ -128,6 +128,7 @@ class SiteProfileCatalogParserTest {
             CallbackContractId("melilla-batch-result-v1"),
             operation.callbackContractId,
         )
+        assertEquals("Firma por lotes en la Sede Electrónica de Melilla", operation.safeDescription)
         assertEquals(setOf(Capability.SIGN), operation.capabilities)
         assertNull(operation.endpointId)
         assertEquals(setOf(SignatureAlgorithm.SHA256_WITH_RSA), operation.algorithms)
