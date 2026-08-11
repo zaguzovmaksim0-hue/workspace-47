@@ -83,12 +83,12 @@ class BatchSigningCoordinatorTest {
         documents = listOf(
             NormalizedBatchSigningDocument(
                 id = "doc-a",
-                dataReference = "https://sede.melilla.es/afirma-signature-storage/${OPERATION_ID}/getdata/doc-a",
+                dataReference = "https://sede.melilla.es/sta/AutofirmaLote/getdata/${OPERATION_ID}/doc-a",
                 format = BatchSigningFormat.CADES,
             ),
             NormalizedBatchSigningDocument(
                 id = "doc-b",
-                dataReference = "https://sede.melilla.es/afirma-signature-storage/${OPERATION_ID}/getdata/doc-b",
+                dataReference = "https://sede.melilla.es/sta/AutofirmaLote/getdata/${OPERATION_ID}/doc-b",
                 format = BatchSigningFormat.PADES,
             ),
         ),
@@ -165,8 +165,8 @@ class BatchSigningCoordinatorTest {
         val DOCUMENT_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174101")
         val MELILLA_ORIGIN = TrustedOrigin("https", "sede.melilla.es", 443)
         const val NAVIGATION_EPOCH = 7L
-        const val OPERATION_ID = "op-g53-a"
-        const val PRE_URL = "https://sede.melilla.es/afirma-signature-storage/op-g53-a/presign"
-        const val POST_URL = "https://sede.melilla.es/afirma-signature-storage/op-g53-a/postsign"
+        const val OPERATION_ID = "op-g54-a"
+        const val PRE_URL = "https://sede.melilla.es/sta/AutofirmaLote/presign/op-g54-a"
+        const val POST_URL = "https://sede.melilla.es/sta/AutofirmaLote/postsign/op-g54-a"
     }
 }
