@@ -103,7 +103,10 @@ internal class MelillaBatchSigningAdapter(
                 response.withBytes { bytes ->
                     channel.success(bytes.decodeStrictUtf8())
                 }
-            }.getOrDefault(false)
+            }.getOrElse {
+                channel.abandon()
+                false
+            }
 
             override fun failure(code: SigningErrorCode): Boolean = channel.failure(code)
 
