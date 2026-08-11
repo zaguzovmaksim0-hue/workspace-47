@@ -34,7 +34,7 @@ class WebMessageBridgeMelillaCancellationTest {
             logger = SanitizedLogger(),
             onAfirmaRequest = {},
             onMelillaBatchRequest = { _, reply -> pendingReply = reply },
-            onMelillaBatchCancel = cancelled::add,
+            onMelillaBatchCancel = { requestId: UUID -> cancelled.add(requestId) },
             activeProfileId = { MELILLA_PROFILE },
             miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
             currentNavigationEpoch = { NAVIGATION_EPOCH },
@@ -111,7 +111,7 @@ class WebMessageBridgeMelillaCancellationTest {
 
         override fun executeJavaScript(
             script: String,
-            resultCallback: WebViewOutcomeReceiver<String, JavaScriptExecutionException>,
+            resultCallback: WebViewOutcomeReceiver<String, JavaScriptExecutionException>?,
         ) = Unit
     }
 
