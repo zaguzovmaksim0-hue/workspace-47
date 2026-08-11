@@ -192,8 +192,8 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 198 |
-| Fuentes oficiales totales registradas | 210 |
+| Fuentes oficiales portal-specific registradas | 201 |
+| Fuentes oficiales totales registradas | 213 |
 | Entradas `VERIFIED_E2E` | 4 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
@@ -215,10 +215,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 8 |
+| `IMPLEMENTED_NOT_E2E` | 10 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 164 |
+| `BROWSE_ONLY` | 162 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3760,24 +3760,24 @@ records:
     origin: "https://sede.melilla.es"
     official_site: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO"
     e_sede: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_TITULARSEDE"
-    entry_url: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
+    procedure_page: "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
+    js_client: "AutoScript"
+    protocol_family: "AUTOSCRIPT_STA_BATCH_TRIFASICO"
+    signature_format: "CAdES / PAdES / XAdES (perfil móvil limitado a CAdES detached)"
+    signature_algorithm: "SHA256withRSA"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso al catálogo y firma electrónica en los trámites que la requieren."
-    protocol_evidence: "La sede documenta certificado, @firma y AutoFirma sin contrato runtime delimitado."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma por lotes AutoScript/STA del trámite público exacto, con perfil móvil QA limitado a CAdES detached."
+    protocol_evidence: "El trámite exacto carga AutoScript y sta-autofirma-lote.js; el helper fija SHA256withRSA, CAdES por defecto y ramas PAdES/XAdES, con pre/post de lote delimitados por evidencia pública."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A11A", "A11B", "A11C"]
-    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Localizar un trámite concreto y revisar sus assets públicos."
+    evidence_ids: ["D03", "A11A", "A11B", "A11C", "A11D", "A11E", "A11F"]
+    reason: "Contrato AutoScript/STA implementado solo en QA; sin aceptación física/E2E del portal real, sin envío administrativo y sin afirmar endpoint dinámico como URL estática."
+    reviewed_at: "2026-08-11"
+    next_gate: "E2E físico/manual del trámite exacto con consentimiento; no promover release ni VERIFIED_E2E sin evidencia separada."
 
   - inventory_id: "ES-PUB-0108"
     surface_key: "gva-sede"
@@ -6328,6 +6328,9 @@ Orden de expansión recomendado:
 [A11A]: https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_TITULARSEDE
 [A11B]: https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO
 [A11C]: https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMA
+[A11D]: https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999
+[A11E]: https://sede.melilla.es/sta/resources/js/sta-autofirma-lote.js
+[A11F]: https://sede.melilla.es/sta/resources/js/autoscript.js
 [A12A]: https://sede.gva.es/es/normativa-reguladora
 [A12B]: https://sede.gva.es/es/
 [A12C]: https://sede.gva.es/es/detall-tramit?id_proc=15602

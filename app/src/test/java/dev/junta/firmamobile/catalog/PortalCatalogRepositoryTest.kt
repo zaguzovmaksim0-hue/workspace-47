@@ -63,11 +63,12 @@ class PortalCatalogRepositoryTest {
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
                 "sevilla-atse-certificate-login",
+                "melilla-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 14, metadataOnly.size)
+        assertEquals(qaPortals.size - 15, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -184,6 +185,33 @@ class PortalCatalogRepositoryTest {
         assertTrue(qaPortal.limitations.contains("E2E", ignoreCase = true))
 
         val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
+
+    @Test
+    fun `Melilla batch contract is launchable only from QA registry pending E2E`() {
+        val portalId = PortalId("melilla-sede")
+        val profileId = ProfileId("melilla-sede")
+        val expectedUrl = java.net.URI(
+            "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+        )
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(setOf(SignatureFormat.CADES), qaPortal.signatureFormats)
+        assertTrue(PortalServiceCapability.ELECTRONIC_SIGNATURE in qaPortal.capabilities)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in qaPortal.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in qaPortal.observedMechanisms)
+        assertEquals(PortalLaunchTarget(profileId, expectedUrl), qaRepository.resolveLaunch(qaPortal))
+        assertTrue(qaPortal.limitations.contains("E2E", ignoreCase = true))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, releasePortal.profileId)
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
         assertFalse(releasePortal.isEnabled)
         assertEquals(null, releaseRepository.resolveLaunch(releasePortal))

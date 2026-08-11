@@ -32,14 +32,14 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
-    fun `bundled catalog contains the complete inventory without expanding trust bindings`() {
+    fun `bundled catalog contains the complete inventory with only exact profile bindings`() {
         val catalog = PublicPortalCatalogParser.parse(json)
 
         assertEquals(1, catalog.schemaVersion)
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(14, catalog.entries.count { it.profileId != null })
+        assertEquals(15, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -57,6 +57,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("sevilla-atse-certificate-login"),
+                ProfileId("melilla-sede"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
