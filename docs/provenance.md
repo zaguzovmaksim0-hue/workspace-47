@@ -31,7 +31,7 @@ A repository commit proves that a file entered this repository at a point in tim
 | Gradle/Maven dependencies | Declared in `gradle/libs.versions.toml`; resolved by the build | `DEPENDENCY_NOT_VENDORED` | Their own upstream licenses apply. Final release notices should include licenses required by distributed dependencies. |
 | Python dependency `PyYAML` | Declared in `tools/requirements.txt` | `DEPENDENCY_NOT_VENDORED` | Upstream license applies; not relicensed by project license. |
 | Go module dependencies | `ws024-relay/go.mod` currently contains no third-party module requirements | `DEPENDENCY_NOT_VENDORED` | Re-evaluate if module requirements are added. |
-| Gradle Wrapper files | Build bootstrap material distributed with the repository | `THIRD_PARTY_REVIEW_PENDING` | Verify Gradle wrapper redistribution/license notice before final NOTICE. |
+| Gradle Wrapper files | `gradle/wrapper/gradle-wrapper.properties` selects Gradle 9.4.1; generated `gradlew` carries the upstream Apache License 2.0 header and SPDX identifier. Gradle documents the Wrapper/Build Tool as Apache-2.0 and the wrapper JAR as self-attributing. | `THIRD_PARTY_LICENSED` | Keep upstream license metadata intact. Wrapper material remains Apache-2.0 and is not relicensed by the project license. |
 
 ## Interoperability and third-party service names
 
@@ -44,8 +44,7 @@ Third-party names, marks, domains, services and their own software remain subjec
 1. Resolve copyright/source rights for `jfm_home_background.webp`.
 2. Resolve copyright/source rights for all custom launcher/brand binary artwork.
 3. Complete a focused source comparison/review for `afirma_shim.js` and obtain maintainer attestation that no unlicensed third-party implementation was copied into it.
-4. Verify the notice requirement for redistributed Gradle Wrapper material.
-5. Review distributed dependency notices required by the eventual binary release.
-6. Complete full-history secret/PII scan and the separate commit-email privacy decision; these are publication gates even though they are not copyright questions.
+4. Review distributed dependency notices required by the eventual binary release.
+5. Complete full-history secret/PII scan and the separate commit-email privacy decision; these are publication gates even though they are not copyright questions.
 
 Until these items are resolved, absence of a root `LICENSE` is intentional. Do not describe the repository as fully open-source or change it to public solely on the basis of this ledger.
