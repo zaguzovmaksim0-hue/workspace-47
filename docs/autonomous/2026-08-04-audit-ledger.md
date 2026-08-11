@@ -3114,3 +3114,66 @@ bindings, and Melilla behavior exact. No phone-local Gradle/JVM/Kotlin execution
 APK install/launch, device control, authenticated portal action, credential/cookie/bearer use,
 certificate unlock/private-key material, real signing, form submission, upload, payment, or
 administrative action occurred.
+
+## Portal G64 — Extremadura Slice 3 protocol + bridge normalization acceptance — 2026-08-12
+
+Extremadura (`extremadura-tramites`, `ES-PUB-0109`) Slice 3 is accepted at its bounded automated
+protocol/bridge-normalization boundary. The slice adds no Browser/MainActivity composition, QA profile,
+registry entry, public-catalog binding, release activation, or E2E claim; those remain Slices 4-5.
+
+Protocol RED `a38bf24b3e70529024b1f855e982bedda857ef52` added an exact Extremadura STA adapter tracer.
+Cloud task `task_e_6a7bab9930dc8323a8fdd7aa3bdca909` verified that pushed SHA and produced the
+intended RED: Gradle exit 1, `BUILD FAILED in 4m26s` at `compileDebugUnitTestKotlin` because
+`ExtremaduraBatchProtocolAdapter` did not exist; no tests executed, dependency verification remained
+enabled, verification metadata was unchanged, and the Cloud checkout was clean.
+
+Protocol GREEN `f91f13183031075129e182784f0a30acd8912f13` adds a distinct fixed
+`ExtremaduraBatchProtocolAdapter` (`extremadura-batch-autoscript-v1`, profile `extremadura-tramites`,
+version 1, exact `tramites.juntaex.es` origin and exact `ExtremaduraBatchUrlPolicy`) while preserving
+Melilla's public adapter id/profile/origin/policy. Only private STA execution state/contract code is
+shared; no caller-configurable host acceptance was introduced. Cloud task
+`task_e_6a7bae3ff44883239b6fa651eac2de15` accepted exact `f91f131...`: Gradle exit 0,
+`BUILD SUCCESSFUL in 5m03s`, 6/6 Debug tests passed (Extremadura 2 + Melilla 4), zero
+failures/errors/skips, dependency verification enabled, unchanged verification metadata, clean checkout.
+
+Bridge/normalization RED `4cf1120dd45c233b1763d1ec07a41903adca0183` added one end-to-end seam from an
+exact Extremadura `MINIAPPLET_BATCH` WebMessage envelope through profile-bound normalization, plus
+wrong-origin and wrong-profile rejection. Cloud task `task_e_6a7bb047a488832396cf197cbdc366c6` verified
+that exact SHA and produced the intended RED: Gradle exit 1, `BUILD FAILED in 4m44s` at
+`compileDebugUnitTestKotlin` because `ExtremaduraBatchBridgeAdapter` and
+`ExtremaduraBatchSigningAdapter` were absent; tests did not execute and the checkout remained clean.
+
+Bridge/normalization GREEN `c57b3d0a3865b96b7e2a92ee773f09c594d287ad` keeps Melilla and Extremadura as
+separate fixed wrappers over private shared STA bridge/normalization cores. Profile id/version, exact
+origin, protocol id, profile-specific URL policy, request/reply ownership, navigation/document
+lifecycle, replay/cancel behavior, and registry operation binding remain contract-bound. Ordinary
+MiniApplet routing and Browser/MainActivity composition were not changed. Focused Debug Cloud task
+`task_e_6a7bb2607b40832397a89d20654b9ad0` accepted exact `c57b3d0...` with Gradle exit 0,
+`BUILD SUCCESSFUL in 4m08s`, 11/11 tests passed (Extremadura signing 1, Melilla bridge 7, Melilla
+signing 3), zero failures/errors/skips, dependency verification enabled, unchanged metadata, clean
+checkout. QA Cloud task `task_e_6a7bb40f3148832382a0dea621bb2037` accepted the same exact SHA with
+Gradle exit 0, `BUILD SUCCESSFUL in 3m35s`, the same 11/11 QA tests passed, zero
+failures/errors/skips, unchanged verification metadata, and a clean checkout.
+
+`git diff --check` passed for the complete Slice 3 range. Direct main-Watchdog Standards + Spec review
+and bounded changed-content scans found no Critical/Important defect and no dependency-verification
+bypass, trust-all/hostname-verifier weakening, HTTP widening, bearer/credential/private-key material,
+redirect/retry widening, or unintended `WebMessageBridge`/`MainActivity`/`BrowserScreen` mutation.
+Exact ownership scans confirm Melilla remains fixed to `melilla-sede` / `sede.melilla.es` /
+`melilla-batch-autoscript-v1` and Extremadura to `extremadura-tramites` /
+`tramites.juntaex.es` / `extremadura-batch-autoscript-v1`.
+
+Catalog accounting remains unchanged: 183 entries, 15 bound surfaces, 14 unique profile IDs, 168
+unbound; inventory remains 162 `BROWSE_ONLY`, 10 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4
+`VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated states remain 90
+`CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 10 `E2E_PENDING`, and 4 `E2E_VERIFIED`. Research queue
+depth remains at least 16 surfaces. Portals integrated in generation 64 remain zero because Extremadura
+has not reached its profile/catalog promotion slice.
+
+Next is Slice 4: Browser/MainActivity composition must select the exact STA bridge/signing/protocol
+ownership flow for Extremadura while preserving Melilla and ordinary-versus-batch arbitration. Slice 5
+then adds the QA-only profile/registry/catalog binding at at most `IMPLEMENTED_NOT_E2E` /
+`E2E_PENDING`. Manual/physical E2E remains required for Extremadura and all previously pending portals.
+No phone-local Gradle/JVM/Kotlin, worker delegation, APK install/launch, device control, authenticated
+portal action, credential/cookie/bearer use, certificate unlock/private-key material, real signing,
+form submission, upload, payment, or administrative action occurred.
