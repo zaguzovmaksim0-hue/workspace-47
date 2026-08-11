@@ -138,3 +138,35 @@ rechecked for explicit source maps, dynamic imports, and script-loader reference
 `ac2-commons.js`; it does not assign an external `src` and does not lead to an AutoFirma wrapper.
 No published `sourceMappingURL`, dynamic import, or linked script revealing `doSignAsPromise` was
 found. The MPTMD `ES-PUB-0072` lead therefore remains research-only.
+
+## Deputación de Ourense — public STA AutoFirma transition boundary
+
+Inventory surface `ES-PUB-0165` already contains the official public reference
+`https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMASELEC`.
+A current bounded GET returned HTTP 200 with STA version `2602.0.4`. That page is informational:
+it describes accepted identification systems and loads 16 first-party scripts, none of which exposes
+`AutoScript`, `MiniApplet`, `STAAutofirmaLote`, `signBatchProcess`, a `SHA*withRSA` algorithm, or a
+CAdES/PAdES/XAdES runtime tuple.
+
+The same public page directly links the separate
+`PAGE_CODE=PTS2_FIRMA` "Sistemas de sinatura" page. A GET to that exact published URL also returned
+HTTP 200 and documented high/substantial/low signing requirements, but its same 16 first-party
+scripts still expose no local signing ABI. Its `webAppsFwk.js?ver=2602.0.4` was fetched at SHA-256
+`25124759cbea11edae00f1196fce47ee1c04361bb10de9c76e5e83101df933d6` and contains no
+AutoFirma/MiniApplet/STA-batch contract.
+
+Two concrete catalogue-detail URLs already published by the public page were then fetched with GET
+only. Both returned HTTP 200. One current procedure detail explicitly renders two entry choices,
+"Con certificado dixital" and **"Con Autofirma"**, where the latter invokes
+`submitFormulario(false,true)`. The loaded first-party
+`/sta/pages/webapps/js/components/catserv.js?ver=2602.0.4` (SHA-256
+`ffdf496a7486c190e4dc2b5e33ae785d99acb1a01daecb1aef2a3069360227e3`) defines that function.
+For the AutoFirma choice it only sets the hidden `autoFirma` field to `true`, sets the form action to
+`window.catser.urlauth + "/frame.jsp"`, and submits the form. No signing algorithm, format, payload,
+callback, storage endpoint, batch contract, or local-signature ABI is defined before that submit.
+
+The form submission was not executed. Therefore the current public evidence proves a real
+procedure-level **AutoFirma transition boundary**, but the cryptographic contract lies after a POST /
+authentication transition that is outside this autonomous research boundary. `diputacion-ourense-sede`
+remains `BROWSE_ONLY` and is added only as a stronger research lead, not an implementation-ready
+profile.

@@ -2310,3 +2310,18 @@ The MPTMD public script set was additionally checked for explicit source maps or
 references that could reveal `doSignAsPromise`; none was found. The one dynamic `<script>` creation is
 only repeat-form inline-script cloning. `ES-PUB-0072` remains a research lead, not an implementation
 candidate.
+
+## Portal G44 — Deputación de Ourense STA transition research — 2026-08-11
+
+A bounded GET-only pass strengthened inventory surface `ES-PUB-0165` without changing its status.
+The already-recorded official `PTS2_FIRMASELEC` URL and its directly linked `PTS2_FIRMA` page both
+return HTTP 200 on STA `2602.0.4`; neither page nor their 16 loaded first-party scripts exposes a
+local AutoFirma/MiniApplet signing tuple.
+
+Two exact public catalogue details published by that surface were fetched. One procedure currently
+offers a real "Con Autofirma" entry. Its first-party `catserv.js?ver=2602.0.4` (SHA-256
+`ffdf496a7486c190e4dc2b5e33ae785d99acb1a01daecb1aef2a3069360227e3`) shows that
+`submitFormulario(false,true)` only sets `autoFirma=true`, points the form to the configured auth
+`/frame.jsp`, and submits. The POST was not performed. Because no algorithm/format/payload/callback
+contract is public before that boundary, `diputacion-ourense-sede` remains `BROWSE_ONLY` and is a
+research lead only. No inventory/catalog/profile mutation was made.

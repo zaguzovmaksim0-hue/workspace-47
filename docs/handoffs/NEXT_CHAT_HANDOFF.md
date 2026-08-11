@@ -99,8 +99,13 @@ Updated: 2026-08-11, generation 44.
   scripts; `mjusticia-sede` remains research-only.
 - MPTMD public loaded scripts expose no source map/dynamic loader for `doSignAsPromise`; the sole
   dynamic script creation clones inline repeated-form code. `ES-PUB-0072` remains a research lead.
+- Deputación de Ourense `ES-PUB-0165` now has a procedure-level public AutoFirma transition:
+  `catserv.js` shows `submitFormulario(false,true)` sets `autoFirma=true` and submits to the configured
+  auth `/frame.jsp`, but no algorithm/format/payload/callback ABI exists before that POST. No POST was
+  made; keep the surface `BROWSE_ONLY` and research-only.
 - Other research-only candidates still needing complete public binding include
-  `justicia-sede-judicial`, `age-acceda`, `mjusticia-sede`, and MPTMD `ES-PUB-0072`.
+  `justicia-sede-judicial`, `age-acceda`, `mjusticia-sede`, MPTMD `ES-PUB-0072`, and Deputación de
+  Ourense `ES-PUB-0165`.
 - Manual-E2E-only gates: UGR, DGT, Cantabria, JCCM; AEAT Client-TLS E2E. Real-portal JavaScript-dialog
   compatibility, TalkBack/physical visual validation and Go race on supported Linux remain external.
 
