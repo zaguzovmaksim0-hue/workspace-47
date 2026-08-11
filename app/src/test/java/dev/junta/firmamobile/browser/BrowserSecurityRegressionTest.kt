@@ -629,6 +629,36 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun browserScreenForwardsMelillaBatchRuntimeCallbacksIntoTheBridge() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val bridgeBlock = source
+            .substringAfter("val attachment = WebMessageBridge(", missingDelimiterValue = "")
+            .substringBefore(").attach(webView)")
+
+        assertTrue(
+            "BrowserScreen must expose an explicit Melilla batch request callback",
+            "onMelillaBatchRequest:" in source,
+        )
+        assertTrue(
+            "BrowserScreen must expose an explicit Melilla batch cancellation callback",
+            "onMelillaBatchCancel:" in source,
+        )
+        assertTrue(
+            "The WebMessageBridge instance must forward the exact Melilla batch request callback",
+            bridgeBlock.isNotEmpty() &&
+                "onMelillaBatchRequest = { request, reply ->" in bridgeBlock &&
+                "onMelillaBatchRequest(request, reply)" in bridgeBlock,
+        )
+        assertTrue(
+            "The WebMessageBridge instance must forward the exact Melilla batch cancellation callback",
+            bridgeBlock.isNotEmpty() &&
+                "onMelillaBatchCancel = onMelillaBatchCancel" in bridgeBlock,
+        )
+    }
+
+    @Test
     fun tunnelRouteDiagnosticsRequireActiveSigningRequestOwnership() {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
