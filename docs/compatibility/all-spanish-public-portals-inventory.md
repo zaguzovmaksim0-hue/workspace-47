@@ -934,24 +934,24 @@ records:
     origin: "https://sede.sevilla.org"
     official_site: "https://sede.sevilla.org/"
     e_sede: "https://sede.sevilla.org/"
-    entry_url: "https://sede.sevilla.org/opencms/system/modules/sede/contents/faq/Presentacion_Clave"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
+    procedure_page: "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
     certificate_required: "SI"
     signature_required: "SI"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
+    js_client: "AutoScript"
+    protocol_family: "AUTOSCRIPT_LOCAL_XADES"
+    signature_format: "XAdES Enveloping"
+    signature_algorithm: "SHA1withRSA"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Presentación con certificado vigente y AutoFirma."
-    protocol_evidence: "Las FAQ acreditan requisitos, no ABI ni endpoint portal-specific."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a ATSE mediante AutoScript.sign sobre un reto efímero de 40 caracteres."
+    protocol_evidence: "La cadena oficial Sede → Oficina Virtual ATSE y la entrada pública fijan AutoScript.sign(Base64(reto), SHA1withRSA, XAdES, null, callback); el reto se genera en runtime y no se codifica en la app."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P10", "P10A"]
-    reason: "Página de procedimiento, JS cliente, formato, algoritmo y endpoint no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Inspeccionar el JS de una presentación pública concreta."
+    evidence_ids: ["P10", "P10A", "P10B", "P10C", "P10D"]
+    reason: "Contrato de acceso con certificado implementado solo en QA; no se realizó E2E físico, authenticate/POST ni uso de Storage/Retrieve."
+    reviewed_at: "2026-08-11"
+    next_gate: "Validar físicamente callback/login sin presentar trámites; mantener QA_ONLY hasta evidencia E2E sanitizada."
 
   - inventory_id: "ES-PUB-0017"
     surface_key: "madrid-sede"
@@ -6253,6 +6253,9 @@ Orden de expansión recomendado:
 [P09A]: https://www.sede.diputaciondevalladolid.es/preguntas-frecuentes
 [P10]: https://sede.sevilla.org/opencms/system/modules/sede/contents/faq/Presentacion_Clave
 [P10A]: https://sede.sevilla.org/opencms/system/modules/sede/contents/faq/Error_firma
+[P10B]: https://sede.sevilla.org/opencms/system/modules/sede/contents/footer/mapa_web
+[P10C]: https://www.sevilla.org/ovweb/
+[P10D]: https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente
 [P11]: https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD
 [P12]: https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp
 [P12A]: https://sede.ugr.es/portal/requisitos/index.html

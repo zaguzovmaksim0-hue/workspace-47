@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a640c4d7a9dc06d73da19947bdc79072d482521860914384a5c867de4943cf6b",
+  "sourceRevision": "a2632149e3055c94f6d8cc39dc0210181e60469f27836fb3db2bf95eb3e94e74",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -422,28 +422,34 @@
     {
       "portalId": "sevilla-sede",
       "inventoryId": "ES-PUB-0016",
-      "profileId": null,
+      "profileId": "sevilla-atse-certificate-login",
       "displayName": "Sede electrónica del Ayuntamiento de Sevilla",
       "organization": "Ayuntamiento de Sevilla",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Sevilla (municipio)",
-      "purpose": "Presentación con certificado vigente y AutoFirma.",
-      "entryUrl": "https://sede.sevilla.org/opencms/system/modules/sede/contents/faq/Presentacion_Clave",
+      "purpose": "Acceso con certificado a ATSE mediante AutoScript.sign sobre un reto efímero de 40 caracteres.",
+      "entryUrl": "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_XADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P10",
-        "P10A"
+        "P10A",
+        "P10B",
+        "P10C",
+        "P10D"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Página de procedimiento, JS cliente, formato, algoritmo y endpoint no verificados."
+      "reviewedOn": "2026-08-11",
+      "limitations": "Contrato de acceso con certificado implementado solo en QA; no se realizó E2E físico, authenticate/POST ni uso de Storage/Retrieve."
     },
     {
       "portalId": "madrid-sede",

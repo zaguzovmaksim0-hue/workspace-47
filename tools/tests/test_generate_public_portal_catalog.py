@@ -101,6 +101,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", ugr["limitations"].lower())
         self.assertIn("storage", ugr["limitations"].lower())
 
+        sevilla = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "sevilla-sede"
+        )
+        self.assertEqual("sevilla-atse-certificate-login", sevilla["profileId"])
+        self.assertEqual(
+            "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
+            sevilla["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", sevilla)
+        self.assertEqual("E2E_PENDING", sevilla["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", sevilla["inventoryStatus"])
+        self.assertEqual("2026-08-11", sevilla["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", sevilla["observedMechanisms"])
+        self.assertIn("XADES", sevilla["observedSignatureFormats"])
+        self.assertIn("qa", sevilla["limitations"].lower())
+        self.assertIn("e2e", sevilla["limitations"].lower())
+        self.assertIn("authenticate", sevilla["limitations"].lower())
+
         us = next(entry for entry in catalog["entries"] if entry["portalId"] == "us-sede")
         self.assertEqual("reg-age-redsara", us["profileId"])
         self.assertEqual(

@@ -62,11 +62,12 @@ class PortalCatalogRepositoryTest {
                 "ugr-certificado-login",
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
+                "sevilla-atse-certificate-login",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 13, metadataOnly.size)
+        assertEquals(qaPortals.size - 14, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -183,6 +184,30 @@ class PortalCatalogRepositoryTest {
         assertTrue(qaPortal.limitations.contains("E2E", ignoreCase = true))
 
         val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
+
+    @Test
+    fun `Sevilla ATSE certificate login is launchable only from QA registry`() {
+        val profileId = ProfileId("sevilla-atse-certificate-login")
+        val expectedUrl = java.net.URI(
+            "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
+        )
+
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(setOf(SignatureFormat.XADES), qaPortal.signatureFormats)
+        assertTrue(PortalServiceCapability.ELECTRONIC_SIGNATURE in qaPortal.capabilities)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in qaPortal.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in qaPortal.observedMechanisms)
+        assertEquals(PortalLaunchTarget(profileId, expectedUrl), qaRepository.resolveLaunch(qaPortal))
+        assertTrue(qaPortal.limitations.contains("E2E", ignoreCase = true))
+        assertTrue(qaPortal.limitations.contains("authenticate", ignoreCase = true))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
         assertFalse(releasePortal.isEnabled)
         assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
