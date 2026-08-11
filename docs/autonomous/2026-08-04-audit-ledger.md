@@ -3022,3 +3022,45 @@ Client-TLS. No phone-local Gradle/JVM/Kotlin execution, worker delegation, APK i
 other device control, authenticated government-portal navigation, credentials/cookies/bearer data,
 certificate unlock/private-key material, real signing, form submission, upload, payment, or
 administrative action was used.
+
+## Portal G62/G63 — Extremadura Slice 1 coordinator acceptance — 2026-08-12
+
+Extremadura (`extremadura-tramites`, `ES-PUB-0109`) has started through the approved five-slice STA
+batch plan. Slice 1 is accepted at its bounded automated boundary and changes only multi-adapter batch
+coordinator ownership; no Extremadura profile, URL policy, bridge binding, public-catalog promotion, or
+release behavior exists yet.
+
+The subordinate design/plan and RED tracer bullet were published in
+`e63799299cf742ff7080cb2f0740a53512c7f321`. Cloud task
+`task_e_6a7b99c536248323926fcfa783be2c12` verified that exact pushed SHA and produced the intended
+compile-time RED: `compileDebugUnitTestKotlin` failed because `BatchSigningCoordinator` did not expose
+the planned `adapterResolver`. Dependency verification remained enabled, verification metadata was
+unchanged, and the Cloud checkout was clean.
+
+Production repair `cea8a1cce1fe799af20f5d44c2f5c541c3ca1e32` adds a fail-closed adapter resolver at
+`prepare` time and stores the exact resolved adapter inside the owned operation. This prevents a later
+`confirm` from selecting a different adapter while preserving the existing single-adapter default.
+Focused Cloud GREEN `task_e_6a7b9c22701c83239a638302621e52dd` accepted exact `cea8a1c...` with
+`BUILD SUCCESSFUL in 5m07s` and 4/4 Debug `BatchSigningCoordinatorTest` tests passed. The broader
+Debug+QA gate `task_e_6a7b9da85e408323b4a995a865976efc` accepted the same exact SHA with
+`BUILD SUCCESSFUL in 7m37s`, Debug 4/4 plus QA 4/4 = 8/8 tests, zero failures/errors/skips, dependency
+verification enabled, unchanged verification metadata, and a clean Cloud checkout.
+
+Current catalog accounting is unchanged by Slice 1: 183 entries, 15 bound surfaces, 14 unique profile
+IDs, 168 unbound; inventory remains 162 `BROWSE_ONLY`, 10 `IMPLEMENTED_NOT_E2E`, 1
+`VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated
+states remain 90 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 10 `E2E_PENDING`, and 4
+`E2E_VERIFIED`. The classified research queue remains at least 16 surfaces. Extremadura remains an
+implementation-in-progress surface and must not be counted as integrated until its profile/catalog slice
+is accepted.
+
+Exact next action is Slice 2 from the existing Extremadura plan: establish RED/GREEN coverage for
+profile-specific fixed STA URL policies. Melilla and Extremadura must independently accept only their
+own exact HTTPS host plus exact `/sta/AutofirmaLote/{presign,postsign,getdata}` bindings and fail closed
+on cross-host, cross-operation, cross-id, query, fragment, userinfo, alternate-port, and path-alias
+inputs. The shared implementation may factor only internal STA URL grammar; the public
+`MelillaBatchUrlPolicy` boundary must remain behavior-compatible and fixed to Melilla.
+
+No phone-local Gradle/JVM/Kotlin execution, worker delegation, APK install/launch, device control,
+authenticated portal action, credential/cookie/bearer use, certificate unlock/private-key material,
+real signing, form submission, upload, payment, or administrative action was used for Slice 1.

@@ -1,9 +1,9 @@
 # NEXT CHAT HANDOFF — Workspace-47 autonomous portal-first cycle
 
-Date: 2026-08-11
+Date: 2026-08-12
 Task: `workspace-47-autonomous-20260803-01`
 Last Cloud-accepted product/test checkpoint before this documentation publication:
-`60afb7ab8b3682b6a85424a71aa0de172b1d26d6` on
+`cea8a1cce1fe799af20f5d44c2f5c541c3ca1e32` on
 `agent/workspace-47-autonomous-20260803`. The commit containing this handoff is a newer documentation
 checkpoint; continuation must begin with `git fetch --prune origin` and exact local/remote HEAD,
 upstream-divergence, cleanliness, and canonical-SHA verification. Canonical
@@ -35,6 +35,25 @@ boundary but remains explicitly non-E2E and release-disabled.
   with `resolveLaunch == null`. Never promote Melilla to `VERIFIED_E2E` without user-supplied physical
   evidence.
 
+## Extremadura Slice 1 accepted automated boundary
+
+Do not repeat the coordinator RED/GREEN slice. Extremadura is still implementation-in-progress and has
+not yet been profile/catalog promoted.
+
+- RED/design-plan commit `e63799299cf742ff7080cb2f0740a53512c7f321`; Cloud
+  `task_e_6a7b99c536248323926fcfa783be2c12` verified exact SHA and failed as intended at
+  `compileDebugUnitTestKotlin` because the coordinator lacked `adapterResolver`.
+- Production commit `cea8a1cce1fe799af20f5d44c2f5c541c3ca1e32` resolves the exact batch protocol adapter
+  fail-closed during prepare and stores it inside the owned operation, preventing adapter substitution
+  before confirm while preserving single-adapter default behavior.
+- Focused Cloud GREEN `task_e_6a7b9c22701c83239a638302621e52dd`: exact `cea8a1c...`,
+  `BUILD SUCCESSFUL in 5m07s`, 4/4 Debug coordinator tests passed.
+- Debug+QA Cloud GREEN `task_e_6a7b9da85e408323b4a995a865976efc`: exact `cea8a1c...`,
+  `BUILD SUCCESSFUL in 7m37s`, Debug 4/4 + QA 4/4 = 8/8, zero failures/errors/skips, dependency
+  verification enabled, verification metadata unchanged, Cloud checkout clean.
+- Slice 2 is next: shared internal STA URL grammar with fixed profile wrappers; Melilla behavior/origin
+  may not be widened. RED must cover own-host success and cross-host/cross-operation/cross-id failure.
+
 ## Portal KPI and queue
 
 - Catalog: 183 entries; 15 bound surfaces; 14 unique profile IDs; 168 unbound.
@@ -48,10 +67,9 @@ boundary but remains explicitly non-E2E and release-disabled.
 
 ## Exact next portal implementation order
 
-1. `extremadura-tramites` (`ES-PUB-0109`). Reuse only the already researched public byte-identical STA
-   batch ABI where official public evidence still supports it; preserve an exact profile-specific
-   origin/URL policy and fail closed on any contract mismatch. Re-check current official public
-   unauthenticated evidence before production mutation and create a narrow subordinate design/plan.
+1. `extremadura-tramites` (`ES-PUB-0109`). Slice 1 coordinator ownership is already accepted. Continue
+   only with Slice 2 of the existing subordinate design/plan: exact fixed Melilla/Extremadura STA URL
+   policies over shared internal grammar, with cross-host/cross-operation/cross-id fail-closed tests.
 2. La Palma (`ES-PUB-0130`) after Extremadura is integrated and accepted.
 3. Eivissa (`ES-PUB-0122`) and Formentera (`ES-PUB-0124`) remain research-only until their public
    evidence becomes implementation-ready.
