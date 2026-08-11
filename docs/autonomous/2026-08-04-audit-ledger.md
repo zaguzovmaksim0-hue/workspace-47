@@ -2856,3 +2856,55 @@ therefore remains 183 entries, 14 bound surfaces, 13 unique profile IDs, 169 unb
 remains at least 16 surfaces. Portals newly integrated in generations 54/55 remain zero. Exact next
 implementation order remains finish Melilla runtime/profile/catalog, then `extremadura-tramites`
 (`ES-PUB-0109`), then La Palma (`ES-PUB-0130`); Eivissa and Formentera remain research-only.
+
+## Portal G56/G57 — Melilla runtime adapter acceptance — 2026-08-11
+
+The first Melilla runtime-wiring slice is now accepted at its bounded automated boundary. The subordinate
+design/plan were published in `bc842fb818d7d81296425b7bf98bd442a315b2f5`. Request normalization
+was established through RED `b956c9dbda5161093e098a4c21c42495a9623aee` and production
+`87171e24d4ca01f89dffc3464da74a58f40740ae`; Cloud GREEN
+`task_e_6a7b4b61633c83239a7ab0c924c9f5ef` passed 1/1 focused test. Reply adaptation was established
+through RED `815c30c14974efbf2e2a0849b2821ce7305a12cd` and production
+`efbf0c0381a905ff2424598519a449c7f9ac9b25`; Cloud GREEN
+`task_e_6a7b4f8a27a88323a30e826331450419` passed 2/2 focused tests.
+
+Direct Standards + Spec review then identified a terminal-ownership defect on malformed UTF-8 protocol
+responses. Regression `9072248837d75c744dcd06856388bcdf503cc003` produced the intended Cloud RED
+in `task_e_6a7b51f4651483238cd9c4551322e78d`: 3 tests executed, 2 passed and exactly the malformed-UTF-8
+ownership test failed because terminal count was 0. Production repair
+`cf5e1475270fdc48c009f6c460cab1b9e5c367fc` strictly decodes UTF-8 and abandons the one-shot reply
+channel on decode/access failure. Final focused Cloud task `task_e_6a7b53772a308323b4440ff56e93c3e8`
+verified that exact pushed SHA with dependency verification enabled and verification metadata unchanged.
+Gradle exited 0 with `BUILD SUCCESSFUL in 6m 31s`; 3/3 `MelillaBatchSigningAdapterTest` tests passed
+with zero failures/errors/skips, and final Cloud `git status --short` was empty.
+
+The direct main-Watchdog Standards + Spec review found no remaining Critical or Important defect in the
+bounded adapter slice. The adapter rebinds the already validated request to the exact Melilla QA profile
+contract, preserves origin/navigation/document/request bindings, adds no endpoint or retry behavior,
+uses only the existing CAdES/PAdES/XAdES vocabulary, and terminates malformed protocol-response
+ownership without delivering invalid text. `git diff --check` passed across the complete runtime-adapter
+slice. Bounded changed-content scans found no private-key/certificate body, bearer material,
+trust-all/hostname-verifier bypass, dependency-verification disabling, insecure HTTP widening, retry
+addition, or debug marker.
+
+This does not complete Melilla runtime integration. `WebMessageBridge` still lacks an explicit runtime
+batch-cancel callback: a validated `MINIAPPLET_BATCH_CANCEL` and bridge-wide teardown abandon bridge
+reply ownership but do not yet notify the future `BatchSigningCoordinator` owner. The next TDD slice is
+therefore the already planned cancellation propagation seam: make `MelillaBatchReplyRegistry.abandonAll`
+return exactly the successfully abandoned request ids and have `WebMessageBridge` invoke a new batch
+cancel callback only for owned terminal abandonments. BrowserScreen/MainActivity composition and shared
+ordinary-versus-batch signing arbitration remain the subsequent slice.
+
+Catalog accounting is unchanged: 183 entries, 14 bound surfaces, 13 unique profile IDs and 169 unbound.
+Inventory remains 163 `BROWSE_ONLY`, 9 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4
+`VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated states remain 91
+`CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 9 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The classified
+research buffer remains at least 16 surfaces. Portals newly integrated in generation 57 remain zero.
+Exact implementation order remains finish Melilla runtime/profile/catalog, then `extremadura-tramites`
+(`ES-PUB-0109`), then La Palma (`ES-PUB-0130`); Eivissa (`ES-PUB-0122`) and Formentera
+(`ES-PUB-0124`) remain research-only. Manual/physical E2E remains pending for Melilla, Sevilla, UGR,
+DGT, Cantabria, JCCM, and AEAT Client-TLS.
+
+No phone-local Gradle/JVM/Kotlin compilation, worker delegation, APK install/launch, ADB/device control,
+authenticated portal navigation, credentials/cookies/bearer data, certificate unlock/private-key
+material, real signing, form submission, upload, payment, or administrative action was used.

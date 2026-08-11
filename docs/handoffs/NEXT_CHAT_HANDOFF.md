@@ -2,8 +2,8 @@
 
 Date: 2026-08-11
 Task: `workspace-47-autonomous-20260803-01`
-Last verified product/test checkpoint before this documentation publication:
-`35b2c1084f003f8e97a5cb610045c05e1b83838e` on
+Last Cloud-accepted product/test checkpoint before this documentation publication:
+`cf5e1475270fdc48c009f6c460cab1b9e5c367fc` on
 `agent/workspace-47-autonomous-20260803`. The commit containing this handoff is a newer documentation
 checkpoint; continuation must begin with `git fetch --prune origin` and exact local/remote HEAD,
 upstream-divergence, cleanliness, and canonical-SHA verification. Canonical
@@ -12,53 +12,46 @@ upstream-divergence, cleanliness, and canonical-SHA verification. Canonical
 
 ## Melilla current automated boundary
 
-The execution core and certificate/user-confirmation coordinator are independently Cloud-accepted.
-Do not repeat them and do not promote Melilla yet.
+The execution core, certificate/user-confirmation coordinator, PRE-ownership hardening, and runtime
+request/reply adapter are independently Cloud-accepted. Do not repeat them and do not promote Melilla
+yet.
 
-- Execution-core evidence remains `d56741ac44f4ffb4a9f731d38776003ffb2144ee` plus test harness
-  `c36e98d73634f3a4d57f6d99a4465e08ed2e0cfc`; combined Cloud task
-  `task_e_6a7b25c89b6c83238ec3cde02a7c6e75` passed Debug 633/633 and QA 14/14.
-- Coordinator prepare/ordered-confirm path is published through
-  `2d89c2592564920b6e57664ef2c13dc5861faf0c`; focused Cloud task
-  `task_e_6a7b3555442c8323a4d9ac81349dfa33` passed 2/2.
-- Foreign-PRE ownership regression harness is published through test-only
-  `6b1b0931a33580b8456006de44b8f7df4c5c7ca7`. Valid Cloud RED
-  `task_e_6a7b3c7b461483239c8de9a1dd304692` ran 3 tests with exactly one intended failure:
-  actual `[prepare, sign:pre-one, complete, failure:PROTOCOL_FAILED]` versus required
-  `[prepare, failure:PROTOCOL_FAILED]`.
-- Production ownership hardening is `35b2c1084f003f8e97a5cb610045c05e1b83838e`: a foreign
-  `BatchPreSignResult` is rejected before `withInput`, local private-key signing, and adapter completion;
-  one-shot prepared-state consumption remains unchanged.
-- The first GREEN task `task_e_6a7b3e828acc8323b1f177ab0834f99a` was Cloud infrastructure
-  non-acceptance only: Gradle wrapper download returned HTTP 503 before tasks ran. No local fallback.
-- Bounded retry `task_e_6a7b3ef125bc8323a83846a6022db832` passed 3/3 coordinator tests at exact
-  `35b2c...`, `BUILD SUCCESSFUL in 4m 2s`.
-- Final coordinator acceptance `task_e_6a7b40692674832395efc1143bd08ac3` verified exact `35b2c...`,
-  dependency verification enabled/unchanged, `BUILD SUCCESSFUL in 12m 25s`, Debug 636/636 plus QA
-  17/17 focused (653/653 observed total), and a clean Cloud checkout.
-- Direct Standards + Spec review found no Critical/Important issue. `git diff --check` and bounded
-  secret/TLS/retry scans passed. Ordinary single-sign `SigningCoordinator` was not changed.
+- Runtime adapter design/plan: `bc842fb818d7d81296425b7bf98bd442a315b2f5`.
+- Request normalization: valid RED `b956c9dbda5161093e098a4c21c42495a9623aee`; production
+  `87171e24d4ca01f89dffc3464da74a58f40740ae`; Cloud GREEN
+  `task_e_6a7b4b61633c83239a7ab0c924c9f5ef` passed 1/1.
+- Reply sink: valid RED `815c30c14974efbf2e2a0849b2821ce7305a12cd`; production
+  `efbf0c0381a905ff2424598519a449c7f9ac9b25`; Cloud GREEN
+  `task_e_6a7b4f8a27a88323a30e826331450419` passed 2/2.
+- Malformed UTF-8 ownership: regression `9072248837d75c744dcd06856388bcdf503cc003` produced the
+  intended Cloud RED in `task_e_6a7b51f4651483238cd9c4551322e78d`; production repair is
+  `cf5e1475270fdc48c009f6c460cab1b9e5c367fc`.
+- Final focused Cloud GREEN `task_e_6a7b53772a308323b4440ff56e93c3e8` verified exact `cf5e147...`,
+  dependency verification enabled, verification metadata unchanged, Gradle exit 0,
+  `BUILD SUCCESSFUL in 6m 31s`, 3/3 focused tests passed, final Cloud worktree clean.
+- Direct Standards + Spec review found no remaining Critical/Important defect in the bounded adapter
+  slice. `git diff --check` and bounded sensitive/TLS/retry/HTTP/debug scans passed.
 
-## Exact next Melilla slice — runtime wiring
+## Exact next Melilla slice — explicit batch cancellation
 
-Create a fresh subordinate design/plan before production mutation. The bounded runtime slice should:
+Use the existing `docs/superpowers/plans/2026-08-11-melilla-runtime-wiring.md`; do not create a new
+runtime design.
 
-1. adapt accepted `MelillaBatchBridgeRequest` into `NormalizedBatchSigningRequest` using the already
-   validated profile/origin/navigation/document binding; do not re-parse or broaden the portal ABI;
-2. adapt `MelillaBatchReplyChannel` to `BatchSigningReplySink` without copying or persisting opaque
-   response bytes longer than delivery requires;
-3. add an explicit native batch-cancel notification from `WebMessageBridge`, including navigation,
-   document teardown, JS cancel, background/certificate-lock paths, and no late success callback;
-4. compose `MelillaBatchProtocolAdapter` with the existing `HttpsProfileHttpTransport` and a dedicated
-   `BatchSigningCoordinator` in `MainActivity`; do not create another TLS/network stack or retry path;
-5. wire `BrowserScreen` so batch and ordinary signing share confirmation/status UX safely without two
-   concurrent operations claiming the same certificate/private-key UI state;
-6. TDD the request/reply conversion and cancellation/terminal-ownership seams first; commit/push every
-   RED/GREEN SHA before Codex Cloud Gradle; no phone-local Gradle/JVM/Kotlin;
-7. only after the complete automated runtime path is Cloud-verified, perform a separate profile/public
-   catalog promotion slice using the canonical catalog generator. Keep Melilla `VERIFIED_CONTRACT` /
-   `QA_ONLY`, inventory at most `IMPLEMENTED_NOT_E2E`, generated state at most `E2E_PENDING`, and
-   release disabled. Never infer `VERIFIED_E2E`.
+1. Add RED coverage proving bridge-owned Melilla cancellation is one-shot: a validated
+   `MINIAPPLET_BATCH_CANCEL` notifies the runtime exactly once for the owned request and bridge-wide
+   teardown returns/notifies that same owned request exactly once.
+2. Commit and push the RED-only SHA before any Gradle execution; run the exact focused test only in
+   Codex Cloud `workspace-47-android` through `$HOME/bin/w47-cloud`.
+3. Minimally add `onMelillaBatchCancel: (UUID) -> Unit` to `WebMessageBridge`; invoke it only when the
+   Melilla reply registry actually wins terminal abandonment. Change `MelillaBatchReplyRegistry.abandonAll`
+   to return the successfully abandoned request ids, mirroring the ordinary reply registry. Do not add a
+   JS message type, origin, endpoint, retry, or new network/TLS path.
+4. Commit/push production GREEN and run focused Cloud verification. Inspect complete diff, run local
+   non-Gradle `git diff --check` plus bounded scans, and perform direct Standards + Spec review.
+5. Then continue Slice 3: BrowserScreen/MainActivity composition plus fail-closed shared
+   ordinary-versus-batch signing arbitration. Only after complete runtime acceptance perform a separate
+   profile/public-catalog promotion; keep Melilla `VERIFIED_CONTRACT` / `QA_ONLY` and at most
+   `IMPLEMENTED_NOT_E2E` / `E2E_PENDING` until user-supplied physical evidence exists.
 
 ## Portal KPI and queue
 
@@ -67,14 +60,13 @@ Create a fresh subordinate design/plan before production mutation. The bounded r
   4 `INACCESSIBLE`, 2 `UNSUPPORTED_PROTOCOL`.
 - Generated catalog: 91 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 9 `E2E_PENDING`, 4
   `E2E_VERIFIED`; classified public research buffer remains at least 16 surfaces.
-- Portals newly integrated in generations 54/55: zero; Melilla coordinator hardening is not a catalog
+- Portals newly integrated in generation 57 so far: zero; Melilla runtime work is not yet a catalog
   integration.
 - Exact implementation order: finish Melilla runtime/profile/catalog, then `extremadura-tramites`
   (`ES-PUB-0109`), then La Palma (`ES-PUB-0130`). Eivissa (`ES-PUB-0122`) and Formentera
   (`ES-PUB-0124`) remain research-only.
-- Manual/physical E2E remains pending for Sevilla, UGR, DGT, Cantabria, JCCM, and AEAT Client-TLS.
-  Melilla also lacks physical E2E and must never become `VERIFIED_E2E` without separate user-supplied
-  physical evidence.
+- Manual/physical E2E remains pending for Melilla, Sevilla, UGR, DGT, Cantabria, JCCM, and AEAT
+  Client-TLS. Never infer `VERIFIED_E2E` from automated evidence.
 
 ## Safety / execution constraints
 
