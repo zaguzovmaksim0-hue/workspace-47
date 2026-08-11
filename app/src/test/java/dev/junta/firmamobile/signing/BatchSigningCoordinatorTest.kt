@@ -120,9 +120,17 @@ class BatchSigningCoordinatorTest {
                 return BatchProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
             }
         }
-        val ownershipEngine = LocalSignatureEngine { input, _, _ ->
-            ownershipTimeline += "sign:${input.decodeToString()}"
-            LocalSignatureResult.Success(LocalSignature("must-not-exist".encodeToByteArray()))
+        val ownershipEngine = object : LocalSignatureEngine {
+            override fun sign(
+                input: ByteArray,
+                identity: UnlockedIdentity,
+                algorithm: SigningAlgorithm,
+            ): LocalSignatureResult {
+                ownershipTimeline += "sign:${input.decodeToString()}"
+                return LocalSignatureResult.Success(
+                    LocalSignature("must-not-exist".encodeToByteArray()),
+                )
+            }
         }
         val ownershipCoordinator = BatchSigningCoordinator(
             certificateSession = session,
