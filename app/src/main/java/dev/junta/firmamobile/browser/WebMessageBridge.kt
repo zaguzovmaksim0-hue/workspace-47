@@ -479,8 +479,7 @@ class WebMessageBridge(
             ugr = profileActive && profileId.value == UGR_PROFILE_ID,
             cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
-            // RED scaffold: preserve the current production behavior until the regression test proves it.
-            sevillaAtse = false,
+            sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
             melillaBatch = melillaBatchEnabled,
         )
 
