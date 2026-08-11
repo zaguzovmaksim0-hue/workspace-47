@@ -61,6 +61,8 @@ import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.JuntaWebViewClient
 import dev.junta.firmamobile.browser.MiniAppletBridgeMode
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
+import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
+import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
 import dev.junta.firmamobile.browser.NavigationBlockReason
 import dev.junta.firmamobile.browser.SensitiveFlowInvalidator
 import dev.junta.firmamobile.browser.SiteClearResult
@@ -103,6 +105,8 @@ fun BrowserScreen(
     clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator,
     onWebViewChanged: (WebView?) -> Unit,
     onNavigationEpochChanged: (Long) -> Unit = {},
+    onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -> Unit)? = null,
+    onMelillaBatchCancel: (UUID) -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -642,6 +646,12 @@ fun BrowserScreen(
                                         onMiniAppletRequest(request, reply)
                                     },
                                     onMiniAppletCancel = onMiniAppletCancel,
+                                    onMelillaBatchRequest = { request, reply ->
+                                        if (onMelillaBatchRequest != null) {
+                                            onMelillaBatchRequest(request, reply)
+                                        }
+                                    }.takeIf { onMelillaBatchRequest != null },
+                                    onMelillaBatchCancel = onMelillaBatchCancel,
                                     activeProfileId = { effectiveTopLevelProfileId },
                                     miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                                     currentNavigationEpoch = { navigationEpoch.longValue },
