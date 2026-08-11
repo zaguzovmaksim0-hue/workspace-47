@@ -13,7 +13,6 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 class MelillaBatchSigningAdapterTest {
@@ -52,9 +51,7 @@ class MelillaBatchSigningAdapterTest {
             clock = Clock.fixed(observedAt, ZoneOffset.UTC),
         )
 
-        val normalized = assertNotNull(adapter.normalize(bridgeRequest))
-
-        checkNotNull(normalized)
+        val normalized = checkNotNull(adapter.normalize(bridgeRequest))
         assertEquals(REQUEST_ID, normalized.requestId)
         assertEquals(MelillaBatchProtocolAdapter.ID, normalized.protocolId)
         assertEquals("melilla-sede", normalized.context.profileId)
