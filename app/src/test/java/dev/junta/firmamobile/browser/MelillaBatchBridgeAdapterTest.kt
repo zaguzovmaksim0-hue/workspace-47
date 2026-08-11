@@ -47,10 +47,13 @@ class MelillaBatchBridgeAdapterTest {
 
     @Test
     fun dedicatedAdapterRejectsBatchBindingChangesBeforeAnyConsumerCanSeeIt() {
-        val changed = portalOwnedBatchEnvelope().replace(
-            "runtime-operation-1/runtime-document-1",
-            "runtime-operation-1/runtime-document-2",
-        )
+        val changed = JSONObject(portalOwnedBatchEnvelope()).apply {
+            getJSONArray("documentos").getJSONObject(0).put(
+                "datareference",
+                "https://sede.melilla.es/sta/AutofirmaLote/getdata/" +
+                    "runtime-operation-1/runtime-document-2",
+            )
+        }.toString()
 
         val result = MelillaBatchBridgeAdapter(
             activeProfileId = { ProfileId(MelillaBatchBridgeAdapter.PROFILE_ID) },
