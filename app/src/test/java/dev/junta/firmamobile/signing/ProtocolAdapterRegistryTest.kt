@@ -54,6 +54,14 @@ class ProtocolAdapterRegistryTest {
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), cantabria?.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), cantabria?.callbackContractId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), ugr?.callbackContractId)
+        val sevilla = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("sevilla-atse-certificate-login"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(SevillaAtseXadesEnvelopingAdapter.ID, sevilla?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), sevilla?.inputAdapterId)
+        assertEquals(CallbackContractId("autoscript-sign-callback-v1"), sevilla?.callbackContractId)
+
         val jccm = BuiltInProtocolAdapterRegistry.registry.resolve(
             ProfileId("jccm-certificate-login-probe"),
             ProtocolOperation.SIGN,
