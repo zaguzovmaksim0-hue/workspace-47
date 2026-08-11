@@ -2,15 +2,17 @@
 
 **Branch:** `oss/publication-readiness-20260811`
 **Baseline:** autonomous integration commit `c1090f6431486501b46f44e1494289f5f48e9cfb`
+**Latest autonomous head observed during audit:** `037b3614298cf2c33089b30fb73b789a26077249`
 **Policy:** repository stays private until every `BLOCKED` item below is resolved and the branch is synchronized with the then-current autonomous integration head.
 
 ## Gate matrix
 
 | Gate | Status | Evidence / required action |
 | --- | --- | --- |
-| Publication branch integrity | `PASS` | Publication changes are based directly on `c1090f6431486501b46f44e1494289f5f48e9cfb`; no force rewrite was used. |
+| Publication branch integrity | `PASS` | Publication changes were recovered onto a branch whose publication commit is a direct child of `c1090f6431486501b46f44e1494289f5f48e9cfb`; no force rewrite was used. |
 | Current-tree secret/credential inventory | `REVIEWED_WITH_FOLLOWUP` | Reviewed release signing configuration, relay credentials/configuration, credential-shaped fixture, sanitized logging/evidence and Gitleaks configuration. No real current-tree signing/relay credential was identified in the reviewed paths. This does **not** replace a full-history scan. |
-| Full-history Gitleaks | `BLOCKED` | A successful full-history Gitleaks result for the final publication candidate is mandatory. Existing workflow configuration performs a full-history scan, but no successful candidate result is recorded here yet. |
+| Full-history Gitleaks | `BLOCKED_BY_ACTIONS_AND_FINAL_SYNC` | A successful full-history Gitleaks result for the final publication candidate is mandatory. The repository workflow is configured for full-history scanning, but GitHub Actions currently fails before job creation even for a one-line `echo` probe, so no successful candidate scan can be claimed. |
+| GitHub Actions execution | `EXTERNAL_BLOCKER` | Workflow files are registered and active after default-branch recovery, but pushes still route to the historical `BuildFailed` pseudo-workflow and finish `startup_failure` with zero jobs. A temporary no-dependency `echo` workflow reproduced the same failure and was removed. This isolates the remaining failure outside Gradle/project test steps and outside third-party action pins. Repository Actions-policy settings could not be read by the connected GitHub App (`403 Resource not accessible by integration`). |
 | Synthetic PKCS#12 fixture | `PASS_TEST_ONLY` | `app/src/androidTest/assets/synthetic-identity.p12.b64` is an intentionally public synthetic instrumentation fixture with public test passphrase and synthetic holder; see `docs/test-fixtures.md`. |
 | Release signing material | `PASS_CURRENT_TREE` | Release signing is supplied outside Git through explicit configuration; no fallback committed production key is accepted. Re-check after final synchronization. |
 | Git-history author/committer email privacy | `BLOCKED` | Existing commits expose a personal email while the public GitHub profile does not publish an email. Before public visibility either rewrite affected history to an approved public/noreply identity and re-verify, or explicitly accept publication of the existing metadata. No silent SHA-changing rewrite is authorized by this audit. |
@@ -30,12 +32,12 @@
 | NOTICE / third-party provenance | `DRAFTED` | Initial NOTICE and `docs/provenance.md` exist. Final dependency/binary-release attribution review remains. |
 | Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Do not add until unresolved project-owned/custom-asset provenance and authorship authority are resolved. |
 | Repository visibility | `PRIVATE_REQUIRED` | Do not switch to public while any publication blocker remains. |
-| Sync with current autonomous head | `BLOCKED_FINAL_STEP` | Immediately before final candidate verification, rebase/merge publication changes onto the then-current autonomous integration state and repeat tree-dependent checks. |
+| Sync with current autonomous head | `BLOCKED_FINAL_STEP` | Autonomous development has already advanced beyond the publication baseline. Immediately before final candidate verification, synchronize onto the then-current integration state and repeat tree-dependent checks. |
 | Codex for OSS application | `NOT_READY` | Prepare truthful form evidence only after repository is safely public and maintainer/public repository metadata is verified. |
 
 ## Remaining hard blockers
 
-1. Successful full-history Gitleaks scan on the final candidate.
+1. Restore an execution path for tests/scans, or otherwise obtain an independently verified full-history Gitleaks result for the final candidate.
 2. Explicit decision on publication or rewrite of personal author/committer email metadata.
 3. Resolve `jfm_home_background.webp` rights/provenance.
 4. Resolve all custom launcher/brand binary artwork rights/provenance.
