@@ -648,7 +648,9 @@ class BrowserSecurityRegressionTest {
         assertTrue(
             "The WebMessageBridge instance must forward the exact Melilla batch request callback",
             bridgeBlock.isNotEmpty() &&
-                "onMelillaBatchRequest = { request, reply ->" in bridgeBlock &&
+                "onMelillaBatchRequest = {" in bridgeBlock &&
+                "request: MelillaBatchBridgeRequest" in bridgeBlock &&
+                "reply: MelillaBatchReplyChannel" in bridgeBlock &&
                 "onMelillaBatchRequest(request, reply)" in bridgeBlock,
         )
         assertTrue(
