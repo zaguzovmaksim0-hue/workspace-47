@@ -6,9 +6,9 @@ Updated: 2026-08-11, generation 47 continuation.
 
 - Work only in `/data/data/com.termux/files/home/workspace-47-autonomous-20260803` on
   `agent/workspace-47-autonomous-20260803`.
-- Pre-handoff research HEAD is `6321d6f1c0b5783baf6b69922e2f355476eb995b`, verified pushed to the
+- Pre-handoff research HEAD is `2fc44a3d1d5301217e9272b14a08a541c70bd9fc`, verified pushed to the
   autonomous remote branch. This ledger/handoff update is committed afterward, so resolve the
-  containing published SHA on continuation rather than assuming `6321d6f...` remains final.
+  containing published SHA on continuation rather than assuming `2fc44a3...` remains final.
 - Canonical `origin/feature/ws024-secure-tunnel-20260728` remains exactly
   `9c99bbfb36e13f88231d56001ccef8c4cbbce128`.
 - Start with `prepare_task`, `git fetch --prune origin`, main HEAD/upstream/remote/divergence/status,
@@ -62,6 +62,13 @@ Updated: 2026-08-11, generation 47 continuation.
   Zamora `ES-PUB-0177` current `sedelectronica.es` entries require a session transition to reach stable
   `/info.0`; bounded no-cookie GETs self-redirect before any signer ABI. No cookie was replayed. All
   three remain `BROWSE_ONLY`.
+- `2fc44a3d1d5301217e9272b14a08a541c70bd9fc`: Eivissa `ES-PUB-0122` exposes an explicit public
+  `Con Autofirma` procedure branch but the signer ABI remains beyond its `/frame.jsp` submission
+  boundary; Formentera `ES-PUB-0124` exposes an older ABSIS/EAD form-signing seam without a verified
+  crypto/transport/result tuple; both remain `BROWSE_ONLY`. La Palma `ES-PUB-0130` exposes public
+  `autoscript.js`, `sta-autofirma-lote.js`, and `webAppsFwk.js` byte-identical to the verified shared
+  Extremadura/Melilla STA seam, so it is implementation-ready in the research queue while its product
+  state truthfully remains `BROWSE_ONLY` until a QA_ONLY implementation slice is verified.
 
 ## KPI and next order
 
@@ -72,12 +79,13 @@ Updated: 2026-08-11, generation 47 continuation.
   `E2E_VERIFIED`; discovery states are 105 `REVIEWED`, 5 `RECHECK_REQUIRED`, 73 `DISCOVERED`.
 - Research buffer remains at least 16 classified public surfaces. Portals fully integrated in generation
   47: zero; Sevilla remains the in-flight implementation slice.
-- Exact implementation order remains: finish Sevilla after acceptable terminal Cloud evidence; obtain
-  terminal evidence and integrate preserved Melilla STA; then implement research-ready
-  `extremadura-tramites` `ES-PUB-0109` through the verified shared STA seam.
-- If Cloud remains evidence-blocked, continue bounded GET/HEAD-only research on fresh unbound surfaces,
-  prioritizing additional public AC2 AGE tenants and remaining insular/deputation surfaces rather than
-  repeating G44-G46 candidates already classified behind authentication/POST boundaries.
+- Exact implementation order is: finish Sevilla after acceptable terminal Cloud evidence; obtain
+  terminal evidence and integrate preserved Melilla STA; implement research-ready
+  `extremadura-tramites` `ES-PUB-0109`; then implement La Palma `ES-PUB-0130` through the same verified
+  shared STA seam with an origin-specific fail-closed QA_ONLY profile.
+- If Cloud remains evidence-blocked, continue bounded GET/HEAD-only research on fresh unbound surfaces;
+  do not repeat Eivissa/Formentera or G44-G46 candidates already classified behind authentication,
+  POST, session, or hidden-signer boundaries.
 
 ## Safety / manual gates
 

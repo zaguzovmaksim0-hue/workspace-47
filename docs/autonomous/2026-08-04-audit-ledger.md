@@ -2624,3 +2624,46 @@ in-flight implementation slice behind the mandatory Cloud terminal-evidence boun
 Generation 47 remained within the public unauthenticated research boundary. No authentication, cookie
 replay, certificate selection, signing component launch, form POST, upload, payment, administrative
 submission, real signature, APK install/launch, ADB, or device-control workflow occurred.
+
+### G47 insular continuation — shared STA implementation-ready lead
+
+After the first generation-47 durable checkpoint, portal-first research continued on three fresh
+insular surfaces and published `2fc44a3d1d5301217e9272b14a08a541c70bd9fc`.
+
+- Eivissa `ES-PUB-0122` exposes a live public STA procedure (`Presentación de documentación a
+  expedientes en trámite`, id `6269002701678511205043`) with explicit `Con certificado digital` and
+  `Con Autofirma` branches. Its public `catserv.js` sets `autoFirma=true` and submits to `/frame.jsp`,
+  but the public pre-submit scripts expose no AutoScript/MiniApplet/STAAutofirmaLote implementation,
+  algorithm/format tuple, local transport, or signature-result contract. It remains `BROWSE_ONLY`.
+- Formentera `ES-PUB-0124` currently resolves through its public meta-refresh into an ABSIS/EAD OVAC
+  surface. Public `absEdiForm.js` contains the form-level `hayElementoFirma` / `firmar` seam and
+  certificate-selection callbacks, but the inspected public script set exposes no verifiable
+  AutoFirma/AutoScript/MiniApplet or cryptographic/transport/result tuple. Its public admitted-signature
+  information page does not fill that gap. It remains `BROWSE_ONLY`.
+- La Palma `ES-PUB-0130` exposes the current STA signer assets pre-auth. `autoscript.js`,
+  `sta-autofirma-lote.js`, and `webAppsFwk.js` are byte-for-byte identical to the already-verified
+  Extremadura/Melilla shared STA seam, preserving `STAAutofirmaLote.firmarLote`, AutoScript batch
+  signing, default `SHA256withRSA` + `CAdES`, the existing PAdES/XAdES extras, backend-supplied
+  pre/post-signer URLs/data references, and the `PRESENTAR_FIRMA` JSON result callback. The public
+  catalog also publishes the AutoFirma integration notice and active telematic procedures. No exact
+  procedure POST/authenticated path was entered. La Palma is now implementation-ready in the research
+  queue only; its product state intentionally remains `BROWSE_ONLY` until a bounded QA_ONLY slice is
+  implemented and verified.
+
+The exact implementation order is therefore Sevilla after acceptable terminal Cloud evidence,
+preserved Melilla STA after acceptable terminal Cloud evidence, `extremadura-tramites` `ES-PUB-0109`,
+and then La Palma `ES-PUB-0130`. Eivissa and Formentera remain research-only. Catalog accounting was
+recomputed after the checkpoint and remains 183 entries, 13 bound, 12 unique profile IDs, 170 unbound;
+all inventory/catalog/discovery status counts are unchanged from the preceding G47 checkpoint. The
+classified research buffer remains at least 16 surfaces and portals fully integrated in generation 47
+remain zero.
+
+A final generation-47 Cloud lifecycle recheck still reported all four preserved Sevilla tasks as
+`READY` with `no diff`; no new terminal Gradle stdout, exit code, observed checkout SHA, or terminal
+conclusion became observable. The Codex-Cloud-only policy therefore continues to block Sevilla and
+Melilla Android acceptance; no local Gradle/JVM/Kotlin command was executed.
+
+All insular research stayed within bounded public unauthenticated GET-only access. No cookie replay,
+authentication, certificate selection, Cl@ve flow, POST/form submission, signing component launch,
+real signature, upload, payment, administrative submission, APK install/launch, ADB, or device-control
+workflow occurred. Temporary public response bodies were deleted after the research checkpoint.
