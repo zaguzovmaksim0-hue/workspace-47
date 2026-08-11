@@ -2212,3 +2212,50 @@ manual E2E gate and no `VERIFIED_E2E` claim is inferred.
 No APK was installed or launched; no ADB/device control, authenticated portal navigation,
 credential/private-certificate unlock, real signing, form submission, upload, payment or
 administrative submission occurred.
+
+## Portal G44 — Sevilla Cloud recovery and preserved pipeline reconciliation — 2026-08-11
+
+**Sevilla Cloud availability and unresolved verdict.** The preserved Sevilla ATSE branch is clean and
+exactly synchronized with its remote at `069c6fd73a19b54b92dc4771867fff712617301d`. Its existing
+RED `108650f51765c2b59a74dee286928ea2e8f3cf65` defines the profile-scoped public shim contract and
+`069c6fd...` contains only the minimal shim GREEN in `AfirmaJavascriptShim.kt` and
+`afirma_shim.js`. Generation 44's single Cloud availability submission was accepted as task
+`task_e_6a7a8bc263208323a3fbab7f5c11be4d` for exact SHA `069c6fd...` and the focused
+`AfirmaJavascriptShimTest`; unlike generation 43, no HTTP 429 occurred. The task progressed from
+`PENDING` to `READY`, proving Cloud accepts work again and therefore the phone-local Gradle fallback is
+not active for generation 44. However, installed Codex CLI `0.148.0-alpha.6` exposes only Cloud
+`exec/status/list/apply/diff`: `status` reports `READY` but does not expose the agent's terminal Gradle
+report, and `diff` reports no diff for this read-only task. A separate blank Playwright session could
+not retrieve the task UI (HTTP 403) and no bypass was attempted. Consequently `READY` is **not**
+recorded as focused GREEN; Sevilla remains unintegrated until exact SHA/Gradle result is observable.
+The shim diff itself passes `git diff --check` and a bounded added-content scan found no key/token,
+TLS/trust bypass, dependency-verification bypass, or `authenticate(...)` implementation.
+
+**Melilla preserved-state reconciliation.** Read-only inspection resolved the previously ambiguous
+local/remote divergence without reset or rewrite. `agent/g36-melilla-batch-contract` is clean at local
+`ce1b1639b322b616fb71cce12c73305db26e6a1a`, exactly one commit ahead of remote
+`25df9f7ed5bef0387568d6c2db5c7083f154fa9b`. The sole local commit is
+`fix(portal): use Android-compatible JSONObject key validation`; it changes only
+`WebMessageBridge.kt`, replacing `json.keySet()` with `json.keys().asSequence().toSet()` for the exact
+`MINIAPPLET_DOCUMENT_READY` key-set check. `git diff --check` passes. Prior Cloud task
+`task_e_6a78dc14b2d48323887a6abf2ad48bce` still exposes only lifecycle `READY`, not a terminal
+PASS/FAIL report, so its Gradle result is not inferred. The local fix is preserved and remains
+unpushed pending a verifiable gate.
+
+**Asturias bounded recheck.** The official public
+`https://miprincipado.asturias.es/utilidades/comprobacion-firma` surface still returns HTTP 200 and
+still exposes the fixed `MiniApplet.sign('SG9sYQ==', getAlgoritmoFirma(), 'XAdES',
+getParamsFirma(), ...)` boundary. The required official helper
+`https://www30.asturias.es/Esign2/esign.jsp` remains unavailable from the current routes: configured
+proxy returns HTTP 502 on CONNECT and a direct no-proxy attempt fails DNS resolution. No algorithm or
+extra-property value is inferred; the Asturias candidate remains research-only.
+
+The catalog remains 183 entries / 13 bound / 12 unique profiles / 170 unbound, with the classified
+research buffer at least 16. Portals integrated in generation 44 remain exactly one: the already
+accepted and published JCCM certificate-login probe. The next implementation candidate is Sevilla
+ATSE once its exact Cloud result is retrievable, followed by the preserved Melilla STA slice and then
+research-ready `extremadura-tramites`.
+
+No APK was installed or launched; no ADB/device control, authenticated government-portal navigation,
+credentials/cookies/bearer/certificate-unlock/private-key material, real signing, upload, payment,
+form POST, or administrative submission occurred.
