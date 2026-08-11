@@ -10,6 +10,7 @@ import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.signing.BatchProtocolResponse
 import dev.junta.firmamobile.signing.BatchSigningFormat
 import dev.junta.firmamobile.signing.BatchSigningReplySink
+import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.NormalizedBatchSigningDocument
 import dev.junta.firmamobile.signing.NormalizedBatchSigningRequest
@@ -29,8 +30,53 @@ import java.time.Clock
  * coordinator can own it.
  */
 internal class MelillaBatchSigningAdapter(
+    registry: SiteProfileRegistry,
+    clock: Clock = Clock.systemUTC(),
+) {
+    private val delegate = StaBatchSigningAdapter(
+        registry = registry,
+        clock = clock,
+        contract = StaBatchSigningContract(
+            profileId = MelillaBatchBridgeAdapter.PROFILE_ID,
+            profileVersion = 1,
+            protocolId = MelillaBatchProtocolAdapter.ID,
+        ),
+    )
+
+    fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? =
+        delegate.normalize(request)
+    fun replySink(channel: MelillaBatchReplyChannel): BatchSigningReplySink = delegate.replySink(channel)
+}
+
+internal class ExtremaduraBatchSigningAdapter(
+    registry: SiteProfileRegistry,
+    clock: Clock = Clock.systemUTC(),
+) {
+    private val delegate = StaBatchSigningAdapter(
+        registry = registry,
+        clock = clock,
+        contract = StaBatchSigningContract(
+            profileId = ExtremaduraBatchBridgeAdapter.PROFILE_ID,
+            profileVersion = 1,
+            protocolId = ExtremaduraBatchProtocolAdapter.ID,
+        ),
+    )
+
+    fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? =
+        delegate.normalize(request)
+    fun replySink(channel: MelillaBatchReplyChannel): BatchSigningReplySink = delegate.replySink(channel)
+}
+
+private data class StaBatchSigningContract(
+    val profileId: String,
+    val profileVersion: Int,
+    val protocolId: dev.junta.firmamobile.signing.SigningProtocolId,
+)
+
+private class StaBatchSigningAdapter(
     private val registry: SiteProfileRegistry,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock,
+    private val contract: StaBatchSigningContract,
 ) {
     fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? = runCatching {
         val resolved = registry.resolve(request.sourceOrigin)
@@ -44,12 +90,12 @@ internal class MelillaBatchSigningAdapter(
             ?: return null
         val operation = profile.operationPolicies[ProtocolOperation.SIGN] ?: return null
 
-        if (profile.profileId.value != MelillaBatchBridgeAdapter.PROFILE_ID ||
-            profile.profileVersion != MELILLA_PROFILE_VERSION ||
+        if (profile.profileId.value != contract.profileId ||
+            profile.profileVersion != contract.profileVersion ||
             profile.compatibilityStatus != CompatibilityStatus.VERIFIED_CONTRACT ||
             profile.capabilities != setOf(Capability.SIGN) ||
             operation.operation != ProtocolOperation.SIGN ||
-            operation.inputAdapterId.value != MelillaBatchProtocolAdapter.ID.value ||
+            operation.inputAdapterId.value != contract.protocolId.value ||
             operation.algorithms != setOf(ProfileSignatureAlgorithm.SHA256_WITH_RSA) ||
             operation.format != ProfileSignatureFormat.CADES ||
             request.algorithm != MELILLA_ALGORITHM ||
@@ -75,7 +121,7 @@ internal class MelillaBatchSigningAdapter(
 
         NormalizedBatchSigningRequest(
             requestId = request.requestId,
-            protocolId = MelillaBatchProtocolAdapter.ID,
+            protocolId = contract.protocolId,
             context = SigningContext(
                 profileId = profile.profileId.value,
                 profileVersion = profile.profileVersion,
@@ -128,7 +174,6 @@ internal class MelillaBatchSigningAdapter(
     }
 
     private companion object {
-        const val MELILLA_PROFILE_VERSION = 1
         const val MELILLA_ALGORITHM = "SHA256withRSA"
         const val MELILLA_FORMAT = "CAdES"
         const val MELILLA_SUBOPERATION = "sign"
