@@ -50,6 +50,31 @@ class WebMessageBridgeMelillaCancellationTest {
         assertFalse(pendingReply.abandon())
     }
 
+    @Test
+    fun bridgeWideAbandonNotifiesRuntimeExactlyOnceForTheOwnedRequest() {
+        val cancelled = mutableListOf<UUID>()
+        lateinit var pendingReply: MelillaBatchReplyChannel
+        val bridge = WebMessageBridge(
+            profileId = MELILLA_PROFILE,
+            logger = SanitizedLogger(),
+            onAfirmaRequest = {},
+            onMelillaBatchRequest = { _, reply -> pendingReply = reply },
+            onMelillaBatchCancel = { requestId: UUID -> cancelled.add(requestId) },
+            activeProfileId = { MELILLA_PROFILE },
+            miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
+            currentNavigationEpoch = { NAVIGATION_EPOCH },
+            currentOrigin = { MELILLA_ORIGIN },
+            currentDocumentId = { DOCUMENT_ID },
+        )
+
+        bridge.receiveForTest(portalOwnedBatchEnvelope())
+        bridge.abandonAllForTest()
+        bridge.abandonAllForTest()
+
+        assertEquals(listOf(REQUEST_ID), cancelled)
+        assertFalse(pendingReply.abandon())
+    }
+
     private fun WebMessageBridge.receiveForTest(rawMessage: String) {
         val method = WebMessageBridge::class.java.getDeclaredMethod(
             "receive",
@@ -66,6 +91,14 @@ class WebMessageBridgeMelillaCancellationTest {
             true,
             NoopReplyProxy,
         )
+    }
+
+    private fun WebMessageBridge.abandonAllForTest() {
+        val method = WebMessageBridge::class.java.getDeclaredMethod(
+            "abandonAllMiniAppletRequests",
+        )
+        method.isAccessible = true
+        method.invoke(this)
     }
 
     private fun portalOwnedBatchEnvelope(): String = JSONObject()
