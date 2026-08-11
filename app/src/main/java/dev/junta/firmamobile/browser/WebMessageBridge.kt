@@ -24,6 +24,14 @@ import java.time.Duration
 import java.util.UUID
 import org.json.JSONObject
 
+internal data class AfirmaShimCompatibilityFlags(
+    val ugr: Boolean,
+    val cantabria: Boolean,
+    val jccm: Boolean,
+    val sevillaAtse: Boolean,
+    val melillaBatch: Boolean,
+)
+
 class WebMessageBridge(
     private val profileId: ProfileId,
     private val logger: SanitizedLogger,
@@ -109,6 +117,11 @@ class WebMessageBridge(
             receive(message, sourceOrigin, isMainFrame, replyProxy)
         }
 
+        val shimFlags = shimCompatibilityFlags(
+            profileId = profileId,
+            profileActive = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
+            melillaBatchEnabled = melillaBatchEnabled,
+        )
         val scriptHandler = if (
             WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
         ) {
@@ -118,13 +131,11 @@ class WebMessageBridge(
                     webView.context,
                     miniAppletMode,
                     qaDiagnosticsEnabled,
-                    ugrCompatibilityEnabled = profileId.value == UGR_PROFILE_ID &&
-                        BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
-                    cantabriaCompatibilityEnabled = profileId.value == CANTABRIA_PROFILE_ID &&
-                        BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
-                    jccmCompatibilityEnabled = profileId.value == JCCM_PROFILE_ID &&
-                        BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
-                    melillaBatchCompatibilityEnabled = melillaBatchEnabled,
+                    ugrCompatibilityEnabled = shimFlags.ugr,
+                    cantabriaCompatibilityEnabled = shimFlags.cantabria,
+                    jccmCompatibilityEnabled = shimFlags.jccm,
+                    sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
+                    melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                 ),
                 originRules,
             )
@@ -458,6 +469,21 @@ class WebMessageBridge(
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
+        private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+
+        internal fun shimCompatibilityFlags(
+            profileId: ProfileId,
+            profileActive: Boolean,
+            melillaBatchEnabled: Boolean,
+        ): AfirmaShimCompatibilityFlags = AfirmaShimCompatibilityFlags(
+            ugr = profileActive && profileId.value == UGR_PROFILE_ID,
+            cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
+            jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
+            // RED scaffold: preserve the current production behavior until the regression test proves it.
+            sevillaAtse = false,
+            melillaBatch = melillaBatchEnabled,
+        )
+
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
         private const val DOCUMENT_READY_FIELD = "type"
         private const val DOCUMENT_READY_TYPE = "MINIAPPLET_DOCUMENT_READY"

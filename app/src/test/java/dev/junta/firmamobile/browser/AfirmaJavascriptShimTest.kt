@@ -235,6 +235,21 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun activeSevillaProfileEnablesTheRuntimeAtseShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("sevilla-atse-certificate-login"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertTrue(flags.sevillaAtse)
+        assertFalse(flags.melillaBatch)
+    }
+
+    @Test
     fun sevillaAtseCompatibilityIsProfileScopedToTheExactXadesChallengeTuple() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(
