@@ -31,7 +31,7 @@ Updated: 2026-08-11, generation 44.
   `git diff --check`, sensitive/policy scan and direct Standards + Spec review passed.
 - Portals integrated/published in generation 44: 1 — JCCM certificate-login probe.
 - Documentation-only research evidence through `d2bc181dfa2611cfe02cb9482876cc29cc3cf264` records the
-  bounded Asturias/SEPE follow-up; the current uncommitted continuation additionally records the
+  bounded Asturias/SEPE follow-up; the subsequent handoff/research continuation records the
   ACCEDA-to-MPTMD public handoff and MPTMD `ES-PUB-0072` as a research lead only.
 
 ## Sevilla current state — next implementation candidate
