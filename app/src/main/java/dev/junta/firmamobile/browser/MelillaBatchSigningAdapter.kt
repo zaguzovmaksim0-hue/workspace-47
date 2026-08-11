@@ -7,12 +7,18 @@ import dev.junta.firmamobile.profile.SignatureAlgorithm as ProfileSignatureAlgor
 import dev.junta.firmamobile.profile.SignatureFormat as ProfileSignatureFormat
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.TrustMode
+import dev.junta.firmamobile.signing.BatchProtocolResponse
 import dev.junta.firmamobile.signing.BatchSigningFormat
+import dev.junta.firmamobile.signing.BatchSigningReplySink
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.NormalizedBatchSigningDocument
 import dev.junta.firmamobile.signing.NormalizedBatchSigningRequest
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.SigningContext
+import dev.junta.firmamobile.signing.SigningErrorCode
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
+import java.nio.charset.StandardCharsets
 import java.time.Clock
 
 /**
@@ -88,6 +94,28 @@ internal class MelillaBatchSigningAdapter(
             documents = documents,
         )
     }.getOrNull()
+
+    fun replySink(channel: MelillaBatchReplyChannel): BatchSigningReplySink =
+        object : BatchSigningReplySink {
+            override val requestId = channel.requestId
+
+            override fun success(response: BatchProtocolResponse): Boolean = runCatching {
+                response.withBytes { bytes ->
+                    channel.success(bytes.decodeStrictUtf8())
+                }
+            }.getOrDefault(false)
+
+            override fun failure(code: SigningErrorCode): Boolean = channel.failure(code)
+
+            override fun abandon(): Boolean = channel.abandon()
+        }
+
+    private fun ByteArray.decodeStrictUtf8(): String =
+        StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(this))
+            .toString()
 
     private fun String.toBatchFormat(): BatchSigningFormat? = when (this) {
         "CAdES" -> BatchSigningFormat.CADES
