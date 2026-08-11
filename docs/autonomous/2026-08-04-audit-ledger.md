@@ -2379,3 +2379,35 @@ catalogued AutoFirma test page both reach the site's WAF boundary before a signi
 No challenge value was retained and no WAF bypass was attempted. `murcia-sede` (`ES-PUB-0113`)
 therefore remains `BROWSE_ONLY` / research-only with no profile or catalog promotion. Detailed bounded
 evidence is in `docs/autonomous/2026-08-11-g45-murcia-research.md`.
+
+**Sevilla profile RED Cloud task and result-retrieval blocker.** Commit
+`44244f96933dbccfcd90bfa066eaf57e283c263a` adds only the exact QA-only Sevilla ATSE profile parser
+contract test. The corresponding Cloud-only focused submission is
+`task_e_6a7aa3b8def08323970f6b302ea0ad64`, created with
+`:app:testDebugUnitTest --tests dev.junta.firmamobile.profile.SiteProfileCatalogParserTest.preservesTheExactSevillaAtseQaOnlyCertificateLoginContract`
+against that exact pushed SHA. It progressed from `PENDING` to lifecycle `READY`. As with the Sevilla
+adapter task `task_e_6a7aa19ae4a08323b0f8200f3f9584bc` for exact SHA
+`1208a2774d6a6ad7994b6c6f3d590b0b072998e0`, the supported CLI exposes no terminal Gradle stdout,
+exit code, observed checkout SHA, or conclusion, so neither task is accepted as RED/GREEN evidence.
+A bounded attempt to open the supported interactive `codex cloud` TUI through the Termux connector PTY
+failed before rendering the task list because the PTY did not answer the terminal cursor-position
+handshake; no private endpoint or web-auth bypass was attempted. No local Gradle/JVM/Kotlin fallback
+was used or authorized.
+
+A generated untracked `error.log` from Cloud CLI diagnostics was inspected before deletion. It contained
+CLI account/cursor diagnostics and repository/environment metadata, but the bounded scan found no
+private-key, bearer, Authorization/Cookie, GitHub-token, OpenAI-key, or MCP-token material. The file was
+removed and is not retained in the worktree.
+
+**Uncommitted Sevilla profile GREEN preservation.** During generation-45 finalization, the main
+worktree acquired unstaged changes in exactly `SiteProfileCatalogParser.kt` and
+`config/site_profiles_v1.json`. They implement the expected narrow Sevilla QA-only profile/parser
+contract corresponding to the published RED at `44244f96933dbccfcd90bfa066eaf57e283c263a`: exact start
+URL/origin, `VERIFIED_CONTRACT`, `QA_ONLY`, `SIGN + LEGACY_SHA1`, RSA/digital-signature certificate
+rules, `SHA1_WITH_RSA`, XAdES `ATTACHED`, null endpoint/mode and no extra properties. Static
+`git diff --check` passes, the JSON parses and contains exactly one Sevilla profile, and a bounded
+added-line scan found no sensitive material, insecure HTTP, trust/hostname bypass, or dependency-
+verification disablement. These production changes were deliberately left **unstaged, uncommitted and
+unpushed** because the corresponding Cloud RED task exposes only lifecycle `READY`, not a verifiable
+expected test failure. Preserve this local work; do not discard or publish it until the required Cloud
+evidence boundary is satisfied.
