@@ -2259,3 +2259,23 @@ research-ready `extremadura-tramites`.
 No APK was installed or launched; no ADB/device control, authenticated government-portal navigation,
 credentials/cookies/bearer/certificate-unlock/private-key material, real signing, upload, payment,
 form POST, or administrative submission occurred.
+
+## Portal G44 — bounded Asturias/SEPE research follow-up — 2026-08-11
+
+Evidence packet: `docs/autonomous/2026-08-11-g44-portal-research-evidence.md`.
+
+Asturias remains research-only: its official public signature-check page still publishes the fixed
+`Hola` / `XAdES` simulation but delegates algorithm and extra properties to the inaccessible
+`www30.asturias.es/Esign2/esign.jsp` helper. Proxy access returns CONNECT 502 and direct access cannot
+resolve the host; no contract value was inferred.
+
+SEPE also remains research-only after bounded GET-only traversal of current public procedure pages and
+three concrete launches. `PSolicitudUnicaWEB/solicitudUnica` and
+`PBajaPrestacion/flows/bajaprestacion` terminate at the official protected-resource authentication
+page before any signing ABI is visible. `DServiciosPrestanetWEB/CertificadosPrestaWeb.do` is public
+but exposes only authentication choices and a POST transition; it publishes no AutoScript/MiniApplet
+algorithm/format/payload/callback tuple. No form was submitted. No profile or catalog status changed.
+
+No new implementation-ready candidate was promoted. The classified research buffer remains at least
+16; exact implementation priority remains Sevilla ATSE after terminal Cloud GREEN evidence, preserved
+Melilla STA, then `extremadura-tramites`.

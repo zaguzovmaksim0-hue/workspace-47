@@ -79,8 +79,12 @@ Updated: 2026-08-11, generation 44.
 - Asturias recheck on 2026-08-11 is unchanged: public signature-check page HTTP 200, but official
   `www30.asturias.es/Esign2/esign.jsp` returns proxy CONNECT 502 and direct DNS fails, so algorithm and
   extra parameters remain unknown and must not be inferred.
+- SEPE bounded GET-only follow-up on 2026-08-11 reached only pre-auth boundaries: two concrete
+  launches redirect to the official protected-resource login and the public certificate-service page
+  exposes an authentication POST but no AutoScript/MiniApplet ABI. No POST was made; `sepe-sede` stays
+  research-only. See `docs/autonomous/2026-08-11-g44-portal-research-evidence.md`.
 - Other research-only candidates still needing complete public binding include
-  `justicia-sede-judicial`, `age-acceda`, `sepe-sede`, and `mjusticia-sede`.
+  `justicia-sede-judicial`, `age-acceda`, and `mjusticia-sede`.
 - Manual-E2E-only gates: UGR, DGT, Cantabria, JCCM; AEAT Client-TLS E2E. Real-portal JavaScript-dialog
   compatibility, TalkBack/physical visual validation and Go race on supported Linux remain external.
 
