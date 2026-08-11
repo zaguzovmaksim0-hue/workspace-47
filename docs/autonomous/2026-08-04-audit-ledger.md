@@ -2370,3 +2370,12 @@ remains at least 16 surfaces.
 No APK was installed or launched; no ADB/device control, authenticated government-portal navigation,
 credential/cookie/bearer/certificate-unlock/private-key material, real signing, form POST, upload,
 payment, or administrative submission occurred.
+
+**Murcia bounded public recheck.** The current CARM Sede landing page and procedure `385` page remain
+public HTTP 200 surfaces, but their exact loaded same-origin JavaScript is generic site plumbing and
+contains no AutoScript/MiniApplet algorithm/format/callback contract. The procedure exposes current
+`/presentador/inicio/385/...` electronic-start links; a bounded GET of one start and the previously
+catalogued AutoFirma test page both reach the site's WAF boundary before a signing runtime is public.
+No challenge value was retained and no WAF bypass was attempted. `murcia-sede` (`ES-PUB-0113`)
+therefore remains `BROWSE_ONLY` / research-only with no profile or catalog promotion. Detailed bounded
+evidence is in `docs/autonomous/2026-08-11-g45-murcia-research.md`.
