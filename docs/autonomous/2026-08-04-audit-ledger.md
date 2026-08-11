@@ -2279,3 +2279,16 @@ algorithm/format/payload/callback tuple. No form was submitted. No profile or ca
 No new implementation-ready candidate was promoted. The classified research buffer remains at least
 16; exact implementation priority remains Sevilla ATSE after terminal Cloud GREEN evidence, preserved
 Melilla STA, then `extremadura-tramites`.
+
+## Portal G44 — ACCEDA/MPTMD handoff research — 2026-08-11
+
+The public ACCEDA `idp/509` route linked by SEPE is an ambit chooser, not a signing surface. Its two
+observed official targets are MPTMD public procedure pages. Their loaded first-party
+`ac2-formularios.js` (SHA-256
+`ac1983eb5ed614c9f446ebbfbea38160a4d28ea99080cbb2ed0adf8a62d1c7cc`) proves a later generic
+AutoFirma sequence only after an expediente-creation POST: it calls `doSignAsPromise(file, nifSol)`
+and then uploads the resulting signed file through a separate POST. Neither POST was executed.
+`doSignAsPromise` is not defined by the exact four same-origin scripts loaded in the unauthenticated
+page and no algorithm/format tuple is exposed there. Consequently neither `age-acceda` nor MPTMD
+surface `ES-PUB-0072` is promoted to implementation-ready; `ES-PUB-0072` is retained as a new
+research lead only. No inventory/catalog mutation was made.

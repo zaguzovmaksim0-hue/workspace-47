@@ -6,14 +6,14 @@ Updated: 2026-08-11, generation 44.
 
 - Work only in `/data/data/com.termux/files/home/workspace-47-autonomous-20260803` on
   `agent/workspace-47-autonomous-20260803`.
-- Last published autonomous HEAD before this handoff-only documentation update is
-  `88ec2d8e6dc8dbef6d889ee6aac96386906ebd88`, verified equal to local HEAD, tracking ref and
+- Last published autonomous HEAD before the current handoff/research documentation update is
+  `d2bc181dfa2611cfe02cb9482876cc29cc3cf264`, verified equal to local HEAD, tracking ref and
   `git ls-remote`, with divergence `0/0` and clean worktree.
 - Canonical `origin/feature/ws024-secure-tunnel-20260728` remains exactly
   `9c99bbfb36e13f88231d56001ccef8c4cbbce128`; no canonical merge, rebase, force-push or rewrite was
   performed.
 - This file is committed after the checkpoint above; on continuation resolve and verify the containing
-  published branch HEAD rather than assuming `88ec2d8...` is still final.
+  published branch HEAD rather than assuming `d2bc181...` is still final.
 - Start with `prepare_task`, `git fetch --prune origin`, branch/HEAD/status/upstream/divergence checks,
   and inspect preserved worker worktrees before any mutation.
 
@@ -30,6 +30,9 @@ Updated: 2026-08-11, generation 44.
   the bounded local-fallback policy. Post-gate generator 9/9, deterministic regeneration,
   `git diff --check`, sensitive/policy scan and direct Standards + Spec review passed.
 - Portals integrated/published in generation 44: 1 — JCCM certificate-login probe.
+- Documentation-only research evidence through `d2bc181dfa2611cfe02cb9482876cc29cc3cf264` records the
+  bounded Asturias/SEPE follow-up; the current uncommitted continuation additionally records the
+  ACCEDA-to-MPTMD public handoff and MPTMD `ES-PUB-0072` as a research lead only.
 
 ## Sevilla current state — next implementation candidate
 
@@ -44,9 +47,9 @@ Updated: 2026-08-11, generation 44.
   lifecycle `READY`. There was no HTTP 429, so **phone-local Gradle fallback is not active** for
   generation 44; subsequent Gradle gates stay Cloud-only.
 - Do **not** count that task as GREEN yet. Installed Codex CLI `0.148.0-alpha.6` `status` exposes only
-  lifecycle `READY`, while `diff` has no diff for the read-only task and no terminal Gradle transcript
-  is available through the CLI. A separate blank Playwright session hit HTTP 403 on the task URL; no
-  authentication/Cloudflare bypass was attempted.
+  lifecycle `READY`; `cloud list --json` likewise exposes task metadata/status but no conclusion/result/
+  transcript, while `diff` has no diff for the read-only task. A separate blank Playwright session hit
+  HTTP 403 on the task URL; no authentication/Cloudflare bypass was attempted.
 - Exact next Sevilla action: obtain the terminal Cloud task report through an authorized supported
   surface; accept only evidence showing observed SHA `069c6fd...`, dependency verification enabled,
   focused Gradle exit 0 / BUILD SUCCESSFUL and clean checkout. Only then integrate the shim into current
@@ -83,8 +86,12 @@ Updated: 2026-08-11, generation 44.
   launches redirect to the official protected-resource login and the public certificate-service page
   exposes an authentication POST but no AutoScript/MiniApplet ABI. No POST was made; `sepe-sede` stays
   research-only. See `docs/autonomous/2026-08-11-g44-portal-research-evidence.md`.
+- ACCEDA `idp/509` was traced by GET-only research to two public MPTMD procedure pages. Their loaded
+  `ac2-formularios.js` proves a post-expediente AutoFirma workflow, but `doSignAsPromise` and its
+  algorithm/format tuple are absent from the exact pre-auth script set; no POST was executed. Keep
+  `age-acceda` unpromoted and add MPTMD `ES-PUB-0072` only as a research lead.
 - Other research-only candidates still needing complete public binding include
-  `justicia-sede-judicial`, `age-acceda`, and `mjusticia-sede`.
+  `justicia-sede-judicial`, `age-acceda`, `mjusticia-sede`, and MPTMD `ES-PUB-0072`.
 - Manual-E2E-only gates: UGR, DGT, Cantabria, JCCM; AEAT Client-TLS E2E. Real-portal JavaScript-dialog
   compatibility, TalkBack/physical visual validation and Go race on supported Linux remain external.
 

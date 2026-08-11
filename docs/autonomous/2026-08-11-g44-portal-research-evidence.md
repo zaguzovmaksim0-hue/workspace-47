@@ -66,3 +66,35 @@ No new implementation-ready candidate was promoted by this slice. The classified
 remains at least 16 surfaces. The implementation-ready order remains Sevilla ATSE (pending terminal
 Cloud GREEN evidence), preserved Melilla STA, then `extremadura-tramites`. SEPE and Asturias stay in
 the research-only queue.
+
+## ACCEDA idp/509 handoff and MPTMD public AutoFirma lead
+
+SEPE's public benefits page links the official ACCEDA chooser
+`https://sede.administracionespublicas.gob.es/procedimientos/choose-ambit/idp/509`. A bounded GET
+returned HTTP 200 with no AutoFirma/AutoScript/MiniApplet contract and no form submission boundary;
+the page is only an ambit chooser. Two official targets published by that chooser are current MPTMD
+procedure pages at `https://mptmd.sede.gob.es/procedimiento/ambitos?idProc=133655` and
+`...?idProc=134479`. Both returned HTTP 200 unauthenticated and exposed only the public Cl@ve login
+entry before procedure state.
+
+Those MPTMD pages load four same-origin JavaScript files. The first-party
+`/.resources/ac2-front/webresources/js/ac2-formularios.js` was fetched at SHA-256
+`ac1983eb5ed614c9f446ebbfbea38160a4d28ea99080cbb2ed0adf8a62d1c7cc`. It contains a generic
+post-auth AutoFirma orchestration: after a POST to `/.rest/formulario/v1/expediente` creates an
+expediente and returns `idExpediente` plus `idDocumentoSolicitud`, `startAutofirma()` downloads the
+server-created document, calls `doSignAsPromise(file, nifSol)`, and later uploads the signed file with
+a POST to `/.rest/formulario/v1/autofirma`. Neither POST was executed.
+
+The pre-auth HTML loads exactly four same-origin scripts (`ac2-commons.js`,
+`ac2-detalleExpediente.js`, `ac2-formularios.js`, and `ac2-usuariosLogin.js`). Across that exact
+public script set, `doSignAsPromise` is referenced but not defined, and no `AutoScript`, `MiniApplet`,
+`SHA*withRSA`, `XAdES`, `PAdES`, or `CAdES` tuple defining that function is present. The public page
+therefore proves that MPTMD has a later AutoFirma workflow but does **not** prove the local signing
+ABI needed for an autonomous profile before the authenticated/POST boundary.
+
+This evidence does not strengthen the existing `age-acceda` contract into an implementation-ready
+profile. It creates a separate research lead for inventory surface `ES-PUB-0072`
+`age-ministerio-de-politica-territorial-y-memoria-democratica`; no inventory or catalog state is
+changed by this documentation-only slice. The next safe gate is a public first-party definition and
+procedure binding for `doSignAsPromise`, if one becomes observable without authentication or form
+submission.
