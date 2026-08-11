@@ -9,6 +9,25 @@ class ExtremaduraBatchUrlPolicyTest {
     private val extremadura = ExtremaduraBatchUrlPolicy()
 
     @Test
+    fun rejectsExtremaduraOriginAndUrlWidening() {
+        val valid =
+            "https://tramites.juntaex.es/sta/AutofirmaLote/presign/runtime-operation-1"
+
+        listOf(
+            valid.replace("https://", "http://"),
+            valid.replace("tramites.juntaex.es", "evil.tramites.juntaex.es"),
+            valid.replace("https://", "https://user@"),
+            valid.replace("tramites.juntaex.es", "tramites.juntaex.es:444"),
+            "$valid?unexpected=value",
+            "$valid#fragment",
+            valid.replace("/sta/AutofirmaLote/", "/sta/autofirmalote/"),
+            valid.replace("/presign/", "/presign//"),
+        ).forEach { candidate ->
+            assertNull(candidate, extremadura.validatePreSignerUrl(candidate))
+        }
+    }
+
+    @Test
     fun fixedProfilesOwnOnlyTheirExactStaRuntimeBindings() {
         val operationId = "runtime-operation-1"
         val documentId = "runtime-document-1"

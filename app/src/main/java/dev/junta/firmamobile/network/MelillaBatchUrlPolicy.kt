@@ -53,8 +53,99 @@ sealed interface MelillaBatchUrlValidation {
  * never creates, rewrites, or guesses one.
  */
 class MelillaBatchUrlPolicy {
+    private val delegate = StaBatchUrlPolicy(HOST)
+
+    fun validate(rawUrl: String): MelillaBatchUrlValidation = delegate.validate(rawUrl)
+
+    fun validate(
+        rawUrl: String,
+        expectedOperationId: String?,
+        expectedDocumentId: String? = null,
+    ): MelillaBatchUrlValidation =
+        delegate.validate(rawUrl, expectedOperationId, expectedDocumentId)
+
+    fun validate(
+        rawUrl: String,
+        expectedOperation: MelillaBatchUrlOperation,
+        expectedOperationId: String? = null,
+        expectedDocumentId: String? = null,
+    ): MelillaBatchUrlValidation =
+        delegate.validate(rawUrl, expectedOperation, expectedOperationId, expectedDocumentId)
+
+    fun validatePreSignerUrl(rawUrl: String): MelillaBatchUrlBinding? =
+        delegate.validatePreSignerUrl(rawUrl)
+
+    fun validatePostSignerUrl(rawUrl: String): MelillaBatchUrlBinding? =
+        delegate.validatePostSignerUrl(rawUrl)
+
+    fun validateDataReference(
+        rawUrl: String,
+        expectedOperacionId: String? = null,
+        expectedDocId: String? = null,
+    ): MelillaBatchUrlBinding? =
+        delegate.validateDataReference(rawUrl, expectedOperacionId, expectedDocId)
+
+    companion object {
+        const val ORIGIN = "https://sede.melilla.es"
+        const val PATH = STA_BATCH_PATH
+        const val MAX_URL_CHARS = STA_MAX_URL_CHARS
+        const val MAX_RAW_QUERY_CHARS = 4_096
+        const val MAX_EPHEMERAL_VALUE_CHARS = STA_MAX_EPHEMERAL_VALUE_CHARS
+
+        private const val HOST = "sede.melilla.es"
+    }
+}
+
+/**
+ * Validates the same public STA batch URL grammar for the Extremadura portal,
+ * while fixing ownership to its one exact HTTPS host.
+ */
+class ExtremaduraBatchUrlPolicy {
+    private val delegate = StaBatchUrlPolicy(HOST)
+
+    fun validate(rawUrl: String): MelillaBatchUrlValidation = delegate.validate(rawUrl)
+
+    fun validate(
+        rawUrl: String,
+        expectedOperationId: String?,
+        expectedDocumentId: String? = null,
+    ): MelillaBatchUrlValidation =
+        delegate.validate(rawUrl, expectedOperationId, expectedDocumentId)
+
+    fun validate(
+        rawUrl: String,
+        expectedOperation: MelillaBatchUrlOperation,
+        expectedOperationId: String? = null,
+        expectedDocumentId: String? = null,
+    ): MelillaBatchUrlValidation =
+        delegate.validate(rawUrl, expectedOperation, expectedOperationId, expectedDocumentId)
+
+    fun validatePreSignerUrl(rawUrl: String): MelillaBatchUrlBinding? =
+        delegate.validatePreSignerUrl(rawUrl)
+
+    fun validatePostSignerUrl(rawUrl: String): MelillaBatchUrlBinding? =
+        delegate.validatePostSignerUrl(rawUrl)
+
+    fun validateDataReference(
+        rawUrl: String,
+        expectedOperacionId: String? = null,
+        expectedDocId: String? = null,
+    ): MelillaBatchUrlBinding? =
+        delegate.validateDataReference(rawUrl, expectedOperacionId, expectedDocId)
+
+    companion object {
+        const val ORIGIN = "https://tramites.juntaex.es"
+        const val PATH = STA_BATCH_PATH
+
+        private const val HOST = "tramites.juntaex.es"
+    }
+}
+
+private class StaBatchUrlPolicy(
+    private val host: String,
+) {
     fun validate(rawUrl: String): MelillaBatchUrlValidation {
-        if (rawUrl.length > MAX_URL_CHARS || rawUrl.any(Char::isISOControl)) {
+        if (rawUrl.length > STA_MAX_URL_CHARS || rawUrl.any(Char::isISOControl)) {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.TOO_LONG)
         }
 
@@ -64,13 +155,13 @@ class MelillaBatchUrlPolicy {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.MALFORMED)
         }
 
-        if (uri.isOpaque || uri.scheme != HTTPS_SCHEME || uri.host != HOST ||
+        if (uri.isOpaque || uri.scheme != HTTPS_SCHEME || uri.host != host ||
             uri.port != -1 && uri.port != HTTPS_PORT ||
             uri.userInfo != null
         ) {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.ORIGIN_NOT_ALLOWED)
         }
-        if (uri.rawAuthority != HOST && uri.rawAuthority != "$HOST:$HTTPS_PORT") {
+        if (uri.rawAuthority != host && uri.rawAuthority != "$host:$HTTPS_PORT") {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.ORIGIN_NOT_ALLOWED)
         }
         if (uri.rawFragment != null) {
@@ -82,11 +173,11 @@ class MelillaBatchUrlPolicy {
 
         val rawPath = uri.rawPath
             ?: return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
-        if (!rawPath.startsWith(PATH_PREFIX)) {
+        if (!rawPath.startsWith(STA_BATCH_PATH_PREFIX)) {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
         }
 
-        val relativePath = rawPath.substring(PATH_PREFIX.length)
+        val relativePath = rawPath.substring(STA_BATCH_PATH_PREFIX.length)
         if (relativePath.isEmpty() || relativePath.endsWith('/')) {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
         }
@@ -221,7 +312,7 @@ class MelillaBatchUrlPolicy {
 
     private fun isSafeIdentifier(value: String): Boolean =
         value.isNotEmpty() &&
-            value.length <= MAX_EPHEMERAL_VALUE_CHARS &&
+            value.length <= STA_MAX_EPHEMERAL_VALUE_CHARS &&
             value != "." &&
             value != ".." &&
             value.all {
@@ -241,15 +332,12 @@ class MelillaBatchUrlPolicy {
     }
 
     companion object {
-        const val ORIGIN = "https://sede.melilla.es"
-        const val PATH = "/sta/AutofirmaLote"
-        const val MAX_URL_CHARS = 8_192
-        const val MAX_RAW_QUERY_CHARS = 4_096
-        const val MAX_EPHEMERAL_VALUE_CHARS = 1_024
-
-        private const val PATH_PREFIX = "$PATH/"
-        private const val HOST = "sede.melilla.es"
         private const val HTTPS_SCHEME = "https"
         private const val HTTPS_PORT = 443
     }
 }
+
+private const val STA_BATCH_PATH = "/sta/AutofirmaLote"
+private const val STA_BATCH_PATH_PREFIX = "$STA_BATCH_PATH/"
+private const val STA_MAX_URL_CHARS = 8_192
+private const val STA_MAX_EPHEMERAL_VALUE_CHARS = 1_024
