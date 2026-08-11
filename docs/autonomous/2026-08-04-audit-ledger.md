@@ -2444,3 +2444,15 @@ payload/callback contract. A bounded GET of the exact PR004A start returns HTTP 
 `/identificate/login`; the authenticated route was not followed and redirect query details were not
 retained. `galicia-sede` (`ES-PUB-0112`) therefore remains `BROWSE_ONLY`. Detailed evidence is in
 `docs/autonomous/2026-08-11-g45-galicia-research.md`.
+
+**Euskadi live Registro General / Giltza contract.** The current Euskadi Registro Electrónico General
+page binds live citizen procedure `1017701` to a publicly GET-readable `x43kToolkitWar` form. The form
+publishes `ISNUEVAFIRMAACTIVA=true` and current `firmaGiltza` assets. Static first-party code proves the
+active path builds `mecanismo_firma=auto` and classifies both location-backed and Base64 documents as
+`xades-enveloping`; it uses the Giltza iframe/server workflow and returns results through callbacks
+before the form's `sign/move` server step. No form field, sign action, server transition, POST,
+certificate selector, upload or submission was used. The live citizen binding is therefore stronger
+than the previous general-help evidence, but actual document/config state and the exact cryptographic
+algorithm remain unresolved behind stateful/server processing. `euskadi-sede-electronica`
+(`ES-PUB-0115`) stays `BROWSE_ONLY`. Exact static hashes and boundaries are recorded in
+`docs/autonomous/2026-08-11-g45-euskadi-registro-research.md`.
