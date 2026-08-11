@@ -2950,3 +2950,75 @@ unbound. Inventory remains 163 `BROWSE_ONLY`, 9 `IMPLEMENTED_NOT_E2E`, 1 `VERIFI
 research queue remains at least 16 surfaces. Portals integrated in generation 58 remain zero. Next is
 Slice 3 runtime composition/arbitration, then separate Melilla profile/catalog promotion, followed by
 `extremadura-tramites` (`ES-PUB-0109`) and La Palma (`ES-PUB-0130`).
+
+## Portal G59-G62 — Melilla runtime/catalog acceptance — 2026-08-11
+
+Melilla is now accepted at the complete automated QA/public-catalog boundary. The runtime composition,
+ordinary-versus-batch signing ownership arbitration, cancellation ownership, and catalog promotion are
+present on the autonomous branch; this acceptance does not assert physical portal E2E and does not
+enable the profile in release.
+
+The catalog promotion commit `037b3614298cf2c33089b30fb73b789a26077249` bound public inventory
+entry `ES-PUB-0107` to exact profile `melilla-sede`, exact reviewed public procedure URL, and
+`IMPLEMENTED_NOT_E2E` / `E2E_PENDING`. Its first catalog Cloud gate
+`task_e_6a7b8975ac94832392f8ab5ce0fd9411` was valid defect evidence: at exact `037b361...`, Gradle
+failed in 4m49s with exactly two QA `PortalCatalogRepositoryTest` failures because the runtime profile
+had no corresponding built-in `SIGN` protocol-registry binding. Dependency verification remained
+enabled and the Cloud checkout was clean.
+
+Direct registry RED `f3b4fb089039a3c57cca67ecc6c27483266b4133` added the subordinate
+registry-binding design/plan and asserted the exact tuple `melilla-sede` / `SIGN` /
+`melilla-batch-autoscript-v1` / `melilla-batch-result-v1` / `MelillaBatchProtocolAdapter.ID`, including
+absence of a `SELECT_CERTIFICATE` fallback. Cloud task `task_e_6a7b8d54a73883238c96ae027f5dafd9`
+verified that exact SHA and produced the intended RED: 2 tests, 1 pass, 1 failure at the missing Melilla
+binding, `BUILD FAILED in 4m59s`, dependency verification enabled, unchanged verification metadata, and
+clean checkout.
+
+Production repair `552189a26daddb329815a9deeec5e604e7421b78` added only that exact seven-line
+`SIGN` registry binding. Cloud task `task_e_6a7b8f6f7c5883239e9196b25afe1442` proved the registry,
+parser, and repository seams but exposed one stale exhaustive UI accounting assertion: requested
+registry 2/2, parser 7/7, and repository 18/18 passed; Debug overall was 646/647, with only
+`PortalCatalogScreenTest.kt:52` still expecting 13 compatible profiles. QA therefore did not run. No
+production behavior was weakened to accommodate the stale test.
+
+Test-only accounting commit `60afb7ab8b3682b6a85424a71aa0de172b1d26d6` updated that compatible
+count from 13 to 14. Focused Cloud GREEN `task_e_6a7b916667288323a6ee8507b88818f7` accepted exact
+`60afb7a...`: `BUILD SUCCESSFUL in 5m20s`, Debug 647/647 plus QA 35/35 = 682/682 tests, zero
+failures/errors/skips, dependency verification enabled, unchanged verification metadata, and clean
+Cloud checkout.
+
+The canonical full Android Cloud gate `task_e_6a7b9341699483238dbaba576b189ed8` then accepted the same
+exact pushed SHA `60afb7ab8b3682b6a85424a71aa0de172b1d26d6`. It ran
+`verifyResolvedCoreVersion verifyPortableAapt2Configuration testDebugUnitTest testQaUnitTest lintDebug
+lintQa assembleDebug assembleQa assembleQaAndroidTest` directly inside `workspace-47-android` with
+`--no-daemon --console=plain`, exited 0, and reported `BUILD SUCCESSFUL in 15m40s`; 142 actionable
+tasks (123 executed, 19 from cache). Debug and QA each passed 647/647 JVM tests, for 1,294/1,294 total
+with zero failures/errors/skips. Both lint variants passed with zero errors and 27 warnings each. The
+Cloud task reported the requested SHA exactly, dependency verification enabled,
+`gradle/verification-metadata.xml` unchanged, and final `git status --short` empty. Built artifacts were
+`app-debug.apk` 20,824,594 bytes, `app-qa.apk` 20,824,594 bytes, and `app-qa-androidTest.apk` 1,182,777
+bytes; they were Cloud build outputs only and were not installed or launched.
+
+Local non-Gradle verification at `60afb7a...` passed: the public-catalog Python suite is 10/10; canonical
+regeneration from `docs/compatibility/all-spanish-public-portals-inventory.md` plus
+`config/site_profiles_v1.json` is byte-for-byte identical to the committed JSON; `git diff --check`
+passes; and bounded changed-product/test scans found no dependency-verification bypass, trust-all or
+hostname-verifier weakening, HTTP/TLS widening, credential/bearer material, retry widening, or private-
+key handling change. A direct main-Watchdog Standards + Spec review found no remaining Critical or
+Important defect in the bounded Melilla catalog/registry slice. QA resolves Melilla as
+`IMPLEMENTED_NOT_E2E` and launchable only at its exact profile URL; release resolves the same public
+surface as `VERIFIED_CONTRACT`, disabled, with no launch target. No `VERIFIED_E2E` promotion occurred.
+
+Current catalog accounting is 183 entries, 15 bound surfaces, 14 unique profile IDs, and 168 unbound.
+Inventory states are 162 `BROWSE_ONLY`, 10 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4
+`VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated states are 90 `CATALOGED`,
+73 `DISCOVERED`, 6 `BLOCKED`, 10 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The classified public research
+buffer remains at least 16 surfaces. Melilla is the portal integration accepted in generation 62. The
+next implementation candidate is `extremadura-tramites` (`ES-PUB-0109`), followed by La Palma
+(`ES-PUB-0130`); Eivissa (`ES-PUB-0122`) and Formentera (`ES-PUB-0124`) remain research-only.
+
+Manual/physical E2E remains pending for Melilla, Sevilla, UGR, DGT, Cantabria, JCCM, and AEAT
+Client-TLS. No phone-local Gradle/JVM/Kotlin execution, worker delegation, APK install/launch, ADB or
+other device control, authenticated government-portal navigation, credentials/cookies/bearer data,
+certificate unlock/private-key material, real signing, form submission, upload, payment, or
+administrative action was used.
