@@ -2422,3 +2422,16 @@ AutoScript/MiniApplet contract before that boundary. Ephemeral server-session va
 response were not retained and the raw iframe body was deleted; no upload or POST was performed.
 `larioja-oficina-electronica` remains `BROWSE_ONLY`. Detailed safe findings are in
 `docs/autonomous/2026-08-11-g45-navarra-larioja-research.md`.
+
+**Castilla y León exact technical-checker evidence.** The current `Tramita Castilla y León`
+technical-requirements page still links the first-party `https://www.ae.jcyl.es/reqae2` simulator.
+Static GET-only inspection now proves its exact default browser-local seam: current `JCYLfirma.js`
+calls `AutoScript.sign`, while the current configuration initializes `SHA512withRSA`, `PADES`, an
+embedded sample PDF and the exact default extras `includeOnlySignningCertificate=true`,
+`expPolicy=FirmaAGE`, `filters.1=nonexpired:;signingCert:;`, and `filters.2=dnie:;`. Default UI state
+keeps the XAdES, batch, headless, no-data, DNI-specific and forced-intermediate-server branches off.
+After local signing the checker performs server-side certificate extraction and POST validation; those
+actions were not executed. This is strong technical-simulator evidence but still not a current citizen
+procedure binding, so broad `castilla-leon-tramita` (`ES-PUB-0102`) remains `BROWSE_ONLY` and no
+profile/catalog promotion was made. Exact hashes and boundaries are recorded in
+`docs/autonomous/2026-08-11-g45-castilla-leon-checker-research.md`.
