@@ -931,7 +931,7 @@ records:
     institution_name: "Ayuntamiento de Sevilla"
     surface_name: "Sede electrónica del Ayuntamiento de Sevilla"
     surface_type: "SEDE"
-    origin: "https://sede.sevilla.org"
+    origin: "https://www.sevilla.org"
     official_site: "https://sede.sevilla.org/"
     e_sede: "https://sede.sevilla.org/"
     entry_url: "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
