@@ -2500,3 +2500,71 @@ unbound surfaces. Inventory states remain 164 `BROWSE_ONLY`, 8 `IMPLEMENTED_NOT_
 states remain 92 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 8 `E2E_PENDING`, and 4 `E2E_VERIFIED`.
 The classified research buffer remains at least 16 surfaces. Portals fully integrated in generation 45
 remain zero because Sevilla is still in-flight behind the Cloud evidence boundary.
+
+## Portal G46 — Cloud observability blocker and research continuation — 2026-08-11
+
+Generation 46 started from clean, remote-identical main SHA
+`392dd853091a2b58894e6c2da78b1458d581ef14` and reverified the preserved workers before mutation.
+Sevilla worker remained clean and remote-identical at
+`069c6fd73a19b54b92dc4771867fff712617301d`. Melilla worker remained clean at local
+`ce1b1639b322b616fb71cce12c73305db26e6a1a`, upstream
+`25df9f7ed5bef0387568d6c2db5c7083f154fa9b`; actual Git divergence is `1 0`, i.e. one local commit
+ahead, correcting the inverted prose in the previous handoff. Canonical
+`origin/feature/ws024-secure-tunnel-20260728` remained exactly
+`9c99bbfb36e13f88231d56001ccef8c4cbbce128`.
+
+The four existing Sevilla Codex Cloud tasks were rechecked through supported surfaces. Profile RED
+`task_e_6a7aa3b8def08323970f6b302ea0ad64`, adapter task
+`task_e_6a7aa19ae4a08323b0f8200f3f9584bc`, profile GREEN
+`task_e_6a7aa66cc13c83238c4f423d292cdc15`, and registry RED
+`task_e_6a7aa844258c832389f97744737e5fcc` still expose lifecycle `READY` only. The registry task was
+still `READY` after approximately 53 minutes and `w47-cloud diff` still returned no diff. The
+installed `codex-cli 0.148.0-alpha.6` was inspected read-only: `codex cloud status` has no stdout,
+exit-code, checkout-SHA, terminal-result or log option, and the available Cloud commands are
+`exec/status/list/apply/diff`. `$HOME/bin/w47-cloud` forwards status/diff to those supported commands.
+Therefore lifecycle `READY` remains insufficient acceptance evidence and no Sevilla registry GREEN,
+runtime/catalog mutation, or Melilla publication was attempted. No local Gradle/JVM/Kotlin fallback
+was used.
+
+While that direct portal blocker remained unresolved, generation 46 published seven independent
+public unauthenticated GET-only research checkpoints, all without profile/catalog/inventory promotion:
+
+- `2429be736309b897b303d27dc404a564fb918081` — CAIB `ES-PUB-0097/0098`: current generic-instance
+  start reaches the `sistramitfront` login boundary before any signing ABI; current sede guidance names
+  AutoFirma/Cl@veFirma only at product level.
+- `969b85a6f294d6d9132ac621970917204094bc1d` — Canarias `ES-PUB-0099`: exact current procedure 6861
+  returns a 303 to `/sede/identificacionmenu`; five same-origin public JS assets expose no AutoFirma,
+  MiniApplet, algorithm or signature-format contract.
+- `494dd4757f970fb1ef9140f423362950545ca770` — Catalunya `ES-PUB-0105`: live Petició genèrica
+  explicitly declares electronic-signature mode, but its public HTML-form flow proceeds to secure
+  authentication and the inspected GSITGF assets expose no local signing ABI.
+- `e35b8334fe61703e8dc73e4d4e06e055c934532c` — Ceuta `ES-PUB-0106`: live `ANI` procedure opens an
+  authentication modal; technical requirements name AutoFirma, while first-party `form.js` exposes no
+  signer algorithm/format/callback contract.
+- `bb490289c31f3ed51173d89ed09478ec94c2c19b` — GVA `ES-PUB-0108`: live procedure 15602 publishes
+  the exact tramitador entry, whose first transition is assistant login; public login JS exposes no
+  signing ABI. Ephemeral service session identifiers were not retained.
+- `6ac33e6f1e16aabded741743d03d59d182566755` — Menorca `ES-PUB-0118`: current sede hands online
+  services to `carpetaciutadana.org`; a bounded no-cookie GET remained in a same-path 302 loop and no
+  stable public procedure/signing contract was exposed.
+- `7f52245d86089629df03c4994762a577dfc1830a` — Mallorca `ES-PUB-0120`: the official sede binds a
+  live SEDIPUALB/SEGEX generic-register procedure that explicitly requires digital-certificate-only
+  identification/signing, rejects Cl@ve for this signed flow, and requires Autofirm@. The pre-submit
+  page and two first-party runtime JS files still expose no algorithm, format, payload, callback or
+  transport, and the next boundary is POST, so the surface remains research-only.
+
+All seven research files passed `git diff --check` and bounded sensitive-pattern scans before their
+atomic commits. Temporary public HTML/JS bodies were deleted. A transient Termux 502 occurred before
+the first Menorca documentation write; after gateway recovery, the main worktree was reverified clean
+and the target file absent before the mutation was retried. No authenticated navigation, certificate
+selection, signing component launch, POST/form submission, upload, payment, real signature, APK
+launch/install, ADB, or device control occurred.
+
+Because only research documentation changed, catalog accounting remains unchanged: 183 entries, 13
+bound surfaces, 12 unique profile IDs, 170 unbound surfaces; inventory states remain 164
+`BROWSE_ONLY`, 8 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`,
+2 `UNSUPPORTED_PROTOCOL`; generated states remain 92 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 8
+`E2E_PENDING`, 4 `E2E_VERIFIED`; discovery states remain 105 `REVIEWED`, 5 `RECHECK_REQUIRED`, 73
+`DISCOVERED`. The classified research buffer remains at least 16 surfaces. Portals fully integrated in
+generation 46 remain zero because Sevilla is still in-flight behind the mandatory Cloud evidence
+boundary.
