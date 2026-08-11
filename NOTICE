@@ -1,0 +1,35 @@
+Junta Firma Mobile — third-party notices
+
+This file is a pre-publication notice inventory. It does not replace the license
+text of any third-party component and does not grant rights to material whose
+provenance is still under review. See docs/provenance.md.
+
+Bebas Neue
+-----------
+Bundled font: app/src/main/res/font/bebas_neue_regular.ttf
+Copyright (c) 2010 Dharma Type
+License: SIL Open Font License, Version 1.1
+License text: docs/licenses/BebasNeue-OFL.txt
+
+Third-party services, names and domains
+---------------------------------------
+References to Junta de Andalucia, AutoFirma, Cliente @firma, Spanish public
+administrations, universities, public agencies, public-service domains and
+other named third-party services are descriptive interoperability references.
+Their names, marks, domains, services and software remain subject to their
+respective owners' rights and licenses. No affiliation, sponsorship,
+certification or endorsement is implied.
+
+Build/runtime dependencies
+--------------------------
+Gradle/Maven and Python dependencies are declared in the repository and are
+subject to their own upstream licenses. Most are resolved at build/install time
+rather than copied as project source. Final release notice completeness remains
+a publication gate; this initial NOTICE must be updated if a distributed
+component's license requires additional attribution or license text.
+
+Unresolved custom assets
+------------------------
+Custom visual binary assets are not declared project-licensed by this NOTICE.
+Their origin/redistribution rights must be resolved, replaced or removed before
+a repository-wide open-source license is applied.
