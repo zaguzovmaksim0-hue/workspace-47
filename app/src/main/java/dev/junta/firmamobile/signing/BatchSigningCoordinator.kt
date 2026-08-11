@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.asStateFlow
 internal class BatchSigningCoordinator(
     private val certificateSession: CertificateSession,
     private val adapter: BatchSigningProtocolAdapter,
+    private val adapterResolver: (SigningProtocolId) -> BatchSigningProtocolAdapter? = { id ->
+        adapter.takeIf { it.id == id }
+    },
     private val localSignatureEngine: LocalSignatureEngine,
     private val currentOrigin: () -> TrustedOrigin?,
     private val currentNavigationEpoch: () -> Long = { 0L },
@@ -40,7 +43,9 @@ internal class BatchSigningCoordinator(
         request: NormalizedBatchSigningRequest,
         reply: BatchSigningReplySink,
     ): SigningPreparationResult {
-        validateBoundary(request, reply)?.let { code ->
+        val operationAdapter = resolveAdapter(request.protocolId)
+            ?: return reject(request, reply, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        validateBoundary(request, reply, operationAdapter)?.let { code ->
             return reject(request, reply, code)
         }
         if (pending != null || active != null) {
@@ -70,6 +75,7 @@ internal class BatchSigningCoordinator(
             request = request,
             certificateSnapshot = certificateSnapshot,
             reply = reply,
+            adapter = operationAdapter,
             startedAtNanos = startedAtNanos,
         )
         pending = operation
@@ -130,7 +136,7 @@ internal class BatchSigningCoordinator(
             operationValidationError(operation, identity)?.let { code ->
                 return fail(operation, code)
             }
-            val ownedPreSign = when (val prepared = adapter.prepare(operation.request, identity.chain)) {
+            val ownedPreSign = when (val prepared = operation.adapter.prepare(operation.request, identity.chain)) {
                 is BatchProtocolPrepareResult.Failure -> return fail(operation, prepared.code)
                 is BatchProtocolPrepareResult.Success -> prepared.preSign
             }
@@ -162,7 +168,7 @@ internal class BatchSigningCoordinator(
                 return fail(operation, code)
             }
             val completion = try {
-                adapter.complete(operation.request, ownedPreSign, localSignatures)
+                operation.adapter.complete(operation.request, ownedPreSign, localSignatures)
             } finally {
                 localSignatures.forEach(LocalSignature::close)
                 localSignatures.clear()
@@ -268,11 +274,12 @@ internal class BatchSigningCoordinator(
     private fun validateBoundary(
         request: NormalizedBatchSigningRequest,
         reply: BatchSigningReplySink,
+        operationAdapter: BatchSigningProtocolAdapter,
     ): SigningErrorCode? {
         if (!request.isOpen() || reply.requestId != request.requestId) {
             return SigningErrorCode.INVALID_REQUEST
         }
-        if (request.protocolId != adapter.id) return SigningErrorCode.UNSUPPORTED_PROTOCOL
+        if (request.protocolId != operationAdapter.id) return SigningErrorCode.UNSUPPORTED_PROTOCOL
         return if (currentOriginSafely() == request.context.origin &&
             currentNavigationEpochSafely() == request.context.navigationEpoch
         ) {
@@ -280,6 +287,12 @@ internal class BatchSigningCoordinator(
         } else {
             SigningErrorCode.ORIGIN_NOT_ALLOWED
         }
+    }
+
+    private fun resolveAdapter(id: SigningProtocolId): BatchSigningProtocolAdapter? = try {
+        adapterResolver(id)?.takeIf { it.id == id }
+    } catch (_: Exception) {
+        null
     }
 
     private fun reject(
@@ -396,6 +409,7 @@ internal class BatchSigningCoordinator(
         val request: NormalizedBatchSigningRequest,
         val certificateSnapshot: CertificateSigningSnapshot,
         val reply: BatchSigningReplySink,
+        val adapter: BatchSigningProtocolAdapter,
         val startedAtNanos: Long,
     ) {
         private val terminalClaim = AtomicReference<TerminalClaim?>(null)
