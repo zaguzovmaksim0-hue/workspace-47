@@ -3179,3 +3179,26 @@ No APK was installed or launched; no ADB/device control, authenticated portal in
   use, real signing, upload, payment or administrative submission occurred. UGR/DGT physical E2E,
   AEAT Client TLS, real-portal JavaScript dialogs, TalkBack/visual validation and supported-Linux Go
   race remain external/manual gates.
+
+
+## Autonomous Portal G53 — Melilla batch execution core — 2026-08-11
+
+- Clean Cloud RED `task_e_6a7b1aeaf50c83239ef6ca5e3a02307d` at exact
+  `46dbdc461836a84ff9b8c97c8d35e81295a5ee93`: dependency verification enabled; expected
+  `:app:compileDebugUnitTestKotlin` failure only on the absent batch execution seam; Cloud checkout
+  clean.
+- Production candidate `d56741ac44f4ffb4a9f731d38776003ffb2144ee` adds the dedicated bounded
+  batch models/interface/Melilla protocol adapter. Its first Cloud GREEN compiled and ran the test but
+  exposed an invalid plain-JVM Android JSON fixture/runtime context, not a production compile failure.
+- Test-harness commit `c36e98d73634f3a4d57f6d99a4465e08ed2e0cfc` adds only the repository-standard
+  Robolectric runner/modes; no assertion or fixture behavior changed.
+- Focused Cloud GREEN `task_e_6a7b2400628883239ab095c5333bd3f7`: exact `c36e98d...`, Gradle
+  exit 0, `BUILD SUCCESSFUL in 4m 3s`, 4/4 passed, dependency verification enabled/unchanged, final
+  checkout clean.
+- Combined Debug+QA Cloud gate `task_e_6a7b25c89b6c83238ec3cde02a7c6e75`: exact `c36e98d...`,
+  Gradle exit 0, `BUILD SUCCESSFUL in 7m 46s`, 60 actionable tasks; Debug XML 633/633 and QA XML
+  14/14, zero failures/errors/skips, covering `MelillaBatchUrlPolicyTest`,
+  `MelillaBatchBridgeAdapterTest`, and `MelillaBatchProtocolAdapterTest`. Verification metadata was
+  unchanged and final Cloud `git status --short` was empty.
+- No local Gradle/JVM/Kotlin execution and no APK/device/authenticated-portal/credential/private-key/
+  real-signing/upload/payment/submission action occurred.

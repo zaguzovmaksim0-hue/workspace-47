@@ -2735,3 +2735,67 @@ or overwrite current main files.
 No APK was installed or launched; no ADB/device control, authenticated portal navigation, cookie or
 credential replay, certificate unlock/private-key use, signing-component launch, real signature,
 form POST, upload, payment, or administrative submission occurred.
+
+
+## Portal G53 — Melilla batch execution-core Cloud acceptance — 2026-08-11
+
+Generation 53 resumed from clean, remote-identical autonomous SHA
+`46dbdc461836a84ff9b8c97c8d35e81295a5ee93`; canonical
+`origin/feature/ws024-secure-tunnel-20260728` remained exactly
+`9c99bbfb36e13f88231d56001ccef8c4cbbce128`. No local Android Gradle, JVM, Kotlin compiler, or
+Gradle daemon was used.
+
+The corrected batch-core TDD RED was rerun in Codex Cloud task
+`task_e_6a7b1aeaf50c83239ef6ca5e3a02307d` at exact pushed SHA
+`46dbdc461836a84ff9b8c97c8d35e81295a5ee93`. Dependency verification remained enabled and the
+checkout remained clean. `:app:compileDebugUnitTestKotlin` failed in 3m40s only on the intended
+missing batch seam (`MelillaBatchProtocolAdapter`, `BatchProtocolPrepareResult`,
+`BatchProtocolCompletionResult`, `NormalizedBatchSigningRequest`,
+`NormalizedBatchSigningDocument`, and `BatchSigningFormat`), so the RED was accepted.
+
+Production commit `d56741ac44f4ffb4a9f731d38776003ffb2144ee` added only
+`BatchSigningModels.kt`, `BatchSigningProtocolAdapter.kt`, and
+`MelillaBatchProtocolAdapter.kt`. The core revalidates exact Melilla pre/post/getdata bindings,
+constructs the evidence-backed AutoFirma JSON batch, uses URL-safe Base64 for `json`/`certs`/`tridata`,
+standard Base64 for `PK1`, preserves ordered `PRE` inputs and `NEED_PRE`, injects the existing
+`ProfileHttpTransport`, consumes prepared state once, bounds/zeroizes owned sensitive protocol byte
+arrays, and introduces no retry or alternate network/TLS stack.
+
+The first GREEN task `task_e_6a7b2040db3c83239079fb32cf8070a0` at `d56741a...` compiled and
+executed the focused suite but failed 4/4 tests. Three failures were Android `org.json` stub runtime
+failures inside the test fixture itself; the fourth was the same missing Android runtime context causing
+an early production `INVALID_REQUEST`. Every other unit test in this repository that directly constructs
+`JSONObject` uses Robolectric. Test-only commit `c36e98d73634f3a4d57f6d99a4465e08ed2e0cfc` therefore added
+the same `RobolectricTestRunner`/Conscrypt/graphics/SQLite annotations as the adjacent Melilla bridge
+test, without changing any assertion, fixture contract, or production code.
+
+Focused Cloud GREEN `task_e_6a7b2400628883239ab095c5333bd3f7` verified exact pushed SHA
+`c36e98d73634f3a4d57f6d99a4465e08ed2e0cfc`: Gradle exit 0, `BUILD SUCCESSFUL in 4m 3s`,
+4/4 focused tests passed, dependency verification remained enabled and unchanged, and final
+`git status --short` was empty. Combined Debug+QA Cloud task
+`task_e_6a7b25c89b6c83238ec3cde02a7c6e75` then verified the same exact SHA with Gradle exit 0 and
+`BUILD SUCCESSFUL in 7m 46s`; Debug XML reported 633/633 passing tests and QA XML reported 14/14
+passing focused tests across `MelillaBatchUrlPolicyTest`, `MelillaBatchBridgeAdapterTest`, and
+`MelillaBatchProtocolAdapterTest`, with zero failures/errors/skips. Dependency verification remained
+enabled, verification metadata was unchanged, and the Cloud checkout finished clean.
+
+Direct Standards + Spec review and static checks found no Critical or Important defect in this bounded
+execution-core slice. `git diff --check` passed; changed-content scans found no private-key/certificate
+body, bearer material, dependency-verification bypass, trust-all/hostname-verifier weakening, HTTP
+allowlist widening, or retry loop. No implementation worker, `agent_spawn`, or delegated code review
+was used.
+
+This does not yet promote Melilla. The public entry remains unbound / `BROWSE_ONLY`; coordinator,
+certificate snapshot/user-confirmation ownership, runtime callback delivery/transport composition, and
+profile/catalog promotion are separate later slices. Catalog accounting therefore remains 183 entries,
+14 bound surfaces, 13 unique profile IDs, 169 unbound; inventory remains 163 `BROWSE_ONLY`, 9
+`IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2
+`UNSUPPORTED_PROTOCOL`; generated states remain 91 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`,
+9 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The classified research buffer remains at least 16.
+Portals newly integrated in generation 53 remain zero. Exact next implementation order remains Melilla
+coordinator/runtime completion, `extremadura-tramites` (`ES-PUB-0109`), then La Palma
+(`ES-PUB-0130`); Eivissa and Formentera remain research-only.
+
+No APK was installed/launched; no ADB/device control, authenticated portal navigation, credentials,
+cookies/bearer data, certificate unlock/private-key material, real signing, form submission, upload,
+payment, or administrative action occurred.
