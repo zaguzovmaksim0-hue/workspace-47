@@ -2411,3 +2411,14 @@ verification disablement. These production changes were deliberately left **unst
 unpushed** because the corresponding Cloud RED task exposes only lifecycle `READY`, not a verifiable
 expected test failure. Preserve this local work; do not discard or publish it until the required Cloud
 evidence boundary is satisfied.
+
+**Navarra / La Rioja bounded public research.** Current Navarra Registro General and its official
+"Firmar documentos" help page both return HTTP 200. The help confirms AutoFirma is used by some
+Navarra procedures, but the public registry surface exposes no exact algorithm/format/payload/callback
+ABI before authentication; `navarra-sede-registro-general` remains `BROWSE_ONLY`. La Rioja's current
+Oficina Electrónica publicly embeds an exact official file-signing utility under `ias1.larioja.org`.
+The embedded GET response exposes a server-side file-input form followed by POST and contains no
+AutoScript/MiniApplet contract before that boundary. Ephemeral server-session values from the raw
+response were not retained and the raw iframe body was deleted; no upload or POST was performed.
+`larioja-oficina-electronica` remains `BROWSE_ONLY`. Detailed safe findings are in
+`docs/autonomous/2026-08-11-g45-navarra-larioja-research.md`.
