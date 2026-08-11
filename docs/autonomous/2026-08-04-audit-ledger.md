@@ -2568,3 +2568,59 @@ bound surfaces, 12 unique profile IDs, 170 unbound surfaces; inventory states re
 `DISCOVERED`. The classified research buffer remains at least 16 surfaces. Portals fully integrated in
 generation 46 remain zero because Sevilla is still in-flight behind the mandatory Cloud evidence
 boundary.
+
+## Portal G47 — Cloud terminal-evidence blocker and platform research expansion — 2026-08-11
+
+Generation 47 started by re-verifying all preserved Git state. The autonomous main was clean and
+remote-identical at `447a8b592815dc0883a1de12cef2834521fe059d`; Sevilla remained clean and
+remote-identical at `069c6fd73a19b54b92dc4771867fff712617301d`; Melilla remained clean at local
+`ce1b1639b322b616fb71cce12c73305db26e6a1a`, one commit ahead of upstream
+`25df9f7ed5bef0387568d6c2db5c7083f154fa9b`. Canonical
+`origin/feature/ws024-secure-tunnel-20260728` remained exactly
+`9c99bbfb36e13f88231d56001ccef8c4cbbce128`.
+
+The four preserved Sevilla Codex Cloud tasks were rechecked without invoking local Gradle. Profile RED
+`task_e_6a7aa3b8def08323970f6b302ea0ad64`, adapter
+`task_e_6a7aa19ae4a08323b0f8200f3f9584bc`, profile GREEN
+`task_e_6a7aa66cc13c83238c4f423d292cdc15`, and registry RED
+`task_e_6a7aa844258c832389f97744737e5fcc` still report lifecycle `READY` and no diff. The installed
+`codex-cli 0.148.0-alpha.6` was inspected more narrowly: `cloud list --json` reports task id, lifecycle,
+environment label, attempt count, update timestamp, URL and diff summary, but no terminal Gradle
+stdout, exit code, observed checkout SHA or result. `cloud status` rejects `--json`, `--attempt` and
+`--verbose`; those options are not supported by that command. Therefore no existing Cloud task yet
+provides the mandatory acceptance evidence, and neither Sevilla registry GREEN nor Melilla publication
+was attempted. No local Gradle/JVM/Kotlin fallback was used.
+
+While Cloud acceptance remained blocked, two atomic portal-research checkpoints were published:
+
+- `ad2e1414ee047bad61463c6a40bacb579c507fb6` — Instituto Cervantes `ES-PUB-0049` and Ministerio de
+  Igualdad `ES-PUB-0067` expose the same four public AC2 frontend scripts at identical SHA-256 hashes.
+  Their shared `ac2-formularios.js` is byte-identical to the MPTMD copy already recorded in G44 and
+  calls `doSignAsPromise(file, nifSol)` in a later AutoFirma flow, but the exact four public scripts do
+  not define that function or expose AutoScript/MiniApplet, algorithm or CAdES/PAdES/XAdES format
+  tuples. Both surfaces remain `BROWSE_ONLY`.
+- `6321d6f1c0b5783baf6b69922e2f355476eb995b` — Diputación de Guadalajara `ES-PUB-0156`, Diputación
+  de Teruel `ES-PUB-0173`, and Diputación de Zamora `ES-PUB-0177` were checked with bounded no-cookie
+  GETs. Their current `sedelectronica.es` entries redirect into `/info`/`/info.0` session transitions;
+  the observed `/info.0` responses self-redirect without replaying the issued session cookie. No cookie
+  was persisted/replayed and no stable public signer ABI was reached, so all three remain
+  `BROWSE_ONLY`.
+
+Both checkpoints passed `git diff --check`, bounded sensitive-pattern scanning, atomic commit/push and
+exact remote-SHA equality. Temporary public HTML/JS response bodies were deleted after inspection.
+The Termux `rg` path currently resolves to a Codex-musl binary that exits 127 on this Android host;
+repository inspection used the working system `grep`/`find` tools instead. This tooling defect did not
+modify the repository and is not a portal blocker.
+
+Catalog accounting was recomputed directly from `public_portal_catalog_v1.json` and is unchanged at
+183 entries, 13 bound surfaces, 12 unique profile IDs and 170 unbound surfaces. Inventory states remain
+164 `BROWSE_ONLY`, 8 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4
+`INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated catalog states remain 92 `CATALOGED`, 73
+`DISCOVERED`, 6 `BLOCKED`, 8 `E2E_PENDING`, and 4 `E2E_VERIFIED`; discovery states remain 105
+`REVIEWED`, 5 `RECHECK_REQUIRED`, and 73 `DISCOVERED`. The classified research buffer remains at
+least 16 surfaces. Portals fully integrated in generation 47 remain zero because Sevilla is still the
+in-flight implementation slice behind the mandatory Cloud terminal-evidence boundary.
+
+Generation 47 remained within the public unauthenticated research boundary. No authentication, cookie
+replay, certificate selection, signing component launch, form POST, upload, payment, administrative
+submission, real signature, APK install/launch, ADB, or device-control workflow occurred.
