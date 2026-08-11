@@ -2157,3 +2157,58 @@ credentials/private-certificate material, real signing, form POST, upload, payme
 submission occurred. Physical UGR, DGT and Cantabria portal E2E; AEAT Client-TLS E2E; real-portal
 JavaScript-dialog compatibility; TalkBack/physical visual accessibility; and Go race on supported
 Linux remain manual/external gates.
+
+## Portal G43/G44 — JCCM certificate-login integration and recovered acceptance — 2026-08-11
+
+**Exact integration boundary.** The preserved JCCM work was integrated without replacing newer
+Cantabria or REG-AGE history. The autonomous product checkpoint is
+`0afd632d8b22691da7cde87c7e587fe8b49b306b`, eight commits ahead of the previously published
+`d8c43aa3ff5b92ec93757b01d62af795679d58b6`. The sequence is `c63bea6` (contract RED),
+`9731ad6` (profile/adapter GREEN), `88b413a` (exact-runtime-page RED), `0b79d60`
+(`currentPageUrl` fail-closed GREEN), `643043f` (separate exact catalog surface), and three bounded
+regression-alignment commits `b79f821`, `5370f5e`, `0afd632`. The runtime profile remains exactly
+`jccm-certificate-login-probe`, `VERIFIED_CONTRACT` / `QA_ONLY`; release remains disabled. The
+native bridge accepts the public probe only on the exact runtime URL
+`https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml`,
+for exact origin, five decoded bytes `ABCDE`, `SHA1withRSA`, `CAdES`, and null/empty extra
+properties. Wrong path, query, fragment, origin, profile, algorithm, format, payload, main-frame state,
+or properties fail closed. No `FORMPROC.submit`, authenticated redirect, session/cookie transfer,
+server upload, or administrative action was added.
+
+**Catalog truthfulness.** Broad JCCM inventory surface `ES-PUB-0103` remains unbound
+`BROWSE_ONLY`. Exact public certificate-probe surface `ES-PUB-0183` is separately bound to
+`jccm-certificate-login-probe`, inventory `IMPLEMENTED_NOT_E2E`, generated catalog `E2E_PENDING`.
+The recomputed catalog contains 183 entries, 13 bound surfaces, 12 unique profile IDs and 170 unbound
+surfaces. Inventory counts are 164 `BROWSE_ONLY`, 8 `IMPLEMENTED_NOT_E2E`, 1
+`VERIFIED_CONTRACT`, 4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`;
+generated states are 92 `CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 8 `E2E_PENDING`, and 4
+`E2E_VERIFIED`. The classified research buffer remains at least 16 surfaces. The exact next
+implementation sequence is Sevilla ATSE, preserved Melilla STA, then research-ready
+`extremadura-tramites`; Justicia, ACCEDA, SEPE, MJusticia and Asturias still need additional public
+contract evidence.
+
+**Gradle incident and terminal acceptance.** The one generation-43 Codex Cloud availability attempt
+failed before Gradle with HTTP 429 `Usage limit exceeded`, activating the operator-authorized bounded
+Termux fallback. The final clean-commit acceptance job `job_20260810_202832_2180e9fd` started with
+`MemAvailable_kB=4199152` and ran one Gradle invocation with `--no-daemon --no-parallel
+--max-workers=1`, JVM `-Xmx1536m -XX:MaxMetaspaceSize=512m`, and in-process Kotlin compilation.
+Against exact SHA `0afd632d8b22691da7cde87c7e587fe8b49b306b`,
+`verifyResolvedCoreVersion`, `verifyPortableAapt2Configuration`, `testDebugUnitTest`,
+`testQaUnitTest`, `lintDebug`, `lintQa`, `assembleDebug`, `assembleQa`, and
+`assembleQaAndroidTest` all completed successfully. Terminal output is `BUILD SUCCESSFUL in 12m
+59s`; 142 actionable tasks were reported (42 executed, 3 from cache, 97 up-to-date). No OOM,
+thermal termination, TLS/checksum bypass, or dependency-verification bypass occurred. Post-gate
+checks passed `git diff --check`, 9/9 public-catalog generator unit tests and byte-for-byte deterministic
+catalog regeneration. A bounded net-diff scan found no private-key material, bearer/JWT material,
+dependency-verification disabling, hostname/trust bypass, or session-persistence pattern.
+
+**Direct Standards + Spec review.** Main-Watchdog review found no Critical or Important defect in the
+JCCM net diff. The WebView shim is profile/origin/call scoped; the native bridge independently adds
+the stricter exact-page check; parser/registry enforce `QA_ONLY`; the CAdES adapter independently
+checks the exact profile/origin/algorithm/format/payload tuple; and the separate catalog row prevents
+inflating the broad JCCM surface. Physical JCCM certificate-login/callback acceptance remains the
+manual E2E gate and no `VERIFIED_E2E` claim is inferred.
+
+No APK was installed or launched; no ADB/device control, authenticated portal navigation,
+credential/private-certificate unlock, real signing, form submission, upload, payment or
+administrative submission occurred.
