@@ -709,6 +709,17 @@ class BrowserSecurityRegressionTest {
                 "when (owner.kind)" in source &&
                 "onDismissSigningState = ::dismissSigningState" in browserBlock,
         )
+        val cancelBlock = source
+            .substringAfter("private fun cancelSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    private fun dismissSigningState")
+        assertTrue(
+            "Active signing cancellation must retain ownership until the signing job actually completes",
+            cancelBlock.isNotEmpty() &&
+                "cancellationJob.invokeOnCompletion" in cancelBlock &&
+                "signingFlowOwnership.release(owner.kind, owner.requestId)" in cancelBlock &&
+                cancelBlock.indexOf("cancellationJob.invokeOnCompletion") <
+                cancelBlock.indexOf("cancellationJob.cancel()"),
+        )
     }
 
     @Test
