@@ -121,6 +121,26 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Melilla catalog exposes the implemented QA batch contract without E2E promotion`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single { it.portalId == PortalId("melilla-sede") }
+
+        assertEquals(ProfileId("melilla-sede"), portal.profileId)
+        assertEquals("ES-PUB-0107", portal.inventoryId)
+        assertEquals(
+            "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+            portal.entryUrl.toString(),
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in portal.observedMechanisms)
+        assertTrue(SignatureFormat.CADES in portal.observedSignatureFormats)
+        assertTrue(portal.limitations.contains("E2E", ignoreCase = true))
+    }
+
+    @Test
     fun `US alias retains its official procedure URL while resolving the exact REG-AGE launch URL`() {
         val aliasJson = json
             .replace(
