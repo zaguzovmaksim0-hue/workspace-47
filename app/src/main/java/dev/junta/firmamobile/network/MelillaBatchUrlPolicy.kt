@@ -46,11 +46,11 @@ sealed interface MelillaBatchUrlValidation {
 }
 
 /**
- * Validates the runtime URLs owned by Melilla's AutoFirma batch wrapper.
+ * Validates the runtime base URLs owned by Melilla's AutoFirma batch servlet.
  *
- * This policy deliberately treats operation and document identifiers as opaque
- * values. It validates their shape and their later binding, but never creates,
- * rewrites, or guesses an identifier.
+ * The live servlet routes operation and document identity in path segments.
+ * Runtime identifiers stay opaque: this policy validates and binds them but
+ * never creates, rewrites, or guesses one.
  */
 class MelillaBatchUrlPolicy {
     fun validate(rawUrl: String): MelillaBatchUrlValidation {
@@ -76,21 +76,26 @@ class MelillaBatchUrlPolicy {
         if (uri.rawFragment != null) {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.FRAGMENT_NOT_ALLOWED)
         }
-        if (uri.rawPath != PATH) {
+        if (uri.rawQuery != null) {
+            return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.QUERY_NOT_ALLOWED)
+        }
+
+        val rawPath = uri.rawPath
+            ?: return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
+        if (!rawPath.startsWith(PATH_PREFIX)) {
             return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
         }
 
-        val rawQuery = uri.rawQuery
-            ?: return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.QUERY_NOT_ALLOWED)
-        if (rawQuery.length > MAX_RAW_QUERY_CHARS) {
-            return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.TOO_LONG)
+        val relativePath = rawPath.substring(PATH_PREFIX.length)
+        if (relativePath.isEmpty() || relativePath.endsWith('/')) {
+            return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
         }
-        val query = parseQuery(rawQuery)
-            ?: return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.QUERY_NOT_ALLOWED)
+        val segments = relativePath.split('/')
+        if (segments.any { it.isEmpty() || ';' in it }) {
+            return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
+        }
 
-        val operationValue = query[OP_PARAMETER]
-            ?: return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.QUERY_NOT_ALLOWED)
-        val operation = when (operationValue) {
+        val operation = when (segments.firstOrNull()) {
             "presign" -> MelillaBatchUrlOperation.PRESIGN
             "postsign" -> MelillaBatchUrlOperation.POSTSIGN
             "getdata" -> MelillaBatchUrlOperation.GETDATA
@@ -98,26 +103,15 @@ class MelillaBatchUrlPolicy {
                 MelillaBatchUrlError.INVALID_OPERATION,
             )
         }
-        val expectedKeys = if (operation == MelillaBatchUrlOperation.GETDATA) {
-            setOf(OP_PARAMETER, OPERATION_ID_PARAMETER, DOCUMENT_ID_PARAMETER)
-        } else {
-            setOf(OP_PARAMETER, OPERATION_ID_PARAMETER)
-        }
-        if (query.keys != expectedKeys) {
-            val error = if (query.keys.any { it !in expectedKeys }) {
-                MelillaBatchUrlError.UNKNOWN_QUERY_PARAMETER
-            } else {
-                MelillaBatchUrlError.QUERY_NOT_ALLOWED
-            }
-            return MelillaBatchUrlValidation.Rejected(error)
+        val expectedSegmentCount = if (operation == MelillaBatchUrlOperation.GETDATA) 3 else 2
+        if (segments.size != expectedSegmentCount) {
+            return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.PATH_NOT_ALLOWED)
         }
 
-        val operationId = query[OPERATION_ID_PARAMETER]
-            ?.takeIf(::isSafeIdentifier)
+        val operationId = decodeIdentifier(segments[1])
             ?: return MelillaBatchUrlValidation.Rejected(MelillaBatchUrlError.INVALID_IDENTIFIER)
         val documentId = if (operation == MelillaBatchUrlOperation.GETDATA) {
-            query[DOCUMENT_ID_PARAMETER]
-                ?.takeIf(::isSafeIdentifier)
+            decodeIdentifier(segments[2])
                 ?: return MelillaBatchUrlValidation.Rejected(
                     MelillaBatchUrlError.INVALID_IDENTIFIER,
                 )
@@ -186,55 +180,58 @@ class MelillaBatchUrlPolicy {
             ?.takeIf { it.binding.operation == MelillaBatchUrlOperation.GETDATA }
             ?.binding
 
-    private fun parseQuery(rawQuery: String): Map<String, String>? {
-        if (rawQuery.isEmpty()) return null
-        val values = linkedMapOf<String, String>()
-        for (pair in rawQuery.split('&')) {
-            if (pair.isEmpty()) return null
-            val separator = pair.indexOf('=')
-            if (separator <= 0 || separator != pair.lastIndexOf('=')) return null
-            val rawName = pair.substring(0, separator)
-            val rawValue = pair.substring(separator + 1)
-            val name = decodeComponent(rawName) ?: return null
-            if (name != rawName) return null
-            val value = decodeComponent(rawValue) ?: return null
-            if (values.put(name, value) != null) return null
-        }
-        return values
-    }
+    private fun decodeIdentifier(raw: String): String? {
+        if (raw.isEmpty()) return null
 
-    private fun decodeComponent(raw: String): String? {
         val bytes = ByteArrayOutputStream(raw.length)
         var index = 0
+        var literalStart = 0
         while (index < raw.length) {
             if (raw[index] != '%') {
-                val encoded = raw[index].toString().encodeToByteArray()
-                bytes.write(encoded, 0, encoded.size)
                 index++
                 continue
+            }
+            if (literalStart < index) {
+                val literal = raw.substring(literalStart, index).encodeToByteArray()
+                bytes.write(literal, 0, literal.size)
             }
             if (index + 2 >= raw.length) return null
             val high = raw[index + 1].hexValue() ?: return null
             val low = raw[index + 2].hexValue() ?: return null
             bytes.write((high shl 4) or low)
             index += 3
+            literalStart = index
         }
-        return try {
+        if (literalStart < raw.length) {
+            val literal = raw.substring(literalStart).encodeToByteArray()
+            bytes.write(literal, 0, literal.size)
+        }
+
+        val decoded = try {
             Charsets.UTF_8.newDecoder()
                 .onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT)
                 .decode(ByteBuffer.wrap(bytes.toByteArray()))
                 .toString()
         } catch (_: Exception) {
-            null
+            return null
         }
+        return decoded.takeIf(::isSafeIdentifier)
     }
 
     private fun isSafeIdentifier(value: String): Boolean =
         value.isNotEmpty() &&
             value.length <= MAX_EPHEMERAL_VALUE_CHARS &&
-            value.all { !it.isISOControl() && !it.isWhitespace() } &&
-            value.none { it == '&' || it == '=' || it == '#' || it == '?' }
+            value != "." &&
+            value != ".." &&
+            value.all {
+                !it.isISOControl() &&
+                    !it.isWhitespace() &&
+                    !Character.isSpaceChar(it)
+            } &&
+            value.none {
+                it == '/' || it == '\\' || it == '?' || it == '#' || it == ';' || it == '%'
+            }
 
     private fun Char.hexValue(): Int? = when (this) {
         in '0'..'9' -> code - '0'.code
@@ -250,11 +247,9 @@ class MelillaBatchUrlPolicy {
         const val MAX_RAW_QUERY_CHARS = 4_096
         const val MAX_EPHEMERAL_VALUE_CHARS = 1_024
 
+        private const val PATH_PREFIX = "$PATH/"
         private const val HOST = "sede.melilla.es"
         private const val HTTPS_SCHEME = "https"
         private const val HTTPS_PORT = 443
-        private const val OP_PARAMETER = "op"
-        private const val OPERATION_ID_PARAMETER = "operacionId"
-        private const val DOCUMENT_ID_PARAMETER = "docId"
     }
 }
