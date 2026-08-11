@@ -14,11 +14,10 @@ import java.time.Instant
 import java.util.ArrayDeque
 import java.util.Base64
 import java.util.UUID
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Test
@@ -36,9 +35,7 @@ class MelillaBatchProtocolAdapterTest {
         val request = batchRequest()
         val adapter = MelillaBatchProtocolAdapter(transport)
 
-        val prepared = assertIs<BatchProtocolPrepareResult.Success>(
-            adapter.prepare(request, identity.chain),
-        ).preSign
+        val prepared = (adapter.prepare(request, identity.chain) as BatchProtocolPrepareResult.Success).preSign
 
         assertEquals(1, transport.calls.size)
         val preCall = transport.calls.single()
@@ -88,19 +85,17 @@ class MelillaBatchProtocolAdapterTest {
         )
 
         assertEquals(2, prepared.inputCount)
-        prepared.withInput(0) { assertContentEquals(preOne, it) }
-        prepared.withInput(1) { assertContentEquals(preTwo, it) }
+        prepared.withInput(0) { assertArrayEquals(preOne, it) }
+        prepared.withInput(1) { assertArrayEquals(preTwo, it) }
 
-        val completed = assertIs<BatchProtocolCompletionResult.Success>(
-            adapter.complete(
+        val completed = (adapter.complete(
                 request,
                 prepared,
                 listOf(
                     LocalSignature("pk1-one".encodeToByteArray()),
                     LocalSignature("pk1-two".encodeToByteArray()),
                 ),
-            ),
-        )
+            ) as BatchProtocolCompletionResult.Success)
         completed.response.use { response ->
             response.withBytes {
                 assertEquals(FINAL_RESPONSE, it.toString(StandardCharsets.UTF_8))
@@ -145,7 +140,7 @@ class MelillaBatchProtocolAdapterTest {
 
         val result = MelillaBatchProtocolAdapter(transport).prepare(request, syntheticIdentity().chain)
 
-        assertEquals(SigningErrorCode.INVALID_REQUEST, assertIs<BatchProtocolPrepareResult.Failure>(result).code)
+        assertEquals(SigningErrorCode.INVALID_REQUEST, (result as BatchProtocolPrepareResult.Failure).code)
         assertTrue(transport.calls.isEmpty())
         request.close()
     }
@@ -163,7 +158,7 @@ class MelillaBatchProtocolAdapterTest {
 
         val result = MelillaBatchProtocolAdapter(transport).prepare(request, syntheticIdentity().chain)
 
-        assertEquals(SigningErrorCode.PROTOCOL_FAILED, assertIs<BatchProtocolPrepareResult.Failure>(result).code)
+        assertEquals(SigningErrorCode.PROTOCOL_FAILED, (result as BatchProtocolPrepareResult.Failure).code)
         assertEquals(1, transport.calls.size)
         request.close()
     }
@@ -176,9 +171,7 @@ class MelillaBatchProtocolAdapterTest {
         )
         val request = batchRequest()
         val adapter = MelillaBatchProtocolAdapter(transport)
-        val prepared = assertIs<BatchProtocolPrepareResult.Success>(
-            adapter.prepare(request, syntheticIdentity().chain),
-        ).preSign
+        val prepared = (adapter.prepare(request, syntheticIdentity().chain) as BatchProtocolPrepareResult.Success).preSign
 
         val wrongCount = adapter.complete(
             request,
@@ -187,20 +180,18 @@ class MelillaBatchProtocolAdapterTest {
         )
         assertEquals(
             SigningErrorCode.PROTOCOL_FAILED,
-            assertIs<BatchProtocolCompletionResult.Failure>(wrongCount).code,
+            (wrongCount as BatchProtocolCompletionResult.Failure).code,
         )
         assertEquals(1, transport.calls.size)
 
-        assertIs<BatchProtocolCompletionResult.Success>(
-            adapter.complete(
+        (adapter.complete(
                 request,
                 prepared,
                 listOf(
                     LocalSignature("pk1-one".encodeToByteArray()),
                     LocalSignature("pk1-two".encodeToByteArray()),
                 ),
-            ),
-        ).response.close()
+            ) as BatchProtocolCompletionResult.Success).response.close()
         assertEquals(2, transport.calls.size)
 
         val reused = adapter.complete(
@@ -211,7 +202,7 @@ class MelillaBatchProtocolAdapterTest {
                 LocalSignature("replay-two".encodeToByteArray()),
             ),
         )
-        assertEquals(SigningErrorCode.PROTOCOL_FAILED, assertIs<BatchProtocolCompletionResult.Failure>(reused).code)
+        assertEquals(SigningErrorCode.PROTOCOL_FAILED, (reused as BatchProtocolCompletionResult.Failure).code)
         assertEquals(2, transport.calls.size)
 
         prepared.close()
