@@ -669,9 +669,11 @@ internal class MelillaBatchReplyRegistry(
     fun abandon(requestId: UUID): Boolean =
         pending[requestId]?.channel?.abandon() == true
 
-    fun abandonAll() {
+    fun abandonAll(): List<UUID> {
         val replies = synchronized(this) { pending.toMap() }
-        replies.values.forEach { it.channel.abandon() }
+        return replies.mapNotNull { (requestId, reply) ->
+            requestId.takeIf { reply.channel.abandon() }
+        }
     }
 
     @Synchronized
