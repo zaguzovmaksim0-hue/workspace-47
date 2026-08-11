@@ -189,7 +189,7 @@ class MelillaBatchUrlPolicy {
     private fun parseQuery(rawQuery: String): Map<String, String>? {
         if (rawQuery.isEmpty()) return null
         val values = linkedMapOf<String, String>()
-        for (pair in rawQuery.split('&', limit = -1)) {
+        for (pair in rawQuery.split('&')) {
             if (pair.isEmpty()) return null
             val separator = pair.indexOf('=')
             if (separator <= 0 || separator != pair.lastIndexOf('=')) return null
