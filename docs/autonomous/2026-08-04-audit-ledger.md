@@ -2292,3 +2292,21 @@ and then uploads the resulting signed file through a separate POST. Neither POST
 page and no algorithm/format tuple is exposed there. Consequently neither `age-acceda` nor MPTMD
 surface `ES-PUB-0072` is promoted to implementation-ready; `ES-PUB-0072` is retained as a new
 research lead only. No inventory/catalog mutation was made.
+
+## Portal G44 — Justicia/MJusticia current-public recheck — 2026-08-11
+
+`docs/autonomous/2026-08-11-g44-portal-research-evidence.md` now records two additional bounded
+GET-only rechecks. The current Sede Judicial `/tramites` surface publishes six same-origin
+procedure/article pages; all returned HTTP 200 and none binds the known `firma.js`
+`SHA256withRSA`/`PAdES` helper through `documentoDeclaracion`, `formFirmaBorrador`, MiniApplet, or
+AutoFirma markup. The helper remains library-level evidence only.
+
+MJusticia `sede2` login idp/75 also remains unchanged at the product boundary: the current public DOM
+contains no certificate controls, while the same first-party `index.js` module still references
+`accAfirma`, `XAdES Detached`, and implicit mode. The other nine same-origin scripts loaded by the page
+define neither `accAfirma` nor a signing algorithm. No profile/status promotion is justified.
+
+The MPTMD public script set was additionally checked for explicit source maps or dynamic script
+references that could reveal `doSignAsPromise`; none was found. The one dynamic `<script>` creation is
+only repeat-form inline-script cloning. `ES-PUB-0072` remains a research lead, not an implementation
+candidate.

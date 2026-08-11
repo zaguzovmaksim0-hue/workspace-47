@@ -37,7 +37,9 @@ Updated: 2026-08-11, generation 44.
 ## Sevilla current state — next implementation candidate
 
 - Preserved worktree `/data/data/com.termux/files/home/workspace-47-autonomous-g38-sevilla` is clean on
-  `agent/g38-sevilla-atse-certificate-login`, local/remote exact SHA
+  `agent/g38-sevilla-atse-certificate-login`; a generated untracked Codex CLI `error.log` containing
+  only diagnostic account/cursor metadata was classified, found to contain no bearer/JWT/private-key
+  material, removed, and the worktree returned clean. Local/remote exact SHA
   `069c6fd73a19b54b92dc4771867fff712617301d`, divergence `0/0`.
 - Existing RED is `108650f51765c2b59a74dee286928ea2e8f3cf65`; `069c6fd...` contains the minimal
   profile-scoped Sevilla shim GREEN only. Its diff passes `git diff --check` and bounded sensitive/
@@ -90,6 +92,13 @@ Updated: 2026-08-11, generation 44.
   `ac2-formularios.js` proves a post-expediente AutoFirma workflow, but `doSignAsPromise` and its
   algorithm/format tuple are absent from the exact pre-auth script set; no POST was executed. Keep
   `age-acceda` unpromoted and add MPTMD `ES-PUB-0072` only as a research lead.
+- Current Sede Judicial `/tramites` recheck found six public procedure/article pages, all HTTP 200,
+  but none binds the known `firma.js` PAdES helper; `justicia-sede-judicial` remains research-only.
+- Current MJusticia idp/75 recheck found the same inactive `accAfirma`/`XAdES Detached` module, no
+  certificate DOM controls, and no wrapper/algorithm definition in the other nine same-origin loaded
+  scripts; `mjusticia-sede` remains research-only.
+- MPTMD public loaded scripts expose no source map/dynamic loader for `doSignAsPromise`; the sole
+  dynamic script creation clones inline repeated-form code. `ES-PUB-0072` remains a research lead.
 - Other research-only candidates still needing complete public binding include
   `justicia-sede-judicial`, `age-acceda`, `mjusticia-sede`, and MPTMD `ES-PUB-0072`.
 - Manual-E2E-only gates: UGR, DGT, Cantabria, JCCM; AEAT Client-TLS E2E. Real-portal JavaScript-dialog

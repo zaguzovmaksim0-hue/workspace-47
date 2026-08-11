@@ -98,3 +98,43 @@ profile. It creates a separate research lead for inventory surface `ES-PUB-0072`
 changed by this documentation-only slice. The next safe gate is a public first-party definition and
 procedure binding for `doSignAsPromise`, if one becomes observable without authentication or form
 submission.
+
+## Sede Judicial — current public procedure binding recheck
+
+The current official `https://sedejudicial.justicia.es/tramites` page returned HTTP 200 and now
+published six same-origin Liferay procedure/article links in the bounded extraction used here:
+Asistencia Jurídica Gratuita, Cita previa, Cuentas de Depósitos y Consignaciones Judiciales, the
+article 627 Ley Concursal form, the article 684 Ley Concursal model, and Procedimiento monitorio en
+la jurisdicción social. All six public GETs returned HTTP 200.
+
+None of those six pages contains `documentoDeclaracion`, `formFirmaBorrador`, `MiniApplet.sign`,
+`AutoFirma`, `SHA256withRSA`, `PAdES`, or another live binding to the already-known first-party
+`firma.js` helper. The previously observed library-level helper therefore remains unbound to a current
+public procedure from this evidence. `justicia-sede-judicial` remains research-only; the existing
+helper contract must not be promoted into a runtime profile without a procedure-specific invocation.
+
+## Ministerio de Justicia — loaded-script recheck
+
+The current public `https://sede2.mjusticia.gob.es/login/index/idp/75` page returned HTTP 200. Its DOM
+still contains no `#submitBtnCertificate`, `#formCertificate`, `#pseudonym-signature`, or certificate
+input branch. It directly loads 11 scripts: ten from `sede2.mjusticia.gob.es` and the accessibility
+client from `insuit.net`. Only the official MJusticia scripts were fetched for contract inspection.
+
+The same first-party login module
+`/js/modules/default/login/index.js?v2026081105` remains byte-identical to the previously recorded
+module (SHA-256 `a9a173e74c2d09781856021856ba40be9d48748aa979cbcb1d9cbc611f6e489c`) and still references
+`accAfirma.selectCertificate(...)`, `XAdES Detached`, implicit mode, and `accAfirma.signData(...)`.
+Across the other nine same-origin scripts loaded by the page, no definition of `accAfirma`,
+`signData`, `selectCertificate`, `AutoScript`, `MiniApplet`, or any `SHA*withRSA` signing algorithm
+was found. The public page therefore still exposes an inactive certificate branch without the
+underlying wrapper/algorithm contract. `mjusticia-sede` remains research-only and is not
+implementation-ready.
+
+## MPTMD linked-script check
+
+The four public same-origin scripts loaded by the two previously inspected MPTMD procedure pages were
+rechecked for explicit source maps, dynamic imports, and script-loader references. The only
+`document.createElement('script')` occurrence is generic cloning of inline repeated-form scripts in
+`ac2-commons.js`; it does not assign an external `src` and does not lead to an AutoFirma wrapper.
+No published `sourceMappingURL`, dynamic import, or linked script revealing `doSignAsPromise` was
+found. The MPTMD `ES-PUB-0072` lead therefore remains research-only.
