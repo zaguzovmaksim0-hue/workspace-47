@@ -165,6 +165,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == JCCM_PROFILE_ID) {
                 validateJccmProfile(p)
             }
+            if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                validateSevillaAtseProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -209,7 +212,13 @@ object SiteProfileCatalogParser {
                 }
                 if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
                     require(op.operation == ProtocolOperation.SIGN)
-                    require(op.packaging == SignaturePackaging.DETACHED)
+                    require(
+                        op.packaging == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                            SignaturePackaging.ATTACHED
+                        } else {
+                            SignaturePackaging.DETACHED
+                        },
+                    )
                     require(op.allowedExtraProperties.isEmpty())
                     when (op.format) {
                         SignatureFormat.CADES -> {
@@ -263,7 +272,13 @@ object SiteProfileCatalogParser {
                         }
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
-                            require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                            require(
+                                op.algorithms == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                                    setOf(SignatureAlgorithm.SHA1_WITH_RSA)
+                                } else {
+                                    setOf(SignatureAlgorithm.SHA512_WITH_RSA)
+                                },
+                            )
                             require(op.fixedExtraProperties.isEmpty())
                         }
                         SignatureFormat.PADES, SignatureFormat.FACTURAE -> error("unsupported adapter format")
@@ -282,6 +297,39 @@ object SiteProfileCatalogParser {
             }
         }
     }
+    private fun validateSevillaAtseProfile(profile: SiteProfile) {
+        require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
+        require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == SEVILLA_ATSE_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(SEVILLA_ATSE_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = SEVILLA_ATSE_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.XADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateJccmProfile(profile: SiteProfile) {
         require(profile.profileVersion == JCCM_PROFILE_VERSION)
         require(profile.displayName == JCCM_DISPLAY_NAME)
@@ -439,6 +487,15 @@ object SiteProfileCatalogParser {
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
     private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
+    private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+    private const val SEVILLA_ATSE_PROFILE_VERSION = 1
+    private const val SEVILLA_ATSE_DISPLAY_NAME =
+        "Agencia Tributaria de Sevilla — Acceso con certificado"
+    private const val SEVILLA_ATSE_START_URL =
+        "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
+    private const val SEVILLA_ATSE_ORIGIN = "https://www.sevilla.org"
+    private const val SEVILLA_ATSE_SAFE_DESCRIPTION =
+        "Acceso con certificado a la Agencia Tributaria de Sevilla"
     private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
     private const val CANTABRIA_PROFILE_VERSION = 1
     private const val CANTABRIA_DISPLAY_NAME =
