@@ -91,6 +91,68 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactMelillaQaOnlyBatchContract() {
+        val profileId = ProfileId("melilla-sede")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Ciudad Autónoma de Melilla — Sede Electrónica", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI(
+                "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+                    "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+            ),
+            profile.startUrl,
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://sede.melilla.es")),
+            profile.initiatorOrigins,
+        )
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN), profile.capabilities)
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertTrue(profile.evidence.isNotEmpty())
+
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(
+            ProtocolInputAdapterId("melilla-batch-autoscript-v1"),
+            operation.inputAdapterId,
+        )
+        assertEquals(
+            CallbackContractId("melilla-batch-result-v1"),
+            operation.callbackContractId,
+        )
+        assertEquals(setOf(Capability.SIGN), operation.capabilities)
+        assertNull(operation.endpointId)
+        assertEquals(setOf(SignatureAlgorithm.SHA256_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.CADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertNull(operation.mode)
+        assertTrue(operation.fixedExtraProperties.isEmpty())
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.melilla.es.evil.example/")),
+        )
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.melilla.es:444/")),
+        )
+    }
+
+    @Test
     fun preservesTheExactUgrQaOnlyCertificateContract() {
         val profileId = ProfileId("ugr-certificado-login")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
