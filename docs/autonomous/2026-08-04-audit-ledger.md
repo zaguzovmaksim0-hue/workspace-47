@@ -2325,3 +2325,48 @@ offers a real "Con Autofirma" entry. Its first-party `catserv.js?ver=2602.0.4` (
 `/frame.jsp`, and submits. The POST was not performed. Because no algorithm/format/payload/callback
 contract is public before that boundary, `diputacion-ourense-sede` remains `BROWSE_ONLY` and is a
 research lead only. No inventory/catalog/profile mutation was made.
+
+## Portal G45 — actual-state reconciliation and Extremadura STA refresh — 2026-08-11
+
+Generation 45 began by re-running `prepare_task`, `git fetch --prune origin`, and the required
+repository/worktree checks. The actual autonomous main was newer than the generation-44 prose handoff:
+`agent/workspace-47-autonomous-20260803` was clean and exactly synchronized with origin at
+`1208a2774d6a6ad7994b6c6f3d590b0b072998e0`, divergence `0/0`, while canonical
+`origin/feature/ws024-secure-tunnel-20260728` remained exactly
+`9c99bbfb36e13f88231d56001ccef8c4cbbce128`.
+
+The published main history after `7c4e302...` contains five Sevilla ATSE implementation/TDD commits:
+`1f97c48bcfcc75363a0b2e0bf5931023da72ba53` (shim GREEN),
+`c909a4a1ce1ed39cc196d31880c38bc46b14adef` (native-bridge RED),
+`06316274733c7f2aa62638ca441e80dd5c36776d` (native-bridge GREEN),
+`84f75e7c9c5130a30c85c4b66c2757dca7d2112e` (XAdES Enveloping adapter RED), and
+`1208a2774d6a6ad7994b6c6f3d590b0b072998e0` (adapter implementation). These commits are preserved as
+actual repository state; they are **not** recorded as accepted Gradle GREEN merely because they are
+pushed. The current Cloud task `task_e_6a7aa19ae4a08323b0f8200f3f9584bc` progressed from `PENDING`
+to lifecycle `READY`, but the installed supported CLI still exposes only lifecycle metadata and no
+terminal stdout/exit-code/observed-SHA report. `READY` therefore remains insufficient acceptance
+evidence. No phone-local Gradle, local Gradle daemon, or local Kotlin compiler was used.
+
+Preserved worker state remains unchanged: Sevilla worker `069c6fd73a19b54b92dc4771867fff712617301d`
+is clean and remote-identical; Melilla worker is clean at local
+`ce1b1639b322b616fb71cce12c73305db26e6a1a`, one commit ahead of remote
+`25df9f7ed5bef0387568d6c2db5c7083f154fa9b`. The Melilla local commit remains intentionally unpushed
+pending verifiable terminal Cloud evidence.
+
+Because Sevilla/Melilla cannot yet cross the required Gradle acceptance boundary, generation 45 used
+independent portal-first work rather than local fallback. A bounded GET-only refresh of the three
+first-party `tramites.juntaex.es` STA resources reconfirmed the exact generation-42 hashes and
+contract. `autoscript.js`, `sta-autofirma-lote.js`, and `webAppsFwk.js?ver=2605.0.2` all returned HTTP
+200 and remain byte-for-byte unchanged. The exact hashes and contract lines are recorded in
+`docs/autonomous/2026-08-11-g45-extremadura-refresh.md`.
+
+`extremadura-tramites` (`ES-PUB-0109`) therefore remains implementation-ready in the research queue,
+but no production/profile/catalog mutation was made because its intended shared STA seam still
+depends on verified Melilla integration. Catalog accounting remains 183 entries, 13 bound surfaces,
+12 unique profile IDs and 170 unbound surfaces; generated states remain 92 `CATALOGED`, 73
+`DISCOVERED`, 6 `BLOCKED`, 8 `E2E_PENDING`, and 4 `E2E_VERIFIED`. The classified research buffer
+remains at least 16 surfaces.
+
+No APK was installed or launched; no ADB/device control, authenticated government-portal navigation,
+credential/cookie/bearer/certificate-unlock/private-key material, real signing, form POST, upload,
+payment, or administrative submission occurred.
