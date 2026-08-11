@@ -438,8 +438,13 @@ class MainActivity : ComponentActivity() {
             SigningFlowKind.ORDINARY -> signingCoordinator.cancel(reason, requestId)
             SigningFlowKind.BATCH -> batchSigningCoordinator.cancel(reason, requestId)
         }
-        signingJobs.takeForCancellation(requestId, accepted)?.cancel()
-        if (accepted) {
+        val cancellationJob = signingJobs.takeForCancellation(requestId, accepted)
+        if (accepted && cancellationJob != null) {
+            cancellationJob.invokeOnCompletion {
+                signingFlowOwnership.release(owner.kind, owner.requestId)
+            }
+            cancellationJob.cancel()
+        } else if (accepted) {
             signingFlowOwnership.release(owner.kind, owner.requestId)
         }
     }
