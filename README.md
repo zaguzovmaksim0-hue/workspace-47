@@ -4,7 +4,7 @@
 
 Junta Firma Mobile is an Android client and interoperability project for certificate-backed authentication and electronic-signature flows used by Spanish public-sector web services. It combines a hardened WebView, local PKCS#12 handling, narrowly scoped portal profiles and protocol adapters, plus evidence-driven compatibility cataloging.
 
-The project is currently in **pre-publication / experimental development**. Compatibility is recorded per exact profile and operation; the repository does not claim universal support for every Spanish public portal or every operation exposed by a supported portal.
+The project is experimental. Compatibility is recorded per exact profile and operation; the repository does not claim universal support for every Spanish public portal or every operation exposed by a supported portal.
 
 ## Security model
 
@@ -36,7 +36,7 @@ The runtime catalog is generated from reviewed repository sources with `tools/ge
 
 ## Build
 
-Use the repository Gradle Wrapper. The Android build is configured around Java 17 and current Android/Gradle tooling declared in the repository.
+Use the repository Gradle Wrapper. The Android build is configured around Java 17 and the Android/Gradle tooling declared in the repository.
 
 Typical development checks:
 
@@ -50,11 +50,25 @@ Release builds intentionally require private signing configuration and must not 
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 
-## Publication candidate cutoff
+Termux-specific build instructions and the full publication gate are documented in [`docs/building-on-termux.md`](docs/building-on-termux.md) and `scripts/oss/run-termux-publication-gates.sh`.
 
-The source-publication candidate is intentionally pinned to product commit `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`, the last autonomous product checkpoint with recorded Codex Cloud acceptance. The recorded broad gate for that SHA passed Debug 656/656 and QA 35/35 tests (691/691 total). Later autonomous commits were an interrupted TDD RED sequence and are not part of the publication candidate.
+## Verified publication candidate
 
-The immutable final branch `oss/publication-candidate-final-20260812` layers publication documentation/policy, security-gate hardening and project-origin visual-resource replacements on top of that green product cutoff. See [`docs/oss-publication-status.md`](docs/oss-publication-status.md) for the exact gate state.
+The source-publication candidate is based on product commit `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`, the last autonomous product checkpoint with recorded Codex Cloud acceptance. Later autonomous TDD RED work was deliberately excluded.
+
+Final private pre-publication verification was completed at candidate SHA `6b5a2ab13497c6c623a223b4a951338f822ccba6`:
+
+- Gitleaks 8.30.1 scanned the full history/all refs: 424 commits, 0 findings, exit 0;
+- publication visual-resource policy: PASS;
+- Debug and QA unit tests: 656/656 each, no failures/errors;
+- Debug/QA lint: PASS;
+- Debug, QA and QA AndroidTest assemblies: PASS;
+- Android artifact verification: PASS;
+- release-signing fail-closed verification: PASS;
+- Python policy/catalog tests: 113 tests, 1 skipped, 0 failures;
+- Go relay test, vet and build: PASS. Native Go `-race` is not supported on Android/arm64 and is optional supporting evidence, not a source-publication blocker.
+
+See [`docs/oss-publication-status.md`](docs/oss-publication-status.md) for the publication record.
 
 ## Test-only credentials
 
@@ -68,18 +82,16 @@ Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting source, compatibilit
 
 Source/asset/data provenance is tracked in [`docs/provenance.md`](docs/provenance.md). Known third-party material retains its own license, including the bundled Bebas Neue font under SIL Open Font License 1.1.
 
-The earlier unresolved custom WebP/launcher PNG artwork has been removed from the publication candidate and replaced with simple project-specific XML/vector resources. See [`docs/visual-asset-audit.md`](docs/visual-asset-audit.md). Their XML structure and manifest wiring have been independently rechecked; final Android resource/Gradle verification is still required before publication approval.
+The earlier unresolved custom WebP/launcher PNG artwork was removed and replaced with project-origin XML/vector resources; those resources passed the final Android build/resource verification. See [`docs/visual-asset-audit.md`](docs/visual-asset-audit.md).
 
 Third-party public-service names, domains, marks and software are referenced descriptively for interoperability. They remain subject to their respective owners' rights and licenses.
 
 ## License
 
-Project-origin material in the final private publication candidate is licensed under the **Apache License 2.0**; see [`LICENSE`](LICENSE). Separately licensed third-party material remains under its own terms as recorded in [`NOTICE`](NOTICE), [`docs/provenance.md`](docs/provenance.md), and the license files under `docs/licenses/`.
+Project-origin source and documentation are licensed under the **Apache License 2.0**. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`docs/license-selection.md`](docs/license-selection.md).
 
-Apache-2.0 does not grant rights in third-party trademarks, public-service names or independently licensed dependencies/assets beyond the terms applicable to those materials.
+Separately licensed third-party material remains under its own terms and is not relicensed by the repository-wide Apache-2.0 license.
 
-The existing author/committer email metadata has been explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12. Neither item remains an independent publication blocker.
+The existing author/committer email metadata was explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12.
 
-Exactly two hard source-publication evidence gates remain: a successful full-history/all-refs secret scan and final Android/Gradle verification of the exact immutable candidate, including the replacement visual resources and publication policy check. The commands and evidence requirements are recorded in [`docs/oss-execution-gates.md`](docs/oss-execution-gates.md).
-
-The repository must remain private until both gates pass and the publication status in [`docs/oss-publication-status.md`](docs/oss-publication-status.md) is approved for public release.
+Source-publication gates are complete. Binary APK/AAB redistribution remains a separate compliance step because exact packaged dependency/NOTICE obligations must be checked for each release artifact.

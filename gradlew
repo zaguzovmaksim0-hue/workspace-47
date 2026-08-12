@@ -107,7 +107,20 @@ case ${PREFIX:-} in
         echo "Run: ./tools/bootstrap-termux-aapt2.sh bootstrap" >&2
         exit 1
     fi
-    set -- "-Pandroid.aapt2FromMavenOverride=$LOCAL_AAPT2" "$@"
+    TERMUX_JAVA_17_HOME=$PREFIX/lib/jvm/java-17-openjdk
+    TERMUX_JAVA_21_HOME=$PREFIX/lib/jvm/java-21-openjdk
+    if [ ! -x "$TERMUX_JAVA_17_HOME/bin/java" ]; then
+        echo "ERROR: Missing Termux OpenJDK 17 at $TERMUX_JAVA_17_HOME" >&2
+        exit 1
+    fi
+    if [ ! -x "$TERMUX_JAVA_21_HOME/bin/java" ]; then
+        echo "ERROR: Missing Termux OpenJDK 21 at $TERMUX_JAVA_21_HOME (required for Robolectric SDK 36 test workers)." >&2
+        exit 1
+    fi
+    set -- \
+        "-Pandroid.aapt2FromMavenOverride=$LOCAL_AAPT2" \
+        "-Dorg.gradle.java.installations.paths=$TERMUX_JAVA_17_HOME,$TERMUX_JAVA_21_HOME" \
+        "$@"
     ;;
 esac
 
