@@ -407,6 +407,20 @@ func TestNewServerDeepCopiesOuterTLSPolicy(t *testing.T) {
 	}
 }
 
+func TestNewServerRejectsAlternateCertificateMap(t *testing.T) {
+	fixture := newServerFixture(t)
+	config := fixture.config
+	alternate := cloneTestCertificate(fixture.serverCert)
+	config.TLSConfig.NameToCertificate = map[string]*tls.Certificate{
+		"relay.test": &alternate,
+	}
+
+	server, err := NewServer(config)
+	if server != nil || !errors.Is(err, ErrServerConfiguration) {
+		t.Fatalf("NewServer() = (%v, %v), want alternate certificate map rejection", server, err)
+	}
+}
+
 func TestNewServerRejectsDynamicOuterTLSOverrides(t *testing.T) {
 	fixture := newServerFixture(t)
 	valid := fixture.config
