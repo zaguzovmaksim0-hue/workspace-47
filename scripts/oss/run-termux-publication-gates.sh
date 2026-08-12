@@ -102,7 +102,7 @@ python -m unittest discover -s tools/tests -p 'test_*.py' -v
 step "6/7 — CANONICAL ANDROID GATE IN CODEX CLOUD ONLY"
 CLOUD_LOG="$ARTIFACT_DIR/codex-cloud-full.log"
 printf 'Submitting exact candidate %s to workspace-47-android via %s\n' "$HEAD_SHA" "$W47_CLOUD"
-"$W47_CLOUD" full --branch "$BRANCH" --sha "$HEAD_SHA" | tee "$CLOUD_LOG"
+"$W47_CLOUD" full --branch "$BRANCH" --sha "$HEAD_SHA" 2>&1 | tee "$CLOUD_LOG"
 grep -Fq "$HEAD_SHA" "$CLOUD_LOG" || fail "Cloud evidence does not contain the requested exact SHA."
 grep -Eq 'task_e_[0-9a-f]+' "$CLOUD_LOG" || fail "Cloud evidence does not contain a task id."
 
