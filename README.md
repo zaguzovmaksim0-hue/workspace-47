@@ -72,6 +72,8 @@ Third-party public-service names, domains, marks and software are referenced des
 
 Until a root `LICENSE` is added, do not assume permission to copy, redistribute, modify or relicense repository-owned source merely because it is visible to collaborators.
 
-The existing author/committer email metadata has been explicitly accepted for publication and does not require a Git-history rewrite. Remaining pre-publication gates include explicit maintainer source-rights attestation, a successful full-history secret scan, Android resource/build verification for the replacement visual resources, synchronization with the final autonomous-development head and repetition of tree-dependent checks.
+The existing author/committer email metadata has been explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12. Neither item remains an independent publication blocker.
+
+Remaining pre-publication gates are a successful full-history secret scan, Android resource/build verification for the replacement visual resources, synchronization with the final autonomous-development head and repetition of tree-dependent checks.
 
 The repository must remain private until the publication status in [`docs/oss-publication-status.md`](docs/oss-publication-status.md) is clear for public release.
