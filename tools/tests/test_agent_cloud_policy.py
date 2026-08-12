@@ -69,6 +69,14 @@ class AgentCloudPolicyTest(unittest.TestCase):
         self.assertIn("Do not invoke w47-cloud or codex cloud from inside this task", launcher)
 
 
+    def test_legacy_publication_runner_is_retired_and_cloud_safe(self) -> None:
+        source = self.read("scripts/oss/run-termux-publication-gates.sh")
+        self.assertIn("retired", source.lower())
+        self.assertIn("w47-cloud full", source)
+        self.assertNotIn("./gradlew", source)
+        self.assertNotIn("oss/publication-readiness-20260811", source)
+        self.assertNotIn("4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb", source)
+
     def test_launcher_builds_cloud_prompt_without_shell_substitution(self) -> None:
         branch = "agent/test-cloud-policy"
         sha = "a" * 40
