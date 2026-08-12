@@ -2,7 +2,7 @@
 
 **Branch:** `oss/publication-readiness-20260811`
 **Baseline:** autonomous integration commit `c1090f6431486501b46f44e1494289f5f48e9cfb`
-**Latest autonomous head observed during audit:** `037b3614298cf2c33089b30fb73b789a26077249`
+**Latest autonomous head observed during audit:** `f77cbd13434fe0b66876ec957db73e2b16751837`
 **Policy:** repository stays private until every `BLOCKED` item below is resolved and the branch is synchronized with the then-current autonomous integration head.
 
 ## Gate matrix
@@ -15,7 +15,7 @@
 | GitHub Actions execution | `EXTERNAL_BLOCKER` | Workflow files are registered and active after default-branch recovery, but pushes still route to the historical `BuildFailed` pseudo-workflow and finish `startup_failure` with zero jobs. A temporary no-dependency `echo` workflow reproduced the same failure and was removed. This isolates the remaining failure outside Gradle/project test steps and outside third-party action pins. Repository Actions-policy settings could not be read by the connected GitHub App (`403 Resource not accessible by integration`). |
 | Synthetic PKCS#12 fixture | `PASS_TEST_ONLY` | `app/src/androidTest/assets/synthetic-identity.p12.b64` is an intentionally public synthetic instrumentation fixture with public test passphrase and synthetic holder; see `docs/test-fixtures.md`. |
 | Release signing material | `PASS_CURRENT_TREE` | Release signing is supplied outside Git through explicit configuration; no fallback committed production key is accepted. Re-check after final synchronization. |
-| Git-history author/committer email privacy | `BLOCKED` | Existing commits expose a personal email while the public GitHub profile does not publish an email. Before public visibility either rewrite affected history to an approved public/noreply identity and re-verify, or explicitly accept publication of the existing metadata. No silent SHA-changing rewrite is authorized by this audit. |
+| Git-history author/committer email privacy | `PASS_USER_ACCEPTED` | The maintainer explicitly accepted publication of the existing author/committer email metadata on 2026-08-12. No history rewrite is required for this gate. |
 | Release transport boundary | `PASS_REVIEWED` | Release secure-tunnel factory is direct-only and release tunnel policy is empty in the reviewed baseline. Re-check after synchronization. |
 | QA relay boundary | `PASS_REVIEWED` | QA capability is opt-in/debug-scoped; relay destination is fixed rather than arbitrary; credential storage is digest-only; deployment guidance keeps operational secrets/captures out of Git. |
 | Protocol/evidence privacy | `PASS_REVIEWED` | Observation recorder/logger and reviewed Junta/UniZAR/AEAT evidence retain sanitized metadata and explicitly omit sensitive credentials/session/identity artifacts. |
@@ -38,11 +38,10 @@
 ## Remaining hard blockers
 
 1. Restore an execution path for tests/scans, or otherwise obtain an independently verified full-history Gitleaks result for the final candidate.
-2. Explicit decision on publication or rewrite of personal author/committer email metadata.
-3. Resolve `jfm_home_background.webp` rights/provenance.
-4. Resolve all custom launcher/brand binary artwork rights/provenance.
-5. Obtain defensible authorship/no-unlicensed-copy attestation for `afirma_shim.js` and other project-owned source before selecting a root license.
-6. Complete final distributed-dependency notice review.
-7. Synchronize with latest autonomous integration head and re-run all tree-dependent publication checks.
+2. Resolve `jfm_home_background.webp` rights/provenance.
+3. Resolve all custom launcher/brand binary artwork rights/provenance.
+4. Obtain defensible authorship/no-unlicensed-copy attestation for `afirma_shim.js` and other project-owned source before selecting a root license.
+5. Complete final distributed-dependency notice review.
+6. Synchronize with latest autonomous integration head and re-run all tree-dependent publication checks.
 
 Public visibility and the Codex for OSS submission remain downstream of these blockers.
