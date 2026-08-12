@@ -3,7 +3,7 @@
 **Final candidate branch:** `oss/publication-candidate-final-20260812`
 **Project product cutoff:** `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`
 **Cutoff rationale:** this is the last autonomous product SHA with recorded Codex Cloud acceptance: focused Gradle PASS plus broader Debug 656/656 and QA 35/35 (691/691 total). Later autonomous commits were in-flight TDD RED work and are intentionally excluded.
-**Candidate model:** OSS documentation/policy, security-gate hardening and project-origin visual-resource remediation layered on top of the Cloud-green product cutoff. No later autonomous product implementation is part of the candidate.
+**Candidate model:** OSS documentation/policy, security-gate hardening, Apache-2.0 root licensing and project-origin visual-resource remediation layered on top of the Cloud-green product cutoff. No later autonomous product implementation is part of the candidate.
 **Execution boundary:** Termux may run Git/Gitleaks/Python policy checks and submit jobs; Android Gradle/JVM/Kotlin executes only in Codex Cloud `workspace-47-android` through `$HOME/bin/w47-cloud`.
 **Policy:** this branch is frozen for final verification. If it moves after a PASS, every SHA-dependent gate must be rerun. Repository visibility remains private until final verification succeeds.
 
@@ -35,13 +35,13 @@
 | Publication visual-asset policy | `PASS_PATH_LEVEL_RECHECK_REQUIRED` | RED→GREEN was previously observed; the one-shot runner reruns `tools/test_publication_visual_assets.py` on the exact final SHA. |
 | Android/Gradle execution | `BLOCKED_EXECUTION_READY` | Canonical gate is `$HOME/bin/w47-cloud full --branch oss/publication-candidate-final-20260812 --sha <exact-sha>` in `workspace-47-android`. The Termux runner invokes it automatically. No local Gradle fallback. |
 | Unofficial-project disclosure | `PASS_REVIEWED` | App and public docs identify the project as independent/unofficial and not endorsed by public administrations. |
-| Public README | `PASS_CURRENT_BRANCH` | Scope, security model, maturity, provenance and no-affiliation language are present. |
+| Public README | `PASS_CURRENT_BRANCH` | Scope, security model, maturity, provenance, license boundary and no-affiliation language are present. |
 | SECURITY policy | `PASS_CURRENT_BRANCH` | Defines private reporting, credential/evidence rules and third-party research authorization boundary. |
 | CONTRIBUTING policy | `PASS_CURRENT_BRANCH` | Defines testing, privacy, research-boundary and provenance requirements. |
 | NOTICE / third-party provenance | `PASS_FOR_SOURCE_PUBLICATION` | NOTICE/provenance/dependency audit distinguish project-origin source from separately licensed material. |
-| Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Apache-2.0 remains selected; add only after Gitleaks and canonical Cloud Android verification pass on the same exact candidate SHA. |
+| Root project `LICENSE` | `PASS_PRIVATE_CANDIDATE` | Standard Apache License 2.0 text is present at repository root on the frozen private candidate. Separately licensed third-party material remains under its own terms per NOTICE/provenance. |
 | Repository visibility | `PRIVATE_REQUIRED` | Do not switch public until final orchestrated verification passes. |
-| Public default branch preparation | `READY_AFTER_PASS` | Existing `main` is an ancestor of the candidate (`behind_by: 0` from the candidate perspective), so the approved candidate can fast-forward `main` without force. Default-branch/visibility settings are downstream of final PASS. |
+| Public default branch preparation | `READY_AFTER_PASS` | Existing `main` is an ancestor of the candidate, so the approved candidate can fast-forward `main` without force. Default-branch/visibility settings are downstream of final PASS. |
 | Codex for OSS application | `NOT_READY` | Prepare/submit only after safe public visibility and verification of public repository metadata. |
 
 ## Remaining hard blockers
@@ -60,4 +60,4 @@ git switch --force-create oss/publication-candidate-final-20260812 \
 bash scripts/oss/run-termux-publication-gates.sh "$PWD"
 ```
 
-Only after the runner reaches `PASS: all mandatory source-publication execution gates completed ...` may the root Apache-2.0 `LICENSE`, approved-publication status, `main` fast-forward and public visibility be applied.
+Only after the runner reaches `PASS: all mandatory source-publication execution gates completed ...` may `main` be fast-forwarded to this exact verified candidate and repository visibility be changed to public.
