@@ -2,7 +2,8 @@ Junta Firma Mobile — third-party notices
 
 This file is a pre-publication notice inventory. It does not replace the license
 text of any third-party component and does not grant rights to material whose
-provenance is still under review. See docs/provenance.md.
+provenance is still under review. See docs/provenance.md and
+docs/licenses/runtime-dependency-audit.md.
 
 Bebas Neue
 -----------
@@ -30,10 +31,20 @@ certification or endorsement is implied.
 Build/runtime dependencies
 --------------------------
 Gradle/Maven and Python dependencies are declared in the repository and are
-subject to their own upstream licenses. Most are resolved at build/install time
-rather than copied as project source. Final release notice completeness remains
-a publication gate; this initial NOTICE must be updated if a distributed
-component's license requires additional attribution or license text.
+resolved externally rather than copied into Junta Firma Mobile project source.
+The reviewed dependency families and their upstream license classes are recorded
+in docs/licenses/runtime-dependency-audit.md. Their licenses are not replaced by
+a future project root license.
+
+For source-repository publication, the reviewed externally resolved dependency
+families are not treated as a project-source relicensing blocker. This does not
+constitute binary-release approval.
+
+Before any APK/AAB distribution, the exact final resolved artifacts must be
+inspected and a release third-party notice bundle must preserve all applicable
+license, copyright and NOTICE material required by the dependencies actually
+incorporated in that binary. The family-level audit is only an input to that
+release gate.
 
 Unresolved custom assets
 ------------------------
