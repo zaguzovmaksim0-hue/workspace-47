@@ -143,7 +143,7 @@ func cloneServerCertificate(certificate tls.Certificate) tls.Certificate {
 }
 
 func validServerTLSConfig(config *tls.Config) bool {
-	if config == nil || len(config.Certificates) != 1 ||
+	if config == nil || len(config.Certificates) != 1 || config.NameToCertificate != nil ||
 		config.MinVersion < tls.VersionTLS12 ||
 		(config.MaxVersion != 0 && config.MaxVersion < tls.VersionTLS12) ||
 		(config.MaxVersion != 0 && config.MaxVersion < config.MinVersion) ||
