@@ -223,6 +223,30 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun staleWebViewCancelsSslErrorWithoutRecordingDiagnostic() {
+        val staleLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        var active = true
+        val staleClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = staleLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+            isActiveWebView = { active },
+        )
+        active = false
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val sslError = Shadow.newInstanceOf(SslError::class.java)
+
+        staleClient.onReceivedSslError(webView, handler, sslError)
+
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
+        assertEquals("", staleLogger.exportText())
+    }
+
+    @Test
     fun staleWebViewDoesNotRecordNetworkRequestDiagnostics() {
         val staleLogger = SanitizedLogger(
             Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
