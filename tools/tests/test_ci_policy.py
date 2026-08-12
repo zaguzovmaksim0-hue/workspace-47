@@ -108,10 +108,10 @@ class CiPolicyTest(unittest.TestCase):
             self.assertTrue({name for name, _ in pinned}.issubset(allowed))
             self.assertIn("persist-credentials: false", source)
 
-    def test_workflows_cover_autonomous_push_branches(self) -> None:
+    def test_workflows_cover_supported_work_branches(self) -> None:
         for path in (CI, SECURITY):
             source = self.read(path)
-            for branch in ("main", "feature/**", "agent/**"):
+            for branch in ("main", "feature/**", "fix/**", "security/**", "agent/**", "oss/**"):
                 self.assertIn(
                     f"      - {branch}\n",
                     source,
