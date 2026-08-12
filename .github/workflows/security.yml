@@ -55,8 +55,8 @@ jobs:
             echo "Gitleaks detector canary failed: expected secret-detection exit 86, got ${status}" >&2
             exit 1
           fi
-      - name: Scan complete Git history
-        run: ./gitleaks git --redact --no-banner --report-format sarif --report-path gitleaks.sarif .
+      - name: Scan complete Git history across all refs
+        run: ./gitleaks git --redact --no-banner --log-opts="--all" --report-format sarif --report-path gitleaks.sarif .
 
   dependency-vulnerabilities:
     name: OSV source dependency scan
