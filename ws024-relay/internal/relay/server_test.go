@@ -407,6 +407,31 @@ func TestNewServerDeepCopiesOuterTLSPolicy(t *testing.T) {
 	}
 }
 
+func TestWithServerConfigIsolatesTLSMutations(t *testing.T) {
+	fixture := newServerFixture(t)
+	base := fixture.config
+
+	withKeyLog := withServerConfig(base, func(c *ServerConfig) {
+		c.TLSConfig.KeyLogWriter = io.Discard
+	})
+	withMaxVersion := withServerConfig(base, func(c *ServerConfig) {
+		c.TLSConfig.MaxVersion = tls.VersionTLS13
+	})
+
+	if base.TLSConfig.KeyLogWriter != nil || base.TLSConfig.MaxVersion != 0 {
+		t.Fatal("withServerConfig mutated the base TLS config")
+	}
+	if withKeyLog.TLSConfig == base.TLSConfig || withMaxVersion.TLSConfig == base.TLSConfig {
+		t.Fatal("withServerConfig retained the base TLS config pointer")
+	}
+	if withKeyLog.TLSConfig.MaxVersion != 0 {
+		t.Fatal("TLS mutation leaked from a sibling case into key-log config")
+	}
+	if withMaxVersion.TLSConfig.KeyLogWriter != nil {
+		t.Fatal("TLS mutation leaked from a sibling case into max-version config")
+	}
+}
+
 func TestNewServerRejectsAlternateCertificateMap(t *testing.T) {
 	fixture := newServerFixture(t)
 	config := fixture.config
@@ -759,6 +784,9 @@ func assertGenericEmptyResponse(t *testing.T, response, status string, forbidden
 
 func withServerConfig(base ServerConfig, mutate func(*ServerConfig)) ServerConfig {
 	copy := base
+	if base.TLSConfig != nil {
+		copy.TLSConfig = base.TLSConfig.Clone()
+	}
 	mutate(&copy)
 	return copy
 }
