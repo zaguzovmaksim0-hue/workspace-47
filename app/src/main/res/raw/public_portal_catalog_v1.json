@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "c335618c5c5998d4450da012ad7a85c926874644b8b178f438a4c3bd5ababc88",
+  "sourceRevision": "e4dedaad723a94257f7b8677b45b020dae1b9db3f7a8b4a15eeb9ccbf2f3cb96",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2532,30 +2532,38 @@
     {
       "portalId": "melilla-sede",
       "inventoryId": "ES-PUB-0107",
-      "profileId": null,
+      "profileId": "melilla-sede",
       "displayName": "Sede electrónica de Melilla",
       "organization": "Ciudad Autónoma de Melilla",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Ciudad Autónoma de Melilla",
-      "purpose": "Acceso al catálogo y firma electrónica en los trámites que la requieren.",
-      "entryUrl": "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO",
+      "purpose": "Firma por lotes AutoScript/STA del trámite público exacto, con perfil móvil QA limitado a CAdES detached.",
+      "entryUrl": "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES",
+        "PADES",
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_STA_BATCH_TRIFASICO",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A11A",
         "A11B",
-        "A11C"
+        "A11C",
+        "A11D",
+        "A11E",
+        "A11F"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-11",
+      "limitations": "Contrato AutoScript/STA implementado solo en QA; sin aceptación física/E2E del portal real, sin envío administrativo y sin afirmar endpoint dinámico como URL estática."
     },
     {
       "portalId": "gva-sede",

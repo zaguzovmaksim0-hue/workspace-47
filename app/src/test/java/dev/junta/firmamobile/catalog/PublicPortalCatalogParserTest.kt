@@ -32,14 +32,14 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
-    fun `bundled catalog contains the complete inventory without expanding trust bindings`() {
+    fun `bundled catalog contains the complete inventory with only exact profile bindings`() {
         val catalog = PublicPortalCatalogParser.parse(json)
 
         assertEquals(1, catalog.schemaVersion)
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(14, catalog.entries.count { it.profileId != null })
+        assertEquals(15, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -57,6 +57,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("sevilla-atse-certificate-login"),
+                ProfileId("melilla-sede"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -116,6 +117,26 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
         assertTrue(PortalMechanism.AUTOFIRMA in portal.observedMechanisms)
         assertTrue(PortalMechanism.MINIAPPLET in portal.observedMechanisms)
+        assertTrue(SignatureFormat.CADES in portal.observedSignatureFormats)
+        assertTrue(portal.limitations.contains("E2E", ignoreCase = true))
+    }
+
+    @Test
+    fun `Melilla catalog exposes the implemented QA batch contract without E2E promotion`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single { it.portalId == PortalId("melilla-sede") }
+
+        assertEquals(ProfileId("melilla-sede"), portal.profileId)
+        assertEquals("ES-PUB-0107", portal.inventoryId)
+        assertEquals(
+            "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+            portal.entryUrl.toString(),
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in portal.observedMechanisms)
         assertTrue(SignatureFormat.CADES in portal.observedSignatureFormats)
         assertTrue(portal.limitations.contains("E2E", ignoreCase = true))
     }

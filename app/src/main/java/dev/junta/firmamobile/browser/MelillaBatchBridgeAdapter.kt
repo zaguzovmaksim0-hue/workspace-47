@@ -3,6 +3,7 @@ package dev.junta.firmamobile.browser
 import android.net.Uri
 import android.util.JsonReader
 import android.util.JsonToken
+import dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy
 import dev.junta.firmamobile.network.MelillaBatchUrlError
 import dev.junta.firmamobile.network.MelillaBatchUrlOperation
 import dev.junta.firmamobile.network.MelillaBatchUrlPolicy
@@ -60,19 +61,103 @@ sealed interface MelillaBatchBridgeRouteResult {
     ) : MelillaBatchBridgeRouteResult
 }
 
-/**
- * Parses the portal-owned Melilla AutoFirma batch envelope.
- *
- * This adapter is intentionally separate from [MiniAppletBridgeAdapter]. The
- * latter remains a single-sign adapter and must keep returning NotApplicable
- * for MINIAPPLET_BATCH.
- */
+/** Parses the portal-owned Melilla AutoFirma batch envelope. */
 class MelillaBatchBridgeAdapter(
-    private val activeProfileId: () -> ProfileId? = { null },
-    private val currentNavigationEpoch: () -> Long? = { null },
-    private val currentDocumentId: () -> UUID? = { null },
-    private val urlPolicy: MelillaBatchUrlPolicy = MelillaBatchUrlPolicy(),
-    private val currentOrigin: () -> TrustedOrigin? = { null },
+    activeProfileId: () -> ProfileId? = { null },
+    currentNavigationEpoch: () -> Long? = { null },
+    currentDocumentId: () -> UUID? = { null },
+    urlPolicy: MelillaBatchUrlPolicy = MelillaBatchUrlPolicy(),
+    currentOrigin: () -> TrustedOrigin? = { null },
+) {
+    private val delegate = StaBatchBridgeAdapter(
+        activeProfileId = activeProfileId,
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentDocumentId = currentDocumentId,
+        currentOrigin = currentOrigin,
+        contract = StaBatchBridgeContract(
+            profileId = ProfileId(PROFILE_ID),
+            origin = TrustedOrigin("https", "sede.melilla.es", 443),
+            urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
+                urlPolicy.validate(rawUrl, operation, operationId, documentId)
+            },
+        ),
+    )
+
+    fun route(rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L) =
+        delegate.route(rawMessage, sourceOrigin, isMainFrame, navigationEpoch)
+    fun abandon(requestId: UUID? = null): Boolean = delegate.abandon(requestId)
+    fun invalidateDocument(documentId: UUID?) = delegate.invalidateDocument(documentId)
+    fun abandonAll() = delegate.abandonAll()
+
+    companion object {
+        const val PROFILE_ID = "melilla-sede"
+        const val SOURCE_ORIGIN = "https://sede.melilla.es"
+        const val TYPE = "MINIAPPLET_BATCH"
+        const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
+        const val MAX_MESSAGE_CHARS = 786_432
+        const val MAX_DOCUMENTS = 128
+    }
+}
+
+/** Fixed-profile Extremadura wrapper over the shared observed STA batch envelope. */
+class ExtremaduraBatchBridgeAdapter(
+    activeProfileId: () -> ProfileId? = { null },
+    currentNavigationEpoch: () -> Long? = { null },
+    currentDocumentId: () -> UUID? = { null },
+    urlPolicy: ExtremaduraBatchUrlPolicy = ExtremaduraBatchUrlPolicy(),
+    currentOrigin: () -> TrustedOrigin? = { null },
+) {
+    private val delegate = StaBatchBridgeAdapter(
+        activeProfileId = activeProfileId,
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentDocumentId = currentDocumentId,
+        currentOrigin = currentOrigin,
+        contract = StaBatchBridgeContract(
+            profileId = ProfileId(PROFILE_ID),
+            origin = TrustedOrigin("https", "tramites.juntaex.es", 443),
+            urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
+                urlPolicy.validate(rawUrl, operation, operationId, documentId)
+            },
+        ),
+    )
+
+    fun route(rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L) =
+        delegate.route(rawMessage, sourceOrigin, isMainFrame, navigationEpoch)
+    fun abandon(requestId: UUID? = null): Boolean = delegate.abandon(requestId)
+    fun invalidateDocument(documentId: UUID?) = delegate.invalidateDocument(documentId)
+    fun abandonAll() = delegate.abandonAll()
+
+    companion object {
+        const val PROFILE_ID = "extremadura-tramites"
+        const val SOURCE_ORIGIN = "https://tramites.juntaex.es"
+        const val TYPE = "MINIAPPLET_BATCH"
+        const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
+        const val MAX_MESSAGE_CHARS = 786_432
+        const val MAX_DOCUMENTS = 128
+    }
+}
+
+private data class StaBatchBridgeContract(
+    val profileId: ProfileId,
+    val origin: TrustedOrigin,
+    val urlValidator: StaBatchBridgeUrlValidator,
+)
+
+private fun interface StaBatchBridgeUrlValidator {
+    fun validate(
+        rawUrl: String,
+        expectedOperation: MelillaBatchUrlOperation,
+        expectedOperationId: String?,
+        expectedDocumentId: String?,
+    ): MelillaBatchUrlValidation
+}
+
+private class StaBatchBridgeAdapter(
+    private val activeProfileId: () -> ProfileId?,
+    private val currentNavigationEpoch: () -> Long?,
+    private val currentDocumentId: () -> UUID?,
+    private val currentOrigin: () -> TrustedOrigin?,
+    private val contract: StaBatchBridgeContract,
 ) {
     private var activeRequestId: UUID? = null
     private var activeDocumentId: UUID? = null
@@ -122,10 +207,10 @@ class MelillaBatchBridgeAdapter(
         if (!isMainFrame) {
             return rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
-        if (activeProfileId() != MELILLA_PROFILE_ID) {
+        if (activeProfileId() != contract.profileId) {
             return rejected(requestId, SigningErrorCode.PROFILE_NOT_ACTIVE)
         }
-        if (!isExactMelillaOrigin(sourceOrigin)) {
+        if (!isExactContractOrigin(sourceOrigin)) {
             return rejected(requestId, SigningErrorCode.ORIGIN_NOT_ALLOWED)
         }
 
@@ -133,7 +218,7 @@ class MelillaBatchBridgeAdapter(
             ?: return rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
             ?: return rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
-        if (currentOrigin()?.let { it != MELILLA_ORIGIN } == true) {
+        if (currentOrigin()?.let { it != contract.origin } == true) {
             return rejected(canonicalRequestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
         if (currentDocumentId()?.let { it != documentId } == true ||
@@ -176,10 +261,11 @@ class MelillaBatchBridgeAdapter(
         val postSignerUrl = json.strictString(POST_SIGNER_URL_FIELD)
             ?: return rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
         val preSigner = when (
-            val result = urlPolicy.validate(
+            val result = contract.urlValidator.validate(
                 preSignerUrl,
-                expectedOperation = MelillaBatchUrlOperation.PRESIGN,
-                expectedOperationId = null,
+                MelillaBatchUrlOperation.PRESIGN,
+                null,
+                null,
             )
         ) {
             is MelillaBatchUrlValidation.Allowed -> result
@@ -188,10 +274,11 @@ class MelillaBatchBridgeAdapter(
         }
         val operationId = preSigner.binding.operationId
         val postSigner = when (
-            val result = urlPolicy.validate(
+            val result = contract.urlValidator.validate(
                 postSignerUrl,
-                expectedOperation = MelillaBatchUrlOperation.POSTSIGN,
-                expectedOperationId = operationId,
+                MelillaBatchUrlOperation.POSTSIGN,
+                operationId,
+                null,
             )
         ) {
             is MelillaBatchUrlValidation.Allowed -> result
@@ -245,11 +332,11 @@ class MelillaBatchBridgeAdapter(
             val dataReference = document.strictString(DATA_REFERENCE_FIELD)
                 ?: return rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
             when (
-                val result = urlPolicy.validate(
+                val result = contract.urlValidator.validate(
                     dataReference,
-                    expectedOperation = MelillaBatchUrlOperation.GETDATA,
-                    expectedOperationId = operationId,
-                    expectedDocumentId = documentExternalId,
+                    MelillaBatchUrlOperation.GETDATA,
+                    operationId,
+                    documentExternalId,
                 )
             ) {
                 is MelillaBatchUrlValidation.Allowed -> Unit
@@ -285,8 +372,8 @@ class MelillaBatchBridgeAdapter(
                 suboperation = suboperation,
                 stopOnError = false,
                 documents = documents.toList(),
-                profileId = MELILLA_PROFILE_ID,
-                sourceOrigin = TrustedOrigin(HTTPS_SCHEME, MELILLA_HOST, HTTPS_PORT),
+                profileId = contract.profileId,
+                sourceOrigin = contract.origin,
                 navigationEpoch = navigationEpoch,
             ),
         )
@@ -335,10 +422,10 @@ class MelillaBatchBridgeAdapter(
         code: SigningErrorCode,
     ): MelillaBatchBridgeRouteResult = MelillaBatchBridgeRouteResult.Rejected(requestId, code)
 
-    private fun isExactMelillaOrigin(uri: Uri): Boolean =
-        uri.scheme == HTTPS_SCHEME &&
-            uri.host == MELILLA_HOST &&
-            uri.port in setOf(-1, HTTPS_PORT) &&
+    private fun isExactContractOrigin(uri: Uri): Boolean =
+        uri.scheme == contract.origin.scheme &&
+            uri.host == contract.origin.host &&
+            uri.port in setOf(-1, contract.origin.port) &&
             uri.encodedUserInfo == null &&
             uri.path.isNullOrEmpty() &&
             uri.query == null &&
@@ -415,8 +502,6 @@ class MelillaBatchBridgeAdapter(
     }
 
     companion object {
-        const val PROFILE_ID = "melilla-sede"
-        const val SOURCE_ORIGIN = "https://sede.melilla.es"
         const val TYPE = "MINIAPPLET_BATCH"
         const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
@@ -442,16 +527,11 @@ class MelillaBatchBridgeAdapter(
         private const val DEFAULT_ALGORITHM = "SHA256withRSA"
         private const val DEFAULT_FORMAT = "CAdES"
         private const val DEFAULT_SUBOPERATION = "sign"
-        private const val MELILLA_HOST = "sede.melilla.es"
-        private const val HTTPS_SCHEME = "https"
-        private const val HTTPS_PORT = 443
         private const val MAX_OPAQUE_VALUE_CHARS = 1_024
         private const val MAX_JSON_DEPTH = 16
         private const val MAX_SEEN_REQUESTS = 64
         private const val MAX_INVALIDATED_DOCUMENTS = 64
 
-        private val MELILLA_PROFILE_ID = ProfileId(PROFILE_ID)
-        private val MELILLA_ORIGIN = TrustedOrigin(HTTPS_SCHEME, MELILLA_HOST, HTTPS_PORT)
         private val SUPPORTED_FORMATS = setOf("CAdES", "PAdES", "XAdES")
         private val BATCH_CANCEL_KEYS = setOf(
             TYPE_FIELD,

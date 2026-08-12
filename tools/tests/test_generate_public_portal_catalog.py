@@ -175,6 +175,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             catalog["sourceRevision"],
         )
 
+    def test_melilla_batch_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        melilla = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "melilla-sede"
+        )
+
+        self.assertEqual("melilla-sede", melilla["profileId"])
+        self.assertEqual("ES-PUB-0107", melilla["inventoryId"])
+        self.assertEqual(
+            "https://sede.melilla.es/sta/CarpetaPublic/doEvent?"
+            "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+            melilla["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", melilla["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", melilla["inventoryStatus"])
+        self.assertEqual("2026-08-11", melilla["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", melilla["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", melilla["observedMechanisms"])
+        self.assertIn("CADES", melilla["observedSignatureFormats"])
+        self.assertIn("e2e", melilla["limitations"].lower())
+        self.assertIn("qa", melilla["limitations"].lower())
+        self.assertNotIn("VERIFIED_E2E", melilla["inventoryStatus"])
+
     def test_jccm_certificate_probe_binds_separate_public_catalog_surface(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         broad = next(

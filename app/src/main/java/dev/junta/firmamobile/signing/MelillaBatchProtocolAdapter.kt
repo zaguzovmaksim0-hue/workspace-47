@@ -2,6 +2,7 @@ package dev.junta.firmamobile.signing
 
 import android.util.JsonReader
 import android.util.JsonToken
+import dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy
 import dev.junta.firmamobile.network.MelillaBatchUrlOperation
 import dev.junta.firmamobile.network.MelillaBatchUrlPolicy
 import dev.junta.firmamobile.network.MelillaBatchUrlValidation
@@ -25,13 +26,108 @@ import org.json.JSONObject
 
 /**
  * Executes the public Melilla AutoFirma JSON batch presign/postsign contract.
- * Runtime URLs are accepted only after [MelillaBatchUrlPolicy] binds operation and document ids.
+ * Runtime URLs remain fixed to [MelillaBatchUrlPolicy].
  */
 class MelillaBatchProtocolAdapter internal constructor(
-    private val transport: ProfileHttpTransport,
-    private val urlPolicy: MelillaBatchUrlPolicy = MelillaBatchUrlPolicy(),
+    transport: ProfileHttpTransport,
+    urlPolicy: MelillaBatchUrlPolicy = MelillaBatchUrlPolicy(),
 ) : BatchSigningProtocolAdapter {
+    private val delegate = StaBatchProtocolAdapter(
+        transport = transport,
+        contract = StaBatchProtocolContract(
+            id = ID,
+            profileId = PROFILE_ID,
+            profileVersion = PROFILE_VERSION,
+            origin = TrustedOrigin("https", "sede.melilla.es", 443),
+            urlValidator = StaBatchUrlValidator { rawUrl, operation, operationId, documentId ->
+                urlPolicy.validate(rawUrl, operation, operationId, documentId)
+            },
+        ),
+    )
+
     override val id: SigningProtocolId = ID
+
+    override fun prepare(
+        request: NormalizedBatchSigningRequest,
+        certificateChain: List<X509Certificate>,
+    ): BatchProtocolPrepareResult = delegate.prepare(request, certificateChain)
+
+    override fun complete(
+        request: NormalizedBatchSigningRequest,
+        preSign: BatchPreSignResult,
+        localSignatures: List<LocalSignature>,
+    ): BatchProtocolCompletionResult = delegate.complete(request, preSign, localSignatures)
+
+    companion object {
+        val ID = SigningProtocolId("melilla-batch-autoscript-v1")
+        private const val PROFILE_ID = "melilla-sede"
+        private const val PROFILE_VERSION = 1
+    }
+}
+
+/**
+ * Executes the same observed STA batch wire contract for the fixed Extremadura profile.
+ * Its protocol id, profile identity, origin, and runtime URL policy are independent from Melilla.
+ */
+class ExtremaduraBatchProtocolAdapter internal constructor(
+    transport: ProfileHttpTransport,
+    urlPolicy: ExtremaduraBatchUrlPolicy = ExtremaduraBatchUrlPolicy(),
+) : BatchSigningProtocolAdapter {
+    private val delegate = StaBatchProtocolAdapter(
+        transport = transport,
+        contract = StaBatchProtocolContract(
+            id = ID,
+            profileId = PROFILE_ID,
+            profileVersion = PROFILE_VERSION,
+            origin = TrustedOrigin("https", "tramites.juntaex.es", 443),
+            urlValidator = StaBatchUrlValidator { rawUrl, operation, operationId, documentId ->
+                urlPolicy.validate(rawUrl, operation, operationId, documentId)
+            },
+        ),
+    )
+
+    override val id: SigningProtocolId = ID
+
+    override fun prepare(
+        request: NormalizedBatchSigningRequest,
+        certificateChain: List<X509Certificate>,
+    ): BatchProtocolPrepareResult = delegate.prepare(request, certificateChain)
+
+    override fun complete(
+        request: NormalizedBatchSigningRequest,
+        preSign: BatchPreSignResult,
+        localSignatures: List<LocalSignature>,
+    ): BatchProtocolCompletionResult = delegate.complete(request, preSign, localSignatures)
+
+    companion object {
+        val ID = SigningProtocolId("extremadura-batch-autoscript-v1")
+        private const val PROFILE_ID = "extremadura-tramites"
+        private const val PROFILE_VERSION = 1
+    }
+}
+
+private data class StaBatchProtocolContract(
+    val id: SigningProtocolId,
+    val profileId: String,
+    val profileVersion: Int,
+    val origin: TrustedOrigin,
+    val urlValidator: StaBatchUrlValidator,
+)
+
+private fun interface StaBatchUrlValidator {
+    fun validate(
+        rawUrl: String,
+        expectedOperation: MelillaBatchUrlOperation,
+        expectedOperationId: String?,
+        expectedDocumentId: String?,
+    ): MelillaBatchUrlValidation
+}
+
+private class StaBatchProtocolAdapter(
+    private val transport: ProfileHttpTransport,
+    private val contract: StaBatchProtocolContract,
+) : BatchSigningProtocolAdapter {
+    override val id: SigningProtocolId = contract.id
 
     override fun prepare(
         request: NormalizedBatchSigningRequest,
@@ -94,7 +190,7 @@ class MelillaBatchProtocolAdapter internal constructor(
                         certsParameter.fill(0)
                         BatchProtocolPrepareResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
                     } else {
-                        val state = MelillaBatchPreSignState(
+                        val state = StaBatchPreSignState(
                             postUrl = urls.postUrl,
                             jsonParameter = jsonParameter,
                             certsParameter = certsParameter,
@@ -118,7 +214,7 @@ class MelillaBatchProtocolAdapter internal constructor(
             localSignatures.forEach(LocalSignature::close)
             return BatchProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
         }
-        val state = preSign.consumeState(request, localSignatures.size) as? MelillaBatchPreSignState
+        val state = preSign.consumeState(request, localSignatures.size) as? StaBatchPreSignState
         if (state == null) {
             localSignatures.forEach(LocalSignature::close)
             return BatchProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
@@ -162,10 +258,10 @@ class MelillaBatchProtocolAdapter internal constructor(
     }
 
     private fun NormalizedBatchSigningRequest.matchesContract(): Boolean =
-        protocolId == ID &&
-            context.profileId == PROFILE_ID &&
-            context.profileVersion == PROFILE_VERSION &&
-            context.origin == MELILLA_ORIGIN &&
+        protocolId == contract.id &&
+            context.profileId == contract.profileId &&
+            context.profileVersion == contract.profileVersion &&
+            context.origin == contract.origin &&
             algorithm == SigningAlgorithm.SHA256_WITH_RSA &&
             format == BatchSigningFormat.CADES &&
             suboperation == SUBOPERATION_SIGN &&
@@ -178,22 +274,24 @@ class MelillaBatchProtocolAdapter internal constructor(
             }
 
     private fun validateUrls(request: NormalizedBatchSigningRequest): ValidatedUrls? {
-        val pre = urlPolicy.validate(
+        val pre = contract.urlValidator.validate(
             request.preSignerUrl,
-            expectedOperation = MelillaBatchUrlOperation.PRESIGN,
-            expectedOperationId = request.operationId,
+            MelillaBatchUrlOperation.PRESIGN,
+            request.operationId,
+            null,
         ) as? MelillaBatchUrlValidation.Allowed ?: return null
-        val post = urlPolicy.validate(
+        val post = contract.urlValidator.validate(
             request.postSignerUrl,
-            expectedOperation = MelillaBatchUrlOperation.POSTSIGN,
-            expectedOperationId = request.operationId,
+            MelillaBatchUrlOperation.POSTSIGN,
+            request.operationId,
+            null,
         ) as? MelillaBatchUrlValidation.Allowed ?: return null
         request.documents.forEach { document ->
-            val data = urlPolicy.validate(
+            val data = contract.urlValidator.validate(
                 document.dataReference,
-                expectedOperation = MelillaBatchUrlOperation.GETDATA,
-                expectedOperationId = request.operationId,
-                expectedDocumentId = document.id,
+                MelillaBatchUrlOperation.GETDATA,
+                request.operationId,
+                document.id,
             )
             if (data !is MelillaBatchUrlValidation.Allowed) return null
         }
@@ -340,7 +438,7 @@ class MelillaBatchProtocolAdapter internal constructor(
         val triData: ByteArray,
     )
 
-    private class MelillaBatchPreSignState(
+    private class StaBatchPreSignState(
         val postUrl: URI,
         jsonParameter: ByteArray,
         certsParameter: ByteArray,
@@ -395,12 +493,8 @@ class MelillaBatchProtocolAdapter internal constructor(
         }
     }
 
-    companion object {
-        val ID = SigningProtocolId("melilla-batch-autoscript-v1")
-        private const val PROFILE_ID = "melilla-sede"
-        private const val PROFILE_VERSION = 1
-        private const val SUBOPERATION_SIGN = "sign"
-        private val MELILLA_ORIGIN = TrustedOrigin("https", "sede.melilla.es", 443)
+    private companion object {
+        const val SUBOPERATION_SIGN = "sign"
         private val ROOT_KEYS = setOf("td")
         private val TRI_DATA_KEYS = setOf("signinfo")
         private val SIGN_INFO_KEYS = setOf("id", "params")
