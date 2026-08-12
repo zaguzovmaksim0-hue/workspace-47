@@ -54,7 +54,7 @@ Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024
 
 The source-publication candidate is intentionally pinned to product commit `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`, the last autonomous product checkpoint with recorded Codex Cloud acceptance. The recorded broad gate for that SHA passed Debug 656/656 and QA 35/35 tests (691/691 total). Later autonomous commits were an interrupted TDD RED sequence and are not part of the publication candidate.
 
-The OSS branch layers publication documentation/policy and project-origin visual-resource replacements on top of that green product cutoff. See [`docs/oss-publication-status.md`](docs/oss-publication-status.md) for the exact gate state.
+The immutable final branch `oss/publication-candidate-final-20260812` layers publication documentation/policy, security-gate hardening and project-origin visual-resource replacements on top of that green product cutoff. See [`docs/oss-publication-status.md`](docs/oss-publication-status.md) for the exact gate state.
 
 ## Test-only credentials
 
@@ -72,14 +72,14 @@ The earlier unresolved custom WebP/launcher PNG artwork has been removed from th
 
 Third-party public-service names, domains, marks and software are referenced descriptively for interoperability. They remain subject to their respective owners' rights and licenses.
 
-## License status
+## License
 
-**No repository-wide open-source license has been applied yet.** This branch is a publication-readiness candidate, not a public OSS release. Apache License 2.0 is the selected provisional candidate for project-origin source; see [`docs/license-selection.md`](docs/license-selection.md).
+Project-origin material in the final private publication candidate is licensed under the **Apache License 2.0**; see [`LICENSE`](LICENSE). Separately licensed third-party material remains under its own terms as recorded in [`NOTICE`](NOTICE), [`docs/provenance.md`](docs/provenance.md), and the license files under `docs/licenses/`.
 
-Until a root `LICENSE` is added, do not assume permission to copy, redistribute, modify or relicense repository-owned source merely because it is visible to collaborators.
+Apache-2.0 does not grant rights in third-party trademarks, public-service names or independently licensed dependencies/assets beyond the terms applicable to those materials.
 
 The existing author/committer email metadata has been explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12. Neither item remains an independent publication blocker.
 
-Exactly two hard source-publication gates remain: a successful full-history secret scan and final Android/Gradle verification of the OSS candidate, including the replacement visual resources and publication policy check. The commands and evidence requirements are recorded in [`docs/oss-execution-gates.md`](docs/oss-execution-gates.md).
+Exactly two hard source-publication evidence gates remain: a successful full-history/all-refs secret scan and final Android/Gradle verification of the exact immutable candidate, including the replacement visual resources and publication policy check. The commands and evidence requirements are recorded in [`docs/oss-execution-gates.md`](docs/oss-execution-gates.md).
 
 The repository must remain private until both gates pass and the publication status in [`docs/oss-publication-status.md`](docs/oss-publication-status.md) is approved for public release.
