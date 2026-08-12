@@ -727,6 +727,52 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun mainActivityComposesExtremaduraBatchThroughTheSameOwnedSigningFlow() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+        val coordinatorBlock = source
+            .substringAfter("batchSigningCoordinator = BatchSigningCoordinator(", missingDelimiterValue = "")
+            .substringBefore("\n        )")
+        val batchPrepareBlock = source
+            .substringAfter("private fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    private fun confirmSigning")
+
+        assertTrue(
+            "MainActivity must own a distinct Extremadura batch normalizer",
+            "private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter" in source,
+        )
+        assertTrue(
+            "MainActivity must create fixed Melilla and Extremadura STA protocol adapters over HTTPS transport",
+            "val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source &&
+                "val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source,
+        )
+        assertTrue(
+            "The batch coordinator must resolve only the two fixed STA protocol adapters and bind confirmation metadata to the active profile",
+            coordinatorBlock.isNotEmpty() &&
+                "adapter = melillaBatchProtocolAdapter" in coordinatorBlock &&
+                "melillaBatchProtocolAdapter.id -> melillaBatchProtocolAdapter" in coordinatorBlock &&
+                "extremaduraBatchProtocolAdapter.id -> extremaduraBatchProtocolAdapter" in coordinatorBlock &&
+                "profileRegistry = BuiltInSiteProfiles.runtimeRegistry" in coordinatorBlock,
+        )
+        assertTrue(
+            "MainActivity must normalize an accepted batch with the adapter fixed to its exact profile id",
+            batchPrepareBlock.isNotEmpty() &&
+                "when (request.profileId.value)" in batchPrepareBlock &&
+                "MelillaBatchBridgeAdapter.PROFILE_ID ->" in batchPrepareBlock &&
+                "ExtremaduraBatchBridgeAdapter.PROFILE_ID ->" in batchPrepareBlock &&
+                "melillaBatchSigningAdapter.normalize(request)" in batchPrepareBlock &&
+                "extremaduraBatchSigningAdapter.normalize(request)" in batchPrepareBlock,
+        )
+        assertTrue(
+            "Extremadura batch requests must retain the existing single BATCH ownership gate",
+            batchPrepareBlock.isNotEmpty() &&
+                "signingFlowOwnership.acquire(SigningFlowKind.BATCH, requestId)" in batchPrepareBlock &&
+                "batchSigningCoordinator.prepare(normalized, replySink)" in batchPrepareBlock,
+        )
+    }
+
+    @Test
     fun tunnelRouteDiagnosticsRequireActiveSigningRequestOwnership() {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
