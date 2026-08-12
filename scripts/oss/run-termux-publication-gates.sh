@@ -37,15 +37,14 @@ if [[ -n $(git status --porcelain) ]]; then
 fi
 git remote get-url origin | grep -Fq 'zaguzovmaksim0-hue/workspace-47' || fail "Unexpected origin repository."
 git fetch --all --tags --prune
-if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
-  git switch "$BRANCH"
-else
-  git switch --track -c "$BRANCH" "origin/$BRANCH"
-fi
-git pull --ff-only origin "$BRANCH"
-[[ -z $(git status --porcelain) ]] || fail "Working tree became dirty after synchronization."
+# The remote final-candidate ref was intentionally rebased during private audit cleanup.
+# A stale local branch is therefore replaced only after the clean-worktree guard above.
+git switch --force-create "$BRANCH" "origin/$BRANCH"
+[[ -z $(git status --porcelain) ]] || fail "Working tree became dirty after candidate synchronization."
 HEAD_SHA=$(git rev-parse HEAD)
+REMOTE_SHA=$(git rev-parse "origin/$BRANCH")
 [[ $HEAD_SHA =~ ^[0-9a-f]{40}$ ]] || fail "Unexpected Git SHA: $HEAD_SHA"
+[[ "$HEAD_SHA" == "$REMOTE_SHA" ]] || fail "Local candidate does not equal origin/$BRANCH."
 printf 'Candidate SHA: %s\n' "$HEAD_SHA"
 
 step "2/7 — INSTALL TERMUX-SAFE PREREQUISITES"
@@ -107,6 +106,8 @@ grep -Fq "$HEAD_SHA" "$CLOUD_LOG" || fail "Cloud evidence does not contain the r
 grep -Eq 'task_e_[0-9a-f]+' "$CLOUD_LOG" || fail "Cloud evidence does not contain a task id."
 
 step "7/7 — FINAL CONSISTENCY AND EVIDENCE"
+CURRENT_REMOTE_SHA=$(git rev-parse "origin/$BRANCH")
+[[ "$HEAD_SHA" == "$CURRENT_REMOTE_SHA" ]] || fail "Remote candidate moved during verification; rerun all gates."
 [[ -z $(git status --porcelain) ]] || {
   git status --short >&2
   fail "Verification changed tracked files."
