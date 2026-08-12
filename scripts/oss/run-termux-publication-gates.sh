@@ -20,7 +20,7 @@ step() {
 [[ -d "$REPO/.git" ]] || fail "Not a Git worktree: $REPO"
 cd "$REPO"
 
-step "1/8 — PREPARE EXACT PUBLICATION BRANCH"
+step "1/6 — PREPARE EXACT PUBLICATION BRANCH"
 if [[ -n $(git status --porcelain) ]]; then
   git status --short >&2
   fail "Working tree is not clean; publication verification refuses to overwrite local work."
@@ -38,28 +38,11 @@ git pull --ff-only origin "$BRANCH"
 HEAD_SHA=$(git rev-parse HEAD)
 printf 'Candidate SHA: %s\n' "$HEAD_SHA"
 
-step "2/8 — INSTALL TERMUX BUILD PREREQUISITES"
-pkg install -y \
-  git curl coreutils findutils gawk tar python openjdk-17 \
-  aapt apksigner unzip binutils
-
-if [[ -d "$PREFIX/lib/jvm/java-17-openjdk" ]]; then
-  export JAVA_HOME="$PREFIX/lib/jvm/java-17-openjdk"
-  export PATH="$JAVA_HOME/bin:$PATH"
-fi
-java -version
-command -v zipalign >/dev/null || fail "zipalign is missing after installing the Termux aapt package."
-command -v apksigner >/dev/null || fail "apksigner is missing after installing the Termux apksigner package."
+step "2/6 — INSTALL NON-ANDROID TERMUX PREREQUISITES"
+pkg install -y git curl coreutils findutils gawk tar python
 command -v python >/dev/null || fail "python is missing."
 
-step "3/8 — BOOTSTRAP AND VERIFY PROJECT-LOCAL TERMUX AAPT2"
-./tools/bootstrap-termux-aapt2.sh bootstrap
-AAPT2_PATH=$(./tools/bootstrap-termux-aapt2.sh verify --root "$REPO/.gradle/termux-aapt2")
-[[ -x "$AAPT2_PATH" ]] || fail "Verified AAPT2 path is not executable: $AAPT2_PATH"
-export PATH="$(dirname "$AAPT2_PATH"):$PATH"
-"$AAPT2_PATH" version
-
-step "4/8 — DOWNLOAD, HASH-VERIFY AND SELF-TEST GITLEAKS"
+step "3/6 — DOWNLOAD, HASH-VERIFY AND SELF-TEST GITLEAKS"
 TOOLS_DIR="$REPO/.gradle/oss-publication-tools"
 ARTIFACT_DIR="$REPO/.gradle/oss-publication-gates/$HEAD_SHA"
 mkdir -p "$TOOLS_DIR" "$ARTIFACT_DIR"
@@ -90,7 +73,7 @@ rm -rf "$canary_dir"
 [[ $canary_status -eq 86 ]] ||
   fail "Gitleaks detector canary failed: expected exit 86, got $canary_status."
 
-step "5/8 — FULL-HISTORY SECRET SCAN ACROSS ALL REFS"
+step "4/6 — FULL-HISTORY SECRET SCAN ACROSS ALL REFS"
 "$gitleaks_bin" git \
   --redact \
   --no-banner \
@@ -100,24 +83,18 @@ step "5/8 — FULL-HISTORY SECRET SCAN ACROSS ALL REFS"
   .
 printf 'Gitleaks PASS: %s\n' "$ARTIFACT_DIR/gitleaks.sarif"
 
-step "6/8 — PUBLICATION POLICY AND PYTHON CHECKS"
+step "5/6 — PUBLICATION POLICY AND PYTHON CHECKS"
 python tools/test_publication_visual_assets.py
 python -m unittest discover -s tools/tests -p 'test_*.py' -v
 
-step "7/8 — ANDROID GRADLE / RESOURCE / ARTIFACT GATES"
-./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
-./gradlew testDebugUnitTest testQaUnitTest --no-daemon
-./gradlew lintDebug lintQa --no-daemon
-./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
-scripts/ci/verify-android-artifacts.sh
-scripts/ci/verify-release-fail-closed.sh
-
-step "8/8 — FINAL CONSISTENCY CHECK"
+step "6/6 — RECORD TERMUX-SAFE EVIDENCE; ANDROID GATE REMAINS CLOUD-ONLY"
 [[ -z $(git status --porcelain) ]] || {
   git status --short >&2
   fail "Verification changed tracked files."
 }
 printf '%s\n' "$HEAD_SHA" >"$ARTIFACT_DIR/verified-commit.txt"
 sha256sum "$ARTIFACT_DIR/gitleaks.sarif" >"$ARTIFACT_DIR/gitleaks.sarif.sha256"
-printf 'PASS: all mandatory source-publication execution gates completed on %s\n' "$HEAD_SHA"
+printf 'PASS: Termux-safe publication gates completed on %s\n' "$HEAD_SHA"
+printf 'PENDING_CLOUD: Android Gradle/resource/artifact gates were NOT run locally.\n'
+printf 'Run the mandatory Android gate in the approved Codex Cloud environment on this exact SHA.\n'
 printf 'Evidence directory: %s\n' "$ARTIFACT_DIR"
