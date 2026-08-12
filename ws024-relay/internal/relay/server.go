@@ -150,6 +150,7 @@ func validServerTLSConfig(config *tls.Config) bool {
 		(config.MaxVersion != 0 && config.MaxVersion < config.MinVersion) ||
 		len(config.NextProtos) != 1 || config.NextProtos[0] != "http/1.1" ||
 		config.GetConfigForClient != nil || config.GetCertificate != nil ||
+		config.WrapSession != nil || config.UnwrapSession != nil ||
 		config.KeyLogWriter != nil {
 		return false
 	}
