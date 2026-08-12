@@ -4,6 +4,7 @@ import dev.junta.firmamobile.browser.NavigationId
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Duration
@@ -62,6 +63,34 @@ class BatchSigningCoordinatorTest {
         assertFalse(rendered.contains(POST_URL))
         assertFalse(rendered.contains("doc-a"))
         assertFalse(rendered.contains("doc-b"))
+    }
+
+    @Test
+    fun prepareUsesConfiguredProfileRegistryForConfirmationMetadata() {
+        val registryCoordinator = BatchSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            localSignatureEngine = engine,
+            currentOrigin = { MELILLA_ORIGIN },
+            currentNavigationEpoch = { NAVIGATION_EPOCH },
+            expiryScheduler = RecordingExpiryScheduler(),
+            profileDisplayName = "must-not-be-shown",
+            supportLevel = "must-not-be-shown",
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+        val reply = RecordingBatchReply(REQUEST_ID, timeline)
+
+        try {
+            assertEquals(
+                SigningPreparationResult.Ready(REQUEST_ID),
+                registryCoordinator.prepare(request(), reply),
+            )
+            val state = registryCoordinator.state.value as SigningUiState.AwaitingConfirmation
+            assertEquals("Ciudad Autónoma de Melilla — Sede Electrónica", state.profileName)
+            assertEquals("VERIFIED_CONTRACT", state.supportLevel)
+        } finally {
+            registryCoordinator.close()
+        }
     }
 
     @Test
