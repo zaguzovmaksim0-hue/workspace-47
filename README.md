@@ -50,6 +50,12 @@ Release builds intentionally require private signing configuration and must not 
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 
+## Publication candidate cutoff
+
+The source-publication candidate is intentionally pinned to product commit `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`, the last autonomous product checkpoint with recorded Codex Cloud acceptance. The recorded broad gate for that SHA passed Debug 656/656 and QA 35/35 tests (691/691 total). Later autonomous commits were an interrupted TDD RED sequence and are not part of the publication candidate.
+
+The OSS branch layers publication documentation/policy and project-origin visual-resource replacements on top of that green product cutoff. See [`docs/oss-publication-status.md`](docs/oss-publication-status.md) for the exact gate state.
+
 ## Test-only credentials
 
 The repository contains one intentionally public synthetic PKCS#12-shaped instrumentation fixture. It belongs to a synthetic test identity, uses a public test password and must never be trusted or reused operationally. Details are in [`docs/test-fixtures.md`](docs/test-fixtures.md).
@@ -62,18 +68,18 @@ Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting source, compatibilit
 
 Source/asset/data provenance is tracked in [`docs/provenance.md`](docs/provenance.md). Known third-party material retains its own license, including the bundled Bebas Neue font under SIL Open Font License 1.1.
 
-The earlier unresolved custom WebP/launcher PNG artwork has been removed from the publication candidate and replaced with simple project-specific XML/vector resources. See [`docs/visual-asset-audit.md`](docs/visual-asset-audit.md). Final Android resource/build verification is still required before publication approval.
+The earlier unresolved custom WebP/launcher PNG artwork has been removed from the publication candidate and replaced with simple project-specific XML/vector resources. See [`docs/visual-asset-audit.md`](docs/visual-asset-audit.md). Their XML structure and manifest wiring have been independently rechecked; final Android resource/Gradle verification is still required before publication approval.
 
 Third-party public-service names, domains, marks and software are referenced descriptively for interoperability. They remain subject to their respective owners' rights and licenses.
 
 ## License status
 
-**No repository-wide open-source license has been applied yet.** This branch is a publication-readiness candidate, not a public OSS release. Apache License 2.0 is the current provisional candidate for project-origin source; see [`docs/license-selection.md`](docs/license-selection.md).
+**No repository-wide open-source license has been applied yet.** This branch is a publication-readiness candidate, not a public OSS release. Apache License 2.0 is the selected provisional candidate for project-origin source; see [`docs/license-selection.md`](docs/license-selection.md).
 
 Until a root `LICENSE` is added, do not assume permission to copy, redistribute, modify or relicense repository-owned source merely because it is visible to collaborators.
 
 The existing author/committer email metadata has been explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12. Neither item remains an independent publication blocker.
 
-Remaining pre-publication gates are a successful full-history secret scan, Android resource/build verification for the replacement visual resources, synchronization with the final autonomous-development head and repetition of tree-dependent checks.
+Exactly two hard source-publication gates remain: a successful full-history secret scan and final Android/Gradle verification of the OSS candidate, including the replacement visual resources and publication policy check. The commands and evidence requirements are recorded in [`docs/oss-execution-gates.md`](docs/oss-execution-gates.md).
 
-The repository must remain private until the publication status in [`docs/oss-publication-status.md`](docs/oss-publication-status.md) is clear for public release.
+The repository must remain private until both gates pass and the publication status in [`docs/oss-publication-status.md`](docs/oss-publication-status.md) is approved for public release.
