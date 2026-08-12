@@ -1,49 +1,51 @@
 # OSS publication status
 
 **Branch:** `oss/publication-readiness-20260811`
-**Baseline:** autonomous integration commit `c1090f6431486501b46f44e1494289f5f48e9cfb`
-**Latest autonomous head observed during audit:** `f217095855bf9b80c633bf756e562fbf54fbe87a`
-**Current synchronization state:** publication branch contains that autonomous head (`behind_by: 0` at the 2026-08-12 cutoff check).
-**Policy:** repository stays private until every blocking item below is resolved and the branch is rechecked against the then-current autonomous integration head immediately before publication.
+**Project product cutoff:** `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`
+**Cutoff rationale:** this is the last autonomous product SHA with recorded Codex Cloud acceptance: focused Gradle PASS plus broader Debug 656/656 and QA 35/35 (691/691 total). Later autonomous commits were in-flight TDD RED work and are intentionally excluded from the publication candidate.
+**Current publication candidate:** OSS documentation/policy and project-origin visual-resource remediation layered on top of the green product cutoff. Relative to `4bf6afb...`, no Kotlin/Java/Go/Python product-source file differs in the current tree.
+**Branch hygiene:** `agent/workspace-47-autonomous-20260803` and `oss/autonomous-cutoff-20260812` were reset to the green cutoff after the maintainer stopped the autonomous worker. The in-flight commits remain preserved in Git/PR history; no OSS publication-branch history rewrite was performed.
+**Policy:** repository stays private until the two remaining execution gates pass on the same final candidate.
 
 ## Gate matrix
 
 | Gate | Status | Evidence / required action |
 | --- | --- | --- |
-| Publication branch integrity | `PASS` | Publication work is preserved on a dedicated branch; synchronization used normal merge commits/PRs and no force rewrite. |
-| Current-tree secret/credential inventory | `REVIEWED_WITH_FOLLOWUP` | Reviewed release signing configuration, relay credentials/configuration, credential-shaped fixture, sanitized logging/evidence and Gitleaks configuration. No real current-tree signing/relay credential was identified in the reviewed paths. This does **not** replace a full-history scan. |
-| Full-history Gitleaks | `BLOCKED_EXECUTION` | A successful full-history Gitleaks result for the final publication candidate is mandatory. Exact pinned commands/checksum are recorded in `docs/oss-execution-gates.md`. No successful scan can be claimed while no execution channel creates jobs. |
-| GitHub Actions execution | `EXTERNAL_BLOCKER_DIAGNOSED` | Real `CI` workflow id `332256667` and `Security scans` id `332256669` are active. Their push filters originally omitted `oss/**`; the OSS branch now includes `oss/**` in both workflows. Even after that correction, both real workflow IDs still report zero OSS runs. Fresh pushes instead create deleted historical workflow `BuildFailed` id `324591298` with `startup_failure`, zero jobs/check-runs, and non-rerequestable suites. Actions permissions, secret-scanning, and user Actions-billing endpoints return `403 Resource not accessible by integration` to the connected GitHub App. See `docs/oss-execution-gates.md`. |
-| Synthetic PKCS#12 fixture | `PASS_TEST_ONLY` | `app/src/androidTest/assets/synthetic-identity.p12.b64` is an intentionally public synthetic instrumentation fixture with public test passphrase and synthetic holder; see `docs/test-fixtures.md`. |
-| Release signing material | `PASS_CURRENT_TREE` | Release signing is supplied outside Git through explicit configuration; no fallback committed production key is accepted. Re-check after final synchronization. |
-| Git-history author/committer email privacy | `PASS_USER_ACCEPTED` | The maintainer explicitly accepted publication of the existing author/committer email metadata on 2026-08-12. No history rewrite is required for this gate. |
-| Release transport boundary | `PASS_REVIEWED` | Release secure-tunnel factory is direct-only and release tunnel policy is empty in the reviewed baseline. Re-check after final synchronization. |
-| QA relay boundary | `PASS_REVIEWED` | QA capability is opt-in/debug-scoped; relay destination is fixed rather than arbitrary; credential storage is digest-only; deployment guidance keeps operational secrets/captures out of Git. |
-| Protocol/evidence privacy | `PASS_REVIEWED` | Observation recorder/logger and reviewed Junta/UniZAR/AEAT evidence retain sanitized metadata and explicitly omit sensitive credentials/session/identity artifacts. |
-| Bebas Neue font | `PASS_THIRD_PARTY_LICENSE` | Bundled font has SIL OFL 1.1 notice in `docs/licenses/BebasNeue-OFL.txt`; NOTICE retains attribution. |
-| Gradle Wrapper | `PASS_THIRD_PARTY_LICENSE` | Gradle 9.4.1 wrapper is upstream Apache-2.0 material; generated script carries the upstream license/SPDX header and NOTICE/provenance record it. |
-| Portal catalog/data provenance | `PASS_WITH_SOURCE_BOUNDARY` | Runtime catalog is generated by local project tooling from reviewed repository inventory/evidence; generator performs no network fetch. Upstream public sources are not silently relicensed. |
-| Runtime/build dependency license review | `PASS_FOR_SOURCE_PUBLICATION` | The current locked runtime families and PyYAML tooling dependency were reviewed at family level in `docs/licenses/runtime-dependency-audit.md`. They are externally resolved rather than vendored project source; no reviewed family creates a project-source relicensing blocker. Exact APK/AAB notices remain a separate release gate. |
-| Binary dependency notices | `BINARY_RELEASE_GATE` | Before any APK/AAB distribution, inspect the exact final AAR/JAR graph and packaged `LICENSE`/`NOTICE` metadata and build the release notice bundle described in `docs/licenses/runtime-dependency-audit.md`. This does not block source publication. |
-| `afirma_shim.js` / project-source rights | `PASS_USER_ATTESTED` | On 2026-08-12 the maintainer explicitly confirmed all five source-rights/no-unlicensed-copy statements recorded in `docs/maintainer-source-attestation.md`. This gate is closed, subject to re-review if later evidence contradicts the attestation. |
-| Home visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | Remediation commit `19fe276d3f62a2d6e6e427e3637877318ee18003` removes unresolved `jfm_home_background.webp` and replaces it with project-specific `jfm_home_background.xml`. The old binary path remains removed in the synchronized candidate. Android resource/build verification is still required. |
-| Launcher/custom visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | The same remediation removes all 20 unresolved launcher PNGs and adds project-specific vector foreground/background plus anydpi fallback XML. The removals/replacements remain present after synchronization. Android resource/build verification remains required. |
-| Publication visual-asset policy | `PASS_PATH_LEVEL_RECHECK_REQUIRED` | `tools/test_publication_visual_assets.py` forbids the 21 unresolved binary paths. RED→GREEN was previously observed for the remediation. Re-run the test on the final synchronized commit using `docs/oss-execution-gates.md`; path preservation was also confirmed by the post-sync commit comparison. |
-| Unofficial-project disclosure in app | `PASS_REVIEWED` | UI has a visible `Cliente no oficial para uso personal` disclosure in the brand header. Public README and SECURITY/CONTRIBUTING docs add stronger no-affiliation language. |
-| Public README | `PASS_CURRENT_BRANCH` | README reflects resolved email/visual provenance, completed maintainer attestation, remaining publication gates, independent/unofficial status, security model and provisional Apache-2.0 decision. Re-review after final execution/sync check. |
-| SECURITY policy | `PASS_CURRENT_BRANCH` | `SECURITY.md` defines sensitive-reporting rules, credential/evidence constraints, QA/release invariants and explicitly denies authorization for third-party public-service security testing. Re-review after final execution/sync check. |
-| CONTRIBUTING policy | `PASS_CURRENT_BRANCH` | `CONTRIBUTING.md` defines test, privacy, research-boundary and provenance requirements for future contributors. Re-review after final execution/sync check. |
-| NOTICE / third-party provenance | `PASS_FOR_SOURCE_PUBLICATION` | NOTICE, provenance ledger and dependency audit distinguish repository source publication from exact binary redistribution obligations. Final APK/AAB notices remain a release-time gate. |
-| Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Apache-2.0 is the current provisional candidate, but do not add it until final full-history scan and Android build/resource verification pass on the final synchronized candidate. |
-| Repository visibility | `PRIVATE_REQUIRED` | Do not switch to public while either technical execution blocker remains. |
-| Sync with current autonomous head | `PASS_CURRENT_CUTOFF` | PR #7 merged autonomous head `b3eab817…`; PR #8 then merged the subsequent test-only head `f217095…`. A fresh comparison after the merges shows the OSS branch is `behind_by: 0` relative to `f217095…`. Recheck immediately before publication because autonomous development may advance again. |
-| Codex for OSS application | `NOT_READY` | Prepare truthful form evidence only after repository is safely public and maintainer/public repository metadata is verified. |
+| Publication branch integrity | `PASS` | Publication work remains on a dedicated branch. Sync used normal PR/merge commits; the later RED test was removed in a normal follow-up commit rather than rewriting OSS history. |
+| Product-code cutoff | `PASS_CLOUD_GREEN` | `4bf6afb...` is the last accepted product checkpoint. Recorded Cloud evidence reports focused Gradle exit 0 and broader Debug 656/656 + QA 35/35 = 691/691 with zero failures/errors/skips. |
+| Current product-source delta vs green cutoff | `PASS_NONE` | Fresh GitHub comparison from `4bf6afb...` to the OSS candidate shows no changed Kotlin/Java/Go/Python product-source files. Build-affecting candidate delta is limited to project-origin Android visual resources; remaining changes are OSS docs/configuration/workflow triggers. |
+| Interrupted autonomous RED | `PASS_EXCLUDED` | `db9bacd...` added an unimplemented `ExtremaduraProfileCatalogBindingTest` as TDD RED. It was removed from the OSS current tree and both autonomous/cutoff refs were pinned back to `4bf6afb...`. |
+| Current-tree secret/credential inventory | `REVIEWED_WITH_FOLLOWUP` | Release signing configuration, relay configuration, synthetic credential fixture, sanitized evidence/logging and Gitleaks configuration were reviewed. No real current-tree signing/relay credential was identified. This does not replace the history scan. |
+| Full-history Gitleaks | `BLOCKED_EXECUTION` | A successful full-history Gitleaks result for this final candidate remains mandatory. Exact pinned commands/checksum are in `docs/oss-execution-gates.md`. |
+| GitHub Actions execution | `EXTERNAL_BLOCKER_DIAGNOSED` | Real `CI` id `332256667` and `Security scans` id `332256669` are active and now include `oss/**`, yet report zero real OSS runs. Push/PR events are diverted to historical deleted workflow `BuildFailed` id `324591298`, conclusion `startup_failure`, with zero jobs/check-runs and non-rerequestable suites. Repository Actions permissions, secret-scanning, and Actions-billing endpoints return `403 Resource not accessible by integration` to the connected GitHub App. |
+| Synthetic PKCS#12 fixture | `PASS_TEST_ONLY` | `app/src/androidTest/assets/synthetic-identity.p12.b64` is an intentionally public synthetic fixture documented in `docs/test-fixtures.md`. |
+| Release signing material | `PASS_CURRENT_TREE` | Real release signing material is supplied outside Git; no committed production-key fallback is accepted. |
+| Git-history author/committer email privacy | `PASS_USER_ACCEPTED` | The maintainer explicitly accepted publication of existing author/committer Gmail metadata on 2026-08-12. |
+| Release transport boundary | `PASS_REVIEWED` | Reviewed release transport remains direct-only; release tunnel policy is empty. |
+| QA relay boundary | `PASS_REVIEWED` | QA capability is opt-in/debug-scoped; relay destination is fixed; credential storage is digest-only; operational secrets/captures stay outside Git. |
+| Protocol/evidence privacy | `PASS_REVIEWED` | Reviewed evidence retains sanitized metadata and omits credentials/session/private identity artifacts. |
+| Bebas Neue font | `PASS_THIRD_PARTY_LICENSE` | SIL OFL 1.1 notice retained in `docs/licenses/BebasNeue-OFL.txt` and `NOTICE`. |
+| Gradle Wrapper | `PASS_THIRD_PARTY_LICENSE` | Upstream Gradle Wrapper material retains Apache-2.0/SPDX metadata. |
+| Portal catalog/data provenance | `PASS_WITH_SOURCE_BOUNDARY` | Runtime catalog is generated by local project tooling from reviewed repository sources; upstream public sources are not silently relicensed. |
+| Runtime/build dependency license review | `PASS_FOR_SOURCE_PUBLICATION` | Family-level runtime/PyYAML review found no project-source relicensing blocker. Exact APK/AAB notices remain a separate binary-release gate. |
+| Binary dependency notices | `BINARY_RELEASE_GATE` | Exact packaged AAR/JAR license/NOTICE audit is required before binary distribution, not before source publication. |
+| `afirma_shim.js` / project-source rights | `PASS_USER_ATTESTED` | Maintainer explicitly confirmed all five source-rights/no-unlicensed-copy statements on 2026-08-12. |
+| Home visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | Unresolved WebP removed; project-origin `jfm_home_background.xml` replaces it. Android build/resource verification remains. |
+| Launcher/custom visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | All 20 unresolved launcher PNGs removed and replaced with project-origin vector/anydpi XML resources. Android build/resource verification remains. |
+| Publication visual-asset policy | `PASS_PATH_LEVEL_RECHECK_REQUIRED` | RED→GREEN was previously observed for `tools/test_publication_visual_assets.py`; rerun on the final execution channel. |
+| Unofficial-project disclosure | `PASS_REVIEWED` | App and public docs clearly identify the project as independent/unofficial and not endorsed by public administrations. |
+| Public README | `PASS_CURRENT_BRANCH` | Scope, security model, maturity, provenance and no-affiliation language are present. |
+| SECURITY policy | `PASS_CURRENT_BRANCH` | Defines private reporting, credential/evidence rules and third-party research authorization boundary. |
+| CONTRIBUTING policy | `PASS_CURRENT_BRANCH` | Defines testing, privacy, research-boundary and provenance requirements. |
+| NOTICE / third-party provenance | `PASS_FOR_SOURCE_PUBLICATION` | NOTICE/provenance/dependency audit distinguish project-origin source from separately licensed material. |
+| Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Apache-2.0 remains selected provisionally; add only after full-history Gitleaks and Android/Gradle verification pass on the final candidate. |
+| Repository visibility | `PRIVATE_REQUIRED` | Do not switch public while either execution blocker remains. |
+| Autonomous synchronization | `PASS_FROZEN_GREEN_CUTOFF` | Autonomous work was stopped by the maintainer. Publication uses the last Cloud-green product cutoff `4bf6afb...`; working autonomous/cutoff refs are pinned to it. |
+| Codex for OSS application | `NOT_READY` | Prepare/submit only after safe public visibility and verification of public repository metadata. |
 
 ## Remaining hard blockers
 
-1. Obtain a successful full-history Gitleaks result on the final synchronized publication candidate.
-2. Run Android resource/Gradle verification (plus the publication visual policy recheck) on the same final candidate using a working execution channel.
+1. Obtain a successful full-history Gitleaks result on the final candidate.
+2. Run final Android/Gradle verification plus publication visual-policy recheck on the same candidate using the required Codex Cloud execution path.
 
-A final autonomous-head comparison remains mandatory immediately before publication, but the current observed cutoff is synchronized. The existing personal Gmail history metadata, former custom binary visual artwork, and maintainer source-rights attestation are no longer independent blockers.
-
-Public visibility, root Apache-2.0 license addition, and the Codex for OSS submission remain downstream of the two execution blockers above.
+Everything else required for source-publication preparation is either passed, explicitly accepted by the maintainer, or classified as a separate binary-release obligation.
