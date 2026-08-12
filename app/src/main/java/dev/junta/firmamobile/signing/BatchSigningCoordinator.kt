@@ -4,6 +4,8 @@ import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.CertificateSigningSnapshot
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.time.Duration
 import java.util.UUID
@@ -26,6 +28,7 @@ internal class BatchSigningCoordinator(
     private val expiryScheduler: SigningExpiryScheduler,
     private val profileDisplayName: String,
     private val supportLevel: String,
+    private val profileRegistry: SiteProfileRegistry? = null,
 ) : AutoCloseable {
     private val mutableState = MutableStateFlow<SigningUiState>(SigningUiState.Idle)
     val state: StateFlow<SigningUiState> = mutableState.asStateFlow()
@@ -47,6 +50,12 @@ internal class BatchSigningCoordinator(
             ?: return reject(request, reply, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         validateBoundary(request, reply, operationAdapter)?.let { code ->
             return reject(request, reply, code)
+        }
+        val profile = profileRegistry?.profile(ProfileId(request.context.profileId))
+        if (profileRegistry != null &&
+            (profile == null || profile.profileVersion != request.context.profileVersion)
+        ) {
+            return reject(request, reply, SigningErrorCode.PROFILE_NOT_ACTIVE)
         }
         if (pending != null || active != null) {
             return reject(request, reply, SigningErrorCode.PROTOCOL_FAILED)
@@ -103,8 +112,8 @@ internal class BatchSigningCoordinator(
         mutableState.value = SigningUiState.AwaitingConfirmation(
             requestId = request.requestId,
             siteHost = request.context.origin.host,
-            profileName = profileDisplayName,
-            supportLevel = supportLevel,
+            profileName = profile?.displayName ?: profileDisplayName,
+            supportLevel = profile?.compatibilityStatus?.name ?: supportLevel,
             safeDescription = batchDescription(request.documents.size),
             format = request.format.displayName(),
             algorithm = request.algorithm.displayName(),
