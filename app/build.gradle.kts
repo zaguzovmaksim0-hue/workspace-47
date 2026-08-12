@@ -2,6 +2,8 @@ import java.net.IDN
 import java.util.Base64
 import java.util.Locale
 import org.gradle.api.artifacts.dsl.LockMode
+import org.gradle.api.tasks.testing.Test
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
     alias(libs.plugins.android.application)
@@ -281,6 +283,16 @@ android {
             "NewerVersionAvailable",
         )
     }
+}
+
+val javaToolchains = extensions.getByType<org.gradle.jvm.toolchain.JavaToolchainService>()
+
+tasks.withType<Test>().configureEach {
+    javaLauncher.set(
+        javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        },
+    )
 }
 
 androidComponents {

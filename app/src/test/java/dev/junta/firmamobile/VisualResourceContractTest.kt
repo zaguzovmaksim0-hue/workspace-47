@@ -1,8 +1,8 @@
 package dev.junta.firmamobile
 
 import android.content.pm.ApplicationInfo
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.RectF
+import androidx.core.graphics.PathParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -51,44 +51,51 @@ class VisualResourceContractTest {
         )
         assertEquals(0, resources.getIdentifier("navigation_history", "string", packageName))
 
-        val foreground = (resources.getDrawable(
-            R.drawable.ic_launcher_foreground,
-            context.theme,
-        ) as BitmapDrawable).bitmap
-        val foregroundBounds = foreground.alphaBounds()
-        assertTrue(foregroundBounds.width * 2 <= foreground.width)
-        assertTrue(foregroundBounds.height * 2 <= foreground.height)
-        assertTrue(foregroundBounds.left > foreground.width / 4)
-        assertTrue(foregroundBounds.top > foreground.height / 4)
+        val foregroundBounds = vectorPathBounds(R.drawable.ic_launcher_foreground)
+        assertTrue(foregroundBounds.bounds.width() * 2 <= foregroundBounds.viewportWidth)
+        assertTrue(foregroundBounds.bounds.height() * 2 <= foregroundBounds.viewportHeight)
+        assertTrue(foregroundBounds.bounds.left > foregroundBounds.viewportWidth / 4)
+        assertTrue(foregroundBounds.bounds.top > foregroundBounds.viewportHeight / 4)
     }
 
-    private fun Bitmap.alphaBounds(): AlphaBounds {
-        var left = width
-        var top = height
-        var right = -1
-        var bottom = -1
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                if ((getPixel(x, y) ushr 24) != 0) {
-                    left = minOf(left, x)
-                    top = minOf(top, y)
-                    right = maxOf(right, x)
-                    bottom = maxOf(bottom, y)
+    private fun vectorPathBounds(resourceId: Int): VectorBounds {
+        val parser = RuntimeEnvironment.getApplication().resources.getXml(resourceId)
+        var viewportWidth = -1f
+        var viewportHeight = -1f
+        val combinedBounds = RectF()
+        var hasPath = false
+        while (parser.eventType != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+            if (parser.eventType == org.xmlpull.v1.XmlPullParser.START_TAG) {
+                when (parser.name) {
+                    "vector" -> {
+                        viewportWidth = parser.getAttributeFloatValue(ANDROID_NS, "viewportWidth", -1f)
+                        viewportHeight = parser.getAttributeFloatValue(ANDROID_NS, "viewportHeight", -1f)
+                    }
+                    "path" -> {
+                        val pathData = checkNotNull(parser.getAttributeValue(ANDROID_NS, "pathData"))
+                        val path = checkNotNull(PathParser.createPathFromPathData(pathData))
+                        val pathBounds = RectF()
+                        path.computeBounds(pathBounds, true)
+                        if (hasPath) combinedBounds.union(pathBounds) else combinedBounds.set(pathBounds)
+                        hasPath = true
+                    }
                 }
             }
+            parser.next()
         }
-        check(right >= left && bottom >= top)
-        return AlphaBounds(left, top, right - left + 1, bottom - top + 1)
+        parser.close()
+        check(viewportWidth > 0f && viewportHeight > 0f && hasPath)
+        return VectorBounds(viewportWidth, viewportHeight, RectF(combinedBounds))
     }
 
-    private data class AlphaBounds(
-        val left: Int,
-        val top: Int,
-        val width: Int,
-        val height: Int,
+    private data class VectorBounds(
+        val viewportWidth: Float,
+        val viewportHeight: Float,
+        val bounds: RectF,
     )
 
     private companion object {
+        const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
         const val ApplicationInfoFlags = 0
     }
 }

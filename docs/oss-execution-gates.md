@@ -12,7 +12,7 @@ A gate is PASS only from successful execution on the exact publication candidate
 - Maintainer source-rights attestation: confirmed 2026-08-12
 - Existing author/committer Gmail metadata: explicitly accepted for publication
 - Former unresolved WebP/launcher PNG set: removed and replaced with project-origin XML/vector resources
-- Android Gradle/JVM/Kotlin execution boundary: **Codex Cloud only**, environment `workspace-47-android`, submitted from Termux through `$HOME/bin/w47-cloud`
+- Android Gradle/JVM/Kotlin execution boundary: **native Termux** on aarch64 with project-local verified AAPT2; Gradle/compilation runs on Java 17 and Robolectric Android-SDK-36 test workers run on Java 21
 
 Public visibility and the root `LICENSE` remain blocked until the final orchestrated run passes on one exact candidate SHA.
 
@@ -31,7 +31,7 @@ Observed facts:
 
 ### Operational conclusion
 
-Do not keep rewriting CI YAML without new evidence. GitHub Actions is not required to finish this private pre-publication gate: Termux performs the non-Android checks and submits the exact same SHA to the existing Codex Cloud Android environment.
+Do not keep rewriting CI YAML without new evidence. GitHub Actions is not required to finish this private pre-publication gate: the exact candidate is verified directly in native Termux with the project-local AAPT2 bootstrap and pinned Java runtimes.
 
 ## Preferred final execution — one command from Termux
 
@@ -45,23 +45,15 @@ The runner is fail-closed and performs the complete orchestration:
 
 1. verifies the expected repository and refuses dirty local work;
 2. fetches all refs/tags, switches to and fast-forwards `oss/publication-readiness-20260811`, and records the exact 40-hex candidate SHA;
-3. installs only Termux-safe prerequisites used for Git/Python/Gitleaks;
-4. downloads **Gitleaks 8.29.1 ARM64**, verifies its official release SHA-256, and extracts a fresh executable from the verified archive;
-5. proves the scanner works by requiring detection of a runtime-only synthetic GitHub-PAT canary;
+3. installs the minimal Termux prerequisites, including OpenJDK 17/21 and Go;
+4. builds exact **Gitleaks 8.30.1** from the official Go module and verifies the embedded module/version identity;
+5. proves the scanner works by requiring detection of a high-entropy runtime-only synthetic GitHub-PAT canary;
 6. scans Git history across **all reachable refs** with `--log-opts="--all"`;
-7. runs `tools/test_publication_visual_assets.py` and the repository Python test suite locally;
-8. invokes the canonical Android gate **only in Codex Cloud**:
+7. runs publication visual policy and Python checks;
+8. runs the complete Android Gradle/artifact/release-fail-closed gate locally in native Termux, then local Go relay supporting checks;
+9. stores ignored evidence under `.gradle/oss-publication-gates/<sha>/` and refuses tracked worktree mutations.
 
-   ```bash
-   $HOME/bin/w47-cloud full \
-     --branch oss/publication-readiness-20260811 \
-     --sha <exact-candidate-sha>
-   ```
-
-9. requires Cloud evidence to contain the requested exact SHA and a `task_e_...` task id;
-10. hashes and stores the Gitleaks SARIF and Cloud transcript under ignored `.gradle/oss-publication-gates/<sha>/`.
-
-No local `./gradlew`, JVM/Kotlin compilation, APK build, install, ADB or device/portal action is performed by this runner.
+The runner never installs or launches an APK, never uses ADB/Shizuku/UI automation, and never supplies real signing credentials.
 
 ## Gate A — exact candidate integrity
 
@@ -83,14 +75,9 @@ The publication candidate intentionally uses the last Cloud-green product bounda
 
 ### Scanner selection
 
-Do **not** use Gitleaks 8.30.1 for the publication decision. Upstream issue `gitleaks/gitleaks#2170` documented a regression in which 8.30.1 could return a false clean result for canonical secrets.
+The publication gate uses exact Gitleaks **8.30.1**. Native Android/Termux does not execute the upstream Linux ARM64 release binary reliably because the binary can hit Android seccomp (`SIGSYS`) while resolving `git`; therefore the Termux runner builds the exact `github.com/zricethezav/gitleaks/v8@v8.30.1` official Go module locally and verifies its module/version identity before use.
 
-The current gate pins Gitleaks **8.29.1** and official release digests:
-
-- Linux ARM64: `691f826ce7c1c564c9c02d0f9025e8e70803e3816707a4be6224408a06a81eaa`
-- Linux x64: `e4eb209d04e20339d77122a3bdf9cd41351255cfb27ebcb75e85325e04f88924`
-
-Before scanning the repository, the binary must detect a synthetic GitHub-PAT-shaped canary and return the configured detector exit code. This prevents a silently broken scanner from producing a publication PASS.
+A high-entropy synthetic GitHub-PAT-shaped canary must return the configured detector exit code before the repository scan starts. This specifically guards against a false-clean scanner or an invalid low-entropy canary without treating the canary as a real credential.
 
 Required history scope:
 
@@ -119,41 +106,23 @@ python -m unittest discover -s tools/tests -p 'test_*.py' -v
 
 The visual policy must prove that none of the 21 former unresolved binary asset paths has been reintroduced.
 
-## Gate D — Android verification, Codex Cloud only
+## Gate D — Android verification, native Termux
 
-Canonical command:
+Run with Java 17 as the Gradle launcher. The tracked `gradlew` Termux hook supplies the verified project-local AAPT2 override and exposes the installed Java 17/21 homes to Gradle toolchain discovery; Robolectric SDK 36 tests use a forked Java 21 worker without changing the Java 17 compile/bytecode target.
 
 ```bash
-$HOME/bin/w47-cloud full \
-  --branch oss/publication-readiness-20260811 \
-  --sha <exact-40-hex-sha>
+export JAVA_HOME="$PREFIX/lib/jvm/java-17-openjdk"
+export PATH="$JAVA_HOME/bin:$PATH"
+./gradlew --version
+./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
+./gradlew testDebugUnitTest testQaUnitTest --no-daemon
+./gradlew lintDebug lintQa --no-daemon
+./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
+scripts/ci/verify-android-artifacts.sh
+scripts/ci/verify-release-fail-closed.sh
 ```
 
-The Cloud gate uses environment `workspace-47-android` and executes the canonical Android verification set:
-
-```text
-verifyResolvedCoreVersion
-verifyPortableAapt2Configuration
-testDebugUnitTest
-testQaUnitTest
-lintDebug
-lintQa
-assembleDebug
-assembleQa
-assembleQaAndroidTest
-```
-
-Cloud acceptance requires:
-
-- Cloud `git rev-parse HEAD` exactly equals the requested SHA;
-- dependency verification remains enabled;
-- Android SDK/API 36 and Build Tools 36.0.0 resolve;
-- every requested Gradle task succeeds;
-- required artifact/release fail-closed verification succeeds;
-- Cloud checkout remains clean;
-- task id/URL and transcript are recorded.
-
-There is **no phone-local Gradle fallback**.
+PASS requires every command to exit `0`. `verify-release-fail-closed.sh` must prove that an unsigned release build fails closed without producing a release APK. No APK install, app launch, ADB/Shizuku/UI automation, production signing, or real signing credential is part of this gate.
 
 ## Gate E — supporting relay checks
 
@@ -169,7 +138,7 @@ When independently needed and an approved execution environment is available:
 )
 ```
 
-These checks do not substitute for the secret-history scan or Cloud Android gate.
+These checks do not substitute for the secret-history scan or native Termux Android gate.
 
 ## After every source-publication gate passes
 
@@ -177,7 +146,7 @@ Only after fresh evidence for the **same final commit** shows:
 
 - all-refs Gitleaks PASS after canary self-test;
 - publication visual/Python policy PASS;
-- canonical Codex Cloud Android gate PASS;
+- native Termux Android/Gradle/artifact/release-fail-closed gate PASS;
 - no newly introduced provenance/license blocker;
 
 then:

@@ -5,7 +5,7 @@
 **Cutoff rationale:** this is the last autonomous product SHA with recorded Codex Cloud acceptance: focused Gradle PASS plus broader Debug 656/656 and QA 35/35 (691/691 total). Later autonomous commits were in-flight TDD RED work and are intentionally excluded from the publication candidate.
 **Current publication candidate:** OSS documentation/policy and project-origin visual-resource remediation layered on top of the green product cutoff. Relative to `4bf6afb...`, no Kotlin/Java/Go/Python product-source file differs in the reviewed current tree.
 **Branch hygiene:** `agent/workspace-47-autonomous-20260803` and `oss/autonomous-cutoff-20260812` were pinned back to the green cutoff after the maintainer stopped the autonomous worker. In-flight commits remain preserved in Git/PR history; the OSS publication branch was not history-rewritten.
-**Execution boundary:** Termux may run Git/Gitleaks/Python policy checks and submit jobs, but Android Gradle/JVM/Kotlin executes only in Codex Cloud `workspace-47-android` through `$HOME/bin/w47-cloud`.
+**Execution boundary:** final source-publication verification runs in native Termux aarch64. Gradle/compilation uses Java 17, Robolectric SDK 36 test workers use Java 21, and Android resources use the verified project-local Termux AAPT2 override.
 **Policy:** repository remains private until the final one-shot verification passes on one exact candidate SHA.
 
 ## Gate matrix
@@ -17,9 +17,9 @@
 | Current product-source delta vs green cutoff | `PASS_NONE` | GitHub comparison from `4bf6afb...` to the reviewed OSS candidate showed no changed Kotlin/Java/Go/Python product-source files. Build-affecting OSS delta is the project-origin Android visual-resource replacement; remaining changes are docs/configuration/verification tooling. |
 | Interrupted autonomous RED | `PASS_EXCLUDED` | `db9bacd...` added an unimplemented `ExtremaduraProfileCatalogBindingTest` as TDD RED. It is absent from the current OSS tree and the autonomous/cutoff refs were pinned back to `4bf6afb...`. |
 | Current-tree secret/credential inventory | `REVIEWED_WITH_FINAL_HISTORY_SCAN` | Release signing, relay configuration, synthetic credential fixture, sanitized evidence/logging and Gitleaks configuration were reviewed. No real current-tree signing/relay credential was identified. Full-history scanning remains mandatory. |
-| Gitleaks scanner integrity | `PASS_CONFIGURED_PENDING_EXECUTION` | Publication gate pins Gitleaks 8.29.1, verifies the official release SHA-256, requires a runtime detector canary, and scans all reachable refs with `--log-opts="--all"`. Gitleaks 8.30.1 is excluded from the publication decision because of upstream regression evidence. |
+| Gitleaks scanner integrity | `PASS_CONFIGURED_PENDING_EXECUTION` | Publication gate builds exact Gitleaks 8.30.1 from the official Go module for Android/arm64, verifies module/version identity, requires a high-entropy detector canary, and scans all reachable refs with `--log-opts="--all"`. |
 | Full-history Gitleaks result | `BLOCKED_EXECUTION` | Must obtain exit `0` and no unresolved real-secret finding on the final exact candidate. One-shot command: `bash scripts/oss/run-termux-publication-gates.sh "$PWD"`. |
-| GitHub Actions execution | `EXTERNAL_BLOCKER_BYPASSED_FOR_PREPUBLICATION` | Real CI/Security workflows are active and include `oss/**`, but events are still diverted to deleted historical `BuildFailed` workflow id `324591298` with pre-job `startup_failure`. The final private publication gate no longer depends on Actions: Termux + Codex Cloud is the approved execution path. |
+| GitHub Actions execution | `EXTERNAL_BLOCKER_BYPASSED_FOR_PREPUBLICATION` | Real CI/Security workflows are active and include `oss/**`, but events are still diverted to deleted historical `BuildFailed` workflow id `324591298` with pre-job `startup_failure`. The final private publication gate no longer depends on Actions: native Termux execution is the approved path. |
 | Synthetic PKCS#12 fixture | `PASS_TEST_ONLY` | `app/src/androidTest/assets/synthetic-identity.p12.b64` is an intentionally public synthetic fixture documented in `docs/test-fixtures.md`. |
 | Release signing material | `PASS_CURRENT_TREE` | Real release signing material is supplied outside Git; no committed production-key fallback is accepted. |
 | Git-history author/committer email privacy | `PASS_USER_ACCEPTED` | Maintainer explicitly accepted publication of existing author/committer Gmail metadata on 2026-08-12. |
@@ -32,16 +32,16 @@
 | Runtime/build dependency license review | `PASS_FOR_SOURCE_PUBLICATION` | Family-level runtime/PyYAML review found no project-source relicensing blocker. Exact APK/AAB notices remain a separate binary-release gate. |
 | Binary dependency notices | `BINARY_RELEASE_GATE` | Exact packaged AAR/JAR license/NOTICE audit is required before binary distribution, not before source publication. |
 | `afirma_shim.js` / project-source rights | `PASS_USER_ATTESTED` | Maintainer explicitly confirmed all five source-rights/no-unlicensed-copy statements on 2026-08-12. |
-| Home visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | Unresolved WebP removed; project-origin `jfm_home_background.xml` replaces it. Fresh final Cloud resource/build verification remains mandatory. |
-| Launcher/custom visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | All 20 unresolved launcher PNGs removed and replaced with project-origin vector/anydpi XML resources. Fresh final Cloud resource/build verification remains mandatory. |
+| Home visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | Unresolved WebP removed; project-origin `jfm_home_background.xml` replaces it. Fresh final native-Termux resource/build verification remains mandatory. |
+| Launcher/custom visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | All 20 unresolved launcher PNGs removed and replaced with project-origin vector/anydpi XML resources. Fresh final native-Termux resource/build verification remains mandatory. |
 | Publication visual-asset policy | `PASS_PATH_LEVEL_RECHECK_REQUIRED` | RED→GREEN was previously observed for `tools/test_publication_visual_assets.py`; the one-shot runner reruns it on the exact final SHA. |
-| Android/Gradle execution | `BLOCKED_EXECUTION_READY` | Canonical full gate is `$HOME/bin/w47-cloud full --branch oss/publication-readiness-20260811 --sha <exact-sha>` in `workspace-47-android`. The Termux orchestrator invokes it automatically after local security/policy checks. No local Gradle fallback. |
+| Android/Gradle execution | `BLOCKED_EXECUTION_READY` | Canonical full gate is `bash scripts/oss/run-termux-publication-gates.sh "$PWD"`; it runs the required Gradle tasks locally with Java 17 plus Java 21 Robolectric workers and verified project-local AAPT2. |
 | Unofficial-project disclosure | `PASS_REVIEWED` | App and public docs clearly identify the project as independent/unofficial and not endorsed by public administrations. |
 | Public README | `PASS_CURRENT_BRANCH` | Scope, security model, maturity, provenance and no-affiliation language are present. |
 | SECURITY policy | `PASS_CURRENT_BRANCH` | Defines private reporting, credential/evidence rules and third-party research authorization boundary. |
 | CONTRIBUTING policy | `PASS_CURRENT_BRANCH` | Defines testing, privacy, research-boundary and provenance requirements. |
 | NOTICE / third-party provenance | `PASS_FOR_SOURCE_PUBLICATION` | NOTICE/provenance/dependency audit distinguish project-origin source from separately licensed material. |
-| Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Apache-2.0 remains selected provisionally; add only after full-history Gitleaks and canonical Cloud Android verification pass on the same exact candidate. |
+| Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Apache-2.0 remains selected provisionally; add only after full-history Gitleaks and native-Termux Android verification pass on the same exact candidate. |
 | Repository visibility | `PRIVATE_REQUIRED` | Do not switch public until the final orchestrated verification passes. |
 | Autonomous synchronization | `PASS_FROZEN_GREEN_CUTOFF` | Autonomous work was stopped. Publication uses the last Cloud-green product cutoff `4bf6afb...`; working autonomous/cutoff refs are pinned to it. |
 | Codex for OSS application | `NOT_READY` | Prepare/submit only after safe public visibility and verification of public repository metadata. |
@@ -50,8 +50,8 @@
 
 There are now only two evidence results left, both produced by the same one-shot Termux orchestration:
 
-1. **Full-history/all-refs Gitleaks PASS** using verified Gitleaks 8.29.1 after its detector canary succeeds.
-2. **Canonical Codex Cloud Android PASS** for the exact same candidate SHA through `$HOME/bin/w47-cloud full`.
+1. **Full-history/all-refs Gitleaks PASS** using exact Gitleaks 8.30.1 from the official Go module after its high-entropy detector canary succeeds.
+2. **Native Termux Android/Gradle PASS** for the exact same candidate SHA, including unit tests, lint, assemblies, artifact verification, and release-signing fail-closed verification.
 
 Run:
 
