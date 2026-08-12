@@ -21,6 +21,14 @@ class AgentCloudPolicyTest(unittest.TestCase):
         self.assertIn("docs/agents/codex-cloud-gradle.md", text)
         self.assertIn("explicit operator authorization", text)
 
+    def test_context_uses_stable_main_pull_request_workflow(self) -> None:
+        text = self.read("CONTEXT.md")
+        self.assertIn("`origin/main`", text)
+        self.assertIn("fresh branch", text)
+        self.assertIn("pull request", text.lower())
+        self.assertIn("merge", text.lower())
+        self.assertNotIn("agent/workspace-47-autonomous-20260803", text)
+
     def test_current_workflow_does_not_mandate_superpowers(self) -> None:
         paths = [
             "AGENTS.md",

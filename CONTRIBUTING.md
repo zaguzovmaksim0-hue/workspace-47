@@ -88,6 +88,8 @@ Evidence documents must state the exact scope and what remains unproven.
 
 ## Pull requests
 
+Keep `main` stable: create a topic branch from the current `main`, run the applicable checks on the candidate commit, and integrate the change through a pull request rather than developing directly on `main`.
+
 A useful pull request explains:
 
 1. the security/compatibility problem being solved;
