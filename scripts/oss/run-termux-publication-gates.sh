@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 
 BRANCH="oss/publication-readiness-20260811"
+PRODUCT_CUTOFF="4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb"
+RED_TEST="app/src/test/java/dev/junta/firmamobile/profile/ExtremaduraProfileCatalogBindingTest.kt"
 REPO="${1:-$PWD}"
 GITLEAKS_VERSION="8.30.1"
 GITLEAKS_MODULE="github.com/zricethezav/gitleaks/v8"
@@ -45,6 +47,12 @@ git pull --ff-only origin "$BRANCH"
 [[ -z $(git status --porcelain) ]] || fail "Working tree became dirty after synchronization."
 HEAD_SHA=$(git rev-parse HEAD)
 [[ $HEAD_SHA =~ ^[0-9a-f]{40}$ ]] || fail "Unexpected Git SHA: $HEAD_SHA"
+git merge-base --is-ancestor "$PRODUCT_CUTOFF" HEAD || fail "Product cutoff is not an ancestor of candidate."
+git diff --check
+git diff --check "$PRODUCT_CUTOFF"..HEAD
+if git cat-file -e HEAD:"$RED_TEST" 2>/dev/null; then
+  fail "Interrupted TDD RED test is present in candidate: $RED_TEST"
+fi
 printf 'Candidate SHA: %s\n' "$HEAD_SHA"
 
 step "2/8 — INSTALL TERMUX-SAFE PREREQUISITES"
@@ -56,20 +64,25 @@ done
 [[ -x "$PREFIX/lib/jvm/java-17-openjdk/bin/java" ]] || fail "Termux OpenJDK 17 is missing."
 [[ -x "$PREFIX/lib/jvm/java-21-openjdk/bin/java" ]] || fail "Termux OpenJDK 21 is missing."
 
+step "3/8 — VERIFY TERMUX AAPT2 AND BUILD EXACT GITLEAKS ${GITLEAKS_VERSION}"
+if ! ./tools/bootstrap-termux-aapt2.sh verify >/dev/null 2>&1; then
+  ./tools/bootstrap-termux-aapt2.sh bootstrap
+fi
+./tools/bootstrap-termux-aapt2.sh verify
+
 TOOLS_DIR="$REPO/.gradle/oss-publication-tools"
 ARTIFACT_DIR="$REPO/.gradle/oss-publication-gates/$HEAD_SHA"
-mkdir -p "$TOOLS_DIR" "$ARTIFACT_DIR"
-
-step "3/8 — BUILD AND SELF-TEST EXACT GITLEAKS ${GITLEAKS_VERSION}"
-export GOBIN="$TOOLS_DIR/go-bin"
-export GOCACHE="$TOOLS_DIR/go-cache"
-export GOMODCACHE="$TOOLS_DIR/go-mod"
-mkdir -p "$GOBIN" "$GOCACHE" "$GOMODCACHE"
-rm -f "$GOBIN/gitleaks"
-go install -ldflags="-X ${GITLEAKS_MODULE}/version.Version=${GITLEAKS_VERSION}" \
+GOBIN_DIR="$TOOLS_DIR/go-bin"
+GOCACHE_DIR="$TOOLS_DIR/go-cache"
+GOMODCACHE_DIR="$TOOLS_DIR/go-mod"
+mkdir -p "$TOOLS_DIR" "$ARTIFACT_DIR" "$GOBIN_DIR" "$GOCACHE_DIR" "$GOMODCACHE_DIR"
+rm -f "$GOBIN_DIR/gitleaks"
+GOBIN="$GOBIN_DIR" GOCACHE="$GOCACHE_DIR" GOMODCACHE="$GOMODCACHE_DIR" CGO_ENABLED=0 \
+  go install -tags gore2regex \
+  -ldflags="-s -w -X=${GITLEAKS_MODULE}/version.Version=${GITLEAKS_VERSION}" \
   "${GITLEAKS_MODULE}@v${GITLEAKS_VERSION}"
 gitleaks_bin="$TOOLS_DIR/gitleaks-${GITLEAKS_VERSION}-termux"
-install -m 700 "$GOBIN/gitleaks" "$gitleaks_bin"
+install -m 700 "$GOBIN_DIR/gitleaks" "$gitleaks_bin"
 [[ $("$gitleaks_bin" version) == "$GITLEAKS_VERSION" ]] || fail "Unexpected Gitleaks version."
 go version -m "$gitleaks_bin" | tee "$ARTIFACT_DIR/gitleaks-module.txt"
 grep -Fq $'mod\tgithub.com/zricethezav/gitleaks/v8\tv8.30.1' "$ARTIFACT_DIR/gitleaks-module.txt" \
@@ -105,7 +118,7 @@ python -m unittest discover -s tools/tests -p 'test_*.py' -v 2>&1 | tee "$ARTIFA
 step "6/8 — ANDROID / GRADLE IN NATIVE TERMUX"
 export JAVA_HOME="$PREFIX/lib/jvm/java-17-openjdk"
 export PATH="$JAVA_HOME/bin:$PATH"
-./gradlew --version | tee "$ARTIFACT_DIR/gradle-version.log"
+./gradlew --version 2>&1 | tee "$ARTIFACT_DIR/gradle-version.log"
 ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon 2>&1 | tee "$ARTIFACT_DIR/gradle-verify.log"
 ./gradlew testDebugUnitTest testQaUnitTest --no-daemon 2>&1 | tee "$ARTIFACT_DIR/gradle-unit.log"
 ./gradlew lintDebug lintQa --no-daemon 2>&1 | tee "$ARTIFACT_DIR/gradle-lint.log"
@@ -120,6 +133,7 @@ step "7/8 — LOCAL GO RELAY SUPPORTING CHECKS"
   go vet ./...
   go build -o "$ARTIFACT_DIR/ws024-relay" ./cmd/ws024-relay
 ) 2>&1 | tee "$ARTIFACT_DIR/go-relay.log"
+printf '%s\n' 'NOTE: Go -race is a separate supporting check; native android/arm64 does not provide a race runtime.' | tee "$ARTIFACT_DIR/go-race-note.txt"
 
 step "8/8 — FINAL CONSISTENCY AND EVIDENCE"
 [[ -z $(git status --porcelain) ]] || {
@@ -130,6 +144,7 @@ printf '%s\n' "$HEAD_SHA" >"$ARTIFACT_DIR/verified-commit.txt"
 sha256sum "$ARTIFACT_DIR/gitleaks.sarif" >"$ARTIFACT_DIR/gitleaks.sarif.sha256"
 {
   printf 'candidate_sha=%s\n' "$HEAD_SHA"
+  printf 'product_cutoff=%s\n' "$PRODUCT_CUTOFF"
   printf 'gitleaks_version=%s\n' "$GITLEAKS_VERSION"
   printf 'gitleaks_source=official-go-module\n'
   printf 'android_execution=native-termux\n'

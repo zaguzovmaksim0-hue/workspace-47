@@ -15,10 +15,16 @@ come from the target phone's configured Termux environment. This is an explicit
 non-blocking limitation for the single-device build scope; the functional
 resource compile and clean Gradle gate detect an incompatible phone runtime.
 
-The current non-debuggable release variant uses AGP's local debug signing key so
-it can be installed during on-device QA without committing credentials. It is
-not a distributable production signature. The final release gate replaces it
-with the external private release key and verifies v2/v3 signatures.
+The `release` variant has no debug/test signing fallback. Its `preReleaseBuild`
+depends on a fail-closed verification task that requires an external private
+release signing configuration. QA remains separately debug-signed; the
+publication gate never supplies real release credentials.
+
+For Android SDK 36 host tests, Java/Kotlin bytecode targets remain JVM 17 while
+Gradle `Test` workers use an OpenJDK 21 launcher required by Robolectric. Native
+Termux therefore requires both `openjdk-17` and `openjdk-21`; `JAVA_HOME` stays
+on Java 17 for Gradle/build execution and the wrapper exposes both installations
+to Gradle toolchain discovery.
 
 Outside Termux, the wrapper leaves the Android Gradle Plugin on its standard
 Maven AAPT2 path. Native Termux on aarch64 needs the project bootstrap because
