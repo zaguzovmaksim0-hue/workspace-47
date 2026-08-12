@@ -1,20 +1,20 @@
 # Maintainer source-rights attestation
 
-**Status:** awaiting explicit maintainer confirmation
+**Status:** confirmed by maintainer on 2026-08-12
 
 This document is a publication gate for material intended to be covered by the future Junta Firma Mobile root project license. It does not attempt to transfer or relicense third-party material.
 
-Repository history and the focused provenance review support a project-native implementation history, including incremental development of `app/src/main/res/raw/afirma_shim.js`. History alone does not prove copyright ownership or licensing authority, so the statements below must be explicitly confirmed by a person with authority over the repository before the root project license is added.
+Repository history and the focused provenance review support a project-native implementation history, including incremental development of `app/src/main/res/raw/afirma_shim.js`. History alone does not prove copyright ownership or licensing authority, so the statements below required explicit confirmation by a person with authority over the repository before the root project license could be added.
 
 ## Required maintainer confirmations
 
-The maintainer should confirm all of the following statements exactly or identify an exception that must be resolved:
+On 2026-08-12, the maintainer explicitly confirmed all five statements below in the project working conversation. No legal name, handwritten signature, or identity beyond that explicit confirmation is inferred or recorded here.
 
-- [ ] I am authorized to publish and license the project-origin source maintained in this repository to the extent that copyright or other licensable rights exist in that material.
-- [ ] To the best of my knowledge, the project-origin Kotlin/Java, Go, Python and JavaScript implementation was created specifically for Junta Firma Mobile and was not copied from a third-party codebase without a compatible license and required attribution.
-- [ ] In particular, I am not aware of `app/src/main/res/raw/afirma_shim.js` containing copied implementation text from AutoFirma, Cliente @firma/MiniApplet or another third-party source that is being silently relicensed as Junta Firma Mobile code.
-- [ ] Third-party dependencies, fonts, protocols, names, public-service interoperability targets and other separately identified material remain under their own licenses/rights and are excluded from any claim that the root project license owns or relicenses them.
-- [ ] I authorize publication of the project-origin source under the project license selected after the remaining publication gates are complete.
+- [x] I am authorized to publish and license the project-origin source maintained in this repository to the extent that copyright or other licensable rights exist in that material.
+- [x] To the best of my knowledge, the project-origin Kotlin/Java, Go, Python and JavaScript implementation was created specifically for Junta Firma Mobile and was not copied from a third-party codebase without a compatible license and required attribution.
+- [x] In particular, I am not aware of `app/src/main/res/raw/afirma_shim.js` containing copied implementation text from AutoFirma, Cliente @firma/MiniApplet or another third-party source that is being silently relicensed as Junta Firma Mobile code.
+- [x] Third-party dependencies, fonts, protocols, names, public-service interoperability targets and other separately identified material remain under their own licenses/rights and are excluded from any claim that the root project license owns or relicenses them.
+- [x] I authorize publication of the project-origin source under the project license selected after the remaining publication gates are complete.
 
 ## Visual-resource state
 
@@ -24,7 +24,7 @@ Those replacement resources fall under the general project-origin/source-rights 
 
 ## Gates not replaced by this attestation
 
-Even after maintainer confirmation, publication still requires:
+Publication still requires:
 
 - final full-history secret scanning on the synchronized candidate;
 - Android resource/build verification on a working execution channel;
@@ -33,4 +33,6 @@ Even after maintainer confirmation, publication still requires:
 
 ## Completion record
 
-Do not mark this gate complete merely because this template exists. When the maintainer explicitly confirms all five statements, record the confirmation date and corresponding publication-status update here without inventing a signature or identity that was not supplied.
+Maintainer confirmation recorded: **2026-08-12**.
+
+This closes the source-rights attestation gate only. It does not by itself authorize public visibility before the remaining technical publication gates are complete.
