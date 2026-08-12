@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -Eeuo pipefail
 
-BRANCH="oss/publication-readiness-20260811"
+BRANCH="oss/publication-candidate-final-20260812"
 REPO="${1:-$PWD}"
 GITLEAKS_VERSION="8.29.1"
 GITLEAKS_ARM64_SHA256="691f826ce7c1c564c9c02d0f9025e8e70803e3816707a4be6224408a06a81eaa"
