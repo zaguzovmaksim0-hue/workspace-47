@@ -35,6 +35,9 @@ class WebMessageBridgeExtremaduraBatchTest {
             profileId = EXTREMADURA_PROFILE,
             logger = SanitizedLogger(),
             onAfirmaRequest = {},
+            // Extremadura is intentionally not in the runtime registry until Slice 5.
+            // The ordinary router is unrelated to this batch seam and never owns these messages.
+            router = WebMessageRouter(ProfileId(MelillaBatchBridgeAdapter.PROFILE_ID)),
             onMelillaBatchRequest = { request, reply ->
                 accepted += request
                 pendingReply = reply
