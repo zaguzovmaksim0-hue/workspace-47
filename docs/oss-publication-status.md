@@ -1,62 +1,52 @@
 # OSS publication status
 
+**Status:** APPROVED FOR SOURCE PUBLICATION
+
 **Branch:** `oss/publication-readiness-20260811`
+**Verified candidate SHA:** `6b5a2ab13497c6c623a223b4a951338f822ccba6`
 **Project product cutoff:** `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`
-**Cutoff rationale:** this is the last autonomous product SHA with recorded Codex Cloud acceptance: focused Gradle PASS plus broader Debug 656/656 and QA 35/35 (691/691 total). Later autonomous commits were in-flight TDD RED work and are intentionally excluded from the publication candidate.
-**Current publication candidate:** OSS documentation/policy and project-origin visual-resource remediation layered on top of the green product cutoff. Relative to `4bf6afb...`, no Kotlin/Java/Go/Python product-source file differs in the reviewed current tree.
-**Branch hygiene:** `agent/workspace-47-autonomous-20260803` and `oss/autonomous-cutoff-20260812` were pinned back to the green cutoff after the maintainer stopped the autonomous worker. In-flight commits remain preserved in Git/PR history; the OSS publication branch was not history-rewritten.
-**Execution boundary:** final source-publication verification runs in native Termux aarch64. Gradle/compilation uses Java 17, Robolectric SDK 36 test workers use Java 21, and Android resources use the verified project-local Termux AAPT2 override.
-**Policy:** repository remains private until the final one-shot verification passes on one exact candidate SHA.
+**Verification environment:** native Termux Android/arm64; Gradle 9.4.1; launcher Java 17.0.20; Robolectric test worker Java 21; verified Termux AAPT2.
 
-## Gate matrix
+The mandatory private pre-publication gates passed on the exact verified candidate. Subsequent repository mutations are publication metadata only: the root Apache-2.0 `LICENSE` and updates to publication/license documentation. No product/build source was changed after the verified gate.
 
-| Gate | Status | Evidence / required action |
+## Final gate matrix
+
+| Gate | Status | Evidence |
 | --- | --- | --- |
-| Publication branch integrity | `PASS` | Publication work remains on a dedicated branch. Sync used normal PR/merge commits; the later RED test was removed by a normal follow-up commit rather than rewriting OSS history. |
-| Product-code cutoff | `PASS_CLOUD_GREEN` | `4bf6afb...` is the last accepted product checkpoint. Recorded Cloud evidence reports focused Gradle exit 0 and broader Debug 656/656 + QA 35/35 = 691/691 with zero failures/errors/skips. |
-| Current product-source delta vs green cutoff | `PASS_NONE` | GitHub comparison from `4bf6afb...` to the reviewed OSS candidate showed no changed Kotlin/Java/Go/Python product-source files. Build-affecting OSS delta is the project-origin Android visual-resource replacement; remaining changes are docs/configuration/verification tooling. |
-| Interrupted autonomous RED | `PASS_EXCLUDED` | `db9bacd...` added an unimplemented `ExtremaduraProfileCatalogBindingTest` as TDD RED. It is absent from the current OSS tree and the autonomous/cutoff refs were pinned back to `4bf6afb...`. |
-| Current-tree secret/credential inventory | `REVIEWED_WITH_FINAL_HISTORY_SCAN` | Release signing, relay configuration, synthetic credential fixture, sanitized evidence/logging and Gitleaks configuration were reviewed. No real current-tree signing/relay credential was identified. Full-history scanning remains mandatory. |
-| Gitleaks scanner integrity | `PASS_CONFIGURED_PENDING_EXECUTION` | Publication gate builds exact Gitleaks 8.30.1 from the official Go module for Android/arm64, verifies module/version identity, requires a high-entropy detector canary, and scans all reachable refs with `--log-opts="--all"`. |
-| Full-history Gitleaks result | `BLOCKED_EXECUTION` | Must obtain exit `0` and no unresolved real-secret finding on the final exact candidate. One-shot command: `bash scripts/oss/run-termux-publication-gates.sh "$PWD"`. |
-| GitHub Actions execution | `EXTERNAL_BLOCKER_BYPASSED_FOR_PREPUBLICATION` | Real CI/Security workflows are active and include `oss/**`, but events are still diverted to deleted historical `BuildFailed` workflow id `324591298` with pre-job `startup_failure`. The final private publication gate no longer depends on Actions: native Termux execution is the approved path. |
-| Synthetic PKCS#12 fixture | `PASS_TEST_ONLY` | `app/src/androidTest/assets/synthetic-identity.p12.b64` is an intentionally public synthetic fixture documented in `docs/test-fixtures.md`. |
-| Release signing material | `PASS_CURRENT_TREE` | Real release signing material is supplied outside Git; no committed production-key fallback is accepted. |
-| Git-history author/committer email privacy | `PASS_USER_ACCEPTED` | Maintainer explicitly accepted publication of existing author/committer Gmail metadata on 2026-08-12. |
-| Release transport boundary | `PASS_REVIEWED` | Reviewed release transport remains direct-only; release tunnel policy is empty. |
-| QA relay boundary | `PASS_REVIEWED` | QA capability is opt-in/debug-scoped; relay destination is fixed; credential storage is digest-only; operational secrets/captures stay outside Git. |
-| Protocol/evidence privacy | `PASS_REVIEWED` | Reviewed evidence retains sanitized metadata and omits credentials/session/private identity artifacts. |
-| Bebas Neue font | `PASS_THIRD_PARTY_LICENSE` | SIL OFL 1.1 notice retained in `docs/licenses/BebasNeue-OFL.txt` and `NOTICE`. |
-| Gradle Wrapper | `PASS_THIRD_PARTY_LICENSE` | Upstream Gradle Wrapper material retains Apache-2.0/SPDX metadata. |
-| Portal catalog/data provenance | `PASS_WITH_SOURCE_BOUNDARY` | Runtime catalog is generated by local project tooling from reviewed repository sources; upstream public sources are not silently relicensed. |
-| Runtime/build dependency license review | `PASS_FOR_SOURCE_PUBLICATION` | Family-level runtime/PyYAML review found no project-source relicensing blocker. Exact APK/AAB notices remain a separate binary-release gate. |
-| Binary dependency notices | `BINARY_RELEASE_GATE` | Exact packaged AAR/JAR license/NOTICE audit is required before binary distribution, not before source publication. |
-| `afirma_shim.js` / project-source rights | `PASS_USER_ATTESTED` | Maintainer explicitly confirmed all five source-rights/no-unlicensed-copy statements on 2026-08-12. |
-| Home visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | Unresolved WebP removed; project-origin `jfm_home_background.xml` replaces it. Fresh final native-Termux resource/build verification remains mandatory. |
-| Launcher/custom visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | All 20 unresolved launcher PNGs removed and replaced with project-origin vector/anydpi XML resources. Fresh final native-Termux resource/build verification remains mandatory. |
-| Publication visual-asset policy | `PASS_PATH_LEVEL_RECHECK_REQUIRED` | RED→GREEN was previously observed for `tools/test_publication_visual_assets.py`; the one-shot runner reruns it on the exact final SHA. |
-| Android/Gradle execution | `BLOCKED_EXECUTION_READY` | Canonical full gate is `bash scripts/oss/run-termux-publication-gates.sh "$PWD"`; it runs the required Gradle tasks locally with Java 17 plus Java 21 Robolectric workers and verified project-local AAPT2. |
-| Unofficial-project disclosure | `PASS_REVIEWED` | App and public docs clearly identify the project as independent/unofficial and not endorsed by public administrations. |
-| Public README | `PASS_CURRENT_BRANCH` | Scope, security model, maturity, provenance and no-affiliation language are present. |
-| SECURITY policy | `PASS_CURRENT_BRANCH` | Defines private reporting, credential/evidence rules and third-party research authorization boundary. |
-| CONTRIBUTING policy | `PASS_CURRENT_BRANCH` | Defines testing, privacy, research-boundary and provenance requirements. |
-| NOTICE / third-party provenance | `PASS_FOR_SOURCE_PUBLICATION` | NOTICE/provenance/dependency audit distinguish project-origin source from separately licensed material. |
-| Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Apache-2.0 remains selected provisionally; add only after full-history Gitleaks and native-Termux Android verification pass on the same exact candidate. |
-| Repository visibility | `PRIVATE_REQUIRED` | Do not switch public until the final orchestrated verification passes. |
-| Autonomous synchronization | `PASS_FROZEN_GREEN_CUTOFF` | Autonomous work was stopped. Publication uses the last Cloud-green product cutoff `4bf6afb...`; working autonomous/cutoff refs are pinned to it. |
-| Codex for OSS application | `NOT_READY` | Prepare/submit only after safe public visibility and verification of public repository metadata. |
+| Publication branch integrity | `PASS` | Dedicated OSS branch; no publication-branch history rewrite. |
+| Product-code cutoff | `PASS_CLOUD_GREEN` | `4bf6afb...` is the last autonomous product checkpoint with recorded Cloud acceptance. |
+| Product cutoff ancestry | `PASS` | `git merge-base --is-ancestor 4bf6afb... 6b5a2ab...` exit 0. |
+| Interrupted autonomous TDD RED | `PASS_EXCLUDED` | `ExtremaduraProfileCatalogBindingTest.kt` absent from verified candidate. |
+| Git diff integrity | `PASS` | `git diff --check` exit 0. |
+| Full-history Gitleaks | `PASS` | Gitleaks 8.30.1 built from exact official Go module; detector canary PASS; 424 commits scanned with `--all`; exit 0; 0 findings. |
+| Current-tree credential review | `PASS_WITH_SYNTHETIC_FIXTURE` | No real signing/relay credential identified. Public PKCS#12 fixture is synthetic/test-only and documented. |
+| Publication visual policy | `PASS` | Exit 0; tracked PNG/WebP count 0; none of the former 21 unresolved binary visual assets returned. |
+| Android configuration verification | `PASS` | `verifyResolvedCoreVersion` exit 0; `verifyPortableAapt2Configuration` exit 0. |
+| Debug unit tests | `PASS` | 656 tests; 0 failures; 0 errors; exit 0. |
+| QA unit tests | `PASS` | 656 tests; 0 failures; 0 errors; exit 0. |
+| Debug/QA lint | `PASS` | `lintDebug` exit 0; `lintQa` exit 0. |
+| Android assemblies | `PASS` | `assembleDebug`, `assembleQa`, `assembleQaAndroidTest` all exit 0. |
+| Android artifact verification | `PASS` | `scripts/ci/verify-android-artifacts.sh` exit 0. |
+| Release signing fail-closed | `PASS` | `scripts/ci/verify-release-fail-closed.sh` exit 0. |
+| Python policy/catalog tests | `PASS` | 113 tests; 1 skipped; 0 failures; exit 0. |
+| Go relay test | `PASS` | `go test ./...` exit 0. |
+| Go relay vet/build | `PASS` | `go vet ./...` and build exit 0. |
+| Go native race detector | `NOT_APPLICABLE_NATIVE_ANDROID` | `-race` is unsupported on Android/arm64 (exit 2). This is optional supporting evidence and is not a mandatory source-publication gate. |
+| Working tree / origin identity | `PASS` | Working tree clean; origin matches candidate. |
+| GitHub Actions | `KNOWN_PLATFORM_BLOCKER_NONBLOCKING` | GitHub Actions continues to fail before job creation via historical `BuildFailed/startup_failure`; mandatory pre-publication verification was completed independently in Termux. Public CI can be repaired/retested after publication. |
+| Maintainer source-rights attestation | `PASS_USER_ATTESTED` | All five source-rights/no-unlicensed-copy statements explicitly confirmed 2026-08-12. |
+| Git-history email privacy | `PASS_USER_ACCEPTED` | Maintainer explicitly accepted publication of existing author/committer Gmail metadata. |
+| Visual provenance | `PASS` | Former unresolved PNG/WebP artwork replaced with project-origin XML/vector resources and successfully compiled/packaged by the final Android gate. |
+| Runtime/dependency source-publication license audit | `PASS` | No reviewed dependency family creates a project-source relicensing blocker. |
+| Root project license | `PASS_APACHE_2_0` | Root `LICENSE` contains the Apache License 2.0 text; `NOTICE` and provenance records remain in place. |
+| Repository visibility | `READY_TO_MAKE_PUBLIC` | Mandatory source-publication gates are complete. |
+| Binary APK/AAB redistribution | `SEPARATE_RELEASE_GATE` | Exact packaged dependency/license/NOTICE audit remains required before binary distribution. |
+| Codex for OSS application | `READY_AFTER_PUBLIC_URL_VERIFICATION` | Verify public repository/default branch metadata after visibility change, then prepare the application. |
 
-## Remaining hard blockers
+## Final verification record
 
-There are now only two evidence results left, both produced by the same one-shot Termux orchestration:
+`OSS_VERIFICATION_RESULT` for `6b5a2ab13497c6c623a223b4a951338f822ccba6` concluded:
 
-1. **Full-history/all-refs Gitleaks PASS** using exact Gitleaks 8.30.1 from the official Go module after its high-entropy detector canary succeeds.
-2. **Native Termux Android/Gradle PASS** for the exact same candidate SHA, including unit tests, lint, assemblies, artifact verification, and release-signing fail-closed verification.
+`READY_FOR_LICENSE_AND_PUBLICATION`
 
-Run:
-
-```bash
-bash scripts/oss/run-termux-publication-gates.sh "$PWD"
-```
-
-If it reaches the final `PASS: all mandatory source-publication execution gates completed ...`, the next repository mutation is the root Apache-2.0 `LICENSE` plus final approved-publication status. Until then, the repository remains private.
+The repository may now be made public as a **source repository**. This approval does not authorize or certify binary APK/AAB distribution and does not imply affiliation with any public administration or third-party service.
