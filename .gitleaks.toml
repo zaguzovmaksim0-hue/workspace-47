@@ -8,3 +8,11 @@ condition = "AND"
 regexTarget = "line"
 paths = ['''^docs/compatibility/all-spanish-public-portals-inventory\.md$''']
 regexes = ['''^\s*surface_key:\s*"[a-z0-9-]+"\s*$''']
+
+[[allowlists]]
+description = "One historical workflow commit contains the exact synthetic detector canary; it is not a credential"
+targetRules = ["github-pat"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^\.github/workflows/security\.yml$''']
+regexes = ['''ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789''']
