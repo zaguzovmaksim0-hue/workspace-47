@@ -22,6 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
+import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
+import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
+import dev.junta.firmamobile.browser.MelillaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
 import dev.junta.firmamobile.browser.MelillaBatchSigningAdapter
@@ -51,6 +54,7 @@ import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
+import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -81,6 +85,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var signingCoordinator: SigningCoordinator
     private lateinit var batchSigningCoordinator: BatchSigningCoordinator
     private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
+    private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogSmokeHook: CatalogSmokeHook
@@ -163,15 +168,28 @@ class MainActivity : ComponentActivity() {
         melillaBatchSigningAdapter = MelillaBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
+        extremaduraBatchSigningAdapter = ExtremaduraBatchSigningAdapter(
+            registry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+        val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
+        val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         batchSigningCoordinator = BatchSigningCoordinator(
             certificateSession = app.certificateSession,
-            adapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport()),
+            adapter = melillaBatchProtocolAdapter,
+            adapterResolver = { id ->
+                when (id) {
+                    melillaBatchProtocolAdapter.id -> melillaBatchProtocolAdapter
+                    extremaduraBatchProtocolAdapter.id -> extremaduraBatchProtocolAdapter
+                    else -> null
+                }
+            },
             localSignatureEngine = JcaLocalSignatureEngine(),
             currentOrigin = { currentSigningOrigin() },
             currentNavigationEpoch = { currentNavigationEpoch },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
             profileDisplayName = melillaProfile.displayName,
             supportLevel = melillaProfile.compatibilityStatus.name,
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
         val publicCatalog = resources.openRawResource(R.raw.public_portal_catalog_v1)
             .bufferedReader().use { PublicPortalCatalogParser.parse(it.readText()) }
@@ -389,8 +407,19 @@ class MainActivity : ComponentActivity() {
         request: MelillaBatchBridgeRequest,
         reply: MelillaBatchReplyChannel,
     ) {
-        val normalized = melillaBatchSigningAdapter.normalize(request)
-        val replySink = melillaBatchSigningAdapter.replySink(reply)
+        val normalized = when (request.profileId.value) {
+            MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.normalize(request)
+            ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.normalize(request)
+            else -> null
+        }
+        val replySink = when (request.profileId.value) {
+            MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.replySink(reply)
+            ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.replySink(reply)
+            else -> {
+                runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
+                return
+            }
+        }
         if (normalized == null) {
             runCatching { replySink.failure(SigningErrorCode.INVALID_REQUEST) }
             return

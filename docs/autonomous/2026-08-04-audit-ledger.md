@@ -3177,3 +3177,56 @@ then adds the QA-only profile/registry/catalog binding at at most `IMPLEMENTED_N
 No phone-local Gradle/JVM/Kotlin, worker delegation, APK install/launch, device control, authenticated
 portal action, credential/cookie/bearer use, certificate unlock/private-key material, real signing,
 form submission, upload, payment, or administrative action occurred.
+
+## Portal G65/G66 — Extremadura Slice 4 Browser/MainActivity composition acceptance — 2026-08-12
+
+Extremadura (`extremadura-tramites`, `ES-PUB-0109`) Slice 4 is accepted at the automated runtime
+composition boundary. This slice wires the already accepted fixed Extremadura STA bridge/signing/protocol
+contracts through the existing shared BATCH ownership flow. It does not yet add the QA profile,
+protocol-registry catalog binding, public-catalog promotion, release enablement, or any E2E claim.
+
+WebMessage routing RED `f77cbd13434fe0b66876ec957db73e2b16751837` and GREEN
+`b3eab817d9deb1d9993e382c23c9c04232e4381e` proved exact fixed-profile dispatch. Cloud Debug
+`task_e_6a7bf747e4a48323ad44977079fd3f2c` and QA
+`task_e_6a7bf8e6e2388323980feff3d0b230d3` each accepted 16/16 tests on the GREEN SHA.
+Profile-bound confirmation metadata RED `f217095855bf9b80c633bf756e562fbf54fbe87a` and GREEN
+`ad72137f7c06ae31dc33fa3c7e89dc9b2c740380` added fail-closed active-profile/version display
+metadata. Focused Cloud `task_e_6a7bfca1045c832386fb7feeb6de84ee` passed 1/1 and broader
+Debug+QA `task_e_6a7bfe64a3c883238d8b56aacb37672b` passed 10/10 on exact `ad72137...`.
+
+MainActivity composition RED `3ddc244f62752f08e050973b737396e316be0bbf` was pushed before
+verification. Cloud `task_e_6a7c00eee0e48323923a6107224a6462` verified that exact SHA and produced
+the intended RED: the new `BrowserSecurityRegressionTest.mainActivityComposesExtremaduraBatchThroughTheSameOwnedSigningFlow`
+failed 1/1 at line 741. Production GREEN `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb` adds a fixed
+`ExtremaduraBatchSigningAdapter`, fixed Melilla and Extremadura protocol adapters, a resolver accepting
+only those exact protocol ids, `BuiltInSiteProfiles.runtimeRegistry` metadata binding, and exact
+`request.profileId` normalization/reply selection while retaining the single existing BATCH
+`SigningFlowOwnershipGate`.
+
+Focused Cloud GREEN `task_e_6a7c05e2564c8323ac84c07066c60d74` accepted exact
+`4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`: Gradle exit 0, `BUILD SUCCESSFUL in 5m34s`, 1/1
+selected Debug test passed, dependency verification remained enabled/unchanged, and final Cloud
+`git status --short` was empty. Broader Debug+QA Cloud
+`task_e_6a7c0b0d611883239597c9ea3d22e278` accepted the same exact SHA with Gradle exit 0,
+`BUILD SUCCESSFUL in 6m18s`; Debug 656/656 and QA 35/35 passed, 691/691 total with zero
+failures/errors/skips. The Cloud turn reported no error and the exact requested base SHA.
+
+Local permitted `git diff --check`, source-level ownership assertions, and bounded changed-content scans
+passed. Direct main-Watchdog Standards + Spec review found no Critical/Important defect: Melilla and
+Extremadura retain distinct fixed profile/origin/protocol ids, unknown profile selection fails closed,
+and exactly one BATCH ownership acquire and one coordinator prepare remain in the MainActivity flow.
+No local Gradle/JVM/Kotlin execution or device/portal action occurred.
+
+Catalog accounting is unchanged through Slice 4: 183 entries, 15 bound surfaces, 14 unique profile IDs,
+168 unbound; inventory remains 162 `BROWSE_ONLY`, 10 `IMPLEMENTED_NOT_E2E`, 1 `VERIFIED_CONTRACT`,
+4 `VERIFIED_E2E`, 4 `INACCESSIBLE`, and 2 `UNSUPPORTED_PROTOCOL`; generated states remain 90
+`CATALOGED`, 73 `DISCOVERED`, 6 `BLOCKED`, 10 `E2E_PENDING`, and 4 `E2E_VERIFIED`. Research queue
+depth remains at least 16 surfaces. Portals integrated in generation 66 remain zero until Extremadura
+Slice 5 profile/catalog promotion is accepted. Manual/physical E2E remains pending for Melilla,
+Extremadura, Sevilla, UGR, DGT, Cantabria, JCCM, and AEAT Client-TLS.
+
+Exact next action is Extremadura Slice 5 only: add `extremadura-tramites` as `VERIFIED_CONTRACT` +
+`QA_ONLY`, bind its distinct SIGN protocol adapter, bind `ES-PUB-0109`, regenerate the public catalog,
+and promote only to `IMPLEMENTED_NOT_E2E` / `E2E_PENDING`; release remains disabled and no E2E claim
+is permitted. After automated Extremadura acceptance, La Palma (`ES-PUB-0130`) is next; Eivissa
+(`ES-PUB-0122`) and Formentera (`ES-PUB-0124`) remain research-only.
