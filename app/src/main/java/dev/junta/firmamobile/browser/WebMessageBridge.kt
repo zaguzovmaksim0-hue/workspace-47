@@ -58,20 +58,41 @@ class WebMessageBridge(
     private val currentDocumentId: () -> UUID? = { null },
     private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
     melillaBatchAdapter: MelillaBatchBridgeAdapter? = null,
+    extremaduraBatchAdapter: ExtremaduraBatchBridgeAdapter? = null,
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
 
-    private val batchAdapter: MelillaBatchBridgeAdapter =
-        melillaBatchAdapter ?: MelillaBatchBridgeAdapter(
-            activeProfileId = activeProfileId,
-            currentNavigationEpoch = currentNavigationEpoch,
-            currentDocumentId = { batchCurrentDocumentId() },
-            currentOrigin = currentOrigin,
+    private val batchRuntime: StaBatchBridgeRuntime? = when (profileId.value) {
+        MelillaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
+            sourceOrigin = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
+            trustedOrigin = TrustedOrigin("https", "sede.melilla.es", 443),
+            adapter = StaBatchBridgeAdapterOps.from(
+                melillaBatchAdapter ?: MelillaBatchBridgeAdapter(
+                    activeProfileId = activeProfileId,
+                    currentNavigationEpoch = currentNavigationEpoch,
+                    currentDocumentId = { batchCurrentDocumentId() },
+                    currentOrigin = currentOrigin,
+                ),
+            ),
         )
+        ExtremaduraBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
+            sourceOrigin = ExtremaduraBatchBridgeAdapter.SOURCE_ORIGIN,
+            trustedOrigin = TrustedOrigin("https", "tramites.juntaex.es", 443),
+            adapter = StaBatchBridgeAdapterOps.from(
+                extremaduraBatchAdapter ?: ExtremaduraBatchBridgeAdapter(
+                    activeProfileId = activeProfileId,
+                    currentNavigationEpoch = currentNavigationEpoch,
+                    currentDocumentId = { batchCurrentDocumentId() },
+                    currentOrigin = currentOrigin,
+                ),
+            ),
+        )
+        else -> null
+    }
 
-    private val melillaBatchEnabled: Boolean
-        get() = profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID &&
+    private val staBatchEnabled: Boolean
+        get() = batchRuntime != null &&
             miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
             onMelillaBatchRequest != null
 
@@ -88,7 +109,7 @@ class WebMessageBridge(
         currentDocumentId = { batchCurrentDocumentId() },
         monotonicNanos = monotonicNanos,
         onTerminal = { requestId ->
-            batchAdapter.abandon(requestId)
+            batchRuntime?.adapter?.abandon(requestId)
             Unit
         },
     )
@@ -96,8 +117,8 @@ class WebMessageBridge(
     fun attach(webView: WebView): WebMessageBridgeAttachment {
         val originRules = (
             JuntaOriginPolicy.webMessageOriginRules(profileId) +
-                if (melillaBatchEnabled) {
-                    setOf(MelillaBatchBridgeAdapter.SOURCE_ORIGIN)
+                if (staBatchEnabled) {
+                    setOf(checkNotNull(batchRuntime).sourceOrigin)
                 } else {
                     emptySet()
                 }
@@ -121,7 +142,7 @@ class WebMessageBridge(
         val shimFlags = shimCompatibilityFlags(
             profileId = profileId,
             profileActive = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
-            melillaBatchEnabled = melillaBatchEnabled,
+            melillaBatchEnabled = staBatchEnabled,
         )
         val scriptHandler = if (
             WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
@@ -164,7 +185,7 @@ class WebMessageBridge(
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
             return
         }
-        if (receiveMelillaDocumentReady(rawMessage, sourceOrigin, isMainFrame)) {
+        if (receiveBatchDocumentReady(rawMessage, sourceOrigin, isMainFrame)) {
             return
         }
 
@@ -189,18 +210,15 @@ class WebMessageBridge(
             PortalCallbackDiagnosticParseResult.NotApplicable -> Unit
         }
 
-        if (
-            profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID &&
-            miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
-            onMelillaBatchRequest != null
-        ) {
+        if (staBatchEnabled) {
+            val runtime = checkNotNull(batchRuntime)
             val batchConsumer = checkNotNull(onMelillaBatchRequest)
             when (
-                val batchResult = batchAdapter.route(
-                    rawMessage = rawMessage,
-                    sourceOrigin = sourceOrigin,
-                    isMainFrame = isMainFrame,
-                    navigationEpoch = currentNavigationEpoch(),
+                val batchResult = runtime.adapter.route(
+                    rawMessage,
+                    sourceOrigin,
+                    isMainFrame,
+                    currentNavigationEpoch(),
                 )
             ) {
                 is MelillaBatchBridgeRouteResult.Accepted -> {
@@ -209,8 +227,8 @@ class WebMessageBridge(
                         postMessage = replyProxy::postMessage,
                     )
                     if (reply == null) {
-                        batchAdapter.abandon(batchResult.request.requestId)
-                        replyMelillaBatchFailure(
+                        runtime.adapter.abandon(batchResult.request.requestId)
+                        replyStaBatchFailure(runtime,
                             replyProxy = replyProxy,
                             sourceOrigin = sourceOrigin,
                             isMainFrame = isMainFrame,
@@ -228,7 +246,7 @@ class WebMessageBridge(
                 }
                 is MelillaBatchBridgeRouteResult.Cancelled -> {
                     val owned = melillaBatchReplyRegistry.abandon(batchResult.requestId)
-                    batchAdapter.abandon(batchResult.requestId)
+                    runtime.adapter.abandon(batchResult.requestId)
                     if (owned) {
                         runCatching { onMelillaBatchCancel(batchResult.requestId) }
                     }
@@ -236,7 +254,7 @@ class WebMessageBridge(
                 }
                 is MelillaBatchBridgeRouteResult.Rejected -> {
                     logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
-                    replyMelillaBatchFailure(
+                    replyStaBatchFailure(runtime,
                         replyProxy = replyProxy,
                         sourceOrigin = sourceOrigin,
                         isMainFrame = isMainFrame,
@@ -364,7 +382,7 @@ class WebMessageBridge(
     }
 
     @Synchronized
-    private fun receiveMelillaDocumentReady(
+    private fun receiveBatchDocumentReady(
         rawMessage: String,
         sourceOrigin: Uri,
         isMainFrame: Boolean,
@@ -373,10 +391,11 @@ class WebMessageBridge(
             ?: return false
         if (json.optString(DOCUMENT_READY_FIELD) != DOCUMENT_READY_TYPE) return false
 
-        val accepted = profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID &&
-            miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
+        val runtime = batchRuntime
+        val accepted = staBatchEnabled &&
+            runtime != null &&
             isMainFrame &&
-            isExactMelillaSourceOrigin(sourceOrigin)
+            isExactStaSourceOrigin(sourceOrigin, runtime)
         if (!accepted || json.keys().asSequence().toSet() != DOCUMENT_READY_KEYS) {
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
             return true
@@ -395,7 +414,7 @@ class WebMessageBridge(
             return true
         }
         if (batchDocumentId != null && batchDocumentId != documentId) {
-            batchAdapter.invalidateDocument(batchDocumentId)
+            runtime.adapter.invalidateDocument(batchDocumentId)
         }
         batchDocumentId = documentId
         batchDocumentEpoch = epoch
@@ -412,8 +431,8 @@ class WebMessageBridge(
     }
 
     private fun abandonAllMiniAppletRequests() {
-        batchAdapter.invalidateDocument(batchCurrentDocumentId())
-        batchAdapter.abandonAll()
+        batchRuntime?.adapter?.invalidateDocument(batchCurrentDocumentId())
+        batchRuntime?.adapter?.abandonAll()
         melillaBatchReplyRegistry.abandonAll().forEach { requestId ->
             runCatching { onMelillaBatchCancel(requestId) }
         }
@@ -424,16 +443,17 @@ class WebMessageBridge(
         }
     }
 
-    private fun isExactMelillaSourceOrigin(uri: Uri): Boolean =
-        uri.scheme == "https" &&
-            uri.host == "sede.melilla.es" &&
-            uri.port in setOf(-1, 443) &&
+    private fun isExactStaSourceOrigin(uri: Uri, runtime: StaBatchBridgeRuntime): Boolean =
+        uri.scheme == runtime.trustedOrigin.scheme &&
+            uri.host == runtime.trustedOrigin.host &&
+            uri.port in setOf(-1, runtime.trustedOrigin.port) &&
             uri.encodedUserInfo == null &&
             uri.path.isNullOrEmpty() &&
             uri.query == null &&
             uri.fragment == null
 
-    private fun replyMelillaBatchFailure(
+    private fun replyStaBatchFailure(
+        runtime: StaBatchBridgeRuntime,
         replyProxy: JavaScriptReplyProxy,
         sourceOrigin: Uri,
         isMainFrame: Boolean,
@@ -441,7 +461,7 @@ class WebMessageBridge(
         code: SigningErrorCode,
     ) {
         if (!isMainFrame || requestId == null ||
-            !isExactMelillaSourceOrigin(sourceOrigin)
+            !isExactStaSourceOrigin(sourceOrigin, runtime)
         ) {
             return
         }
@@ -496,6 +516,39 @@ class WebMessageBridge(
         private val DOCUMENT_UUID_PATTERN = Regex(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-" +
                 "[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}",
+        )
+    }
+}
+
+private data class StaBatchBridgeRuntime(
+    val sourceOrigin: String,
+    val trustedOrigin: TrustedOrigin,
+    val adapter: StaBatchBridgeAdapterOps,
+)
+
+private class StaBatchBridgeAdapterOps(
+    val route: (String, Uri, Boolean, Long) -> MelillaBatchBridgeRouteResult,
+    val abandon: (UUID?) -> Boolean,
+    val invalidateDocument: (UUID?) -> Unit,
+    val abandonAll: () -> Unit,
+) {
+    companion object {
+        fun from(adapter: MelillaBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
+            route = { raw, origin, mainFrame, epoch ->
+                adapter.route(raw, origin, mainFrame, epoch)
+            },
+            abandon = adapter::abandon,
+            invalidateDocument = adapter::invalidateDocument,
+            abandonAll = adapter::abandonAll,
+        )
+
+        fun from(adapter: ExtremaduraBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
+            route = { raw, origin, mainFrame, epoch ->
+                adapter.route(raw, origin, mainFrame, epoch)
+            },
+            abandon = adapter::abandon,
+            invalidateDocument = adapter::invalidateDocument,
+            abandonAll = adapter::abandonAll,
         )
     }
 }
