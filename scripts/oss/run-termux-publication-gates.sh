@@ -48,7 +48,6 @@ REMOTE_SHA=$(git rev-parse "origin/$BRANCH")
 printf 'Candidate SHA: %s\n' "$HEAD_SHA"
 
 step "2/7 — INSTALL TERMUX-SAFE PREREQUISITES"
-pkg update -y
 pkg install -y git curl coreutils findutils gawk tar python
 command -v python >/dev/null || fail "python is missing."
 [[ -x "$W47_CLOUD" ]] || fail "Codex Cloud wrapper is missing or not executable: $W47_CLOUD"
