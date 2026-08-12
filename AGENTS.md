@@ -14,4 +14,4 @@ The Android phone is an orchestrator, not a Gradle build host. Push an isolated 
 
 ## Agent metadata
 
-GitHub is the issue tracker. Domain documentation is single-context. See `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, and `docs/agents/domain.md`.
+GitHub is the issue tracker. Domain documentation is single-context. The current branch/PR lifecycle is defined in `CONTEXT.md`; public contribution expectations are in `CONTRIBUTING.md`. See `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, and `docs/agents/domain.md`.
