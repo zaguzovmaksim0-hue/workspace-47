@@ -12,7 +12,7 @@ Security review currently covers the active project source in this repository, i
 - project-controlled QA relay code under `ws024-relay/`;
 - build/release configuration that separates QA capabilities from release behavior.
 
-The repository is in pre-publication development. A stable public release support matrix has not yet been declared.
+This is a public source repository. A stable binary release support matrix has not yet been declared; security claims remain scoped to the exact source commit, build variant, and operation that was verified.
 
 ## Reporting a vulnerability
 

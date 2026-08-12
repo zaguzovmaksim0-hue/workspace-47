@@ -50,7 +50,7 @@ Release builds intentionally require private signing configuration and must not 
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 
-Termux-specific build instructions and the full publication gate are documented in [`docs/building-on-termux.md`](docs/building-on-termux.md) and `scripts/oss/run-termux-publication-gates.sh`.
+Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Agent-initiated Android/Gradle verification uses the exact-SHA Codex Cloud path documented in [`docs/agents/codex-cloud-gradle.md`](docs/agents/codex-cloud-gradle.md); the former one-shot Termux publication runner is retired.
 
 ## Verified publication candidate
 

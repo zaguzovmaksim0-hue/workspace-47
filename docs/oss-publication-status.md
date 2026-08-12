@@ -1,13 +1,17 @@
 # OSS publication status
 
-**Status:** APPROVED FOR SOURCE PUBLICATION
+**Status:** HISTORICAL PUBLICATION BASELINE — SOURCE REPOSITORY PUBLIC
 
 **Branch:** `oss/publication-readiness-20260811`
 **Verified candidate SHA:** `6b5a2ab13497c6c623a223b4a951338f822ccba6`
 **Project product cutoff:** `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`
 **Verification environment:** native Termux Android/arm64; Gradle 9.4.1; launcher Java 17.0.20; Robolectric test worker Java 21; verified Termux AAPT2.
 
-The mandatory private pre-publication gates passed on the exact verified candidate. Subsequent repository mutations are publication metadata only: the root Apache-2.0 `LICENSE` and updates to publication/license documentation. No product/build source was changed after the verified gate.
+> **Historical publication baseline.** The candidate, environment, and gate matrix below record the 2026-08-12 source-publication decision and are not current build instructions. Current development follows the stable-`main` / pull-request workflow in `CONTEXT.md`, and current agent-initiated Android/Gradle verification follows `docs/agents/codex-cloud-gradle.md`.
+
+**Current repository state (verified 2026-08-12):** GitHub visibility is `public` and the default branch is `main`.
+
+The mandatory private pre-publication gates passed on the exact verified candidate. Those results apply to that historical candidate SHA; later `main` changes use their own PR evidence and do not inherit unexecuted gate results from this record.
 
 ## Final gate matrix
 
@@ -39,9 +43,9 @@ The mandatory private pre-publication gates passed on the exact verified candida
 | Visual provenance | `PASS` | Former unresolved PNG/WebP artwork replaced with project-origin XML/vector resources and successfully compiled/packaged by the final Android gate. |
 | Runtime/dependency source-publication license audit | `PASS` | No reviewed dependency family creates a project-source relicensing blocker. |
 | Root project license | `PASS_APACHE_2_0` | Root `LICENSE` contains the Apache License 2.0 text; `NOTICE` and provenance records remain in place. |
-| Repository visibility | `READY_TO_MAKE_PUBLIC` | Mandatory source-publication gates are complete. |
+| Repository visibility | `PUBLIC` | GitHub repository visibility is public; default branch is `main` (verified 2026-08-12). |
 | Binary APK/AAB redistribution | `SEPARATE_RELEASE_GATE` | Exact packaged dependency/license/NOTICE audit remains required before binary distribution. |
-| Codex for OSS application | `READY_AFTER_PUBLIC_URL_VERIFICATION` | Verify public repository/default branch metadata after visibility change, then prepare the application. |
+| Codex for OSS application | `PUBLIC_URL_VERIFIED` | Public repository visibility and default `main` metadata have been verified; application suitability remains a separate review. |
 
 ## Final verification record
 
