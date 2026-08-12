@@ -1,5 +1,7 @@
 # OSS execution gates and GitHub Actions startup-failure runbook
 
+> **Historical record — not current execution instructions.** This document records the 2026-08-12 pre-publication procedure and evidence. The repository is now on a stable-public-`main` / PR-first workflow, and all current agent-initiated Android/Gradle commands run in Codex Cloud according to `CONTEXT.md` and `docs/agents/codex-cloud-gradle.md`. The former `scripts/oss/run-termux-publication-gates.sh` entry point is retired and fails closed; do not use the native-Termux Gradle steps below for current work.
+
 **Scope:** final technical gates before a root project license and public visibility.
 
 A gate is PASS only from successful execution on the exact publication candidate. Configuration, an older successful SHA, or expected behavior is not sufficient.
