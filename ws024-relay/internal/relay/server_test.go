@@ -407,6 +407,29 @@ func TestNewServerDeepCopiesOuterTLSPolicy(t *testing.T) {
 	}
 }
 
+func TestNewServerRejectsDynamicOuterTLSOverrides(t *testing.T) {
+	fixture := newServerFixture(t)
+	valid := fixture.config
+	cases := []ServerConfig{
+		withServerConfig(valid, func(c *ServerConfig) {
+			c.TLSConfig.GetConfigForClient = func(*tls.ClientHelloInfo) (*tls.Config, error) {
+				return &tls.Config{MinVersion: tls.VersionTLS10}, nil
+			}
+		}),
+		withServerConfig(valid, func(c *ServerConfig) {
+			c.TLSConfig.GetCertificate = func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+				return &tls.Certificate{}, nil
+			}
+		}),
+	}
+	for i, config := range cases {
+		server, err := NewServer(config)
+		if server != nil || !errors.Is(err, ErrServerConfiguration) {
+			t.Fatalf("case %d: NewServer() = (%v, %v), want dynamic TLS override rejection", i, server, err)
+		}
+	}
+}
+
 func TestNewServerRejectsNilDependenciesAndUnsafeTimeouts(t *testing.T) {
 	fixture := newServerFixture(t)
 	valid := fixture.config
