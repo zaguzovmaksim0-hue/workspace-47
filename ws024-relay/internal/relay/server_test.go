@@ -40,6 +40,12 @@ func TestOuterTLSConfigPinsServerPolicy(t *testing.T) {
 	if config.ClientAuth != tls.NoClientCert {
 		t.Fatalf("ClientAuth = %v, want NoClientCert", config.ClientAuth)
 	}
+	if config.Rand != nil {
+		t.Fatal("Rand must remain nil so crypto/tls uses crypto/rand")
+	}
+	if len(config.CipherSuites) != 0 {
+		t.Fatalf("CipherSuites = %v, want Go secure defaults", config.CipherSuites)
+	}
 }
 
 func TestServerRejectsTLS11BeforeCredentialVerification(t *testing.T) {
@@ -429,6 +435,25 @@ func TestWithServerConfigIsolatesTLSMutations(t *testing.T) {
 	}
 	if withMaxVersion.TLSConfig.KeyLogWriter != nil {
 		t.Fatal("TLS mutation leaked from a sibling case into max-version config")
+	}
+}
+
+func TestNewServerRejectsCustomCryptographicTLSPolicy(t *testing.T) {
+	fixture := newServerFixture(t)
+	valid := fixture.config
+	cases := []ServerConfig{
+		withServerConfig(valid, func(c *ServerConfig) {
+			c.TLSConfig.Rand = bytes.NewReader(make([]byte, 4096))
+		}),
+		withServerConfig(valid, func(c *ServerConfig) {
+			c.TLSConfig.CipherSuites = []uint16{tls.TLS_RSA_WITH_AES_128_GCM_SHA256}
+		}),
+	}
+	for i, config := range cases {
+		server, err := NewServer(config)
+		if server != nil || !errors.Is(err, ErrServerConfiguration) {
+			t.Fatalf("case %d: NewServer() = (%v, %v), want custom cryptographic TLS policy rejection", i, server, err)
+		}
 	}
 }
 
