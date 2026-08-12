@@ -64,6 +64,7 @@ proved complete by identical tests in the Phase 1 commit.
 
 ```text
 .gitignore
+.gitattributes
 build.gradle.kts
 settings.gradle.kts
 gradle.properties
@@ -73,6 +74,8 @@ gradle/wrapper/gradle-wrapper.properties
 gradlew
 gradlew.bat
 keystore.properties.example
+tools/bootstrap-termux-aapt2.sh
+docs/building-on-termux.md
 app/build.gradle.kts
 app/proguard-rules.pro
 app/src/main/AndroidManifest.xml
@@ -178,6 +181,10 @@ app/src/androidTest/java/dev/junta/firmamobile/ConfigurationStateTest.kt
 **Interfaces:**
 - Produces launcher `dev.junta.firmamobile/.MainActivity` and `@Composable fun AppRoot()`.
 - Establishes dependency coordinates and release/debug build policy for every later task.
+- Produces installable debug and non-debuggable QA release APKs; the QA release
+  uses AGP's local debug key until Task 15 replaces it with the external key.
+- Establishes a verified project-local Termux/aarch64 AAPT2 bootstrap while
+  leaving supported desktop hosts on AGP's standard Maven AAPT2.
 
 - [ ] **Step 1: Generate the wrapper and verify the pinned distribution**
 
@@ -186,9 +193,15 @@ Run from the repository root:
 ```bash
 gradle wrapper --gradle-version 9.4.1 --distribution-type bin
 rg 'gradle-9\.4\.1-bin\.zip' gradle/wrapper/gradle-wrapper.properties
+./tools/bootstrap-termux-aapt2.sh bootstrap # native Termux/aarch64 only
 ```
 
-Expected: one matching distribution URL; `./gradlew --version` reports Gradle 9.4.1.
+Expected: one matching distribution URL; `./gradlew --version` reports Gradle
+9.4.1. On native Termux/aarch64 it first verifies pinned Termux package and
+native-binary hashes under ignored `.gradle/termux-aapt2/`, injects the verified
+project-relative launcher path, and otherwise fails closed with the bootstrap
+command. The launcher pins the runtime for every AAPT2 child process and the
+bootstrap verifies a real resource compile without any global package install.
 
 - [ ] **Step 2: Add the exact version catalog and build plugins**
 
@@ -200,7 +213,7 @@ agp = "9.2.1"
 compose-compiler = "2.3.10"
 compose-bom = "2026.06.00"
 activity = "1.13.0"
-core = "1.17.0"
+core = "1.18.0"
 lifecycle = "2.10.0"
 webkit = "1.16.0"
 datastore = "1.2.0"
@@ -228,6 +241,9 @@ plugins {
 ```
 
 Do not apply `org.jetbrains.kotlin.android`; AGP 9.2 supplies built-in Kotlin.
+The build must also verify that both `androidx.core:core` and
+`androidx.core:core-ktx` resolve to exactly 1.18.0 on
+`debugRuntimeClasspath`; a catalog declaration alone is insufficient.
 
 - [ ] **Step 3: Add app build configuration**
 
@@ -343,16 +359,19 @@ disclosure, `Certificado digital`, the privacy explanation, and
 Run:
 
 ```bash
-./gradlew lintDebug testDebugUnitTest assembleDebug compileDebugAndroidTestKotlin
+./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration lintDebug testDebugUnitTest assembleDebug assembleRelease compileDebugAndroidTestKotlin
+./gradlew :app:dependencyInsight --dependency androidx.core:core-ktx --configuration debugRuntimeClasspath
 aapt dump badging app/build/outputs/apk/debug/app-debug.apk | rg "package: name='dev.junta.firmamobile'|sdkVersion:'26'|targetSdkVersion:'36'"
+apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
 ```
 
-Expected: all Gradle tasks pass and all three manifest facts match.
+Expected: all Gradle tasks pass, both APKs verify as installable, and all three
+manifest facts match. The QA release signature is not the final export key.
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add .gitignore build.gradle.kts settings.gradle.kts gradle.properties gradle gradlew gradlew.bat keystore.properties.example app
+git add .gitignore .gitattributes build.gradle.kts settings.gradle.kts gradle.properties gradle gradlew gradlew.bat keystore.properties.example tools docs/building-on-termux.md app
 git commit -m "build: scaffold secure Android application"
 ```
 

@@ -1,0 +1,4491 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": 1,
+  "sourceRevision": "e4dedaad723a94257f7b8677b45b020dae1b9db3f7a8b4a15eeb9ccbf2f3cb96",
+  "entries": [
+    {
+      "portalId": "age-pag-reg",
+      "inventoryId": "ES-PUB-0001",
+      "profileId": null,
+      "displayName": "Punto de Acceso General / Registro Electrónico General",
+      "organization": "Administración General del Estado",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Identificación y presentación con certificado/DNIe o Cl@ve.",
+      "entryUrl": "https://sede.administracion.gob.es/PAG_Sede/ServiciosElectronicos/RegistroElectronicoGeneral.html?idioma=es&imprimir=1",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P01",
+        "P01B",
+        "D11"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "ABI, formato, endpoint y TLS cliente no verificados; solo se autoriza navegación."
+    },
+    {
+      "portalId": "age-reg-redsara",
+      "inventoryId": "ES-PUB-0002",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico General / RedSARA",
+      "organization": "Administración General del Estado",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Firma del XML de resumen antes de guardarlo en el expediente.",
+      "entryUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P14",
+        "P14B",
+        "P14C",
+        "P14D",
+        "LIVE-REDSARA-2026-07-30"
+      ],
+      "reviewedOn": "2026-07-30",
+      "limitations": "Revalidación física 2026-07-30: Nuevo registro y Mis registros exigen Cl@ve; XAdES solo aparece tras preparar una solicitud, sin E2E público seguro antes de una actuación administrativa."
+    },
+    {
+      "portalId": "age-acceda",
+      "inventoryId": "ES-PUB-0003",
+      "profileId": null,
+      "displayName": "Plataforma ACCEDA",
+      "organization": "Administración General del Estado",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Helper estático para firmar una solicitud; rama genérica gobernada por formulario.",
+      "entryUrl": "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "PADES",
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "VERIFIED_CONTRACT",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P15",
+        "P15A",
+        "P15B",
+        "D11"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "Contrato estático probado, pero faltan procedimiento exacto, endpoint servidor, implementación y aceptación E2E."
+    },
+    {
+      "portalId": "aeat-sede",
+      "inventoryId": "ES-PUB-0004",
+      "profileId": "aeat-mis-datos-censales",
+      "displayName": "AEAT — Mi área personal / Mis datos censales",
+      "organization": "Agencia Estatal de Administración Tributaria",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Autenticación Client TLS para el acceso de solo lectura a Mis datos censales.",
+      "entryUrl": "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "CLIENT_TLS",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P02",
+        "P02A",
+        "P02C",
+        "P02D",
+        "D11"
+      ],
+      "reviewedOn": "2026-07-31",
+      "limitations": "Contrato Client TLS exacto implementado solo en QA; faltan callback WebView y aceptación E2E del portal. No se afirma firma ni presentación administrativa."
+    },
+    {
+      "portalId": "seguridad-social-sede",
+      "inventoryId": "ES-PUB-0005",
+      "profileId": null,
+      "displayName": "Sede Electrónica de la Seguridad Social",
+      "organization": "Instituto Nacional de la Seguridad Social",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Firma de trámites de la Sede mediante AutoFirma.",
+      "entryUrl": "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "BLOCKED",
+      "inventoryStatus": "UNSUPPORTED_PROTOCOL",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P03",
+        "D11"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "El flujo AutoFirma documentado por la propia Sede no funciona en dispositivos móviles."
+    },
+    {
+      "portalId": "tgss-importass",
+      "inventoryId": "ES-PUB-0006",
+      "profileId": null,
+      "displayName": "Import@ss",
+      "organization": "Tesorería General de la Seguridad Social",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Acceso mediante SMS, Cl@ve, certificado electrónico o DNIe.",
+      "entryUrl": "https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P03A"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "Firma, transporte de certificado, formato y endpoint no verificados."
+    },
+    {
+      "portalId": "sepe-sede",
+      "inventoryId": "ES-PUB-0007",
+      "profileId": null,
+      "displayName": "Sede electrónica del SEPE",
+      "organization": "Servicio Público de Empleo Estatal",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Firma con AutoFirma después de identificarse mediante certificado.",
+      "entryUrl": "https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P04",
+        "D11"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "El requisito de AutoFirma no autoriza un bridge sin contrato técnico exacto."
+    },
+    {
+      "portalId": "dgt-sede",
+      "inventoryId": "ES-PUB-0008",
+      "profileId": "dgt-verificacion-equipo",
+      "displayName": "Sede electrónica de la DGT",
+      "organization": "Dirección General de Tráfico",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Verificación de equipo mediante MiniApplet.sign con payload fijo.",
+      "entryUrl": "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P05",
+        "DGT-JS-MAIN-2026-08-09",
+        "DGT-JS-CONSTANTES-2026-08-09",
+        "DGT-JS-MINIAPPLET-2026-08-09"
+      ],
+      "reviewedOn": "2026-08-09",
+      "limitations": "La integración local está implementada solo para QA y el contrato CAdES fijo; no se ha observado aceptación E2E, presentación administrativa ni endpoint portal-specific."
+    },
+    {
+      "portalId": "justicia-sede-judicial",
+      "inventoryId": "ES-PUB-0009",
+      "profileId": null,
+      "displayName": "Sede Judicial Electrónica",
+      "organization": "Administración de Justicia",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Acceso con Cl@ve/certificado y firma de escritos o documentos PDF con AutoFirma.",
+      "entryUrl": "https://sedejudicial.justicia.es/firma-y-certificados-electronicos-admitidos",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P06",
+        "P06A"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "Procedimiento exacto, ABI, formato criptográfico, endpoint y callback no verificados."
+    },
+    {
+      "portalId": "mjusticia-sede",
+      "inventoryId": "ES-PUB-0010",
+      "profileId": null,
+      "displayName": "Sede electrónica del Ministerio de Justicia",
+      "organization": "Ministerio de Justicia",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Firma local con AutoFirma en determinados trámites.",
+      "entryUrl": "https://sede.mjusticia.gob.es/tramites/organos-gobierno",
+      "observedMechanisms": [
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P06B",
+        "P06C",
+        "D11"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "Requisito exacto de certificado, formato, algoritmo, endpoint y callback no verificados."
+    },
+    {
+      "portalId": "junta-andalucia-ovorion",
+      "inventoryId": "ES-PUB-0011",
+      "profileId": "junta-andalucia",
+      "displayName": "Ovorion",
+      "organization": "Junta de Andalucía",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Andalucía",
+      "purpose": "Firma de autenticación mediante MiniApplet.sign.",
+      "entryUrl": "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET_TRIFASICA_PRE_PKCS1_POST",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P07"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "La entrega técnica está implementada, pero no existe evidencia sanitizada de aceptación del portal."
+    },
+    {
+      "portalId": "comunidad-madrid-sede",
+      "inventoryId": "ES-PUB-0012",
+      "profileId": null,
+      "displayName": "Sede electrónica de la Comunidad de Madrid",
+      "organization": "Comunidad de Madrid",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Comunidad de Madrid",
+      "purpose": "Descargar PDF, firmarlo localmente con AutoFirma y adjuntarlo al registro.",
+      "entryUrl": "https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P08",
+        "P08A"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "PAdES es solo candidato; formato aceptado, JS cliente y endpoint de upload no verificados."
+    },
+    {
+      "portalId": "comunidad-madrid-gestiona2",
+      "inventoryId": "ES-PUB-0013",
+      "profileId": null,
+      "displayName": "gestiona2",
+      "organization": "Comunidad de Madrid",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Comunidad de Madrid",
+      "purpose": "Acceso con certificado y firma AutoFirma del trámite observado.",
+      "entryUrl": "https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "BLOCKED",
+      "inventoryStatus": "UNSUPPORTED_PROTOCOL",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P08B"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "El propio frontend declara que la solicitud no puede realizarse desde móvil o tableta."
+    },
+    {
+      "portalId": "aragon-siraw",
+      "inventoryId": "ES-PUB-0014",
+      "profileId": "aragon-siraw",
+      "displayName": "SIRAW",
+      "organization": "Gobierno de Aragón",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Aragón",
+      "purpose": "Firma de token de acceso y hash precalculado mediante MiniApplet.sign.",
+      "entryUrl": "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET_CON_STORAGE_RETRIEVE",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P16",
+        "P16B",
+        "P16C"
+      ],
+      "reviewedOn": "2026-07-28",
+      "limitations": "El portal real aceptó la firma CAdES de autenticación y abrió la sesión interna; verificación limitada al login observado."
+    },
+    {
+      "portalId": "diputacion-valladolid-sede",
+      "inventoryId": "ES-PUB-0015",
+      "profileId": null,
+      "displayName": "Sede electrónica de la Diputación de Valladolid",
+      "organization": "Diputación Provincial de Valladolid",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Valladolid (provincia)",
+      "purpose": "Identificación/firma con DNIe y certificados admitidos por @firma.",
+      "entryUrl": "https://www.sede.diputaciondevalladolid.es/requisitos-tecnicos",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P09",
+        "P09A",
+        "D06",
+        "DP38A",
+        "DP38B"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "Procedimiento, JS cliente, protocolo, formato, endpoint, cofirma y contrafirma no verificados."
+    },
+    {
+      "portalId": "sevilla-sede",
+      "inventoryId": "ES-PUB-0016",
+      "profileId": "sevilla-atse-certificate-login",
+      "displayName": "Sede electrónica del Ayuntamiento de Sevilla",
+      "organization": "Ayuntamiento de Sevilla",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Sevilla (municipio)",
+      "purpose": "Acceso con certificado a ATSE mediante AutoScript.sign sobre un reto efímero de 40 caracteres.",
+      "entryUrl": "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_XADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P10",
+        "P10A",
+        "P10B",
+        "P10C",
+        "P10D"
+      ],
+      "reviewedOn": "2026-08-11",
+      "limitations": "Contrato de acceso con certificado implementado solo en QA; no se realizó E2E físico, authenticate/POST ni uso de Storage/Retrieve."
+    },
+    {
+      "portalId": "madrid-sede",
+      "inventoryId": "ES-PUB-0017",
+      "profileId": null,
+      "displayName": "Sede electrónica del Ayuntamiento de Madrid",
+      "organization": "Ayuntamiento de Madrid",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Madrid (municipio)",
+      "purpose": "Identificación/tramitación con certificado cuando el procedimiento lo admite.",
+      "entryUrl": "https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "RECHECK_REQUIRED",
+      "evidenceIds": [
+        "P11"
+      ],
+      "reviewedOn": "2026-07-15",
+      "limitations": "Firma y contrato técnico no verificados; la lectura web existe, pero la comprobación CLI no es repetible."
+    },
+    {
+      "portalId": "ugr-sede",
+      "inventoryId": "ES-PUB-0018",
+      "profileId": "ugr-certificado-login",
+      "displayName": "Sede electrónica de la Universidad de Granada",
+      "organization": "Universidad de Granada",
+      "governmentLevel": "UNIVERSITY",
+      "territory": "España",
+      "purpose": "Acceso con certificado mediante AutoScript.sign y CAdES detached.",
+      "entryUrl": "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P12",
+        "P12A"
+      ],
+      "reviewedOn": "2026-08-09",
+      "limitations": "Contrato AutoScript/MiniApplet CAdES SHA1 implementado solo en QA; no se realizó E2E ni se enviaron solicitudes a StorageService/RetrieveService; esas URLs son solo configuración de almacenamiento/recuperación y no un endpoint de firma."
+    },
+    {
+      "portalId": "us-sede",
+      "inventoryId": "ES-PUB-0019",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica de la Universidad de Sevilla",
+      "organization": "Universidad de Sevilla",
+      "governmentLevel": "UNIVERSITY",
+      "territory": "Andalucía",
+      "purpose": "La sede US delega esta presentación al Registro Electrónico de la AGE mediante un enlace público exacto a REG-AGE.",
+      "entryUrl": "https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P13",
+        "P13A",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-09",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL; no se realizó E2E físico desde la ficha US ni se infirió un contrato de firma propio de la US."
+    },
+    {
+      "portalId": "unizar-tramitador",
+      "inventoryId": "ES-PUB-0020",
+      "profileId": "unizar-tramitador",
+      "displayName": "Tramitador ciudadano",
+      "organization": "Universidad de Zaragoza",
+      "governmentLevel": "UNIVERSITY",
+      "territory": "España",
+      "purpose": "Firma de challenge de sesión precalculado; tri-phase en móvil.",
+      "entryUrl": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_TRIFASICA_MOVIL_CON_STORAGE_RETRIEVE",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P17",
+        "P17A",
+        "P17B",
+        "E2E-UNIZAR-2026-07-30"
+      ],
+      "reviewedOn": "2026-07-30",
+      "limitations": "El portal real aceptó la firma CAdES de autenticación y abrió el buzón electrónico; verificación limitada al login observado."
+    },
+    {
+      "portalId": "age-administrador-de-infraestructuras-ferroviarias-adif",
+      "inventoryId": "ES-PUB-0021",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Administrador de Infraestructuras Ferroviarias (ADIF)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.adif.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid",
+      "inventoryId": "ES-PUB-0022",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Agencia Española de Cooperación Internacional para el Desarrollo (AECID)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.aecid.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-agencia-espanola-de-medicamentos-y-productos-sanitarios-aemps",
+      "inventoryId": "ES-PUB-0023",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Agencia Española de Medicamentos y Productos Sanitarios (AEMPS)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.aemps.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-agencia-estatal-de-meteorologia-aemet",
+      "inventoryId": "ES-PUB-0024",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Agencia Estatal de Meteorología (AEMET)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-agencia-estatal-de-seguridad-aerea-aesa",
+      "inventoryId": "ES-PUB-0025",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Agencia Estatal de Seguridad Aérea (AESA)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.seguridadaerea.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-agencia-estatal-del-boletin-oficial-del-estado-boe",
+      "inventoryId": "ES-PUB-0026",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Agencia Estatal del Boletín Oficial del Estado (BOE)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.boe.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-autoridad-independiente-de-responsabilidad-fiscal-airef",
+      "inventoryId": "ES-PUB-0027",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Autoridad Independiente de Responsabilidad Fiscal (AIReF)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://airef.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-biblioteca-nacional-de-espana",
+      "inventoryId": "ES-PUB-0028",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Biblioteca Nacional de España",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.bne.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-centro-de-investigaciones-energeticas-medioambientales-y-tecnologicas-ciemat",
+      "inventoryId": "ES-PUB-0029",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.ciemat.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-centro-para-el-desarrollo-tecnologico-industrial-cdti",
+      "inventoryId": "ES-PUB-0030",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Centro para el Desarrollo Tecnológico Industrial (CDTI)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.cdti.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-comisionado-para-el-mercado-de-tabacos-cmt",
+      "inventoryId": "ES-PUB-0031",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Comisionado para el Mercado de Tabacos (CMT)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.cmt.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-comision-nacional-de-los-mercados-y-la-competencia-cnmc",
+      "inventoryId": "ES-PUB-0032",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Comisión Nacional de los Mercados y la Competencia (CNMC)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.cnmc.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-comision-nacional-del-mercado-de-valores-cnmv",
+      "inventoryId": "ES-PUB-0033",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Comisión Nacional del Mercado de Valores (CNMV)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-consejo-de-seguridad-nuclear-csn",
+      "inventoryId": "ES-PUB-0034",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Consejo de Seguridad Nuclear (CSN)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.csn.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-consejo-de-transparencia-y-buen-gobierno-ctbg",
+      "inventoryId": "ES-PUB-0035",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Consejo de Transparencia y Buen Gobierno (CTBG)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.consejodetransparencia.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-consejo-superior-de-deportes",
+      "inventoryId": "ES-PUB-0036",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Consejo Superior de Deportes",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.csd.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-consejo-superior-de-investigaciones-cientificas-csic",
+      "inventoryId": "ES-PUB-0037",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Consejo Superior de Investigaciones Científicas (CSIC)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.csic.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-cuerpo-nacional-de-policia",
+      "inventoryId": "ES-PUB-0038",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Cuerpo Nacional de Policía",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.policia.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-direccion-general-de-fondos-europeos",
+      "inventoryId": "ES-PUB-0039",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Dirección General de Fondos Europeos",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sedefondoscomunitarios.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-direccion-general-de-la-guardia-civil",
+      "inventoryId": "ES-PUB-0040",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Dirección General de la Guardia Civil",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.guardiacivil.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-direccion-general-de-ordenacion-del-juego",
+      "inventoryId": "ES-PUB-0041",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Dirección General de Ordenación del Juego",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.ordenacionjuego.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-direccion-general-de-seguros-y-fondos-de-pensiones",
+      "inventoryId": "ES-PUB-0042",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Dirección General de Seguros y Fondos de Pensiones",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.sededgsfp.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-direccion-general-del-catastro",
+      "inventoryId": "ES-PUB-0043",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Dirección General del Catastro",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.sedecatastro.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-enaire-entidad-publica-empresarial",
+      "inventoryId": "ES-PUB-0044",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "ENAIRE, Entidad Pública Empresarial",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://enaire.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-entidad-publica-empresarial-de-suelo-sepes",
+      "inventoryId": "ES-PUB-0045",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Entidad Pública Empresarial de Suelo (SEPES)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.sepes.es/es/sede-electronica",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-fondo-de-garantia-salarial-fogasa",
+      "inventoryId": "ES-PUB-0046",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Fondo de Garantía Salarial (FOGASA)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.mites.gob.es/fogasa/default.html",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-fondo-espanol-de-garantia-agraria-o-a-fega",
+      "inventoryId": "ES-PUB-0047",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Fondo Español de Garantía Agraria O.A. (FEGA)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.sede.fega.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-fabrica-nacional-de-moneda-y-timbre-real-casa-de-la-moneda-fnmt-rcm",
+      "inventoryId": "ES-PUB-0048",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Fábrica Nacional de Moneda y Timbre-Real Casa de la Moneda (FNMT-RCM)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.sede.fnmt.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-cervantes",
+      "inventoryId": "ES-PUB-0049",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto Cervantes",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://cervantes.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-de-astrofisica-de-canarias-iac",
+      "inventoryId": "ES-PUB-0050",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto de Astrofísica de Canarias (IAC)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://iac.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-de-contabilidad-y-auditoria-de-cuentas-icac",
+      "inventoryId": "ES-PUB-0051",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto de Contabilidad y Auditoría de Cuentas (ICAC)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://icac.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-de-credito-oficial-ico",
+      "inventoryId": "ES-PUB-0052",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto de Crédito Oficial (ICO)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sedeico.gob.es/web/sedeico",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-de-mayores-y-servicios-sociales-imserso",
+      "inventoryId": "ES-PUB-0053",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto de Mayores y Servicios Sociales (IMSERSO)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.imserso.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-de-salud-carlos-iii",
+      "inventoryId": "ES-PUB-0054",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto de Salud Carlos III",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.isciii.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-nacional-de-administracion-publica-inap",
+      "inventoryId": "ES-PUB-0055",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto Nacional de Administración Pública (INAP)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.inap.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-nacional-de-estadistica-ine",
+      "inventoryId": "ES-PUB-0056",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto Nacional de Estadística (INE)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.ine.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-para-la-transicion-justa-itj",
+      "inventoryId": "ES-PUB-0057",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto para la Transición Justa (ITJ)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.transicionjusta.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-instituto-social-de-las-fuerzas-armadas-isfas",
+      "inventoryId": "ES-PUB-0058",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Instituto Social de las Fuerzas Armadas (ISFAS)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.isfas.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-agricultura-pesca-y-alimentacion",
+      "inventoryId": "ES-PUB-0059",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Agricultura, Pesca y Alimentación",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.mapa.gob.es/portal/site/seMAPA",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-asuntos-exteriores-union-europea-y-cooperacion",
+      "inventoryId": "ES-PUB-0060",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Asuntos Exteriores, Unión Europea y Cooperación",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.maec.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-ciencia-innovacion-y-universidades",
+      "inventoryId": "ES-PUB-0061",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Ciencia, Innovación y Universidades",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://ciencia.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-cultura",
+      "inventoryId": "ES-PUB-0062",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Cultura",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://cultura.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-defensa",
+      "inventoryId": "ES-PUB-0063",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Defensa",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.defensa.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030",
+      "inventoryId": "ES-PUB-0064",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Derechos Sociales, Consumo y Agenda 2030",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://dsca.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-economia-comercio-y-empresa",
+      "inventoryId": "ES-PUB-0065",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Economía, Comercio y Empresa",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.mineco.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-educacion-formacion-profesional-y-deportes",
+      "inventoryId": "ES-PUB-0066",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Educación, Formación Profesional y Deportes",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.educacion.gob.es/portada.html",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-igualdad",
+      "inventoryId": "ES-PUB-0067",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Igualdad",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://igualdad.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-inclusion-seguridad-social-y-migraciones",
+      "inventoryId": "ES-PUB-0068",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Inclusión, Seguridad Social y Migraciones",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.inclusion.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-industria-y-turismo",
+      "inventoryId": "ES-PUB-0069",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Industria y Turismo",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.minetur.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-juventud-e-infancia",
+      "inventoryId": "ES-PUB-0070",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Juventud e Infancia",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://juventudeinfancia.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-la-presidencia-justicia-y-relaciones-con-las-cortes",
+      "inventoryId": "ES-PUB-0071",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de la Presidencia, Justicia y Relaciones con las Cortes",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://mpr.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-politica-territorial-y-memoria-democratica",
+      "inventoryId": "ES-PUB-0072",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Política Territorial y Memoria Democrática",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://mptmd.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-sanidad",
+      "inventoryId": "ES-PUB-0073",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Sanidad",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.mscbs.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-trabajo-y-economia-social",
+      "inventoryId": "ES-PUB-0074",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Trabajo y Economía Social",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.mites.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-transportes-y-movilidad-sostenible",
+      "inventoryId": "ES-PUB-0075",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Transportes y Movilidad Sostenible",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.mitma.gob.es/sede_electronica/lang_castellano/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-de-vivienda-y-agenda-urbana",
+      "inventoryId": "ES-PUB-0076",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio de Vivienda y Agenda Urbana",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://mivau.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-del-interior",
+      "inventoryId": "ES-PUB-0077",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio del Interior",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.mir.gob.es/opencms/export/sites/default/es/inicio/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-para-la-transformacion-digital-y-de-la-funcion-publica",
+      "inventoryId": "ES-PUB-0078",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio para la Transformación Digital y de la Función Pública",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://digital.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico",
+      "inventoryId": "ES-PUB-0079",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Ministerio para la Transición Ecológica y el Reto Demográfico",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.miteco.gob.es/portal/site/seMITECO",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-museo-nacional-centro-de-arte-reina-sofia",
+      "inventoryId": "ES-PUB-0080",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Museo Nacional Centro de Arte Reina Sofía",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://museoreinasofia.sede.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-mutualidad-general-judicial-mugeju",
+      "inventoryId": "ES-PUB-0081",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Mutualidad General Judicial (MUGEJU)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sedemugeju.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-oficina-espanola-de-patentes-y-marcas",
+      "inventoryId": "ES-PUB-0082",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Oficina Española de Patentes y Marcas",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.oepm.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-portal-de-la-transparencia",
+      "inventoryId": "ES-PUB-0083",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Portal de la Transparencia",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.transparencia.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-portal-funciona",
+      "inventoryId": "ES-PUB-0084",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Portal Funciona",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.funciona.gob.es/public/servicios",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-puertos-del-estado",
+      "inventoryId": "ES-PUB-0085",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Puertos del Estado",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.puertos.gob.es/Paginas/Contenido.aspx",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-red-es",
+      "inventoryId": "ES-PUB-0086",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Red.es",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.red.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-secretaria-de-estado-de-comercio",
+      "inventoryId": "ES-PUB-0087",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Secretaría de Estado de Comercio",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.comercio.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-sede-electronica-central-del-ministerio",
+      "inventoryId": "ES-PUB-0088",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Sede electrónica central del Ministerio",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.hacienda.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-sede-electronica-de-la-s-e-de-digitalizacion-e-inteligencia-artificial-y-s-e-de-telecomunica",
+      "inventoryId": "ES-PUB-0089",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Sede Electrónica de la S.E. de Digitalización e Inteligencia Artificial y S.E. de Telecomunicaciones e Infraestructuras Digitales del Ministerio de Transformación Digital",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-sede-electronica-de-los-tribunales-economico-administrativos-tea",
+      "inventoryId": "ES-PUB-0090",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Sede electrónica de los Tribunales Económico-Administrativos (TEA)",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.tea.hacienda.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-tesoro-publico",
+      "inventoryId": "ES-PUB-0091",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Tesoro Público",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.tesoropublico.gob.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "age-universidad-nacional-de-educacion-a-distancia-uned",
+      "inventoryId": "ES-PUB-0092",
+      "profileId": null,
+      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "organization": "Universidad Nacional de Educación a Distancia (UNED)",
+      "governmentLevel": "UNIVERSITY",
+      "territory": "España",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://sede.uned.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D11"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+    },
+    {
+      "portalId": "junta-andalucia-sede",
+      "inventoryId": "ES-PUB-0093",
+      "profileId": null,
+      "displayName": "Sede electrónica de la Junta de Andalucía",
+      "organization": "Junta de Andalucía",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Andalucía",
+      "purpose": "Acceso público a información y servicios de la sede autonómica.",
+      "entryUrl": "https://www.juntadeandalucia.es/servicios/sede",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A01A",
+        "A01B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "aragon-tramites-sede",
+      "inventoryId": "ES-PUB-0094",
+      "profileId": null,
+      "displayName": "Trámites del Gobierno de Aragón",
+      "organization": "Gobierno de Aragón",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Aragón",
+      "purpose": "Tramitación con medios de identificación y firma según el procedimiento.",
+      "entryUrl": "https://www.aragon.es/tramites",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A02A",
+        "A02B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La mención general de firma no acredita cliente JS, formato, callback, endpoint ni TLS cliente."
+    },
+    {
+      "portalId": "asturias-miprincipado-sede",
+      "inventoryId": "ES-PUB-0095",
+      "profileId": null,
+      "displayName": "MiPrincipado",
+      "organization": "Principado de Asturias",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Principado de Asturias",
+      "purpose": "Información de sede y acceso con sistemas de identificación admitidos.",
+      "entryUrl": "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A03A",
+        "A03C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Firma, transporte del certificado, ABI, formato y endpoint no verificados."
+    },
+    {
+      "portalId": "asturias-sede-tramite-autofirma",
+      "inventoryId": "ES-PUB-0096",
+      "profileId": null,
+      "displayName": "Frontend de trámite de la Sede de Asturias",
+      "organization": "Principado de Asturias",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Principado de Asturias",
+      "purpose": "Tramitación pública cuya ficha indica firma con AutoFirma.",
+      "entryUrl": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
+      "observedMechanisms": [
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A03B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "AutoFirma como producto no basta para autorizar bridge ni inferir el transporte."
+    },
+    {
+      "portalId": "caib-seu-electronica",
+      "inventoryId": "ES-PUB-0097",
+      "profileId": null,
+      "displayName": "Seu Electrònica de les Illes Balears",
+      "organization": "Gobierno de las Illes Balears",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Illes Balears",
+      "purpose": "Acceso y firma mediante los sistemas admitidos según el trámite.",
+      "entryUrl": "https://www.caib.es/seucaib/ca/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A04A",
+        "A04B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "No se verificaron cliente JS, operación, formato, algoritmo, callback ni endpoint concretos."
+    },
+    {
+      "portalId": "caib-registre-electronic",
+      "inventoryId": "ES-PUB-0098",
+      "profileId": null,
+      "displayName": "Registre Electrònic",
+      "organization": "Gobierno de las Illes Balears",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Illes Balears",
+      "purpose": "Información y acceso al registro electrónico autonómico.",
+      "entryUrl": "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A04B",
+        "A04C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "No se verificaron entrada operativa final, certificado, firma, ABI ni endpoint."
+    },
+    {
+      "portalId": "canarias-sede",
+      "inventoryId": "ES-PUB-0099",
+      "profileId": null,
+      "displayName": "Sede electrónica del Gobierno de Canarias",
+      "organization": "Gobierno de Canarias",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Canarias",
+      "purpose": "Tramitación con certificado y AutoFirma cuando el procedimiento lo requiere.",
+      "entryUrl": "https://sede.gobiernodecanarias.org/sede/la_sede",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A05A",
+        "A05B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Producto, formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
+    },
+    {
+      "portalId": "cantabria-sede",
+      "inventoryId": "ES-PUB-0100",
+      "profileId": null,
+      "displayName": "Sede electrónica del Gobierno de Cantabria",
+      "organization": "Gobierno de Cantabria",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Cantabria",
+      "purpose": "Catálogo y tramitación con sistemas de firma admitidos según el procedimiento.",
+      "entryUrl": "https://sede.cantabria.es/sede/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A06A",
+        "A06B",
+        "A06C",
+        "A06D"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado y firma son condicionales; cliente JS, formato y endpoint siguen sin verificar."
+    },
+    {
+      "portalId": "cantabria-registro-electronico-comun",
+      "inventoryId": "ES-PUB-0101",
+      "profileId": "cantabria-rec-cert-login",
+      "displayName": "Registro Electrónico Común",
+      "organization": "Gobierno de Cantabria",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Cantabria",
+      "purpose": "Acceso con certificado al REC mediante MiniApplet.sign sobre un reto efímero de 40 caracteres hexadecimales.",
+      "entryUrl": "https://rec.cantabria.es/rec/bienvenida.htm",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOFIRMA_MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A06E",
+        "CANTABRIA-REC-AUTOFIRMA-2026-08-09",
+        "CANTABRIA-REC-AFIRMA-CLIENTE-2026-08-09",
+        "CANTABRIA-REC-MINIAPPLET-2026-08-09"
+      ],
+      "reviewedOn": "2026-08-09",
+      "limitations": "Contrato de acceso con certificado implementado solo en QA; no se realizó E2E, autenticación posterior ni envío del formulario del portal."
+    },
+    {
+      "portalId": "castilla-leon-tramita",
+      "inventoryId": "ES-PUB-0102",
+      "profileId": null,
+      "displayName": "Tramitacastillayleon",
+      "organization": "Junta de Castilla y León",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Castilla y León",
+      "purpose": "Acceso a trámites y firma electrónica cuando la actuación la exige.",
+      "entryUrl": "https://www.tramitacastillayleon.jcyl.es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A07A",
+        "A07B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La documentación de requisitos no acredita ABI, formato, callback ni endpoint concretos."
+    },
+    {
+      "portalId": "castilla-la-mancha-sede",
+      "inventoryId": "ES-PUB-0103",
+      "profileId": null,
+      "displayName": "Sede electrónica de Castilla-La Mancha",
+      "organization": "Junta de Comunidades de Castilla-La Mancha",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Castilla-La Mancha",
+      "purpose": "Tramitación con los sistemas de identificación y firma admitidos.",
+      "entryUrl": "https://www.jccm.es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A08A",
+        "A08B",
+        "A08C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "catalunya-seu-electronica",
+      "inventoryId": "ES-PUB-0104",
+      "profileId": null,
+      "displayName": "Seu electrònica de la Generalitat de Catalunya",
+      "organization": "Generalitat de Catalunya",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Cataluña",
+      "purpose": "Relación digital mediante sistemas de identificación y firma según el servicio.",
+      "entryUrl": "https://web.gencat.cat/ca/seu-electronica",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A09A",
+        "A09B",
+        "A09D"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Operación, cliente JS, formato, algoritmo, callback y endpoint no verificados."
+    },
+    {
+      "portalId": "catalunya-tramits-peticio-generica",
+      "inventoryId": "ES-PUB-0105",
+      "profileId": null,
+      "displayName": "Tràmits gencat — Petició genèrica",
+      "organization": "Generalitat de Catalunya",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Cataluña",
+      "purpose": "Presentación de una petición genérica con identificación y firma cuando corresponda.",
+      "entryUrl": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A09B",
+        "A09C",
+        "A09D"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La condición de firma no acredita cliente JS, formato, algoritmo ni callback exactos."
+    },
+    {
+      "portalId": "ceuta-sede",
+      "inventoryId": "ES-PUB-0106",
+      "profileId": null,
+      "displayName": "Sede electrónica de Ceuta",
+      "organization": "Ciudad Autónoma de Ceuta",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Ciudad Autónoma de Ceuta",
+      "purpose": "Tramitación con certificado, Cl@ve o AutoFirma según el procedimiento.",
+      "entryUrl": "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A10A",
+        "A10B",
+        "A10C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La mención de certificado no prueba TLS cliente ni un contrato de firma."
+    },
+    {
+      "portalId": "melilla-sede",
+      "inventoryId": "ES-PUB-0107",
+      "profileId": "melilla-sede",
+      "displayName": "Sede electrónica de Melilla",
+      "organization": "Ciudad Autónoma de Melilla",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Ciudad Autónoma de Melilla",
+      "purpose": "Firma por lotes AutoScript/STA del trámite público exacto, con perfil móvil QA limitado a CAdES detached.",
+      "entryUrl": "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "CADES",
+        "PADES",
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_STA_BATCH_TRIFASICO",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A11A",
+        "A11B",
+        "A11C",
+        "A11D",
+        "A11E",
+        "A11F"
+      ],
+      "reviewedOn": "2026-08-11",
+      "limitations": "Contrato AutoScript/STA implementado solo en QA; sin aceptación física/E2E del portal real, sin envío administrativo y sin afirmar endpoint dinámico como URL estática."
+    },
+    {
+      "portalId": "gva-sede",
+      "inventoryId": "ES-PUB-0108",
+      "profileId": null,
+      "displayName": "Sede electrónica de la Generalitat Valenciana",
+      "organization": "Generalitat Valenciana",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Comunitat Valenciana",
+      "purpose": "Tramitación mediante los sistemas de identificación y firma admitidos.",
+      "entryUrl": "https://sede.gva.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A12A",
+        "A12B",
+        "A12C",
+        "A12D"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El término ClientCert de la ayuda no prueba ClientCertRequest TLS; formato y endpoint tampoco están verificados."
+    },
+    {
+      "portalId": "extremadura-tramites",
+      "inventoryId": "ES-PUB-0109",
+      "profileId": null,
+      "displayName": "Trámites de la Junta de Extremadura",
+      "organization": "Junta de Extremadura",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Extremadura",
+      "purpose": "Tramitación con certificado o DNIe y firma cuando el servicio la exige.",
+      "entryUrl": "https://tramites.juntaex.es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A13A",
+        "A13B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
+    },
+    {
+      "portalId": "extremadura-sede-anterior",
+      "inventoryId": "ES-PUB-0110",
+      "profileId": null,
+      "displayName": "Sede electrónica anterior de la Junta de Extremadura",
+      "organization": "Junta de Extremadura",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Extremadura",
+      "purpose": "Entrada histórica de sede cuya relación con el portal de trámites actual no está resuelta.",
+      "entryUrl": "https://sede.juntaex.es/SEDE/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "DISCOVERED",
+      "evidenceIds": [
+        "D03",
+        "A13C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "No se ha acreditado retirada, sustitución, operación vigente ni contrato técnico; se conserva sin promoción."
+    },
+    {
+      "portalId": "extremadura-portal-tributario",
+      "inventoryId": "ES-PUB-0111",
+      "profileId": null,
+      "displayName": "Portal Tributario de la Junta de Extremadura",
+      "organization": "Junta de Extremadura",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Extremadura",
+      "purpose": "Tramitación tributaria con certificado y AutoFirma según los requisitos publicados.",
+      "entryUrl": "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A13D"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La exigencia del producto no identifica cliente JS, algoritmo, endpoint ni TLS cliente."
+    },
+    {
+      "portalId": "galicia-sede",
+      "inventoryId": "ES-PUB-0112",
+      "profileId": null,
+      "displayName": "Sede electrónica de la Xunta de Galicia",
+      "organization": "Xunta de Galicia",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Galicia",
+      "purpose": "Presentación de solicitud genérica mediante sistemas de identificación y firma admitidos.",
+      "entryUrl": "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A14A",
+        "A14B",
+        "A14C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "murcia-sede",
+      "inventoryId": "ES-PUB-0113",
+      "profileId": null,
+      "displayName": "Sede electrónica de la CARM",
+      "organization": "Comunidad Autónoma de la Región de Murcia",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Región de Murcia",
+      "purpose": "Tramitación con certificado, Cl@ve y AutoFirma según el procedimiento.",
+      "entryUrl": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A16A",
+        "A16B",
+        "A16C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "navarra-sede-registro-general",
+      "inventoryId": "ES-PUB-0114",
+      "profileId": null,
+      "displayName": "Sede electrónica y Registro General Electrónico de Navarra",
+      "organization": "Gobierno de Navarra",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Comunidad Foral de Navarra",
+      "purpose": "Presentación en el Registro General con certificado y firma cuando corresponda.",
+      "entryUrl": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A17A",
+        "A17B",
+        "A17C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La documentación no acredita cliente JS, formato aceptado, callback ni endpoint."
+    },
+    {
+      "portalId": "euskadi-sede-electronica",
+      "inventoryId": "ES-PUB-0115",
+      "profileId": null,
+      "displayName": "Sede electrónica de Euskadi",
+      "organization": "Gobierno Vasco",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "País Vasco",
+      "purpose": "Tramitación mediante medios de identificación y firma admitidos.",
+      "entryUrl": "https://www.euskadi.eus/sede-electronica/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A18A",
+        "A18B",
+        "A18C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Las menciones documentales, incluida XAdES en escenarios delimitados, no prueban el flujo de esta superficie."
+    },
+    {
+      "portalId": "la-rioja-oficina-electronica",
+      "inventoryId": "ES-PUB-0116",
+      "profileId": null,
+      "displayName": "Oficina electrónica del Gobierno de La Rioja",
+      "organization": "Gobierno de La Rioja",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "La Rioja",
+      "purpose": "Tramitación electrónica con certificado y AutoFirma cuando el trámite lo requiere.",
+      "entryUrl": "https://web.larioja.org/oficina-electronica/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D03",
+        "A19A",
+        "A19B",
+        "A19C"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "menorca-portal-institucional",
+      "inventoryId": "ES-PUB-0117",
+      "profileId": null,
+      "displayName": "Portal institucional del Consell Insular de Menorca",
+      "organization": "Consell Insular de Menorca",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.cime.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I01A",
+        "I01B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "menorca-sede-electronica",
+      "inventoryId": "ES-PUB-0118",
+      "profileId": null,
+      "displayName": "Seu electrònica del Consell Insular de Menorca",
+      "organization": "Consell Insular de Menorca",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://seuelectronica.cime.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I01B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "mallorca-portal-institucional",
+      "inventoryId": "ES-PUB-0119",
+      "profileId": null,
+      "displayName": "Portal institucional del Consell de Mallorca",
+      "organization": "Consell de Mallorca",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.conselldemallorca.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I02A",
+        "I02B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "mallorca-sede-electronica",
+      "inventoryId": "ES-PUB-0120",
+      "profileId": null,
+      "displayName": "Seu electrònica del Consell de Mallorca",
+      "organization": "Consell de Mallorca",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://seu.conselldemallorca.net/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I02B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "eivissa-portal-institucional",
+      "inventoryId": "ES-PUB-0121",
+      "profileId": null,
+      "displayName": "Portal institucional del Consell Insular d’Eivissa",
+      "organization": "Consell Insular d’Eivissa",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.conselldeivissa.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I03A",
+        "I03B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "eivissa-sede-electronica",
+      "inventoryId": "ES-PUB-0122",
+      "profileId": null,
+      "displayName": "Sede electrónica del Consell Insular d’Eivissa",
+      "organization": "Consell Insular d’Eivissa",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://seu.conselldeivissa.es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I03B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "formentera-portal-institucional",
+      "inventoryId": "ES-PUB-0123",
+      "profileId": null,
+      "displayName": "Portal institucional del Consell Insular de Formentera",
+      "organization": "Consell Insular de Formentera",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.consellinsulardeformentera.cat/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I04A",
+        "I04B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "formentera-sede-electronica",
+      "inventoryId": "ES-PUB-0124",
+      "profileId": null,
+      "displayName": "Sede electrónica / OVAC del Consell Insular de Formentera",
+      "organization": "Consell Insular de Formentera",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Illes Balears",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://ovac.conselldeformentera.cat/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I04B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "el-hierro-portal-institucional",
+      "inventoryId": "ES-PUB-0125",
+      "profileId": null,
+      "displayName": "Portal institucional del Cabildo Insular de El Hierro",
+      "organization": "Cabildo Insular de El Hierro",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.elhierro.es/es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I05A",
+        "I05B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "el-hierro-sede-electronica",
+      "inventoryId": "ES-PUB-0126",
+      "profileId": null,
+      "displayName": "Sede electrónica del Cabildo Insular de El Hierro",
+      "organization": "Cabildo Insular de El Hierro",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://elhierro.sedelectronica.es/info.0",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "BLOCKED",
+      "inventoryStatus": "INACCESSIBLE",
+      "discoveryState": "RECHECK_REQUIRED",
+      "evidenceIds": [
+        "I05B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El transporte de revisión informó 400 Redirect loop detected al abrir https://elhierro.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+    },
+    {
+      "portalId": "tenerife-portal-institucional",
+      "inventoryId": "ES-PUB-0127",
+      "profileId": null,
+      "displayName": "Portal institucional del Cabildo Insular de Tenerife",
+      "organization": "Cabildo Insular de Tenerife",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.tenerife.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I06A",
+        "I06B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "tenerife-sede-electronica",
+      "inventoryId": "ES-PUB-0128",
+      "profileId": null,
+      "displayName": "Sede electrónica del Cabildo Insular de Tenerife",
+      "organization": "Cabildo Insular de Tenerife",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://sede.tenerife.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I06B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "la-palma-portal-institucional",
+      "inventoryId": "ES-PUB-0129",
+      "profileId": null,
+      "displayName": "Portal institucional del Cabildo Insular de La Palma",
+      "organization": "Cabildo Insular de La Palma",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.cabildodelapalma.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I07A",
+        "I07B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "la-palma-sede-electronica",
+      "inventoryId": "ES-PUB-0130",
+      "profileId": null,
+      "displayName": "Sede electrónica del Cabildo Insular de La Palma",
+      "organization": "Cabildo Insular de La Palma",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://sedeelectronica.cabildodelapalma.es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I07B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "la-gomera-portal-institucional",
+      "inventoryId": "ES-PUB-0131",
+      "profileId": null,
+      "displayName": "Portal institucional del Cabildo Insular de La Gomera",
+      "organization": "Cabildo Insular de La Gomera",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.lagomera.es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I08A",
+        "I08B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "la-gomera-sede-electronica",
+      "inventoryId": "ES-PUB-0132",
+      "profileId": null,
+      "displayName": "Sede electrónica del Cabildo Insular de La Gomera",
+      "organization": "Cabildo Insular de La Gomera",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://lagomera.sedelectronica.es/info.0",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "BLOCKED",
+      "inventoryStatus": "INACCESSIBLE",
+      "discoveryState": "RECHECK_REQUIRED",
+      "evidenceIds": [
+        "I08B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El transporte de revisión informó 400 Redirect loop detected al abrir https://lagomera.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+    },
+    {
+      "portalId": "fuerteventura-portal-institucional",
+      "inventoryId": "ES-PUB-0133",
+      "profileId": null,
+      "displayName": "Portal institucional del Cabildo Insular de Fuerteventura",
+      "organization": "Cabildo Insular de Fuerteventura",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.cabildofuer.es/cabildo/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I09A",
+        "I09B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "fuerteventura-sede-electronica",
+      "inventoryId": "ES-PUB-0134",
+      "profileId": null,
+      "displayName": "Sede electrónica del Cabildo Insular de Fuerteventura",
+      "organization": "Cabildo Insular de Fuerteventura",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://sede.cabildofuer.es/eAdmin/Sede.do",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I09B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "lanzarote-portal-institucional",
+      "inventoryId": "ES-PUB-0135",
+      "profileId": null,
+      "displayName": "Portal institucional del Cabildo Insular de Lanzarote",
+      "organization": "Cabildo Insular de Lanzarote",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://www.cabildodelanzarote.com/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I10A",
+        "I10B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "lanzarote-sede-electronica",
+      "inventoryId": "ES-PUB-0136",
+      "profileId": null,
+      "displayName": "Sede electrónica del Cabildo Insular de Lanzarote",
+      "organization": "Cabildo Insular de Lanzarote",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://cabildodelanzarote.sedelectronica.es/info.0",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "BLOCKED",
+      "inventoryStatus": "INACCESSIBLE",
+      "discoveryState": "RECHECK_REQUIRED",
+      "evidenceIds": [
+        "I10B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "El transporte de revisión informó 400 Redirect loop detected al abrir https://cabildodelanzarote.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+    },
+    {
+      "portalId": "gran-canaria-portal-institucional",
+      "inventoryId": "ES-PUB-0137",
+      "profileId": null,
+      "displayName": "Portal institucional del Cabildo Insular de Gran Canaria",
+      "organization": "Cabildo Insular de Gran Canaria",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "entryUrl": "https://cabildo.grancanaria.com/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D12",
+        "I11A",
+        "I11B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+    },
+    {
+      "portalId": "gran-canaria-sede-electronica",
+      "inventoryId": "ES-PUB-0138",
+      "profileId": null,
+      "displayName": "Sede electrónica del Cabildo Insular de Gran Canaria",
+      "organization": "Cabildo Insular de Gran Canaria",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Canarias",
+      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "entryUrl": "https://sede.grancanaria.com/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "I11B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+    },
+    {
+      "portalId": "diputacion-alicante-portal",
+      "inventoryId": "ES-PUB-0139",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Alicante",
+      "organization": "Diputación Provincial de Alicante",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Comunidad Valenciana",
+      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
+      "entryUrl": "https://www.diputacionalicante.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP01A",
+        "DP01B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    },
+    {
+      "portalId": "diputacion-alava-portal",
+      "inventoryId": "ES-PUB-0140",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Foral de Álava",
+      "organization": "Diputación Foral de Álava",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "País Vasco",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://web.araba.eus/es/home",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP02A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-albacete-portal",
+      "inventoryId": "ES-PUB-0141",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Albacete",
+      "organization": "Diputación Provincial de Albacete",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla-La Mancha",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.dipualba.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP03A",
+        "DP03B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-almeria-portal",
+      "inventoryId": "ES-PUB-0142",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Almería",
+      "organization": "Diputación Provincial de Almería",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.dipalme.org",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP04A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-avila-portal",
+      "inventoryId": "ES-PUB-0143",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Ávila",
+      "organization": "Diputación Provincial de Ávila",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
+      "entryUrl": "https://www.diputacionavila.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP05A",
+        "DP05B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    },
+    {
+      "portalId": "diputacion-badajoz-portal",
+      "inventoryId": "ES-PUB-0144",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Badajoz",
+      "organization": "Diputación Provincial de Badajoz",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Extremadura",
+      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
+      "entryUrl": "https://www.dip-badajoz.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP06A",
+        "DP06B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    },
+    {
+      "portalId": "diputacion-barcelona-portal",
+      "inventoryId": "ES-PUB-0145",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputació de Barcelona",
+      "organization": "Diputació de Barcelona",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Cataluña",
+      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
+      "entryUrl": "https://www.diba.cat/es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP07A",
+        "DP07B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    },
+    {
+      "portalId": "diputacion-burgos-portal",
+      "inventoryId": "ES-PUB-0146",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Burgos",
+      "organization": "Diputación Provincial de Burgos",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://burgos.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP08A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-caceres-portal",
+      "inventoryId": "ES-PUB-0147",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Cáceres",
+      "organization": "Diputación Provincial de Cáceres",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Extremadura",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.dip-caceres.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP09A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-cadiz-portal",
+      "inventoryId": "ES-PUB-0148",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Cádiz",
+      "organization": "Diputación Provincial de Cádiz",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
+      "entryUrl": "https://www.dipucadiz.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP10A",
+        "DP10B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    },
+    {
+      "portalId": "diputacion-castellon-portal",
+      "inventoryId": "ES-PUB-0149",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputació de Castelló",
+      "organization": "Diputació de Castelló",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Comunidad Valenciana",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.dipcas.es/es/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP11A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-ciudad-real-portal",
+      "inventoryId": "ES-PUB-0150",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Ciudad Real",
+      "organization": "Diputación Provincial de Ciudad Real",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla-La Mancha",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.dipucr.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP12A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-cordoba-portal",
+      "inventoryId": "ES-PUB-0151",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Córdoba",
+      "organization": "Diputación Provincial de Córdoba",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.dipucordoba.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP13A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-a-coruna-portal",
+      "inventoryId": "ES-PUB-0152",
+      "profileId": null,
+      "displayName": "Portal oficial de Deputación da Coruña",
+      "organization": "Deputación da Coruña",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Galicia",
+      "purpose": "Un recurso tributario oficial documenta certificado y firma en ese flujo limitado; no se generaliza al portal.",
+      "entryUrl": "https://www.dacoruna.gal/portada",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP14A",
+        "DP14B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Certificado y firma son condicionales solo para el flujo citado; procedimiento general y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-cuenca-portal",
+      "inventoryId": "ES-PUB-0153",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Cuenca",
+      "organization": "Diputación Provincial de Cuenca",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla-La Mancha",
+      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
+      "entryUrl": "https://www.dipucuenca.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP15A",
+        "DP15B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    },
+    {
+      "portalId": "diputacion-girona-portal",
+      "inventoryId": "ES-PUB-0154",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputació de Girona",
+      "organization": "Diputació de Girona",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Cataluña",
+      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
+      "entryUrl": "https://www.ddgi.cat/web/",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP16A",
+        "DP16B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+    },
+    {
+      "portalId": "diputacion-granada-portal",
+      "inventoryId": "ES-PUB-0155",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Granada",
+      "organization": "Diputación Provincial de Granada",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "NO_VERIFICADO",
+      "entryUrl": "https://www.dipgra.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP17A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    },
+    {
+      "portalId": "diputacion-guadalajara-sede",
+      "inventoryId": "ES-PUB-0156",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Guadalajara",
+      "organization": "Diputación Provincial de Guadalajara",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla-La Mancha",
+      "purpose": "La sede documenta identificación condicionada con certificado; no acredita firma obligatoria en un trámite concreto.",
+      "entryUrl": "https://dguadalajara.sedelectronica.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP18A",
+        "DP18B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La identificación con certificado no permite inferir firma, formato, algoritmo, endpoint, cliente JS ni TLS cliente."
+    },
+    {
+      "portalId": "diputacion-gipuzkoa-sede",
+      "inventoryId": "ES-PUB-0157",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Foral de Gipuzkoa",
+      "organization": "Diputación Foral de Gipuzkoa",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "País Vasco",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://egoitza.gipuzkoa.eus/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP19A",
+        "DP19B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-huelva-portal",
+      "inventoryId": "ES-PUB-0158",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Huelva",
+      "organization": "Diputación Provincial de Huelva",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "El portal oficial enlaza verificación de firma; no acredita que un trámite exija certificado o firma.",
+      "entryUrl": "https://www.diphuelva.es",
+      "observedMechanisms": [],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP20A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "No se generaliza el enlace de verificación a certificado o firma obligatorios; seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-huesca-portal",
+      "inventoryId": "ES-PUB-0159",
+      "profileId": null,
+      "displayName": "Portal oficial de Diputación Provincial de Huesca",
+      "organization": "Diputación Provincial de Huesca",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Aragón",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://www.dphuesca.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP21A",
+        "DP21B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-jaen-sede",
+      "inventoryId": "ES-PUB-0160",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Jaén",
+      "organization": "Diputación Provincial de Jaén",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.dipujaen.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP22A",
+        "DP22B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-leon-sede",
+      "inventoryId": "ES-PUB-0161",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de León",
+      "organization": "Diputación Provincial de León",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.dipuleon.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP23A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-lleida-sede",
+      "inventoryId": "ES-PUB-0162",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputació de Lleida",
+      "organization": "Diputació de Lleida",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Cataluña",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://seu.diputaciolleida.cat",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP24A",
+        "DP24B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-lugo-sede",
+      "inventoryId": "ES-PUB-0163",
+      "profileId": null,
+      "displayName": "Sede electrónica de Deputación de Lugo",
+      "organization": "Deputación de Lugo",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Galicia",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.deputacionlugo.org",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP25A",
+        "DP25B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-malaga-sede",
+      "inventoryId": "ES-PUB-0164",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Málaga",
+      "organization": "Diputación Provincial de Málaga",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.malaga.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP26A",
+        "DP26B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-ourense-sede",
+      "inventoryId": "ES-PUB-0165",
+      "profileId": null,
+      "displayName": "Sede electrónica de Deputación de Ourense",
+      "organization": "Deputación de Ourense",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Galicia",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.depourense.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP27A",
+        "DP27B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-palencia-sede",
+      "inventoryId": "ES-PUB-0166",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Palencia",
+      "organization": "Diputación Provincial de Palencia",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.diputaciondepalencia.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP28A",
+        "DP28B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-pontevedra-sede",
+      "inventoryId": "ES-PUB-0167",
+      "profileId": null,
+      "displayName": "Sede electrónica de Deputación de Pontevedra",
+      "organization": "Deputación de Pontevedra",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Galicia",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.depo.gal",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP29A",
+        "DP29B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-salamanca-sede",
+      "inventoryId": "ES-PUB-0168",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación de Salamanca",
+      "organization": "Diputación de Salamanca",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.diputaciondesalamanca.gob.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP30A",
+        "DP30B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-segovia-sede",
+      "inventoryId": "ES-PUB-0169",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación de Segovia",
+      "organization": "Diputación de Segovia",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.dipsegovia.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP31A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-sevilla-sede",
+      "inventoryId": "ES-PUB-0170",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación de Sevilla",
+      "organization": "Diputación de Sevilla",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Andalucía",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sedeelectronicadipusevilla.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP32A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-soria-sede",
+      "inventoryId": "ES-PUB-0171",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación de Soria",
+      "organization": "Diputación de Soria",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://sede.dipsoria.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "BLOCKED",
+      "inventoryStatus": "INACCESSIBLE",
+      "discoveryState": "RECHECK_REQUIRED",
+      "evidenceIds": [
+        "D06",
+        "DP33A",
+        "DP33B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La revalidación HTTPS directa falla por certificado TLS de validez normal expirado el 2026-06-21; la evidencia documental se conserva sin afirmar accesibilidad actual ni contrato técnico."
+    },
+    {
+      "portalId": "diputacion-tarragona-sede",
+      "inventoryId": "ES-PUB-0172",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputació de Tarragona",
+      "organization": "Diputació de Tarragona",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Cataluña",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://seuelectronica.dipta.cat",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP34A",
+        "DP34B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-teruel-sede",
+      "inventoryId": "ES-PUB-0173",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Teruel",
+      "organization": "Diputación Provincial de Teruel",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Aragón",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://dpteruel.sedelectronica.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP35A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-toledo-sede",
+      "inventoryId": "ES-PUB-0174",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Toledo",
+      "organization": "Diputación Provincial de Toledo",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla-La Mancha",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://diputacion.toledo.gob.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP36A",
+        "DP36B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-valencia-sede",
+      "inventoryId": "ES-PUB-0175",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputació de València",
+      "organization": "Diputació de València",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Comunidad Valenciana",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://www.sede.dival.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP37A",
+        "DP37B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-bizkaia-sede",
+      "inventoryId": "ES-PUB-0176",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Foral de Bizkaia",
+      "organization": "Diputación Foral de Bizkaia",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "País Vasco",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://www.ebizkaia.eus",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP39A",
+        "DP39B"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-zamora-sede",
+      "inventoryId": "ES-PUB-0177",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Zamora",
+      "organization": "Diputación Provincial de Zamora",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Castilla y León",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://diputaciondezamora.sedelectronica.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP40A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "diputacion-zaragoza-sede",
+      "inventoryId": "ES-PUB-0178",
+      "profileId": null,
+      "displayName": "Sede electrónica de Diputación Provincial de Zaragoza",
+      "organization": "Diputación Provincial de Zaragoza",
+      "governmentLevel": "LOCAL_ADMINISTRATION",
+      "territory": "Aragón",
+      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "entryUrl": "https://dpz.sedelectronica.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D06",
+        "DP41A"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    },
+    {
+      "portalId": "comunidad-madrid-cuenta-digital-carne-joven",
+      "inventoryId": "ES-PUB-0179",
+      "profileId": null,
+      "displayName": "Cuenta Digital — Carné Joven 53F1",
+      "organization": "Comunidad de Madrid",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Comunidad de Madrid",
+      "purpose": "Solicitud electrónica y obtención de la versión digital del Carné Joven de la Comunidad de Madrid mediante Cuenta Digital.",
+      "entryUrl": "https://digital.comunidad.madrid/ext/53F1",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "NO_VERIFICADO",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P18",
+        "P18A",
+        "P18B",
+        "P18C",
+        "P18D",
+        "P18E",
+        "P18F"
+      ],
+      "reviewedOn": "2026-07-16",
+      "limitations": "La ficha acredita «Firmar y enviar» y certificado/DNIe solo como opción; el lookup autenticado de 53F1 no revela el endpoint de presentación, payload, callback, formato ni algoritmo. La cadena JS revisada solo acredita lookup/redirect."
+    },
+    {
+      "portalId": "junta-andalucia-carne-joven",
+      "inventoryId": "ES-PUB-0180",
+      "profileId": "carne-joven-andalucia",
+      "displayName": "Carné Joven Europeo de Andalucía",
+      "organization": "Instituto Andaluz de la Juventud",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Andalucía",
+      "purpose": "Entrada con certificado mediante facade TLS compartida y retorno exacto a ws104.",
+      "entryUrl": "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "TLS_CLIENT_CERTIFICATE_AUTHENTICATION",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "P19",
+        "P19A",
+        "P19B",
+        "P19C",
+        "P19D"
+      ],
+      "reviewedOn": "2026-07-21",
+      "limitations": "CLIENT_TLS_AUTH verificado E2E en dispositivo físico para Zona privada y Solicitar Carné Joven; la firma, AutoFirma, presentación jurídica o solicitud completada posterior no se afirman como E2E."
+    },
+    {
+      "portalId": "junta-andalucia-ofvirtual",
+      "inventoryId": "ES-PUB-0181",
+      "profileId": "junta-ofvirtual",
+      "displayName": "Junta de Andalucía — Oficina Virtual",
+      "organization": "Junta de Andalucía",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Andalucía",
+      "purpose": "Acceso con certificado a la Oficina Virtual",
+      "entryUrl": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+      "observedMechanisms": [
+        "AFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET_TRIPHASE",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "LIVE-JUNTA-OFVIRTUAL-2026-07-22",
+        "E2E-JUNTA-OFVIRTUAL-2026-07-29"
+      ],
+      "reviewedOn": "2026-07-29",
+      "limitations": "El portal real aceptó la firma CAdES de autenticación y abrió la sesión interna; verificación limitada al login observado."
+    },
+    {
+      "portalId": "educacion-convocatoria-46",
+      "inventoryId": "ES-PUB-0182",
+      "profileId": "educacion-convocatoria",
+      "displayName": "Ministerio de Educación — Convocatoria 46",
+      "organization": "Ministerio de Educación, Formación Profesional y Deportes",
+      "governmentLevel": "STATE",
+      "territory": "España",
+      "purpose": "Consulta de la convocatoria de homologación y convalidación",
+      "entryUrl": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
+      "observedSignatureFormats": [],
+      "protocolFamily": "CLAVE_GATEWAY_UNVERIFIED",
+      "catalogStatus": "CATALOGED",
+      "inventoryStatus": "BROWSE_ONLY",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "LIVE-EDUCACION-ENTRY-2026-07-22"
+      ],
+      "reviewedOn": "2026-07-22",
+      "limitations": "Transporte downstream de certificado y callback no verificados; firma bloqueada."
+    },
+    {
+      "portalId": "castilla-la-mancha-certificate-login-probe",
+      "inventoryId": "ES-PUB-0183",
+      "profileId": "jccm-certificate-login-probe",
+      "displayName": "JCCM — acceso público con certificado",
+      "organization": "Junta de Comunidades de Castilla-La Mancha",
+      "governmentLevel": "AUTONOMOUS_COMMUNITY",
+      "territory": "Castilla-La Mancha",
+      "purpose": "Validación pública de acceso con certificado mediante AutoScript/MiniApplet.sign sobre payload fijo ABCDE.",
+      "entryUrl": "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "G38-JCCM-CERTIFICATE-LOGIN-2026-08-09"
+      ],
+      "reviewedOn": "2026-08-09",
+      "limitations": "Contrato AutoScript/MiniApplet CAdES SHA1 implementado solo para QA; E2E pendiente y sin FORMPROC.submit, presentación administrativa, autenticación ni sesión."
+    }
+  ]
+}

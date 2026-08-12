@@ -1,0 +1,942 @@
+package dev.junta.firmamobile.signing
+
+import dev.junta.firmamobile.browser.NavigationId
+import dev.junta.firmamobile.certificate.CertificateSession
+import dev.junta.firmamobile.certificate.SensitiveCertificateFingerprintObserver
+import dev.junta.firmamobile.certificate.UnlockedIdentity
+import dev.junta.firmamobile.network.ProfileHttpRoute
+import dev.junta.firmamobile.network.TunnelRouteDurationBucket
+import dev.junta.firmamobile.network.TunnelRouteEvent
+import dev.junta.firmamobile.network.TunnelRouteStage
+import dev.junta.firmamobile.network.TrustedOrigin
+import java.security.cert.X509Certificate
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class SigningCoordinatorTest {
+    private val clock = Clock.fixed(NOW, ZoneOffset.UTC)
+    private val identity = syntheticIdentity()
+    private val session = CertificateSession(clock).apply { unlock(identity) }
+    private val adapter = RecordingAdapter()
+    private val engine = RecordingEngine()
+    private val expiryScheduler = ControlledExpiryScheduler()
+    private var activeOrigin: TrustedOrigin? = PORTAL_ORIGIN
+    private val coordinator = SigningCoordinator(
+        certificateSession = session,
+        adapter = adapter,
+        localSignatureEngine = engine,
+        currentOrigin = { activeOrigin },
+        clock = clock,
+        expiryScheduler = expiryScheduler,
+    )
+
+    @Test
+    fun preparePublishesOnlySafeConfirmationAndDoesNotStartSigning() {
+        val reply = RecordingReply(REQUEST_ID)
+
+        val result = coordinator.prepare(request(), reply)
+
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), result)
+        val state = coordinator.state.value as SigningUiState.AwaitingConfirmation
+        assertEquals(REQUEST_ID, state.requestId)
+        assertEquals("www.juntadeandalucia.es", state.siteHost)
+        assertEquals("Junta de Andalucía", state.profileName)
+        assertEquals("EXPERIMENTAL", state.supportLevel)
+        assertEquals("Autenticación con certificado", state.safeDescription)
+        assertEquals("CAdES", state.format)
+        assertEquals("SHA256withRSA", state.algorithm)
+        assertEquals(identity.summary.ownerName, state.certificateOwner)
+        assertFalse(state.requiresLegacySha1Warning)
+        assertTrue(adapter.events.isEmpty())
+        assertTrue(engine.events.isEmpty())
+        assertTrue(reply.events.isEmpty())
+        assertFalse(state.toString().contains(PAYLOAD.decodeToString()))
+    }
+
+    @Test
+    fun onlyMatchingActiveRequestReceivesSecureTunnelProgress() {
+        val blockingAdapter = BlockingPrepareAdapter()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = blockingAdapter,
+            localSignatureEngine = RecordingEngine(),
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request(), reply))
+
+        val result = AtomicReference<SigningExecutionResult>()
+        val confirmThread = thread(start = true) {
+            result.set(runBlocking { localCoordinator.confirm(REQUEST_ID) })
+        }
+        assertTrue(blockingAdapter.prepareEntered.await(5, TimeUnit.SECONDS))
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        val connecting = TunnelRouteEvent(
+            route = ProfileHttpRoute.SECURE_TUNNEL,
+            stage = TunnelRouteStage.TUNNEL_CONNECTING,
+            durationBucket = TunnelRouteDurationBucket.NOT_AVAILABLE,
+        )
+        assertFalse(localCoordinator.onTunnelRouteEvent(WRONG_REQUEST_ID, connecting))
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        val directFallback = connecting.copy(
+            route = ProfileHttpRoute.DIRECT,
+            stage = TunnelRouteStage.DIRECT_FAILED_PRE_HTTP,
+        )
+        assertTrue(localCoordinator.onTunnelRouteEvent(REQUEST_ID, directFallback))
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        assertTrue(localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting))
+        assertEquals(SigningUiState.ConnectingSecurely(REQUEST_ID), localCoordinator.state.value)
+
+        assertFalse(localCoordinator.onTunnelRouteEvent(
+            WRONG_REQUEST_ID,
+            connecting.copy(stage = TunnelRouteStage.TUNNEL_ESTABLISHED),
+        ))
+        assertEquals(SigningUiState.ConnectingSecurely(REQUEST_ID), localCoordinator.state.value)
+
+        assertTrue(localCoordinator.onTunnelRouteEvent(
+            REQUEST_ID,
+            connecting.copy(
+                stage = TunnelRouteStage.TUNNEL_ESTABLISHED,
+                durationBucket = TunnelRouteDurationBucket.UNDER_ONE_SECOND,
+            ),
+        ))
+        assertEquals(SigningUiState.Signing(REQUEST_ID), localCoordinator.state.value)
+
+        blockingAdapter.releasePrepare.countDown()
+        confirmThread.join(5_000)
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), result.get())
+        assertEquals(SigningUiState.Completed(REQUEST_ID), localCoordinator.state.value)
+
+        assertFalse(localCoordinator.onTunnelRouteEvent(REQUEST_ID, connecting))
+        assertEquals(SigningUiState.Completed(REQUEST_ID), localCoordinator.state.value)
+    }
+
+    @Test
+    fun tunnelProgressIsIgnoredBeforeConfirmation() {
+        val reply = RecordingReply(REQUEST_ID)
+        coordinator.prepare(request(), reply)
+        val before = coordinator.state.value
+
+        assertFalse(coordinator.onTunnelRouteEvent(
+            REQUEST_ID,
+            TunnelRouteEvent(
+                route = ProfileHttpRoute.SECURE_TUNNEL,
+                stage = TunnelRouteStage.TUNNEL_CONNECTING,
+            ),
+        ))
+
+        assertEquals(before, coordinator.state.value)
+    }
+
+    @Test
+    fun cancelledActiveRequestRejectsLateTunnelProgressOwnership() {
+        val blockingAdapter = BlockingPrepareAdapter()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = blockingAdapter,
+            localSignatureEngine = RecordingEngine(),
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request(), reply))
+
+        val result = AtomicReference<SigningExecutionResult>()
+        val confirmThread = thread(start = true) {
+            result.set(runBlocking { localCoordinator.confirm(REQUEST_ID) })
+        }
+        assertTrue(blockingAdapter.prepareEntered.await(5, TimeUnit.SECONDS))
+        assertTrue(localCoordinator.cancel(SigningCancelReason.BACKGROUND, REQUEST_ID))
+
+        assertFalse(
+            localCoordinator.onTunnelRouteEvent(
+                REQUEST_ID,
+                TunnelRouteEvent(
+                    route = ProfileHttpRoute.SECURE_TUNNEL,
+                    stage = TunnelRouteStage.TUNNEL_ESTABLISHED,
+                ),
+            ),
+        )
+
+        blockingAdapter.releasePrepare.countDown()
+        confirmThread.join(5_000)
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.CERTIFICATE_LOCKED),
+            result.get(),
+        )
+    }
+
+    @Test
+    fun explicitConfirmRunsPreSignLocalSignPostSignAndOneShotDeliveryInOrder() = runTest {
+        val reply = RecordingReply(REQUEST_ID)
+        coordinator.prepare(request(), reply)
+
+        val result = coordinator.confirm(REQUEST_ID)
+
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), result)
+        assertEquals(listOf("pre", "post"), adapter.events)
+        assertEquals(listOf("local"), engine.events)
+        assertEquals(listOf("success"), reply.events)
+        assertArrayEquals(FINAL_SIGNATURE, reply.deliveredSignature)
+        assertEquals(SigningUiState.Completed(REQUEST_ID), coordinator.state.value)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.INVALID_REQUEST),
+            coordinator.confirm(REQUEST_ID),
+        )
+        assertEquals(listOf("success"), reply.events)
+    }
+
+    @Test
+    fun concurrentConfirmAllowsOnlyOneExecutionToOwnTheRequest() {
+        val blockingAdapter = BlockingPrepareAdapter()
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = blockingAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request(), reply))
+        val first = AtomicReference<SigningExecutionResult>()
+        val firstThread = thread(start = true) {
+            first.set(runBlocking { localCoordinator.confirm(REQUEST_ID) })
+        }
+
+        assertTrue(blockingAdapter.prepareEntered.await(5, TimeUnit.SECONDS))
+        val second = runBlocking { localCoordinator.confirm(REQUEST_ID) }
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.INVALID_REQUEST),
+            second,
+        )
+
+        blockingAdapter.releasePrepare.countDown()
+        firstThread.join(5_000)
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), first.get())
+        assertEquals(listOf("local"), localEngine.events)
+        assertEquals(listOf("success"), reply.events)
+    }
+
+    @Test
+    fun changedOriginAfterConfirmationFailsBeforeNetworkOrPrivateKeyUse() = runTest {
+        val reply = RecordingReply(REQUEST_ID)
+        coordinator.prepare(request(), reply)
+        activeOrigin = TrustedOrigin("https", "sede.juntadeandalucia.es", 443)
+
+        val result = coordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.ORIGIN_NOT_ALLOWED),
+            result,
+        )
+        assertTrue(adapter.events.isEmpty())
+        assertTrue(engine.events.isEmpty())
+        assertEquals(listOf("failure:ORIGIN_NOT_ALLOWED"), reply.events)
+    }
+
+    @Test
+    fun changedNavigationEpochAfterConfirmationFailsBeforeNetworkOrPrivateKeyUse() = runTest {
+        var epoch = 4L
+        val localAdapter = RecordingAdapter()
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = localAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            currentNavigationEpoch = { epoch },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(request(navigationEpoch = epoch), reply)
+
+        epoch++
+        val result = localCoordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.ORIGIN_NOT_ALLOWED),
+            result,
+        )
+        assertTrue(localAdapter.events.isEmpty())
+        assertTrue(localEngine.events.isEmpty())
+        assertEquals(listOf("failure:ORIGIN_NOT_ALLOWED"), reply.events)
+    }
+
+    @Test
+    fun regAgeProfileRoutesThroughLocalXadesAdapterAndDeliversVerifiableResult() = runTest {
+        val redOrigin = TrustedOrigin("https", "reg.redsara.es", 443)
+        val redAdapter = LocalXadesDetachedAdapter(clock)
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = RecordingAdapter(),
+            localSignatureEngine = JcaLocalSignatureEngine(),
+            currentOrigin = { redOrigin },
+            currentNavigationEpoch = { 9L },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+            adapterResolver = { id -> redAdapter.takeIf { it.id == id } },
+        )
+        val request = redRequest(redOrigin, navigationEpoch = 9L)
+        val reply = RecordingReply(REQUEST_ID)
+
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request, reply))
+        val state = localCoordinator.state.value as SigningUiState.AwaitingConfirmation
+        assertEquals("Registro Electrónico General (REG-AGE)", state.profileName)
+        assertEquals("XAdES Detached", state.format)
+        assertEquals("SHA512withRSA", state.algorithm)
+
+        assertEquals(
+            SigningExecutionResult.Delivered(REQUEST_ID),
+            localCoordinator.confirm(REQUEST_ID),
+        )
+        val result = checkNotNull(reply.deliveredSignature)
+        val fingerprint = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(identity.certificate.encoded)
+        assertTrue(XadesDetachedCodec.validate(result, fingerprint))
+        result.fill(0)
+        fingerprint.fill(0)
+    }
+
+    @Test
+    fun changedOrLockedCertificateAfterConfirmationFailsBeforeNetwork() = runTest {
+        val reply = RecordingReply(REQUEST_ID)
+        coordinator.prepare(request(), reply)
+        session.unlock(freshSyntheticIdentity())
+
+        val result = coordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.CERTIFICATE_LOCKED),
+            result,
+        )
+        assertTrue(adapter.events.isEmpty())
+        assertTrue(engine.events.isEmpty())
+        assertEquals(listOf("failure:CERTIFICATE_LOCKED"), reply.events)
+    }
+
+    @Test
+    fun userCancelConsumesPendingRequestAndNeverSigns() = runTest {
+        val reply = RecordingReply(REQUEST_ID)
+        coordinator.prepare(request(), reply)
+
+        assertTrue(coordinator.cancel(SigningCancelReason.USER, REQUEST_ID))
+
+        assertEquals(SigningUiState.Idle, coordinator.state.value)
+        assertEquals(listOf("failure:USER_CANCELLED"), reply.events)
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.INVALID_REQUEST),
+            coordinator.confirm(REQUEST_ID),
+        )
+        assertTrue(adapter.events.isEmpty())
+        assertTrue(engine.events.isEmpty())
+    }
+
+    @Test
+    fun civilClockJumpCannotExpireOrExtendARequestSecurityWindow() = runTest {
+        val civilClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(10_000L)
+        val localAdapter = RecordingAdapter()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = localAdapter,
+            localSignatureEngine = RecordingEngine(),
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = civilClock,
+            monotonicNanos = monotonic::nowNanos,
+            pendingStore = PendingSignRequestStore(
+                clock = civilClock,
+                monotonicNanos = monotonic::nowNanos,
+            ),
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        val candidate = request(observedAtMonotonicNanos = monotonic.nowNanos())
+
+        civilClock.advance(Duration.ofDays(30))
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(candidate, reply))
+        civilClock.rewind(Duration.ofDays(60))
+
+        assertEquals(
+            SigningExecutionResult.Delivered(REQUEST_ID),
+            localCoordinator.confirm(REQUEST_ID),
+        )
+        assertEquals(listOf("pre", "post"), localAdapter.events)
+        assertEquals(listOf("success"), reply.events)
+    }
+
+    @Test
+    fun pendingConfirmationExpiresAndClearsSensitiveStateWithoutUserAction() {
+        val mutableClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(20_000L)
+        val storedCopyClears = mutableListOf<Boolean>()
+        val certificateFingerprintClears = mutableListOf<Boolean>()
+        val localSession = CertificateSession(
+            clock = mutableClock,
+            fingerprintObserver = SensitiveCertificateFingerprintObserver(
+                certificateFingerprintClears::add,
+            ),
+        ).apply { unlock(identity) }
+        val localScheduler = ControlledExpiryScheduler()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = localSession,
+            adapter = RecordingAdapter(),
+            localSignatureEngine = RecordingEngine(),
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = mutableClock,
+            monotonicNanos = monotonic::nowNanos,
+            pendingStore = PendingSignRequestStore(
+                clock = mutableClock,
+                observer = SensitiveSigningCopyObserver(storedCopyClears::add),
+                monotonicNanos = monotonic::nowNanos,
+            ),
+            expiryScheduler = localScheduler,
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(
+            request(observedAtMonotonicNanos = monotonic.nowNanos()),
+            reply,
+        )
+
+        monotonic.advance(Duration.ofMinutes(2))
+        mutableClock.rewind(Duration.ofDays(30))
+        localScheduler.runPending()
+
+        assertEquals(
+            SigningUiState.Failed(REQUEST_ID, SigningErrorCode.REQUEST_EXPIRED),
+            localCoordinator.state.value,
+        )
+        assertEquals(listOf("failure:REQUEST_EXPIRED"), reply.events)
+        assertEquals(listOf(true, true), storedCopyClears)
+        assertEquals(listOf(true), certificateFingerprintClears)
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.INVALID_REQUEST),
+            runBlocking { localCoordinator.confirm(REQUEST_ID) },
+        )
+        assertEquals(listOf("failure:REQUEST_EXPIRED"), reply.events)
+    }
+
+    @Test
+    fun sha1RequestRequiresAVisibleLegacyWarning() {
+        val reply = RecordingReply(REQUEST_ID)
+
+        coordinator.prepare(
+            request(algorithm = SigningAlgorithm.SHA1_WITH_RSA),
+            reply,
+        )
+
+        val state = coordinator.state.value as SigningUiState.AwaitingConfirmation
+        assertTrue(state.requiresLegacySha1Warning)
+        assertEquals("SHA1withRSA", state.algorithm)
+    }
+
+    @Test
+    fun cancellationThatStartsBeforeDeliveryAlwaysBeatsConcurrentSuccess() {
+        val originProvider = BlockingFinalOriginProvider(PORTAL_ORIGIN)
+        val localSession = CertificateSession(clock).apply { unlock(identity) }
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = localSession,
+            adapter = RecordingAdapter(),
+            localSignatureEngine = localEngine,
+            currentOrigin = originProvider::current,
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = BlockingFailureReply(REQUEST_ID)
+        localCoordinator.prepare(request(), reply)
+        val result = AtomicReference<SigningExecutionResult>()
+        val confirmThread = thread(start = true) {
+            result.set(runBlocking { localCoordinator.confirm(REQUEST_ID) })
+        }
+
+        assertTrue(originProvider.finalCheckEntered.await(5, TimeUnit.SECONDS))
+        val cancelThread = thread(start = true) {
+            localCoordinator.cancel(SigningCancelReason.USER, REQUEST_ID)
+        }
+        assertTrue(reply.failureEntered.await(5, TimeUnit.SECONDS))
+        originProvider.releaseFinalCheck.countDown()
+        confirmThread.join(5_000)
+        reply.releaseFailure.countDown()
+        cancelThread.join(5_000)
+
+        assertEquals(listOf("failure:USER_CANCELLED"), reply.events)
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.USER_CANCELLED),
+            result.get(),
+        )
+        assertTrue(localEngine.events.isEmpty())
+    }
+
+    @Test
+    fun requestExpiryDuringPreSignClosesPreSignWithoutUsingPrivateKey() = runTest {
+        val mutableClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(30_000L)
+        val localSession = CertificateSession(mutableClock).apply { unlock(identity) }
+        val preSignState = TrackingPreSignState()
+        val localAdapter = MutatingAdapter(
+            preSignState = preSignState,
+            onPrepare = { monotonic.advance(Duration.ofMinutes(2)) },
+        )
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = localSession,
+            adapter = localAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = mutableClock,
+            monotonicNanos = monotonic::nowNanos,
+            pendingStore = PendingSignRequestStore(
+                clock = mutableClock,
+                monotonicNanos = monotonic::nowNanos,
+            ),
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(
+            request(observedAtMonotonicNanos = monotonic.nowNanos()),
+            reply,
+        )
+
+        val result = localCoordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.REQUEST_EXPIRED),
+            result,
+        )
+        assertTrue(localEngine.events.isEmpty())
+        assertTrue(preSignState.closed.get())
+        assertEquals(listOf("failure:REQUEST_EXPIRED"), reply.events)
+    }
+
+    @Test
+    fun certificateLockDuringPreSignClosesPreSignWithoutUsingPrivateKey() = runTest {
+        val localSession = CertificateSession(clock).apply { unlock(identity) }
+        val preSignState = TrackingPreSignState()
+        val localAdapter = MutatingAdapter(
+            preSignState = preSignState,
+            onPrepare = localSession::lock,
+        )
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = localSession,
+            adapter = localAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(request(), reply)
+
+        val result = localCoordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.CERTIFICATE_LOCKED),
+            result,
+        )
+        assertTrue(localEngine.events.isEmpty())
+        assertTrue(preSignState.closed.get())
+        assertEquals(listOf("failure:CERTIFICATE_LOCKED"), reply.events)
+    }
+
+    @Test
+    fun originChangeDuringPreSignClosesPreSignWithoutUsingPrivateKey() = runTest {
+        var origin: TrustedOrigin? = PORTAL_ORIGIN
+        val preSignState = TrackingPreSignState()
+        val localAdapter = MutatingAdapter(
+            preSignState = preSignState,
+            onPrepare = {
+                origin = TrustedOrigin("https", "sede.juntadeandalucia.es", 443)
+            },
+        )
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = localAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { origin },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(request(), reply)
+
+        val result = localCoordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.NAVIGATION_CHANGED),
+            result,
+        )
+        assertTrue(localEngine.events.isEmpty())
+        assertTrue(preSignState.closed.get())
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+    }
+
+    @Test
+    fun requestExpiryDuringPostSignClosesResultWithoutDeliveringSuccess() = runTest {
+        val mutableClock = MutableClock(NOW)
+        val monotonic = MutableMonotonicClock(40_000L)
+        val finalSignatureCleared = AtomicBoolean(false)
+        val localAdapter = MutatingAdapter(
+            preSignState = TrackingPreSignState(),
+            onComplete = { monotonic.advance(Duration.ofMinutes(2)) },
+            finalSignatureCleared = finalSignatureCleared,
+        )
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(mutableClock).apply { unlock(identity) },
+            adapter = localAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = mutableClock,
+            monotonicNanos = monotonic::nowNanos,
+            pendingStore = PendingSignRequestStore(
+                clock = mutableClock,
+                monotonicNanos = monotonic::nowNanos,
+            ),
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(
+            request(observedAtMonotonicNanos = monotonic.nowNanos()),
+            reply,
+        )
+
+        val result = localCoordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.REQUEST_EXPIRED),
+            result,
+        )
+        assertEquals(listOf("local"), localEngine.events)
+        assertTrue(finalSignatureCleared.get())
+        assertEquals(listOf("failure:REQUEST_EXPIRED"), reply.events)
+    }
+
+    private fun request(
+        algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA,
+        navigationEpoch: Long = 0L,
+        observedAtMonotonicNanos: Long = System.nanoTime(),
+    ) = NormalizedSignRequest(
+        requestId = REQUEST_ID,
+        protocolId = JuntaTriPhaseAdapter.ID,
+        context = SigningContext(
+            profileId = "junta-andalucia",
+            profileVersion = 1,
+            origin = PORTAL_ORIGIN,
+            navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),
+            navigationEpoch = navigationEpoch,
+            observedAt = NOW,
+        ),
+        algorithm = algorithm,
+        format = SigningFormat.CADES,
+        safeDescription = "Autenticación con certificado",
+        payload = PAYLOAD.copyOf(),
+        observedAtMonotonicNanos = observedAtMonotonicNanos,
+    )
+
+    private fun redRequest(
+        origin: TrustedOrigin,
+        navigationEpoch: Long,
+    ) = NormalizedSignRequest(
+        requestId = REQUEST_ID,
+        protocolId = LocalXadesDetachedAdapter.ID,
+        context = SigningContext(
+            profileId = "reg-age-redsara",
+            profileVersion = 1,
+            origin = origin,
+            navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),
+            navigationEpoch = navigationEpoch,
+            observedAt = NOW,
+        ),
+        algorithm = SigningAlgorithm.SHA512_WITH_RSA,
+        format = SigningFormat.XADES,
+        safeDescription = "Firma del resumen XML del registro",
+        payload = MiniAppletPayloadCodec.encode(
+            "<resumen><dato>synthetic-registry</dato></resumen>".encodeToByteArray(),
+            "",
+        ),
+    )
+
+    private class BlockingPrepareAdapter : SigningProtocolAdapter {
+        override val id = JuntaTriPhaseAdapter.ID
+        val prepareEntered = CountDownLatch(1)
+        val releasePrepare = CountDownLatch(1)
+
+        override suspend fun prepare(
+            request: NormalizedSignRequest,
+            certificateChain: List<X509Certificate>,
+        ): ProtocolPrepareResult {
+            prepareEntered.countDown()
+            check(releasePrepare.await(5, TimeUnit.SECONDS))
+            return ProtocolPrepareResult.Success(
+                PreSignResult(request, PRE_SIGN_INPUT.copyOf(), TestPreSignState()),
+            )
+        }
+
+        override suspend fun complete(
+            request: NormalizedSignRequest,
+            preSign: PreSignResult,
+            localSignature: LocalSignature,
+        ): ProtocolCompletionResult {
+            checkNotNull(preSign.consumeState(request)).close()
+            return ProtocolCompletionResult.Success(LocalSignature(FINAL_SIGNATURE.copyOf()))
+        }
+    }
+
+    private class RecordingAdapter : SigningProtocolAdapter {
+        override val id = JuntaTriPhaseAdapter.ID
+        val events = mutableListOf<String>()
+
+        override suspend fun prepare(
+            request: NormalizedSignRequest,
+            certificateChain: List<X509Certificate>,
+        ): ProtocolPrepareResult {
+            events += "pre"
+            return ProtocolPrepareResult.Success(
+                PreSignResult(request, PRE_SIGN_INPUT.copyOf(), TestPreSignState()),
+            )
+        }
+
+        override suspend fun complete(
+            request: NormalizedSignRequest,
+            preSign: PreSignResult,
+            localSignature: LocalSignature,
+        ): ProtocolCompletionResult {
+            events += "post"
+            checkNotNull(preSign.consumeState(request)).close()
+            localSignature.close()
+            preSign.close()
+            return ProtocolCompletionResult.Success(LocalSignature(FINAL_SIGNATURE.copyOf()))
+        }
+    }
+
+    private class RecordingEngine : LocalSignatureEngine {
+        val events = mutableListOf<String>()
+
+        override fun sign(
+            input: ByteArray,
+            identity: UnlockedIdentity,
+            algorithm: SigningAlgorithm,
+        ): LocalSignatureResult {
+            events += "local"
+            assertArrayEquals(PRE_SIGN_INPUT, input)
+            return LocalSignatureResult.Success(LocalSignature(LOCAL_SIGNATURE.copyOf()))
+        }
+    }
+
+    private class TestPreSignState : PreSignState {
+        override fun close() = Unit
+    }
+
+    private class TrackingPreSignState : PreSignState {
+        val closed = AtomicBoolean(false)
+
+        override fun close() {
+            closed.set(true)
+        }
+    }
+
+    private class MutatingAdapter(
+        private val preSignState: TrackingPreSignState,
+        private val onPrepare: () -> Unit = {},
+        private val onComplete: () -> Unit = {},
+        private val finalSignatureCleared: AtomicBoolean = AtomicBoolean(false),
+    ) : SigningProtocolAdapter {
+        override val id = JuntaTriPhaseAdapter.ID
+
+        override suspend fun prepare(
+            request: NormalizedSignRequest,
+            certificateChain: List<X509Certificate>,
+        ): ProtocolPrepareResult {
+            onPrepare()
+            return ProtocolPrepareResult.Success(
+                PreSignResult(request, PRE_SIGN_INPUT.copyOf(), preSignState),
+            )
+        }
+
+        override suspend fun complete(
+            request: NormalizedSignRequest,
+            preSign: PreSignResult,
+            localSignature: LocalSignature,
+        ): ProtocolCompletionResult {
+            onComplete()
+            checkNotNull(preSign.consumeState(request)).close()
+            return ProtocolCompletionResult.Success(
+                LocalSignature(
+                    FINAL_SIGNATURE.copyOf(),
+                    SensitiveSignatureCopyObserver(finalSignatureCleared::set),
+                ),
+            )
+        }
+    }
+
+    private class MutableClock(
+        private var current: Instant,
+    ) : Clock() {
+        override fun getZone() = ZoneOffset.UTC
+
+        override fun withZone(zone: java.time.ZoneId): Clock = Clock.fixed(current, zone)
+
+        override fun instant(): Instant = current
+
+        fun advance(duration: Duration) {
+            current = current.plus(duration)
+        }
+
+        fun rewind(duration: Duration) {
+            current = current.minus(duration)
+        }
+    }
+
+    private class MutableMonotonicClock(
+        private var currentNanos: Long,
+    ) {
+        fun nowNanos(): Long = currentNanos
+
+        fun advance(duration: Duration) {
+            currentNanos += duration.toNanos()
+        }
+    }
+
+    private class ControlledExpiryScheduler : SigningExpiryScheduler {
+        private var task: ScheduledTask? = null
+
+        override fun schedule(
+            delay: Duration,
+            action: () -> Unit,
+        ): SigningExpiryHandle {
+            check(task == null)
+            check(!delay.isNegative && !delay.isZero)
+            val scheduled = ScheduledTask(action)
+            task = scheduled
+            return SigningExpiryHandle {
+                scheduled.cancelled.set(true)
+                if (task === scheduled) task = null
+            }
+        }
+
+        fun runPending() {
+            val scheduled = checkNotNull(task)
+            task = null
+            if (!scheduled.cancelled.get()) scheduled.action()
+        }
+
+        private class ScheduledTask(
+            val action: () -> Unit,
+            val cancelled: AtomicBoolean = AtomicBoolean(false),
+        )
+    }
+
+    private class RecordingReply(
+        override val requestId: UUID,
+    ) : SigningReplySink {
+        private val terminal = AtomicBoolean(false)
+        val events = mutableListOf<String>()
+        var deliveredSignature: ByteArray? = null
+
+        override fun success(signature: LocalSignature, certificateDer: ByteArray): Boolean {
+            if (!terminal.compareAndSet(false, true)) {
+                signature.close()
+                certificateDer.fill(0)
+                return false
+            }
+            deliveredSignature = signature.use { owned -> owned.withBytes(ByteArray::copyOf) }
+            certificateDer.fill(0)
+            events += "success"
+            return true
+        }
+
+        override fun failure(code: SigningErrorCode): Boolean {
+            if (!terminal.compareAndSet(false, true)) return false
+            events += "failure:${code.name}"
+            return true
+        }
+
+        override fun abandon(): Boolean = terminal.compareAndSet(false, true)
+    }
+
+    private class BlockingFinalOriginProvider(
+        private val origin: TrustedOrigin,
+    ) {
+        private val calls = AtomicInteger()
+        val finalCheckEntered = CountDownLatch(1)
+        val releaseFinalCheck = CountDownLatch(1)
+
+        fun current(): TrustedOrigin {
+            if (calls.incrementAndGet() == FINAL_ORIGIN_CHECK_CALL) {
+                finalCheckEntered.countDown()
+                check(releaseFinalCheck.await(5, TimeUnit.SECONDS))
+            }
+            return origin
+        }
+
+        private companion object {
+            const val FINAL_ORIGIN_CHECK_CALL = 4
+        }
+    }
+
+    private class BlockingFailureReply(
+        override val requestId: UUID,
+    ) : SigningReplySink {
+        private val terminal = AtomicBoolean(false)
+        val failureEntered = CountDownLatch(1)
+        val releaseFailure = CountDownLatch(1)
+        val events = mutableListOf<String>()
+
+        override fun success(signature: LocalSignature, certificateDer: ByteArray): Boolean {
+            val won = terminal.compareAndSet(false, true)
+            signature.close()
+            certificateDer.fill(0)
+            if (won) synchronized(events) { events += "success" }
+            return won
+        }
+
+        override fun failure(code: SigningErrorCode): Boolean {
+            failureEntered.countDown()
+            check(releaseFailure.await(5, TimeUnit.SECONDS))
+            val won = terminal.compareAndSet(false, true)
+            if (won) synchronized(events) { events += "failure:${code.name}" }
+            return won
+        }
+
+        override fun abandon(): Boolean = terminal.compareAndSet(false, true)
+    }
+
+    private companion object {
+        val NOW: Instant = Instant.parse("2030-01-01T00:00:00Z")
+        val REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174000")
+        val WRONG_REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174099")
+        val PORTAL_ORIGIN = TrustedOrigin("https", "www.juntadeandalucia.es", 443)
+        val PAYLOAD = "synthetic-coordinator-payload".encodeToByteArray()
+        val PRE_SIGN_INPUT = "synthetic-pre-sign".encodeToByteArray()
+        val LOCAL_SIGNATURE = byteArrayOf(1, 2, 3)
+        val FINAL_SIGNATURE = byteArrayOf(4, 5, 6)
+    }
+}

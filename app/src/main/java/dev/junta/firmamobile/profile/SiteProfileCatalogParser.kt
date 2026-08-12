@@ -1,0 +1,651 @@
+package dev.junta.firmamobile.profile
+
+import java.net.URI
+import java.time.LocalDate
+
+object SiteProfileCatalogParser {
+    const val MAX_CATALOG_CHARS = 262_144
+
+    fun parse(json: String): SiteProfileCatalog {
+        require(json.length <= MAX_CATALOG_CHARS)
+        val root = StrictJson(json).parse().obj("catalog")
+        root.exact("schemaVersion", "catalogVersion", "profiles")
+        val schemaVersion = root.int("schemaVersion")
+        require(schemaVersion == 1)
+        val catalog = SiteProfileCatalog(
+            schemaVersion = schemaVersion,
+            catalogVersion = root.int("catalogVersion").also { require(it >= 1) },
+            profiles = root.array("profiles").map(::profile),
+        )
+        require(catalog.profiles.map { it.profileId }.toSet().size == catalog.profiles.size)
+        validateCatalog(catalog)
+        return catalog
+    }
+
+    private fun profile(value: JValue): SiteProfile {
+        val o = value.obj("profile")
+        o.exact(
+            "profileId", "profileVersion", "displayName", "compatibilityStatus", "activation",
+            "startUrl", "initiatorOrigins", "redirectOrigins", "trustedBrowseOrigins", "endpoints",
+            "operationPolicies", "capabilities", "clientAuthPolicy", "certificateRules", "evidence",
+        )
+        val profileId = ProfileId(o.string("profileId"))
+        val endpoints = o.array("endpoints").map(::endpoint)
+        require(endpoints.map { it.endpointId }.toSet().size == endpoints.size)
+        val operations = o.array("operationPolicies").map { value ->
+            operation(value, allowBlankFixedExtraPropertyValues = profileId.value == CANTABRIA_PROFILE_ID)
+        }
+        require(operations.map { it.operation }.toSet().size == operations.size)
+        return SiteProfile(
+            profileId = profileId,
+            profileVersion = o.int("profileVersion").also { require(it >= 1) },
+            displayName = o.string("displayName").also { require(it.isNotBlank() && it.length <= 128) },
+            compatibilityStatus = enum(o.string("compatibilityStatus")),
+            activation = enum(o.string("activation")),
+            startUrl = strictHttpsUrl(o.string("startUrl")),
+            initiatorOrigins = origins(o.array("initiatorOrigins")),
+            redirectOrigins = origins(o.array("redirectOrigins")),
+            trustedBrowseOrigins = origins(o.array("trustedBrowseOrigins")),
+            endpoints = endpoints.associateBy { it.endpointId },
+            operationPolicies = operations.associateBy { it.operation },
+            capabilities = enums(o.array("capabilities")),
+            clientAuthPolicy = o.nullableObject("clientAuthPolicy")?.let(::clientAuth),
+            certificateRules = certificateRules(o.objValue("certificateRules")),
+            evidence = o.array("evidence").map(::evidence),
+        )
+    }
+
+    private fun endpoint(value: JValue): ProfileEndpoint {
+        val o = value.obj("endpoint")
+        o.exact(
+            "endpointId", "purpose", "url", "method", "requestContentTypes",
+            "responseContentTypes", "maxRequestBytes", "maxResponseBytes", "redirects",
+        )
+        return ProfileEndpoint(
+            EndpointId(o.string("endpointId")), enum(o.string("purpose")),
+            strictHttpsUrl(o.string("url")).also { require(it.rawQuery == null) }, enum(o.string("method")),
+            strings(o.array("requestContentTypes")).also { require(it.isNotEmpty() && it.all(::validContentType)) },
+            strings(o.array("responseContentTypes")).also { require(it.isNotEmpty() && it.all(::validContentType)) },
+            o.int("maxRequestBytes").also { require(it in 1..MAX_BODY_BYTES) },
+            o.int("maxResponseBytes").also { require(it in 1..MAX_BODY_BYTES) },
+            enum(o.string("redirects")),
+        )
+    }
+
+    private fun operation(
+        value: JValue,
+        allowBlankFixedExtraPropertyValues: Boolean,
+    ): OperationPolicy {
+        val o = value.obj("operationPolicy")
+        o.exact(
+            "operation", "safeDescription", "inputAdapterId", "callbackContractId", "capabilities", "endpointId",
+            "algorithms", "format", "packaging", "mode", "fixedExtraProperties",
+            "allowedExtraProperties",
+        )
+        return OperationPolicy(
+            operation = enum(o.string("operation")),
+            safeDescription = o.string("safeDescription").also {
+                require(it.isNotBlank() && it.length <= 160 && it.all { character -> !character.isISOControl() })
+            },
+            inputAdapterId = ProtocolInputAdapterId(o.string("inputAdapterId")).also {
+                require(it.value in REGISTERED_ADAPTERS)
+            },
+            callbackContractId = CallbackContractId(o.string("callbackContractId")).also {
+                require(it.value in REGISTERED_CALLBACKS)
+            },
+            capabilities = enums(o.array("capabilities")),
+            endpointId = o.nullableString("endpointId")?.let(::EndpointId),
+            algorithms = enums(o.array("algorithms")),
+            format = o.nullableString("format")?.let { enum(it) },
+            packaging = o.nullableString("packaging")?.let { enum(it) },
+            mode = o.nullableString("mode")?.let { enum(it) },
+            fixedExtraProperties = extraProperties(
+                o.objValue("fixedExtraProperties"),
+                allowBlankValues = allowBlankFixedExtraPropertyValues,
+            ),
+            allowedExtraProperties = strings(o.array("allowedExtraProperties")),
+        )
+    }
+
+    private fun clientAuth(o: JObject): ClientAuthPolicy {
+        o.exact(
+            "transitionMode", "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
+            "requiredEphemeralQueryParameters", "allowEmptyIssuerList", "grantTtlSeconds",
+        )
+        val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
+        val fixed = stringMap(o.objValue("fixedQueryParameters"))
+        val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
+        require((fixed.keys intersect ephemeral).isEmpty())
+        when (transitionMode) {
+            ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE ->
+                require(fixed.isNotEmpty() || ephemeral.isNotEmpty())
+            ClientAuthTransitionMode.DIRECT_FROM_SOURCE ->
+                require(fixed.isEmpty() && ephemeral.isEmpty())
+        }
+        return ClientAuthPolicy(
+            transitionMode = transitionMode,
+            requestOrigins = origins(o.array("requestOrigins")).also { require(it.size == 1) },
+            sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
+                .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) },
+            requestPath = o.string("requestPath").also {
+                require(it.startsWith('/') && URI(null, null, it, null).rawPath == it)
+            },
+            fixedQueryParameters = fixed,
+            requiredEphemeralQueryParameters = ephemeral,
+            allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
+            grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
+        )
+    }
+
+    private fun certificateRules(value: JValue): CertificateFilterRules {
+        val o = value.obj("certificateRules")
+        o.exact("allowedKeyAlgorithms", "requireDigitalSignatureKeyUsage")
+        val algorithms = strings(o.array("allowedKeyAlgorithms"))
+        require(algorithms.isNotEmpty() && algorithms.all { it == "RSA" || it == "EC" })
+        return CertificateFilterRules(algorithms, o.boolean("requireDigitalSignatureKeyUsage"))
+    }
+
+    private fun evidence(value: JValue): EvidenceReference {
+        val o = value.obj("evidence")
+        o.exact("url", "reviewedOn")
+        return EvidenceReference(strictHttpsUrl(o.string("url")), LocalDate.parse(o.string("reviewedOn")))
+    }
+
+    private fun validateCatalog(catalog: SiteProfileCatalog) {
+        val navigationOriginOwners = mutableMapOf<ExactOrigin, ProfileId>()
+        val endpointUrlOwners = mutableMapOf<URI, ProfileId>()
+        val endpointOwners = mutableMapOf<EndpointId, ProfileId>()
+        catalog.profiles.forEach { p ->
+            if (p.profileId.value == UGR_PROFILE_ID) {
+                validateUgrProfile(p)
+            }
+            if (p.profileId.value == CANTABRIA_PROFILE_ID) {
+                validateCantabriaProfile(p)
+            }
+            if (p.profileId.value == JCCM_PROFILE_ID) {
+                validateJccmProfile(p)
+            }
+            if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                validateSevillaAtseProfile(p)
+            }
+            if (p.profileId.value == MELILLA_PROFILE_ID) {
+                validateMelillaProfile(p)
+            }
+            require(p.initiatorOrigins.isNotEmpty())
+            require(p.startUrl.origin() in p.initiatorOrigins)
+            require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
+            require((p.initiatorOrigins intersect p.trustedBrowseOrigins).isEmpty())
+            require((p.redirectOrigins intersect p.trustedBrowseOrigins).isEmpty())
+            val clientAuthOrigins = p.clientAuthPolicy?.requestOrigins ?: emptySet()
+            require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty())
+            require((clientAuthOrigins intersect p.redirectOrigins).isEmpty())
+            require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
+            if (p.compatibilityStatus == CompatibilityStatus.BROWSE_ONLY ||
+                p.compatibilityStatus == CompatibilityStatus.UNSUPPORTED
+            ) {
+                require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
+                require(p.capabilities.none {
+                    it == Capability.SIGN || it == Capability.SELECT_CERTIFICATE ||
+                        it == Capability.CLIENT_TLS_AUTH || it == Capability.AFIRMA_URI
+                })
+            }
+            require(p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED || p.activation == ProfileActivation.DISABLED)
+            require(p.activation != ProfileActivation.ENABLED || p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED)
+            require(Capability.CLIENT_TLS_AUTH in p.capabilities == (p.clientAuthPolicy != null))
+            p.clientAuthPolicy?.let { policy ->
+                require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
+                require(p.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+                require(policy.sourceUrls.all { it.origin() in p.initiatorOrigins })
+                require(policy.fixedQueryParameters.keys.all(PARAMETER_NAME::matches))
+                require(policy.fixedQueryParameters.values.all { value ->
+                    value.length <= 2_048 && value.none(Char::isISOControl)
+                })
+                require(policy.requiredEphemeralQueryParameters.all(PARAMETER_NAME::matches))
+            }
+            p.operationPolicies.values.forEach { op ->
+                require(op.capabilities.all { it in p.capabilities })
+                require(op.endpointId == null || op.endpointId in p.endpoints)
+                require((op.fixedExtraProperties.keys intersect op.allowedExtraProperties).isEmpty())
+                if (SignatureAlgorithm.SHA1_WITH_RSA in op.algorithms) {
+                    require(Capability.LEGACY_SHA1 in p.capabilities && Capability.LEGACY_SHA1 in op.capabilities)
+                }
+                if (op.operation == ProtocolOperation.SIGN) {
+                    require(op.algorithms.isNotEmpty() && op.format != null)
+                    require(op.packaging != null && Capability.SIGN in op.capabilities)
+                }
+                if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
+                    require(op.operation == ProtocolOperation.SIGN)
+                    require(
+                        op.packaging == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                            SignaturePackaging.ATTACHED
+                        } else {
+                            SignaturePackaging.DETACHED
+                        },
+                    )
+                    require(op.allowedExtraProperties.isEmpty())
+                    when (op.format) {
+                        SignatureFormat.CADES -> {
+                            if (op.endpointId == null) {
+                                if (p.profileId.value == CANTABRIA_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.IMPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                                    require(op.fixedExtraProperties == CANTABRIA_EXTRA_PROPERTIES)
+                                } else {
+                                    require(op.mode == SignatureMode.EXPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                    val expectedLocalCadesProperties = when (p.profileId.value) {
+                                        ARAGON_LOCAL_CADES_PROFILE_ID -> mapOf(
+                                            "mode" to "explicit",
+                                            "filter" to "nonexpired",
+                                        )
+                                        DGT_LOCAL_CADES_PROFILE_ID -> mapOf(
+                                            "filter" to "nonexpired:",
+                                        )
+                                        UGR_PROFILE_ID -> emptyMap()
+                                        JCCM_PROFILE_ID -> emptyMap()
+                                        else -> null
+                                    }
+                                    require(
+                                        expectedLocalCadesProperties != null &&
+                                            op.fixedExtraProperties == expectedLocalCadesProperties,
+                                    )
+                                }
+                            } else {
+                                require(op.fixedExtraProperties["serverUrl"] ==
+                                    op.endpointId.let(p.endpoints::get)?.url?.toString())
+                                when (op.mode) {
+                                    SignatureMode.EXPLICIT -> {
+                                        val exactKeys = op.fixedExtraProperties.keys
+                                        val explicitMode = exactKeys == setOf("serverUrl", "mode") &&
+                                            op.fixedExtraProperties["mode"] == "explicit"
+                                        val fixedCertificateFilter =
+                                            exactKeys == setOf("serverUrl", "filters") &&
+                                                !op.fixedExtraProperties["filters"].isNullOrBlank()
+                                        require(explicitMode || fixedCertificateFilter)
+                                    }
+                                    null -> {
+                                        require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                        require(op.fixedExtraProperties.keys ==
+                                            setOf("serverUrl", "precalculatedHashAlgorithm"))
+                                        require(op.fixedExtraProperties["precalculatedHashAlgorithm"] == "SHA1")
+                                    }
+                                    SignatureMode.IMPLICIT -> error("implicit direct-data profile is unsupported")
+                                }
+                            }
+                        }
+                        SignatureFormat.XADES -> {
+                            require(op.endpointId == null && op.mode == null)
+                            require(
+                                op.algorithms == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                                    setOf(SignatureAlgorithm.SHA1_WITH_RSA)
+                                } else {
+                                    setOf(SignatureAlgorithm.SHA512_WITH_RSA)
+                                },
+                            )
+                            require(op.fixedExtraProperties.isEmpty())
+                        }
+                        SignatureFormat.PADES, SignatureFormat.FACTURAE -> error("unsupported adapter format")
+                        null -> error("signing format required")
+                    }
+                }
+            }
+            p.endpoints.values.forEach { endpoint ->
+                require(endpoint.redirects == RedirectPolicy.DENY)
+                require(endpointOwners.put(endpoint.endpointId, p.profileId) == null)
+                require(endpointUrlOwners.put(endpoint.url, p.profileId) == null)
+            }
+            p.allOrigins().forEach { origin ->
+                require(navigationOriginOwners.put(origin, p.profileId) == null)
+
+            }
+        }
+    }
+    private fun validateMelillaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MELILLA_PROFILE_VERSION)
+        require(profile.displayName == MELILLA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MELILLA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MELILLA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = MELILLA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("melilla-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("melilla-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+    private fun validateSevillaAtseProfile(profile: SiteProfile) {
+        require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
+        require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == SEVILLA_ATSE_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(SEVILLA_ATSE_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = SEVILLA_ATSE_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.XADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+    private fun validateJccmProfile(profile: SiteProfile) {
+        require(profile.profileVersion == JCCM_PROFILE_VERSION)
+        require(profile.displayName == JCCM_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == JCCM_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(JCCM_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = JCCM_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+
+    private fun validateUgrProfile(profile: SiteProfile) {
+        require(profile.profileVersion == UGR_PROFILE_VERSION)
+        require(profile.displayName == UGR_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == UGR_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(UGR_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = UGR_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+
+    private fun validateCantabriaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CANTABRIA_PROFILE_VERSION)
+        require(profile.displayName == CANTABRIA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CANTABRIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CANTABRIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = CANTABRIA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.IMPLICIT,
+                fixedExtraProperties = CANTABRIA_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+    private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
+        (clientAuthPolicy?.requestOrigins ?: emptySet())
+    private fun URI.origin() = ExactOrigin.parse("https://$host")
+    private fun origins(values: List<JValue>) = values.map {
+        val raw = it.string()
+        ExactOrigin.parse(raw).also { origin -> require(raw == origin.serialized) }
+    }.toSet().also { require(it.size == values.size) }
+    private fun strings(values: List<JValue>) = values.map { it.string() }.toSet()
+        .also { require(it.size == values.size && it.all(String::isNotBlank)) }
+    private fun stringMap(value: JValue): Map<String, String> = value.obj("stringMap").values
+        .mapValues { (_, entry) -> entry.string() }
+        .also { map -> require(map.keys.all { it.isNotBlank() } && map.values.all { it.isNotBlank() }) }
+
+    private fun extraProperties(
+        value: JValue,
+        allowBlankValues: Boolean,
+    ): Map<String, String> = value.obj("stringMap").values
+        .mapValues { (_, entry) -> entry.string() }
+        .also { map ->
+            require(map.keys.all { it.isNotBlank() })
+            require(
+                map.values.all { entry ->
+                    entry.length <= MAX_EXTRA_PROPERTY_VALUE_CHARS &&
+                        entry.none(Char::isISOControl) &&
+                        (allowBlankValues || entry.isNotBlank())
+                },
+            )
+        }
+    private inline fun <reified T : Enum<T>> enums(values: List<JValue>) =
+        values.map { enum<T>(it.string()) }.toSet().also { require(it.size == values.size) }
+    private inline fun <reified T : Enum<T>> enum(value: String): T = enumValueOf(value)
+    private fun strictHttpsUrl(raw: String): URI {
+        require(raw.length <= 2048 && !raw.any(Char::isISOControl))
+        val uri = URI(raw)
+        require(!uri.isOpaque && uri.scheme == "https" && uri.host != null && uri.userInfo == null)
+        require(uri.port == -1 || uri.port == 443)
+        require(uri.rawFragment == null)
+        val origin = ExactOrigin.parse("https://${uri.host}")
+        require(uri.host == origin.host)
+        return uri
+    }
+
+    private fun validContentType(value: String): Boolean =
+        value.length <= 128 && CONTENT_TYPE.matches(value)
+
+    private const val ARAGON_LOCAL_CADES_PROFILE_ID = "aragon-siraw"
+    private const val DGT_LOCAL_CADES_PROFILE_ID = "dgt-verificacion-equipo"
+    private val REGISTERED_ADAPTERS = setOf(
+        "miniapplet-autoscript-v1",
+        "melilla-batch-autoscript-v1",
+    )
+    private val REGISTERED_CALLBACKS = setOf(
+        "miniapplet-sign-callback-v1",
+        "autoscript-sign-callback-v1",
+        "melilla-batch-result-v1",
+    )
+    private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
+    private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+    private const val MAX_BODY_BYTES = 8 * 1024 * 1024
+    private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
+    private const val MELILLA_PROFILE_ID = "melilla-sede"
+    private const val MELILLA_PROFILE_VERSION = 1
+    private const val MELILLA_DISPLAY_NAME = "Ciudad Autónoma de Melilla — Sede Electrónica"
+    private const val MELILLA_START_URL =
+        "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+            "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
+    private const val MELILLA_ORIGIN = "https://sede.melilla.es"
+    private const val MELILLA_SAFE_DESCRIPTION = "Firma por lotes en la Sede Electrónica de Melilla"
+    private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+    private const val SEVILLA_ATSE_PROFILE_VERSION = 1
+    private const val SEVILLA_ATSE_DISPLAY_NAME =
+        "Agencia Tributaria de Sevilla — Acceso con certificado"
+    private const val SEVILLA_ATSE_START_URL =
+        "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
+    private const val SEVILLA_ATSE_ORIGIN = "https://www.sevilla.org"
+    private const val SEVILLA_ATSE_SAFE_DESCRIPTION =
+        "Acceso con certificado a la Agencia Tributaria de Sevilla"
+    private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
+    private const val CANTABRIA_PROFILE_VERSION = 1
+    private const val CANTABRIA_DISPLAY_NAME =
+        "Registro Electrónico Común de Cantabria — Acceso con certificado"
+    private const val CANTABRIA_START_URL = "https://rec.cantabria.es/rec/bienvenida.htm"
+    private const val CANTABRIA_ORIGIN = "https://rec.cantabria.es"
+    private const val CANTABRIA_SAFE_DESCRIPTION =
+        "Acceso con certificado al Registro Electrónico Común de Cantabria"
+    private val CANTABRIA_EXTRA_PROPERTIES = linkedMapOf(
+        "filters" to "",
+        "mode" to "implicit",
+    )
+    private const val UGR_PROFILE_ID = "ugr-certificado-login"
+    private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
+    private const val JCCM_PROFILE_VERSION = 1
+    private const val JCCM_DISPLAY_NAME =
+        "Junta de Comunidades de Castilla-La Mancha — Probe de acceso con certificado"
+    private const val JCCM_START_URL =
+        "https://ventanillaelectronica.jccm.es/administracion_electronica/formularios/identificacion.phtml"
+    private const val JCCM_ORIGIN = "https://ventanillaelectronica.jccm.es"
+    private const val JCCM_SAFE_DESCRIPTION =
+        "Validación pública de acceso con certificado de Castilla-La Mancha"
+    private const val UGR_PROFILE_VERSION = 1
+    private const val UGR_DISPLAY_NAME = "Universidad de Granada — Acceso con certificado"
+    private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
+    private const val UGR_ORIGIN = "https://sede.ugr.es"
+    private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
+}
+
+private sealed interface JValue {
+    fun obj(label: String) = this as? JObject ?: error("$label must be object")
+    fun string() = (this as? JString)?.value ?: error("string required")
+}
+private data class JObject(val values: LinkedHashMap<String, JValue>) : JValue {
+    fun exact(vararg keys: String) { require(values.keys == keys.toSet()) }
+    fun string(key: String) = required(key).string()
+    fun nullableString(key: String) = when (val v = required(key)) { JNull -> null; else -> v.string() }
+    fun int(key: String): Int = (required(key) as? JNumber)?.value?.toIntExact() ?: error("integer required")
+    fun boolean(key: String) = (required(key) as? JBoolean)?.value ?: error("boolean required")
+    fun array(key: String) = (required(key) as? JArray)?.values ?: error("array required")
+    fun objValue(key: String) = required(key)
+    fun nullableObject(key: String) = when (val v = required(key)) { JNull -> null; is JObject -> v; else -> error("object required") }
+    private fun required(key: String) = requireNotNull(values[key])
+}
+private data class JArray(val values: List<JValue>) : JValue
+private data class JString(val value: String) : JValue
+private data class JNumber(val value: String) : JValue
+private data class JBoolean(val value: Boolean) : JValue
+private data object JNull : JValue
+private fun String.toIntExact(): Int? = toIntOrNull()?.takeIf { it.toString() == this }
+
+private class StrictJson(private val source: String) {
+    private var index = 0
+    fun parse(): JValue = value(0).also { whitespace(); require(index == source.length) }
+    private fun value(depth: Int): JValue {
+        require(depth <= 32); whitespace(); require(index < source.length)
+        return when (source[index]) {
+            '{' -> obj(depth + 1); '[' -> array(depth + 1); '"' -> JString(string())
+            't' -> literal("true", JBoolean(true)); 'f' -> literal("false", JBoolean(false))
+            'n' -> literal("null", JNull); '-', in '0'..'9' -> number()
+            else -> error("invalid JSON")
+        }
+    }
+    private fun obj(depth: Int): JObject {
+        index++; whitespace(); val map = linkedMapOf<String, JValue>()
+        if (take('}')) return JObject(map)
+        while (true) {
+            whitespace(); require(peek() == '"'); val key = string(); require(map[key] == null)
+            whitespace(); require(take(':')); map[key] = value(depth); whitespace()
+            if (take('}')) return JObject(map); require(take(','))
+        }
+    }
+    private fun array(depth: Int): JArray {
+        index++; whitespace(); val list = mutableListOf<JValue>()
+        if (take(']')) return JArray(list)
+        while (true) { list += value(depth); whitespace(); if (take(']')) return JArray(list); require(take(',')) }
+    }
+    private fun string(): String {
+        require(take('"')); val out = StringBuilder()
+        while (index < source.length) {
+            val c = source[index++]; when {
+                c == '"' -> return out.toString()
+                c == '\\' -> { require(index < source.length); when (val e = source[index++]) {
+                    '"', '\\', '/' -> out.append(e); 'b' -> out.append('\b'); 'f' -> out.append('\u000c')
+                    'n' -> out.append('\n'); 'r' -> out.append('\r'); 't' -> out.append('\t')
+                    'u' -> { require(index + 4 <= source.length); val hex = source.substring(index, index + 4); require(hex.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }); out.append(hex.toInt(16).toChar()); index += 4 }
+                    else -> error("invalid escape")
+                } }
+                c.code < 0x20 -> error("control in string")
+                else -> out.append(c)
+            }
+        }; error("unterminated string")
+    }
+    private fun number(): JNumber {
+        val start = index; if (take('-')) require(index < source.length)
+        if (take('0')) require(index == source.length || source[index] !in '0'..'9')
+        else { require(index < source.length && source[index] in '1'..'9'); while (index < source.length && source[index] in '0'..'9') index++ }
+        require(index == source.length || source[index] !in charArrayOf('.', 'e', 'E'))
+        return JNumber(source.substring(start, index))
+    }
+    private fun <T : JValue> literal(text: String, value: T): T { require(source.startsWith(text, index)); index += text.length; return value }
+    private fun whitespace() { while (index < source.length && source[index] in charArrayOf(' ', '\n', '\r', '\t')) index++ }
+    private fun take(c: Char) = if (index < source.length && source[index] == c) { index++; true } else false
+    private fun peek() = source[index]
+}

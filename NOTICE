@@ -1,0 +1,53 @@
+Junta Firma Mobile — third-party notices
+
+This file is a pre-publication notice inventory. It does not replace the license
+text of any third-party component and does not grant rights to material whose
+provenance is still under review. See docs/provenance.md and
+docs/licenses/runtime-dependency-audit.md.
+
+Bebas Neue
+-----------
+Bundled font: app/src/main/res/font/bebas_neue_regular.ttf
+Copyright (c) 2010 Dharma Type
+License: SIL Open Font License, Version 1.1
+License text: docs/licenses/BebasNeue-OFL.txt
+
+Gradle Wrapper
+--------------
+The repository contains generated Gradle Wrapper material for Gradle 9.4.1.
+The generated `gradlew` script carries the upstream Apache License 2.0 header
+and SPDX identifier. Gradle documents the Wrapper and Gradle Build Tool as
+licensed under Apache License 2.0; upstream license metadata must remain intact.
+
+Third-party services, names and domains
+---------------------------------------
+References to Junta de Andalucia, AutoFirma, Cliente @firma, Spanish public
+administrations, universities, public agencies, public-service domains and
+other named third-party services are descriptive interoperability references.
+Their names, marks, domains, services and software remain subject to their
+respective owners' rights and licenses. No affiliation, sponsorship,
+certification or endorsement is implied.
+
+Build/runtime dependencies
+--------------------------
+Gradle/Maven and Python dependencies are declared in the repository and are
+resolved externally rather than copied into Junta Firma Mobile project source.
+The reviewed dependency families and their upstream license classes are recorded
+in docs/licenses/runtime-dependency-audit.md. Their licenses are not replaced by
+a future project root license.
+
+For source-repository publication, the reviewed externally resolved dependency
+families are not treated as a project-source relicensing blocker. This does not
+constitute binary-release approval.
+
+Before any APK/AAB distribution, the exact final resolved artifacts must be
+inspected and a release third-party notice bundle must preserve all applicable
+license, copyright and NOTICE material required by the dependencies actually
+incorporated in that binary. The family-level audit is only an input to that
+release gate.
+
+Unresolved custom assets
+------------------------
+Custom visual binary assets are not declared project-licensed by this NOTICE.
+Their origin/redistribution rights must be resolved, replaced or removed before
+a repository-wide open-source license is applied.

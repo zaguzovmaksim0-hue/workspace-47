@@ -1,0 +1,317 @@
+package dev.junta.firmamobile.browser
+
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
+import org.robolectric.annotation.GraphicsMode
+import org.robolectric.annotation.SQLiteMode
+
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
+@SQLiteMode(SQLiteMode.Mode.LEGACY)
+class AfirmaJavascriptShimTest {
+    @Test
+    fun shimOnlyForwardsAfirmaOrIntentUrisThroughTheNamedWebMessageObject() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(context)
+
+        assertTrue(script.contains("window.JuntaFirmaMobile"))
+        assertTrue(script.contains("bridge.postMessage"))
+        assertTrue(script.contains("AFIRMA_URI"))
+        assertTrue(script.contains("window.open"))
+        assertTrue(script.contains("afirma:"))
+        assertTrue(script.contains("intent:"))
+        assertTrue(script.length <= AfirmaJavascriptShim.MAX_SCRIPT_CHARS)
+    }
+
+    @Test
+    fun shimDoesNotExposeSecretsOrHardcodePortalCallbacks() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(context)
+
+        assertFalse(script.contains("addJavascriptInterface"))
+        assertFalse(script.contains("getPrivateKey"))
+        assertFalse(script.contains("readFile"))
+        assertFalse(script.contains("sendHttpRequest"))
+        assertFalse(script.contains("saveSignatureAuthCallback"))
+        assertFalse(script.contains("ws024"))
+    }
+
+    @Test
+    fun shimObservesMiniAppletCallsAndBlocksLoopbackWebSocketsWithoutCallbacks() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(context)
+
+        assertTrue(script.contains("window.JuntaFirmaProbe"))
+        assertTrue(script.contains("MiniApplet"))
+        assertTrue(script.contains("window.AutoScript"))
+        assertTrue(script.contains("cargarMiniApplet"))
+        assertTrue(script.contains("MINIAPPLET_OBSERVATION"))
+        assertTrue(script.contains("RUNTIME_BRANCH_OBSERVATION"))
+        assertTrue(script.contains("MINIAPPLET_CALL_END"))
+        assertTrue(script.contains("probeDocumentId"))
+        assertTrue(script.contains("documentId: probeDocumentId"))
+        assertTrue(script.contains("activeProbeRequestId"))
+        assertTrue(script.contains("requestId: activeProbeRequestId"))
+        assertTrue(script.contains("tryObserveMiniAppletCall"))
+        assertTrue(script.contains("finally"))
+        assertTrue(script.contains("window.WebSocket"))
+        assertTrue(script.contains("Reflect.apply"))
+        assertTrue(script.contains("window.top !== window"))
+        assertTrue(script.contains("btnacceso"))
+        assertTrue(script.contains("signInAutcertjs"))
+        assertFalse(script.contains("querySelector(\"input[type=button]"))
+        assertFalse(script.contains("saveSignatureAuthCallback"))
+        assertFalse(script.contains("showLogCallback"))
+    }
+
+    @Test
+    fun qaModeReportsClosedPortalCallbackStagesWithoutPayloadFields() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val qa = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+        )
+        val release = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+
+        assertTrue(qa.contains("const qaDiagnosticsEnabled = true"))
+        assertTrue(release.contains("const qaDiagnosticsEnabled = false"))
+        assertTrue(qa.contains("QA_PORTAL_DIAGNOSTIC"))
+        assertTrue(qa.contains("RESULT_RECEIVED"))
+        assertTrue(qa.contains("RESULT_IGNORED"))
+        assertTrue(qa.contains("CALLBACK_STARTED"))
+        assertTrue(qa.contains("CALLBACK_RETURNED"))
+        assertTrue(qa.contains("CALLBACK_THROWN"))
+        assertFalse(qa.contains("certificate: certificateB64"))
+        assertFalse(qa.contains("signature: signatureB64"))
+    }
+
+    @Test
+    fun functionalModeOwnsMiniAppletSignWhileProbeModeKeepsObservationOnly() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val functional = AfirmaJavascriptShim.load(
+            context,
+            MiniAppletBridgeMode.FUNCTIONAL,
+        )
+        val observation = AfirmaJavascriptShim.load(
+            context,
+            MiniAppletBridgeMode.OBSERVATION,
+        )
+
+        assertTrue(functional.contains("const functionalSigningEnabled = true"))
+        assertTrue(observation.contains("const functionalSigningEnabled = false"))
+        assertTrue(functional.contains("MINIAPPLET_SIGN"))
+        assertTrue(functional.contains("MINIAPPLET_RESULT"))
+        assertTrue(functional.contains("MINIAPPLET_CANCEL"))
+        assertTrue(functional.contains("pendingCallbacks"))
+        assertTrue(functional.contains("pendingCallbacks.delete"))
+        assertTrue(functional.contains("isIdenticalInFlightCall"))
+        assertTrue(functional.contains("pending.dataB64 === args[0]"))
+        assertTrue(functional.contains("pending.successCallback === args[4]"))
+        assertTrue(functional.contains("SHA512withRSA"))
+        assertTrue(functional.contains("XAdES Detached"))
+        assertTrue(functional.contains("args[3] === null"))
+        assertTrue(functional.contains("successCallback(signatureB64, certificateB64)"))
+        assertTrue(functional.contains("errorCallback(errorCode"))
+        assertTrue(functional.contains("pagehide"))
+        assertFalse(functional.contains("evaluateJavascript"))
+        assertFalse(functional.contains("Math.random"))
+        assertTrue(functional.contains("const uriRequestId = secureRequestId()"))
+        assertTrue(functional.contains("if (!uriRequestId)"))
+    }
+
+    @Test
+    fun documentStartShimHasTheMissingMelillaBatchBridgeContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val functional = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            melillaBatchCompatibilityEnabled = true,
+        )
+
+        assertTrue(
+            "The document-start shim must recognize AutoScript.signBatchProcess",
+            functional.contains("signBatchProcess"),
+        )
+        assertTrue(
+            "The document-start shim must emit the dedicated MINIAPPLET_BATCH discriminator",
+            functional.contains("MINIAPPLET_BATCH"),
+        )
+        assertTrue(functional.contains("pendingBatchCallbacks"))
+        assertTrue(functional.contains("MINIAPPLET_BATCH_RESULT"))
+        assertTrue(functional.contains("validationResponse"))
+        assertTrue(functional.contains("pending.successCallback(validationResponse)"))
+        assertTrue(functional.contains("MINIAPPLET_DOCUMENT_READY"))
+        assertTrue(functional.contains("notifyNativeDocumentReady"))
+    }
+
+    @Test
+    fun melillaBatchShimIsDisabledUnlessTheNativeProfileScopeEnablesIt() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            melillaBatchCompatibilityEnabled = true,
+        )
+
+        assertTrue(disabled.contains("const melillaBatchCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("const melillaBatchCompatibilityEnabled = true"))
+        assertTrue(enabled.contains(
+            "wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, " +
+                "melillaBatchCompatibilityEnabled",
+        ))
+        assertTrue(enabled.contains("if (includeMelillaBatch)"))
+    }
+
+    @Test
+    fun ugrCompatibilityPathIsProfileScopedAndUsesOnlyTheExactObservedContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = true,
+        )
+
+        assertTrue(script.contains("const ugrCompatibilityEnabled = true"))
+        assertTrue(script.contains("https://sede.ugr.es"))
+        assertTrue(script.contains("Universidad de Granada"))
+        assertTrue(script.contains("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ=="))
+        assertTrue(script.contains("SHA1withRSA"))
+        assertTrue(script.contains("CAdES"))
+        assertTrue(script.contains("args[3] === \"\""))
+        assertTrue(script.contains("StorageService"))
+        assertTrue(script.contains("RetrieveService"))
+        assertTrue(script.contains("setForceWSMode"))
+        assertTrue(script.contains("cargarAppAfirma"))
+        assertTrue(script.contains("setServlets"))
+        assertTrue(script.contains("return undefined"))
+    }
+
+    @Test
+    fun jccmCompatibilityPathIsProfileScopedToTheExactBase64ProbeContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val jccm = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            jccmCompatibilityEnabled = true,
+        )
+        val generic = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            jccmCompatibilityEnabled = false,
+        )
+
+        assertTrue(jccm.contains("const jccmCompatibilityEnabled = true"))
+        assertTrue(jccm.contains("https://ventanillaelectronica.jccm.es"))
+        assertTrue(jccm.contains("QUJDREU="))
+        assertTrue(jccm.contains("args[0] === jccmPayloadBase64"))
+        assertTrue(jccm.contains("SHA1withRSA"))
+        assertTrue(jccm.contains("CAdES"))
+        assertTrue(jccm.contains("args[3] === null || args[3] === \"\""))
+        assertTrue(jccm.contains("!jccmCompatibilityEnabled"))
+        assertFalse(jccm.contains("FORMPROC.submit()"))
+        assertTrue(generic.contains("const jccmCompatibilityEnabled = false"))
+    }
+
+    @Test
+    fun activeSevillaProfileEnablesTheRuntimeAtseShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("sevilla-atse-certificate-login"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertTrue(flags.sevillaAtse)
+        assertFalse(flags.melillaBatch)
+    }
+
+    @Test
+    fun sevillaAtseCompatibilityIsProfileScopedToTheExactXadesChallengeTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            sevillaAtseCompatibilityEnabled = true,
+        )
+
+        assertTrue(script.contains("const sevillaAtseCompatibilityEnabled = true"))
+        assertTrue(script.contains("https://www.sevilla.org"))
+        assertTrue(script.contains("sevillaAtseChallengePattern"))
+        assertTrue(script.contains("atob(value)"))
+        assertTrue(script.contains("args[1] === \"SHA1withRSA\""))
+        assertTrue(script.contains("args[2] === \"XAdES\""))
+        assertTrue(script.contains("args[3] == null"))
+        assertTrue(script.contains("if (isSevillaAtseOrigin && !isExactSevillaAtseCall)"))
+        assertFalse(script.contains("authenticate("))
+    }
+
+    @Test
+    fun nonUgrShimKeepsTheStrictGenericTransportMode() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = false,
+        )
+
+        assertTrue(script.contains("const ugrCompatibilityEnabled = false"))
+        assertTrue(script.contains("!base64Pattern.test(args[0])"))
+        assertTrue(script.contains("args[3] === null"))
+        assertTrue(script.contains("window.location.origin === ugrOrigin"))
+    }
+
+    @Test
+    fun cantabriaCompatibilityPathDescribesTheExactProfileScopedMiniAppletContract() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = false,
+            cantabriaCompatibilityEnabled = true,
+        )
+        val generic = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            ugrCompatibilityEnabled = false,
+            cantabriaCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const cantabriaCompatibilityEnabled = true"))
+        assertTrue(generic.contains("const cantabriaCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("window.location.origin === cantabriaOrigin"))
+        assertTrue(enabled.contains("https://rec.cantabria.es"))
+        assertTrue(enabled.contains("[0-9a-f]{40}"))
+        assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"CAdES\""))
+        assertTrue(enabled.contains("filters=\\nmode=implicit"))
+        assertTrue(enabled.contains("globalThis.btoa(args[0])"))
+    }
+}

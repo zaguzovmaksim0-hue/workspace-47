@@ -1,1 +1,32 @@
 .worktrees/
+.superpowers/
+.gradle/
+.kotlin/
+.idea/
+*.iml
+local.properties
+**/build/
+.externalNativeBuild/
+.cxx/
+
+# Local release signing material
+keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Local secrets and QA credentials
+.env
+.env.*
+!.env.example
+ws024-qa-credential.once
+qa-credentials.json
+
+# Captures and diagnostic output that may contain session or personal data
+*.har
+*.pcap
+*.pcapng
+*.log

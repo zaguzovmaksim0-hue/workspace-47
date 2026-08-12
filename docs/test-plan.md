@@ -70,16 +70,21 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - algoritmo/formato no permitidos rechazados;
 - límites de input y error de provider sanitizado.
 
-### CookieBridgeTest
+### ProfileCookieBridgeTest / SiteDataCleanerTest
 
-- cookies se entregan al mismo host;
-- cookies no se entregan a otro host permitido ni externo;
-- `Set-Cookie` se sincroniza con URL exacta y flush;
-- 301/302 a login produce `SESSION_EXPIRED`;
-- 401/403 produce `SESSION_EXPIRED`;
-- HTML login con status 200 no se toma como respuesta de protocolo;
-- redirects se revalidan por salto;
-- ningún error/log contiene header Cookie o Set-Cookie.
+- cookies nativas se entregan solo al endpoint exacto del perfil activo;
+- otro perfil, mismo host con path distinto y perfil sin endpoints fallan antes
+  de consultar `CookieManager`;
+- `Set-Cookie` se acota, rechaza CR/LF/NUL/oversize y hace flush sin logs;
+- borrar el sitio elimina solo WebStorage del origin HTTPS actual;
+- si `GET_COOKIE_INFO` no existe, las cookies quedan intactas y nunca se ejecuta
+  un borrado global implícito;
+- al estar disponible, solo se reutilizan nombre, host exacto, path y `Secure`
+  para expirar la cookie; no se copia su valor;
+- metadata parent-domain/malformada deja las cookies intactas;
+- cerrar sesión, borrar el sitio y borrar todos los datos son acciones y
+  confirmaciones diferentes;
+- 301/302 a login, 401/403 o HTML inesperado producen `SESSION_EXPIRED`.
 
 ### OriginAllowlistTest / SafeUrlValidatorTest
 
@@ -93,6 +98,22 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - userinfo y esquemas file/content/javascript/data se rechazan;
 - DNS result no público y redirect externo se rechazan.
 
+### PublicIpAddressPolicyTest / ProfileHttpTransportTest / relay upstream tests
+
+- la revisión IANA IPv6 queda fijada a `2025-10-09`;
+- IPv4 público y IPv6 global ordinario dentro de `2000::/3` se aceptan;
+- unspecified, loopback, mapped, scoped, ULA, link-local, multicast,
+  documentation, transition, benchmark y todos los prefijos especiales revisados
+  se rechazan en sus límites exactos;
+- `64:ff9b::/96` acepta solo IPv4 embebido público y rechaza private, loopback,
+  documentation, benchmark y demás IPv4 especiales;
+- Android filtra el DNS set y entrega al executor únicamente direcciones
+  aprobadas sin cambiar hostname/SNI;
+- el network interceptor rechaza un peer fuera del set aprobado;
+- el relay rechaza cualquier mixed DNS set inseguro, no unmappea IPv4-mapped,
+  marca IPv6 literal con brackets y verifica el peer exacto;
+- profiles continúan rechazando IP literals: F-17 afecta solo DNS results.
+
 ### AfirmaRequestRouterTest
 
 - `afirma://sign` se enruta a confirmación;
@@ -103,6 +124,68 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - intent arbitrario/package/component se rechaza;
 - requestId duplicado o consumido se rechaza;
 - navegación/origin cambiado invalida pending request.
+
+### JuntaWebViewClient Afirma frame-boundary regressions
+
+- callback moderno main-frame permite `afirma://sign` válido desde el signing origin;
+- callback moderno main-frame permite embedded-Afirma `intent:` válido;
+- subframe directo `afirma:` se consume como `UNTRUSTED_AFIRMA_ORIGIN`, no entrega
+  `onAfirmaRequest` y no publica `onNavigationBlocked` a la UI top-level;
+- subframe embedded-Afirma `intent:` falla cerrado y permanece igualmente silencioso para la
+  UI de aplicación;
+- callback String deprecated no puede probar main-frame, no entrega Afirma a native y no
+  publica un callback UI de bloqueo;
+- los negativos anteriores conservan top-level trusted como control para aislar el
+  límite de frame ownership;
+- ejecutar la familia WebView/navigation/WebMessage en Debug y QA; el E2E físico del
+  portal sigue siendo un gate separado.
+
+### JuntaWebViewClient external-navigation frame-boundary regressions
+
+- HTTPS externo directo en callback moderno main-frame mantiene un único
+  `openExternal`;
+- `intent:` validado con `browser_fallback_url=https://...` en main-frame mantiene el
+  handoff externo aprobado;
+- el mismo HTTPS desde subframe se consume como `UNTRUSTED_EXTERNAL_NAVIGATION` sin
+  `openExternal` ni `onNavigationBlocked`;
+- el callback String deprecated tampoco puede entregar `OpenExternal` porque no prueba
+  propiedad main-frame;
+- un `intent:` con browser fallback desde subframe falla cerrado por el mismo límite;
+- el diagnóstico bloqueado no conserva query/fragment sensibles del URL de prueba;
+- ejecutar la familia WebView/navigation/WebMessage en Debug y QA y mantener el E2E
+  físico del navegador/portal como gate separado.
+
+### JuntaWebViewClient blocked-navigation callback ownership regressions
+
+- main-frame POST que no puede usar el upgrade HTTPS sigue publicando
+  `INSECURE_HTTP`;
+- main-frame cross-profile/invalid/Play block mantiene el callback de aplicación;
+- HTTP downgrade subframe, cross-profile HTTPS subframe y scheme no soportado subframe
+  se consumen y registran sin `onNavigationBlocked`;
+- callback String deprecated tampoco puede publicar un blocked-navigation callback;
+- los negativos conservan `main_frame=false` y la razón original en diagnóstico
+  sanitizado sin query/fragment canaries;
+- `JuntaNavigationPolicy` debe permanecer fuera del diff de esta familia.
+
+### TrustedJuntaWebView capability-hardening regressions
+
+- production source contiene explícitamente `setGeolocationEnabled(false)`;
+- el manifest principal no declara `ACCESS_COARSE_LOCATION` ni
+  `ACCESS_FINE_LOCATION`;
+- `JuntaWebChromeClient.onGeolocationPermissionsShowPrompt` conserva
+  `callback.invoke(origin, false, false)` y `onPermissionRequest` conserva `deny()`;
+- `TrustedJuntaWebViewTest` mantiene mixed content, file/content access, ventanas y
+  media autoplay en sus estados fail-closed existentes;
+- ejecutar source/settings regressions en Debug y QA. El comportamiento físico de
+  geolocalización queda fuera del claim automatizado.
+
+
+### JuntaWebViewClient Safe Browsing frame ownership regressions
+
+- main-frame hit siempre llama `backToSafety(true)` y publica `SAFE_BROWSING`;
+- subframe hit llama `backToSafety(true)` pero no publica error de aplicación;
+- stale WebView también vuelve a seguridad sin mutar UI;
+- `proceed` e interstitial permanecen prohibidos.
 
 ### TriPhaseClientTest
 
@@ -126,6 +209,52 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 - result/cancel/error limpian estado;
 - strings con comillas, saltos y secuencias JS no producen inyección;
 - mensajes fuera del navigation id activo se rechazan.
+
+### MonotonicSecurityTimeTest / BoundedReplayLedger / SigningCoordinator hostile tests
+
+- el TTL de request, pending, operación activa y reply se calcula solo con reloj
+  monotónico; el reloj civil puede avanzar o retroceder sin alterar autorización;
+- el límite exacto de dos minutos expira y un valor monotónico menor que el
+  observado falla cerrado;
+- los request IDs terminales se retienen cinco minutos, se podan en el boundary
+  exacto y liberan capacidad sin permitir replay durante la retención;
+- rollback monotónico conserva la evidencia de replay y no poda entradas;
+- dos `confirm` concurrentes permiten una sola ejecución de PRE/local/POST;
+- success y failure concurrentes producen exactamente un terminal/callback;
+- callbacks stale, epoch/origin cambiados y replay posterior al terminal no se
+  entregan;
+- el shim no contiene `Math.random()` y no reenvía AFIRMA/MiniApplet al bridge si
+  Web Crypto no puede generar un UUID seguro.
+
+### ClientAuthNavigationAuthorizerTest / ClientAuthRequestHandlerTest
+
+- Carné Joven conserva `REDIRECT_AFTER_SOURCE` y sus parámetros exactos;
+- AEAT usa `DIRECT_FROM_SOURCE` únicamente desde
+  `https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html` hacia
+  `https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso`;
+- legacy callback, subframe, profile/source incorrectos, suffix-host, non-443,
+  path distinto/codificado, fragment, query y `?` vacío fallan cerrados;
+- el mismo tuple profile/source/target/epoch se consume una sola vez;
+- RSA procede únicamente con issuer DER coincidente; issuer vacío se rechaza
+  para AEAT y dispara limpieza de preferencias;
+- release no resuelve el profile ni sus origins mientras siga
+  `VERIFIED_CONTRACT / QA_ONLY`.
+
+### ClientCertPreferenceBarrierTest / ClientCertPreferenceCoordinatorTest
+
+- estado inicial `IDLE`; ninguna navegación se habilita antes del callback;
+- timeout exacto de tres segundos deja `FAILED` persistente a nivel de proceso;
+- callback tardío, generation anterior y segundo consumo se ignoran;
+- callback síncrono no deja una tarea de timeout activa;
+- excepción del API y ausencia de callback fallan cerradas;
+- una nueva limpieza supersede la generation anterior y solo su callback puede
+  recuperar `IDLE`;
+- desacoplar el listener de una Activity no cancela la limpieza global;
+- el coordinator no conserva certificado, clave, WebView, URL ni datos del
+  challenge;
+- `BrowserScreen` no llama directamente a
+  `WebView.clearClientCertPreferences` y no crea `AndroidView` en `CLEARING` o
+  `FAILED`.
 
 ### SanitizedLoggerTest
 
@@ -156,8 +285,19 @@ Ejecutar en API 36 real o emulador equivalente:
 - bloqueo manual obliga a introducir contraseña otra vez;
 - background timeout bloquea identidad;
 - una hoja de confirmación aparece y cancelar no firma;
-- `FLAG_SECURE` está activo durante entrada de password;
-- borrar sesión limpia cookies/storage según UI y vuelve a estado esperado.
+- `FLAG_SECURE` está inactivo solo en loading/no-certificate idle y activo
+  durante password, unlock, certificado desbloqueado, catálogo/WebView y firma;
+- borrar datos del sitio no afecta otros origins y muestra resultado
+  exacto/limitado/fallido;
+- una limpieza confirmada del sitio o global debe avanzar `navigationEpoch` antes de
+  `clearOrigin` / `clearAllConfirmed`, abandonando callbacks MiniApplet y contexto de firma
+  del documento anterior antes de que empiece la eliminación/reload;
+- cerrar sesión bloquea el certificado sin borrar datos de otros portales;
+- borrar todos los datos web requiere una confirmación separada.
+- el callback Android real de `clearClientCertPreferences` produce
+  `CLEARING → IDLE` sin abrir WebView, portal ni certificado;
+- el classifier IPv6 físico confirma IPv6 global ordinario, NAT64 con IPv4
+  público y rechazo de NAT64 con IPv4 no público.
 
 Los tests de WebView usarán contenido controlado e interceptores/test server;
 no dependerán del portal real para ser deterministas. La configuración release
@@ -169,7 +309,11 @@ Con red real y sin introducir secretos en logs:
 
 1. abrir la URL inicial;
 2. confirmar status/host visible y ausencia de SSL bypass;
-3. capturar metadatos del `MiniApplet.cargarMiniApplet`/`sign` real;
+3. capturar metadatos del `MiniApplet.cargarMiniApplet`/`sign` real y aceptar
+   una rama solo con UUID idéntico o una única ventana top-level
+   SIGN/documento/origin de 250 ms; publicar solo tras `CALL_END`, mostrar
+   `PROTOCOL_CORRELATION_REJECTED` si se invalida y nunca emparejar una
+   navegación anterior;
 4. pulsar firma solo con certificado de prueba autorizado;
 5. verificar que no se abre Play/AutoFirma;
 6. registrar nombres, longitudes, hashes cortos, algoritmo, formato y hosts;
@@ -197,11 +341,30 @@ Secuencia de aceptación:
 8. aceptar, completar pre-sign/local/post-sign y entregar resultado;
 9. confirmar que el portal acepta y continúa;
 10. bloquear certificado y confirmar que otra firma exige contraseña;
-11. inspeccionar UI tree, screenshot no sensible y logcat sanitizado;
+11. inspeccionar `FLAG_SECURE` mediante window state y usar UI tree/logcat
+    sanitizados; no capturar screenshot de certificado, catálogo autenticado,
+    WebView ni firma;
 12. repetir el camino de cancelación y sesión expirada.
 
-Artefactos permitidos: capturas sin datos personales, UI XML sanitizado, lista
-de eventos/códigos y hashes cortos. No se conserva network trace con cuerpos.
+Para F-03 AEAT, la aceptación física se limita a:
+
+1. abrir exactamente `Mi área personal` y seleccionar `Mis datos censales`;
+2. observar `onReceivedClientCertRequest` para
+   `www1.agenciatributaria.gob.es:443` sin registrar principals completos;
+3. confirmar que key types e issuer digest son compatibles con la identidad;
+4. aceptar el consentimiento nativo y verificar únicamente la apertura del área
+   autenticada de solo lectura;
+5. detenerse antes de cualquier modificación, firma, pago o presentación;
+6. conservar solo hash del APK, sí/no de callback/aceptación, host/port,
+   key-types normalizados, número/digest corto de issuers y categoría path sin
+   query ni datos personales.
+
+Si cualquiera de estos gates falla, el profile permanece `QA_ONLY`.
+
+Artefactos permitidos: capturas únicamente de la pantalla inicial sin
+certificado o de una Activity de prueba no sensible, UI XML sanitizado, estado
+de window flags, lista de eventos/códigos y hashes cortos. Las superficies
+protegidas por F-05 no se capturan. No se conserva network trace con cuerpos.
 
 ## 6. Comandos y gates de build/release
 
@@ -227,7 +390,44 @@ Gates adicionales:
 - v2/v3 signature verificada y fingerprint guardado;
 - diff final revisado y dependencias/licencias documentadas.
 
-## 7. Clasificación del resultado
+## 7. Gate CI y supply chain (F-14)
+
+Cada `push`, pull request y ejecución manual debe conservar estos límites:
+
+- permisos globales `contents: read`; no `pull_request_target` ni credenciales Git
+  persistentes;
+- todas las Actions de terceros fijadas a SHA completo de 40 caracteres;
+- Gradle wrapper 9.4.1 y su distribución verificados por SHA-256 oficial;
+- dependency verification con metadata y artifacts SHA-256, sin trusted wildcard;
+- Python: descubrimiento completo de `tools/tests/test_*.py`;
+- Android: Debug/QA unit, lint, Debug/QA/QA AndroidTest builds;
+- APK: `zipalign -c -p -v 4`, v2 signature, exactamente un signer,
+  `allowBackup=false`, cleartext false, no `testOnly` inesperado y canarios
+  prohibidos ausentes;
+- release sin las cuatro entradas privadas de firma: fallo obligatorio y ningún
+  `app-release.apk` residual;
+- Go 1.26.5: test normal, race en Linux, vet, build y `govulncheck` 1.6.0;
+- Gitleaks 8.30.1: archivo descargado con checksum exacto y scan de historial Git
+  completo con redacción;
+- Gradle runtime locking estricto: `app/gradle.lockfile` contiene solo
+  `debugRuntimeClasspath`, `qaRuntimeClasspath` y `releaseRuntimeClasspath`; la
+  task de verificación materializa artifacts y falla ante lock ausente o stale;
+- OSV-Scanner 2.3.8: solo `app/gradle.lockfile`,
+  `tools/requirements.txt` y `ws024-relay/go.mod` como inputs explícitos;
+- Dependabot semanal para Gradle, Go modules, GitHub Actions y `pip` en `/tools`.
+
+Separación explícita de claims: `app/gradle.lockfile` fija versiones de los
+runtime graphs instalables; `gradle/verification-metadata.xml` autentica metadata
+y artifacts descargados por SHA-256; OSV consulta vulnerabilidades conocidas para
+los paquetes del lock. Ninguno de estos controles demuestra ausencia de
+vulnerabilidades desconocidas, lógica maliciosa o riesgos fuera del alcance de
+las bases de datos.
+
+El race detector no es compatible con Android/arm64. Una ejecución local que
+retorne `-race is not supported on android/arm64` se clasifica como no ejecutada;
+el job Linux debe seguir siendo obligatorio.
+
+## 8. Clasificación del resultado
 
 - **Passed:** evidencia directa cubre el caso completo.
 - **Failed — change-caused:** se corrige antes de avanzar de etapa.
@@ -236,3 +436,181 @@ Gates adicionales:
 - **Blocked by human/external state:** se identifica el paso exacto, pero no se
   sustituye por una afirmación de éxito.
 - **Not run:** nunca se presenta como implícitamente aprobado.
+
+## G14-04 — Android backup/D2D domain exclusion gate — 2026-08-06
+
+- Parse `app/src/main/res/xml/backup_rules.xml`; require exactly nine `<exclude>` entries,
+  one for each supported app backup domain, every `path="."`, and no `<include>`.
+- Parse `app/src/main/res/xml/data_extraction_rules.xml`; require exactly
+  `<cloud-backup>` and `<device-transfer>`, each with the same exact nine-domain
+  exclusion set, every `path="."`, and no `<include>`.
+- Keep `android:allowBackup="false"`, `android:fullBackupContent` and
+  `android:dataExtractionRules` wired in the manifest; do not treat `allowBackup=false`
+  alone as proof of Android 12+ D2D exclusion.
+- Regression gate: `python -m unittest tools.tests.test_ci_policy.CiPolicyTest -v` plus
+  the existing full Android JVM/lint/build, Python/Go, APK-artifact and release
+  fail-closed gates. Physical device/portal execution is not required for this policy
+  resource contract.
+
+## G15-01 — Client TLS monotonic TTL regression gate — 2026-08-06
+
+- Exercise pending redirect authorization, direct-transition replay suppression and granted Client TLS lifetime against injected monotonic time, including exact TTL expiry and civil-clock rollback.
+- Revalidate the same monotonic grant after asynchronous client-certificate preference clearing and immediately before `ClientCertRequest.proceed`; civil time is permitted only for X.509 validity.
+- Preserve hostile profile/origin/path, host/port, epoch, issuer, key algorithm, keyUsage/EKU and one-shot cleanup regressions.
+- Run focused Debug/QA Client TLS suites plus full Debug/QA JVM, lint, Debug/QA/QA-AndroidTest assemblies, dependency/toolchain gates, full Python, Go test/vet/build, Android artifact verification and release-signing fail-closed.
+
+## G24-01 — SSL callback UI ownership gate — 2026-08-08
+
+- For normal WebView SSL callbacks, require unconditional `handler.cancel()`, forbid
+  `handler.proceed()`, retain sanitized cancellation diagnostics, and forbid promotion to
+  top-level `onBrowserError` because this callback has no `isForMainFrame` metadata.
+- For dedicated Client TLS SSL callbacks, additionally require unconditional grant
+  abandonment/one-shot cleanup before any later certificate request can proceed.
+- Do not substitute `SslError.url` equality for frame ownership. Modern resource/error
+  callbacks that expose `WebResourceRequest` keep their existing explicit
+  `isForMainFrame` UI gates.
+- Run focused Debug/QA browser + Client TLS suites, full Debug/QA JVM,
+  dependency/toolchain, lint, Debug/QA/QA-AndroidTest assemblies, Python, Go
+  test/vet/build, Android artifact verification and release-signing fail-closed.
+
+## G25-01 — JavaScript modal secure-display gate — 2026-08-08
+
+- Require explicit `JuntaWebChromeClient` overrides for `onJsAlert`, `onJsBeforeUnload`,
+  `onJsConfirm` and `onJsPrompt`; none may delegate to `super` or create `Dialog`/
+  `AlertDialog` UI.
+- `alert` and `beforeunload` must resolve with `JsResult.confirm()` and return `true` so
+  execution/navigation cannot remain suspended. `confirm` and `prompt` must resolve with
+  `cancel()` and return `true`, preserving fail-closed false/null semantics.
+- Callback `url`, `message` and prompt `defaultValue` must not be shown, logged, persisted
+  or forwarded. Existing popup, generic-permission, geolocation, navigation, TLS,
+  Client-TLS and signing gates remain unchanged.
+- Run focused Debug/QA runtime + source-contract regressions, full Debug/QA JVM,
+  runtime dependency/core/AAPT2 gates, lint, Debug/QA/QA-AndroidTest assemblies, Python,
+  Go test/vet/build, Android artifact verification and release-signing fail-closed.
+- Automated success proves suppression of the platform-default modal path, not physical
+  compatibility with a public portal that intentionally depends on JavaScript dialogs.
+
+## G26-01 — dedicated Client TLS subframe confinement gate — 2026-08-08
+
+- A modern off-origin `WebResourceRequest` with `isForMainFrame=false` must be consumed,
+  abandon/clear the one-shot Client TLS grant, and publish no application/UI callback.
+- A modern subframe on an already allowed Client TLS source/request origin remains allowed
+  (`false`) and must not abandon the grant; this is the compatibility control against an
+  over-broad iframe ban.
+- A disallowed modern main-frame request remains consumed, abandons the grant and publishes
+  exactly `INVALID_URL`; this is the positive ownership control.
+- A disallowed deprecated String callback remains consumed and abandons the grant but
+  publishes no top-level callback because frame ownership is unavailable.
+- Preserve exact Client TLS transition/target, host/port, TTL/epoch, issuer, key type,
+  keyUsage/EKU, preference-clearing, profile/release and one-shot regressions. Run focused
+  Debug/QA Client TLS tests plus fresh full Debug/QA JVM, runtime lock/core/AAPT2, lint,
+  Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact and
+  release-signing fail-closed gates.
+
+## G27-01 — certificate error live-region gate — 2026-08-08
+
+- Render `AppRoot` with a synthetic locked certificate state containing
+  `PASSWORD_INVALID_OR_FILE`; the existing visible error node must expose
+  `SemanticsProperties.LiveRegion == LiveRegionMode.Assertive`.
+- Preserve existing certificate-selection, password consumption/clearing, safe summary and action
+  tests. The accessibility change must not request focus, change error copy/layout, or alter
+  certificate state/validation/storage/signing/network/WebView/profile/release behavior.
+- Run focused Debug/QA `AppRootTest`, fresh full Debug/QA JVM plus runtime-lock/core/AAPT2 checks,
+  lint, Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact and
+  release-signing fail-closed gates. Physical TalkBack timing/interruption remains a manual gate.
+
+
+## G30-01 — tunnel-route diagnostic ownership gate — 2026-08-08
+
+- For `MainActivity.onTunnelRouteEvent`, require `SanitizedLogger.recordTunnelRouteEvent` to be
+  reachable only after `SigningCoordinator.onTunnelRouteEvent(requestId, event)` returns an
+  affirmative ownership decision.
+- `SigningCoordinator` must reject ownership for no active operation, wrong request ID,
+  pre-confirmation/non-active ownership and cancelled/post-completion callbacks. Active matching
+  direct-fallback events remain accepted without changing signing UI; secure-tunnel connecting /
+  established / failed stages keep the existing UI transitions.
+- Preserve the closed `TunnelRouteEvent` schema: do not add request IDs, URLs, hosts,
+  exceptions, credentials or payloads to diagnostics; do not change transport fallback, timeout,
+  TLS/origin/path, signing/certificate, profile/release or dependency policy.
+- Run focused Debug/QA `BrowserSecurityRegressionTest` + `SigningCoordinatorTest`, adjacent route
+  coverage, then fresh runtime-lock/core/AAPT2, complete Debug/QA JVM, lint,
+  Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build, Android artifact
+  verification and release-signing fail-closed. Review the full diff and sensitive/unsafe added
+  lines; require generated relay and release APK absence before commit.
+
+
+## G16-01 — certificate unlock same-boot monotonic lease gate — 2026-08-08
+
+- `CertificateSessionTest`: inject independent civil and monotonic clocks; prove civil rollback cannot keep a signing identity alive after the original monotonic lease, exact boundary expires, and monotonic rollback fails closed.
+- `CertificateUnlockCacheTest`: authenticate deterministic boot count + the **original manual lease elapsed-realtime observation** in `JFMUC002`; prove changed boot, delayed-store non-renewal, elapsed rollback, unavailable boot-time evidence, legacy-record rejection and exact/over retention reject/clear, while same-boot restore carries only the authenticated remaining duration. Preserve encryption, tamper, reference binding, cancellation/invalidation and zeroization regressions.
+- `CertificateViewModelTest`: inject a short restored lease and advance the shared monotonic clock during gateway reload; identity must not be published by renewing from civil expiry. Manual unlock must create the original lease before cache persistence and pass its observation into store.
+- Required acceptance gate: three suites Debug+QA; fresh full Debug/QA JVM plus runtime lock/core/AAPT2; lintDebug/lintQa; Debug/QA/QA-AndroidTest assemblies; Python discovery; Go test/vet/build; Android artifact verification; release-signing fail-closed; APK hashes; generated relay removal; zero release APKs; `git diff --check`; changed-content sensitive/unsafe scans; `CiPolicyTest`.
+- Observed final automated evidence: focused 42/42 per variant, full 562/562 per variant, lint 0 errors / 26 warnings per variant, Python 102 with one environmental hardlink skip, Go/artifact/release PASS. Automated tests establish the injected same-boot/reboot boundary; they do not claim a physical reboot/device run or authenticated portal acceptance. Historical process-cold-launch evidence remains process-recovery evidence only.
+
+## G31-01 — global browser resource-cache erasure gate — 2026-08-08
+
+- Source/order regression: the confirmed global clear handler must call `clearCache(true)` after
+  `stopLoading()` and before `SiteDataCleaner.clearAllConfirmed`; the current-site handler must
+  not call application-wide `clearCache(true)`.
+- Lifecycle regression: global completion ownership is `BrowserDataClearCompletionLease<WebView>`.
+  If `webViewRef.get()` is null, the handler must invalidate stale completion ownership, publish
+  failure and remain outside the branch that begins cache/cookie/WebStorage deletion.
+- Preserve G29 pre-clear navigation-epoch invalidation, Client TLS abandonment, signing
+  cancellation, exact initiating-WebView completion ownership and owner-checked reload.
+- Run focused Debug/QA browser/data-clear suites, then fresh runtime lock/core/AAPT2 + complete
+  Debug/QA JVM, lint, Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build,
+  Android artifact verification, release-signing fail-closed, relay cleanup, `git diff --check`,
+  sensitive/unsafe scans and `CiPolicyTest`.
+- Automated scope does not assert physical WebView/portal acceptance and does not claim that
+  `clearCache(true)` erases persistence classes outside the documented resource cache.
+
+## G32-01 — global cookie-removal completion-semantics gate — 2026-08-09
+
+- RED: with successful `WebStorage.deleteAllData()` and `removeAllCookies` callback `false`, require
+  global completion `true`, one storage clear, one remove-all invocation and zero flushes. The RED
+  must fail only because production misreads the Boolean as success/failure.
+- GREEN/failure controls: callback `false` is a completed no-op; callback `true` requires one
+  successful flush. WebStorage exception, synchronous remove-all exception and required-flush
+  exception must report failure.
+- Adjacent regression set: `SiteDataCleanerTest`, `BrowserDataClearCompletionLeaseTest` and
+  `BrowserSecurityRegressionTest` in Debug+QA, preserving G31 owner/cache and G29 epoch behavior.
+- Full gate: fresh runtime dependency locks/resolved core/portable AAPT2 plus complete Debug/QA JVM,
+  lintDebug/lintQa, Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build,
+  Android artifact verification, release-signing fail-closed, APK hashes, generated relay removal,
+  zero release APKs, `git diff --check`, changed-content safety review and `CiPolicyTest`.
+- Independent review must have no unresolved Critical/Important issue. A synchronous test fake is
+  acceptable for this narrow semantic regression because production simply composes the platform
+  completion callback; physical/device behavior is not inferred from it.
+
+## G33-01 — certificate provider display-name bidi hardening gate — 2026-08-09
+
+- RED: a valid official-PKCS12 provider display name containing U+202E and U+2066 must return and
+  persist the same plain name with those controls removed; unchanged production must fail only on
+  that display-name policy gap.
+- GREEN: remove exactly Unicode `Bidi_Control` U+061C, U+200E..U+200F, U+202A..U+202E and
+  U+2066..U+2069 at `sanitizeDisplayName()`. Preserve ordinary printable Unicode, the existing
+  256-character bound and blank fallback. Octet-stream extension admission must remain based on
+  the original trimmed provider name before display sanitization.
+- Required acceptance: focused/adjacent Debug+QA, independent review with no unresolved
+  Critical/Important finding, fresh runtime lock/core/AAPT2 + full Debug/QA JVM, lintDebug/lintQa,
+  Debug/QA/QA-AndroidTest assemblies, Python discovery, Go test/vet/build, Android artifact
+  verification, release-signing fail-closed, APK hashes, relay removal, zero release APKs,
+  `git diff --check`, changed-content safety review and `CiPolicyTest`.
+- Automated tests establish the repository/native-string boundary only. They do not establish a
+  physical SAF picker, real certificate, TalkBack/visual rendering or portal E2E result.
+
+## G34-01 — legacy persisted certificate display-name read gate — 2026-08-09
+
+- Seed a complete Preferences DataStore certificate reference whose legacy `display_name` contains
+  U+202E/U+2066; `PreferencesCertificateReferenceStore.read()` must return `certevil.p12` with URI
+  and MIME unchanged.
+- Selection and persisted-read paths must share the exact G33 C0/DEL/bidi/256-character/trim/fallback
+  policy. `read()` must not perform a DataStore write. Octet-stream extension admission remains
+  based on the provider's original trimmed filename.
+- Required acceptance: store+repository Debug/QA GREEN, independent review without unresolved
+  Critical/Important issue, runtime locks/resolved core/portable AAPT2 + full Debug/QA JVM,
+  lintDebug/lintQa, Debug/QA/QA-AndroidTest assemblies, Python, Go test/vet/build, Android artifact
+  verification, APK hashes, release fail-closed, relay cleanup, zero release APKs, `CiPolicyTest`,
+  `git diff --check`, exact owned scope and changed-content sensitive/unsafe review.
+- Automated tests establish the persisted-string/read boundary only; no physical SAF/certificate,
+  TalkBack/visual, authenticated portal or real signing acceptance is claimed.
