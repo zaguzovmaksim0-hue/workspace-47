@@ -1,5 +1,7 @@
 # Building on Termux
 
+> **Manual contributor compatibility path.** These notes describe the historical/manual native-Termux build path. They do not authorize agent-initiated Gradle execution in Termux. Current agents must use the exact-SHA Codex Cloud workflow in `docs/agents/codex-cloud-gradle.md`.
+
 ## Supported scope
 
 The authoritative build environment is native Termux/aarch64 on the target

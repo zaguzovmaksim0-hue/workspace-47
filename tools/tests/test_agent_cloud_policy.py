@@ -29,6 +29,18 @@ class AgentCloudPolicyTest(unittest.TestCase):
         self.assertIn("merge", text.lower())
         self.assertNotIn("agent/workspace-47-autonomous-20260803", text)
 
+    def test_public_oss_docs_match_current_repository_state(self) -> None:
+        readme = self.read("README.md")
+        security = self.read("SECURITY.md")
+        publication = self.read("docs/oss-publication-status.md")
+        self.assertNotIn("scripts/oss/run-termux-publication-gates.sh", readme)
+        self.assertNotIn("repository is in pre-publication development", security.lower())
+        self.assertIn("public source repository", security.lower())
+        self.assertIn("historical publication baseline", publication.lower())
+        self.assertIn("`PUBLIC`", publication)
+        self.assertNotIn("READY_TO_MAKE_PUBLIC", publication)
+        self.assertNotIn("READY_AFTER_PUBLIC_URL_VERIFICATION", publication)
+
     def test_current_workflow_does_not_mandate_superpowers(self) -> None:
         paths = [
             "AGENTS.md",
