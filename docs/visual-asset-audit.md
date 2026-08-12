@@ -1,7 +1,8 @@
 # Visual asset publication audit
 
-**Status:** unresolved publication blocker
-**Source commit reviewed:** `86d644c76036eecc9cfda8617e11f31770f379d4` (`feat: apply Junta Firma visual identity`)
+**Status:** provenance remediation applied; Android resource/build verification pending
+**Original source commit reviewed:** `86d644c76036eecc9cfda8617e11f31770f379d4` (`feat: apply Junta Firma visual identity`)
+**Remediation commit:** `19fe276d3f62a2d6e6e427e3637877318ee18003` (`fix(oss): replace unresolved visual binaries with project vectors`)
 
 This audit separates Android resource wiring from copyright/provenance. A binary asset being present in Git does not establish the right to redistribute or relicense it.
 
@@ -9,16 +10,11 @@ This audit separates Android resource wiring from copyright/provenance. A binary
 
 - `app/src/main/res/font/bebas_neue_regular.ttf` — SIL Open Font License 1.1; license text is retained in `docs/licenses/BebasNeue-OFL.txt` and attribution is recorded in `NOTICE`.
 
-## Unresolved custom binary assets
+## Original unresolved binary set
 
-The visual-identity commit introduced the following binary image set without source/license metadata that this audit could establish.
-
-### Home background
+The earlier visual-identity commit introduced 21 binary image paths without source/license metadata that this audit could establish:
 
 1. `app/src/main/res/drawable-nodpi/jfm_home_background.webp`
-
-### Density-specific launcher foreground/background PNGs
-
 2. `app/src/main/res/drawable-mdpi/ic_launcher_background.png`
 3. `app/src/main/res/drawable-mdpi/ic_launcher_foreground.png`
 4. `app/src/main/res/drawable-hdpi/ic_launcher_background.png`
@@ -29,9 +25,6 @@ The visual-identity commit introduced the following binary image set without sou
 9. `app/src/main/res/drawable-xxhdpi/ic_launcher_foreground.png`
 10. `app/src/main/res/drawable-xxxhdpi/ic_launcher_background.png`
 11. `app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png`
-
-### Density-specific launcher PNGs
-
 12. `app/src/main/res/mipmap-mdpi/ic_launcher.png`
 13. `app/src/main/res/mipmap-mdpi/ic_launcher_round.png`
 14. `app/src/main/res/mipmap-hdpi/ic_launcher.png`
@@ -43,33 +36,37 @@ The visual-identity commit introduced the following binary image set without sou
 20. `app/src/main/res/mipmap-xxxhdpi/ic_launcher.png`
 21. `app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png`
 
-## Current Android wiring
+## Remediation applied
 
-`AndroidManifest.xml` points to `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round`. Android 8+ adaptive launcher resources also exist under `mipmap-anydpi-v26/` and reference foreground/background resources. The app UI separately uses `jfm_home_background.webp` as a branded background.
+The publication branch removes all 21 unresolved binary paths and replaces the required resource names with repository-native text/XML resources created specifically for the publication remediation:
 
-The visible application disclosure `Cliente no oficial para uso personal` is useful for affiliation clarity but does not resolve copyright ownership of any image.
+- `app/src/main/res/drawable/jfm_home_background.xml` — neutral geometric vector background;
+- `app/src/main/res/drawable/ic_launcher_background.xml` — simple project color field;
+- `app/src/main/res/drawable/ic_launcher_foreground.xml` — generic document/signature geometry;
+- `app/src/main/res/mipmap-anydpi/ic_launcher.xml` — fallback layer-list;
+- `app/src/main/res/mipmap-anydpi/ic_launcher_round.xml` — fallback layer-list.
 
-## Preferred remediation
+The Android 8+ adaptive icon resources under `mipmap-anydpi-v26/` continue to reference `@drawable/ic_launcher_background` and `@drawable/ic_launcher_foreground`, so the replacement preserves the existing resource contract. The app UI continues to resolve `R.drawable.jfm_home_background` without changing Kotlin wiring.
 
-The safest publication path is to **replace, not guess**:
+The replacement artwork was constructed as simple project-specific XML geometry during this remediation; no third-party image, government seal, official emblem or externally sourced graphic was used as its visual source.
 
-1. create project-authored vector/XML launcher foreground/background resources with simple original geometry and no official seal/logo;
-2. use adaptive-icon XML for modern Android and deterministic project-owned fallbacks for older Android versions;
-3. replace the WebP home background with a project-authored vector/Compose gradient/geometric background, or an image whose source and compatible license are documented;
-4. remove all 21 unresolved binary files from the publication candidate;
-5. update `docs/provenance.md` and `NOTICE` so the replacement resources are explicitly project-authored;
-6. retain the existing independent/unofficial disclosure and no-affiliation language.
+## Policy TDD evidence
 
-## TDD gate before replacement
+`tools/test_publication_visual_assets.py` defines the publication contract: none of the 21 unresolved binary paths may exist in the publication candidate.
 
-Production resources are not changed in this audit branch until an executable test channel is available.
+The RED state was observed before replacement with the test failing on the unresolved path set. After commit `19fe276d3f62a2d6e6e427e3637877318ee18003`, the recursive Git tree contains none of the prohibited `.webp`/`.png` paths and contains the replacement XML resources. A fresh path-level execution of the same policy test against the post-remediation resource state exits successfully with one test passing.
 
-The first change must be a failing resource-contract test that requires the publication candidate to avoid the unresolved binary paths (or requires their project-owned replacements). The test must be observed failing for the expected reason. Only then should resource files/wiring be changed; the same test plus the relevant Android resource/build checks must subsequently be observed passing.
+The replacement XML documents were also parsed as well-formed XML during the verification pass.
 
-GitHub Actions currently fails before job creation even for a one-line `echo` workflow, so the required RED/GREEN evidence cannot honestly be claimed yet. The replacement plan is therefore ready but intentionally not applied.
+## Remaining verification boundary
 
-## Alternative remediation
+The provenance blocker for the removed binary artwork is resolved on this publication branch. This does **not** constitute an Android build/resource-link PASS.
 
-If the maintainer can produce reliable source records showing that each unresolved image was created for this project and that the maintainer owns or is authorized to license it under the selected project license, retain the images and record that attestation/source evidence here and in `docs/provenance.md`.
+GitHub Actions still fails before job creation, so the following remain mandatory before public release approval:
 
-Absent that evidence, publication remains blocked on these assets.
+1. run the relevant Android resource/Gradle build on a working execution channel;
+2. confirm `aapt2`/resource linking accepts the vector and launcher XML resources;
+3. repeat the policy test and build checks after synchronizing with the final autonomous-development head;
+4. visually inspect the final launcher/home presentation for usability and unofficial-project clarity.
+
+If a future synchronization reintroduces any of the 21 original binary paths, this publication gate reopens automatically.
