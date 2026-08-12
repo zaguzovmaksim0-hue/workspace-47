@@ -46,6 +46,9 @@ func TestOuterTLSConfigPinsServerPolicy(t *testing.T) {
 	if len(config.CipherSuites) != 0 {
 		t.Fatalf("CipherSuites = %v, want Go secure defaults", config.CipherSuites)
 	}
+	if config.WrapSession != nil || config.UnwrapSession != nil {
+		t.Fatal("custom session TLS hooks must remain disabled")
+	}
 }
 
 func TestServerRejectsTLS11BeforeCredentialVerification(t *testing.T) {
@@ -435,6 +438,29 @@ func TestWithServerConfigIsolatesTLSMutations(t *testing.T) {
 	}
 	if withMaxVersion.TLSConfig.KeyLogWriter != nil {
 		t.Fatal("TLS mutation leaked from a sibling case into max-version config")
+	}
+}
+
+func TestNewServerRejectsCustomSessionTLSHooks(t *testing.T) {
+	fixture := newServerFixture(t)
+	valid := fixture.config
+	cases := []ServerConfig{
+		withServerConfig(valid, func(c *ServerConfig) {
+			c.TLSConfig.WrapSession = func(tls.ConnectionState, *tls.SessionState) ([]byte, error) {
+				return []byte("plaintext-session-state"), nil
+			}
+		}),
+		withServerConfig(valid, func(c *ServerConfig) {
+			c.TLSConfig.UnwrapSession = func([]byte, tls.ConnectionState) (*tls.SessionState, error) {
+				return nil, nil
+			}
+		}),
+	}
+	for i, config := range cases {
+		server, err := NewServer(config)
+		if server != nil || !errors.Is(err, ErrServerConfiguration) {
+			t.Fatalf("case %d: NewServer() = (%v, %v), want custom session TLS hook rejection", i, server, err)
+		}
 	}
 }
 
