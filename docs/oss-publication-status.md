@@ -2,7 +2,7 @@
 
 **Branch:** `oss/publication-readiness-20260811`
 **Baseline:** autonomous integration commit `c1090f6431486501b46f44e1494289f5f48e9cfb`
-**Latest autonomous head observed during audit:** `f77cbd13434fe0b66876ec957db73e2b16751837`
+**Latest autonomous head observed during audit:** `b3eab817d9deb1d9993e382c23c9c04232e4381e`
 **Policy:** repository stays private until every blocking item below is resolved and the branch is synchronized with the then-current autonomous integration head.
 
 ## Gate matrix
@@ -11,8 +11,8 @@
 | --- | --- | --- |
 | Publication branch integrity | `PASS` | Publication changes were recovered onto a branch whose publication commit is a direct child of `c1090f6431486501b46f44e1494289f5f48e9cfb`; no force rewrite was used. |
 | Current-tree secret/credential inventory | `REVIEWED_WITH_FOLLOWUP` | Reviewed release signing configuration, relay credentials/configuration, credential-shaped fixture, sanitized logging/evidence and Gitleaks configuration. No real current-tree signing/relay credential was identified in the reviewed paths. This does **not** replace a full-history scan. |
-| Full-history Gitleaks | `BLOCKED_BY_ACTIONS_AND_FINAL_SYNC` | A successful full-history Gitleaks result for the final publication candidate is mandatory. The repository workflow is configured for full-history scanning, but GitHub Actions currently fails before job creation even for a one-line `echo` probe, so no successful candidate scan can be claimed. |
-| GitHub Actions execution | `EXTERNAL_BLOCKER` | Workflow files are registered and active after default-branch recovery, but pushes still route to the historical `BuildFailed` pseudo-workflow and finish `startup_failure` with zero jobs. A temporary no-dependency `echo` workflow reproduced the same failure and was removed. The latest observed autonomous push at `f77cbd13434fe0b66876ec957db73e2b16751837` still fails the same way. Repository Actions-policy settings could not be read by the connected GitHub App (`403 Resource not accessible by integration`). |
+| Full-history Gitleaks | `BLOCKED_BY_ACTIONS_AND_FINAL_SYNC` | A successful full-history Gitleaks result for the final publication candidate is mandatory. GitHub Actions still fails before job creation, so no successful candidate scan can be claimed. |
+| GitHub Actions execution | `EXTERNAL_BLOCKER` | Fresh OSS push `fcbd4d622b5f8630e9e9abe3d5dccd623b8e2a71` produced Actions run `31564173799`, path `BuildFailed`, conclusion `startup_failure`, before any job started. The previous attestation-status run `31564067694` likewise had zero jobs; attempting to re-run failed jobs returned `403 This workflow run cannot be retried`. Repository Actions-policy/secret-scanning endpoints are also inaccessible to the connected GitHub App (`403 Resource not accessible by integration`). |
 | Synthetic PKCS#12 fixture | `PASS_TEST_ONLY` | `app/src/androidTest/assets/synthetic-identity.p12.b64` is an intentionally public synthetic instrumentation fixture with public test passphrase and synthetic holder; see `docs/test-fixtures.md`. |
 | Release signing material | `PASS_CURRENT_TREE` | Release signing is supplied outside Git through explicit configuration; no fallback committed production key is accepted. Re-check after final synchronization. |
 | Git-history author/committer email privacy | `PASS_USER_ACCEPTED` | The maintainer explicitly accepted publication of the existing author/committer email metadata on 2026-08-12. No history rewrite is required for this gate. |
@@ -29,13 +29,13 @@
 | Launcher/custom visual provenance | `PASS_PROJECT_ORIGIN_REPLACEMENT_BUILD_PENDING` | The same remediation commit removes all 20 unresolved launcher PNGs and adds project-specific vector foreground/background plus anydpi fallback XML while preserving adaptive-icon references. Publication policy test is GREEN for the post-remediation path state; Android resource/build verification remains required. |
 | Publication visual-asset policy | `PASS_PATH_LEVEL` | `tools/test_publication_visual_assets.py` forbids the 21 unresolved binary paths. RED was observed before replacement; a fresh post-remediation execution exits successfully with one test passing. This is a provenance/path contract, not an Android compiler result. |
 | Unofficial-project disclosure in app | `PASS_REVIEWED` | UI has a visible `Cliente no oficial para uso personal` disclosure in the brand header. Public README and SECURITY/CONTRIBUTING docs add stronger no-affiliation language. |
-| Public README | `PASS_CURRENT_BRANCH` | README now reflects the resolved email/visual provenance decisions, remaining publication gates, independent/unofficial status, security model and provisional Apache-2.0 decision. Re-review after final synchronization. |
+| Public README | `PASS_CURRENT_BRANCH` | README reflects resolved email/visual provenance, completed maintainer attestation, remaining publication gates, independent/unofficial status, security model and provisional Apache-2.0 decision. Re-review after final synchronization. |
 | SECURITY policy | `PASS_CURRENT_BRANCH` | `SECURITY.md` defines sensitive-reporting rules, credential/evidence constraints, QA/release invariants and explicitly denies authorization for third-party public-service security testing. Re-review after final synchronization. |
 | CONTRIBUTING policy | `PASS_CURRENT_BRANCH` | `CONTRIBUTING.md` defines test, privacy, research-boundary and provenance requirements for future contributors. Re-review after final synchronization. |
 | NOTICE / third-party provenance | `PASS_FOR_SOURCE_PUBLICATION` | NOTICE, provenance ledger and dependency audit distinguish repository source publication from exact binary redistribution obligations. Final APK/AAB notices remain a release-time gate. |
 | Root project `LICENSE` | `INTENTIONALLY_ABSENT` | Apache-2.0 is the current provisional candidate, but do not add it until final full-history scan, Android build/resource verification and final synchronization are complete. |
 | Repository visibility | `PRIVATE_REQUIRED` | Do not switch to public while any publication blocker remains. |
-| Sync with current autonomous head | `BLOCKED_FINAL_STEP` | Current comparison against autonomous head `f77cbd13434fe0b66876ec957db73e2b16751837` is diverged from merge-base `c1090f6431486501b46f44e1494289f5f48e9cfb`: both lines have advanced independently. Final synchronization must be conflict-aware and followed by repeat verification. |
+| Sync with current autonomous head | `BLOCKED_FINAL_STEP` | Latest autonomous head observed is `b3eab817d9deb1d9993e382c23c9c04232e4381e`. Relative to the previous observed `f77cbd1…`, it adds one commit touching only `app/src/main/java/dev/junta/firmamobile/browser/WebMessageBridge.kt`. The OSS and autonomous lines still diverge from the earlier common base; final synchronization must be conflict-aware and followed by repeat verification. |
 | Codex for OSS application | `NOT_READY` | Prepare truthful form evidence only after repository is safely public and maintainer/public repository metadata is verified. |
 
 ## Remaining hard blockers
