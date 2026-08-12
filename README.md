@@ -62,12 +62,16 @@ Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting source, compatibilit
 
 Source/asset/data provenance is tracked in [`docs/provenance.md`](docs/provenance.md). Known third-party material retains its own license, including the bundled Bebas Neue font under SIL Open Font License 1.1.
 
+The earlier unresolved custom WebP/launcher PNG artwork has been removed from the publication candidate and replaced with simple project-specific XML/vector resources. See [`docs/visual-asset-audit.md`](docs/visual-asset-audit.md). Final Android resource/build verification is still required before publication approval.
+
 Third-party public-service names, domains, marks and software are referenced descriptively for interoperability. They remain subject to their respective owners' rights and licenses.
 
 ## License status
 
-**No repository-wide open-source license has been applied yet.** This branch is a publication-readiness candidate, not a public OSS release. The provenance review still has unresolved custom visual-asset ownership and other final publication gates.
+**No repository-wide open-source license has been applied yet.** This branch is a publication-readiness candidate, not a public OSS release. Apache License 2.0 is the current provisional candidate for project-origin source; see [`docs/license-selection.md`](docs/license-selection.md).
 
 Until a root `LICENSE` is added, do not assume permission to copy, redistribute, modify or relicense repository-owned source merely because it is visible to collaborators.
 
-The repository must remain private until the publication checklist in `docs/superpowers/specs/2026-08-11-oss-publication-readiness-design.md` is complete, including full-history secret scanning and the Git-history privacy decision.
+The existing author/committer email metadata has been explicitly accepted for publication and does not require a Git-history rewrite. Remaining pre-publication gates include explicit maintainer source-rights attestation, a successful full-history secret scan, Android resource/build verification for the replacement visual resources, synchronization with the final autonomous-development head and repetition of tree-dependent checks.
+
+The repository must remain private until the publication status in [`docs/oss-publication-status.md`](docs/oss-publication-status.md) is clear for public release.
