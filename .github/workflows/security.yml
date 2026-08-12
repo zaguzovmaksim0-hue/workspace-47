@@ -46,7 +46,9 @@ jobs:
           set -euo pipefail
           canary_dir="$(mktemp -d)"
           trap 'rm -rf "$canary_dir"' EXIT
-          printf '%s\n' 'token = "ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789"' >"$canary_dir/canary.txt"
+          canary_prefix='ghp_'
+          canary_body='aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789'
+          printf 'token = "%s%s"\n' "$canary_prefix" "$canary_body" >"$canary_dir/canary.txt"
           set +e
           ./gitleaks dir "$canary_dir" --no-banner --exit-code 86 >/dev/null 2>&1
           status=$?
