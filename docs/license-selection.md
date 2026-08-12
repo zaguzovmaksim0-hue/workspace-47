@@ -1,38 +1,47 @@
 # Project license selection
 
-**Status:** provisional; do not add root `LICENSE` yet
+**Status:** approved for source publication
 
-## Recommended candidate
+## Selected project license
 
-**Apache License 2.0** is the current preferred root license for project-origin Junta Firma Mobile source. The maintainer source-rights attestation was explicitly confirmed on 2026-08-12. Autonomous development was stopped and the source-publication candidate is pinned to the last recorded Codex Cloud-green product SHA, `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`. The only remaining prerequisites are the final full-history secret scan and Android/Gradle verification of the OSS candidate.
+**Apache License 2.0** applies to project-origin Junta Firma Mobile source and documentation unless a file or directory is explicitly identified as third-party or separately licensed.
+
+The root `LICENSE` contains the unmodified Apache License 2.0 text. `NOTICE`, `docs/provenance.md`, `docs/visual-asset-audit.md`, and `docs/licenses/runtime-dependency-audit.md` remain part of the licensing/provenance record.
+
+## Approval evidence
+
+The source-publication candidate was verified in native Termux at candidate SHA `6b5a2ab13497c6c623a223b4a951338f822ccba6`, with product cutoff `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb` as an ancestor.
+
+Mandatory publication gates passed:
+
+- Gitleaks 8.30.1, full history/all refs: 424 commits scanned, 0 findings, exit 0;
+- publication visual policy: exit 0, no legacy 21 binary visual paths returned;
+- Gradle 9.4.1 / Java 17 with verified Termux AAPT2: configuration verification, Debug/QA unit tests, Debug/QA lint, Debug/QA/QA-AndroidTest assemblies all exit 0;
+- `verify-android-artifacts.sh`: PASS;
+- `verify-release-fail-closed.sh`: PASS;
+- Python tooling tests: 113 tests, 1 skipped, 0 failures, exit 0;
+- Go relay test/vet/build: PASS. Native `-race` is unsupported on Android/arm64 and remains optional supporting evidence rather than a source-publication blocker.
+
+The working tree was clean and origin matched the verified candidate.
 
 ## Rationale
 
-- The project is intended for public open-source maintenance and interoperability work rather than source-available-only distribution.
-- Apache-2.0 gives explicit copyright permissions and an express patent license, which is useful for a security/interoperability-oriented software project.
-- A large portion of the reviewed Android/Kotlin ecosystem dependencies is already Apache-2.0; those dependencies remain separately licensed, but using Apache-2.0 for project-origin source keeps the licensing model comparatively simple.
-- Reviewed MIT/BSD dependencies remain under their own licenses and do not need to be relicensed as project code.
-- The source audit has not identified a vendored GPL/EUPL AutoFirma/Cliente @firma implementation inside the project-owned `afirma_shim.js` path. The maintainer explicitly confirmed the no-unlicensed-copy/source-rights attestation for this and the other project-origin source on 2026-08-12. If later evidence contradicts that attestation, this recommendation must be reopened before publication.
-- The earlier unresolved WebP/launcher PNG set has been removed from the publication branch and replaced with simple project-specific XML/vector resources in commit `19fe276d3f62a2d6e6e427e3637877318ee18003`; XML structure and manifest wiring have been rechecked, but final Android resource/Gradle verification is still pending.
+- Apache-2.0 provides explicit copyright permissions and an express patent license suitable for an interoperability/security-oriented open-source project.
+- Reviewed Android/Kotlin ecosystem dependencies remain under their own upstream licenses; choosing Apache-2.0 for project-origin material does not relicense them.
+- Reviewed MIT/BSD dependencies remain separately licensed.
+- The source/provenance review did not identify a vendored GPL/EUPL AutoFirma/Cliente @firma implementation in project-owned source; the maintainer explicitly confirmed the source-rights/no-unlicensed-copy attestation on 2026-08-12.
+- The previously unresolved WebP/launcher PNG set was removed and replaced with project-origin XML/vector resources, and the final Android resource/build gates passed.
 
-## Material not covered by the future root license
+## Material not relicensed by the root license
 
-A root Apache-2.0 file must not be presented as relicensing:
+The root Apache-2.0 license does not relicense:
 
-- Bebas Neue, which remains under SIL OFL 1.1;
-- Gradle Wrapper material, which remains under its upstream terms;
-- external Maven/Python dependencies;
+- Bebas Neue, which remains under SIL Open Font License 1.1;
+- Gradle Wrapper/upstream material under its existing upstream terms;
+- external Maven, Go, Python or other dependencies;
 - third-party names, marks, services, public portals or protocols;
-- any future third-party or separately licensed asset introduced after this review.
+- any separately licensed third-party material identified by `NOTICE`, file headers, or `docs/licenses/`.
 
-The repository `NOTICE`, `docs/provenance.md`, `docs/visual-asset-audit.md`, and `docs/licenses/runtime-dependency-audit.md` remain part of the publication record.
+## Binary distribution boundary
 
-## Conditions before adding root `LICENSE`
-
-1. Obtain the required full-history secret scan on the frozen publication candidate.
-2. Run Android resource/Gradle verification for the project-origin visual replacements and the final OSS candidate on a working execution channel.
-3. Recheck that no source or asset changes made during those two verification steps alter the licensing conclusion.
-
-The maintainer attestation, existing Gmail history metadata, former 21 unresolved visual binary paths, and autonomous-head synchronization are no longer open conditions. Later interrupted TDD RED commits were deliberately excluded from the candidate; the working autonomous/cutoff refs are pinned to the last Cloud-green product checkpoint.
-
-Until the two remaining execution conditions pass, absence of a root `LICENSE` is deliberate.
+Approval here is for **source publication**. APK/AAB distribution remains subject to the exact-artifact dependency and NOTICE review described in `docs/licenses/runtime-dependency-audit.md`.
