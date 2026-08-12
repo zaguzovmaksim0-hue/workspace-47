@@ -14,19 +14,23 @@ The maintainer should confirm all of the following statements exactly or identif
 - [ ] To the best of my knowledge, the project-origin Kotlin/Java, Go, Python and JavaScript implementation was created specifically for Junta Firma Mobile and was not copied from a third-party codebase without a compatible license and required attribution.
 - [ ] In particular, I am not aware of `app/src/main/res/raw/afirma_shim.js` containing copied implementation text from AutoFirma, Cliente @firma/MiniApplet or another third-party source that is being silently relicensed as Junta Firma Mobile code.
 - [ ] Third-party dependencies, fonts, protocols, names, public-service interoperability targets and other separately identified material remain under their own licenses/rights and are excluded from any claim that the root project license owns or relicenses them.
-- [ ] I authorize publication of the project-origin source under the project license selected after the remaining provenance gates are complete.
+- [ ] I authorize publication of the project-origin source under the project license selected after the remaining publication gates are complete.
 
-## Explicit exclusions
+## Visual-resource state
 
-This attestation does **not** resolve the currently unknown source/redistribution rights for:
+The earlier unresolved `jfm_home_background.webp` and 20 custom launcher PNG paths are no longer part of the publication candidate. Commit `19fe276d3f62a2d6e6e427e3637877318ee18003` removes them and substitutes project-specific XML/vector resources as recorded in `docs/visual-asset-audit.md` and `docs/provenance.md`.
 
-- `app/src/main/res/drawable-nodpi/jfm_home_background.webp`;
-- the custom launcher/brand PNG assets identified by the visual-assets publication audit.
+Those replacement resources fall under the general project-origin/source-rights confirmation above to the extent licensable rights exist. This attestation does not claim ownership of third-party names, services, protocols or separately licensed material.
 
-Those assets must still be replaced, removed, or independently proven redistributable before a blanket project license is applied.
+## Gates not replaced by this attestation
 
-It also does not replace the final full-history secret scan, final branch synchronization, or exact APK/AAB third-party notice audit.
+Even after maintainer confirmation, publication still requires:
+
+- final full-history secret scanning on the synchronized candidate;
+- Android resource/build verification on a working execution channel;
+- final synchronization with the autonomous-development head and repetition of tree-dependent checks;
+- exact third-party notice verification before any APK/AAB binary distribution.
 
 ## Completion record
 
-Do not mark this gate complete merely because this template exists. When the maintainer explicitly confirms the statements, record the confirmation date and corresponding publication-status update here without inventing a signature or identity that was not supplied.
+Do not mark this gate complete merely because this template exists. When the maintainer explicitly confirms all five statements, record the confirmation date and corresponding publication-status update here without inventing a signature or identity that was not supplied.
