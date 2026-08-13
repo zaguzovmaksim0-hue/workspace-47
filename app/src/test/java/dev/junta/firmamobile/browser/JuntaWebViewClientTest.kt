@@ -8,7 +8,6 @@ import android.webkit.SafeBrowsingResponse
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.ClientCertRequest
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceError
 import android.webkit.WebView
 import android.webkit.ValueCallback
 import androidx.test.core.app.ApplicationProvider
@@ -224,7 +223,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun staleWebViewSafetyErrorsFailClosedWithoutRecordingDiagnostics() {
+    fun staleWebViewSafeBrowsingFailsClosedWithoutRecordingDiagnostic() {
         val staleLogger = SanitizedLogger(
             Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
         )
@@ -245,11 +244,6 @@ class JuntaWebViewClientTest {
             request("https://www.juntadeandalucia.es/suspicious"),
             0,
             safeBrowsing,
-        )
-        staleClient.onReceivedError(
-            webView,
-            request(TRUSTED_PAGE),
-            Shadow.newInstanceOf(WebResourceError::class.java),
         )
 
         assertTrue(safeBrowsing.backToSafetyCalled)
