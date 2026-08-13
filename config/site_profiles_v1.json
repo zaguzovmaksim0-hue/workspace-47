@@ -541,6 +541,28 @@
         {"url":"https://tramites.juntaex.es/sta/resources/js/autoscript.js","reviewedOn":"2026-08-13"},
         {"url":"https://tramites.juntaex.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2","reviewedOn":"2026-08-13"}
       ]
+    },
+    {
+      "profileId": "la-palma-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Cabildo Insular de La Palma — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedeelectronica.cabildodelapalma.es/",
+      "initiatorOrigins": ["https://sedeelectronica.cabildodelapalma.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma","inputAdapterId":"la-palma-batch-autoscript-v1","callbackContractId":"la-palma-batch-result-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sedeelectronica.cabildodelapalma.es/","reviewedOn":"2026-08-13"},
+        {"url":"https://sedeelectronica.cabildodelapalma.es/sta/resources/js/sta-autofirma-lote.js","reviewedOn":"2026-08-13"},
+        {"url":"https://sedeelectronica.cabildodelapalma.es/sta/resources/js/autoscript.js","reviewedOn":"2026-08-13"},
+        {"url":"https://sedeelectronica.cabildodelapalma.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.3","reviewedOn":"2026-08-13"}
+      ]
     }
   ]
 }

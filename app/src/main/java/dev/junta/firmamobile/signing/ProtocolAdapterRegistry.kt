@@ -115,6 +115,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("extremadura-batch-result-v1"),
                 signingProtocolId = ExtremaduraBatchProtocolAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId("la-palma-sede-electronica"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("la-palma-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("la-palma-batch-result-v1"),
+                signingProtocolId = LaPalmaBatchProtocolAdapter.ID,
+            ),
         ),
     )
 }
