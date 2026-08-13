@@ -125,6 +125,32 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `PAG REG alias keeps PAG metadata and inherits only the exact QA REG AGE launch`() {
+        val portalId = PortalId("age-pag-reg")
+        val profileId = ProfileId("reg-age-redsara")
+        val pagEntry = java.net.URI(
+            "https://sede.administracion.gob.es/PAG_Sede/ServiciosElectronicos/RegistroElectronicoGeneral.html?idioma=es&imprimir=1",
+        )
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(pagEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, pagEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
+
+    @Test
     fun `US alias keeps US metadata and inherits only the exact QA REG AGE launch`() {
         val portalId = PortalId("us-sede")
         val profileId = ProfileId("reg-age-redsara")
