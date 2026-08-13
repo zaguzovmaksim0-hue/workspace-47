@@ -8,6 +8,7 @@ import android.webkit.SafeBrowsingResponse
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.ClientCertRequest
 import android.webkit.WebResourceRequest
+import android.webkit.TestWebResourceError
 import android.webkit.WebView
 import android.webkit.ValueCallback
 import androidx.test.core.app.ApplicationProvider
@@ -220,6 +221,62 @@ class JuntaWebViewClientTest {
         assertFalse(shadowOf(handler).wasProceedCalled())
         assertTrue(safeBrowsing.backToSafetyCalled)
         assertFalse(safeBrowsing.proceedCalled)
+    }
+
+    @Test
+    fun staleWebViewSafeBrowsingFailsClosedWithoutRecordingDiagnostic() {
+        val staleLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        var active = true
+        val staleCallbacks = RecordingBrowserCallbacks()
+        val staleClient = JuntaWebViewClient(
+            callbacks = staleCallbacks,
+            logger = staleLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+            isActiveWebView = { active },
+        )
+        active = false
+        val safeBrowsing = RecordingSafeBrowsingResponse()
+
+        staleClient.onSafeBrowsingHit(
+            webView,
+            request("https://www.juntadeandalucia.es/suspicious"),
+            0,
+            safeBrowsing,
+        )
+
+        assertTrue(safeBrowsing.backToSafetyCalled)
+        assertFalse(safeBrowsing.proceedCalled)
+        assertTrue(staleCallbacks.events.isEmpty())
+        assertEquals("", staleLogger.exportText())
+    }
+
+    @Test
+    fun staleWebViewMainFrameNetworkErrorDoesNotRecordDiagnostic() {
+        val staleLogger = SanitizedLogger(
+            Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+        )
+        var active = true
+        val staleCallbacks = RecordingBrowserCallbacks()
+        val staleClient = JuntaWebViewClient(
+            callbacks = staleCallbacks,
+            logger = staleLogger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentPageUrl = { TRUSTED_PAGE },
+            isActiveWebView = { active },
+        )
+        active = false
+
+        staleClient.onReceivedError(
+            webView,
+            request(TRUSTED_PAGE),
+            TestWebResourceError(-2, "synthetic network failure"),
+        )
+
+        assertTrue(staleCallbacks.events.isEmpty())
+        assertEquals("", staleLogger.exportText())
     }
 
     @Test

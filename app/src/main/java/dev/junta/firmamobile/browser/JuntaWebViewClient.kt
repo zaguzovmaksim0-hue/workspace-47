@@ -243,9 +243,9 @@ class JuntaWebViewClient(
         callback: SafeBrowsingResponse,
     ) {
         callback.backToSafety(true)
-        logger.recordBrowserEvent(DiagnosticEventCode.SAFE_BROWSING_BLOCKED)
-        if (isCurrentWebView(view) && request.isForMainFrame) {
-            callbacks.onBrowserError(BrowserErrorCode.SAFE_BROWSING)
+        if (isCurrentWebView(view)) {
+            logger.recordBrowserEvent(DiagnosticEventCode.SAFE_BROWSING_BLOCKED)
+            if (request.isForMainFrame) callbacks.onBrowserError(BrowserErrorCode.SAFE_BROWSING)
         }
     }
 
@@ -254,9 +254,9 @@ class JuntaWebViewClient(
         request: WebResourceRequest,
         error: WebResourceError,
     ) {
-        if (request.isForMainFrame) {
+        if (request.isForMainFrame && isCurrentWebView(view)) {
             logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR)
-            if (isCurrentWebView(view)) callbacks.onBrowserError(BrowserErrorCode.NETWORK_ERROR)
+            callbacks.onBrowserError(BrowserErrorCode.NETWORK_ERROR)
         }
     }
 
