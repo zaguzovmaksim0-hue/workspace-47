@@ -524,6 +524,7 @@ class SiteProfileCatalogParserTest {
         assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
         assertEquals(false, policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)
+        assertEquals(443, policy.requestPort)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
@@ -580,6 +581,7 @@ class SiteProfileCatalogParserTest {
         assertEquals(setOf("ticketId", "webSessionId"), policy.requiredEphemeralQueryParameters)
         assertTrue(policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)
+        assertEquals(443, policy.requestPort)
         assertEquals(
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolve(

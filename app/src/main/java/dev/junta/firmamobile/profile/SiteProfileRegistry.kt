@@ -82,7 +82,9 @@ class SiteProfileRegistry(
         if (compatibilityStatus == CompatibilityStatus.BROWSE_ONLY && origin in initiatorOrigins) {
             return TrustMode.BROWSE_ONLY
         }
-        if (origin in (clientAuthPolicy?.requestOrigins ?: emptySet())) return TrustMode.BROWSE_ONLY
+        if (clientAuthPolicy?.requestPort == 443 && origin in clientAuthPolicy.requestOrigins) {
+            return TrustMode.BROWSE_ONLY
+        }
         if (origin in initiatorOrigins) {
             return when {
                 Capability.SIGN in capabilities || Capability.SELECT_CERTIFICATE in capabilities ->

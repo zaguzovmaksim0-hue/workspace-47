@@ -203,11 +203,14 @@ class ClientAuthNavigationAuthorizer internal constructor(
 
     private fun currentBelongsTo(profile: SiteProfile, currentUrl: String?): Boolean {
         val current = currentUrl?.let(::strictHttpsUri) ?: return false
+        if (current.port !in setOf(-1, 443)) return false
         return runCatching { ExactOrigin.parse("https://${current.host}") }.getOrNull() in profile.initiatorOrigins
     }
 
     private fun URI.matches(policy: ClientAuthPolicy): Boolean {
         if (rawPath != policy.requestPath || rawFragment != null) return false
+        val effectivePort = if (port == -1) 443 else port
+        if (effectivePort != policy.requestPort) return false
         val origin = runCatching { ExactOrigin.parse("https://$host") }.getOrNull() ?: return false
         if (origin !in policy.requestOrigins) return false
         val expectedNames = policy.fixedQueryParameters.keys + policy.requiredEphemeralQueryParameters
@@ -266,7 +269,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         require(raw.length <= MAX_URL_CHARS && raw.none(Char::isISOControl))
         val uri = URI(raw)
         require(!uri.isOpaque && uri.scheme == "https" && uri.host != null && uri.userInfo == null)
-        require(uri.port == -1 || uri.port == 443)
+        require(uri.port == -1 || uri.port in 1..65_535)
         ExactOrigin.parse("https://${uri.host}")
         uri
     }.getOrNull()

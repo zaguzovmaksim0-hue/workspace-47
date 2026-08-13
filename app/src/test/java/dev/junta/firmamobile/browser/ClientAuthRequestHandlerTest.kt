@@ -50,6 +50,31 @@ class ClientAuthRequestHandlerTest {
     }
 
     @Test
+    fun valladolidClientCertificateRequestProceedsOnlyOnTheObservedPort() {
+        val exact = RecordingRequest(
+            host = "www.sede.diputaciondevalladolid.es",
+            port = 21460,
+            keyTypes = arrayOf("RSA"),
+            principals = emptyArray(),
+        )
+        valladolidHandler(epoch = 33).handle(exact)
+        assertEquals(1, exact.proceeds)
+        assertEquals(0, exact.ignores)
+
+        listOf(443, 21461).forEach { wrongPort ->
+            val rejected = RecordingRequest(
+                host = "www.sede.diputaciondevalladolid.es",
+                port = wrongPort,
+                keyTypes = arrayOf("RSA"),
+                principals = emptyArray(),
+            )
+            valladolidHandler(epoch = 34).handle(rejected)
+            assertEquals(0, rejected.proceeds)
+            assertEquals(1, rejected.ignores)
+        }
+    }
+
+    @Test
     fun aeatLeafSubjectIsNotAcceptedAsAnIssuer() {
         val issuedIdentity = issuedSyntheticIdentity()
         assertNotEquals(
@@ -246,6 +271,32 @@ class ClientAuthRequestHandlerTest {
         )
     }
 
+    private fun valladolidHandler(
+        epoch: Long,
+        currentEpoch: () -> Long = { epoch },
+        clears: AtomicInteger = AtomicInteger(),
+    ) = ClientAuthRequestHandler(
+        grant = ClientAuthGrant(authorizedValladolid(), epoch),
+        identityProvider = { identity },
+        currentNavigationEpoch = currentEpoch,
+        clearClientCertPreferences = { clears.incrementAndGet() },
+        clock = clock,
+        monotonicNanos = monotonic::nowNanos,
+    )
+
+    private fun authorizedValladolid(): AuthorizedClientAuthTarget {
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        authorizer.observeTopLevelNavigation(
+            VALLADOLID_PROFILE, VALLADOLID_INDEX, VALLADOLID_SOURCE, 40, true,
+        )
+        authorizer.onTopLevelPageStarted(VALLADOLID_SOURCE, 41)
+        return checkNotNull(
+            authorizer.observeTopLevelNavigation(
+                VALLADOLID_PROFILE, VALLADOLID_SOURCE, VALLADOLID_TARGET, 41, true,
+            ),
+        )
+    }
+
     private fun aeatHandler(
         epoch: Long,
         currentEpoch: () -> Long = { epoch },
@@ -355,6 +406,11 @@ class ClientAuthRequestHandlerTest {
     }
 
     private companion object {
+        val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        const val VALLADOLID_INDEX = "https://www.sede.diputaciondevalladolid.es/tgauth/login"
+        const val VALLADOLID_SOURCE = "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"
+        const val VALLADOLID_TARGET =
+            "https://www.sede.diputaciondevalladolid.es:21460/c/portal/cert-login"
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         const val AEAT_SOURCE =
