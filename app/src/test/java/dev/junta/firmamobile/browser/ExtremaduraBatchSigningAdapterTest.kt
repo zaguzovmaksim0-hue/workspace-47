@@ -1,21 +1,12 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
-import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
-import dev.junta.firmamobile.profile.CallbackContractId
-import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
-import dev.junta.firmamobile.profile.ProtocolInputAdapterId
-import dev.junta.firmamobile.profile.ProtocolOperation
-import dev.junta.firmamobile.profile.SiteProfile
-import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.SigningErrorCode
-import java.net.URI
 import java.time.Clock
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneOffset
 import org.json.JSONArray
 import org.json.JSONObject
@@ -80,39 +71,7 @@ class ExtremaduraBatchSigningAdapterTest {
         assertEquals(SigningErrorCode.PROFILE_NOT_ACTIVE, wrongProfile.code)
     }
 
-    private fun extremaduraRegistry(): SiteProfileRegistry {
-        val catalog = BuiltInSiteProfiles.catalog
-        val extremadura = melillaTemplate().copy(
-            profileId = ProfileId("extremadura-tramites"),
-            displayName = "Extremadura test fixture",
-            startUrl = URI("https://tramites.juntaex.es/"),
-            initiatorOrigins = setOf(ExactOrigin.parse("https://tramites.juntaex.es")),
-            operationPolicies = melillaTemplate().operationPolicies.mapValues { (operation, policy) ->
-                if (operation == ProtocolOperation.SIGN) {
-                    policy.copy(
-                        inputAdapterId = ProtocolInputAdapterId(ExtremaduraBatchProtocolAdapter.ID.value),
-                        callbackContractId = CallbackContractId("extremadura-batch-result-v1"),
-                    )
-                } else {
-                    policy
-                }
-            },
-            evidence = listOf(
-                melillaTemplate().evidence.first().copy(
-                    url = URI("https://tramites.juntaex.es/"),
-                    reviewedOn = LocalDate.of(2026, 8, 12),
-                ),
-            ),
-        )
-        return SiteProfileRegistry(
-            catalog.copy(profiles = catalog.profiles + extremadura),
-            BuildTrustPolicy.QA,
-        )
-    }
-
-    private fun melillaTemplate(): SiteProfile = BuiltInSiteProfiles.catalog.profiles.single {
-        it.profileId.value == MelillaBatchBridgeAdapter.PROFILE_ID
-    }
+    private fun extremaduraRegistry() = BuiltInSiteProfiles.qaRegistry
 
     private fun extremaduraEnvelope(): String = JSONObject()
         .put("type", "MINIAPPLET_BATCH")

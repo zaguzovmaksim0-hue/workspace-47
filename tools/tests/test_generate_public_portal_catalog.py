@@ -199,6 +199,26 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", melilla["limitations"].lower())
         self.assertNotIn("VERIFIED_E2E", melilla["inventoryStatus"])
 
+    def test_extremadura_sta_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        extremadura = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "extremadura-tramites"
+        )
+
+        self.assertEqual("extremadura-tramites", extremadura["profileId"])
+        self.assertEqual("ES-PUB-0109", extremadura["inventoryId"])
+        self.assertEqual("https://tramites.juntaex.es/", extremadura["entryUrl"])
+        self.assertEqual("E2E_PENDING", extremadura["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", extremadura["inventoryStatus"])
+        self.assertEqual("2026-08-13", extremadura["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", extremadura["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", extremadura["observedMechanisms"])
+        self.assertIn("CADES", extremadura["observedSignatureFormats"])
+        self.assertIn("e2e", extremadura["limitations"].lower())
+        self.assertIn("qa", extremadura["limitations"].lower())
+        self.assertNotEqual("VERIFIED_E2E", extremadura["inventoryStatus"])
+
     def test_jccm_certificate_probe_binds_separate_public_catalog_surface(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         broad = next(

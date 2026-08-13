@@ -108,6 +108,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("melilla-batch-result-v1"),
                 signingProtocolId = MelillaBatchProtocolAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId("extremadura-tramites"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("extremadura-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("extremadura-batch-result-v1"),
+                signingProtocolId = ExtremaduraBatchProtocolAdapter.ID,
+            ),
         ),
     )
 }
