@@ -32,6 +32,7 @@ class JuntaOriginPolicyTest {
     private val jccm = ProfileId("jccm-certificate-login-probe")
     private val sevilla = ProfileId("sevilla-atse-certificate-login")
     private val melilla = ProfileId("melilla-sede")
+    private val extremadura = ProfileId("extremadura-tramites")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -57,6 +58,7 @@ class JuntaOriginPolicyTest {
             "ventanillaelectronica.jccm.es",
             "www.sevilla.org",
             "sede.melilla.es",
+            "tramites.juntaex.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -126,6 +128,10 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("www.sevilla.org"), JuntaOriginPolicy.browserAllowedHosts(sevilla))
         assertEquals(setOf("sede.melilla.es"), JuntaOriginPolicy.browserAllowedHosts(melilla))
         assertEquals(
+            setOf("tramites.juntaex.es"),
+            JuntaOriginPolicy.browserAllowedHosts(extremadura),
+        )
+        assertEquals(
             setOf("https://ventanillaelectronica.jccm.es"),
             JuntaOriginPolicy.webMessageOriginRules(jccm),
         )
@@ -136,6 +142,10 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://sede.melilla.es"),
             JuntaOriginPolicy.webMessageOriginRules(melilla),
+        )
+        assertEquals(
+            setOf("https://tramites.juntaex.es"),
+            JuntaOriginPolicy.webMessageOriginRules(extremadura),
         )
     }
 
