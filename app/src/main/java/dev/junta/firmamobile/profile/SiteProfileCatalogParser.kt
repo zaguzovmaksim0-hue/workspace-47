@@ -182,6 +182,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == EXTREMADURA_PROFILE_ID) {
                 validateExtremaduraProfile(p)
             }
+            if (p.profileId.value == LA_PALMA_PROFILE_ID) {
+                validateLaPalmaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -380,6 +383,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateLaPalmaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == LA_PALMA_PROFILE_VERSION)
+        require(profile.displayName == LA_PALMA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == LA_PALMA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(LA_PALMA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = LA_PALMA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("la-palma-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("la-palma-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -565,12 +601,14 @@ object SiteProfileCatalogParser {
         "miniapplet-autoscript-v1",
         "melilla-batch-autoscript-v1",
         "extremadura-batch-autoscript-v1",
+        "la-palma-batch-autoscript-v1",
     )
     private val REGISTERED_CALLBACKS = setOf(
         "miniapplet-sign-callback-v1",
         "autoscript-sign-callback-v1",
         "melilla-batch-result-v1",
         "extremadura-batch-result-v1",
+        "la-palma-batch-result-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
@@ -591,6 +629,13 @@ object SiteProfileCatalogParser {
     private const val EXTREMADURA_ORIGIN = "https://tramites.juntaex.es"
     private const val EXTREMADURA_SAFE_DESCRIPTION =
         "Firma por lotes en Trámites de la Junta de Extremadura"
+    private const val LA_PALMA_PROFILE_ID = "la-palma-sede-electronica"
+    private const val LA_PALMA_PROFILE_VERSION = 1
+    private const val LA_PALMA_DISPLAY_NAME = "Cabildo Insular de La Palma — Sede electrónica"
+    private const val LA_PALMA_START_URL = "https://sedeelectronica.cabildodelapalma.es/"
+    private const val LA_PALMA_ORIGIN = "https://sedeelectronica.cabildodelapalma.es"
+    private const val LA_PALMA_SAFE_DESCRIPTION =
+        "Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma"
     private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
     private const val SEVILLA_ATSE_PROFILE_VERSION = 1
     private const val SEVILLA_ATSE_DISPLAY_NAME =

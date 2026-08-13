@@ -4469,20 +4469,20 @@ records:
     procedure_page: "NO_VERIFICADO"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    js_client: "AutoScript / STAAutofirmaLote"
+    protocol_family: "AUTOSCRIPT_STA_BATCH_TRIFASICO"
+    signature_format: "CAdES / PAdES / XAdES (perfil móvil QA limitado a CAdES detached)"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "URLs runtime bajo /sta/AutofirmaLote/{presign,postsign,getdata}; valores concretos suministrados por backend"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma por lotes AutoScript/STA con perfil móvil QA limitado al contrato CAdES observado."
+    protocol_evidence: "La sede pública carga AutoScript, sta-autofirma-lote.js y webAppsFwk.js; los tres recursos son byte-idénticos a los ya validados en Extremadura. firmarLote declara SHA256withRSA/CAdES/sign y usa el contrato STA batch trifásico."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I07B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["I07B", "I07C", "I07D", "I07E", "I07F"]
+    reason: "Contrato STA batch implementado solo en QA; E2E físico/manual y aceptación por un trámite real siguen pendientes. Las URLs presign/postsign/getdata son efímeras y no se fijan como endpoints estáticos."
+    reviewed_at: "2026-08-13"
+    next_gate: "E2E físico/manual autorizado; no promover release ni VERIFIED_E2E sin evidencia separada."
 
   - inventory_id: "ES-PUB-0131"
     surface_key: "la-gomera-portal-institucional"
@@ -6379,6 +6379,10 @@ Orden de expansión recomendado:
 [I06B]: https://sede.tenerife.es/
 [I07A]: https://www.cabildodelapalma.es/
 [I07B]: https://sedeelectronica.cabildodelapalma.es/
+[I07C]: https://sedeelectronica.cabildodelapalma.es/sta/resources/js/sta-autofirma-lote.js
+[I07D]: https://sedeelectronica.cabildodelapalma.es/sta/resources/js/autoscript.js
+[I07E]: https://sedeelectronica.cabildodelapalma.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.3
+[I07F]: https://sedeelectronica.cabildodelapalma.es/sta/CarpetaPublic/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME
 [I08A]: https://www.lagomera.es/
 [I08B]: https://lagomera.sedelectronica.es/info.0
 [I09A]: https://www.cabildofuer.es/cabildo/

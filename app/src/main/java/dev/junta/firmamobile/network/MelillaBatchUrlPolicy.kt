@@ -141,6 +141,51 @@ class ExtremaduraBatchUrlPolicy {
     }
 }
 
+/**
+ * Validates the observed public STA batch URL grammar for the Cabildo de La Palma portal,
+ * while fixing ownership to its one exact HTTPS host.
+ */
+class LaPalmaBatchUrlPolicy {
+    private val delegate = StaBatchUrlPolicy(HOST)
+
+    fun validate(rawUrl: String): MelillaBatchUrlValidation = delegate.validate(rawUrl)
+
+    fun validate(
+        rawUrl: String,
+        expectedOperationId: String?,
+        expectedDocumentId: String? = null,
+    ): MelillaBatchUrlValidation =
+        delegate.validate(rawUrl, expectedOperationId, expectedDocumentId)
+
+    fun validate(
+        rawUrl: String,
+        expectedOperation: MelillaBatchUrlOperation,
+        expectedOperationId: String? = null,
+        expectedDocumentId: String? = null,
+    ): MelillaBatchUrlValidation =
+        delegate.validate(rawUrl, expectedOperation, expectedOperationId, expectedDocumentId)
+
+    fun validatePreSignerUrl(rawUrl: String): MelillaBatchUrlBinding? =
+        delegate.validatePreSignerUrl(rawUrl)
+
+    fun validatePostSignerUrl(rawUrl: String): MelillaBatchUrlBinding? =
+        delegate.validatePostSignerUrl(rawUrl)
+
+    fun validateDataReference(
+        rawUrl: String,
+        expectedOperacionId: String? = null,
+        expectedDocId: String? = null,
+    ): MelillaBatchUrlBinding? =
+        delegate.validateDataReference(rawUrl, expectedOperacionId, expectedDocId)
+
+    companion object {
+        const val ORIGIN = "https://sedeelectronica.cabildodelapalma.es"
+        const val PATH = STA_BATCH_PATH
+
+        private const val HOST = "sedeelectronica.cabildodelapalma.es"
+    }
+}
+
 private class StaBatchUrlPolicy(
     private val host: String,
 ) {
