@@ -116,6 +116,7 @@ data class ClientAuthPolicy(
     val requiredEphemeralQueryParameters: Set<String>,
     val allowEmptyIssuerList: Boolean,
     val grantTtlSeconds: Int,
+    val requestPort: Int = 443,
 )
 
 data class CertificateFilterRules(

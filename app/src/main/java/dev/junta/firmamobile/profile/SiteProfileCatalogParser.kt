@@ -108,17 +108,24 @@ object SiteProfileCatalogParser {
     }
 
     private fun clientAuth(o: JObject): ClientAuthPolicy {
-        o.exact(
+        val baseKeys = arrayOf(
             "transitionMode", "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
             "requiredEphemeralQueryParameters", "allowEmptyIssuerList", "grantTtlSeconds",
         )
+        val requestPort = if ("requestPort" in o.values) {
+            o.exact(*baseKeys, "requestPort")
+            o.int("requestPort").also { require(it in 1..65_535) }
+        } else {
+            o.exact(*baseKeys)
+            443
+        }
         val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
         val fixed = stringMap(o.objValue("fixedQueryParameters"))
         val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
         require((fixed.keys intersect ephemeral).isEmpty())
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE ->
-                require(fixed.isNotEmpty() || ephemeral.isNotEmpty())
+                require(fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443)
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE ->
                 require(fixed.isEmpty() && ephemeral.isEmpty())
         }
@@ -134,6 +141,7 @@ object SiteProfileCatalogParser {
             requiredEphemeralQueryParameters = ephemeral,
             allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
             grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
+            requestPort = requestPort,
         )
     }
 
@@ -179,10 +187,13 @@ object SiteProfileCatalogParser {
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
             require((p.initiatorOrigins intersect p.trustedBrowseOrigins).isEmpty())
             require((p.redirectOrigins intersect p.trustedBrowseOrigins).isEmpty())
-            val clientAuthOrigins = p.clientAuthPolicy?.requestOrigins ?: emptySet()
-            require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty())
-            require((clientAuthOrigins intersect p.redirectOrigins).isEmpty())
-            require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
+            val clientAuthPolicy = p.clientAuthPolicy
+            val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
+            if (clientAuthPolicy?.requestPort == 443) {
+                require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty())
+                require((clientAuthOrigins intersect p.redirectOrigins).isEmpty())
+                require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
+            }
             if (p.compatibilityStatus == CompatibilityStatus.BROWSE_ONLY ||
                 p.compatibilityStatus == CompatibilityStatus.UNSUPPORTED
             ) {

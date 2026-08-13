@@ -78,7 +78,9 @@ internal class ClientAuthRequestHandler(
             return false
         }
         val requestOrigin = authorized.policy.requestOrigins.singleOrNull() ?: return false
-        if (!request.host.equals(requestOrigin.host, ignoreCase = true) || request.port != requestOrigin.port) {
+        if (!request.host.equals(requestOrigin.host, ignoreCase = true) ||
+            request.port != authorized.policy.requestPort
+        ) {
             return false
         }
         val certificate = identity.certificate
@@ -220,16 +222,17 @@ internal class ClientAuthWebViewClient(
 
     private fun isAllowed(rawUrl: String): Boolean {
         val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return false
-        if (uri.scheme != "https" || uri.host == null || uri.userInfo != null ||
-            uri.port !in setOf(-1, 443) || uri.rawFragment != null
-        ) {
+        if (uri.scheme != "https" || uri.host == null || uri.userInfo != null || uri.rawFragment != null) {
             return false
         }
+        val effectivePort = if (uri.port == -1) 443 else uri.port
+        if (effectivePort !in 1..65_535) return false
         val origin = runCatching { ExactOrigin.parse("https://${uri.host}") }.getOrNull() ?: return false
         val requestOrigins = grant.authorized.policy.requestOrigins
+        if (origin in requestOrigins && effectivePort == grant.authorized.policy.requestPort) return true
         val returnOrigins = grant.authorized.policy.sourceUrls.mapTo(linkedSetOf()) {
             ExactOrigin.parse("https://${it.host}")
         }
-        return origin in requestOrigins || origin in returnOrigins
+        return effectivePort == 443 && origin in returnOrigins
     }
 }

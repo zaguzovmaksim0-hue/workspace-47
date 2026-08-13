@@ -904,24 +904,24 @@ records:
     origin: "https://www.sede.diputaciondevalladolid.es"
     official_site: "https://www.sede.diputaciondevalladolid.es/"
     e_sede: "https://www.sede.diputaciondevalladolid.es/"
-    entry_url: "https://www.sede.diputaciondevalladolid.es/requisitos-tecnicos"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.sede.diputaciondevalladolid.es/tgauth/login"
+    procedure_page: "https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/"
     certificate_required: "SI"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://www.sede.diputaciondevalladolid.es:21460/c/portal/cert-login"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Identificación/firma con DNIe y certificados admitidos por @firma."
-    protocol_evidence: "La validación por @firma y una explicación de multifirma no prueban el transporte de un trámite."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P09", "P09A", "D06", "DP38A", "DP38B"]
-    reason: "Procedimiento, JS cliente, protocolo, formato, endpoint, cofirma y contrafirma no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Identificar una operación real sin habilitar multifirma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado digital mediante TLS cliente en el endpoint exacto :21460; firma documental bloqueada."
+    protocol_evidence: "La entrada pública /c/portal/cert-login redirige exactamente a :21460; el handshake TLS solicita certificado cliente y sin certificado retorna a /errors/no-certificate."
+    client_tls_auth: "SI"
+    evidence_ids: ["P09", "P09A", "D06", "DP38A", "DP38B", "VALLADOLID-PROCEDURE-2026-08-13", "VALLADOLID-LOGIN-2026-08-13", "VALLADOLID-CERT-REDIRECT-2026-08-13", "VALLADOLID-CLIENT-TLS-2026-08-13"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para host, ruta y puerto exactos; sin verificación E2E. La firma documental, cofirma, contrafirma y presentación jurídica permanecen bloqueadas."
+    reviewed_at: "2026-08-13"
+    next_gate: "Verificar E2E el login TLS cliente en dispositivo físico sin realizar firma documental ni presentación administrativa antes de cualquier promoción release."
 
   - inventory_id: "ES-PUB-0016"
     surface_key: "sevilla-sede"
@@ -6251,6 +6251,10 @@ Orden de expansión recomendado:
 [P08B]: https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094
 [P09]: https://www.sede.diputaciondevalladolid.es/requisitos-tecnicos
 [P09A]: https://www.sede.diputaciondevalladolid.es/preguntas-frecuentes
+[VALLADOLID-PROCEDURE-2026-08-13]: https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/
+[VALLADOLID-LOGIN-2026-08-13]: https://www.sede.diputaciondevalladolid.es/tgauth/login
+[VALLADOLID-CERT-REDIRECT-2026-08-13]: https://www.sede.diputaciondevalladolid.es/c/portal/cert-login
+[VALLADOLID-CLIENT-TLS-2026-08-13]: https://www.sede.diputaciondevalladolid.es:21460/c/portal/cert-login
 [P10]: https://sede.sevilla.org/opencms/system/modules/sede/contents/faq/Presentacion_Clave
 [P10A]: https://sede.sevilla.org/opencms/system/modules/sede/contents/faq/Error_firma
 [P10B]: https://sede.sevilla.org/opencms/system/modules/sede/contents/footer/mapa_web

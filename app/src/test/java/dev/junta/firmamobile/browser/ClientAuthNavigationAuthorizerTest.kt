@@ -46,6 +46,73 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactTwoStageValladolidRedirectAuthorizesOnlyTheObservedClientTlsPort() {
+        val valladolid = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+
+        assertNull(
+            valladolid.observeTopLevelNavigation(
+                VALLADOLID_PROFILE,
+                VALLADOLID_INDEX,
+                VALLADOLID_SOURCE,
+                80,
+                true,
+            ),
+        )
+        valladolid.onTopLevelPageStarted(VALLADOLID_SOURCE, 81)
+
+        val authorized = valladolid.observeTopLevelNavigation(
+            VALLADOLID_PROFILE,
+            VALLADOLID_SOURCE,
+            VALLADOLID_TARGET,
+            81,
+            true,
+        )
+
+        assertEquals(VALLADOLID_PROFILE, authorized?.profileId)
+        assertEquals(21460, authorized?.target?.port)
+        assertEquals("/c/portal/cert-login", authorized?.target?.rawPath)
+
+        val wrongPortSource = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos,
+        )
+        assertNull(
+            wrongPortSource.observeTopLevelNavigation(
+                VALLADOLID_PROFILE,
+                VALLADOLID_INDEX.replace(".es/", ".es:21460/"),
+                VALLADOLID_SOURCE,
+                85,
+                true,
+            ),
+        )
+        wrongPortSource.onTopLevelPageStarted(VALLADOLID_SOURCE, 86)
+        assertNull(
+            wrongPortSource.observeTopLevelNavigation(
+                VALLADOLID_PROFILE, VALLADOLID_SOURCE, VALLADOLID_TARGET, 86, true,
+            ),
+        )
+
+        listOf(
+            VALLADOLID_TARGET.replace(":21460", ""),
+            VALLADOLID_TARGET.replace(":21460", ":21461"),
+            "$VALLADOLID_TARGET?extra=1",
+        ).forEach { invalidTarget ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                fresh.observeTopLevelNavigation(
+                    VALLADOLID_PROFILE, VALLADOLID_INDEX, VALLADOLID_SOURCE, 90, true,
+                ),
+            )
+            fresh.onTopLevelPageStarted(VALLADOLID_SOURCE, 91)
+            assertNull(
+                invalidTarget,
+                fresh.observeTopLevelNavigation(
+                    VALLADOLID_PROFILE, VALLADOLID_SOURCE, invalidTarget, 91, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun hostileNavigationCannotResetConsumedDirectGrantInTheSameEpoch() {
         val direct = aeatAuthorizer()
         assertEquals(
@@ -418,10 +485,17 @@ class ClientAuthNavigationAuthorizerTest {
     private companion object {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
+        val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
         const val AEAT_TARGET =
             "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+        const val VALLADOLID_INDEX =
+            "https://www.sede.diputaciondevalladolid.es/tgauth/login"
+        const val VALLADOLID_SOURCE =
+            "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"
+        const val VALLADOLID_TARGET =
+            "https://www.sede.diputaciondevalladolid.es:21460/c/portal/cert-login"
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"

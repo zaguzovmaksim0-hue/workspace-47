@@ -66,6 +66,35 @@ class ClientAuthWebViewClientTest {
         assertEquals(1, clears.get())
     }
 
+    @Test
+    fun valladolidDedicatedTlsWebViewPinsTheRequestPortAndAllowsOnlyTheDefaultPortReturn() {
+        val epoch = AtomicInteger(15)
+        val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
+        val client = valladolidClient(epoch, callbacks)
+
+        assertFalse(
+            client.shouldOverrideUrlLoading(
+                webView, navigationRequest(VALLADOLID_TARGET, isMainFrame = true),
+            ),
+        )
+        assertFalse(
+            client.shouldOverrideUrlLoading(
+                webView, navigationRequest(VALLADOLID_SOURCE, isMainFrame = true),
+            ),
+        )
+
+        val adjacent = valladolidClient(AtomicInteger(16), RecordingCallbacks {})
+        assertTrue(
+            adjacent.shouldOverrideUrlLoading(
+                webView,
+                navigationRequest(
+                    VALLADOLID_TARGET.replace(":21460", ":21461"),
+                    isMainFrame = true,
+                ),
+            ),
+        )
+    }
+
     @Suppress("DEPRECATION")
     @Test
     fun staleClientTlsWebViewRejectsCertificateAndCannotMutateActiveBrowser() {
@@ -236,6 +265,32 @@ class ClientAuthWebViewClientTest {
             override fun getRequestHeaders(): Map<String, String> = emptyMap()
         }
 
+    private fun valladolidClient(
+        epoch: AtomicInteger,
+        callbacks: BrowserNavigationCallbacks,
+        clears: AtomicInteger = AtomicInteger(),
+    ): ClientAuthWebViewClient {
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        authorizer.observeTopLevelNavigation(
+            VALLADOLID_PROFILE, VALLADOLID_INDEX, VALLADOLID_SOURCE, 4, true,
+        )
+        authorizer.onTopLevelPageStarted(VALLADOLID_SOURCE, 5)
+        val authorized = checkNotNull(
+            authorizer.observeTopLevelNavigation(
+                VALLADOLID_PROFILE, VALLADOLID_SOURCE, VALLADOLID_TARGET, 5, true,
+            ),
+        )
+        val grant = ClientAuthGrant(authorized, epoch.get().toLong())
+        val handler = ClientAuthRequestHandler(
+            grant = grant,
+            identityProvider = { synthetic.identity },
+            currentNavigationEpoch = { epoch.get().toLong() },
+            clearClientCertPreferences = { clears.incrementAndGet() },
+            clock = clock,
+        )
+        return ClientAuthWebViewClient(grant, handler, callbacks)
+    }
+
     private fun client(
         epoch: AtomicInteger,
         callbacks: BrowserNavigationCallbacks,
@@ -311,6 +366,11 @@ class ClientAuthWebViewClientTest {
     }
 
     private companion object {
+        val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        const val VALLADOLID_INDEX = "https://www.sede.diputaciondevalladolid.es/tgauth/login"
+        const val VALLADOLID_SOURCE = "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"
+        const val VALLADOLID_TARGET =
+            "https://www.sede.diputaciondevalladolid.es:21460/c/portal/cert-login"
         val PROFILE = ProfileId("carne-joven-andalucia")
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "80a3b427c3792ccbb1c4e5414917867ecd82e1c33a0329c571251f4dcc5eb5a6",
+  "sourceRevision": "cc23e2e53c0e082bbd260745e08c9235eebe5e740ad5f36a0244d2a9a85fb6d0",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -393,31 +393,36 @@
     {
       "portalId": "diputacion-valladolid-sede",
       "inventoryId": "ES-PUB-0015",
-      "profileId": null,
+      "profileId": "diputacion-valladolid-sede",
       "displayName": "Sede electrónica de la Diputación de Valladolid",
       "organization": "Diputación Provincial de Valladolid",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Valladolid (provincia)",
-      "purpose": "Identificación/firma con DNIe y certificados admitidos por @firma.",
-      "entryUrl": "https://www.sede.diputaciondevalladolid.es/requisitos-tecnicos",
+      "purpose": "Acceso con certificado digital mediante TLS cliente en el endpoint exacto :21460; firma documental bloqueada.",
+      "entryUrl": "https://www.sede.diputaciondevalladolid.es/tgauth/login",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P09",
         "P09A",
         "D06",
         "DP38A",
-        "DP38B"
+        "DP38B",
+        "VALLADOLID-PROCEDURE-2026-08-13",
+        "VALLADOLID-LOGIN-2026-08-13",
+        "VALLADOLID-CERT-REDIRECT-2026-08-13",
+        "VALLADOLID-CLIENT-TLS-2026-08-13"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Procedimiento, JS cliente, protocolo, formato, endpoint, cofirma y contrafirma no verificados."
+      "reviewedOn": "2026-08-13",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para host, ruta y puerto exactos; sin verificación E2E. La firma documental, cofirma, contrafirma y presentación jurídica permanecen bloqueadas."
     },
     {
       "portalId": "sevilla-sede",

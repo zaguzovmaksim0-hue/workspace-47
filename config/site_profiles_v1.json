@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 16,
+  "catalogVersion": 17,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -497,6 +497,27 @@
           "url": "https://sede.melilla.es/sta/resources/js/autoscript.js",
           "reviewedOn": "2026-08-09"
         }
+      ]
+    },
+    {
+      "profileId": "diputacion-valladolid-sede",
+      "profileVersion": 1,
+      "displayName": "Diputación de Valladolid — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.sede.diputaciondevalladolid.es/tgauth/login",
+      "initiatorOrigins": ["https://www.sede.diputaciondevalladolid.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"REDIRECT_AFTER_SOURCE","requestOrigins":["https://www.sede.diputaciondevalladolid.es"],"sourceUrls":["https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"],"requestPath":"/c/portal/cert-login","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":21460},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/","reviewedOn":"2026-08-13"},
+        {"url":"https://www.sede.diputaciondevalladolid.es/tgauth/login","reviewedOn":"2026-08-13"},
+        {"url":"https://www.sede.diputaciondevalladolid.es/c/portal/cert-login","reviewedOn":"2026-08-13"}
       ]
     },
     {
