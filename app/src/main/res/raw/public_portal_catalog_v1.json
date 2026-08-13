@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "cc23e2e53c0e082bbd260745e08c9235eebe5e740ad5f36a0244d2a9a85fb6d0",
+  "sourceRevision": "732b5537dbb80ffa1aa2ee6c06161e639c389eef00609d8355c1c08d06da4b72",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4228,29 +4228,34 @@
     {
       "portalId": "diputacion-toledo-sede",
       "inventoryId": "ES-PUB-0174",
-      "profileId": null,
+      "profileId": "diputacion-toledo-sede",
       "displayName": "Sede electrónica de Diputación Provincial de Toledo",
       "organization": "Diputación Provincial de Toledo",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla-La Mancha",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://diputacion.toledo.gob.es",
+      "purpose": "Acceso con certificado a la Solicitud de propósito general mediante TLS cliente SIGEM en el endpoint exacto :843; firma y presentación permanecen bloqueadas.",
+      "entryUrl": "https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP36A",
-        "DP36B"
+        "DP36B",
+        "TOLEDO-PROCEDURES-2026-08-13",
+        "TOLEDO-REGISTRY-START-2026-08-13",
+        "TOLEDO-CERT-REDIRECT-2026-08-13",
+        "TOLEDO-CLIENT-TLS-2026-08-13"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-13",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para el source, host, ruta y puerto exactos; sin E2E. La firma documental y la presentación administrativa posteriores no se implementan ni se infieren."
     },
     {
       "portalId": "diputacion-valencia-sede",

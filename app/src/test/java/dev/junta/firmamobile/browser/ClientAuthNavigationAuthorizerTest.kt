@@ -46,6 +46,46 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactDirectToledoTransitionAuthorizesOnlyPort843AndTheObservedSource() {
+        val toledo = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+
+        val authorized = toledo.observeTopLevelNavigation(
+            TOLEDO_PROFILE, TOLEDO_SOURCE, TOLEDO_TARGET, 60, true,
+        )
+
+        assertEquals(TOLEDO_PROFILE, authorized?.profileId)
+        assertEquals(843, authorized?.target?.port)
+        assertEquals("/SIGEM_AutenticacionWeb/validacionCertificado.do", authorized?.target?.rawPath)
+
+        listOf(
+            TOLEDO_TARGET.replace(":843", ""),
+            TOLEDO_TARGET.replace(":843", ":844"),
+            "$TOLEDO_TARGET?extra=1",
+        ).forEach { invalidTarget ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                invalidTarget,
+                fresh.observeTopLevelNavigation(
+                    TOLEDO_PROFILE, TOLEDO_SOURCE, invalidTarget, 61, true,
+                ),
+            )
+        }
+
+        val wrongSource = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos,
+        )
+        assertNull(
+            wrongSource.observeTopLevelNavigation(
+                TOLEDO_PROFILE,
+                TOLEDO_SOURCE.replace("TRAM_31", "TRAM_32"),
+                TOLEDO_TARGET,
+                62,
+                true,
+            ),
+        )
+    }
+
+    @Test
     fun exactTwoStageValladolidRedirectAuthorizesOnlyTheObservedClientTlsPort() {
         val valladolid = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
 
@@ -486,10 +526,17 @@ class ClientAuthNavigationAuthorizerTest {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        val TOLEDO_PROFILE = ProfileId("diputacion-toledo-sede")
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
         const val AEAT_TARGET =
             "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+        const val TOLEDO_SOURCE =
+            "https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/" +
+                "seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&" +
+                "SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY="
+        const val TOLEDO_TARGET =
+            "https://diputacion.toledo.gob.es:843/SIGEM_AutenticacionWeb/validacionCertificado.do"
         const val VALLADOLID_INDEX =
             "https://www.sede.diputaciondevalladolid.es/tgauth/login"
         const val VALLADOLID_SOURCE =

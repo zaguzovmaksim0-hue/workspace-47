@@ -5801,24 +5801,24 @@ records:
     origin: "https://diputacion.toledo.gob.es"
     official_site: "https://diputacion.toledo.gob.es"
     e_sede: "https://diputacion.toledo.gob.es"
-    entry_url: "https://diputacion.toledo.gob.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
+    entry_url: "https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31"
+    procedure_page: "https://diputacion.toledo.gob.es/procedimientos/1"
+    certificate_required: "SI"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://diputacion.toledo.gob.es:843/SIGEM_AutenticacionWeb/validacionCertificado.do"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP36A", "DP36B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Solicitud de propósito general mediante TLS cliente SIGEM en el endpoint exacto :843; firma y presentación permanecen bloqueadas."
+    protocol_evidence: "La Sede enlaza de forma explícita la Solicitud de propósito general con certificado; el flujo público deriva a seleccionEntidad.do y su JavaScript navega al endpoint exacto :843. El handshake TLS solicita certificado cliente con lista de CA y, sin certificado, devuelve un error controlado de certificado de usuario."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP36A", "DP36B", "TOLEDO-PROCEDURES-2026-08-13", "TOLEDO-REGISTRY-START-2026-08-13", "TOLEDO-CERT-REDIRECT-2026-08-13", "TOLEDO-CLIENT-TLS-2026-08-13"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para el source, host, ruta y puerto exactos; sin E2E. La firma documental y la presentación administrativa posteriores no se implementan ni se infieren."
+    reviewed_at: "2026-08-13"
+    next_gate: "Verificar E2E únicamente el acceso TLS cliente en dispositivo físico autorizado, sin firmar ni presentar una solicitud administrativa, antes de cualquier promoción release."
 
   - inventory_id: "ES-PUB-0175"
     surface_key: "diputacion-valencia-sede"
@@ -6455,6 +6455,10 @@ availability, certificado, firma ni contrato técnico.
 [DP35A]: https://dpteruel.sedelectronica.es
 [DP36A]: https://diputacion.toledo.gob.es
 [DP36B]: https://diputacion.toledo.gob.es/sede/2
+[TOLEDO-PROCEDURES-2026-08-13]: https://diputacion.toledo.gob.es/procedimientos/1
+[TOLEDO-REGISTRY-START-2026-08-13]: https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31
+[TOLEDO-CERT-REDIRECT-2026-08-13]: https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY=
+[TOLEDO-CLIENT-TLS-2026-08-13]: https://diputacion.toledo.gob.es:843/SIGEM_AutenticacionWeb/validacionCertificado.do
 [DP37A]: https://www.sede.dival.es
 [DP37B]: https://www.sede.dival.es/opencms/opencms/sede/paginas/index.jsp?opcion=detalle&agrupacion=DatosInstitucionales&servicio=ListaSistemasFirmaElectronica
 [DP38A]: https://www.sede.diputaciondevalladolid.es/

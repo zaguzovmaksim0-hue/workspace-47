@@ -34,6 +34,7 @@ class JuntaOriginPolicyTest {
     private val melilla = ProfileId("melilla-sede")
     private val extremadura = ProfileId("extremadura-tramites")
     private val valladolid = ProfileId("diputacion-valladolid-sede")
+    private val toledo = ProfileId("diputacion-toledo-sede")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -61,6 +62,7 @@ class JuntaOriginPolicyTest {
             "sede.melilla.es",
             "tramites.juntaex.es",
             "www.sede.diputaciondevalladolid.es",
+            "diputacion.toledo.gob.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -138,6 +140,11 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(valladolid),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(valladolid).isEmpty())
+        assertEquals(
+            setOf("diputacion.toledo.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(toledo),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(toledo).isEmpty())
         assertEquals(
             setOf("https://ventanillaelectronica.jccm.es"),
             JuntaOriginPolicy.webMessageOriginRules(jccm),
