@@ -59,6 +59,7 @@ class WebMessageBridge(
     private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
     melillaBatchAdapter: MelillaBatchBridgeAdapter? = null,
     extremaduraBatchAdapter: ExtremaduraBatchBridgeAdapter? = null,
+    laPalmaBatchAdapter: LaPalmaBatchBridgeAdapter? = null,
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
@@ -81,6 +82,18 @@ class WebMessageBridge(
             trustedOrigin = TrustedOrigin("https", "tramites.juntaex.es", 443),
             adapter = StaBatchBridgeAdapterOps.from(
                 extremaduraBatchAdapter ?: ExtremaduraBatchBridgeAdapter(
+                    activeProfileId = activeProfileId,
+                    currentNavigationEpoch = currentNavigationEpoch,
+                    currentDocumentId = { batchCurrentDocumentId() },
+                    currentOrigin = currentOrigin,
+                ),
+            ),
+        )
+        LaPalmaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
+            sourceOrigin = LaPalmaBatchBridgeAdapter.SOURCE_ORIGIN,
+            trustedOrigin = TrustedOrigin("https", "sedeelectronica.cabildodelapalma.es", 443),
+            adapter = StaBatchBridgeAdapterOps.from(
+                laPalmaBatchAdapter ?: LaPalmaBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
                     currentNavigationEpoch = currentNavigationEpoch,
                     currentDocumentId = { batchCurrentDocumentId() },
@@ -543,6 +556,15 @@ private class StaBatchBridgeAdapterOps(
         )
 
         fun from(adapter: ExtremaduraBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
+            route = { raw, origin, mainFrame, epoch ->
+                adapter.route(raw, origin, mainFrame, epoch)
+            },
+            abandon = adapter::abandon,
+            invalidateDocument = adapter::invalidateDocument,
+            abandonAll = adapter::abandonAll,
+        )
+
+        fun from(adapter: LaPalmaBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
             route = { raw, origin, mainFrame, epoch ->
                 adapter.route(raw, origin, mainFrame, epoch)
             },

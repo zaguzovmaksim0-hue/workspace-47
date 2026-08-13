@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "732b5537dbb80ffa1aa2ee6c06161e639c389eef00609d8355c1c08d06da4b72",
+  "sourceRevision": "ca23ac4ae7196e98dd7e8132b2d33f5a86cd88c82c91fc915091fa5c62597fc7",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3136,27 +3136,36 @@
     {
       "portalId": "la-palma-sede-electronica",
       "inventoryId": "ES-PUB-0130",
-      "profileId": null,
+      "profileId": "la-palma-sede-electronica",
       "displayName": "Sede electrónica del Cabildo Insular de La Palma",
       "organization": "Cabildo Insular de La Palma",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "purpose": "Firma por lotes AutoScript/STA con perfil móvil QA limitado al contrato CAdES observado.",
       "entryUrl": "https://sedeelectronica.cabildodelapalma.es/",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES",
+        "PADES",
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_STA_BATCH_TRIFASICO",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I07B"
+        "I07B",
+        "I07C",
+        "I07D",
+        "I07E",
+        "I07F"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-13",
+      "limitations": "Contrato STA batch implementado solo en QA; E2E físico/manual y aceptación por un trámite real siguen pendientes. Las URLs presign/postsign/getdata son efímeras y no se fijan como endpoints estáticos."
     },
     {
       "portalId": "la-gomera-portal-institucional",

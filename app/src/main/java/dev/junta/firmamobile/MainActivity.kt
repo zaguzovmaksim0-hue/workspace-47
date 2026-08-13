@@ -24,6 +24,8 @@ import androidx.lifecycle.lifecycleScope
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
+import dev.junta.firmamobile.browser.LaPalmaBatchBridgeAdapter
+import dev.junta.firmamobile.browser.LaPalmaBatchSigningAdapter
 import dev.junta.firmamobile.browser.MelillaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
@@ -55,6 +57,7 @@ import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
+import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -86,6 +89,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var batchSigningCoordinator: BatchSigningCoordinator
     private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
     private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter
+    private lateinit var laPalmaBatchSigningAdapter: LaPalmaBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogSmokeHook: CatalogSmokeHook
@@ -171,8 +175,12 @@ class MainActivity : ComponentActivity() {
         extremaduraBatchSigningAdapter = ExtremaduraBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
+        laPalmaBatchSigningAdapter = LaPalmaBatchSigningAdapter(
+            registry = BuiltInSiteProfiles.runtimeRegistry,
+        )
         val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
+        val laPalmaBatchProtocolAdapter = LaPalmaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         batchSigningCoordinator = BatchSigningCoordinator(
             certificateSession = app.certificateSession,
             adapter = melillaBatchProtocolAdapter,
@@ -180,6 +188,7 @@ class MainActivity : ComponentActivity() {
                 when (id) {
                     melillaBatchProtocolAdapter.id -> melillaBatchProtocolAdapter
                     extremaduraBatchProtocolAdapter.id -> extremaduraBatchProtocolAdapter
+                    laPalmaBatchProtocolAdapter.id -> laPalmaBatchProtocolAdapter
                     else -> null
                 }
             },
@@ -410,11 +419,13 @@ class MainActivity : ComponentActivity() {
         val normalized = when (request.profileId.value) {
             MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.normalize(request)
             ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.normalize(request)
+            LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.normalize(request)
             else -> null
         }
         val replySink = when (request.profileId.value) {
             MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.replySink(reply)
             ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.replySink(reply)
+            LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.replySink(reply)
             else -> {
                 runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
                 return

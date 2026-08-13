@@ -66,12 +66,13 @@ class PortalCatalogRepositoryTest {
                 "melilla-sede",
                 "extremadura-tramites",
                 "diputacion-valladolid-sede",
+                "la-palma-sede-electronica",
                 "diputacion-toledo-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 18, metadataOnly.size)
+        assertEquals(qaPortals.size - 19, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })

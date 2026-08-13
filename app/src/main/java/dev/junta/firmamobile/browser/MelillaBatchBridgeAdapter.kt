@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.JsonReader
 import android.util.JsonToken
 import dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy
+import dev.junta.firmamobile.network.LaPalmaBatchUrlPolicy
 import dev.junta.firmamobile.network.MelillaBatchUrlError
 import dev.junta.firmamobile.network.MelillaBatchUrlOperation
 import dev.junta.firmamobile.network.MelillaBatchUrlPolicy
@@ -130,6 +131,44 @@ class ExtremaduraBatchBridgeAdapter(
     companion object {
         const val PROFILE_ID = "extremadura-tramites"
         const val SOURCE_ORIGIN = "https://tramites.juntaex.es"
+        const val TYPE = "MINIAPPLET_BATCH"
+        const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
+        const val MAX_MESSAGE_CHARS = 786_432
+        const val MAX_DOCUMENTS = 128
+    }
+}
+
+/** Fixed-profile La Palma wrapper over the shared observed STA batch envelope. */
+class LaPalmaBatchBridgeAdapter(
+    activeProfileId: () -> ProfileId? = { null },
+    currentNavigationEpoch: () -> Long? = { null },
+    currentDocumentId: () -> UUID? = { null },
+    urlPolicy: LaPalmaBatchUrlPolicy = LaPalmaBatchUrlPolicy(),
+    currentOrigin: () -> TrustedOrigin? = { null },
+) {
+    private val delegate = StaBatchBridgeAdapter(
+        activeProfileId = activeProfileId,
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentDocumentId = currentDocumentId,
+        currentOrigin = currentOrigin,
+        contract = StaBatchBridgeContract(
+            profileId = ProfileId(PROFILE_ID),
+            origin = TrustedOrigin("https", "sedeelectronica.cabildodelapalma.es", 443),
+            urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
+                urlPolicy.validate(rawUrl, operation, operationId, documentId)
+            },
+        ),
+    )
+
+    fun route(rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L) =
+        delegate.route(rawMessage, sourceOrigin, isMainFrame, navigationEpoch)
+    fun abandon(requestId: UUID? = null): Boolean = delegate.abandon(requestId)
+    fun invalidateDocument(documentId: UUID?) = delegate.invalidateDocument(documentId)
+    fun abandonAll() = delegate.abandonAll()
+
+    companion object {
+        const val PROFILE_ID = "la-palma-sede-electronica"
+        const val SOURCE_ORIGIN = "https://sedeelectronica.cabildodelapalma.es"
         const val TYPE = "MINIAPPLET_BATCH"
         const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
