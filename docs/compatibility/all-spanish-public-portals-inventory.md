@@ -3824,20 +3824,20 @@ records:
     procedure_page: "NO_VERIFICADO"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    js_client: "AutoScript / STAAutofirmaLote"
+    protocol_family: "AUTOSCRIPT_STA_BATCH_TRIFASICO"
+    signature_format: "CAdES / PAdES / XAdES (perfil móvil QA limitado a CAdES detached)"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "URLs runtime bajo /sta/AutofirmaLote/{presign,postsign,getdata}; valores concretos suministrados por backend"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación con certificado o DNIe y firma cuando el servicio la exige."
-    protocol_evidence: "La sede publica sistemas de firma, pero no cliente JS ni contrato de un trámite concreto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma por lotes AutoScript/STA con perfil móvil QA limitado al contrato CAdES observado."
+    protocol_evidence: "La página pública de Registro General carga AutoScript, sta-autofirma-lote.js y webAppsFwk.js; firmarLote usa SHA256withRSA/CAdES/sign/stopOnError=false y devuelve el resultado mediante PRESENTAR_FIRMA."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A13A", "A13B"]
-    reason: "Formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Capturar un trámite actual y su transporte de firma."
+    evidence_ids: ["D03", "A13A", "A13B", "A13E", "A13F", "A13G", "A13H"]
+    reason: "Contrato STA batch implementado solo en QA; E2E físico/manual y aceptación por un trámite real siguen pendientes. Las URLs presign/postsign/getdata son efímeras y no se fijan como endpoints estáticos."
+    reviewed_at: "2026-08-13"
+    next_gate: "E2E físico/manual autorizado; no promover release ni VERIFIED_E2E sin evidencia separada."
 
   - inventory_id: "ES-PUB-0110"
     surface_key: "extremadura-sede-anterior"
@@ -6339,6 +6339,10 @@ Orden de expansión recomendado:
 [A13B]: https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMA
 [A13C]: https://sede.juntaex.es/SEDE/
 [A13D]: https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos
+[A13E]: https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_REGGENERAL_INFO
+[A13F]: https://tramites.juntaex.es/sta/resources/js/sta-autofirma-lote.js
+[A13G]: https://tramites.juntaex.es/sta/resources/js/autoscript.js
+[A13H]: https://tramites.juntaex.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2
 [A14A]: https://sede.xunta.gal/a-sede/identificacion-e-titularidade
 [A14B]: https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica
 [A14C]: https://sede.xunta.gal/a-sede/sistemas-de-identificacion-e-sinatura

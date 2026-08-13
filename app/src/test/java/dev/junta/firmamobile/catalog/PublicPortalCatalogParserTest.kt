@@ -39,7 +39,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(15, catalog.entries.count { it.profileId != null })
+        assertEquals(16, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -58,6 +58,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("sevilla-atse-certificate-login"),
                 ProfileId("melilla-sede"),
+                ProfileId("extremadura-tramites"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

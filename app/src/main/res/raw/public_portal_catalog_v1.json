@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "e4dedaad723a94257f7b8677b45b020dae1b9db3f7a8b4a15eeb9ccbf2f3cb96",
+  "sourceRevision": "80a3b427c3792ccbb1c4e5414917867ecd82e1c33a0329c571251f4dcc5eb5a6",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2597,29 +2597,38 @@
     {
       "portalId": "extremadura-tramites",
       "inventoryId": "ES-PUB-0109",
-      "profileId": null,
+      "profileId": "extremadura-tramites",
       "displayName": "Trámites de la Junta de Extremadura",
       "organization": "Junta de Extremadura",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Extremadura",
-      "purpose": "Tramitación con certificado o DNIe y firma cuando el servicio la exige.",
+      "purpose": "Firma por lotes AutoScript/STA con perfil móvil QA limitado al contrato CAdES observado.",
       "entryUrl": "https://tramites.juntaex.es/",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES",
+        "PADES",
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_STA_BATCH_TRIFASICO",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A13A",
-        "A13B"
+        "A13B",
+        "A13E",
+        "A13F",
+        "A13G",
+        "A13H"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
+      "reviewedOn": "2026-08-13",
+      "limitations": "Contrato STA batch implementado solo en QA; E2E físico/manual y aceptación por un trámite real siguen pendientes. Las URLs presign/postsign/getdata son efímeras y no se fijan como endpoints estáticos."
     },
     {
       "portalId": "extremadura-sede-anterior",

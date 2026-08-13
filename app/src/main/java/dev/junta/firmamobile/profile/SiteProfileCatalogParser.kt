@@ -171,6 +171,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == MELILLA_PROFILE_ID) {
                 validateMelillaProfile(p)
             }
+            if (p.profileId.value == EXTREMADURA_PROFILE_ID) {
+                validateExtremaduraProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -321,6 +324,39 @@ object SiteProfileCatalogParser {
                 safeDescription = MELILLA_SAFE_DESCRIPTION,
                 inputAdapterId = ProtocolInputAdapterId("melilla-batch-autoscript-v1"),
                 callbackContractId = CallbackContractId("melilla-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+    private fun validateExtremaduraProfile(profile: SiteProfile) {
+        require(profile.profileVersion == EXTREMADURA_PROFILE_VERSION)
+        require(profile.displayName == EXTREMADURA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == EXTREMADURA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EXTREMADURA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = EXTREMADURA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("extremadura-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("extremadura-batch-result-v1"),
                 capabilities = setOf(Capability.SIGN),
                 endpointId = null,
                 algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
@@ -517,11 +553,13 @@ object SiteProfileCatalogParser {
     private val REGISTERED_ADAPTERS = setOf(
         "miniapplet-autoscript-v1",
         "melilla-batch-autoscript-v1",
+        "extremadura-batch-autoscript-v1",
     )
     private val REGISTERED_CALLBACKS = setOf(
         "miniapplet-sign-callback-v1",
         "autoscript-sign-callback-v1",
         "melilla-batch-result-v1",
+        "extremadura-batch-result-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
@@ -535,6 +573,13 @@ object SiteProfileCatalogParser {
             "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
     private const val MELILLA_ORIGIN = "https://sede.melilla.es"
     private const val MELILLA_SAFE_DESCRIPTION = "Firma por lotes en la Sede Electrónica de Melilla"
+    private const val EXTREMADURA_PROFILE_ID = "extremadura-tramites"
+    private const val EXTREMADURA_PROFILE_VERSION = 1
+    private const val EXTREMADURA_DISPLAY_NAME = "Junta de Extremadura — Trámites"
+    private const val EXTREMADURA_START_URL = "https://tramites.juntaex.es/"
+    private const val EXTREMADURA_ORIGIN = "https://tramites.juntaex.es"
+    private const val EXTREMADURA_SAFE_DESCRIPTION =
+        "Firma por lotes en Trámites de la Junta de Extremadura"
     private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
     private const val SEVILLA_ATSE_PROFILE_VERSION = 1
     private const val SEVILLA_ATSE_DISPLAY_NAME =
