@@ -510,7 +510,7 @@ class SiteProfileCatalogParserTest {
         mutations.forEach { (expected, replacement) ->
             assertTrue("missing Sanidad contract fragment: $expected", BuiltInSiteProfiles.JSON.contains(expected))
             assertThrows(IllegalArgumentException::class.java) {
-                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replace(expected, replacement, limit = 1))
+                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(expected, replacement))
             }
         }
     }
