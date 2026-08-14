@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "f00de6237cbed11e4584db63f76faef05c5dff292703a9f1ae7087183e4f6e80",
+  "sourceRevision": "22eafe07e9817b9faa70c3c7dba7df3ca3c47873e2eaa6bec3e1a01a0ad0ffbc",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2097,24 +2097,29 @@
     {
       "portalId": "age-sede-electronica-de-los-tribunales-economico-administrativos-tea",
       "inventoryId": "ES-PUB-0090",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "tea-alegaciones-certificado",
+      "displayName": "TEA / Alegaciones con certificado",
       "organization": "Sede electrónica de los Tribunales Económico-Administrativos (TEA)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.tea.hacienda.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Acceso con certificado TLS cliente a la entrada pública de Alegaciones TEA; no incluye firma documental ni presentación administrativa.",
+      "entryUrl": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "P24",
+        "P25"
+      ],
+      "reviewedOn": "2026-08-14",
+      "limitations": "CLIENT_TLS_AUTH TLS 1.2 implementado solo en QA para la fuente, host, ruta y query tram=0 exactos. E2E físico pendiente; no se afirma firma electrónica, envío de alegaciones ni aceptación administrativa."
     },
     {
       "portalId": "age-tesoro-publico",

@@ -188,6 +188,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
+            if (p.profileId.value == TEA_PROFILE_ID) {
+                validateTeaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -225,7 +228,10 @@ object SiteProfileCatalogParser {
                 if (policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     policy.fixedQueryParameters.isNotEmpty()
                 ) {
-                    require(p.profileId.value == SANIDAD_PROFILE_ID)
+                    require(
+                        p.profileId.value == SANIDAD_PROFILE_ID ||
+                            p.profileId.value == TEA_PROFILE_ID
+                    )
                 }
                 require(policy.sourceUrls.all { it.origin() in p.initiatorOrigins })
                 require(policy.fixedQueryParameters.keys.all(PARAMETER_NAME::matches))
@@ -359,6 +365,36 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateTeaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == TEA_PROFILE_VERSION)
+        require(profile.displayName == TEA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == TEA_SOURCE_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TEA_SOURCE_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(TEA_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(TEA_SOURCE_URL)),
+                requestPath = TEA_REQUEST_PATH,
+                fixedQueryParameters = linkedMapOf("tram" to "0"),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TEA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
     }
 
@@ -682,6 +718,17 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
+    private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"
+    private const val TEA_PROFILE_VERSION = 1
+    private const val TEA_DISPLAY_NAME = "TEA — Alegaciones con certificado"
+    private const val TEA_SOURCE_URL = "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+    private const val TEA_SOURCE_ORIGIN = "https://sede.tea.hacienda.gob.es"
+    private const val TEA_REQUEST_ORIGIN = "https://www1.tea.hacienda.gob.es"
+    private const val TEA_REQUEST_PATH = "/wlpl/TEAC-TRAM/SedeTRAM"
+    private val TEA_EVIDENCE_URLS = setOf(
+        TEA_SOURCE_URL,
+        "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
     )
     private const val MELILLA_PROFILE_ID = "melilla-sede"
     private const val MELILLA_PROFILE_VERSION = 1

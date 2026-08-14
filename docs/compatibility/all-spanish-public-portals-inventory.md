@@ -3230,30 +3230,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Sede electrónica de los Tribunales Económico-Administrativos (TEA)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "TEA / Alegaciones con certificado"
     surface_type: "SEDE"
     origin: "https://sede.tea.hacienda.gob.es"
     official_site: "https://sede.tea.hacienda.gob.es/"
     e_sede: "https://sede.tea.hacienda.gob.es/"
-    entry_url: "https://sede.tea.hacienda.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+    procedure_page: "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    endpoint: "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado TLS cliente a la entrada pública de Alegaciones TEA; no incluye firma documental ni presentación administrativa."
+    protocol_evidence: "La página pública de Alegaciones enlaza exactamente a SedeTRAM?tram=0 en www1.tea.hacienda.gob.es. El handshake TLS 1.2 de ese host envía CertificateRequest, una lista no vacía de autoridades certificadoras y tipos RSA/ECDSA; sin certificado el flujo termina en la página oficial de error 403."
+    client_tls_auth: "SI"
+    evidence_ids: ["D11", "P24", "P25"]
+    reason: "CLIENT_TLS_AUTH TLS 1.2 implementado solo en QA para la fuente, host, ruta y query tram=0 exactos. E2E físico pendiente; no se afirma firma electrónica, envío de alegaciones ni aceptación administrativa."
+    reviewed_at: "2026-08-14"
+    next_gate: "Confirmar onReceivedClientCertRequest y acceso autenticado en WebView físico sin firmar ni presentar alegaciones antes de cualquier promoción release."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda. El perfil no cubre Otras solicitudes (tram=2) ni otros trámites TEA."
 
   - inventory_id: "ES-PUB-0091"
     surface_key: "age-tesoro-publico"
@@ -6290,6 +6290,8 @@ Orden de expansión recomendado:
 [P21]: https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm
 [P22]: https://sede.mscbs.gob.es/diseno/js/form_gen.js
 [P23]: https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES
+[P24]: https://sede.tea.hacienda.gob.es/TEA/alegaciones.html
+[P25]: https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0
 [P19A]: https://ws101.juntadeandalucia.es/portalcj/
 [P19B]: https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp
 [P19C]: https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet

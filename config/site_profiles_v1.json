@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 17,
+  "catalogVersion": 18,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -584,6 +584,26 @@
         {"url":"https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm","reviewedOn":"2026-08-14"},
         {"url":"https://sede.mscbs.gob.es/diseno/js/form_gen.js","reviewedOn":"2026-08-14"},
         {"url":"https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES","reviewedOn":"2026-08-14"}
+      ]
+    },
+    {
+      "profileId": "tea-alegaciones-certificado",
+      "profileVersion": 1,
+      "displayName": "TEA — Alegaciones con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+      "initiatorOrigins": ["https://sede.tea.hacienda.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://www1.tea.hacienda.gob.es"],"sourceUrls":["https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"],"requestPath":"/wlpl/TEAC-TRAM/SedeTRAM","fixedQueryParameters":{"tram":"0"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.tea.hacienda.gob.es/TEA/alegaciones.html","reviewedOn":"2026-08-14"},
+        {"url":"https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0","reviewedOn":"2026-08-14"}
       ]
     }
   ]
