@@ -563,6 +563,28 @@
         {"url":"https://sedeelectronica.cabildodelapalma.es/sta/resources/js/autoscript.js","reviewedOn":"2026-08-13"},
         {"url":"https://sedeelectronica.cabildodelapalma.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.3","reviewedOn":"2026-08-13"}
       ]
+    },
+    {
+      "profileId": "ministerio-sanidad-certificado",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Sanidad — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.mscbs.gob.es/",
+      "initiatorOrigins": ["https://sede.mscbs.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://sede.mscbs.gob.es"],"sourceUrls":["https://sede.mscbs.gob.es/registroElectronico/formularios.htm"],"requestPath":"/SIGEM_AutenticacionWeb/validacionCertificado.do","fixedQueryParameters":{"REDIRECCION":"RegistroTelematico","tramiteId":"TRAM_TARDESCONPLAN","ENTIDAD_ID":"000","LANG":"es","COUNTRY":"ES"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.mscbs.gob.es/registroElectronico/formularios.htm","reviewedOn":"2026-08-14"},
+        {"url":"https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm","reviewedOn":"2026-08-14"},
+        {"url":"https://sede.mscbs.gob.es/diseno/js/form_gen.js","reviewedOn":"2026-08-14"},
+        {"url":"https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES","reviewedOn":"2026-08-14"}
+      ]
     }
   ]
 }

@@ -497,6 +497,41 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun rejectsAnyExpansionOfTheSanidadSameOriginClientTlsContract() {
+        val mutations = listOf(
+            "\"tramiteId\":\"TRAM_TARDESCONPLAN\"" to
+                "\"tramiteId\":\"TRAM_OTHER\"",
+            "\"sourceUrls\":[\"https://sede.mscbs.gob.es/registroElectronico/formularios.htm\"]" to
+                "\"sourceUrls\":[\"https://sede.mscbs.gob.es/registroElectronico/home.htm\"]",
+            "\"COUNTRY\":\"ES\"},\"requiredEphemeralQueryParameters\":[]" to
+                "\"COUNTRY\":\"ES\"},\"requiredEphemeralQueryParameters\":[\"session\"]",
+        )
+
+        mutations.forEach { (expected, replacement) ->
+            assertTrue("missing Sanidad contract fragment: $expected", BuiltInSiteProfiles.JSON.contains(expected))
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(expected, replacement))
+            }
+        }
+    }
+
+    @Test
+    fun rejectsDirectFixedQueryOutsideThePinnedSanidadContract() {
+        val aeatPathAndQuery =
+            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\",\"fixedQueryParameters\":{}"
+        val expanded =
+            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\"," +
+                "\"fixedQueryParameters\":{\"unexpected\":\"1\"}"
+
+        assertTrue(BuiltInSiteProfiles.JSON.contains(aeatPathAndQuery))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(aeatPathAndQuery, expanded),
+            )
+        }
+    }
+
+    @Test
     fun preservesTheExactAeatClientTlsQaContract() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "815b197911680be78ff077c84f13bdf765a6c3f48c0f6cf6921b7bafa2895b2e",
+  "sourceRevision": "f00de6237cbed11e4584db63f76faef05c5dff292703a9f1ae7087183e4f6e80",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1716,24 +1716,31 @@
     {
       "portalId": "age-ministerio-de-sanidad",
       "inventoryId": "ES-PUB-0073",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "ministerio-sanidad-certificado",
+      "displayName": "Sede electrónica / acceso con certificado al registro SIGEM",
       "organization": "Ministerio de Sanidad",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Acceso con certificado mediante TLS cliente al trámite público TRAM_TARDESCONPLAN; no incluye firma documental ni presentación administrativa.",
       "entryUrl": "https://sede.mscbs.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "P20",
+        "P21",
+        "P22",
+        "P23"
+      ],
+      "reviewedOn": "2026-08-14",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para source, host, ruta y query exactos. El flujo depende de renegociación TLS 1.2 y queda E2E pendiente; no se afirma firma, envío ni aceptación administrativa."
     },
     {
       "portalId": "age-ministerio-de-trabajo-y-economia-social",

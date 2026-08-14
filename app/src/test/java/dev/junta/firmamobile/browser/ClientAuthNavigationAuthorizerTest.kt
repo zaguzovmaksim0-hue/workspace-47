@@ -46,6 +46,52 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactSameOriginSanidadFixedQueryTransitionProducesOneBoundedTarget() {
+        val result = authorizer.observeTopLevelNavigation(
+            activeProfileId = SANIDAD_PROFILE,
+            currentUrl = SANIDAD_SOURCE,
+            targetUrl = SANIDAD_TARGET,
+            currentEpoch = 45,
+            isModernMainFrameRequest = true,
+        )
+
+        assertEquals(SANIDAD_PROFILE, result?.profileId)
+        assertEquals("sede.mscbs.gob.es", result?.target?.host)
+        assertEquals("/SIGEM_AutenticacionWeb/validacionCertificado.do", result?.target?.rawPath)
+        assertNull(
+            authorizer.observeTopLevelNavigation(
+                SANIDAD_PROFILE, SANIDAD_SOURCE, SANIDAD_TARGET, 45, true,
+            ),
+        )
+    }
+
+    @Test
+    fun sanidadDirectTransitionRejectsEverySourcePathAndQueryExpansion() {
+        val invalidCalls = listOf<Pair<String, String>>(
+            SANIDAD_SOURCE.replace("formularios.htm", "home.htm") to SANIDAD_TARGET,
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("TRAM_TARDESCONPLAN", "TRAM_OTHER"),
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("COUNTRY=ES", "COUNTRY=FR"),
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("LANG=es", "LANG=en"),
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("ENTIDAD_ID=000", "ENTIDAD_ID=001"),
+            SANIDAD_SOURCE to "$SANIDAD_TARGET&extra=1",
+            SANIDAD_SOURCE to "$SANIDAD_TARGET&COUNTRY=ES",
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("/validacionCertificado.do", "/validacionCertificado.do/other"),
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("sede.mscbs.gob.es", "sede.mscbs.gob.es.evil.example"),
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("sede.mscbs.gob.es", "sede.mscbs.gob.es:8443"),
+        )
+
+        invalidCalls.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    SANIDAD_PROFILE, source, target, 50L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTwoStageValladolidRedirectAuthorizesOnlyTheObservedClientTlsPort() {
         val valladolid = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
 
@@ -486,10 +532,17 @@ class ClientAuthNavigationAuthorizerTest {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        val SANIDAD_PROFILE = ProfileId("ministerio-sanidad-certificado")
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
         const val AEAT_TARGET =
             "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+        const val SANIDAD_SOURCE =
+            "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
+        const val SANIDAD_TARGET =
+            "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
+                "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
+                "ENTIDAD_ID=000&LANG=es&COUNTRY=ES"
         const val VALLADOLID_INDEX =
             "https://www.sede.diputaciondevalladolid.es/tgauth/login"
         const val VALLADOLID_SOURCE =
