@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "22eafe07e9817b9faa70c3c7dba7df3ca3c47873e2eaa6bec3e1a01a0ad0ffbc",
+  "sourceRevision": "817b899d675a0b304cd8264de01a02f1597ed8f6a3b42ff618a586bbbe46bd5f",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3102,24 +3102,32 @@
     {
       "portalId": "tenerife-sede-electronica",
       "inventoryId": "ES-PUB-0128",
-      "profileId": null,
+      "profileId": "tenerife-sede-electronica",
       "displayName": "Sede electrónica del Cabildo Insular de Tenerife",
       "organization": "Cabildo Insular de Tenerife",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "purpose": "Firma local AutoFirma de la solicitud descargada, limitada en QA al contrato SHA512withRSA/CAdES/mode=explicit observado.",
       "entryUrl": "https://sede.tenerife.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_CADES_LOCAL",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I06B"
+        "I06B",
+        "I06C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-14",
+      "limitations": "Contrato de firma local implementado solo en QA; no se ha realizado E2E físico/manual, autenticación real ni presentación administrativa. El perfil no promueve release ni VERIFIED_E2E."
     },
     {
       "portalId": "la-palma-portal-institucional",

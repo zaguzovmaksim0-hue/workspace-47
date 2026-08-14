@@ -565,6 +565,26 @@
       ]
     },
     {
+      "profileId": "tenerife-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Cabildo Insular de Tenerife — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.tenerife.es/",
+      "initiatorOrigins": ["https://sede.tenerife.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"mode":"explicit"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.tenerife.es/","reviewedOn":"2026-08-14"},
+        {"url":"https://sede.tenerife.es/76.81426d6ba0b90ca6.js","reviewedOn":"2026-08-14"}
+      ]
+    },
+    {
       "profileId": "ministerio-sanidad-certificado",
       "profileVersion": 1,
       "displayName": "Ministerio de Sanidad — acceso con certificado",

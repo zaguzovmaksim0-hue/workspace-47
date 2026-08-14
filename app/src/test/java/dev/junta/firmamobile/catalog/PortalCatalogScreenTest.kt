@@ -49,7 +49,7 @@ class PortalCatalogScreenTest {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
-        assertEquals(19, compatible.items.size)
+        assertEquals(20, compatible.items.size)
         val verifiedIds = setOf("carne-joven-andalucia", "aragon-siraw", "junta-ofvirtual", "unizar-tramitador")
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }
