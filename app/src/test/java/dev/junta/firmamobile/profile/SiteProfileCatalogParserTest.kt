@@ -516,6 +516,22 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun rejectsDirectFixedQueryOutsideThePinnedSanidadContract() {
+        val aeatPathAndQuery =
+            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\",\"fixedQueryParameters\":{}"
+        val expanded =
+            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\"," +
+                "\"fixedQueryParameters\":{\"unexpected\":\"1\"}"
+
+        assertTrue(BuiltInSiteProfiles.JSON.contains(aeatPathAndQuery))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(aeatPathAndQuery, expanded),
+            )
+        }
+    }
+
+    @Test
     fun preservesTheExactAeatClientTlsQaContract() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }

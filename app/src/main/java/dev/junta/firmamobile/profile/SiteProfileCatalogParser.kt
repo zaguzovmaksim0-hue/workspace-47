@@ -222,6 +222,11 @@ object SiteProfileCatalogParser {
             p.clientAuthPolicy?.let { policy ->
                 require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
                 require(p.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+                if (policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+                    policy.fixedQueryParameters.isNotEmpty()
+                ) {
+                    require(p.profileId.value == SANIDAD_PROFILE_ID)
+                }
                 require(policy.sourceUrls.all { it.origin() in p.initiatorOrigins })
                 require(policy.fixedQueryParameters.keys.all(PARAMETER_NAME::matches))
                 require(policy.fixedQueryParameters.values.all { value ->
