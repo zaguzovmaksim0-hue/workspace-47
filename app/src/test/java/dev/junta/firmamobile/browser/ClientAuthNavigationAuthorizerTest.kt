@@ -46,6 +46,50 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactTeaAlegacionesDirectTransitionProducesOneBoundedTarget() {
+        val result = authorizer.observeTopLevelNavigation(
+            activeProfileId = TEA_PROFILE,
+            currentUrl = TEA_SOURCE,
+            targetUrl = TEA_TARGET,
+            currentEpoch = 42,
+            isModernMainFrameRequest = true,
+        )
+
+        assertEquals(TEA_PROFILE, result?.profileId)
+        assertEquals("www1.tea.hacienda.gob.es", result?.target?.host)
+        assertEquals("/wlpl/TEAC-TRAM/SedeTRAM", result?.target?.rawPath)
+        assertEquals("tram=0", result?.target?.rawQuery)
+        assertNull(
+            authorizer.observeTopLevelNavigation(
+                TEA_PROFILE, TEA_SOURCE, TEA_TARGET, 42, true,
+            ),
+        )
+    }
+
+    @Test
+    fun teaAlegacionesDirectTransitionRejectsEverySourceAndTargetExpansion() {
+        val invalidCalls = listOf<Pair<String, String>>(
+            TEA_SOURCE.replace("alegaciones.html", "solicitudes.html") to TEA_TARGET,
+            TEA_SOURCE to TEA_TARGET.replace("tram=0", "tram=2"),
+            TEA_SOURCE to "$TEA_TARGET&extra=1",
+            TEA_SOURCE to "$TEA_TARGET&tram=0",
+            TEA_SOURCE to TEA_TARGET.replace("/SedeTRAM", "/SedeTRAM/other"),
+            TEA_SOURCE to TEA_TARGET.replace("www1.tea.hacienda.gob.es", "www1.tea.hacienda.gob.es.evil.example"),
+            TEA_SOURCE to TEA_TARGET.replace("www1.tea.hacienda.gob.es", "www1.tea.hacienda.gob.es:8443"),
+        )
+
+        invalidCalls.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    TEA_PROFILE, source, target, 43L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactSameOriginSanidadFixedQueryTransitionProducesOneBoundedTarget() {
         val result = authorizer.observeTopLevelNavigation(
             activeProfileId = SANIDAD_PROFILE,
@@ -531,12 +575,17 @@ class ClientAuthNavigationAuthorizerTest {
     private companion object {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
+        val TEA_PROFILE = ProfileId("tea-alegaciones-certificado")
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         val SANIDAD_PROFILE = ProfileId("ministerio-sanidad-certificado")
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
         const val AEAT_TARGET =
             "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+        const val TEA_SOURCE =
+            "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+        const val TEA_TARGET =
+            "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0"
         const val SANIDAD_SOURCE =
             "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
         const val SANIDAD_TARGET =
