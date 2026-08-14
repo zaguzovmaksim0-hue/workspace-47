@@ -82,9 +82,6 @@ class SiteProfileRegistry(
         if (compatibilityStatus == CompatibilityStatus.BROWSE_ONLY && origin in initiatorOrigins) {
             return TrustMode.BROWSE_ONLY
         }
-        if (clientAuthPolicy?.requestPort == 443 && origin in clientAuthPolicy.requestOrigins) {
-            return TrustMode.BROWSE_ONLY
-        }
         if (origin in initiatorOrigins) {
             return when {
                 Capability.SIGN in capabilities || Capability.SELECT_CERTIFICATE in capabilities ->
@@ -92,6 +89,9 @@ class SiteProfileRegistry(
                 Capability.CLIENT_TLS_AUTH in capabilities -> TrustMode.TRUSTED_CLIENT_AUTH
                 else -> TrustMode.TRUSTED_BROWSE
             }
+        }
+        if (clientAuthPolicy?.requestPort == 443 && origin in clientAuthPolicy.requestOrigins) {
+            return TrustMode.BROWSE_ONLY
         }
         if (origin in redirectOrigins) return TrustMode.BROWSE_ONLY
         if (origin in trustedBrowseOrigins) return TrustMode.TRUSTED_BROWSE

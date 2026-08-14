@@ -2704,30 +2704,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Sanidad"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / acceso con certificado al registro SIGEM"
     surface_type: "SEDE"
     origin: "https://sede.mscbs.gob.es"
     official_site: "https://sede.mscbs.gob.es/"
     e_sede: "https://sede.mscbs.gob.es/"
     entry_url: "https://sede.mscbs.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    procedure_page: "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Sanidad."
+    endpoint: "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado mediante TLS cliente al trámite público TRAM_TARDESCONPLAN; no incluye firma documental ni presentación administrativa."
+    protocol_evidence: "El índice SIGEM público marca TRAM_TARDESCONPLAN activo; form_gen.js construye el endpoint exacto de certificado. Una petición GET sin certificado provoca HelloRequest y CertificateRequest por renegociación TLS 1.2 con lista de emisores no vacía, y termina en HTTP 403."
+    client_tls_auth: "SI"
+    evidence_ids: ["D11", "P20", "P21", "P22", "P23"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para source, host, ruta y query exactos. El flujo depende de renegociación TLS 1.2 y queda E2E pendiente; no se afirma firma, envío ni aceptación administrativa."
+    reviewed_at: "2026-08-14"
+    next_gate: "Confirmar onReceivedClientCertRequest y acceso autenticado en WebView físico sin firmar ni presentar trámites antes de cualquier promoción release."
 
   - inventory_id: "ES-PUB-0074"
     surface_key: "age-ministerio-de-trabajo-y-economia-social"
@@ -6287,6 +6286,10 @@ Orden de expansión recomendado:
 [P18E]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/2395.e31f7440c3b55405.js
 [P18F]: https://gestiona.comunidad.madrid/cudc_mf_procedures/3.8.4/9536.885f46529d1fae07.js
 [P19]: https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html
+[P20]: https://sede.mscbs.gob.es/registroElectronico/formularios.htm
+[P21]: https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm
+[P22]: https://sede.mscbs.gob.es/diseno/js/form_gen.js
+[P23]: https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES
 [P19A]: https://ws101.juntadeandalucia.es/portalcj/
 [P19B]: https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp
 [P19C]: https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet

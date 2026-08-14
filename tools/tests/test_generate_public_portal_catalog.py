@@ -252,6 +252,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("solo para qa", limitations)
         self.assertIn("e2e pendiente", limitations)
 
+    def test_sanidad_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        sanidad = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-sanidad"
+        )
+
+        self.assertEqual("ministerio-sanidad-certificado", sanidad["profileId"])
+        self.assertEqual("ES-PUB-0073", sanidad["inventoryId"])
+        self.assertEqual("https://sede.mscbs.gob.es/", sanidad["entryUrl"])
+        self.assertNotIn("launchUrl", sanidad)
+        self.assertEqual("E2E_PENDING", sanidad["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", sanidad["inventoryStatus"])
+        self.assertEqual("2026-08-14", sanidad["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", sanidad["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", sanidad["observedMechanisms"])
+        self.assertNotIn("ELECTRONIC_SIGNATURE", sanidad["observedMechanisms"])
+        self.assertEqual([], sanidad["observedSignatureFormats"])
+        self.assertIn("tls 1.2", sanidad["limitations"].lower())
+        self.assertIn("e2e", sanidad["limitations"].lower())
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}

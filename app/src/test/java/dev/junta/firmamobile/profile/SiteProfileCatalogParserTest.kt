@@ -497,6 +497,25 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun rejectsAnyExpansionOfTheSanidadSameOriginClientTlsContract() {
+        val mutations = listOf(
+            "\"tramiteId\":\"TRAM_TARDESCONPLAN\"" to
+                "\"tramiteId\":\"TRAM_OTHER\"",
+            "\"sourceUrls\":[\"https://sede.mscbs.gob.es/registroElectronico/formularios.htm\"]" to
+                "\"sourceUrls\":[\"https://sede.mscbs.gob.es/registroElectronico/home.htm\"]",
+            "\"COUNTRY\":\"ES\"},\"requiredEphemeralQueryParameters\":[]" to
+                "\"COUNTRY\":\"ES\"},\"requiredEphemeralQueryParameters\":[\"session\"]",
+        )
+
+        mutations.forEach { (expected, replacement) ->
+            assertTrue("missing Sanidad contract fragment: $expected", BuiltInSiteProfiles.JSON.contains(expected))
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replace(expected, replacement, limit = 1))
+            }
+        }
+    }
+
+    @Test
     fun preservesTheExactAeatClientTlsQaContract() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }

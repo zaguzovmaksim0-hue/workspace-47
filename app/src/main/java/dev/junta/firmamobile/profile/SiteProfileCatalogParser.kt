@@ -127,7 +127,7 @@ object SiteProfileCatalogParser {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE ->
                 require(fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443)
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE ->
-                require(fixed.isEmpty() && ephemeral.isEmpty())
+                require(ephemeral.isEmpty())
         }
         return ClientAuthPolicy(
             transitionMode = transitionMode,
@@ -185,6 +185,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LA_PALMA_PROFILE_ID) {
                 validateLaPalmaProfile(p)
             }
+            if (p.profileId.value == SANIDAD_PROFILE_ID) {
+                validateSanidadProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -192,8 +195,15 @@ object SiteProfileCatalogParser {
             require((p.redirectOrigins intersect p.trustedBrowseOrigins).isEmpty())
             val clientAuthPolicy = p.clientAuthPolicy
             val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
+            val sameOriginDirectClientAuth =
+                p.profileId.value == SANIDAD_PROFILE_ID &&
+                    clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+                    clientAuthPolicy.requestPort == 443 &&
+                    clientAuthOrigins == p.initiatorOrigins &&
+                    clientAuthPolicy.fixedQueryParameters.isNotEmpty() &&
+                    clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty()
             if (clientAuthPolicy?.requestPort == 443) {
-                require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty())
+                require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty() || sameOriginDirectClientAuth)
                 require((clientAuthOrigins intersect p.redirectOrigins).isEmpty())
                 require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
             }
@@ -317,6 +327,36 @@ object SiteProfileCatalogParser {
             }
         }
     }
+    private fun validateSanidadProfile(profile: SiteProfile) {
+        require(profile.profileVersion == SANIDAD_PROFILE_VERSION)
+        require(profile.displayName == SANIDAD_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == SANIDAD_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(SANIDAD_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(SANIDAD_ORIGIN)),
+                sourceUrls = setOf(URI(SANIDAD_SOURCE_URL)),
+                requestPath = SANIDAD_REQUEST_PATH,
+                fixedQueryParameters = SANIDAD_FIXED_QUERY,
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
     private fun validateMelillaProfile(profile: SiteProfile) {
         require(profile.profileVersion == MELILLA_PROFILE_VERSION)
         require(profile.displayName == MELILLA_DISPLAY_NAME)
@@ -614,6 +654,30 @@ object SiteProfileCatalogParser {
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
     private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
+    private const val SANIDAD_PROFILE_ID = "ministerio-sanidad-certificado"
+    private const val SANIDAD_PROFILE_VERSION = 1
+    private const val SANIDAD_DISPLAY_NAME = "Ministerio de Sanidad — acceso con certificado"
+    private const val SANIDAD_START_URL = "https://sede.mscbs.gob.es/"
+    private const val SANIDAD_ORIGIN = "https://sede.mscbs.gob.es"
+    private const val SANIDAD_SOURCE_URL =
+        "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
+    private const val SANIDAD_REQUEST_PATH =
+        "/SIGEM_AutenticacionWeb/validacionCertificado.do"
+    private val SANIDAD_FIXED_QUERY = linkedMapOf(
+        "REDIRECCION" to "RegistroTelematico",
+        "tramiteId" to "TRAM_TARDESCONPLAN",
+        "ENTIDAD_ID" to "000",
+        "LANG" to "es",
+        "COUNTRY" to "ES",
+    )
+    private val SANIDAD_EVIDENCE_URLS = setOf(
+        SANIDAD_SOURCE_URL,
+        "https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm",
+        "https://sede.mscbs.gob.es/diseno/js/form_gen.js",
+        "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
+            "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
+            "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
     private const val MELILLA_PROFILE_ID = "melilla-sede"
     private const val MELILLA_PROFILE_VERSION = 1
     private const val MELILLA_DISPLAY_NAME = "Ciudad Autónoma de Melilla — Sede Electrónica"
