@@ -68,6 +68,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-valladolid-sede",
                 "la-palma-sede-electronica",
                 "ministerio-sanidad-certificado",
+                "tea-alegaciones-certificado",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

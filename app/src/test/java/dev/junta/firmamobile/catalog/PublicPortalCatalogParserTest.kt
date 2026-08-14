@@ -62,6 +62,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-valladolid-sede"),
                 ProfileId("la-palma-sede-electronica"),
                 ProfileId("ministerio-sanidad-certificado"),
+                ProfileId("tea-alegaciones-certificado"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
