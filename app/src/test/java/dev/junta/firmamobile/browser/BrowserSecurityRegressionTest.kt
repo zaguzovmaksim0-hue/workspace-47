@@ -92,6 +92,25 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun tenerifeSigningAdapterIsWiredIntoTheRuntimeResolver() {
+        val activitySource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+        val resolverBlock = activitySource
+            .substringAfter("adapterResolver = { id ->", missingDelimiterValue = "")
+            .substringBefore("\n            },")
+
+        assertTrue(
+            "MainActivity must construct the exact Tenerife signing adapter",
+            "val tenerifeAdapter = TenerifeCadesDetachedAdapter()" in activitySource,
+        )
+        assertTrue(
+            "The runtime adapter resolver must map Tenerife's exact protocol id to that adapter",
+            resolverBlock.isNotEmpty() && "tenerifeAdapter.id -> tenerifeAdapter" in resolverBlock,
+        )
+    }
+
+    @Test
     fun crossProfileNavigationCannotRebindTheSelectedSecurityProfile() {
         val invalidations = mutableListOf<BrowserTransitionReason>()
         val junta = profile("junta-andalucia")

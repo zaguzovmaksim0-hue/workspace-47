@@ -4405,23 +4405,23 @@ records:
     official_site: "https://sede.tenerife.es/"
     e_sede: "https://sede.tenerife.es/"
     entry_url: "https://sede.tenerife.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    procedure_page: "SPA pública de la sede; el componente app-autofirma firma el documentoSolicitud descargado por la tramitación."
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AutoScript / AutoFirma / AutoFirmaService (Angular)"
+    protocol_family: "AUTOSCRIPT_CADES_LOCAL"
+    signature_format: "CAdES detached"
+    signature_algorithm: "SHA512withRSA"
+    endpoint: "Sin endpoint de firma: AutoScript.sign recibe en Base64 el documentoSolicitud descargado y devuelve signatureB64 al backend."
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La fuente acredita la sede y sus servicios públicos, no un requisito exacto de certificado o firma ni un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma local AutoFirma de la solicitud descargada, limitada en QA al contrato SHA512withRSA/CAdES/mode=explicit observado."
+    protocol_evidence: "El bundle público 76.81426d6ba0b90ca6.js define app-autofirma/AutoFirmaService: descarga documentoSolicitud, lo codifica Base64, fija CAdES + SHA512withRSA + mode=explicit, llama AutoScript.sign y entrega signatureB64 mediante presentCertificateSignature."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I06B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["I06B", "I06C"]
+    reason: "Contrato de firma local implementado solo en QA; no se ha realizado E2E físico/manual, autenticación real ni presentación administrativa. El perfil no promueve release ni VERIFIED_E2E."
+    reviewed_at: "2026-08-14"
+    next_gate: "E2E físico/manual autorizado sobre el flujo real; no promover release ni VERIFIED_E2E sin evidencia separada."
 
   - inventory_id: "ES-PUB-0129"
     surface_key: "la-palma-portal-institucional"
@@ -6382,6 +6382,7 @@ Orden de expansión recomendado:
 [I05B]: https://elhierro.sedelectronica.es/info.0
 [I06A]: https://www.tenerife.es/
 [I06B]: https://sede.tenerife.es/
+[I06C]: https://sede.tenerife.es/76.81426d6ba0b90ca6.js
 [I07A]: https://www.cabildodelapalma.es/
 [I07B]: https://sedeelectronica.cabildodelapalma.es/
 [I07C]: https://sedeelectronica.cabildodelapalma.es/sta/resources/js/sta-autofirma-lote.js

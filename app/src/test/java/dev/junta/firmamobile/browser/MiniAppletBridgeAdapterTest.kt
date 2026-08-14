@@ -249,6 +249,61 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactTenerifeAutoScriptCallNormalizesTheDownloadedDocumentToSha512Cades() {
+        val result = adapterFor(TENERIFE_PROFILE_ID).route(
+            rawMessage = tenerifeMessage(),
+            sourceOrigin = TENERIFE_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 48,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(TENERIFE_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(TENERIFE_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.tenerife.es", request.context.origin.host)
+            assertEquals(48, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA512_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(TENERIFE_DOCUMENT, data)
+                    assertEquals(TENERIFE_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun tenerifeRejectsWrongProfileOriginTupleAndPropertiesWithoutBroadening() {
+        assertTrue(
+            adapterFor(TENERIFE_PROFILE_ID).route(
+                tenerifeMessage(),
+                Uri.parse("https://sede.tenerife.es.evil.example"),
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor("junta-andalucia").route(
+                tenerifeMessage(),
+                TENERIFE_ORIGIN,
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        listOf(
+            tenerifeMessage(algorithm = "SHA256withRSA"),
+            tenerifeMessage(format = "XAdES Detached"),
+            tenerifeMessage(extraProperties = "mode=implicit"),
+            tenerifeMessage(extraProperties = JSONObject.NULL),
+        ).forEach { message ->
+            assertTrue(
+                adapterFor(TENERIFE_PROFILE_ID).route(message, TENERIFE_ORIGIN, true) is
+                    MiniAppletBridgeRouteResult.Rejected,
+            )
+        }
+    }
+
+    @Test
     fun cantabriaRecRejectsWrongProfileOriginChallengeTupleAndPropertiesWithoutGenericBroadening() {
         assertEquals(
             SigningErrorCode.ORIGIN_NOT_ALLOWED,
@@ -950,6 +1005,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun tenerifeMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(TENERIFE_DOCUMENT),
+        algorithm: String = "SHA512withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = TENERIFE_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private fun cantabriaMessage(
         dataB64: String = Base64.getEncoder().encodeToString(CANTABRIA_CHALLENGE.encodeToByteArray()),
         algorithm: String = "SHA512withRSA",
@@ -1002,6 +1072,11 @@ class MiniAppletBridgeAdapterTest {
         const val JCCM_PROTOCOL_ID = "jccm-certificate-login-probe-local-cades-v1"
         const val UGR_PROTOCOL_ID = "ugr-certificado-login-local-cades-v1"
         val UGR_DATA = "Universidad de Granada".encodeToByteArray()
+        val TENERIFE_ORIGIN: Uri = Uri.parse("https://sede.tenerife.es")
+        const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
+        const val TENERIFE_PROTOCOL_ID = "tenerife-sede-local-cades-v1"
+        const val TENERIFE_EXTRA_PROPERTIES = "mode=explicit"
+        val TENERIFE_DOCUMENT = "synthetic Tenerife application document".encodeToByteArray()
         val CANTABRIA_ORIGIN: Uri = Uri.parse("https://rec.cantabria.es")
         const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"

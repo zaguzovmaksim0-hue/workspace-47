@@ -173,6 +173,7 @@ internal object CadesDetachedCodec {
         certificateChain: List<X509Certificate>,
         clock: Clock,
         provider: Provider = BouncyCastleProvider(),
+        signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
     ): CadesPreSignMaterial {
         requireContentSize(content, expectedContentBytes)
         require(certificateChain.isNotEmpty())
@@ -194,7 +195,10 @@ internal object CadesDetachedCodec {
                 Attribute(CMSAttributes.signingTime, DERSet(Time(Date.from(clock.instant())))),
             )
         }
-        val contentSigner = CapturingContentSigner(rsaPublicKey.modulus.bitLength())
+        val contentSigner = CapturingContentSigner(
+            rsaPublicKey.modulus.bitLength(),
+            signingAlgorithm.cadesJcaName(),
+        )
         return try {
             val digestProvider = JcaDigestCalculatorProviderBuilder().setProvider(provider).build()
             val signerInfo = JcaSignerInfoGeneratorBuilder(digestProvider)
@@ -232,6 +236,7 @@ internal object CadesDetachedCodec {
         signingCertificateFingerprint: ByteArray,
         signatureValue: ByteArray,
         provider: Provider = BouncyCastleProvider(),
+        signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
     ): ByteArray {
         require(placeholderCms.isNotEmpty() && placeholderCms.size <= MAX_CMS_BYTES)
         requireContentSize(detachedContent, expectedContentBytes)
@@ -270,6 +275,7 @@ internal object CadesDetachedCodec {
                 expectedContentBytes = expectedContentBytes,
                 expectedCertificateFingerprint = signingCertificateFingerprint,
                 provider = provider,
+                signingAlgorithm = signingAlgorithm,
             ),
         )
         return result
@@ -281,6 +287,7 @@ internal object CadesDetachedCodec {
         expectedContentBytes: Int,
         expectedCertificateFingerprint: ByteArray? = null,
         provider: Provider = BouncyCastleProvider(),
+        signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
     ): Boolean = runCatching {
         require(signatureDocument.isNotEmpty() && signatureDocument.size <= MAX_CMS_BYTES)
         requireContentSize(detachedContent, expectedContentBytes)
@@ -289,9 +296,11 @@ internal object CadesDetachedCodec {
         val signers = cms.signerInfos.signers
         require(signers.size == 1)
         val signer = signers.single()
-        require(signer.digestAlgOID == OID_SHA_1)
-        require(signer.encryptionAlgOID == PKCSObjectIdentifiers.rsaEncryption.id ||
-            signer.encryptionAlgOID == PKCSObjectIdentifiers.sha1WithRSAEncryption.id)
+        require(signer.digestAlgOID == signingAlgorithm.digestOid())
+        require(
+            signer.encryptionAlgOID == PKCSObjectIdentifiers.rsaEncryption.id ||
+                signer.encryptionAlgOID == signingAlgorithm.signatureOid(),
+        )
         require(signer.signedAttributes[PKCSObjectIdentifiers.id_aa_signingCertificateV2] != null)
         require(signer.signedAttributes[CMSAttributes.signingTime] != null)
         val certificates = cms.certificates.getMatches(null).filter(signer.sid::match)
@@ -303,7 +312,7 @@ internal object CadesDetachedCodec {
         }
         val certificate = CertificateFactory.getInstance("X.509")
             .generateCertificate(ByteArrayInputStream(holder.encoded)) as X509Certificate
-        require(Signature.getInstance("SHA1withRSA").run {
+        require(Signature.getInstance(signingAlgorithm.cadesJcaName()).run {
             initVerify(certificate.publicKey)
             update(signer.encodedSignedAttributes)
             verify(signer.signature)
@@ -317,13 +326,16 @@ internal object CadesDetachedCodec {
         require(content.size == expectedContentBytes)
     }
 
-    private class CapturingContentSigner(rsaBits: Int) : ContentSigner, AutoCloseable {
+    private class CapturingContentSigner(
+        rsaBits: Int,
+        private val jcaSignatureAlgorithm: String,
+    ) : ContentSigner, AutoCloseable {
         private val output = ClearingByteArrayOutputStream()
         private var closed = false
         private val placeholder = ByteArray((rsaBits + 7) / 8)
 
         override fun getAlgorithmIdentifier() =
-            DefaultSignatureAlgorithmIdentifierFinder().find("SHA1withRSA")
+            DefaultSignatureAlgorithmIdentifierFinder().find(jcaSignatureAlgorithm)
 
         override fun getOutputStream(): OutputStream = check(!closed).let { output }
 
@@ -352,5 +364,25 @@ internal object CadesDetachedCodec {
     private const val MAX_SIGNED_ATTRIBUTES_BYTES = 65_536
     private const val SHA_256 = "SHA-256"
     private const val SHA_256_BYTES = 32
+    private fun SigningAlgorithm.cadesJcaName(): String = when (this) {
+        SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
+        SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+        SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
+    }
+
+    private fun SigningAlgorithm.digestOid(): String = when (this) {
+        SigningAlgorithm.SHA1_WITH_RSA -> OID_SHA_1
+        SigningAlgorithm.SHA256_WITH_RSA -> OID_SHA_256
+        SigningAlgorithm.SHA512_WITH_RSA -> OID_SHA_512
+    }
+
+    private fun SigningAlgorithm.signatureOid(): String = when (this) {
+        SigningAlgorithm.SHA1_WITH_RSA -> "1.2.840.113549.1.1.5"
+        SigningAlgorithm.SHA256_WITH_RSA -> "1.2.840.113549.1.1.11"
+        SigningAlgorithm.SHA512_WITH_RSA -> "1.2.840.113549.1.1.13"
+    }
+
     private const val OID_SHA_1 = "1.3.14.3.2.26"
+    private const val OID_SHA_256 = "2.16.840.1.101.3.4.2.1"
+    private const val OID_SHA_512 = "2.16.840.1.101.3.4.2.3"
 }

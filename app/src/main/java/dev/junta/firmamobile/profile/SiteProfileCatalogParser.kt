@@ -191,6 +191,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == TEA_PROFILE_ID) {
                 validateTeaProfile(p)
             }
+            if (p.profileId.value == TENERIFE_PROFILE_ID) {
+                validateTenerifeProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -268,6 +271,10 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.IMPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == CANTABRIA_EXTRA_PROPERTIES)
+                                } else if (p.profileId.value == TENERIFE_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.EXPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                                    require(op.fixedExtraProperties == TENERIFE_EXTRA_PROPERTIES)
                                 } else {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
@@ -395,6 +402,40 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TEA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateTenerifeProfile(profile: SiteProfile) {
+        require(profile.profileVersion == TENERIFE_PROFILE_VERSION)
+        require(profile.displayName == TENERIFE_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == TENERIFE_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TENERIFE_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = TENERIFE_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = TENERIFE_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TENERIFE_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
     }
 
@@ -729,6 +770,18 @@ object SiteProfileCatalogParser {
     private val TEA_EVIDENCE_URLS = setOf(
         TEA_SOURCE_URL,
         "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
+    )
+    private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
+    private const val TENERIFE_PROFILE_VERSION = 1
+    private const val TENERIFE_DISPLAY_NAME = "Cabildo Insular de Tenerife — Sede electrónica"
+    private const val TENERIFE_START_URL = "https://sede.tenerife.es/"
+    private const val TENERIFE_ORIGIN = "https://sede.tenerife.es"
+    private const val TENERIFE_SAFE_DESCRIPTION =
+        "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
+    private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private val TENERIFE_EVIDENCE_URLS = setOf(
+        TENERIFE_START_URL,
+        "https://sede.tenerife.es/76.81426d6ba0b90ca6.js",
     )
     private const val MELILLA_PROFILE_ID = "melilla-sede"
     private const val MELILLA_PROFILE_VERSION = 1
