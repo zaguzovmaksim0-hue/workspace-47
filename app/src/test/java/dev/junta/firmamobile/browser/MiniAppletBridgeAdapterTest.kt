@@ -65,7 +65,7 @@ class MiniAppletBridgeAdapterTest {
         result.request.normalized.use { request ->
             assertEquals(REQUEST_ID, request.requestId.toString())
             assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
-            assertEquals(SigningFormat.CMS, request.format)
+            assertEquals(SigningFormat.CADES, request.format)
             assertEquals("www.juntadeandalucia.es", request.context.origin.host)
             assertEquals(DOCUMENT_ID, request.context.navigationId.value)
             request.withPayload { payload ->
@@ -291,7 +291,7 @@ class MiniAppletBridgeAdapterTest {
             assertEquals("sede.carm.es", request.context.origin.host)
             assertEquals(49, request.context.navigationEpoch)
             assertEquals(SigningAlgorithm.SHA256_WITH_RSA, request.algorithm)
-            assertEquals(SigningFormat.CADES, request.format)
+            assertEquals(SigningFormat.CMS, request.format)
             request.withPayload { payload ->
                 MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
                     assertArrayEquals(MURCIA_DOCUMENT, data)
@@ -329,13 +329,16 @@ class MiniAppletBridgeAdapterTest {
             murciaMessage(extraProperties = "mode=explicit"),
             murciaMessage(extraProperties = "filters=nonexpired:\nmode=explicit"),
             murciaMessage(extraProperties = JSONObject.NULL),
-            murciaMessage(dataB64 = ""),
         ).forEach { message ->
             assertEquals(
                 SigningErrorCode.INVALID_REQUEST,
                 murciaRejected(rawMessage = message),
             )
         }
+        assertEquals(
+            SigningErrorCode.REQUEST_TOO_LARGE,
+            murciaRejected(rawMessage = murciaMessage(dataB64 = "")),
+        )
     }
 
     @Test

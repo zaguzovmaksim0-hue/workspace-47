@@ -28,8 +28,8 @@ class MurciaSedeCmsAdapterTest {
     fun producesSha256AttachedCmsForMurciaPayloadAndVerifies() = runTest {
         val document = "synthetic Murcia CARM application payload 12345".encodeToByteArray()
         val request = request(document.copyOf())
-        val prepared = adapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
-        val local = prepared.preSign.withBytesToSign { signedAttributes ->
+        val preSign = assertPrepared(request)
+        val local = preSign.withBytesToSign { signedAttributes ->
             JcaLocalSignatureEngine().sign(
                 signedAttributes,
                 identity,
@@ -37,7 +37,7 @@ class MurciaSedeCmsAdapterTest {
             )
         } as LocalSignatureResult.Success
 
-        val completed = adapter.complete(request, prepared.preSign, local.signature)
+        val completed = adapter.complete(request, preSign, local.signature)
             as ProtocolCompletionResult.Success
         val result = completed.signature.withBytes { it.copyOf() }
         val fingerprint = MessageDigest.getInstance("SHA-256").digest(identity.certificate.encoded)
@@ -60,7 +60,7 @@ class MurciaSedeCmsAdapterTest {
 
         completed.signature.close()
         local.signature.close()
-        prepared.preSign.close()
+        preSign.close()
         request.close()
         result.fill(0)
         document.fill(0)
@@ -71,8 +71,8 @@ class MurciaSedeCmsAdapterTest {
     fun rejectsTamperedContentSignatureAndFingerprint() = runTest {
         val document = "synthetic Murcia CARM payload for tampering test".encodeToByteArray()
         val request = request(document.copyOf())
-        val prepared = adapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
-        val local = prepared.preSign.withBytesToSign { signedAttributes ->
+        val preSign = assertPrepared(request)
+        val local = preSign.withBytesToSign { signedAttributes ->
             JcaLocalSignatureEngine().sign(
                 signedAttributes,
                 identity,
@@ -80,7 +80,7 @@ class MurciaSedeCmsAdapterTest {
             )
         } as LocalSignatureResult.Success
 
-        val completed = adapter.complete(request, prepared.preSign, local.signature)
+        val completed = adapter.complete(request, preSign, local.signature)
             as ProtocolCompletionResult.Success
         val result = completed.signature.withBytes { it.copyOf() }
         val fingerprint = MessageDigest.getInstance("SHA-256").digest(identity.certificate.encoded)
@@ -114,7 +114,7 @@ class MurciaSedeCmsAdapterTest {
 
         completed.signature.close()
         local.signature.close()
-        prepared.preSign.close()
+        preSign.close()
         request.close()
         result.fill(0)
         document.fill(0)
@@ -152,8 +152,8 @@ class MurciaSedeCmsAdapterTest {
     fun enforcesSingleUseStateConsumptionAndZeroization() = runTest {
         val document = "single-use test document".encodeToByteArray()
         val request = request(document.copyOf())
-        val prepared = adapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
-        val local = prepared.preSign.withBytesToSign { signedAttributes ->
+        val preSign = assertPrepared(request)
+        val local = preSign.withBytesToSign { signedAttributes ->
             JcaLocalSignatureEngine().sign(
                 signedAttributes,
                 identity,
@@ -161,11 +161,11 @@ class MurciaSedeCmsAdapterTest {
             )
         } as LocalSignatureResult.Success
 
-        val completed = adapter.complete(request, prepared.preSign, local.signature)
+        val completed = adapter.complete(request, preSign, local.signature)
             as ProtocolCompletionResult.Success
         completed.signature.close()
 
-        val secondComplete = adapter.complete(request, prepared.preSign, local.signature)
+        val secondComplete = adapter.complete(request, preSign, local.signature)
         assertTrue(secondComplete is ProtocolCompletionResult.Failure)
         assertEquals(SigningErrorCode.PROTOCOL_FAILED, (secondComplete as ProtocolCompletionResult.Failure).code)
 
@@ -175,10 +175,17 @@ class MurciaSedeCmsAdapterTest {
         assertNull(stolenConsume)
 
         local.signature.close()
-        prepared.preSign.close()
+        preSign.close()
         preparedOther.preSign.close()
         request.close()
         otherRequest.close()
+    }
+
+    private suspend fun assertPrepared(request: NormalizedSignRequest): PreSignResult {
+        return when (val result = adapter.prepare(request, identity.chain)) {
+            is ProtocolPrepareResult.Success -> result.preSign
+            is ProtocolPrepareResult.Failure -> error("Murcia prepare failed with ${result.code}")
+        }
     }
 
     private suspend fun assertFailure(request: NormalizedSignRequest, code: SigningErrorCode) {

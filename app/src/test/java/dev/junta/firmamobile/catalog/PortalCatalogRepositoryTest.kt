@@ -75,11 +75,12 @@ class PortalCatalogRepositoryTest {
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
                 "policia-solicitud-generica",
+                "murcia-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 27, metadataOnly.size)
+        assertEquals(qaPortals.size - 28, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
