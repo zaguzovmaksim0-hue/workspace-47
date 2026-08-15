@@ -65,6 +65,8 @@ import dev.junta.firmamobile.browser.MiniAppletBridgeMode
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
+import dev.junta.firmamobile.browser.VeaMultiModeBridgeRequest
+import dev.junta.firmamobile.browser.VeaMultiModeReplyChannel
 import dev.junta.firmamobile.browser.NavigationBlockReason
 import dev.junta.firmamobile.browser.SensitiveFlowInvalidator
 import dev.junta.firmamobile.browser.SiteClearResult
