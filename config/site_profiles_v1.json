@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 21,
+  "catalogVersion": 22,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -687,6 +687,26 @@
         {"url":"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml","reviewedOn":"2026-08-15"},
         {"url":"https://portafirmas.dival.es/signingpad/js/autoscript.js","reviewedOn":"2026-08-15"},
         {"url":"https://portafirmas.dival.es/signingpad/js/filtros.js","reviewedOn":"2026-08-15"}
+      ]
+    },
+    {
+      "profileId": "ceuta-sede",
+      "profileVersion": 1,
+      "displayName": "Ciudad Autónoma de Ceuta — Sede electrónica",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
+      "initiatorOrigins": ["https://sede.ceuta.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info","reviewedOn":"2026-07-16"},
+        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info","reviewedOn":"2026-07-16"}
       ]
     }
   ]

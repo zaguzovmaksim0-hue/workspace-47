@@ -2528,7 +2528,7 @@
     {
       "portalId": "ceuta-sede",
       "inventoryId": "ES-PUB-0106",
-      "profileId": null,
+      "profileId": "ceuta-sede",
       "displayName": "Sede electrónica de Ceuta",
       "organization": "Ciudad Autónoma de Ceuta",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",

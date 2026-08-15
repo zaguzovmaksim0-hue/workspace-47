@@ -32,6 +32,7 @@ class JuntaOriginPolicyTest {
     private val jccm = ProfileId("jccm-certificate-login-probe")
     private val sevilla = ProfileId("sevilla-atse-certificate-login")
     private val melilla = ProfileId("melilla-sede")
+    private val ceuta = ProfileId("ceuta-sede")
     private val extremadura = ProfileId("extremadura-tramites")
     private val valladolid = ProfileId("diputacion-valladolid-sede")
     private val laPalma = ProfileId("la-palma-sede-electronica")
@@ -65,6 +66,7 @@ class JuntaOriginPolicyTest {
             "ventanillaelectronica.jccm.es",
             "www.sevilla.org",
             "sede.melilla.es",
+            "sede.ceuta.es",
             "tramites.juntaex.es",
             "www.sede.diputaciondevalladolid.es",
             "sedeelectronica.cabildodelapalma.es",
@@ -143,6 +145,8 @@ class JuntaOriginPolicyTest {
         )
         assertEquals(setOf("www.sevilla.org"), JuntaOriginPolicy.browserAllowedHosts(sevilla))
         assertEquals(setOf("sede.melilla.es"), JuntaOriginPolicy.browserAllowedHosts(melilla))
+        assertEquals(setOf("sede.ceuta.es"), JuntaOriginPolicy.browserAllowedHosts(ceuta))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(ceuta).isEmpty())
         assertEquals(
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),

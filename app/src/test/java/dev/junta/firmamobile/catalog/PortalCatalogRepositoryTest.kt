@@ -64,6 +64,7 @@ class PortalCatalogRepositoryTest {
                 "jccm-certificate-login-probe",
                 "sevilla-atse-certificate-login",
                 "melilla-sede",
+                "ceuta-sede",
                 "extremadura-tramites",
                 "diputacion-valladolid-sede",
                 "la-palma-sede-electronica",
@@ -77,7 +78,7 @@ class PortalCatalogRepositoryTest {
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 25, metadataOnly.size)
+        assertEquals(qaPortals.size - 26, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -97,7 +98,7 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
         qaPortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
-            val expectedStatus = if (portal.profileId == ProfileId("educacion-convocatoria")) {
+            val expectedStatus = if (portal.profileId in setOf(ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede"))) {
                 PortalSupportStatus.BROWSE_ONLY
             } else {
                 PortalSupportStatus.IMPLEMENTED_NOT_E2E
@@ -113,7 +114,7 @@ class PortalCatalogRepositoryTest {
         }
         releasePortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
             when (portal.profileId) {
-                ProfileId("educacion-convocatoria") -> {
+                ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede") -> {
                     assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                     assertTrue(portal.isEnabled)
                 }

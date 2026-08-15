@@ -352,6 +352,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", toledo["limitations"].lower())
 
 
+    def test_ceuta_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        ceuta = next(entry for entry in catalog["entries"] if entry["portalId"] == "ceuta-sede")
+
+        self.assertEqual("ceuta-sede", ceuta["profileId"])
+        self.assertEqual("ES-PUB-0106", ceuta["inventoryId"])
+        self.assertEqual("https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info", ceuta["entryUrl"])
+        self.assertNotIn("launchUrl", ceuta)
+        self.assertEqual("CATALOGED", ceuta["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", ceuta["inventoryStatus"])
+        self.assertEqual("2026-07-16", ceuta["reviewedOn"])
+        self.assertEqual([], ceuta["observedSignatureFormats"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
