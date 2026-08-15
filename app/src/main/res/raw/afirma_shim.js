@@ -514,9 +514,46 @@
     rejectDirectCall(pending.errorCallback, errorCode);
   }
 
-  function isJuntaVeaOrigin() {
-    return functionalSigningEnabled && juntaMultiModeCompatibilityEnabled &&
-      window.location.origin === juntaVeaOrigin;
+  const juntaVeaAllowedPaths = [
+    "/inicio/",
+    "/inicio",
+    "/",
+    "/confirmacion-modificacion-datos-contacto",
+    "/documentacion-voluntaria",
+    "/borrador/",
+    "/formulario/",
+    "/resumen-pago/",
+    "/procedimiento-detalle/",
+    "/competente/",
+    "/tarea/",
+    "/justificante",
+    "/datos-contacto",
+    "/area-personal"
+  ];
+
+  const allowedVeaSignAlgorithms = new Set([
+    "SHA256WITHRSA",
+    "SHA512WITHRSA",
+    "SHA1WITHRSA",
+    "SHA384WITHRSA",
+    "SHA224WITHRSA"
+  ]);
+
+  const allowedVeaSignFormats = new Set([
+    "CADES",
+    "XADES",
+    "PADES"
+  ]);
+
+  function isJuntaVeaPage() {
+    if (!functionalSigningEnabled || !juntaMultiModeCompatibilityEnabled) {
+      return false;
+    }
+    if (window.location.origin !== juntaVeaOrigin) {
+      return false;
+    }
+    const pathname = window.location.pathname;
+    return juntaVeaAllowedPaths.some(p => pathname === p || (p.endsWith("/") && pathname.startsWith(p)));
   }
 
   function clearPendingMultiMode(requestIdValue) {
@@ -530,7 +567,7 @@
   }
 
   function interceptJuntaMultiModeSign(args) {
-    if (!isJuntaVeaOrigin()) {
+    if (!isJuntaVeaPage()) {
       return false;
     }
     const errorCallback = args[8];
@@ -543,14 +580,27 @@
     const signFmt = args[5];
     const signParams = args[6];
 
+    const normalizedAlg = typeof signAlg === "string" ? signAlg.trim().toUpperCase().replace(/-/g, "") : "";
+    const normalizedFmt = typeof signFmt === "string" ? signFmt.trim().toUpperCase() : "";
+
+    const validOriginalData = origDataArray === null || (
+      Array.isArray(origDataArray) &&
+      origDataArray.length === arrayLen &&
+      origDataArray.every(item => item === null || (typeof item === "string" && item.length === 0))
+    );
+
     const valid = Array.isArray(opArray) && Array.isArray(dataArray) &&
       typeof arrayLen === "number" && arrayLen > 0 && arrayLen <= 128 &&
       opArray.length === arrayLen && dataArray.length === arrayLen &&
       opArray.every(op => op === "sign") &&
       dataArray.every(d => typeof d === "string" && d.length > 0 && d.length <= 512) &&
-      typeof signAlg === "string" && signAlg.length > 0 &&
-      typeof signFmt === "string" && signFmt.length > 0 &&
+      validOriginalData &&
+      allowedVeaSignAlgorithms.has(normalizedAlg) &&
+      allowedVeaSignFormats.has(normalizedFmt) &&
       typeof signParams === "string" && signParams.length <= maxExtraPropertiesChars &&
+      signParams.includes("mode=explicit") &&
+      signParams.includes("precalculatedHashAlgorithm=") &&
+      signParams.includes("filters=") &&
       typeof successCallback === "function" && typeof errorCallback === "function" &&
       probeDocumentId;
 
@@ -600,7 +650,8 @@
       arrayLength: arrayLen,
       algorithm: signAlg,
       format: signFmt,
-      extraProperties: signParams
+      extraProperties: signParams,
+      pageUrl: window.location.href
     };
 
     try {

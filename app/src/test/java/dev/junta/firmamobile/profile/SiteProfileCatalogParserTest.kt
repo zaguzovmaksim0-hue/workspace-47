@@ -199,7 +199,7 @@ class SiteProfileCatalogParserTest {
             ),
             operation.algorithms,
         )
-        assertNull(operation.format)
+        assertEquals(SignatureFormat.CADES, operation.format)
         assertEquals(SignaturePackaging.DETACHED, operation.packaging)
         assertEquals(SignatureMode.EXPLICIT, operation.mode)
         assertTrue(operation.fixedExtraProperties.isEmpty())

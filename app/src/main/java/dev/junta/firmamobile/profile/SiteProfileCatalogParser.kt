@@ -1015,7 +1015,7 @@ object SiteProfileCatalogParser {
                     SignatureAlgorithm.SHA256_WITH_RSA,
                     SignatureAlgorithm.SHA512_WITH_RSA,
                 ),
-                format = null,
+                format = SignatureFormat.CADES,
                 packaging = SignaturePackaging.DETACHED,
                 mode = SignatureMode.EXPLICIT,
                 fixedExtraProperties = emptyMap(),

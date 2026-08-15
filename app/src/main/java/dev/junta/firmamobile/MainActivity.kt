@@ -64,6 +64,7 @@ import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
 import dev.junta.firmamobile.signing.VeaMultiModeSigningAdapter
+import dev.junta.firmamobile.signing.VeaMultiModeSigningCoordinator
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -95,6 +96,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter
     private lateinit var laPalmaBatchSigningAdapter: LaPalmaBatchSigningAdapter
     private lateinit var veaMultiModeSigningAdapter: VeaMultiModeSigningAdapter
+    private lateinit var veaMultiModeSigningCoordinator: VeaMultiModeSigningCoordinator
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogSmokeHook: CatalogSmokeHook
@@ -209,6 +211,14 @@ class MainActivity : ComponentActivity() {
             supportLevel = melillaProfile.compatibilityStatus.name,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
+        veaMultiModeSigningCoordinator = VeaMultiModeSigningCoordinator(
+            certificateSession = app.certificateSession,
+            adapter = veaMultiModeSigningAdapter,
+            currentOrigin = { currentSigningOrigin() },
+            currentNavigationEpoch = { currentNavigationEpoch },
+            expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
         val publicCatalog = resources.openRawResource(R.raw.public_portal_catalog_v1)
             .bufferedReader().use { PublicPortalCatalogParser.parse(it.readText()) }
         catalogRepository = PortalCatalogRepository(
@@ -246,9 +256,11 @@ class MainActivity : ComponentActivity() {
             val certificateState = certificateViewModel.state.collectAsStateWithLifecycle()
             val ordinarySigningState = signingCoordinator.state.collectAsStateWithLifecycle()
             val batchSigningState = batchSigningCoordinator.state.collectAsStateWithLifecycle()
+            val veaMultiModeSigningState = veaMultiModeSigningCoordinator.state.collectAsStateWithLifecycle()
             val signingState = when (signingFlowOwnership.current()?.kind) {
                 SigningFlowKind.BATCH -> batchSigningState.value
                 SigningFlowKind.ORDINARY -> ordinarySigningState.value
+                SigningFlowKind.VEA_MULTIMODE -> veaMultiModeSigningState.value
                 null -> SigningUiState.Idle
             }
             val updateSecureWindow = remember(window) {
@@ -330,7 +342,9 @@ class MainActivity : ComponentActivity() {
                         onWebViewChanged = { currentWebView = it },
                         onNavigationEpochChanged = { currentNavigationEpoch = it },
                         onVeaMultiModeRequest = ::prepareVeaMultiModeSigning,
-                        onVeaMultiModeCancel = signingCoordinator::cancel,
+                        onVeaMultiModeCancel = { requestId ->
+                            cancelSigning(SigningCancelReason.JAVASCRIPT, requestId)
+                        },
                         )
                     }
                 } else if (destination == AppDestination.Catalog && unlocked != null) {
@@ -404,6 +418,7 @@ class MainActivity : ComponentActivity() {
         cancelSigning(SigningCancelReason.BACKGROUND)
         signingCoordinator.close()
         batchSigningCoordinator.close()
+        veaMultiModeSigningCoordinator.close()
         super.onDestroy()
     }
 
@@ -463,24 +478,14 @@ class MainActivity : ComponentActivity() {
         reply: VeaMultiModeReplyChannel,
     ) {
         val replySink = veaMultiModeSigningAdapter.replySink(reply)
-        val app = application as JuntaFirmaApplication
-        val identity = app.certificateSession.identityForSigning()
-        if (identity == null) {
-            replySink.failure(SigningErrorCode.CERTIFICATE_LOCKED)
-            return
-        }
         val requestId = request.requestId
-        if (!signingFlowOwnership.acquire(SigningFlowKind.ORDINARY, requestId)) {
+        if (!signingFlowOwnership.acquire(SigningFlowKind.VEA_MULTIMODE, requestId)) {
             runCatching { replySink.failure(SigningErrorCode.PROTOCOL_FAILED) }
             return
         }
-        try {
-            val executed = veaMultiModeSigningAdapter.execute(request, identity, replySink)
-            if (!executed) {
-                replySink.failure(SigningErrorCode.LOCAL_SIGNATURE_FAILED)
-            }
-        } finally {
-            signingFlowOwnership.release(SigningFlowKind.ORDINARY, requestId)
+        val result = veaMultiModeSigningCoordinator.prepare(request, replySink)
+        if (result is SigningPreparationResult.Rejected && veaMultiModeSigningCoordinator.state.value is SigningUiState.Idle) {
+            signingFlowOwnership.release(SigningFlowKind.VEA_MULTIMODE, requestId)
         }
     }
 
@@ -490,12 +495,14 @@ class MainActivity : ComponentActivity() {
         val awaiting = when (owner.kind) {
             SigningFlowKind.ORDINARY -> signingCoordinator.state.value
             SigningFlowKind.BATCH -> batchSigningCoordinator.state.value
+            SigningFlowKind.VEA_MULTIMODE -> veaMultiModeSigningCoordinator.state.value
         } as? SigningUiState.AwaitingConfirmation
         if (awaiting?.requestId != requestId) return
         val job = lifecycleScope.launch(start = CoroutineStart.LAZY) {
             when (owner.kind) {
                 SigningFlowKind.ORDINARY -> signingCoordinator.confirm(requestId)
                 SigningFlowKind.BATCH -> batchSigningCoordinator.confirm(requestId)
+                SigningFlowKind.VEA_MULTIMODE -> veaMultiModeSigningCoordinator.confirm(requestId)
             }
         }
         if (signingJobs.register(requestId, job)) {
@@ -514,6 +521,7 @@ class MainActivity : ComponentActivity() {
         val accepted = when (owner.kind) {
             SigningFlowKind.ORDINARY -> signingCoordinator.cancel(reason, requestId)
             SigningFlowKind.BATCH -> batchSigningCoordinator.cancel(reason, requestId)
+            SigningFlowKind.VEA_MULTIMODE -> veaMultiModeSigningCoordinator.cancel(reason, requestId)
         }
         val cancellationJob = signingJobs.takeForCancellation(requestId, accepted)
         if (accepted && cancellationJob != null) {
@@ -531,10 +539,12 @@ class MainActivity : ComponentActivity() {
         when (owner.kind) {
             SigningFlowKind.ORDINARY -> signingCoordinator.dismissTerminalState()
             SigningFlowKind.BATCH -> batchSigningCoordinator.dismissTerminalState()
+            SigningFlowKind.VEA_MULTIMODE -> veaMultiModeSigningCoordinator.dismissTerminalState()
         }
         val state = when (owner.kind) {
             SigningFlowKind.ORDINARY -> signingCoordinator.state.value
             SigningFlowKind.BATCH -> batchSigningCoordinator.state.value
+            SigningFlowKind.VEA_MULTIMODE -> veaMultiModeSigningCoordinator.state.value
         }
         if (state is SigningUiState.Idle) {
             signingFlowOwnership.release(owner.kind, owner.requestId)
@@ -609,6 +619,7 @@ private sealed interface AppDestination {
 internal enum class SigningFlowKind {
     ORDINARY,
     BATCH,
+    VEA_MULTIMODE,
 }
 
 internal data class SigningFlowOwner(

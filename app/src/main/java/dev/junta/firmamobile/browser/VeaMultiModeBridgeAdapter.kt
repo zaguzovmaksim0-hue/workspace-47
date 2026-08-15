@@ -5,10 +5,13 @@ import android.util.JsonReader
 import android.util.JsonToken
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.security.BoundedReplayLedger
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.PrecalculatedHashAlgorithm
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.SigningErrorCode
 import java.io.StringReader
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONObject
@@ -28,6 +31,7 @@ data class VeaMultiModeBridgeRequest(
     val profileId: ProfileId,
     val sourceOrigin: TrustedOrigin,
     val navigationEpoch: Long,
+    val pageUrl: String? = null,
 )
 
 sealed interface VeaMultiModeBridgeRouteResult {
@@ -51,17 +55,29 @@ class VeaMultiModeBridgeAdapter(
     private val currentNavigationEpoch: () -> Long? = { null },
     private val currentDocumentId: () -> UUID? = { null },
     private val currentOrigin: () -> TrustedOrigin? = { null },
+    private val currentUrl: () -> String? = { null },
+    monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
-    private val abandonedRequests = mutableSetOf<UUID>()
+    private var activeRequestId: UUID? = null
     private var activeDocumentId: UUID? = null
+    private var lastNavigationEpoch: Long? = null
+    private val invalidatedDocumentIds = linkedSetOf<UUID>()
+    private val replayLedger = BoundedReplayLedger<UUID>(
+        monotonicNanos = monotonicNanos,
+        retention = Duration.ofMinutes(5),
+        maxEntries = 64,
+    )
 
+    @Synchronized
     fun route(
         rawMessage: String,
         sourceOrigin: Uri,
         isMainFrame: Boolean,
         navigationEpoch: Long = 0L,
     ): VeaMultiModeBridgeRouteResult {
-        if (navigationEpoch < 0L) return VeaMultiModeBridgeRouteResult.NotApplicable
+        if (navigationEpoch < 0L || navigationEpoch == Long.MAX_VALUE) {
+            return VeaMultiModeBridgeRouteResult.NotApplicable
+        }
         if (rawMessage.length > MAX_MESSAGE_CHARS) {
             return VeaMultiModeBridgeRouteResult.NotApplicable
         }
@@ -80,16 +96,17 @@ class VeaMultiModeBridgeAdapter(
         if (requestId == null || documentId == null) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
         }
-        if (messageType == CANCEL_TYPE) {
-            if (streamedKeys != CANCEL_KEYS) {
-                return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
-            }
-            abandonedRequests.add(requestId)
-            return VeaMultiModeBridgeRouteResult.Cancelled(requestId, documentId)
+
+        val currentEpoch = currentNavigationEpoch()
+        if (currentEpoch?.let { it != navigationEpoch } == true) {
+            invalidateActiveDocument()
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
-        if (streamedKeys != SIGN_KEYS) {
-            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+        if (lastNavigationEpoch?.let { it != navigationEpoch } == true) {
+            invalidateActiveDocument()
         }
+        lastNavigationEpoch = navigationEpoch
+
         if (!isMainFrame) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
@@ -102,19 +119,40 @@ class VeaMultiModeBridgeAdapter(
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.ORIGIN_NOT_ALLOWED)
         }
         val currentDocId = currentDocumentId()
-        if (currentDocId != null && currentDocId != documentId) {
-            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
-        }
-        val expectedEpoch = currentNavigationEpoch()
-        if (expectedEpoch != null && expectedEpoch != navigationEpoch) {
+        if (currentDocId != null && currentDocId != documentId || documentId in invalidatedDocumentIds) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
         val expectedOrigin = currentOrigin()
         if (expectedOrigin != null && (expectedOrigin.scheme != "https" || expectedOrigin.host != "veaja.cloud.juntadeandalucia.es" || expectedOrigin.port != 443)) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.ORIGIN_NOT_ALLOWED)
         }
-        if (requestId in abandonedRequests) {
-            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.USER_CANCELLED)
+
+        if (messageType == CANCEL_TYPE) {
+            if (streamedKeys != CANCEL_KEYS) {
+                return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+            }
+            if (activeRequestId == requestId) {
+                activeRequestId = null
+            }
+            invalidateDocument(documentId)
+            return VeaMultiModeBridgeRouteResult.Cancelled(requestId, documentId)
+        }
+
+        if (streamedKeys != SIGN_KEYS) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+        }
+
+        val pageUrl = json.optString("pageUrl", "")
+        if (pageUrl.isNotEmpty() && !isValidVeaPageUrl(pageUrl)) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+        }
+        val runtimeUrl = currentUrl()
+        if (runtimeUrl != null && !isValidVeaPageUrl(runtimeUrl)) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
+        }
+
+        if (activeRequestId != null || replayLedger.contains(requestId)) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.PROTOCOL_FAILED)
         }
 
         val arrayLength = json.optInt("arrayLength", -1)
@@ -152,9 +190,19 @@ class VeaMultiModeBridgeAdapter(
             null
         } else {
             val origJsonArray = json.optJSONArray("originalDataArray")
-            if (origJsonArray != null) {
-                List(origJsonArray.length()) { origJsonArray.optString(it, "") }
-            } else null
+                ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+            if (origJsonArray.length() != arrayLength) {
+                return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+            }
+            val list = mutableListOf<String>()
+            for (i in 0 until arrayLength) {
+                val item = if (origJsonArray.isNull(i)) "" else origJsonArray.optString(i, "")
+                if (item.isNotEmpty()) {
+                    return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+                }
+                list.add(item)
+            }
+            list
         }
 
         val algorithm = json.optString("algorithm", "").trim()
@@ -165,17 +213,20 @@ class VeaMultiModeBridgeAdapter(
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
         }
 
+        val normalizedFormat = format.uppercase()
+        if (normalizedFormat !in SUPPORTED_FORMATS) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+        }
+
         val parsedParams = parseExtraParams(extraProperties)
             ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
 
         val hashAlgorithm = parsedParams.hashAlgorithm
-        val matchingAlgorithm = when (algorithm.uppercase().replace("-", "")) {
-            "SHA256WITHRSA" -> SigningAlgorithm.SHA256_WITH_RSA
-            "SHA512WITHRSA" -> SigningAlgorithm.SHA512_WITH_RSA
-            "SHA1WITHRSA" -> SigningAlgorithm.SHA1_WITH_RSA
-            else -> return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
-        }
-        if (matchingAlgorithm !in hashAlgorithm.matchingSigningAlgorithms) {
+        val normalizedAlg = algorithm.uppercase().replace("-", "")
+        val expectedHashAlgorithm = ALGORITHM_HASH_MAP[normalizedAlg]
+            ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+
+        if (expectedHashAlgorithm != hashAlgorithm) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
         }
 
@@ -186,6 +237,11 @@ class VeaMultiModeBridgeAdapter(
             decodedHashes.add(decoded)
         }
 
+        if (!replayLedger.recordNew(requestId)) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.PROTOCOL_FAILED)
+        }
+
+        activeRequestId = requestId
         activeDocumentId = documentId
 
         val request = VeaMultiModeBridgeRequest(
@@ -203,32 +259,50 @@ class VeaMultiModeBridgeAdapter(
             profileId = ProfileId(PROFILE_ID),
             sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
             navigationEpoch = navigationEpoch,
+            pageUrl = pageUrl.ifEmpty { null },
         )
         return VeaMultiModeBridgeRouteResult.Accepted(request)
     }
 
+    @Synchronized
     fun abandon(requestId: UUID? = null): Boolean {
-        if (requestId != null) {
-            abandonedRequests.add(requestId)
+        if (requestId != null && activeRequestId == requestId) {
+            activeRequestId = null
         }
         return true
     }
 
+    @Synchronized
     fun invalidateDocument(documentId: UUID?) {
-        if (documentId != null && activeDocumentId == documentId) {
-            activeDocumentId = null
+        if (documentId != null) {
+            invalidatedDocumentIds.add(documentId)
+            if (activeDocumentId == documentId) {
+                activeDocumentId = null
+                activeRequestId = null
+            }
         }
     }
 
+    @Synchronized
     fun abandonAll() {
-        abandonedRequests.clear()
+        activeRequestId = null
         activeDocumentId = null
+        invalidatedDocumentIds.clear()
+    }
+
+    private fun invalidateActiveDocument() {
+        val active = activeDocumentId
+        if (active != null) {
+            invalidatedDocumentIds.add(active)
+            activeDocumentId = null
+            activeRequestId = null
+        }
     }
 
     private data class ParsedVeaParams(
         val hashAlgorithm: PrecalculatedHashAlgorithm,
         val mode: String,
-        val filters: String?,
+        val filters: String,
     )
 
     private fun parseExtraParams(raw: String): ParsedVeaParams? {
@@ -251,17 +325,31 @@ class VeaMultiModeBridgeAdapter(
                     hashAlgo = PrecalculatedHashAlgorithm.parse(value) ?: return null
                 }
                 "filters" -> {
+                    if (!isValidVeaFilter(value)) return null
                     filters = value
                 }
                 else -> return null // Reject unknown properties fail-closed
             }
         }
-        if (mode != "explicit" || hashAlgo == null) return null
+        if (mode != "explicit" || hashAlgo == null || filters == null) return null
         return ParsedVeaParams(
             hashAlgorithm = hashAlgo,
             mode = mode,
             filters = filters,
         )
+    }
+
+    private fun isValidVeaFilter(filterStr: String): Boolean {
+        val cleaned = filterStr.trim()
+        if (!cleaned.startsWith("nonexpired:;signingCert")) return false
+        val remainder = cleaned.removePrefix("nonexpired:;signingCert").trim()
+        if (remainder.isEmpty() || remainder == ";") return true
+        val stripped = remainder.trimStart(';')
+        if (stripped.startsWith("qualified:")) {
+            val serial = stripped.removePrefix("qualified:").trimEnd(';')
+            return serial.isNotEmpty() && serial.all { it.isLetterOrDigit() }
+        }
+        return false
     }
 
     private fun String.uniqueTopLevelKeys(): Set<String>? = try {
@@ -316,12 +404,51 @@ class VeaMultiModeBridgeAdapter(
             "algorithm",
             "format",
             "extraProperties",
+            "pageUrl",
         )
         private val CANCEL_KEYS = setOf(
             "type",
             "documentId",
             "requestId",
         )
+
+        val SUPPORTED_FORMATS = setOf("CADES", "XADES", "PADES")
+
+        val ALGORITHM_HASH_MAP = mapOf(
+            "SHA256WITHRSA" to PrecalculatedHashAlgorithm.SHA256,
+            "SHA512WITHRSA" to PrecalculatedHashAlgorithm.SHA512,
+            "SHA1WITHRSA" to PrecalculatedHashAlgorithm.SHA1,
+            "SHA384WITHRSA" to PrecalculatedHashAlgorithm.SHA384,
+            "SHA224WITHRSA" to PrecalculatedHashAlgorithm.SHA224,
+        )
+
+        val ALLOWED_PATH_PREFIXES = listOf(
+            "/inicio/",
+            "/inicio",
+            "/",
+            "/confirmacion-modificacion-datos-contacto",
+            "/documentacion-voluntaria",
+            "/borrador/",
+            "/formulario/",
+            "/resumen-pago/",
+            "/procedimiento-detalle/",
+            "/competente/",
+            "/tarea/",
+            "/justificante",
+            "/datos-contacto",
+            "/area-personal",
+        )
+
+        fun isValidVeaPageUrl(rawUrl: String): Boolean {
+            val uri = runCatching { Uri.parse(rawUrl) }.getOrNull() ?: return false
+            if (uri.scheme != "https" || uri.host != "veaja.cloud.juntadeandalucia.es" || (uri.port != -1 && uri.port != 443)) {
+                return false
+            }
+            val path = uri.path ?: "/"
+            return ALLOWED_PATH_PREFIXES.any { allowed ->
+                path == allowed || (allowed.endsWith("/") && path.startsWith(allowed))
+            }
+        }
     }
 }
 

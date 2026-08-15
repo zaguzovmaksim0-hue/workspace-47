@@ -64,7 +64,7 @@ class JuntaSedeProfileCatalogBindingTest {
             ),
             operation.algorithms,
         )
-        assertNull(operation.format)
+        assertEquals(SignatureFormat.CADES, operation.format)
         assertEquals(SignaturePackaging.DETACHED, operation.packaging)
         assertEquals(SignatureMode.EXPLICIT, operation.mode)
         assertNull(operation.endpointId)

@@ -709,7 +709,7 @@
           "capabilities": ["SIGN", "LEGACY_SHA1"],
           "endpointId": null,
           "algorithms": ["SHA1_WITH_RSA", "SHA256_WITH_RSA", "SHA512_WITH_RSA"],
-          "format": null,
+          "format": "CADES",
           "packaging": "DETACHED",
           "mode": "EXPLICIT",
           "fixedExtraProperties": {},
