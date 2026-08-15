@@ -14,6 +14,7 @@ import java.util.UUID
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -36,6 +37,26 @@ class VeaMultiModeSigningCoordinatorTest {
         expiryScheduler = expiryScheduler,
         profileRegistry = BuiltInSiteProfiles.qaRegistry,
     )
+
+    @Test
+    fun veaUrlCanonicalizationIsJvmSafeAndFailClosed() {
+        assertEquals(
+            "https://veaja.cloud.juntadeandalucia.es/inicio/?x=1",
+            VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(
+                "https://veaja.cloud.juntadeandalucia.es/inicio/?x=1#ignored",
+            ),
+        )
+        assertNull(
+            VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(
+                "https://user@veaja.cloud.juntadeandalucia.es/inicio/",
+            ),
+        )
+        assertNull(
+            VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(
+                "https://veaja.cloud.juntadeandalucia.es:444/inicio/",
+            ),
+        )
+    }
 
     @Test
     fun prepareTransitionsToAwaitingConfirmationWithoutSigning() {

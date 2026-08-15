@@ -11,6 +11,7 @@ import dev.junta.firmamobile.signing.PrecalculatedHashAlgorithm
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.SigningErrorCode
 import java.io.StringReader
+import java.net.URI
 import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -477,20 +478,20 @@ class VeaMultiModeBridgeAdapter(
         }
 
         fun canonicalizeVeaUrl(rawUrl: String): String? {
-            val uri = runCatching { Uri.parse(rawUrl) }.getOrNull() ?: return null
+            val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return null
             if (uri.scheme != "https" ||
                 uri.host != "veaja.cloud.juntadeandalucia.es" ||
                 (uri.port != -1 && uri.port != 443) ||
-                uri.encodedUserInfo != null
+                uri.rawUserInfo != null
             ) {
                 return null
             }
-            val rawPath = uri.path ?: "/"
-            val normalizedPath = if (rawPath.isEmpty()) "/" else rawPath
+            val path = uri.path ?: "/"
+            val normalizedPath = if (path.isEmpty()) "/" else path
             if (!isValidVeaPath(normalizedPath)) {
                 return null
             }
-            val query = uri.encodedQuery
+            val query = uri.rawQuery
             val querySuffix = if (query != null) "?$query" else ""
             return "https://veaja.cloud.juntadeandalucia.es$normalizedPath$querySuffix"
         }
