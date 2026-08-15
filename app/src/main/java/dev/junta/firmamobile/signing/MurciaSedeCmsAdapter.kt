@@ -309,7 +309,7 @@ internal object MurciaCmsCodec {
             signer.encryptionAlgOID == PKCSObjectIdentifiers.rsaEncryption.id ||
                 signer.encryptionAlgOID == OID_SHA256_RSA,
         )
-        require(signer.signedAttributes[PKCSObjectIdentifiers.id_aa_signingCertificateV2] != null)
+        require(signer.signedAttributes[PKCSObjectIdentifiers.id_aa_signingCertificateV2] == null)
         require(signer.signedAttributes[CMSAttributes.signingTime] != null)
         val certificates = cms.certificates.getMatches(null).filter(signer.sid::match)
         require(certificates.size == 1)
