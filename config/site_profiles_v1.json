@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 18,
+  "catalogVersion": 19,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -518,6 +518,27 @@
         {"url":"https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/","reviewedOn":"2026-08-13"},
         {"url":"https://www.sede.diputaciondevalladolid.es/tgauth/login","reviewedOn":"2026-08-13"},
         {"url":"https://www.sede.diputaciondevalladolid.es/c/portal/cert-login","reviewedOn":"2026-08-13"}
+      ]
+    },
+    {
+      "profileId": "diputacion-toledo-sede",
+      "profileVersion": 1,
+      "displayName": "Diputación de Toledo — Registro Telemático con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31",
+      "initiatorOrigins": ["https://diputacion.toledo.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://diputacion.toledo.gob.es"],"sourceUrls":["https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY="],"requestPath":"/SIGEM_AutenticacionWeb/validacionCertificado.do","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15,"requestPort":843},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://diputacion.toledo.gob.es/procedimientos/1","reviewedOn":"2026-08-13"},
+        {"url":"https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31","reviewedOn":"2026-08-13"},
+        {"url":"https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY=","reviewedOn":"2026-08-13"}
       ]
     },
     {
