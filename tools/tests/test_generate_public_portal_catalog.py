@@ -314,6 +314,32 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual(["CADES"], tenerife["observedSignatureFormats"])
         self.assertIn("e2e", tenerife["limitations"].lower())
 
+    def test_toledo_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        toledo = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-toledo-sede"
+        )
+
+        self.assertEqual("diputacion-toledo-sede", toledo["profileId"])
+        self.assertEqual("ES-PUB-0174", toledo["inventoryId"])
+        self.assertEqual(
+            "https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31",
+            toledo["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", toledo)
+        self.assertEqual("E2E_PENDING", toledo["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", toledo["inventoryStatus"])
+        self.assertEqual("2026-08-13", toledo["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", toledo["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", toledo["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", toledo["observedMechanisms"])
+        self.assertEqual([], toledo["observedSignatureFormats"])
+        self.assertIn("client_tls_auth", toledo["limitations"].lower())
+        self.assertIn("firma", toledo["limitations"].lower())
+        self.assertIn("e2e", toledo["limitations"].lower())
+
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
