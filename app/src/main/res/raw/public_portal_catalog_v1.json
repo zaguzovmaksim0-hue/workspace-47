@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "5c6bdcfce4ad599708fd60ae0715924fe0f17d99094d20efd21b17f016efa037",
+  "sourceRevision": "d912deae91b5d5279cea054d7fe2ed41bcbf997a5757a2f4c49112cdffad3394",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -949,24 +949,32 @@
     {
       "portalId": "age-cuerpo-nacional-de-policia",
       "inventoryId": "ES-PUB-0038",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "policia-solicitud-generica",
+      "displayName": "Sede electrónica de la Policía Nacional — Solicitud genérica",
       "organization": "Cuerpo Nacional de Policía",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Firma de solicitud genérica en la Sede de la Policía Nacional mediante AutoScript.sign en formato XAdES Detached con SHA1withRSA.",
       "entryUrl": "https://sede.policia.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_XADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "POLICIA-SEDE-2026-08-15",
+        "POLICIA-SOLICITUD-2026-08-15"
+      ],
+      "reviewedOn": "2026-08-15",
+      "limitations": "Contrato de firma XAdES Detached implementado solo en QA; no se realizó E2E físico/manual, autenticación real ni presentación administrativa. El perfil no promueve release ni VERIFIED_E2E."
     },
     {
       "portalId": "age-direccion-general-de-fondos-europeos",

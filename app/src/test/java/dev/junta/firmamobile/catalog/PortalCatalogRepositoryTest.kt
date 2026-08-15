@@ -74,6 +74,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-toledo-sede",
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
+                "policia-solicitud-generica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

@@ -111,6 +111,25 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun policiaSigningAdapterIsWiredIntoTheRuntimeResolver() {
+        val activitySource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+        val resolverBlock = activitySource
+            .substringAfter("adapterResolver = { id ->", missingDelimiterValue = "")
+            .substringBefore("\n            },")
+
+        assertTrue(
+            "MainActivity must construct the exact Policia signing adapter",
+            "val policiaAdapter = PoliciaXadesDetachedAdapter()" in activitySource,
+        )
+        assertTrue(
+            "The runtime adapter resolver must map Policia's exact protocol id to that adapter",
+            resolverBlock.isNotEmpty() && "policiaAdapter.id -> policiaAdapter" in resolverBlock,
+        )
+    }
+
+    @Test
     fun crossProfileNavigationCannotRebindTheSelectedSecurityProfile() {
         val invalidations = mutableListOf<BrowserTransitionReason>()
         val junta = profile("junta-andalucia")

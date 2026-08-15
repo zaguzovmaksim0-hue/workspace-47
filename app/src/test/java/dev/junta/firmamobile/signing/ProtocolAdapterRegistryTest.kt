@@ -101,6 +101,14 @@ class ProtocolAdapterRegistryTest {
             ),
         )
 
+        val policia = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("policia-solicitud-generica"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(PoliciaXadesDetachedAdapter.ID, policia?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), policia?.inputAdapterId)
+        assertEquals(CallbackContractId("autoscript-sign-callback-v1"), policia?.callbackContractId)
+
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),

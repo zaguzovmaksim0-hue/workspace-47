@@ -68,6 +68,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-toledo-sede"),
                 ProfileId("isciii-certificate-selection"),
                 ProfileId("diputacion-valencia-sede"),
+                ProfileId("policia-solicitud-generica"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

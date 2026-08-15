@@ -18,6 +18,7 @@
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
+  const policiaCompatibilityEnabled = __JFM_POLICIA_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
   const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
@@ -33,6 +34,11 @@
   const jccmPayloadBase64 = "QUJDREU=";
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
+  const policiaOrigin = "https://sede.policia.gob.es";
+  const policiaProcedurePage =
+    "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml";
+  const policiaExtraProperties =
+    "format=XAdES Detached\nfilters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:";
   const melillaBatchOrigin = "https://sede.melilla.es";
   const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
@@ -224,6 +230,28 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isPoliciaOrigin =
+      policiaCompatibilityEnabled && window.location.origin === policiaOrigin;
+    const isPoliciaProcedurePage =
+      isPoliciaOrigin &&
+      window.location.href === policiaProcedurePage &&
+      window.location.search === "" &&
+      window.location.hash === "";
+    const isExactPoliciaCall =
+      isPoliciaProcedurePage &&
+      typeof args[0] === "string" &&
+      args[0].length > 0 &&
+      args[0].length <= maxDirectDataChars &&
+      base64Pattern.test(args[0]) &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "XAdES" &&
+      (args[3] === policiaExtraProperties || args[3] === policiaExtraProperties.replace(/\n/g, "\r\n")) &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isPoliciaOrigin && !isExactPoliciaCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isExactUgrLiteralCall =
       ugrCompatibilityEnabled &&
       window.location.origin === ugrOrigin &&
@@ -270,7 +298,8 @@
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
-          !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall)) {
+          !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
+          !isExactPoliciaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
