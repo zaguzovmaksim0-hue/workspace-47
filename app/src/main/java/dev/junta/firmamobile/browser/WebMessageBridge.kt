@@ -143,6 +143,7 @@ class WebMessageBridge(
     private val replyRegistry = MiniAppletReplyRegistry(
         currentNavigationEpoch = currentNavigationEpoch,
         currentOrigin = currentOrigin,
+        currentPageUrl = currentPageUrl,
         monotonicNanos = monotonicNanos,
     )
 
@@ -701,6 +702,7 @@ class WebMessageBridgeAttachment internal constructor(
 internal class MiniAppletReplyRegistry(
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
+    private val currentPageUrl: () -> String? = { null },
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     replayRetention: Duration = DEFAULT_REPLAY_RETENTION,
     maxReplayEntries: Int = MAX_SEEN_REQUESTS,
@@ -724,6 +726,7 @@ internal class MiniAppletReplyRegistry(
         val binding = PendingBinding(
             profileId = context.profileId,
             origin = context.origin,
+            pageUrl = context.pageUrl,
             navigationId = context.navigationId,
             navigationEpoch = context.navigationEpoch,
             observedAtMonotonicNanos = monotonicNanos(),
@@ -776,7 +779,8 @@ internal class MiniAppletReplyRegistry(
                 monotonicNanos(),
             ) ||
             currentNavigationEpoch() != binding.navigationEpoch ||
-            currentOrigin() != binding.origin
+            currentOrigin() != binding.origin ||
+            (binding.pageUrl != null && currentPageUrl() != binding.pageUrl)
         ) return@runCatching false
         BuiltInSiteProfiles.runtimeRegistry.resolve(binding.origin)
             ?.profile?.profileId?.value == binding.profileId
@@ -796,6 +800,7 @@ internal class MiniAppletReplyRegistry(
     private data class PendingBinding(
         val profileId: String,
         val origin: TrustedOrigin,
+        val pageUrl: String?,
         val navigationId: NavigationId,
         val navigationEpoch: Long,
         val observedAtMonotonicNanos: Long,

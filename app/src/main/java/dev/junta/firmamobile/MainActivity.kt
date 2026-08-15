@@ -150,6 +150,7 @@ class MainActivity : ComponentActivity() {
                 }
             },
             currentNavigationEpoch = { currentNavigationEpoch },
+            currentPageUrl = { currentWebView?.url },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
             adapterResolver = { id ->
                 when (id) {

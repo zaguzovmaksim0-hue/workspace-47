@@ -388,6 +388,7 @@ internal class ProfileMiniAppletBridgeAdapter(
                         navigationId = navigationId,
                         navigationEpoch = navigationEpoch,
                         observedAt = clock.instant(),
+                        pageUrl = currentPageUrl,
                     ),
                     algorithm = algorithm.first,
                     format = format.first,
