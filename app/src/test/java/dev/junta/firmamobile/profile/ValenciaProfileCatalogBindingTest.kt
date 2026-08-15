@@ -44,7 +44,7 @@ class ValenciaProfileCatalogBindingTest {
         assertTrue(profile.endpoints.isEmpty())
         assertEquals(setOf(Capability.SELECT_CERTIFICATE), profile.capabilities)
         assertNull(profile.clientAuthPolicy)
-        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
 
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SELECT_CERTIFICATE)

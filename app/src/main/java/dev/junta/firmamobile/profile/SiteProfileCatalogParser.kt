@@ -411,7 +411,7 @@ object SiteProfileCatalogParser {
         require(profile.endpoints.isEmpty())
         require(profile.capabilities == setOf(Capability.SELECT_CERTIFICATE))
         require(profile.clientAuthPolicy == null)
-        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SELECT_CERTIFICATE))
         require(
             profile.operationPolicies.getValue(ProtocolOperation.SELECT_CERTIFICATE) == OperationPolicy(

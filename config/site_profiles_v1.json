@@ -682,7 +682,7 @@
       "operationPolicies": [{"operation":"SELECT_CERTIFICATE","safeDescription":"Compartir certificado con el Portafirmas de la Diputació de València","inputAdapterId":"autoscript-select-certificate-v1","callbackContractId":"autoscript-select-certificate-callback-v1","capabilities":["SELECT_CERTIFICATE"],"endpointId":null,"algorithms":[],"format":null,"packaging":null,"mode":null,"fixedExtraProperties":{"filters":"keyusage.nonrepudiation:true;nonexpired:true","headless":"true"},"allowedExtraProperties":[]}],
       "capabilities": ["SELECT_CERTIFICATE"],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml","reviewedOn":"2026-08-15"},
         {"url":"https://portafirmas.dival.es/signingpad/js/autoscript.js","reviewedOn":"2026-08-15"},
