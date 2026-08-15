@@ -98,7 +98,7 @@ class VeaMultiModeBridgeAdapter(
         }
 
         val currentEpoch = currentNavigationEpoch()
-        if (currentEpoch?.let { it != navigationEpoch } == true) {
+        if (currentEpoch == null || currentEpoch != navigationEpoch) {
             invalidateActiveDocument()
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
@@ -351,7 +351,12 @@ class VeaMultiModeBridgeAdapter(
                     mode = value
                 }
                 "precalculatedHashAlgorithm" -> {
-                    hashAlgo = PrecalculatedHashAlgorithm.parse(value) ?: return null
+                    hashAlgo = when (value) {
+                        "SHA-1" -> PrecalculatedHashAlgorithm.SHA1
+                        "SHA-256" -> PrecalculatedHashAlgorithm.SHA256
+                        "SHA-512" -> PrecalculatedHashAlgorithm.SHA512
+                        else -> return null
+                    }
                 }
                 "filters" -> {
                     if (!isValidVeaFilter(value)) return null
