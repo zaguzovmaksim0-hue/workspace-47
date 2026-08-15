@@ -5,7 +5,7 @@ import dev.junta.firmamobile.BuildConfig
 import dev.junta.firmamobile.R
 
 object AfirmaJavascriptShim {
-    const val MAX_SCRIPT_CHARS = 32 * 1024
+    const val MAX_SCRIPT_CHARS = 48 * 1024
 
     fun load(context: Context): String = load(
         context,
@@ -23,6 +23,7 @@ object AfirmaJavascriptShim {
         sevillaAtseCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
         isciiiCertificateSelectionEnabled: Boolean = false,
+        valenciaCertificateSelectionEnabled: Boolean = false,
     ): String {
         val script = context.resources.openRawResource(R.raw.afirma_shim)
             .bufferedReader(Charsets.UTF_8)
@@ -35,6 +36,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
+        check(script.countOccurrences(VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
         val configured = script
             .replace(
                 MODE_PLACEHOLDER,
@@ -68,6 +70,10 @@ object AfirmaJavascriptShim {
                 ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER,
                 if (isciiiCertificateSelectionEnabled) "true" else "false",
             )
+            .replace(
+                VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER,
+                if (valenciaCertificateSelectionEnabled) "true" else "false",
+            )
         check(configured.isNotBlank() && configured.length <= MAX_SCRIPT_CHARS)
         return configured
     }
@@ -87,6 +93,8 @@ object AfirmaJavascriptShim {
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
     private const val ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER =
         "__JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__"
+    private const val VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER =
+        "__JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__"
 }
 
 enum class MiniAppletBridgeMode {

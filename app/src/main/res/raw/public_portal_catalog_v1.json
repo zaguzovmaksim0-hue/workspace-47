@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1317df3d6b849a9a3f642373b2897ab87d171ab40cd8f4536d07b0d561e64e34",
+  "sourceRevision": "5c6bdcfce4ad599708fd60ae0715924fe0f17d99094d20efd21b17f016efa037",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4296,29 +4296,30 @@
     {
       "portalId": "diputacion-valencia-sede",
       "inventoryId": "ES-PUB-0175",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputació de València",
+      "profileId": "diputacion-valencia-sede",
+      "displayName": "Diputació de València — Portafirmas con certificado",
       "organization": "Diputació de València",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Comunidad Valenciana",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://www.sede.dival.es",
+      "purpose": "Selección local de certificado para el acceso al Portafirmas de la Diputació de València.",
+      "entryUrl": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml",
       "observedMechanisms": [
-        "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "AUTOSCRIPT_LOCAL",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP37A",
-        "DP37B"
+        "DP37B",
+        "VALENCIA-SELECTCERT-2026-08-15"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-15",
+      "limitations": "Contrato público preautenticación implementado en QA: selección local y devolución de certB64 al callback exitoCallback; las llamadas comentadas de firma CAdES/PAdES y el posterior POST JSF permanecen bloqueados. Falta E2E físico seguro."
     },
     {
       "portalId": "diputacion-bizkaia-sede",

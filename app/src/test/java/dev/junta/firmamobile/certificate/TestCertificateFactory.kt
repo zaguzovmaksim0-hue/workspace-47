@@ -49,6 +49,24 @@ internal object TestCertificateFactory {
         )
     }
 
+    fun digitalSignatureCertificate(): X509Certificate = validIdentity.certificate
+
+    fun nonRepudiationCertificate(): X509Certificate = identity(
+        commonName = "Certificado de no repudio",
+        algorithm = "RSA",
+        notBefore = defaultNotBefore,
+        notAfter = defaultNotAfter,
+        keyUsage = KeyUsage.digitalSignature or KeyUsage.nonRepudiation,
+    ).certificate
+
+    fun expiredNonRepudiationCertificate(): X509Certificate = identity(
+        commonName = "Certificado de no repudio caducado",
+        algorithm = "RSA",
+        notBefore = now.minusSeconds(86_400 * 365),
+        notAfter = now.minusSeconds(1),
+        keyUsage = KeyUsage.digitalSignature or KeyUsage.nonRepudiation,
+    ).certificate
+
     fun freshValidRsa(): ByteArray {
         val identity = identity(
             commonName = "Persona de Prueba",

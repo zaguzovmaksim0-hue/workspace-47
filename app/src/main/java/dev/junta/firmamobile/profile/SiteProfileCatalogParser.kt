@@ -197,6 +197,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == ISCIII_PROFILE_ID) {
                 validateIsciiiProfile(p)
             }
+            if (p.profileId.value == VALENCIA_PROFILE_ID) {
+                validateValenciaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -258,13 +261,17 @@ object SiteProfileCatalogParser {
                     require(op.packaging != null && Capability.SIGN in op.capabilities)
                 }
                 if (op.inputAdapterId.value == ISCIII_INPUT_ADAPTER_ID) {
-                    require(p.profileId.value == ISCIII_PROFILE_ID)
+                    require(p.profileId.value == ISCIII_PROFILE_ID || p.profileId.value == VALENCIA_PROFILE_ID)
                     require(op.operation == ProtocolOperation.SELECT_CERTIFICATE)
                     require(op.capabilities == setOf(Capability.SELECT_CERTIFICATE))
                     require(op.endpointId == null)
                     require(op.algorithms.isEmpty())
                     require(op.format == null && op.packaging == null && op.mode == null)
-                    require(op.fixedExtraProperties == ISCIII_FIXED_EXTRA_PROPERTIES)
+                    if (p.profileId.value == ISCIII_PROFILE_ID) {
+                        require(op.fixedExtraProperties == ISCIII_FIXED_EXTRA_PROPERTIES)
+                    } else {
+                        require(op.fixedExtraProperties == VALENCIA_FIXED_EXTRA_PROPERTIES)
+                    }
                     require(op.allowedExtraProperties.isEmpty())
                 }
                 if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
@@ -389,6 +396,40 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == ISCIII_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-15") })
+    }
+
+    private fun validateValenciaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == VALENCIA_PROFILE_VERSION)
+        require(profile.displayName == VALENCIA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == VALENCIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(VALENCIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SELECT_CERTIFICATE))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SELECT_CERTIFICATE))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SELECT_CERTIFICATE) == OperationPolicy(
+                operation = ProtocolOperation.SELECT_CERTIFICATE,
+                safeDescription = VALENCIA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId(VALENCIA_INPUT_ADAPTER_ID),
+                callbackContractId = CallbackContractId(VALENCIA_CALLBACK_CONTRACT_ID),
+                capabilities = setOf(Capability.SELECT_CERTIFICATE),
+                endpointId = null,
+                algorithms = emptySet(),
+                format = null,
+                packaging = null,
+                mode = null,
+                fixedExtraProperties = VALENCIA_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == VALENCIA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-15") })
     }
 
@@ -804,6 +845,24 @@ object SiteProfileCatalogParser {
         ISCIII_START_URL,
         "https://sede.isciii.gob.es/js/autoscript/autoscript.js",
         "https://sede.isciii.gob.es/js/autoscript/constantes.js",
+    )
+    private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
+    private const val VALENCIA_PROFILE_VERSION = 1
+    private const val VALENCIA_DISPLAY_NAME = "Diputació de València — selección de certificado"
+    private const val VALENCIA_START_URL = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml"
+    private const val VALENCIA_ORIGIN = "https://portafirmas.dival.es"
+    private const val VALENCIA_SAFE_DESCRIPTION =
+        "Compartir certificado con el Portafirmas de la Diputació de València"
+    private const val VALENCIA_INPUT_ADAPTER_ID = "autoscript-select-certificate-v1"
+    private const val VALENCIA_CALLBACK_CONTRACT_ID = "autoscript-select-certificate-callback-v1"
+    private val VALENCIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+        "filters" to "keyusage.nonrepudiation:true;nonexpired:true",
+        "headless" to "true",
+    )
+    private val VALENCIA_EVIDENCE_URLS = setOf(
+        VALENCIA_START_URL,
+        "https://portafirmas.dival.es/signingpad/js/autoscript.js",
+        "https://portafirmas.dival.es/signingpad/js/filtros.js",
     )
     private const val SANIDAD_PROFILE_ID = "ministerio-sanidad-certificado"
     private const val SANIDAD_PROFILE_VERSION = 1

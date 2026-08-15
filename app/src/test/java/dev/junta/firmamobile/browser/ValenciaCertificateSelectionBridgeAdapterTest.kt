@@ -1,7 +1,6 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
-import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -21,14 +20,14 @@ import org.robolectric.annotation.SQLiteMode
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
-class IsciiiCertificateSelectionBridgeAdapterTest {
-    private val adapter = IsciiiCertificateSelectionBridgeAdapter(
+class ValenciaCertificateSelectionBridgeAdapterTest {
+    private val adapter = ValenciaCertificateSelectionBridgeAdapter(
         profileRegistry = BuiltInSiteProfiles.qaRegistry,
         activeProfileId = { ProfileId(PROFILE_ID) },
     )
 
     @Test
-    fun exactPublicIsciiiSelectCertificateCallNormalizesWithoutNetworkExecution() {
+    fun exactPublicValenciaSelectCertificateCallNormalizesWithoutNetworkExecution() {
         val result = adapter.route(
             rawMessage = message(EXTRA_PROPERTIES),
             sourceOrigin = Uri.parse(ORIGIN),
@@ -40,7 +39,7 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
         assertEquals(UUID.fromString(REQUEST_ID), result.request.requestId)
         assertEquals(PROFILE_ID, result.request.context.profileId)
         assertEquals(1, result.request.context.profileVersion)
-        assertEquals("sede.isciii.gob.es", result.request.context.origin.host)
+        assertEquals("portafirmas.dival.es", result.request.context.origin.host)
         assertEquals(DOCUMENT_ID, result.request.context.navigationId.value)
         assertEquals(17, result.request.context.navigationEpoch)
         assertEquals(SAFE_DESCRIPTION, result.request.safeDescription)
@@ -64,18 +63,31 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
             sourceOrigin = Uri.parse(ORIGIN),
             isMainFrame = true,
             navigationEpoch = 17,
-            currentPageUrl = "https://sede.isciii.gob.es/",
+            currentPageUrl = "https://portafirmas.dival.es/",
         ) as CertificateSelectionBridgeRouteResult.Rejected
         assertEquals(SigningErrorCode.UNOBSERVED_CONTRACT, wrongPage.code)
 
         val wrongParameters = adapter.route(
-            rawMessage = message("serverUrl=https://attacker.example/SignatureService"),
+            rawMessage = message("filters=none"),
             sourceOrigin = Uri.parse(ORIGIN),
             isMainFrame = true,
             navigationEpoch = 17,
             currentPageUrl = START_URL,
         ) as CertificateSelectionBridgeRouteResult.Rejected
         assertEquals(SigningErrorCode.INVALID_REQUEST, wrongParameters.code)
+
+        val inactiveAdapter = ValenciaCertificateSelectionBridgeAdapter(
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
+            activeProfileId = { ProfileId("other-profile") },
+        )
+        val profileNotActive = inactiveAdapter.route(
+            rawMessage = message(EXTRA_PROPERTIES),
+            sourceOrigin = Uri.parse(ORIGIN),
+            isMainFrame = true,
+            navigationEpoch = 17,
+            currentPageUrl = START_URL,
+        ) as CertificateSelectionBridgeRouteResult.Rejected
+        assertEquals(SigningErrorCode.PROFILE_NOT_ACTIVE, profileNotActive.code)
     }
 
     @Test
@@ -96,34 +108,7 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
         assertEquals("success", result.getString("status"))
         assertEquals("AQIDBAU=", result.getString("certificate"))
         assertFalse(result.has("signature"))
-        assertFalse(result.has("serverUrl"))
-    }
-
-    @Test
-    fun replyFailsClosedWhenExactPageChangesWithinSameNavigationEpoch() {
-        var currentPageUrl: String? = START_URL
-        val routed = adapter.route(
-            rawMessage = message(EXTRA_PROPERTIES),
-            sourceOrigin = Uri.parse(ORIGIN),
-            isMainFrame = true,
-            navigationEpoch = 17,
-            currentPageUrl = START_URL,
-        ) as CertificateSelectionBridgeRouteResult.Accepted
-        val messages = mutableListOf<String>()
-        val registry = CertificateSelectionReplyRegistry(
-            activeProfileId = { ProfileId(PROFILE_ID) },
-            currentNavigationEpoch = { 17 },
-            currentOrigin = { TrustedOrigin("https", "sede.isciii.gob.es", 443) },
-            currentPageUrl = { currentPageUrl },
-        )
-        val reply = checkNotNull(registry.create(routed.request, messages::add))
-        val certificateDer = byteArrayOf(1, 2, 3, 4, 5)
-
-        currentPageUrl = "https://sede.isciii.gob.es/other"
-
-        assertFalse(reply.success(certificateDer))
-        assertTrue(certificateDer.all { it == 0.toByte() })
-        assertTrue(messages.isEmpty())
+        assertFalse(result.has("filters"))
     }
 
     @Test
@@ -150,6 +135,25 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
         assertEquals(SigningErrorCode.INVALID_REQUEST, malformed.code)
     }
 
+    @Test
+    fun cancelMessageRoutesToCancelled() {
+        val cancelJson = JSONObject()
+            .put("type", "MINIAPPLET_SELECT_CERTIFICATE_CANCEL")
+            .put("documentId", DOCUMENT_ID)
+            .put("requestId", REQUEST_ID)
+            .toString()
+        val result = adapter.route(
+            rawMessage = cancelJson,
+            sourceOrigin = Uri.parse(ORIGIN),
+            isMainFrame = true,
+            navigationEpoch = 17,
+            currentPageUrl = START_URL,
+        ) as CertificateSelectionBridgeRouteResult.Cancelled
+
+        assertEquals(UUID.fromString(REQUEST_ID), result.requestId)
+        assertEquals(DOCUMENT_ID, result.navigationId.value)
+    }
+
     private fun message(properties: String): String = JSONObject()
         .put("type", "MINIAPPLET_SELECT_CERTIFICATE")
         .put("documentId", DOCUMENT_ID)
@@ -158,14 +162,14 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
         .toString()
 
     private companion object {
-        const val PROFILE_ID = "isciii-certificate-selection"
-        const val ORIGIN = "https://sede.isciii.gob.es"
-        const val START_URL =
-            "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null"
+        const val PROFILE_ID = "diputacion-valencia-sede"
+        const val ORIGIN = "https://portafirmas.dival.es"
+        const val START_URL = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml"
         const val DOCUMENT_ID = "11111111-1111-4111-8111-111111111111"
         const val REQUEST_ID = "22222222-2222-4222-8222-222222222222"
-        const val SAFE_DESCRIPTION = "Compartir certificado con la Sede electrónica del ISCIII"
+        const val SAFE_DESCRIPTION =
+            "Compartir certificado con el Portafirmas de la Diputació de València"
         const val EXTRA_PROPERTIES =
-            "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService"
+            "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true"
     }
 }

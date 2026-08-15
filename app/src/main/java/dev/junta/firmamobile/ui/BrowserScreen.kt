@@ -71,6 +71,7 @@ import dev.junta.firmamobile.browser.SiteClearResult
 import dev.junta.firmamobile.browser.SiteDataCleaner
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
+import dev.junta.firmamobile.browser.ValenciaCertificateSelectionBridgeAdapter
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
 import dev.junta.firmamobile.browser.WebViewProfileCapabilities
 import dev.junta.firmamobile.network.JuntaOriginPolicy
@@ -85,7 +86,10 @@ import dev.junta.firmamobile.signing.SigningUiState
 import java.util.UUID
 import java.net.URI
 import java.security.MessageDigest
+import java.security.cert.X509Certificate
+import java.time.Instant
 import java.util.Base64
+import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
 private data class PendingCertificateSelection(
@@ -108,6 +112,18 @@ internal fun certificateSelectionFingerprint(identity: UnlockedIdentity): String
         certificateDer.fill(0)
     }
 }.getOrNull()
+
+internal fun certificateEligibleForSelection(
+    profileId: String,
+    certificate: X509Certificate,
+    now: Instant = Instant.now(),
+): Boolean {
+    if (profileId != ValenciaCertificateSelectionBridgeAdapter.PROFILE_ID) return true
+    if (!certificate.publicKey.algorithm.equals("RSA", ignoreCase = true)) return false
+    if (runCatching { certificate.checkValidity(Date.from(now)) }.isFailure) return false
+    val keyUsage = certificate.keyUsage ?: return false
+    return keyUsage.size > 1 && keyUsage[1]
+}
 
 @Composable
 fun BrowserScreen(
@@ -231,6 +247,10 @@ fun BrowserScreen(
         val identity = clientCertificateIdentityProvider()
         if (identity == null) {
             reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED)
+            return
+        }
+        if (!certificateEligibleForSelection(request.context.profileId, identity.certificate)) {
+            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
             return
         }
         val fingerprint = certificateSelectionFingerprint(identity)
@@ -827,6 +847,12 @@ fun BrowserScreen(
                 val currentFingerprint = identity?.let(::certificateSelectionFingerprint)
                 if (identity == null || currentFingerprint != pending.certificateFingerprint) {
                     pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED)
+                } else if (!certificateEligibleForSelection(
+                        pending.request.context.profileId,
+                        identity.certificate,
+                    )
+                ) {
+                    pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
                 } else {
                     val certificateDer = runCatching { identity.certificate.encoded }.getOrNull()
                     if (certificateDer == null) {

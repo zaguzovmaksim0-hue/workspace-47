@@ -346,4 +346,49 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("filters=\\nmode=implicit"))
         assertTrue(enabled.contains("globalThis.btoa(args[0])"))
     }
+
+    @Test
+    fun activeValenciaProfileEnablesTheRuntimeSelectionShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("diputacion-valencia-sede"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertFalse(flags.sevillaAtse)
+        assertFalse(flags.melillaBatch)
+        assertFalse(flags.isciiiCertificateSelection)
+        assertTrue(flags.valenciaCertificateSelection)
+    }
+
+    @Test
+    fun valenciaCompatibilityOwnsOnlyTheExactObservedCertificateSelectionCall() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            valenciaCertificateSelectionEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            valenciaCertificateSelectionEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const vSel = true"))
+        assertTrue(disabled.contains("const vSel = false"))
+        assertTrue(enabled.contains("https://portafirmas.dival.es"))
+        assertTrue(enabled.contains("/signingpad/xhtml/login.xhtml"))
+        assertTrue(enabled.contains("filters=keyusage.nonrepudiation:true;nonexpired:true\\nheadless=true"))
+        assertTrue(enabled.contains("selectCertificate"))
+        assertTrue(enabled.contains("MINIAPPLET_SELECT_CERTIFICATE"))
+        assertTrue(enabled.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
+        assertTrue(enabled.contains("successCallback(certificateB64)"))
+        assertFalse(enabled.contains("validarCertificado"))
+    }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 20,
+  "catalogVersion": 21,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -666,6 +666,27 @@
         {"url":"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null","reviewedOn":"2026-08-15"},
         {"url":"https://sede.isciii.gob.es/js/autoscript/autoscript.js","reviewedOn":"2026-08-15"},
         {"url":"https://sede.isciii.gob.es/js/autoscript/constantes.js","reviewedOn":"2026-08-15"}
+      ]
+    },
+    {
+      "profileId": "diputacion-valencia-sede",
+      "profileVersion": 1,
+      "displayName": "Diputació de València — selección de certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml",
+      "initiatorOrigins": ["https://portafirmas.dival.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SELECT_CERTIFICATE","safeDescription":"Compartir certificado con el Portafirmas de la Diputació de València","inputAdapterId":"autoscript-select-certificate-v1","callbackContractId":"autoscript-select-certificate-callback-v1","capabilities":["SELECT_CERTIFICATE"],"endpointId":null,"algorithms":[],"format":null,"packaging":null,"mode":null,"fixedExtraProperties":{"filters":"keyusage.nonrepudiation:true;nonexpired:true","headless":"true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SELECT_CERTIFICATE"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml","reviewedOn":"2026-08-15"},
+        {"url":"https://portafirmas.dival.es/signingpad/js/autoscript.js","reviewedOn":"2026-08-15"},
+        {"url":"https://portafirmas.dival.es/signingpad/js/filtros.js","reviewedOn":"2026-08-15"}
       ]
     }
   ]

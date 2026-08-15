@@ -39,6 +39,7 @@ class JuntaOriginPolicyTest {
     private val tea = ProfileId("tea-alegaciones-certificado")
     private val tenerife = ProfileId("tenerife-sede-electronica")
     private val toledo = ProfileId("diputacion-toledo-sede")
+    private val valencia = ProfileId("diputacion-valencia-sede")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -73,6 +74,7 @@ class JuntaOriginPolicyTest {
             "sede.tenerife.es",
             "diputacion.toledo.gob.es",
             "sede.isciii.gob.es",
+            "portafirmas.dival.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -185,6 +187,11 @@ class JuntaOriginPolicyTest {
         )
         assertEquals(setOf("diputacion.toledo.gob.es"), JuntaOriginPolicy.browserAllowedHosts(toledo))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(toledo).isEmpty())
+        assertEquals(setOf("portafirmas.dival.es"), JuntaOriginPolicy.browserAllowedHosts(valencia))
+        assertEquals(
+            setOf("https://portafirmas.dival.es"),
+            JuntaOriginPolicy.webMessageOriginRules(valencia),
+        )
     }
 
     @Test

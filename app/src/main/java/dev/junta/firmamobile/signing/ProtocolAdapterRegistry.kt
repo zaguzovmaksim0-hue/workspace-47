@@ -136,6 +136,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("la-palma-batch-result-v1"),
                 signingProtocolId = LaPalmaBatchProtocolAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId("diputacion-valencia-sede"),
+                operation = ProtocolOperation.SELECT_CERTIFICATE,
+                inputAdapterId = ProtocolInputAdapterId("autoscript-select-certificate-v1"),
+                callbackContractId = CallbackContractId("autoscript-select-certificate-callback-v1"),
+                signingProtocolId = SigningProtocolId("valencia-select-certificate-v1"),
+            ),
         ),
     )
 }
