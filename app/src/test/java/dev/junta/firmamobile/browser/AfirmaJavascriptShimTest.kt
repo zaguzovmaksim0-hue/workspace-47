@@ -428,4 +428,45 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("args[2] === \"XAdES\""))
         assertTrue(script.contains("isPoliciaProcedurePage"))
     }
+
+    @Test
+    fun activeMurciaProfileEnablesTheRuntimeMurciaShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("murcia-sede"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertFalse(flags.sevillaAtse)
+        assertFalse(flags.melillaBatch)
+        assertTrue(flags.murcia)
+    }
+
+    @Test
+    fun murciaCompatibilityPathIsProfileScopedToTheExactCmsAttachedSigningTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val murcia = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            murciaCompatibilityEnabled = true,
+        )
+        val generic = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            murciaCompatibilityEnabled = false,
+        )
+
+        assertTrue(murcia.contains("const murciaCompatibilityEnabled = true"))
+        assertTrue(murcia.contains("https://sede.carm.es"))
+        assertTrue(murcia.contains("args[1] === \"SHA256withRSA\""))
+        assertTrue(murcia.contains("args[2] === \"CMS/PKCS#7\""))
+        assertTrue(murcia.contains("isMurciaOrigin && !isExactMurciaCall"))
+        assertTrue(murcia.contains("!isMurciaOrigin"))
+        assertTrue(generic.contains("const murciaCompatibilityEnabled = false"))
+    }
 }

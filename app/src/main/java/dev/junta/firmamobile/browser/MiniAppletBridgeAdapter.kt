@@ -218,6 +218,15 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == POLICIA_PROFILE_ID && !isPoliciaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isMurciaContract = isExactMurciaContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+        )
+        if (profile.profileId.value == MURCIA_PROFILE_ID && !isMurciaContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -239,8 +248,9 @@ internal class ProfileMiniAppletBridgeAdapter(
             )
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
-            FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract || isPoliciaContract) {
+            FORMAT_CADES -> if (isMurciaContract) null else SigningFormat.CADES to SignatureFormat.CADES
+            FORMAT_CMS_PKCS7 -> if (isMurciaContract) SigningFormat.CADES to SignatureFormat.CADES else null
+            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract || isPoliciaContract || isMurciaContract) {
                 null
             } else {
                 SigningFormat.XADES to SignatureFormat.XADES
@@ -316,6 +326,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 )
             }
             canonicalExtraProperties(raw, operation.fixedExtraProperties)
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isMurciaContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.let { raw -> canonicalExtraProperties(raw, MURCIA_FIXED_EXTRA_PROPERTIES) }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -665,6 +682,42 @@ internal class ProfileMiniAppletBridgeAdapter(
                 byte.toInt() in 0x61..0x66
         }
 
+    private fun isExactMurciaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+    ): Boolean =
+        profile.profileId.value == MURCIA_PROFILE_ID &&
+            profile.profileVersion == MURCIA_PROFILE_VERSION &&
+            profile.displayName == MURCIA_DISPLAY_NAME &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == MURCIA_START_URL &&
+            origin.serialized == MURCIA_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(MURCIA_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == MURCIA_SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.IMPLICIT &&
+            operation.fixedExtraProperties == MURCIA_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == MURCIA_PROTOCOL_ID
+
     private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
         val observed = linkedMapOf<String, String>()
         val lines = raw.split('\n')
@@ -702,8 +755,22 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val ALGORITHM_SHA256_RSA = "SHA256withRSA"
         private const val ALGORITHM_SHA512_RSA = "SHA512withRSA"
         private const val FORMAT_CADES = "CAdES"
+        private const val FORMAT_CMS_PKCS7 = "CMS/PKCS#7"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val FORMAT_XADES = "XAdES"
+        private const val MURCIA_PROFILE_ID = "murcia-sede"
+        private const val MURCIA_PROFILE_VERSION = 1
+        private const val MURCIA_DISPLAY_NAME = "Sede electrónica de la CARM"
+        private const val MURCIA_START_URL =
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"
+        private const val MURCIA_ORIGIN = "https://sede.carm.es"
+        private const val MURCIA_SAFE_DESCRIPTION =
+            "Firma de solicitud en la Sede electrónica de la CARM"
+        private const val MURCIA_PROTOCOL_ID = "murcia-sede-local-cms-v1"
+        private val MURCIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "filters" to "nonexpired:",
+            "mode" to "implicit",
+        )
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val SEVILLA_ATSE_PROFILE_VERSION = 1
         private const val SEVILLA_ATSE_START_URL =

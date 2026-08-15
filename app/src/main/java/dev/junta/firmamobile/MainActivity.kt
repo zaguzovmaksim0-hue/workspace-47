@@ -61,6 +61,7 @@ import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
+import dev.junta.firmamobile.signing.MurciaSedeCmsAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
@@ -134,6 +135,7 @@ class MainActivity : ComponentActivity() {
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
         val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
         val policiaAdapter = PoliciaXadesDetachedAdapter()
+        val murciaAdapter = MurciaSedeCmsAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
         signingCoordinator = SigningCoordinator(
             certificateSession = app.certificateSession,
@@ -166,6 +168,7 @@ class MainActivity : ComponentActivity() {
                     tenerifeAdapter.id -> tenerifeAdapter
                     sevillaAdapter.id -> sevillaAdapter
                     policiaAdapter.id -> policiaAdapter
+                    murciaAdapter.id -> murciaAdapter
                     unizarAdapter.id -> unizarAdapter
                     else -> null
                 }

@@ -199,6 +199,8 @@ object SiteProfileCatalogParser {
             }
             if (p.profileId.value == VALENCIA_PROFILE_ID) {
                 validateValenciaProfile(p)
+            if (p.profileId.value == MURCIA_PROFILE_ID) {
+                validateMurciaProfile(p)
             }
             if (p.profileId.value == POLICIA_PROFILE_ID) {
                 validatePoliciaProfile(p)
@@ -280,7 +282,9 @@ object SiteProfileCatalogParser {
                 if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
                     require(op.operation == ProtocolOperation.SIGN)
                     require(
-                        op.packaging == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                        op.packaging == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
+                            p.profileId.value == MURCIA_PROFILE_ID
+                        ) {
                             SignaturePackaging.ATTACHED
                         } else {
                             SignaturePackaging.DETACHED
@@ -294,6 +298,10 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.IMPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == CANTABRIA_EXTRA_PROPERTIES)
+                                } else if (p.profileId.value == MURCIA_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.IMPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
+                                    require(op.fixedExtraProperties == MURCIA_EXTRA_PROPERTIES)
                                 } else if (p.profileId.value == TENERIFE_PROFILE_ID) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
@@ -802,6 +810,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateMurciaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MURCIA_PROFILE_VERSION)
+        require(profile.displayName == MURCIA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MURCIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MURCIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = MURCIA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = SignatureMode.IMPLICIT,
+                fixedExtraProperties = MURCIA_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
     private fun URI.origin() = ExactOrigin.parse("https://$host")
@@ -1023,6 +1064,18 @@ object SiteProfileCatalogParser {
     private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
     private const val UGR_ORIGIN = "https://sede.ugr.es"
     private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
+    private const val MURCIA_PROFILE_ID = "murcia-sede"
+    private const val MURCIA_PROFILE_VERSION = 1
+    private const val MURCIA_DISPLAY_NAME = "Sede electrónica de la CARM"
+    private const val MURCIA_START_URL =
+        "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"
+    private const val MURCIA_ORIGIN = "https://sede.carm.es"
+    private const val MURCIA_SAFE_DESCRIPTION =
+        "Firma de solicitud en la Sede electrónica de la CARM"
+    private val MURCIA_EXTRA_PROPERTIES = linkedMapOf(
+        "filters" to "nonexpired:",
+        "mode" to "implicit",
+    )
 }
 
 private sealed interface JValue {

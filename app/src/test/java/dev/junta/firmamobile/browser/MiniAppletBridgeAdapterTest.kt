@@ -275,6 +275,84 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactMurciaAutoScriptCallNormalizesToSha256Cades() {
+        val result = adapterFor(MURCIA_PROFILE_ID).route(
+            rawMessage = murciaMessage(),
+            sourceOrigin = MURCIA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 49,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(MURCIA_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(MURCIA_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.carm.es", request.context.origin.host)
+            assertEquals(49, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA256_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(MURCIA_DOCUMENT, data)
+                    assertEquals(MURCIA_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun murciaRejectsWrongProfileOriginTupleAndPropertiesWithoutBroadening() {
+        assertEquals(
+            SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            murciaRejected(activeProfile = "junta-andalucia"),
+        )
+        assertEquals(
+            SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            murciaRejected(origin = Uri.parse("https://sede.carm.es.evil.example")),
+        )
+        listOf(
+            murciaMessage(algorithm = "SHA1withRSA"),
+            murciaMessage(algorithm = "SHA512withRSA"),
+            murciaMessage(format = "CAdES"),
+            murciaMessage(format = "XAdES Detached"),
+            murciaMessage(format = "XAdES"),
+            murciaMessage(extraProperties = "mode=explicit"),
+            murciaMessage(extraProperties = "filters=nonexpired:\nmode=explicit"),
+            murciaMessage(extraProperties = JSONObject.NULL),
+            murciaMessage(dataB64 = ""),
+        ).forEach { message ->
+            assertEquals(
+                SigningErrorCode.INVALID_REQUEST,
+                murciaRejected(rawMessage = message),
+            )
+        }
+    }
+
+    @Test
+    fun formatCmsPkcs7IsRejectedForNonMurciaProfiles() {
+        listOf(
+            "junta-andalucia",
+            "aragon-siraw",
+            "dgt-verificacion-equipo",
+            "ugr-certificado-login",
+            "cantabria-rec-cert-login",
+            "jccm-certificate-login-probe",
+            "tenerife-sede-electronica",
+        ).forEach { profileId ->
+            val message = murciaMessage()
+            val result = adapterFor(profileId).route(
+                rawMessage = message,
+                sourceOrigin = MURCIA_ORIGIN,
+                isMainFrame = true,
+            )
+            assertTrue(
+                "Profile $profileId must reject CMS/PKCS#7 format",
+                result is MiniAppletBridgeRouteResult.Rejected,
+            )
+        }
+    }
+
+    @Test
     fun tenerifeRejectsWrongProfileOriginTupleAndPropertiesWithoutBroadening() {
         assertTrue(
             adapterFor(TENERIFE_PROFILE_ID).route(
@@ -1200,6 +1278,31 @@ class MiniAppletBridgeAdapterTest {
         isMainFrame = true,
     ) as MiniAppletBridgeRouteResult.Rejected).code
 
+    private fun murciaMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(MURCIA_DOCUMENT),
+        algorithm: String = "SHA256withRSA",
+        format: String = "CMS/PKCS#7",
+        extraProperties: Any = MURCIA_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
+    private fun murciaRejected(
+        rawMessage: String = murciaMessage(),
+        origin: Uri = MURCIA_ORIGIN,
+        activeProfile: String = MURCIA_PROFILE_ID,
+    ): SigningErrorCode = (adapterFor(activeProfile).route(
+        rawMessage = rawMessage,
+        sourceOrigin = origin,
+        isMainFrame = true,
+    ) as MiniAppletBridgeRouteResult.Rejected).code
+
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
@@ -1237,6 +1340,11 @@ class MiniAppletBridgeAdapterTest {
         const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"
         const val CANTABRIA_CHALLENGE = "0123456789abcdef0123456789abcdef01234567"
         const val CANTABRIA_EXTRA_PROPERTIES = "filters=\nmode=implicit"
+        val MURCIA_ORIGIN: Uri = Uri.parse("https://sede.carm.es")
+        const val MURCIA_PROFILE_ID = "murcia-sede"
+        const val MURCIA_PROTOCOL_ID = "murcia-sede-local-cms-v1"
+        const val MURCIA_EXTRA_PROPERTIES = "filters=nonexpired:\nmode=implicit"
+        val MURCIA_DOCUMENT = "synthetic Murcia CARM application payload".encodeToByteArray()
         val JCCM_DATA = "ABCDE".encodeToByteArray()
         const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =

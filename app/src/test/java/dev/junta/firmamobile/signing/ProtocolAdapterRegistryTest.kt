@@ -94,12 +94,13 @@ class ProtocolAdapterRegistryTest {
             CallbackContractId("melilla-batch-result-v1"),
             melilla?.callbackContractId,
         )
-        assertNull(
-            BuiltInProtocolAdapterRegistry.registry.resolve(
-                ProfileId("melilla-sede"),
-                ProtocolOperation.SELECT_CERTIFICATE,
-            ),
+        val murcia = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("murcia-sede"),
+            ProtocolOperation.SIGN,
         )
+        assertEquals(MurciaSedeCmsAdapter.ID, murcia?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), murcia?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), murcia?.callbackContractId)
 
         val policia = BuiltInProtocolAdapterRegistry.registry.resolve(
             ProfileId("policia-solicitud-generica"),

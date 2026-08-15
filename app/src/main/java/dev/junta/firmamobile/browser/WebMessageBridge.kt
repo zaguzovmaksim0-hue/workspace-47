@@ -33,6 +33,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val melillaBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
+    val murcia: Boolean,
 )
 
 class WebMessageBridge(
@@ -215,6 +216,7 @@ class WebMessageBridge(
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
+                    murciaCompatibilityEnabled = shimFlags.murcia,
                 ),
                 originRules,
             )
@@ -608,6 +610,7 @@ class WebMessageBridge(
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
+        private const val MURCIA_PROFILE_ID = "murcia-sede"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -622,6 +625,7 @@ class WebMessageBridge(
             melillaBatch = melillaBatchEnabled,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
+            murcia = profileActive && profileId.value == MURCIA_PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"

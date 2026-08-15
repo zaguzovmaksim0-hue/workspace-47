@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d912deae91b5d5279cea054d7fe2ed41bcbf997a5757a2f4c49112cdffad3394",
+  "sourceRevision": "a79387ecdbc9e11a80d76b60cdae3dd7c72c641f5ba8ca0f0cf74a8272f3aecc",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2742,21 +2742,25 @@
     {
       "portalId": "murcia-sede",
       "inventoryId": "ES-PUB-0113",
-      "profileId": null,
+      "profileId": "murcia-sede",
       "displayName": "Sede electrónica de la CARM",
       "organization": "Comunidad Autónoma de la Región de Murcia",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Región de Murcia",
-      "purpose": "Tramitación con certificado, Cl@ve y AutoFirma según el procedimiento.",
+      "purpose": "Firma electrónica en la Sede de la CARM mediante MiniApplet/AutoScript con formato CMS/PKCS#7 adjunto y modo implícito.",
       "entryUrl": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
       "observedMechanisms": [
+        "AUTOFIRMA",
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOFIRMA_MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
@@ -2764,8 +2768,8 @@
         "A16B",
         "A16C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-15",
+      "limitations": "Firma CMS/PKCS#7 adjunta local SHA256withRSA verificada por contrato en entorno QA; Storage/Retrieve remotos deshabilitados."
     },
     {
       "portalId": "navarra-sede-registro-general",

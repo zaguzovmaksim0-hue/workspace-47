@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 23,
+  "catalogVersion": 24,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -9,15 +9,78 @@
       "compatibilityStatus": "EXPERIMENTAL",
       "activation": "ENABLED",
       "startUrl": "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
-      "initiatorOrigins": ["https://www.juntadeandalucia.es"],
-      "redirectOrigins": ["https://sede.juntadeandalucia.es", "https://ssoweb.juntadeandalucia.es", "https://pfirma.juntadeandalucia.es", "https://ws050.juntadeandalucia.es"],
-      "trustedBrowseOrigins": ["https://ws024.juntadeandalucia.es"],
-      "endpoints": [{"endpointId":"junta-triphase","purpose":"TRIPHASE","url":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService","method":"POST","requestContentTypes":["application/x-www-form-urlencoded; charset=UTF-8"],"responseContentTypes":["text/plain"],"maxRequestBytes":2097152,"maxResponseBytes":2097152,"redirects":"DENY"}],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Autenticación con certificado","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":"junta-triphase","algorithms":["SHA1_WITH_RSA","SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"serverUrl":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService","filters":"keyusage.digitalsignature:true;nonexpired:"},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN", "LEGACY_SHA1", "AFIRMA_URI"],
+      "initiatorOrigins": [
+        "https://www.juntadeandalucia.es"
+      ],
+      "redirectOrigins": [
+        "https://sede.juntadeandalucia.es",
+        "https://ssoweb.juntadeandalucia.es",
+        "https://pfirma.juntadeandalucia.es",
+        "https://ws050.juntadeandalucia.es"
+      ],
+      "trustedBrowseOrigins": [
+        "https://ws024.juntadeandalucia.es"
+      ],
+      "endpoints": [
+        {
+          "endpointId": "junta-triphase",
+          "purpose": "TRIPHASE",
+          "url": "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService",
+          "method": "POST",
+          "requestContentTypes": [
+            "application/x-www-form-urlencoded; charset=UTF-8"
+          ],
+          "responseContentTypes": [
+            "text/plain"
+          ],
+          "maxRequestBytes": 2097152,
+          "maxResponseBytes": 2097152,
+          "redirects": "DENY"
+        }
+      ],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Autenticación con certificado",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": [
+            "SIGN",
+            "LEGACY_SHA1"
+          ],
+          "endpointId": "junta-triphase",
+          "algorithms": [
+            "SHA1_WITH_RSA",
+            "SHA256_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": "EXPLICIT",
+          "fixedExtraProperties": {
+            "serverUrl": "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService",
+            "filters": "keyusage.digitalsignature:true;nonexpired:"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN",
+        "LEGACY_SHA1",
+        "AFIRMA_URI"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs","reviewedOn":"2026-07-15"}]
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs",
+          "reviewedOn": "2026-07-15"
+        }
+      ]
     },
     {
       "profileId": "reg-age-redsara",
@@ -26,15 +89,52 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://reg.redsara.es/es/",
-      "initiatorOrigins": ["https://reg.redsara.es"],
+      "initiatorOrigins": [
+        "https://reg.redsara.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma del resumen XML del registro","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"XADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN"],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma del resumen XML del registro",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "autoscript-sign-callback-v1",
+          "capabilities": [
+            "SIGN"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA512_WITH_RSA"
+          ],
+          "format": "XADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {},
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://reg.redsara.es/es/chunk-64DWZJJG.js","reviewedOn":"2026-07-18"},{"url":"https://reg.redsara.es/es/scripts-IIDJLUBL.js","reviewedOn":"2026-07-18"}]
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://reg.redsara.es/es/chunk-64DWZJJG.js",
+          "reviewedOn": "2026-07-18"
+        },
+        {
+          "url": "https://reg.redsara.es/es/scripts-IIDJLUBL.js",
+          "reviewedOn": "2026-07-18"
+        }
+      ]
     },
     {
       "profileId": "unizar-tramitador",
@@ -43,15 +143,73 @@
       "compatibilityStatus": "VERIFIED_E2E",
       "activation": "ENABLED",
       "startUrl": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
-      "initiatorOrigins": ["https://tramita.unizar.es"],
+      "initiatorOrigins": [
+        "https://tramita.unizar.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
-      "endpoints": [{"endpointId":"unizar-triphase","purpose":"TRIPHASE","url":"https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService","method":"POST","requestContentTypes":["application/x-www-form-urlencoded; charset=UTF-8"],"responseContentTypes":["text/plain"],"maxRequestBytes":2097152,"maxResponseBytes":2097152,"redirects":"DENY"}],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Oficina Virtual","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":"unizar-triphase","algorithms":["SHA1_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{"precalculatedHashAlgorithm":"SHA1","serverUrl":"https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "endpoints": [
+        {
+          "endpointId": "unizar-triphase",
+          "purpose": "TRIPHASE",
+          "url": "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService",
+          "method": "POST",
+          "requestContentTypes": [
+            "application/x-www-form-urlencoded; charset=UTF-8"
+          ],
+          "responseContentTypes": [
+            "text/plain"
+          ],
+          "maxRequestBytes": 2097152,
+          "maxResponseBytes": 2097152,
+          "redirects": "DENY"
+        }
+      ],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Acceso con certificado a la Oficina Virtual",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "autoscript-sign-callback-v1",
+          "capabilities": [
+            "SIGN",
+            "LEGACY_SHA1"
+          ],
+          "endpointId": "unizar-triphase",
+          "algorithms": [
+            "SHA1_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {
+            "precalculatedHashAlgorithm": "SHA1",
+            "serverUrl": "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN",
+        "LEGACY_SHA1"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent","reviewedOn":"2026-07-30"},{"url":"https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js","reviewedOn":"2026-07-18"}]
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent",
+          "reviewedOn": "2026-07-30"
+        },
+        {
+          "url": "https://tramita.unizar.es/tramitador/js/implementaciones/implementacionIFirma_ES.js",
+          "reviewedOn": "2026-07-18"
+        }
+      ]
     },
     {
       "profileId": "carne-joven-andalucia",
@@ -60,15 +218,53 @@
       "compatibilityStatus": "VERIFIED_E2E",
       "activation": "ENABLED",
       "startUrl": "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp",
-      "initiatorOrigins": ["https://ws104.juntadeandalucia.es"],
+      "initiatorOrigins": [
+        "https://ws104.juntadeandalucia.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode": "REDIRECT_AFTER_SOURCE","requestOrigins":["https://ws235.juntadeandalucia.es"],"sourceUrls":["https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"],"requestPath":"/authenticationFacade","fixedQueryParameters":{"action":"validateCert","appId":"IAJ.CARNETJOVEN","comeBackURL":"aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ="},"requiredEphemeralQueryParameters":["ticketId","webSessionId"],"allowEmptyIssuerList":true,"grantTtlSeconds":15},
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html","reviewedOn":"2026-07-18"},{"url":"https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet","reviewedOn":"2026-07-18"}]
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "REDIRECT_AFTER_SOURCE",
+        "requestOrigins": [
+          "https://ws235.juntadeandalucia.es"
+        ],
+        "sourceUrls": [
+          "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
+        ],
+        "requestPath": "/authenticationFacade",
+        "fixedQueryParameters": {
+          "action": "validateCert",
+          "appId": "IAJ.CARNETJOVEN",
+          "comeBackURL": "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ="
+        },
+        "requiredEphemeralQueryParameters": [
+          "ticketId",
+          "webSessionId"
+        ],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html",
+          "reviewedOn": "2026-07-18"
+        },
+        {
+          "url": "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet",
+          "reviewedOn": "2026-07-18"
+        }
+      ]
     },
     {
       "profileId": "aeat-mis-datos-censales",
@@ -77,15 +273,47 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html",
-      "initiatorOrigins": ["https://sede.agenciatributaria.gob.es"],
+      "initiatorOrigins": [
+        "https://sede.agenciatributaria.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode": "DIRECT_FROM_SOURCE","requestOrigins":["https://www1.agenciatributaria.gob.es"],"sourceUrls":["https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"],"requestPath":"/wlpl/BUGC-JDIT/MdcAcceso","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html","reviewedOn":"2026-07-31"},{"url":"https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso","reviewedOn":"2026-07-31"}]
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": [
+          "https://www1.agenciatributaria.gob.es"
+        ],
+        "sourceUrls": [
+          "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+        ],
+        "requestPath": "/wlpl/BUGC-JDIT/MdcAcceso",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html",
+          "reviewedOn": "2026-07-31"
+        },
+        {
+          "url": "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso",
+          "reviewedOn": "2026-07-31"
+        }
+      ]
     },
     {
       "profileId": "junta-ofvirtual",
@@ -94,15 +322,69 @@
       "compatibilityStatus": "VERIFIED_E2E",
       "activation": "ENABLED",
       "startUrl": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
-      "initiatorOrigins": ["https://ws072.juntadeandalucia.es"],
+      "initiatorOrigins": [
+        "https://ws072.juntadeandalucia.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
-      "endpoints": [{"endpointId":"junta-ofvirtual-triphase","purpose":"TRIPHASE","url":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService","method":"POST","requestContentTypes":["application/x-www-form-urlencoded; charset=UTF-8"],"responseContentTypes":["text/plain"],"maxRequestBytes":2097152,"maxResponseBytes":2097152,"redirects":"DENY"}],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Oficina Virtual","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":"junta-ofvirtual-triphase","algorithms":["SHA1_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"serverUrl":"https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService","filters":"keyusage.digitalsignature:true;nonexpired:"},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "endpoints": [
+        {
+          "endpointId": "junta-ofvirtual-triphase",
+          "purpose": "TRIPHASE",
+          "url": "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService",
+          "method": "POST",
+          "requestContentTypes": [
+            "application/x-www-form-urlencoded; charset=UTF-8"
+          ],
+          "responseContentTypes": [
+            "text/plain"
+          ],
+          "maxRequestBytes": 2097152,
+          "maxResponseBytes": 2097152,
+          "redirects": "DENY"
+        }
+      ],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Acceso con certificado a la Oficina Virtual",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": [
+            "SIGN",
+            "LEGACY_SHA1"
+          ],
+          "endpointId": "junta-ofvirtual-triphase",
+          "algorithms": [
+            "SHA1_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": "EXPLICIT",
+          "fixedExtraProperties": {
+            "serverUrl": "https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService",
+            "filters": "keyusage.digitalsignature:true;nonexpired:"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN",
+        "LEGACY_SHA1"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs","reviewedOn":"2026-07-29"}]
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+          "reviewedOn": "2026-07-29"
+        }
+      ]
     },
     {
       "profileId": "educacion-convocatoria",
@@ -111,15 +393,27 @@
       "compatibilityStatus": "BROWSE_ONLY",
       "activation": "ENABLED",
       "startUrl": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
-      "initiatorOrigins": ["https://sede.educacion.gob.es"],
+      "initiatorOrigins": [
+        "https://sede.educacion.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
       "capabilities": [],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46","reviewedOn":"2026-07-22"}]
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+          "reviewedOn": "2026-07-22"
+        }
+      ]
     },
     {
       "profileId": "aragon-siraw",
@@ -187,7 +481,9 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/",
-      "initiatorOrigins": ["https://sede.dgt.gob.es"],
+      "initiatorOrigins": [
+        "https://sede.dgt.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
@@ -197,9 +493,14 @@
           "safeDescription": "Verificación de equipo con certificado",
           "inputAdapterId": "miniapplet-autoscript-v1",
           "callbackContractId": "miniapplet-sign-callback-v1",
-          "capabilities": ["SIGN", "LEGACY_SHA1"],
+          "capabilities": [
+            "SIGN",
+            "LEGACY_SHA1"
+          ],
           "endpointId": null,
-          "algorithms": ["SHA1_WITH_RSA"],
+          "algorithms": [
+            "SHA1_WITH_RSA"
+          ],
           "format": "CADES",
           "packaging": "DETACHED",
           "mode": "EXPLICIT",
@@ -209,10 +510,15 @@
           "allowedExtraProperties": []
         }
       ],
-      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "capabilities": [
+        "SIGN",
+        "LEGACY_SHA1"
+      ],
       "clientAuthPolicy": null,
       "certificateRules": {
-        "allowedKeyAlgorithms": ["RSA"],
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
         "requireDigitalSignatureKeyUsage": true
       },
       "evidence": [
@@ -293,7 +599,9 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://rec.cantabria.es/rec/bienvenida.htm",
-      "initiatorOrigins": ["https://rec.cantabria.es"],
+      "initiatorOrigins": [
+        "https://rec.cantabria.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
@@ -303,9 +611,13 @@
           "safeDescription": "Acceso con certificado al Registro Electrónico Común de Cantabria",
           "inputAdapterId": "miniapplet-autoscript-v1",
           "callbackContractId": "miniapplet-sign-callback-v1",
-          "capabilities": ["SIGN"],
+          "capabilities": [
+            "SIGN"
+          ],
           "endpointId": null,
-          "algorithms": ["SHA512_WITH_RSA"],
+          "algorithms": [
+            "SHA512_WITH_RSA"
+          ],
           "format": "CADES",
           "packaging": "DETACHED",
           "mode": "IMPLICIT",
@@ -316,10 +628,14 @@
           "allowedExtraProperties": []
         }
       ],
-      "capabilities": ["SIGN"],
+      "capabilities": [
+        "SIGN"
+      ],
       "clientAuthPolicy": null,
       "certificateRules": {
-        "allowedKeyAlgorithms": ["RSA"],
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
         "requireDigitalSignatureKeyUsage": true
       },
       "evidence": [
@@ -468,9 +784,13 @@
           "safeDescription": "Firma por lotes en la Sede Electrónica de Melilla",
           "inputAdapterId": "melilla-batch-autoscript-v1",
           "callbackContractId": "melilla-batch-result-v1",
-          "capabilities": ["SIGN"],
+          "capabilities": [
+            "SIGN"
+          ],
           "endpointId": null,
-          "algorithms": ["SHA256_WITH_RSA"],
+          "algorithms": [
+            "SHA256_WITH_RSA"
+          ],
           "format": "CADES",
           "packaging": "DETACHED",
           "mode": null,
@@ -478,10 +798,14 @@
           "allowedExtraProperties": []
         }
       ],
-      "capabilities": ["SIGN"],
+      "capabilities": [
+        "SIGN"
+      ],
       "clientAuthPolicy": null,
       "certificateRules": {
-        "allowedKeyAlgorithms": ["RSA"],
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
         "requireDigitalSignatureKeyUsage": true
       },
       "evidence": [
@@ -506,18 +830,51 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://www.sede.diputaciondevalladolid.es/tgauth/login",
-      "initiatorOrigins": ["https://www.sede.diputaciondevalladolid.es"],
+      "initiatorOrigins": [
+        "https://www.sede.diputaciondevalladolid.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode":"REDIRECT_AFTER_SOURCE","requestOrigins":["https://www.sede.diputaciondevalladolid.es"],"sourceUrls":["https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"],"requestPath":"/c/portal/cert-login","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":21460},
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "REDIRECT_AFTER_SOURCE",
+        "requestOrigins": [
+          "https://www.sede.diputaciondevalladolid.es"
+        ],
+        "sourceUrls": [
+          "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"
+        ],
+        "requestPath": "/c/portal/cert-login",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 21460
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/","reviewedOn":"2026-08-13"},
-        {"url":"https://www.sede.diputaciondevalladolid.es/tgauth/login","reviewedOn":"2026-08-13"},
-        {"url":"https://www.sede.diputaciondevalladolid.es/c/portal/cert-login","reviewedOn":"2026-08-13"}
+        {
+          "url": "https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://www.sede.diputaciondevalladolid.es/tgauth/login",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login",
+          "reviewedOn": "2026-08-13"
+        }
       ]
     },
     {
@@ -527,18 +884,51 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31",
-      "initiatorOrigins": ["https://diputacion.toledo.gob.es"],
+      "initiatorOrigins": [
+        "https://diputacion.toledo.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://diputacion.toledo.gob.es"],"sourceUrls":["https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY="],"requestPath":"/SIGEM_AutenticacionWeb/validacionCertificado.do","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15,"requestPort":843},
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": [
+          "https://diputacion.toledo.gob.es"
+        ],
+        "sourceUrls": [
+          "https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY="
+        ],
+        "requestPath": "/SIGEM_AutenticacionWeb/validacionCertificado.do",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15,
+        "requestPort": 843
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://diputacion.toledo.gob.es/procedimientos/1","reviewedOn":"2026-08-13"},
-        {"url":"https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31","reviewedOn":"2026-08-13"},
-        {"url":"https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY=","reviewedOn":"2026-08-13"}
+        {
+          "url": "https://diputacion.toledo.gob.es/procedimientos/1",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY=",
+          "reviewedOn": "2026-08-13"
+        }
       ]
     },
     {
@@ -548,19 +938,59 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://tramites.juntaex.es/",
-      "initiatorOrigins": ["https://tramites.juntaex.es"],
+      "initiatorOrigins": [
+        "https://tramites.juntaex.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma por lotes en Trámites de la Junta de Extremadura","inputAdapterId":"extremadura-batch-autoscript-v1","callbackContractId":"extremadura-batch-result-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN"],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma por lotes en Trámites de la Junta de Extremadura",
+          "inputAdapterId": "extremadura-batch-autoscript-v1",
+          "callbackContractId": "extremadura-batch-result-v1",
+          "capabilities": [
+            "SIGN"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA256_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {},
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_REGGENERAL_INFO","reviewedOn":"2026-08-13"},
-        {"url":"https://tramites.juntaex.es/sta/resources/js/sta-autofirma-lote.js","reviewedOn":"2026-08-13"},
-        {"url":"https://tramites.juntaex.es/sta/resources/js/autoscript.js","reviewedOn":"2026-08-13"},
-        {"url":"https://tramites.juntaex.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2","reviewedOn":"2026-08-13"}
+        {
+          "url": "https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_REGGENERAL_INFO",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://tramites.juntaex.es/sta/resources/js/sta-autofirma-lote.js",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://tramites.juntaex.es/sta/resources/js/autoscript.js",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://tramites.juntaex.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2",
+          "reviewedOn": "2026-08-13"
+        }
       ]
     },
     {
@@ -570,19 +1000,59 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sedeelectronica.cabildodelapalma.es/",
-      "initiatorOrigins": ["https://sedeelectronica.cabildodelapalma.es"],
+      "initiatorOrigins": [
+        "https://sedeelectronica.cabildodelapalma.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma","inputAdapterId":"la-palma-batch-autoscript-v1","callbackContractId":"la-palma-batch-result-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN"],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma",
+          "inputAdapterId": "la-palma-batch-autoscript-v1",
+          "callbackContractId": "la-palma-batch-result-v1",
+          "capabilities": [
+            "SIGN"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA256_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {},
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://sedeelectronica.cabildodelapalma.es/","reviewedOn":"2026-08-13"},
-        {"url":"https://sedeelectronica.cabildodelapalma.es/sta/resources/js/sta-autofirma-lote.js","reviewedOn":"2026-08-13"},
-        {"url":"https://sedeelectronica.cabildodelapalma.es/sta/resources/js/autoscript.js","reviewedOn":"2026-08-13"},
-        {"url":"https://sedeelectronica.cabildodelapalma.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.3","reviewedOn":"2026-08-13"}
+        {
+          "url": "https://sedeelectronica.cabildodelapalma.es/",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://sedeelectronica.cabildodelapalma.es/sta/resources/js/sta-autofirma-lote.js",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://sedeelectronica.cabildodelapalma.es/sta/resources/js/autoscript.js",
+          "reviewedOn": "2026-08-13"
+        },
+        {
+          "url": "https://sedeelectronica.cabildodelapalma.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.3",
+          "reviewedOn": "2026-08-13"
+        }
       ]
     },
     {
@@ -592,17 +1062,53 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.tenerife.es/",
-      "initiatorOrigins": ["https://sede.tenerife.es"],
+      "initiatorOrigins": [
+        "https://sede.tenerife.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"mode":"explicit"},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN"],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": [
+            "SIGN"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA512_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "DETACHED",
+          "mode": "EXPLICIT",
+          "fixedExtraProperties": {
+            "mode": "explicit"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://sede.tenerife.es/","reviewedOn":"2026-08-14"},
-        {"url":"https://sede.tenerife.es/76.81426d6ba0b90ca6.js","reviewedOn":"2026-08-14"}
+        {
+          "url": "https://sede.tenerife.es/",
+          "reviewedOn": "2026-08-14"
+        },
+        {
+          "url": "https://sede.tenerife.es/76.81426d6ba0b90ca6.js",
+          "reviewedOn": "2026-08-14"
+        }
       ]
     },
     {
@@ -612,19 +1118,60 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.mscbs.gob.es/",
-      "initiatorOrigins": ["https://sede.mscbs.gob.es"],
+      "initiatorOrigins": [
+        "https://sede.mscbs.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://sede.mscbs.gob.es"],"sourceUrls":["https://sede.mscbs.gob.es/registroElectronico/formularios.htm"],"requestPath":"/SIGEM_AutenticacionWeb/validacionCertificado.do","fixedQueryParameters":{"REDIRECCION":"RegistroTelematico","tramiteId":"TRAM_TARDESCONPLAN","ENTIDAD_ID":"000","LANG":"es","COUNTRY":"ES"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": [
+          "https://sede.mscbs.gob.es"
+        ],
+        "sourceUrls": [
+          "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
+        ],
+        "requestPath": "/SIGEM_AutenticacionWeb/validacionCertificado.do",
+        "fixedQueryParameters": {
+          "REDIRECCION": "RegistroTelematico",
+          "tramiteId": "TRAM_TARDESCONPLAN",
+          "ENTIDAD_ID": "000",
+          "LANG": "es",
+          "COUNTRY": "ES"
+        },
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://sede.mscbs.gob.es/registroElectronico/formularios.htm","reviewedOn":"2026-08-14"},
-        {"url":"https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm","reviewedOn":"2026-08-14"},
-        {"url":"https://sede.mscbs.gob.es/diseno/js/form_gen.js","reviewedOn":"2026-08-14"},
-        {"url":"https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES","reviewedOn":"2026-08-14"}
+        {
+          "url": "https://sede.mscbs.gob.es/registroElectronico/formularios.htm",
+          "reviewedOn": "2026-08-14"
+        },
+        {
+          "url": "https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm",
+          "reviewedOn": "2026-08-14"
+        },
+        {
+          "url": "https://sede.mscbs.gob.es/diseno/js/form_gen.js",
+          "reviewedOn": "2026-08-14"
+        },
+        {
+          "url": "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+          "reviewedOn": "2026-08-14"
+        }
       ]
     },
     {
@@ -634,17 +1181,48 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
-      "initiatorOrigins": ["https://sede.tea.hacienda.gob.es"],
+      "initiatorOrigins": [
+        "https://sede.tea.hacienda.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://www1.tea.hacienda.gob.es"],"sourceUrls":["https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"],"requestPath":"/wlpl/TEAC-TRAM/SedeTRAM","fixedQueryParameters":{"tram":"0"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": [
+          "https://www1.tea.hacienda.gob.es"
+        ],
+        "sourceUrls": [
+          "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+        ],
+        "requestPath": "/wlpl/TEAC-TRAM/SedeTRAM",
+        "fixedQueryParameters": {
+          "tram": "0"
+        },
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://sede.tea.hacienda.gob.es/TEA/alegaciones.html","reviewedOn":"2026-08-14"},
-        {"url":"https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0","reviewedOn":"2026-08-14"}
+        {
+          "url": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+          "reviewedOn": "2026-08-14"
+        },
+        {
+          "url": "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
+          "reviewedOn": "2026-08-14"
+        }
       ]
     },
     {
@@ -654,18 +1232,56 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null",
-      "initiatorOrigins": ["https://sede.isciii.gob.es"],
+      "initiatorOrigins": [
+        "https://sede.isciii.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SELECT_CERTIFICATE","safeDescription":"Compartir certificado con la Sede electrónica del ISCIII","inputAdapterId":"autoscript-select-certificate-v1","callbackContractId":"autoscript-select-certificate-callback-v1","capabilities":["SELECT_CERTIFICATE"],"endpointId":null,"algorithms":[],"format":null,"packaging":null,"mode":null,"fixedExtraProperties":{"serverUrl":"http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService"},"allowedExtraProperties":[]}],
-      "capabilities": ["SELECT_CERTIFICATE"],
+      "operationPolicies": [
+        {
+          "operation": "SELECT_CERTIFICATE",
+          "safeDescription": "Compartir certificado con la Sede electrónica del ISCIII",
+          "inputAdapterId": "autoscript-select-certificate-v1",
+          "callbackContractId": "autoscript-select-certificate-callback-v1",
+          "capabilities": [
+            "SELECT_CERTIFICATE"
+          ],
+          "endpointId": null,
+          "algorithms": [],
+          "format": null,
+          "packaging": null,
+          "mode": null,
+          "fixedExtraProperties": {
+            "serverUrl": "http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SELECT_CERTIFICATE"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": false
+      },
       "evidence": [
-        {"url":"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null","reviewedOn":"2026-08-15"},
-        {"url":"https://sede.isciii.gob.es/js/autoscript/autoscript.js","reviewedOn":"2026-08-15"},
-        {"url":"https://sede.isciii.gob.es/js/autoscript/constantes.js","reviewedOn":"2026-08-15"}
+        {
+          "url": "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null",
+          "reviewedOn": "2026-08-15"
+        },
+        {
+          "url": "https://sede.isciii.gob.es/js/autoscript/autoscript.js",
+          "reviewedOn": "2026-08-15"
+        },
+        {
+          "url": "https://sede.isciii.gob.es/js/autoscript/constantes.js",
+          "reviewedOn": "2026-08-15"
+        }
       ]
     },
     {
@@ -675,18 +1291,56 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml",
-      "initiatorOrigins": ["https://portafirmas.dival.es"],
+      "initiatorOrigins": [
+        "https://portafirmas.dival.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SELECT_CERTIFICATE","safeDescription":"Compartir certificado con el Portafirmas de la Diputació de València","inputAdapterId":"autoscript-select-certificate-v1","callbackContractId":"autoscript-select-certificate-callback-v1","capabilities":["SELECT_CERTIFICATE"],"endpointId":null,"algorithms":[],"format":null,"packaging":null,"mode":null,"fixedExtraProperties":{"filters":"keyusage.nonrepudiation:true;nonexpired:true","headless":"true"},"allowedExtraProperties":[]}],
-      "capabilities": ["SELECT_CERTIFICATE"],
+      "operationPolicies": [
+        {
+          "operation": "SELECT_CERTIFICATE",
+          "safeDescription": "Compartir certificado con el Portafirmas de la Diputació de València",
+          "inputAdapterId": "autoscript-select-certificate-v1",
+          "callbackContractId": "autoscript-select-certificate-callback-v1",
+          "capabilities": [
+            "SELECT_CERTIFICATE"
+          ],
+          "endpointId": null,
+          "algorithms": [],
+          "format": null,
+          "packaging": null,
+          "mode": null,
+          "fixedExtraProperties": {
+            "filters": "keyusage.nonrepudiation:true;nonexpired:true",
+            "headless": "true"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SELECT_CERTIFICATE"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": false
+      },
       "evidence": [
-        {"url":"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml","reviewedOn":"2026-08-15"},
-        {"url":"https://portafirmas.dival.es/signingpad/js/autoscript.js","reviewedOn":"2026-08-15"},
-        {"url":"https://portafirmas.dival.es/signingpad/js/filtros.js","reviewedOn":"2026-08-15"}
+        {
+          "url": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml",
+          "reviewedOn": "2026-08-15"
+        },
+        {
+          "url": "https://portafirmas.dival.es/signingpad/js/autoscript.js",
+          "reviewedOn": "2026-08-15"
+        },
+        {
+          "url": "https://portafirmas.dival.es/signingpad/js/filtros.js",
+          "reviewedOn": "2026-08-15"
+        }
       ]
     },
     {
@@ -696,17 +1350,30 @@
       "compatibilityStatus": "BROWSE_ONLY",
       "activation": "ENABLED",
       "startUrl": "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
-      "initiatorOrigins": ["https://sede.ceuta.es"],
+      "initiatorOrigins": [
+        "https://sede.ceuta.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
       "capabilities": [],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
       "evidence": [
-        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info","reviewedOn":"2026-07-16"},
-        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info","reviewedOn":"2026-07-16"}
+        {
+          "url": "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
+          "reviewedOn": "2026-07-16"
+        },
+        {
+          "url": "https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info",
+          "reviewedOn": "2026-07-16"
+        }
       ]
     },
     {
@@ -716,17 +1383,110 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.policia.gob.es/",
-      "initiatorOrigins": ["https://sede.policia.gob.es"],
+      "initiatorOrigins": [
+        "https://sede.policia.gob.es"
+      ],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de solicitud en la Sede de la Policía Nacional","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"XADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{"format":"XAdES Detached","filters.1":"dnie:;nonexpired:","filters.2":"keyusage.nonrepudiation:true;nonexpired:"},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma de solicitud en la Sede de la Policía Nacional",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "autoscript-sign-callback-v1",
+          "capabilities": [
+            "SIGN",
+            "LEGACY_SHA1"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA1_WITH_RSA"
+          ],
+          "format": "XADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {
+            "format": "XAdES Detached",
+            "filters.1": "dnie:;nonexpired:",
+            "filters.2": "keyusage.nonrepudiation:true;nonexpired:"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN",
+        "LEGACY_SHA1"
+      ],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": false
+      },
       "evidence": [
-        {"url":"https://sede.policia.gob.es/","reviewedOn":"2026-08-15"},
-        {"url":"https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml","reviewedOn":"2026-08-15"}
+        {
+          "url": "https://sede.policia.gob.es/",
+          "reviewedOn": "2026-08-15"
+        },
+        {
+          "url": "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml",
+          "reviewedOn": "2026-08-15"
+        }
+      ]
+    },
+    {
+      "profileId": "murcia-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de la CARM",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+      "initiatorOrigins": [
+        "https://sede.carm.es"
+      ],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma de solicitud en la Sede electrónica de la CARM",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": [
+            "SIGN"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA256_WITH_RSA"
+          ],
+          "format": "CADES",
+          "packaging": "ATTACHED",
+          "mode": "IMPLICIT",
+          "fixedExtraProperties": {
+            "filters": "nonexpired:",
+            "mode": "implicit"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN"
+      ],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+          "reviewedOn": "2026-08-15"
+        }
       ]
     }
   ]

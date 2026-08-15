@@ -22,6 +22,7 @@
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
   const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
+  const murciaCompatibilityEnabled = __JFM_MURCIA_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -44,6 +45,7 @@
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  const murciaOrigin = "https://sede.carm.es";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -275,6 +277,25 @@
       args[1] === "SHA1withRSA" &&
       args[2] === "CAdES" &&
       (args[3] === null || args[3] === "");
+    const isMurciaOrigin =
+      murciaCompatibilityEnabled && window.location.origin === murciaOrigin;
+    const isExactMurciaCall =
+      isMurciaOrigin &&
+      args.length === 6 &&
+      typeof args[0] === "string" &&
+      args[0].length > 0 &&
+      args[0].length <= maxDirectDataChars &&
+      base64Pattern.test(args[0]) &&
+      args[1] === "SHA256withRSA" &&
+      args[2] === "CMS/PKCS#7" &&
+      typeof args[3] === "string" &&
+      args[3].length <= maxExtraPropertiesChars &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isMurciaOrigin && !isExactMurciaCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
         globalThis.btoa(args[0]) : args[0];
@@ -283,11 +304,11 @@
       typeof globalThis.btoa === "function" &&
       base64Pattern.test(dataB64);
     const isJuntaCades =
-      !jccmCompatibilityEnabled &&
+      !jccmCompatibilityEnabled && !isMurciaOrigin &&
       (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
       args[2] === "CAdES" && typeof args[3] === "string" &&
       args[3].length <= maxExtraPropertiesChars;
-    const isRegXades = !jccmCompatibilityEnabled &&
+    const isRegXades = !jccmCompatibilityEnabled && !isMurciaOrigin &&
       args[1] === "SHA512withRSA" &&
       args[2] === "XAdES Detached" && args[3] === null;
     if (args.length !== 6 || typeof successCallback !== "function" ||
@@ -299,7 +320,7 @@
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
           !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
-          !isExactPoliciaCall)) {
+          !isExactPoliciaCall && !isExactMurciaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
