@@ -408,6 +408,7 @@ class SigningCoordinator internal constructor(
         }
         val expectedFormat = when (request.format) {
             SigningFormat.CADES -> ProfileSignatureFormat.CADES
+            SigningFormat.CMS -> ProfileSignatureFormat.CMS
             SigningFormat.XADES -> ProfileSignatureFormat.XADES
         }
         if (expectedAlgorithm !in operation.algorithms || expectedFormat != operation.format) {
@@ -540,6 +541,7 @@ class SigningCoordinator internal constructor(
 
     private fun SigningFormat.displayName(): String = when (this) {
         SigningFormat.CADES -> "CAdES"
+        SigningFormat.CMS -> "CMS/PKCS#7"
         SigningFormat.XADES -> "XAdES Detached"
     }
 

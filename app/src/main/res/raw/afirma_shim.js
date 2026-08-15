@@ -46,6 +46,7 @@
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   const murciaOrigin = "https://sede.carm.es";
+  const murciaProbeUrl = "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -279,8 +280,9 @@
       (args[3] === null || args[3] === "");
     const isMurciaOrigin =
       murciaCompatibilityEnabled && window.location.origin === murciaOrigin;
+    const isMurciaProbePage = isMurciaOrigin && window.location.href === murciaProbeUrl;
     const isExactMurciaCall =
-      isMurciaOrigin &&
+      isMurciaProbePage &&
       args.length === 6 &&
       typeof args[0] === "string" &&
       args[0].length > 0 &&

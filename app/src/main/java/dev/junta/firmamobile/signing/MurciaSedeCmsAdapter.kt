@@ -23,8 +23,6 @@ import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.asn1.cms.SignedData
 import org.bouncycastle.asn1.cms.SignerInfo
 import org.bouncycastle.asn1.cms.Time
-import org.bouncycastle.asn1.ess.ESSCertIDv2
-import org.bouncycastle.asn1.ess.SigningCertificateV2
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaCertStore
@@ -123,7 +121,7 @@ class MurciaSedeCmsAdapter internal constructor(
             context.origin.serialized == INITIATOR_ORIGIN &&
             safeDescription == SAFE_DESCRIPTION &&
             algorithm == SigningAlgorithm.SHA256_WITH_RSA &&
-            format == SigningFormat.CADES
+            format == SigningFormat.CMS
 
     private fun NormalizedSignRequest.matchesPayloadContract(): Boolean = runCatching {
         withPayload { payload ->
@@ -139,7 +137,7 @@ class MurciaSedeCmsAdapter internal constructor(
         const val PROFILE_ID = "murcia-sede"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://sede.carm.es"
-        const val SAFE_DESCRIPTION = "Firma de solicitud en la Sede electrónica de la CARM"
+        const val SAFE_DESCRIPTION = "Prueba pública de firma AutoFirma de la CARM"
         const val EXPECTED_EXTRA_PROPERTIES = "filters=nonexpired:\nmode=implicit"
         const val MAX_PAYLOAD_BYTES = 524_288
         private const val MAX_CERTIFICATES = 10
@@ -195,18 +193,12 @@ internal object MurciaCmsCodec {
         require(content.isNotEmpty() && content.size <= MAX_CONTENT_BYTES)
         require(certificateChain.isNotEmpty())
         val signingCertificate = certificateChain.first()
+        signingCertificate.checkValidity(Date.from(clock.instant()))
         val rsaPublicKey = signingCertificate.publicKey as? RSAPublicKey
             ?: error("RSA certificate required")
         val certificateHash = MessageDigest.getInstance(SHA_256).digest(signingCertificate.encoded)
         val contentCopy = content.copyOf()
         val attributes = Hashtable<ASN1ObjectIdentifier, Attribute>().apply {
-            put(
-                PKCSObjectIdentifiers.id_aa_signingCertificateV2,
-                Attribute(
-                    PKCSObjectIdentifiers.id_aa_signingCertificateV2,
-                    DERSet(SigningCertificateV2(ESSCertIDv2(certificateHash))),
-                ),
-            )
             put(
                 CMSAttributes.signingTime,
                 Attribute(CMSAttributes.signingTime, DERSet(Time(Date.from(clock.instant())))),

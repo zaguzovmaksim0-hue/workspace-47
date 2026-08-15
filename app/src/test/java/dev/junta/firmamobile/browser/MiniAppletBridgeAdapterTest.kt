@@ -65,7 +65,7 @@ class MiniAppletBridgeAdapterTest {
         result.request.normalized.use { request ->
             assertEquals(REQUEST_ID, request.requestId.toString())
             assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
-            assertEquals(SigningFormat.CADES, request.format)
+            assertEquals(SigningFormat.CMS, request.format)
             assertEquals("www.juntadeandalucia.es", request.context.origin.host)
             assertEquals(DOCUMENT_ID, request.context.navigationId.value)
             request.withPayload { payload ->
@@ -275,12 +275,13 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
-    fun exactMurciaAutoScriptCallNormalizesToSha256Cades() {
+    fun exactMurciaAutoScriptProbeCallNormalizesToSha256Cms() {
         val result = adapterFor(MURCIA_PROFILE_ID).route(
             rawMessage = murciaMessage(),
             sourceOrigin = MURCIA_ORIGIN,
             isMainFrame = true,
             navigationEpoch = 49,
+            currentPageUrl = MURCIA_PROBE_URL,
         ) as MiniAppletBridgeRouteResult.Accepted
 
         result.request.normalized.use { request ->
@@ -310,6 +311,15 @@ class MiniAppletBridgeAdapterTest {
             SigningErrorCode.ORIGIN_NOT_ALLOWED,
             murciaRejected(origin = Uri.parse("https://sede.carm.es.evil.example")),
         )
+        listOf(
+            null,
+            "https://sede.carm.es/",
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+            "$MURCIA_PROBE_URL?x=1",
+            "$MURCIA_PROBE_URL#fragment",
+        ).forEach { page ->
+            assertEquals(SigningErrorCode.UNSUPPORTED_PROTOCOL, murciaRejected(currentPageUrl = page))
+        }
         listOf(
             murciaMessage(algorithm = "SHA1withRSA"),
             murciaMessage(algorithm = "SHA512withRSA"),
@@ -1297,10 +1307,12 @@ class MiniAppletBridgeAdapterTest {
         rawMessage: String = murciaMessage(),
         origin: Uri = MURCIA_ORIGIN,
         activeProfile: String = MURCIA_PROFILE_ID,
+        currentPageUrl: String? = MURCIA_PROBE_URL,
     ): SigningErrorCode = (adapterFor(activeProfile).route(
         rawMessage = rawMessage,
         sourceOrigin = origin,
         isMainFrame = true,
+        currentPageUrl = currentPageUrl,
     ) as MiniAppletBridgeRouteResult.Rejected).code
 
     private companion object {
@@ -1343,6 +1355,7 @@ class MiniAppletBridgeAdapterTest {
         val MURCIA_ORIGIN: Uri = Uri.parse("https://sede.carm.es")
         const val MURCIA_PROFILE_ID = "murcia-sede"
         const val MURCIA_PROTOCOL_ID = "murcia-sede-local-cms-v1"
+        const val MURCIA_PROBE_URL = "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html"
         const val MURCIA_EXTRA_PROPERTIES = "filters=nonexpired:\nmode=implicit"
         val MURCIA_DOCUMENT = "synthetic Murcia CARM application payload".encodeToByteArray()
         val JCCM_DATA = "ABCDE".encodeToByteArray()

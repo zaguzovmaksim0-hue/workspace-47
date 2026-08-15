@@ -298,10 +298,6 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.IMPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == CANTABRIA_EXTRA_PROPERTIES)
-                                } else if (p.profileId.value == MURCIA_PROFILE_ID) {
-                                    require(op.mode == SignatureMode.IMPLICIT)
-                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
-                                    require(op.fixedExtraProperties == MURCIA_EXTRA_PROPERTIES)
                                 } else if (p.profileId.value == TENERIFE_PROFILE_ID) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
@@ -348,6 +344,13 @@ object SiteProfileCatalogParser {
                                     SignatureMode.IMPLICIT -> error("implicit direct-data profile is unsupported")
                                 }
                             }
+                        }
+                        SignatureFormat.CMS -> {
+                            require(p.profileId.value == MURCIA_PROFILE_ID)
+                            require(op.endpointId == null)
+                            require(op.mode == SignatureMode.IMPLICIT)
+                            require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
+                            require(op.fixedExtraProperties == MURCIA_EXTRA_PROPERTIES)
                         }
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
@@ -834,7 +837,7 @@ object SiteProfileCatalogParser {
                 capabilities = setOf(Capability.SIGN),
                 endpointId = null,
                 algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
-                format = SignatureFormat.CADES,
+                format = SignatureFormat.CMS,
                 packaging = SignaturePackaging.ATTACHED,
                 mode = SignatureMode.IMPLICIT,
                 fixedExtraProperties = MURCIA_EXTRA_PROPERTIES,
@@ -1066,12 +1069,11 @@ object SiteProfileCatalogParser {
     private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
     private const val MURCIA_PROFILE_ID = "murcia-sede"
     private const val MURCIA_PROFILE_VERSION = 1
-    private const val MURCIA_DISPLAY_NAME = "Sede electrónica de la CARM"
-    private const val MURCIA_START_URL =
-        "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"
+    private const val MURCIA_DISPLAY_NAME = "CARM — Prueba pública AutoFirma"
+    private const val MURCIA_START_URL = "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html"
     private const val MURCIA_ORIGIN = "https://sede.carm.es"
     private const val MURCIA_SAFE_DESCRIPTION =
-        "Firma de solicitud en la Sede electrónica de la CARM"
+        "Prueba pública de firma AutoFirma de la CARM"
     private val MURCIA_EXTRA_PROPERTIES = linkedMapOf(
         "filters" to "nonexpired:",
         "mode" to "implicit",

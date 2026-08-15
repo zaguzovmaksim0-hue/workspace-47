@@ -1439,10 +1439,10 @@
     {
       "profileId": "murcia-sede",
       "profileVersion": 1,
-      "displayName": "Sede electrónica de la CARM",
+      "displayName": "CARM — Prueba pública AutoFirma",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
-      "startUrl": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+      "startUrl": "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html",
       "initiatorOrigins": [
         "https://sede.carm.es"
       ],
@@ -1452,7 +1452,7 @@
       "operationPolicies": [
         {
           "operation": "SIGN",
-          "safeDescription": "Firma de solicitud en la Sede electrónica de la CARM",
+          "safeDescription": "Prueba pública de firma AutoFirma de la CARM",
           "inputAdapterId": "miniapplet-autoscript-v1",
           "callbackContractId": "miniapplet-sign-callback-v1",
           "capabilities": [
@@ -1462,7 +1462,7 @@
           "algorithms": [
             "SHA256_WITH_RSA"
           ],
-          "format": "CADES",
+          "format": "CMS",
           "packaging": "ATTACHED",
           "mode": "IMPLICIT",
           "fixedExtraProperties": {
@@ -1484,8 +1484,8 @@
       },
       "evidence": [
         {
-          "url": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
-          "reviewedOn": "2026-08-15"
+          "url": "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html",
+          "reviewedOn": "2026-08-13"
         }
       ]
     }

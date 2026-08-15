@@ -27,6 +27,7 @@ enum class SigningAlgorithm {
 
 enum class SigningFormat {
     CADES,
+    CMS,
     XADES,
 }
 

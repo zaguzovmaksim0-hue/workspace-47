@@ -846,11 +846,11 @@ class SiteProfileCatalogParserTest {
         val profile = checkNotNull(BuiltInSiteProfiles.catalog.profiles.singleOrNull {
             it.profileId == ProfileId("murcia-sede")
         })
-        assertEquals("Sede electrónica de la CARM", profile.displayName)
+        assertEquals("CARM — Prueba pública AutoFirma", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(
-            URI("https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"),
+            URI("https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html"),
             profile.startUrl,
         )
         assertEquals(setOf(ExactOrigin.parse("https://sede.carm.es")), profile.initiatorOrigins)
@@ -858,7 +858,7 @@ class SiteProfileCatalogParserTest {
         assertEquals(1, profile.operationPolicies.size)
         val signOp = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(SignatureAlgorithm.SHA256_WITH_RSA, signOp.algorithms.single())
-        assertEquals(SignatureFormat.CADES, signOp.format)
+        assertEquals(SignatureFormat.CMS, signOp.format)
         assertEquals(SignaturePackaging.ATTACHED, signOp.packaging)
         assertEquals(SignatureMode.IMPLICIT, signOp.mode)
         assertEquals(

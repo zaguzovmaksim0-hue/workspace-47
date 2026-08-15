@@ -326,6 +326,21 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual(["CADES"], tenerife["observedSignatureFormats"])
         self.assertIn("e2e", tenerife["limitations"].lower())
 
+    def test_murcia_cms_probe_profile_preserves_admin_entry_and_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        murcia = next(entry for entry in catalog["entries"] if entry["portalId"] == "murcia-sede")
+        self.assertEqual("murcia-sede", murcia["profileId"])
+        self.assertEqual("ES-PUB-0113", murcia["inventoryId"])
+        self.assertEqual(
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+            murcia["entryUrl"],
+        )
+        self.assertEqual("https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html", murcia["launchUrl"])
+        self.assertEqual(["CMS"], murcia["observedSignatureFormats"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", murcia["inventoryStatus"])
+        self.assertEqual("2026-08-13", murcia["reviewedOn"])
+        self.assertIn("probe", murcia["limitations"].lower())
+
     def test_toledo_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         toledo = next(
@@ -384,15 +399,20 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
-    def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
+    def test_every_profile_binds_through_its_exact_entry_or_explicit_launch_alias(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
-        entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
         profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
 
-        self.assertEqual(len(catalog["entries"]), len(entries_by_url))
         for profile in profiles:
-            entry = entries_by_url[profile["startUrl"]]
-            self.assertEqual(profile["profileId"], entry["profileId"])
+            matching_entries = [
+                entry for entry in catalog["entries"]
+                if entry["profileId"] == profile["profileId"]
+                and (
+                    entry["entryUrl"] == profile["startUrl"]
+                    or entry.get("launchUrl") == profile["startUrl"]
+                )
+            ]
+            self.assertGreaterEqual(len(matching_entries), 1, profile["profileId"])
 
     def test_missing_inventory_match_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")

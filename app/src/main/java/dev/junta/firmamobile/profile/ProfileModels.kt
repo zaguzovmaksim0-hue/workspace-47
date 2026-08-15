@@ -76,7 +76,7 @@ enum class RedirectPolicy { DENY }
 enum class ProtocolOperation { SIGN, SELECT_CERTIFICATE }
 enum class Capability { SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, LEGACY_SHA1, AFIRMA_URI }
 enum class SignatureAlgorithm { SHA1_WITH_RSA, SHA256_WITH_RSA, SHA512_WITH_RSA }
-enum class SignatureFormat { CADES, PADES, XADES, FACTURAE }
+enum class SignatureFormat { CADES, CMS, PADES, XADES, FACTURAE }
 enum class SignaturePackaging { ATTACHED, DETACHED }
 enum class SignatureMode { IMPLICIT, EXPLICIT }
 

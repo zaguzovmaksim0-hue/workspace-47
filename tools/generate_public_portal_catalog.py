@@ -104,10 +104,10 @@ def _profile_bindings(
     profile_by_start_url = {start_url: profile_id for profile_id, start_url in profiles}
     for profile_id, start_url in profiles:
         matches = records_by_entry_url.get(start_url, [])
-        if not matches:
-            raise ValueError(f"profile {profile_id} has no inventory entry for exact startUrl")
-        if len(matches) != 1:
+        if len(matches) > 1:
             raise ValueError(f"profile {profile_id} has multiple inventory entries for exact startUrl")
+        if not matches:
+            continue
         surface_key = str(matches[0].get("surface_key", ""))
         if not surface_key:
             raise ValueError(f"profile {profile_id} matched an invalid inventory surface")
@@ -130,6 +130,11 @@ def _profile_bindings(
         if surface_key in bindings:
             raise ValueError(f"redundant alias launch_url on profile-owned surface: {surface_key}")
         bindings[surface_key] = profile_id
+
+    bound_profiles = set(bindings.values())
+    for profile_id, _ in profiles:
+        if profile_id not in bound_profiles:
+            raise ValueError(f"profile {profile_id} has no inventory entry or alias for startUrl")
     return bindings
 
 
@@ -161,7 +166,7 @@ def _mechanisms(record: dict[str, object]) -> list[str]:
 
 def _formats(record: dict[str, object]) -> list[str]:
     value = str(record.get("signature_format", "")).lower()
-    return [name for name in ("CADES", "PADES", "XADES", "FACTURAE") if name.lower() in value]
+    return [name for name in ("CADES", "CMS", "PADES", "XADES", "FACTURAE") if name.lower() in value]
 
 
 def _catalog_status(record: dict[str, object]) -> str:

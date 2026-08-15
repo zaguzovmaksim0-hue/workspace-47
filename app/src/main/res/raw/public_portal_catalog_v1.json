@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a79387ecdbc9e11a80d76b60cdae3dd7c72c641f5ba8ca0f0cf74a8272f3aecc",
+  "sourceRevision": "82a03f5b61a0844f2ce9cc6a3d6986ac006425e96734e993bb6c9b9c0979f2f7",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2747,8 +2747,9 @@
       "organization": "Comunidad Autónoma de la Región de Murcia",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Región de Murcia",
-      "purpose": "Firma electrónica en la Sede de la CARM mediante MiniApplet/AutoScript con formato CMS/PKCS#7 adjunto y modo implícito.",
+      "purpose": "Prueba pública QA de AutoFirma de la CARM con CMS/PKCS#7 adjunto; no representa una presentación administrativa.",
       "entryUrl": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+      "launchUrl": "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html",
       "observedMechanisms": [
         "AUTOFIRMA",
         "CERTIFICATE_ACCESS",
@@ -2756,9 +2757,9 @@
         "MINIAPPLET"
       ],
       "observedSignatureFormats": [
-        "CADES"
+        "CMS"
       ],
-      "protocolFamily": "AUTOFIRMA_MINIAPPLET_LOCAL_CADES",
+      "protocolFamily": "AUTOFIRMA_MINIAPPLET_LOCAL_CMS",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
@@ -2766,10 +2767,11 @@
         "D03",
         "A16A",
         "A16B",
-        "A16C"
+        "A16C",
+        "A16D"
       ],
-      "reviewedOn": "2026-08-15",
-      "limitations": "Firma CMS/PKCS#7 adjunta local SHA256withRSA verificada por contrato en entorno QA; Storage/Retrieve remotos deshabilitados."
+      "reviewedOn": "2026-08-13",
+      "limitations": "Implementación limitada al probe público QA de AutoFirma; CMS/PKCS#7 adjunto local, sin Storage/Retrieve, autenticación, callback administrativo ni presentación E2E."
     },
     {
       "portalId": "navarra-sede-registro-general",

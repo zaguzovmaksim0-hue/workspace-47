@@ -463,6 +463,8 @@ class AfirmaJavascriptShimTest {
 
         assertTrue(murcia.contains("const murciaCompatibilityEnabled = true"))
         assertTrue(murcia.contains("https://sede.carm.es"))
+        assertTrue(murcia.contains("https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html"))
+        assertTrue(murcia.contains("window.location.href === murciaProbeUrl"))
         assertTrue(murcia.contains("args[1] === \"SHA256withRSA\""))
         assertTrue(murcia.contains("args[2] === \"CMS/PKCS#7\""))
         assertTrue(murcia.contains("isMurciaOrigin && !isExactMurciaCall"))

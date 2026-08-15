@@ -3941,23 +3941,24 @@ records:
     official_site: "https://sede.carm.es/web/pagina?IDCONTENIDO=40291&IDTIPO=100"
     e_sede: "https://sede.carm.es/web/pagina?IDCONTENIDO=40291&IDTIPO=100"
     entry_url: "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"
+    launch_url: "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html"
     procedure_page: "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"
     certificate_required: "SI"
     signature_required: "SI"
     js_client: "AutoFirma / MiniApplet"
-    protocol_family: "AUTOFIRMA_MINIAPPLET_LOCAL_CADES"
-    signature_format: "CAdES / ATTACHED / IMPLICIT"
+    protocol_family: "AUTOFIRMA_MINIAPPLET_LOCAL_CMS"
+    signature_format: "CMS / ATTACHED / IMPLICIT"
     signature_algorithm: "SHA256withRSA"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
-    operation_summary: "Firma electrónica en la Sede de la CARM mediante MiniApplet/AutoScript con formato CMS/PKCS#7 adjunto y modo implícito."
-    protocol_evidence: "La sede electrónica de la CARM fija AutoScript/MiniApplet.sign con SHA256withRSA, CMS/PKCS#7, mode=implicit y filters=nonexpired:; no se realiza envío de formulario ni Storage/Retrieve remoto."
+    operation_summary: "Prueba pública QA de AutoFirma de la CARM con CMS/PKCS#7 adjunto; no representa una presentación administrativa."
+    protocol_evidence: "La observación pública first-party del probe fijó SHA256withRSA, CMS/PKCS#7, filters=nonexpired: y mode=implicit; el enlace oficial al probe se revalidó el 2026-08-15, pero el runtime quedó detrás de WAF y no se eludió."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A16A", "A16B", "A16C"]
-    reason: "Firma CMS/PKCS#7 adjunta local SHA256withRSA verificada por contrato en entorno QA; Storage/Retrieve remotos deshabilitados."
-    reviewed_at: "2026-08-15"
-    next_gate: "Validar físicamente el callback/login sin presentar trámites; mantener QA_ONLY hasta evidencia E2E sanitizada."
+    evidence_ids: ["D03", "A16A", "A16B", "A16C", "A16D"]
+    reason: "Implementación limitada al probe público QA de AutoFirma; CMS/PKCS#7 adjunto local, sin Storage/Retrieve, autenticación, callback administrativo ni presentación E2E."
+    reviewed_at: "2026-08-13"
+    next_gate: "Revalidar el runtime del probe por un canal first-party verificable sin eludir WAF; mantener QA_ONLY y no generalizar al trámite administrativo."
 
   - inventory_id: "ES-PUB-0114"
     surface_key: "navarra-sede-registro-general"
@@ -6363,6 +6364,7 @@ Orden de expansión recomendado:
 [A16A]: https://sede.carm.es/web/pagina?IDCONTENIDO=40291&IDTIPO=100
 [A16B]: https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288
 [A16C]: https://sede.carm.es/web/pagina?IDCONTENIDO=56864&IDTIPO=100&RASTRO=c%24m40248
+[A16D]: https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html
 [A17A]: https://www.navarra.es/es/tramites/titularidad-de-la-sede-electronica
 [A17B]: https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico
 [A17C]: https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/firmar-documentos

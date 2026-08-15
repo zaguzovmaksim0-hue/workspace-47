@@ -142,6 +142,17 @@ class FingerprintTest(unittest.TestCase):
             ("https://firma.example.es/TriPhaseSignatureService",),
         )
 
+    def test_plain_cms_pkcs7_is_a_local_signature_format_without_becoming_cades(self) -> None:
+        fingerprints = inventory.fingerprint_text(
+            "AutoScript.sign(data, 'SHA256withRSA', 'CMS/PKCS#7', 'mode=implicit')"
+        )
+        self.assertIn("CLIENT_AUTOSCRIPT", fingerprints)
+        self.assertIn("OP_SIGN", fingerprints)
+        self.assertIn("FORMAT_CMS", fingerprints)
+        self.assertNotIn("FORMAT_CADES", fingerprints)
+        self.assertIn("LOCAL_SIGNATURE_FORMAT", inventory.protocol_families(fingerprints))
+        self.assertEqual("LIKELY_FAMILY", inventory.evidence_confidence(fingerprints))
+
     def test_intent_requires_an_autofirma_marker(self) -> None:
         self.assertNotIn(
             "AUTOFIRMA_INTENT_URI",

@@ -10,6 +10,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 import kotlinx.coroutines.test.runTest
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
 import org.bouncycastle.cms.CMSSignedData
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -43,6 +44,8 @@ class MurciaSedeCmsAdapterTest {
 
         val cms = CMSSignedData(result)
         assertFalse(cms.isDetachedSignature)
+        val signer = cms.signerInfos.signers.single()
+        assertNull(signer.signedAttributes.get(PKCSObjectIdentifiers.id_aa_signingCertificateV2))
         val extractedStream = ByteArrayOutputStream()
         cms.signedContent.write(extractedStream)
         assertArrayEquals(document, extractedStream.toByteArray())
@@ -127,10 +130,22 @@ class MurciaSedeCmsAdapterTest {
         assertFailure(request(origin = "https://sede.carm.es.evil.example"), SigningErrorCode.UNSUPPORTED_PROTOCOL)
         assertFailure(request(algorithm = SigningAlgorithm.SHA1_WITH_RSA), SigningErrorCode.UNSUPPORTED_PROTOCOL)
         assertFailure(request(algorithm = SigningAlgorithm.SHA512_WITH_RSA), SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        assertFailure(request(format = SigningFormat.CADES), SigningErrorCode.UNSUPPORTED_PROTOCOL)
         assertFailure(request(format = SigningFormat.XADES), SigningErrorCode.UNSUPPORTED_PROTOCOL)
         assertFailure(request(extraProperties = "mode=explicit"), SigningErrorCode.PROTOCOL_FAILED)
         assertFailure(request(extraProperties = "filters=nonexpired:\nmode=explicit"), SigningErrorCode.PROTOCOL_FAILED)
         assertFailure(request(ByteArray(0)), SigningErrorCode.PROTOCOL_FAILED)
+    }
+
+    @Test
+    fun rejectsCertificateThatExpiredAfterUnlockBeforePresign() = runTest {
+        val expiredAtSigning = MurciaSedeCmsAdapter(
+            Clock.fixed(Instant.parse("2032-01-02T03:04:05Z"), ZoneOffset.UTC),
+        )
+        val request = request()
+        val result = expiredAtSigning.prepare(request, identity.chain) as ProtocolPrepareResult.Failure
+        assertEquals(SigningErrorCode.PROTOCOL_FAILED, result.code)
+        request.close()
     }
 
     @Test
@@ -180,7 +195,7 @@ class MurciaSedeCmsAdapterTest {
         profileVersion: Int = MurciaSedeCmsAdapter.PROFILE_VERSION,
         origin: String = MurciaSedeCmsAdapter.INITIATOR_ORIGIN,
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA,
-        format: SigningFormat = SigningFormat.CADES,
+        format: SigningFormat = SigningFormat.CMS,
     ) = NormalizedSignRequest(
         requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174000"),
         protocolId = protocolId,

@@ -28,16 +28,14 @@ import org.robolectric.annotation.SQLiteMode
 class MurciaProfileCatalogBindingTest {
     private val profileId = ProfileId(MurciaSedeCmsAdapter.PROFILE_ID)
     private val portalId = PortalId("murcia-sede")
-    private val startUrl = URI(
-        "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
-    )
+    private val startUrl = URI("https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html")
 
     @Test
     fun qaProfilePreservesExactMurciaSignerContractAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
         assertEquals(1, profile.profileVersion)
-        assertEquals("Sede electrónica de la CARM", profile.displayName)
+        assertEquals("CARM — Prueba pública AutoFirma", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
@@ -49,13 +47,13 @@ class MurciaProfileCatalogBindingTest {
         assertNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-15" })
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-13" })
 
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), operation.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), operation.callbackContractId)
         assertEquals(setOf(SignatureAlgorithm.SHA256_WITH_RSA), operation.algorithms)
-        assertEquals(SignatureFormat.CADES, operation.format)
+        assertEquals(SignatureFormat.CMS, operation.format)
         assertEquals(SignaturePackaging.ATTACHED, operation.packaging)
         assertEquals(SignatureMode.IMPLICIT, operation.mode)
         assertEquals(
@@ -82,11 +80,14 @@ class MurciaProfileCatalogBindingTest {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0113" }
         assertEquals(portalId, entry.portalId)
+        assertEquals(URI("https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288"), entry.entryUrl)
+        assertEquals(startUrl, entry.launchUrl)
         assertEquals(profileId, entry.profileId)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
-        assertEquals(setOf(SignatureFormat.CADES), entry.observedSignatureFormats)
-        assertEquals("2026-08-15", entry.reviewedOn.toString())
+        assertEquals(setOf(SignatureFormat.CMS), entry.observedSignatureFormats)
+        assertEquals("2026-08-13", entry.reviewedOn.toString())
+        assertTrue(entry.limitations.contains("probe", ignoreCase = true))
         assertTrue(entry.limitations.contains("CMS/PKCS#7", ignoreCase = true))
 
         val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)

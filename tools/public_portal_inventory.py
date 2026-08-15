@@ -946,6 +946,7 @@ FINGERPRINT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("STORAGE_SERVICE", re.compile(r"StorageService|\bstservlet\b", re.IGNORECASE)),
     ("RETRIEVE_SERVICE", re.compile(r"RetrieveService|\brtservlet\b", re.IGNORECASE)),
     ("FORMAT_CADES", re.compile(r"\bCAdES\b", re.IGNORECASE)),
+    ("FORMAT_CMS", re.compile(r"\bCMS(?:/PKCS#7)?\b", re.IGNORECASE)),
     ("FORMAT_PADES", re.compile(r"\bPAdES\b", re.IGNORECASE)),
     ("FORMAT_XADES", re.compile(r"\bXAdES\b", re.IGNORECASE)),
     ("FORMAT_FACTURAE", re.compile(r"\bFacturaE\b", re.IGNORECASE)),
@@ -983,7 +984,7 @@ def protocol_families(fingerprints: Iterable[str]) -> tuple[str, ...]:
         families.add("TRIPHASE_PRE_POST")
     if values & {"STORAGE_SERVICE", "RETRIEVE_SERVICE"}:
         families.add("STORAGE_RETRIEVE")
-    if values & {"FORMAT_CADES", "FORMAT_PADES", "FORMAT_XADES", "FORMAT_FACTURAE"}:
+    if values & {"FORMAT_CADES", "FORMAT_CMS", "FORMAT_PADES", "FORMAT_XADES", "FORMAT_FACTURAE"}:
         families.add("LOCAL_SIGNATURE_FORMAT")
     if "OP_SELECT_CERTIFICATE" in values:
         families.add("CERTIFICATE_SELECTION")
