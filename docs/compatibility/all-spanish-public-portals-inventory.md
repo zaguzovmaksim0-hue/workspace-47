@@ -346,7 +346,7 @@ requiera traducción manual.
 
 | Ficha | Institución o superficie | Fuentes oficiales | Tipo de evidencia |
 | --- | --- | --- | --- |
-| `P01` | PAG / enlace al REG-AGE | [P01][P01B] | Entrada y sistemas de firma aceptados; sin ABI. |
+| `P01` | PAG / enlace al REG-AGE | [P01][P01B] | Ficha oficial PAG y enlace público exacto de Acceso al Registro Electrónico General hacia REG-AGE; el ABI pertenece al perfil RedSARA ya verificado. |
 | `P02` | AEAT | [P02][P02A][P02B] | Certificado en navegador/Android y fase documental de firma; sin `ClientCertRequest` exacto. |
 | `P03` | Seguridad Social / Import@ss | [P03][P03A] | Ayuda oficial; AutoFirma móvil rechazada en la Sede y métodos de acceso Import@ss. |
 | `P04` | SEPE | [P04] | FAQ oficial de AutoFirma de escritorio. |
@@ -483,23 +483,24 @@ records:
     official_site: "https://sede.administracion.gob.es/"
     e_sede: "https://sede.administracion.gob.es/"
     entry_url: "https://sede.administracion.gob.es/PAG_Sede/ServiciosElectronicos/RegistroElectronicoGeneral.html?idioma=es&imprimir=1"
+    launch_url: "https://reg.redsara.es/es/"
     procedure_page: "https://sede.administracion.gob.es/PAG_Sede/ServiciosElectronicos/RegistroElectronicoGeneral.html?idioma=es&imprimir=1"
     certificate_required: "CONDICIONAL"
-    signature_required: "NO_VERIFICADO"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Identificación y presentación con certificado/DNIe o Cl@ve."
-    protocol_evidence: "La fuente acredita sistemas de firma aceptados, pero no ABI ni transporte portal-specific."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede PAG delega el acceso al Registro Electrónico General mediante un enlace público exacto a REG-AGE."
+    protocol_evidence: "La ficha oficial PAG enlaza directamente Acceso al Registro Electrónico General con el mismo launch URL https://reg.redsara.es/es/ ya cubierto por el perfil reg-age-redsara; no se infiere un contrato de firma propio de PAG."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P01", "P01B", "D11"]
-    reason: "ABI, formato, endpoint y TLS cliente no verificados; solo se autoriza navegación."
-    reviewed_at: "2026-07-15"
-    next_gate: "Capturar un trámite y transporte exactos sin credenciales."
+    evidence_ids: ["P01", "P01B", "P14", "D11"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la ficha PAG como entry URL y no se realizó E2E físico desde ella."
+    reviewed_at: "2026-08-13"
+    next_gate: "E2E físico seguro desde la ficha PAG hasta REG-AGE sin realizar una presentación administrativa real."
 
   - inventory_id: "ES-PUB-0002"
     surface_key: "age-reg-redsara"

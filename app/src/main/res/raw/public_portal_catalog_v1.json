@@ -1,33 +1,36 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "dbf38136798cd047f4e9eccaade5c77ce979b4d1ce86b963eaa2cf0ddeb64c3f",
+  "sourceRevision": "e717639405dee5351b5fd4ca9a18bd2455d55e0697694d9033fe68efbefc67f3",
   "entries": [
     {
       "portalId": "age-pag-reg",
       "inventoryId": "ES-PUB-0001",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Punto de Acceso General / Registro Electrónico General",
       "organization": "Administración General del Estado",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Identificación y presentación con certificado/DNIe o Cl@ve.",
+      "purpose": "La Sede PAG delega el acceso al Registro Electrónico General mediante un enlace público exacto a REG-AGE.",
       "entryUrl": "https://sede.administracion.gob.es/PAG_Sede/ServiciosElectronicos/RegistroElectronicoGeneral.html?idioma=es&imprimir=1",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [
-        "CERTIFICATE_ACCESS"
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P01",
         "P01B",
+        "P14",
         "D11"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "ABI, formato, endpoint y TLS cliente no verificados; solo se autoriza navegación."
+      "reviewedOn": "2026-08-13",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la ficha PAG como entry URL y no se realizó E2E físico desde ella."
     },
     {
       "portalId": "age-reg-redsara",

@@ -149,6 +149,33 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `PAG REG alias retains the official PAG URL while resolving the exact REG AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single { it.portalId == PortalId("age-pag-reg") }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://sede.administracion.gob.es/PAG_Sede/ServiciosElectronicos/RegistroElectronicoGeneral.html?idioma=es&imprimir=1"),
+            portal.entryUrl,
+        )
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `US alias retains its official procedure URL while resolving the exact REG-AGE launch URL`() {
         val aliasJson = json
             .replace(

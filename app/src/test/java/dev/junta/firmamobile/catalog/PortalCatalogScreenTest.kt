@@ -198,7 +198,7 @@ class PortalCatalogScreenTest {
         }
 
         rule.onNodeWithText("Buscar servicio u organismo")
-            .performTextInput("Punto de Acceso General")
+            .performTextInput("SEPE")
         rule.onNodeWithText(
             "Sede pública catalogada; la navegación integrada, el certificado y la firma " +
                 "están bloqueados hasta verificar un perfil técnico.",
