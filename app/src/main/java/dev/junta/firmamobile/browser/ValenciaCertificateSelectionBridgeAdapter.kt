@@ -155,6 +155,7 @@ class ValenciaCertificateSelectionBridgeAdapter(
                     navigationEpoch = navigationEpoch,
                     observedAt = clock.instant(),
                 ),
+                pageUrl = START_URL,
                 safeDescription = SAFE_DESCRIPTION,
                 extraProperties = extraProperties,
             ),

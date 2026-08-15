@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -43,6 +44,7 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
         assertEquals(DOCUMENT_ID, result.request.context.navigationId.value)
         assertEquals(17, result.request.context.navigationEpoch)
         assertEquals(SAFE_DESCRIPTION, result.request.safeDescription)
+        assertEquals(START_URL, result.request.pageUrl)
         assertEquals(EXTRA_PROPERTIES, result.request.extraProperties)
     }
 
@@ -95,6 +97,33 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
         assertEquals("AQIDBAU=", result.getString("certificate"))
         assertFalse(result.has("signature"))
         assertFalse(result.has("serverUrl"))
+    }
+
+    @Test
+    fun replyFailsClosedWhenExactPageChangesWithinSameNavigationEpoch() {
+        var currentPageUrl: String? = START_URL
+        val routed = adapter.route(
+            rawMessage = message(EXTRA_PROPERTIES),
+            sourceOrigin = Uri.parse(ORIGIN),
+            isMainFrame = true,
+            navigationEpoch = 17,
+            currentPageUrl = START_URL,
+        ) as CertificateSelectionBridgeRouteResult.Accepted
+        val messages = mutableListOf<String>()
+        val registry = CertificateSelectionReplyRegistry(
+            activeProfileId = { ProfileId(PROFILE_ID) },
+            currentNavigationEpoch = { 17 },
+            currentOrigin = { TrustedOrigin("https", "sede.isciii.gob.es", 443) },
+            currentPageUrl = { currentPageUrl },
+        )
+        val reply = checkNotNull(registry.create(routed.request, messages::add))
+        val certificateDer = byteArrayOf(1, 2, 3, 4, 5)
+
+        currentPageUrl = "https://sede.isciii.gob.es/other"
+
+        assertFalse(reply.success(certificateDer))
+        assertTrue(certificateDer.all { it == 0.toByte() })
+        assertTrue(messages.isEmpty())
     }
 
     @Test

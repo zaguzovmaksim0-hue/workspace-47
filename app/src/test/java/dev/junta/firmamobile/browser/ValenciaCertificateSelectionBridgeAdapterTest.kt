@@ -43,6 +43,7 @@ class ValenciaCertificateSelectionBridgeAdapterTest {
         assertEquals(DOCUMENT_ID, result.request.context.navigationId.value)
         assertEquals(17, result.request.context.navigationEpoch)
         assertEquals(SAFE_DESCRIPTION, result.request.safeDescription)
+        assertEquals(START_URL, result.request.pageUrl)
         assertEquals(EXTRA_PROPERTIES, result.request.extraProperties)
     }
 

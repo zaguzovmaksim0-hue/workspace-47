@@ -150,6 +150,7 @@ class WebMessageBridge(
         activeProfileId = activeProfileId,
         currentNavigationEpoch = currentNavigationEpoch,
         currentOrigin = currentOrigin,
+        currentPageUrl = currentPageUrl,
         monotonicNanos = monotonicNanos,
     )
 

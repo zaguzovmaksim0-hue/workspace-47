@@ -27,6 +27,7 @@ import org.json.JSONObject
 data class CertificateSelectionBridgeRequest(
     val requestId: UUID,
     val context: SigningContext,
+    val pageUrl: String,
     val safeDescription: String,
     val extraProperties: String,
 )
@@ -178,6 +179,7 @@ class IsciiiCertificateSelectionBridgeAdapter(
                     navigationEpoch = navigationEpoch,
                     observedAt = clock.instant(),
                 ),
+                pageUrl = START_URL,
                 safeDescription = SAFE_DESCRIPTION,
                 extraProperties = extraProperties,
             ),
@@ -364,6 +366,7 @@ internal class CertificateSelectionReplyRegistry(
     private val activeProfileId: () -> ProfileId?,
     private val currentNavigationEpoch: () -> Long,
     private val currentOrigin: () -> TrustedOrigin?,
+    private val currentPageUrl: () -> String?,
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
     private val pending = linkedMapOf<UUID, PendingReply>()
@@ -384,6 +387,7 @@ internal class CertificateSelectionReplyRegistry(
         val binding = PendingBinding(
             profileId = request.context.profileId,
             origin = request.context.origin,
+            pageUrl = request.pageUrl,
             navigationId = request.context.navigationId,
             navigationEpoch = request.context.navigationEpoch,
             observedAtMonotonicNanos = monotonicNanos(),
@@ -435,7 +439,8 @@ internal class CertificateSelectionReplyRegistry(
         ) &&
             activeProfileId()?.value == binding.profileId &&
             currentNavigationEpoch() == binding.navigationEpoch &&
-            currentOrigin() == binding.origin
+            currentOrigin() == binding.origin &&
+            currentPageUrl() == binding.pageUrl
     }.getOrDefault(false)
 
     private data class PendingReply(
@@ -446,6 +451,7 @@ internal class CertificateSelectionReplyRegistry(
     private data class PendingBinding(
         val profileId: String,
         val origin: TrustedOrigin,
+        val pageUrl: String,
         val navigationId: NavigationId,
         val navigationEpoch: Long,
         val observedAtMonotonicNanos: Long,
