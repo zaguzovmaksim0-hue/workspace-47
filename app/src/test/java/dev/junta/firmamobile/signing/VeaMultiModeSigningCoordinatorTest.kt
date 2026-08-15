@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.browser.VeaMultiModeBridgeRequest
+import dev.junta.firmamobile.browser.VeaMultiModeBridgeAdapter
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.TestCertificateFactory
 import dev.junta.firmamobile.certificate.UnlockedIdentity
