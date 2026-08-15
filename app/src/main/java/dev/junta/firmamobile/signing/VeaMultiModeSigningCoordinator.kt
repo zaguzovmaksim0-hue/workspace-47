@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class VeaMultiModeSigningCoordinator(
+internal class VeaMultiModeSigningCoordinator(
     private val certificateSession: CertificateSession,
     private val adapter: VeaMultiModeSigningAdapter,
     private val currentOrigin: () -> TrustedOrigin?,
@@ -137,7 +137,7 @@ class VeaMultiModeSigningCoordinator(
                     operation.clearSensitive()
                     mutableState.value = SigningUiState.Idle
                 }
-                SigningExecutionResult.Success
+                SigningExecutionResult.Delivered(requestId)
             } else {
                 fail(operation, SigningErrorCode.LOCAL_SIGNATURE_FAILED)
             }
@@ -152,20 +152,17 @@ class VeaMultiModeSigningCoordinator(
             ?: active?.takeIf { requestId == null || it.request.requestId == requestId }
             ?: return false
 
-        val targetRequestId = candidate.request.requestId
         candidate.cancelExpiry()
         if (pending === candidate) pending = null
         if (active === candidate) active = null
         candidate.clearSensitive()
 
-        val errorCode = reason.signingErrorCode
-        runCatching { candidate.reply.failure(errorCode) }
-
-        if (reason.showsErrorUi) {
-            mutableState.value = SigningUiState.Failed(targetRequestId, errorCode)
+        if (reason.abandonReply) {
+            runCatching { candidate.reply.abandon() }
         } else {
-            mutableState.value = SigningUiState.Idle
+            runCatching { candidate.reply.failure(reason.code) }
         }
+        mutableState.value = SigningUiState.Idle
         return true
     }
 
@@ -231,14 +228,14 @@ class VeaMultiModeSigningCoordinator(
         val reply: VeaMultiModeReplySink,
         val startedAtNanos: Long,
     ) {
-        private var expiryHandle: AutoCloseable? = null
+        private var expiryHandle: SigningExpiryHandle? = null
 
-        fun attachExpiry(handle: AutoCloseable) {
+        fun attachExpiry(handle: SigningExpiryHandle) {
             expiryHandle = handle
         }
 
         fun cancelExpiry() {
-            expiryHandle?.close()
+            expiryHandle?.cancel()
             expiryHandle = null
         }
 

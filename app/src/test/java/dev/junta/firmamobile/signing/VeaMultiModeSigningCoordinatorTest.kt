@@ -140,7 +140,7 @@ class VeaMultiModeSigningCoordinatorTest {
         assertTrue(reply.events.isEmpty())
 
         val confirmResult = coordinator.confirm(requestId)
-        assertEquals(SigningExecutionResult.Success, confirmResult)
+        assertEquals(SigningExecutionResult.Delivered(requestId), confirmResult)
         assertEquals(1, reply.events.size)
         assertTrue(reply.events[0].startsWith("success:"))
         assertEquals(SigningUiState.Idle, coordinator.state.value)
@@ -217,8 +217,8 @@ class VeaMultiModeSigningCoordinatorTest {
         val cancelled = coordinator.cancel(SigningCancelReason.JAVASCRIPT, requestId)
 
         assertTrue(cancelled)
-        assertEquals(listOf("failure:USER_CANCELLED"), reply.events)
-        assertTrue(coordinator.state.value is SigningUiState.Failed)
+        assertEquals(listOf("abandon"), reply.events)
+        assertEquals(SigningUiState.Idle, coordinator.state.value)
     }
 
     @Test
