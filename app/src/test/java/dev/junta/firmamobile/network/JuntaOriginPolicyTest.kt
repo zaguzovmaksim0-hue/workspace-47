@@ -72,6 +72,7 @@ class JuntaOriginPolicyTest {
             "www1.tea.hacienda.gob.es",
             "sede.tenerife.es",
             "diputacion.toledo.gob.es",
+            "sede.isciii.gob.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
