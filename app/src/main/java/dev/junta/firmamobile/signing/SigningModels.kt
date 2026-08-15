@@ -57,6 +57,7 @@ data class SigningContext(
     val navigationId: NavigationId,
     val navigationEpoch: Long = 0L,
     val observedAt: Instant,
+    val pageUrl: String? = null,
 ) {
     init { require(navigationEpoch >= 0L) }
 }

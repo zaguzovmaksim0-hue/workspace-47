@@ -132,6 +132,28 @@ class MiniAppletReplyRegistryTest {
     }
 
     @Test
+    fun pageUrlChangeMakesAReplyTerminalWithoutDelivery() {
+        val trusted = TrustedOrigin("https", "reg.redsara.es", 443)
+        var pageUrl: String? = PAGE_URL
+        val posted = mutableListOf<String>()
+        val registry = MiniAppletReplyRegistry(
+            currentNavigationEpoch = { 7L },
+            currentOrigin = { trusted },
+            currentPageUrl = { pageUrl },
+        )
+        val requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174000")
+        val channel = checkNotNull(
+            registry.create(requestId, context(trusted, 7L, PAGE_URL), posted::add),
+        )
+
+        pageUrl = "https://reg.redsara.es/registro/other"
+
+        assertTrue(!channel.success(LocalSignature(byteArrayOf(1)), byteArrayOf(2)))
+        assertTrue(posted.isEmpty())
+        assertTrue(registry.abandonAll().isEmpty())
+    }
+
+    @Test
     fun requestIdCannotBeReplayedAfterTerminalDelivery() {
         val origin = TrustedOrigin("https", "reg.redsara.es", 443)
         val registry = MiniAppletReplyRegistry(
@@ -198,6 +220,7 @@ class MiniAppletReplyRegistryTest {
     private fun context(
         origin: TrustedOrigin,
         epoch: Long = 1L,
+        pageUrl: String? = null,
     ) = SigningContext(
         profileId = if (origin.host == "reg.redsara.es") "reg-age-redsara" else "junta-andalucia",
         profileVersion = 1,
@@ -205,7 +228,12 @@ class MiniAppletReplyRegistryTest {
         navigationId = NavigationId("navigation-1"),
         navigationEpoch = epoch,
         observedAt = Instant.parse("2030-01-01T00:00:00Z"),
+        pageUrl = pageUrl,
     )
+
+    private companion object {
+        const val PAGE_URL = "https://reg.redsara.es/registro/action/are/acceso.do"
+    }
 
     private class MutableMonotonicClock(
         private var currentNanos: Long,

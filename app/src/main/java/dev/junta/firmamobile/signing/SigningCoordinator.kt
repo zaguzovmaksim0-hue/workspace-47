@@ -80,6 +80,7 @@ class SigningCoordinator internal constructor(
     private val localSignatureEngine: LocalSignatureEngine,
     private val currentOrigin: () -> TrustedOrigin?,
     private val currentNavigationEpoch: () -> Long = { 0L },
+    private val currentPageUrl: () -> String? = { null },
     private val clock: Clock = Clock.systemUTC(),
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     private val pendingStore: PendingSignRequestStore = PendingSignRequestStore(
@@ -418,13 +419,15 @@ class SigningCoordinator internal constructor(
                 monotonicNanos(),
             )
         ) return SigningErrorCode.REQUEST_EXPIRED
-        return if (currentOriginSafely() == request.context.origin &&
-            currentNavigationEpochSafely() == request.context.navigationEpoch
-        ) {
-            null
-        } else {
-            SigningErrorCode.ORIGIN_NOT_ALLOWED
+        if (currentOriginSafely() != request.context.origin) {
+            return SigningErrorCode.ORIGIN_NOT_ALLOWED
         }
+        if (currentNavigationEpochSafely() != request.context.navigationEpoch ||
+            !pageUrlStillMatches(request.context.pageUrl)
+        ) {
+            return SigningErrorCode.NAVIGATION_CHANGED
+        }
+        return null
     }
 
     private fun reject(
@@ -496,7 +499,17 @@ class SigningCoordinator internal constructor(
 
     private fun originStillMatches(operation: Operation): Boolean =
         currentOriginSafely() == operation.summary.context.origin &&
-            currentNavigationEpochSafely() == operation.summary.context.navigationEpoch
+            currentNavigationEpochSafely() == operation.summary.context.navigationEpoch &&
+            pageUrlStillMatches(operation.summary.context.pageUrl)
+
+    private fun pageUrlStillMatches(boundPageUrl: String?): Boolean =
+        boundPageUrl == null || currentPageUrlSafely() == boundPageUrl
+
+    private fun currentPageUrlSafely(): String? = try {
+        currentPageUrl()
+    } catch (_: Exception) {
+        null
+    }
 
     private fun currentOriginSafely(): TrustedOrigin? = try {
         currentOrigin()

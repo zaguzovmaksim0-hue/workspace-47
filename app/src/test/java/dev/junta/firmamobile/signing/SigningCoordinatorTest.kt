@@ -260,6 +260,35 @@ class SigningCoordinatorTest {
     }
 
     @Test
+    fun changedPageUrlAfterConfirmationFailsBeforeAdapterOrPrivateKeyUse() = runTest {
+        var pageUrl: String? = PAGE_URL
+        val localAdapter = RecordingAdapter()
+        val localEngine = RecordingEngine()
+        val localCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(identity) },
+            adapter = localAdapter,
+            localSignatureEngine = localEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            currentPageUrl = { pageUrl },
+            clock = clock,
+            expiryScheduler = ControlledExpiryScheduler(),
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(request(pageUrl = PAGE_URL), reply)
+
+        pageUrl = "https://www.juntadeandalucia.es/other"
+        val result = localCoordinator.confirm(REQUEST_ID)
+
+        assertEquals(
+            SigningExecutionResult.Failed(SigningErrorCode.ORIGIN_NOT_ALLOWED),
+            result,
+        )
+        assertTrue(localAdapter.events.isEmpty())
+        assertTrue(localEngine.events.isEmpty())
+        assertEquals(listOf("failure:ORIGIN_NOT_ALLOWED"), reply.events)
+    }
+
+    @Test
     fun changedNavigationEpochAfterConfirmationFailsBeforeNetworkOrPrivateKeyUse() = runTest {
         var epoch = 4L
         val localAdapter = RecordingAdapter()
@@ -643,6 +672,7 @@ class SigningCoordinatorTest {
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA,
         navigationEpoch: Long = 0L,
         observedAtMonotonicNanos: Long = System.nanoTime(),
+        pageUrl: String? = null,
     ) = NormalizedSignRequest(
         requestId = REQUEST_ID,
         protocolId = JuntaTriPhaseAdapter.ID,
@@ -653,6 +683,7 @@ class SigningCoordinatorTest {
             navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),
             navigationEpoch = navigationEpoch,
             observedAt = NOW,
+            pageUrl = pageUrl,
         ),
         algorithm = algorithm,
         format = SigningFormat.CADES,
@@ -934,6 +965,7 @@ class SigningCoordinatorTest {
         val REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174000")
         val WRONG_REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174099")
         val PORTAL_ORIGIN = TrustedOrigin("https", "www.juntadeandalucia.es", 443)
+        const val PAGE_URL = "https://www.juntadeandalucia.es/servicios/firma"
         val PAYLOAD = "synthetic-coordinator-payload".encodeToByteArray()
         val PRE_SIGN_INPUT = "synthetic-pre-sign".encodeToByteArray()
         val LOCAL_SIGNATURE = byteArrayOf(1, 2, 3)
