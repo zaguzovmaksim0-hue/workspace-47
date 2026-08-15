@@ -225,13 +225,13 @@ class VeaMultiModeBridgeAdapter(
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
         }
 
-        val parsedParams = parseExtraParams(extraProperties)
-            ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
-
-        val hashAlgorithm = parsedParams.hashAlgorithm
         val normalizedAlg = algorithm.uppercase().replace("-", "")
         val expectedHashAlgorithm = ALGORITHM_HASH_MAP[normalizedAlg]
             ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+
+        val parsedParams = parseExtraParams(extraProperties)
+            ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+        val hashAlgorithm = parsedParams.hashAlgorithm
 
         if (expectedHashAlgorithm != hashAlgorithm) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)

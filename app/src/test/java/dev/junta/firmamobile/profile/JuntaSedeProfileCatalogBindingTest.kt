@@ -121,7 +121,7 @@ class JuntaSedeProfileCatalogBindingTest {
             publicCatalog = publicCatalog,
         )
         val releaseItem = release.portals().single { it.portalId == portalId }
-        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releaseItem.supportStatus)
+        assertEquals(PortalSupportStatus.BROWSE_ONLY, releaseItem.supportStatus)
         assertFalse(releaseItem.isEnabled)
         assertNull(release.resolveLaunch(releaseItem))
     }

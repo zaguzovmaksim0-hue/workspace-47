@@ -174,10 +174,7 @@ class AfirmaJavascriptShimTest {
 
         assertTrue(disabled.contains("const melillaBatchCompatibilityEnabled = false"))
         assertTrue(enabled.contains("const melillaBatchCompatibilityEnabled = true"))
-        assertTrue(enabled.contains(
-            "wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, " +
-                "melillaBatchCompatibilityEnabled",
-        ))
+        assertTrue(enabled.contains("functionalSigningEnabled && melillaBatchCompatibilityEnabled"))
         assertTrue(enabled.contains("if (includeMelillaBatch)"))
     }
 
@@ -410,7 +407,8 @@ class AfirmaJavascriptShimTest {
         assertTrue(disabled.contains("const juntaMultiModeCompatibilityEnabled = false"))
         assertTrue(enabled.contains("const juntaMultiModeCompatibilityEnabled = true"))
         assertTrue(enabled.contains("https://veaja.cloud.juntadeandalucia.es"))
-        assertTrue(enabled.contains("juntaVeaAllowedPaths"))
+        assertTrue(enabled.contains("juntaVeaExactPaths"))
+        assertTrue(enabled.contains("juntaVeaPrefixPaths"))
         assertTrue(enabled.contains("isJuntaVeaPage"))
         assertTrue(enabled.contains("allowedVeaSignAlgorithms"))
         assertTrue(enabled.contains("allowedVeaSignFormats"))

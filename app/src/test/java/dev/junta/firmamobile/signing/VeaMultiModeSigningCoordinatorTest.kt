@@ -34,7 +34,7 @@ class VeaMultiModeSigningCoordinatorTest {
         currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         currentDocumentId = { defaultDocumentId },
         expiryScheduler = expiryScheduler,
-        profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        profileRegistry = BuiltInSiteProfiles.qaRegistry,
     )
 
     @Test
@@ -79,7 +79,7 @@ class VeaMultiModeSigningCoordinatorTest {
     @Test
     fun prepareSetsSha1LegacyWarningWhenSha1Used() {
         val requestId = UUID.randomUUID()
-        val documentId = UUID.randomUUID()
+        val documentId = defaultDocumentId
         val hashBytes = ByteArray(20) { 0x22 }
         val request = VeaMultiModeBridgeRequest(
             requestId = requestId,
@@ -117,8 +117,9 @@ class VeaMultiModeSigningCoordinatorTest {
             currentOrigin = { origin },
             currentNavigationEpoch = { 100L },
             currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+            currentDocumentId = { defaultDocumentId },
             expiryScheduler = expiryScheduler,
-            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
         )
 
         val requestId = UUID.randomUUID()
@@ -155,8 +156,9 @@ class VeaMultiModeSigningCoordinatorTest {
             currentOrigin = { origin },
             currentNavigationEpoch = { 100L },
             currentPageUrl = { dynamicPageUrl },
+            currentDocumentId = { defaultDocumentId },
             expiryScheduler = expiryScheduler,
-            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
         )
 
         val requestId = UUID.randomUUID()
@@ -188,7 +190,7 @@ class VeaMultiModeSigningCoordinatorTest {
             currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
             currentDocumentId = { dynamicDocId },
             expiryScheduler = expiryScheduler,
-            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
         )
 
         val requestId = UUID.randomUUID()
@@ -232,7 +234,7 @@ class VeaMultiModeSigningCoordinatorTest {
             currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
             currentDocumentId = { defaultDocumentId },
             expiryScheduler = expiryScheduler,
-            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
         )
 
         val requestId = UUID.randomUUID()
@@ -261,7 +263,7 @@ class VeaMultiModeSigningCoordinatorTest {
             currentPageUrl = { currentUrl },
             currentDocumentId = { defaultDocumentId },
             expiryScheduler = expiryScheduler,
-            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
         )
 
         val requestId = UUID.randomUUID()
@@ -290,7 +292,7 @@ class VeaMultiModeSigningCoordinatorTest {
             currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
             currentDocumentId = { currentDoc },
             expiryScheduler = expiryScheduler,
-            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
         )
 
         val requestId = UUID.randomUUID()
@@ -322,7 +324,7 @@ class VeaMultiModeSigningCoordinatorTest {
             currentPageUrl = { curUrl },
             currentDocumentId = { curDoc },
             expiryScheduler = expiryScheduler,
-            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            profileRegistry = BuiltInSiteProfiles.qaRegistry,
         )
 
         // 1. Origin becomes null before confirm
@@ -358,7 +360,7 @@ class VeaMultiModeSigningCoordinatorTest {
     private fun validRequest(
         requestId: UUID,
         pageUrl: String = "https://veaja.cloud.juntadeandalucia.es/inicio/",
-        documentId: UUID = UUID.randomUUID(),
+        documentId: UUID = defaultDocumentId,
     ): VeaMultiModeBridgeRequest {
         val hashBytes = ByteArray(32) { 0x33 }
         return VeaMultiModeBridgeRequest(
