@@ -51,6 +51,7 @@ class PortalCatalogRepositoryTest {
         assertEquals(
             setOf(
                 "junta-andalucia",
+                "junta-andalucia-sede",
                 "reg-age-redsara",
                 "unizar-tramitador",
                 "carne-joven-andalucia",
@@ -77,7 +78,7 @@ class PortalCatalogRepositoryTest {
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 25, metadataOnly.size)
+        assertEquals(qaPortals.size - 26, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -117,7 +118,7 @@ class PortalCatalogRepositoryTest {
                     assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                     assertTrue(portal.isEnabled)
                 }
-                ProfileId("junta-andalucia") -> {
+                ProfileId("junta-andalucia"), ProfileId("junta-andalucia-sede") -> {
                     assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                     assertFalse(portal.isEnabled)
                     assertEquals(null, releaseRepository.resolveLaunch(portal))

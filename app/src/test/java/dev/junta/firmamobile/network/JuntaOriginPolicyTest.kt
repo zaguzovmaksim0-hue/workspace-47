@@ -19,6 +19,7 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class JuntaOriginPolicyTest {
     private val junta = ProfileId("junta-andalucia")
+    private val juntaSede = ProfileId("junta-andalucia-sede")
     private val redSara = ProfileId("reg-age-redsara")
     private val unizar = ProfileId("unizar-tramitador")
     private val carneJoven = ProfileId("carne-joven-andalucia")
@@ -50,6 +51,7 @@ class JuntaOriginPolicyTest {
             "pfirma.juntadeandalucia.es",
             "ws024.juntadeandalucia.es",
             "ws050.juntadeandalucia.es",
+            "veaja.cloud.juntadeandalucia.es",
             "reg.redsara.es",
             "tramita.unizar.es",
             "ws104.juntadeandalucia.es",
@@ -97,6 +99,10 @@ class JuntaOriginPolicyTest {
             ),
             JuntaOriginPolicy.browserAllowedHosts(junta),
         )
+        assertEquals(
+            setOf("veaja.cloud.juntadeandalucia.es"),
+            JuntaOriginPolicy.browserAllowedHosts(juntaSede),
+        )
         assertEquals(setOf("reg.redsara.es"), JuntaOriginPolicy.browserAllowedHosts(redSara))
         assertEquals(setOf("tramita.unizar.es"), JuntaOriginPolicy.browserAllowedHosts(unizar))
         assertEquals(setOf("ws104.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(carneJoven))
@@ -111,6 +117,10 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://www.juntadeandalucia.es"),
             JuntaOriginPolicy.webMessageOriginRules(junta),
+        )
+        assertEquals(
+            setOf("https://veaja.cloud.juntadeandalucia.es"),
+            JuntaOriginPolicy.webMessageOriginRules(juntaSede),
         )
         assertEquals(
             setOf("https://reg.redsara.es"),
