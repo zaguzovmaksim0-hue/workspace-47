@@ -47,6 +47,7 @@
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   const murciaOrigin = "https://sede.carm.es";
   const murciaProbeUrl = "https://sede.carm.es/cryptoApplet/ayuda/probarautofirma.html";
+  const murciaExtraProperties = "filters=nonexpired:\nmode=implicit";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -290,8 +291,8 @@
       base64Pattern.test(args[0]) &&
       args[1] === "SHA256withRSA" &&
       args[2] === "CMS/PKCS#7" &&
-      typeof args[3] === "string" &&
-      args[3].length <= maxExtraPropertiesChars &&
+      (args[3] === murciaExtraProperties ||
+        args[3] === murciaExtraProperties.replace(/\n/g, "\r\n")) &&
       typeof successCallback === "function" &&
       typeof errorCallback === "function";
     if (isMurciaOrigin && !isExactMurciaCall) {
