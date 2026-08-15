@@ -31,6 +31,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val sevillaAtse: Boolean,
     val melillaBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
+    val valenciaCertificateSelection: Boolean,
 )
 
 class WebMessageBridge(
@@ -55,11 +56,8 @@ class WebMessageBridge(
         monotonicNanos = monotonicNanos,
         activeProfileId = activeProfileId,
     ),
-    private val certificateSelectionAdapter: IsciiiCertificateSelectionBridgeAdapter =
-        IsciiiCertificateSelectionBridgeAdapter(
-            activeProfileId = activeProfileId,
-            clock = clock,
-        ),
+    isciiiCertificateSelectionAdapter: IsciiiCertificateSelectionBridgeAdapter? = null,
+    valenciaCertificateSelectionAdapter: ValenciaCertificateSelectionBridgeAdapter? = null,
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
@@ -72,6 +70,30 @@ class WebMessageBridge(
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
+
+    private val certificateSelectionAdapter: (
+        rawMessage: String,
+        sourceOrigin: Uri,
+        isMainFrame: Boolean,
+        navigationEpoch: Long,
+        currentPageUrl: String?,
+    ) -> CertificateSelectionBridgeRouteResult = when (profileId.value) {
+        IsciiiCertificateSelectionBridgeAdapter.PROFILE_ID -> {
+            val adapter = isciiiCertificateSelectionAdapter ?: IsciiiCertificateSelectionBridgeAdapter(
+                activeProfileId = activeProfileId,
+                clock = clock,
+            )
+            adapter::route
+        }
+        ValenciaCertificateSelectionBridgeAdapter.PROFILE_ID -> {
+            val adapter = valenciaCertificateSelectionAdapter ?: ValenciaCertificateSelectionBridgeAdapter(
+                activeProfileId = activeProfileId,
+                clock = clock,
+            )
+            adapter::route
+        }
+        else -> { _, _, _, _, _ -> CertificateSelectionBridgeRouteResult.NotApplicable }
+    }
 
     private val batchRuntime: StaBatchBridgeRuntime? = when (profileId.value) {
         MelillaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
@@ -188,6 +210,7 @@ class WebMessageBridge(
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
+                    valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
                 ),
                 originRules,
             )
@@ -241,12 +264,12 @@ class WebMessageBridge(
         }
 
         when (
-            val selectionResult = certificateSelectionAdapter.route(
-                rawMessage = rawMessage,
-                sourceOrigin = sourceOrigin,
-                isMainFrame = isMainFrame,
-                navigationEpoch = currentNavigationEpoch(),
-                currentPageUrl = currentPageUrl(),
+            val selectionResult = certificateSelectionAdapter(
+                rawMessage,
+                sourceOrigin,
+                isMainFrame,
+                currentNavigationEpoch(),
+                currentPageUrl(),
             )
         ) {
             is CertificateSelectionBridgeRouteResult.Accepted -> {
@@ -579,6 +602,7 @@ class WebMessageBridge(
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
+        private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -591,6 +615,7 @@ class WebMessageBridge(
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
             melillaBatch = melillaBatchEnabled,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
+            valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"

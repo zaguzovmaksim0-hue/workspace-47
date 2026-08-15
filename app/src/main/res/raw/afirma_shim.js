@@ -20,6 +20,7 @@
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
+  const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -33,8 +34,10 @@
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
   const melillaBatchOrigin = "https://sede.melilla.es";
-  const iPage="https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
-  const iProps="serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
+  const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
+  const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
+  const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
+  const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -168,11 +171,21 @@
     }
   }
 
-  function interceptISelect(a) {
-    if (!iSel) return false;
-    if (location.href !== iPage || a.length !== 3 || a[0] !== iProps ||
-        typeof a[1] !== "function" || typeof a[2] !== "function") {
-      rejectDirectCall(a[2], "INVALID_REQUEST"); return true;
+  function interceptCertificateSelection(a) {
+    if (!iSel && !vSel) return false;
+    let valid = false;
+    if (iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&
+        typeof a[1] === "function" && typeof a[2] === "function") {
+      valid = true;
+    } else if (vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&
+        typeof a[1] === "function" && typeof a[2] === "function") {
+      valid = true;
+    }
+    if (!valid) {
+      if (a.length >= 3 && typeof a[2] === "function") {
+        rejectDirectCall(a[2], "INVALID_REQUEST");
+      }
+      return true;
     }
     if (!functionalSigningEnabled || !bridge || typeof bridge.postMessage !== "function" ||
         !canonicalUuidPattern.test(probeDocumentId) || pendingCallbacks.size) {
@@ -699,7 +712,7 @@
     function wrappedMiniAppletMethod(...args) {
       const observedRequestId = tryObserveMiniAppletCall(call, args);
       if (observedRequestId === null) {
-        if (call === "SELECT_CERTIFICATE" && interceptISelect(args)) {
+        if (call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) {
           return undefined;
         }
         if (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) {
@@ -714,6 +727,7 @@
       activeProbeRequestId = observedRequestId;
       try {
         if ((call === "SIGN" && interceptMiniAppletSign(args)) ||
+            (call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) ||
             (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) ||
             interceptUgrSetupCall(call, args)) {
           return undefined;
@@ -808,7 +822,7 @@
 
   const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
   if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
-    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled, iSel);
+    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled, iSel || vSel);
     Object.defineProperty(window, "AutoScript", {
       enumerable: true,
       configurable: true,
@@ -820,7 +834,7 @@
           value,
           ugrCompatibilityEnabled,
           melillaBatchCompatibilityEnabled,
-          iSel,
+          iSel || vSel,
         );
       }
     });
@@ -829,7 +843,7 @@
         autoScript,
         ugrCompatibilityEnabled,
         melillaBatchCompatibilityEnabled,
-        iSel,
+        iSel || vSel,
       );
     }, { once: true });
   } else {
@@ -837,7 +851,7 @@
       window.AutoScript,
       ugrCompatibilityEnabled,
       melillaBatchCompatibilityEnabled,
-      iSel,
+      iSel || vSel,
     );
   }
 
