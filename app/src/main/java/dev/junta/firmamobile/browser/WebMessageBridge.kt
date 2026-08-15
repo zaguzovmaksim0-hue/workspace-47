@@ -30,6 +30,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val jccm: Boolean,
     val sevillaAtse: Boolean,
     val melillaBatch: Boolean,
+    val isciiiCertificateSelection: Boolean,
 )
 
 class WebMessageBridge(
@@ -39,6 +40,9 @@ class WebMessageBridge(
     private val onMiniAppletRequest: ((MiniAppletBridgeRequest, MiniAppletReplyChannel) -> Unit)? =
         null,
     private val onMiniAppletCancel: (UUID) -> Unit = {},
+    private val onCertificateSelectionRequest:
+        ((CertificateSelectionBridgeRequest, CertificateSelectionReplyChannel) -> Unit)? = null,
+    private val onCertificateSelectionCancel: (UUID) -> Unit = {},
     private val onMelillaBatchRequest:
         ((MelillaBatchRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     private val onMelillaBatchCancel: (UUID) -> Unit = {},
@@ -51,6 +55,11 @@ class WebMessageBridge(
         monotonicNanos = monotonicNanos,
         activeProfileId = activeProfileId,
     ),
+    private val certificateSelectionAdapter: IsciiiCertificateSelectionBridgeAdapter =
+        IsciiiCertificateSelectionBridgeAdapter(
+            activeProfileId = activeProfileId,
+            clock = clock,
+        ),
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
@@ -115,6 +124,13 @@ class WebMessageBridge(
         monotonicNanos = monotonicNanos,
     )
 
+    private val certificateSelectionReplyRegistry = CertificateSelectionReplyRegistry(
+        activeProfileId = activeProfileId,
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentOrigin = currentOrigin,
+        monotonicNanos = monotonicNanos,
+    )
+
     private val melillaBatchReplyRegistry = MelillaBatchReplyRegistry(
         activeProfileId = activeProfileId,
         currentNavigationEpoch = currentNavigationEpoch,
@@ -171,6 +187,7 @@ class WebMessageBridge(
                     jccmCompatibilityEnabled = shimFlags.jccm,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
+                    isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                 ),
                 originRules,
             )
@@ -221,6 +238,55 @@ class WebMessageBridge(
                 return
             }
             PortalCallbackDiagnosticParseResult.NotApplicable -> Unit
+        }
+
+        when (
+            val selectionResult = certificateSelectionAdapter.route(
+                rawMessage = rawMessage,
+                sourceOrigin = sourceOrigin,
+                isMainFrame = isMainFrame,
+                navigationEpoch = currentNavigationEpoch(),
+                currentPageUrl = currentPageUrl(),
+            )
+        ) {
+            is CertificateSelectionBridgeRouteResult.Accepted -> {
+                val reply = certificateSelectionReplyRegistry.create(
+                    request = selectionResult.request,
+                    postMessage = replyProxy::postMessage,
+                )
+                val handler = onCertificateSelectionRequest
+                if (reply == null || handler == null) {
+                    reply?.failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    return
+                }
+                runCatching { handler(selectionResult.request, reply) }.onFailure {
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    reply.failure(SigningErrorCode.PROTOCOL_FAILED)
+                }
+                return
+            }
+            is CertificateSelectionBridgeRouteResult.Cancelled -> {
+                if (certificateSelectionReplyRegistry.abandon(
+                        selectionResult.requestId,
+                        selectionResult.navigationId,
+                    )
+                ) {
+                    runCatching { onCertificateSelectionCancel(selectionResult.requestId) }
+                }
+                return
+            }
+            is CertificateSelectionBridgeRouteResult.Rejected -> {
+                logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                selectionResult.requestId?.let { requestId ->
+                    CertificateSelectionReplyChannel(
+                        requestId = requestId,
+                        postMessage = replyProxy::postMessage,
+                    ).failure(selectionResult.code)
+                }
+                return
+            }
+            CertificateSelectionBridgeRouteResult.NotApplicable -> Unit
         }
 
         if (staBatchEnabled) {
@@ -444,6 +510,9 @@ class WebMessageBridge(
     }
 
     private fun abandonAllMiniAppletRequests() {
+        certificateSelectionReplyRegistry.abandonAll().forEach { requestId ->
+            runCatching { onCertificateSelectionCancel(requestId) }
+        }
         batchRuntime?.adapter?.invalidateDocument(batchCurrentDocumentId())
         batchRuntime?.adapter?.abandonAll()
         melillaBatchReplyRegistry.abandonAll().forEach { requestId ->
@@ -509,6 +578,7 @@ class WebMessageBridge(
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+        private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -520,6 +590,7 @@ class WebMessageBridge(
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
             melillaBatch = melillaBatchEnabled,
+            isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"

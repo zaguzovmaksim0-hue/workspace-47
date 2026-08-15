@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "e717639405dee5351b5fd4ca9a18bd2455d55e0697694d9033fe68efbefc67f3",
+  "sourceRevision": "1317df3d6b849a9a3f642373b2897ab87d171ab40cd8f4536d07b0d561e64e34",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1301,24 +1301,28 @@
     {
       "portalId": "age-instituto-de-salud-carlos-iii",
       "inventoryId": "ES-PUB-0054",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "isciii-certificate-selection",
+      "displayName": "Sede electrónica / selección de certificado",
       "organization": "Instituto de Salud Carlos III",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.isciii.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Selección local de certificado para continuar el formulario genérico de la sede.",
+      "entryUrl": "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "AUTOSCRIPT_LOCAL",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "ISCIII-SELECTCERT-2026-08-15"
+      ],
+      "reviewedOn": "2026-08-15",
+      "limitations": "Contrato público preautenticación implementado en QA: selección local y devolución de certB64; el serverUrl HTTP observado se valida como literal y no se usa como endpoint de red. Falta E2E físico seguro."
     },
     {
       "portalId": "age-instituto-nacional-de-administracion-publica-inap",

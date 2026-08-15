@@ -48,6 +48,7 @@ class BrowserScreenTest {
 
         assertTrue(profileRequiresWebMessageBridge(profile("junta-andalucia")))
         assertTrue(profileRequiresWebMessageBridge(profile("reg-age-redsara")))
+        assertTrue(profileRequiresWebMessageBridge(profile("isciii-certificate-selection")))
         assertTrue(profileRequiresWebMessageBridge(profile("unizar-tramitador")))
         assertTrue(!profileRequiresWebMessageBridge(profile("carne-joven-andalucia")))
     }

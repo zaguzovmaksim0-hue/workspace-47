@@ -194,6 +194,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
             }
+            if (p.profileId.value == ISCIII_PROFILE_ID) {
+                validateIsciiiProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -253,6 +256,16 @@ object SiteProfileCatalogParser {
                 if (op.operation == ProtocolOperation.SIGN) {
                     require(op.algorithms.isNotEmpty() && op.format != null)
                     require(op.packaging != null && Capability.SIGN in op.capabilities)
+                }
+                if (op.inputAdapterId.value == ISCIII_INPUT_ADAPTER_ID) {
+                    require(p.profileId.value == ISCIII_PROFILE_ID)
+                    require(op.operation == ProtocolOperation.SELECT_CERTIFICATE)
+                    require(op.capabilities == setOf(Capability.SELECT_CERTIFICATE))
+                    require(op.endpointId == null)
+                    require(op.algorithms.isEmpty())
+                    require(op.format == null && op.packaging == null && op.mode == null)
+                    require(op.fixedExtraProperties == ISCIII_FIXED_EXTRA_PROPERTIES)
+                    require(op.allowedExtraProperties.isEmpty())
                 }
                 if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
                     require(op.operation == ProtocolOperation.SIGN)
@@ -345,6 +358,40 @@ object SiteProfileCatalogParser {
             }
         }
     }
+    private fun validateIsciiiProfile(profile: SiteProfile) {
+        require(profile.profileVersion == ISCIII_PROFILE_VERSION)
+        require(profile.displayName == ISCIII_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == ISCIII_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(ISCIII_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SELECT_CERTIFICATE))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SELECT_CERTIFICATE))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SELECT_CERTIFICATE) == OperationPolicy(
+                operation = ProtocolOperation.SELECT_CERTIFICATE,
+                safeDescription = ISCIII_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId(ISCIII_INPUT_ADAPTER_ID),
+                callbackContractId = CallbackContractId(ISCIII_CALLBACK_CONTRACT_ID),
+                capabilities = setOf(Capability.SELECT_CERTIFICATE),
+                endpointId = null,
+                algorithms = emptySet(),
+                format = null,
+                packaging = null,
+                mode = null,
+                fixedExtraProperties = ISCIII_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == ISCIII_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-15") })
+    }
+
     private fun validateSanidadProfile(profile: SiteProfile) {
         require(profile.profileVersion == SANIDAD_PROFILE_VERSION)
         require(profile.displayName == SANIDAD_DISPLAY_NAME)
@@ -724,6 +771,7 @@ object SiteProfileCatalogParser {
         "melilla-batch-autoscript-v1",
         "extremadura-batch-autoscript-v1",
         "la-palma-batch-autoscript-v1",
+        "autoscript-select-certificate-v1",
     )
     private val REGISTERED_CALLBACKS = setOf(
         "miniapplet-sign-callback-v1",
@@ -731,11 +779,32 @@ object SiteProfileCatalogParser {
         "melilla-batch-result-v1",
         "extremadura-batch-result-v1",
         "la-palma-batch-result-v1",
+        "autoscript-select-certificate-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
     private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
+    private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
+    private const val ISCIII_PROFILE_VERSION = 1
+    private const val ISCIII_DISPLAY_NAME = "ISCIII — selección de certificado"
+    private const val ISCIII_START_URL =
+        "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null"
+    private const val ISCIII_ORIGIN = "https://sede.isciii.gob.es"
+    private const val ISCIII_SAFE_DESCRIPTION =
+        "Compartir certificado con la Sede electrónica del ISCIII"
+    private const val ISCIII_INPUT_ADAPTER_ID = "autoscript-select-certificate-v1"
+    private const val ISCIII_CALLBACK_CONTRACT_ID =
+        "autoscript-select-certificate-callback-v1"
+    private val ISCIII_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+        "serverUrl" to
+            "http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService",
+    )
+    private val ISCIII_EVIDENCE_URLS = setOf(
+        ISCIII_START_URL,
+        "https://sede.isciii.gob.es/js/autoscript/autoscript.js",
+        "https://sede.isciii.gob.es/js/autoscript/constantes.js",
+    )
     private const val SANIDAD_PROFILE_ID = "ministerio-sanidad-certificado"
     private const val SANIDAD_PROFILE_VERSION = 1
     private const val SANIDAD_DISPLAY_NAME = "Ministerio de Sanidad — acceso con certificado"

@@ -22,6 +22,7 @@ object AfirmaJavascriptShim {
         jccmCompatibilityEnabled: Boolean = false,
         sevillaAtseCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
+        isciiiCertificateSelectionEnabled: Boolean = false,
     ): String {
         val script = context.resources.openRawResource(R.raw.afirma_shim)
             .bufferedReader(Charsets.UTF_8)
@@ -33,6 +34,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(JCCM_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
         val configured = script
             .replace(
                 MODE_PLACEHOLDER,
@@ -62,6 +64,10 @@ object AfirmaJavascriptShim {
                 MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
                 if (melillaBatchCompatibilityEnabled) "true" else "false",
             )
+            .replace(
+                ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER,
+                if (isciiiCertificateSelectionEnabled) "true" else "false",
+            )
         check(configured.isNotBlank() && configured.length <= MAX_SCRIPT_CHARS)
         return configured
     }
@@ -79,6 +85,8 @@ object AfirmaJavascriptShim {
         "__JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__"
     private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
+    private const val ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER =
+        "__JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__"
 }
 
 enum class MiniAppletBridgeMode {

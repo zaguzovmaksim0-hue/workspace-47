@@ -271,6 +271,38 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun isciiiCompatibilityOwnsOnlyTheExactObservedCertificateSelectionCall() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            isciiiCertificateSelectionEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            isciiiCertificateSelectionEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const iSel = true"))
+        assertTrue(disabled.contains("const iSel = false"))
+        assertTrue(enabled.contains("https://sede.isciii.gob.es"))
+        assertTrue(enabled.contains("/cargaApplet.jsp"))
+        assertTrue(enabled.contains("accion=generico&recurso.opcion=null"))
+        assertTrue(enabled.contains("selectCertificate"))
+        assertTrue(enabled.contains("MINIAPPLET_SELECT_CERTIFICATE"))
+        assertTrue(enabled.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
+        assertTrue(enabled.contains(
+            "serverUrl=http://dtomcat7.isciiides.es:8080/" +
+                "afirma-server-triphase-signer/SignatureService",
+        ))
+        assertTrue(enabled.contains("successCallback(certificateB64)"))
+        assertFalse(enabled.contains("form.submit()"))
+    }
+
+    @Test
     fun nonUgrShimKeepsTheStrictGenericTransportMode() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(

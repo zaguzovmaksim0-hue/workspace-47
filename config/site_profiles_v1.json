@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 19,
+  "catalogVersion": 20,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -645,6 +645,27 @@
       "evidence": [
         {"url":"https://sede.tea.hacienda.gob.es/TEA/alegaciones.html","reviewedOn":"2026-08-14"},
         {"url":"https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0","reviewedOn":"2026-08-14"}
+      ]
+    },
+    {
+      "profileId": "isciii-certificate-selection",
+      "profileVersion": 1,
+      "displayName": "ISCIII — selección de certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null",
+      "initiatorOrigins": ["https://sede.isciii.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SELECT_CERTIFICATE","safeDescription":"Compartir certificado con la Sede electrónica del ISCIII","inputAdapterId":"autoscript-select-certificate-v1","callbackContractId":"autoscript-select-certificate-callback-v1","capabilities":["SELECT_CERTIFICATE"],"endpointId":null,"algorithms":[],"format":null,"packaging":null,"mode":null,"fixedExtraProperties":{"serverUrl":"http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService"},"allowedExtraProperties":[]}],
+      "capabilities": ["SELECT_CERTIFICATE"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null","reviewedOn":"2026-08-15"},
+        {"url":"https://sede.isciii.gob.es/js/autoscript/autoscript.js","reviewedOn":"2026-08-15"},
+        {"url":"https://sede.isciii.gob.es/js/autoscript/constantes.js","reviewedOn":"2026-08-15"}
       ]
     }
   ]
