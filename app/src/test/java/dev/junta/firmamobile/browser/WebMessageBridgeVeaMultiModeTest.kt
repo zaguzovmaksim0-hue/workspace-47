@@ -1,8 +1,10 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import androidx.webkit.JavaScriptExecutionException
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebMessageCompat
+import androidx.webkit.WebViewOutcomeReceiver
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.SanitizedLogger
@@ -193,4 +195,15 @@ class WebMessageBridgeVeaMultiModeTest {
         .put("documentId", docId.toString())
         .put("requestId", requestId.toString())
         .toString()
+    private object NoopReplyProxy : JavaScriptReplyProxy() {
+        override fun postMessage(message: String) = Unit
+
+        override fun postMessage(message: ByteArray) = Unit
+
+        override fun executeJavaScript(
+            script: String,
+            resultCallback: WebViewOutcomeReceiver<String, JavaScriptExecutionException>?,
+        ) = Unit
+    }
+
 }

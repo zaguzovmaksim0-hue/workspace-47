@@ -10,13 +10,10 @@ import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.PrecalculatedHashAlgorithm
-import dev.junta.firmamobile.signing.SignatureAlgorithm
-import dev.junta.firmamobile.signing.SignatureFormat
-import dev.junta.firmamobile.signing.SignatureMode
-import dev.junta.firmamobile.signing.SignaturePackaging
 import dev.junta.firmamobile.signing.SigningProtocolId
 import java.net.URI
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -110,8 +107,9 @@ class JuntaSedeProfileCatalogBindingTest {
             profileCatalog = BuiltInSiteProfiles.catalog,
             publicCatalog = publicCatalog,
         )
-        val qaItem = qa.catalogItems().single { it.portalId == portalId }
-        assertEquals(PortalSupportStatus.SUPPORTED_IN_QA, qaItem.supportStatus)
+        val qaItem = qa.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaItem.supportStatus)
+        assertTrue(qaItem.isEnabled)
         assertEquals(
             PortalLaunchTarget(profileId = profileId, entryUrl = startUrl),
             qa.resolveLaunch(qaItem),
@@ -122,8 +120,9 @@ class JuntaSedeProfileCatalogBindingTest {
             profileCatalog = BuiltInSiteProfiles.catalog,
             publicCatalog = publicCatalog,
         )
-        val releaseItem = release.catalogItems().single { it.portalId == portalId }
-        assertEquals(PortalSupportStatus.UNSUPPORTED_IN_RELEASE, releaseItem.supportStatus)
+        val releaseItem = release.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releaseItem.supportStatus)
+        assertFalse(releaseItem.isEnabled)
         assertNull(release.resolveLaunch(releaseItem))
     }
 

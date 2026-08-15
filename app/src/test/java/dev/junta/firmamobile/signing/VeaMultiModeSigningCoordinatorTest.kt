@@ -380,6 +380,16 @@ class VeaMultiModeSigningCoordinatorTest {
         )
     }
 
+
+    private class RecordingExpiryScheduler : SigningExpiryScheduler {
+        val scheduled = mutableListOf<Duration>()
+
+        override fun schedule(delay: Duration, action: () -> Unit): SigningExpiryHandle {
+            scheduled += delay
+            return SigningExpiryHandle {}
+        }
+    }
+
     private class RecordingVeaReply(override val requestId: UUID) : VeaMultiModeReplySink {
         val events = mutableListOf<String>()
 
