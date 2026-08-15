@@ -146,56 +146,7 @@ class WebMessageBridge(
     fun attach(webView: WebView): WebMessageBridgeAttachment {
         val originRules = (
             JuntaOriginPolicy.webMessageOriginRules(profileId) +
-                when (
-            val selectionResult = certificateSelectionAdapter.route(
-                rawMessage = rawMessage,
-                sourceOrigin = sourceOrigin,
-                isMainFrame = isMainFrame,
-                navigationEpoch = currentNavigationEpoch(),
-                currentPageUrl = currentPageUrl(),
-            )
-        ) {
-            is CertificateSelectionBridgeRouteResult.Accepted -> {
-                val reply = certificateSelectionReplyRegistry.create(
-                    request = selectionResult.request,
-                    postMessage = replyProxy::postMessage,
-                )
-                val handler = onCertificateSelectionRequest
-                if (reply == null || handler == null) {
-                    reply?.failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
-                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
-                    return
-                }
-                runCatching { handler(selectionResult.request, reply) }.onFailure {
-                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
-                    reply.failure(SigningErrorCode.PROTOCOL_FAILED)
-                }
-                return
-            }
-            is CertificateSelectionBridgeRouteResult.Cancelled -> {
-                if (certificateSelectionReplyRegistry.abandon(
-                        selectionResult.requestId,
-                        selectionResult.navigationId,
-                    )
-                ) {
-                    runCatching { onCertificateSelectionCancel(selectionResult.requestId) }
-                }
-                return
-            }
-            is CertificateSelectionBridgeRouteResult.Rejected -> {
-                logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
-                selectionResult.requestId?.let { requestId ->
-                    CertificateSelectionReplyChannel(
-                        requestId = requestId,
-                        postMessage = replyProxy::postMessage,
-                    ).failure(selectionResult.code)
-                }
-                return
-            }
-            CertificateSelectionBridgeRouteResult.NotApplicable -> Unit
-        }
-
-        if (staBatchEnabled) {
+                if (staBatchEnabled) {
                     setOf(checkNotNull(batchRuntime).sourceOrigin)
                 } else {
                     emptySet()
@@ -287,6 +238,55 @@ class WebMessageBridge(
                 return
             }
             PortalCallbackDiagnosticParseResult.NotApplicable -> Unit
+        }
+
+        when (
+            val selectionResult = certificateSelectionAdapter.route(
+                rawMessage = rawMessage,
+                sourceOrigin = sourceOrigin,
+                isMainFrame = isMainFrame,
+                navigationEpoch = currentNavigationEpoch(),
+                currentPageUrl = currentPageUrl(),
+            )
+        ) {
+            is CertificateSelectionBridgeRouteResult.Accepted -> {
+                val reply = certificateSelectionReplyRegistry.create(
+                    request = selectionResult.request,
+                    postMessage = replyProxy::postMessage,
+                )
+                val handler = onCertificateSelectionRequest
+                if (reply == null || handler == null) {
+                    reply?.failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    return
+                }
+                runCatching { handler(selectionResult.request, reply) }.onFailure {
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    reply.failure(SigningErrorCode.PROTOCOL_FAILED)
+                }
+                return
+            }
+            is CertificateSelectionBridgeRouteResult.Cancelled -> {
+                if (certificateSelectionReplyRegistry.abandon(
+                        selectionResult.requestId,
+                        selectionResult.navigationId,
+                    )
+                ) {
+                    runCatching { onCertificateSelectionCancel(selectionResult.requestId) }
+                }
+                return
+            }
+            is CertificateSelectionBridgeRouteResult.Rejected -> {
+                logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                selectionResult.requestId?.let { requestId ->
+                    CertificateSelectionReplyChannel(
+                        requestId = requestId,
+                        postMessage = replyProxy::postMessage,
+                    ).failure(selectionResult.code)
+                }
+                return
+            }
+            CertificateSelectionBridgeRouteResult.NotApplicable -> Unit
         }
 
         if (staBatchEnabled) {
