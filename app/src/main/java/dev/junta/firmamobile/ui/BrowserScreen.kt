@@ -148,6 +148,8 @@ fun BrowserScreen(
     onNavigationEpochChanged: (Long) -> Unit = {},
     onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     onMelillaBatchCancel: (UUID) -> Unit = {},
+    onVeaMultiModeRequest: ((VeaMultiModeBridgeRequest, VeaMultiModeReplyChannel) -> Unit)? = null,
+    onVeaMultiModeCancel: (UUID) -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -751,6 +753,15 @@ fun BrowserScreen(
                                         }
                                     }.takeIf { onMelillaBatchRequest != null },
                                     onMelillaBatchCancel = onMelillaBatchCancel,
+                                    onVeaMultiModeRequest = {
+                                        request: VeaMultiModeBridgeRequest,
+                                        reply: VeaMultiModeReplyChannel,
+                                        ->
+                                        if (onVeaMultiModeRequest != null) {
+                                            onVeaMultiModeRequest(request, reply)
+                                        }
+                                    }.takeIf { onVeaMultiModeRequest != null },
+                                    onVeaMultiModeCancel = onVeaMultiModeCancel,
                                     activeProfileId = { effectiveTopLevelProfileId },
                                     miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                                     currentNavigationEpoch = { navigationEpoch.longValue },

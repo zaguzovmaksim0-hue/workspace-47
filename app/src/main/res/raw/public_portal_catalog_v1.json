@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "5c6bdcfce4ad599708fd60ae0715924fe0f17d99094d20efd21b17f016efa037",
+  "sourceRevision": "acbbc2c6792bd04ab8f790e415692b668605994da7a1238ca97ea2e370717dc0",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2175,26 +2175,32 @@
     {
       "portalId": "junta-andalucia-sede",
       "inventoryId": "ES-PUB-0093",
-      "profileId": null,
+      "profileId": "junta-andalucia-sede",
       "displayName": "Sede electrónica de la Junta de Andalucía",
       "organization": "Junta de Andalucía",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Andalucía",
-      "purpose": "Acceso público a información y servicios de la sede autonómica.",
-      "entryUrl": "https://www.juntadeandalucia.es/servicios/sede",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "purpose": "Firma electrónica en la Ventanilla Electrónica (VEA) de la Junta de Andalucía.",
+      "entryUrl": "https://veaja.cloud.juntadeandalucia.es/inicio/",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A01A",
         "A01B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-15",
+      "limitations": "Contrato multiModeSign prehashed verificado; pendiente validación E2E en producción."
     },
     {
       "portalId": "aragon-tramites-sede",

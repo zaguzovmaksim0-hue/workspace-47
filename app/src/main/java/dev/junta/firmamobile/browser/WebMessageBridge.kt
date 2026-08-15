@@ -32,6 +32,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val melillaBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
+    val juntaMultiMode: Boolean,
 )
 
 class WebMessageBridge(
@@ -47,6 +48,9 @@ class WebMessageBridge(
     private val onMelillaBatchRequest:
         ((MelillaBatchRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     private val onMelillaBatchCancel: (UUID) -> Unit = {},
+    private val onVeaMultiModeRequest:
+        ((VeaMultiModeBridgeRequest, VeaMultiModeReplyChannel) -> Unit)? = null,
+    private val onVeaMultiModeCancel: (UUID) -> Unit = {},
     private val router: WebMessageRouter = WebMessageRouter(profileId),
     private val activeProfileId: () -> ProfileId? = { null },
     clock: Clock = Clock.systemUTC(),
@@ -67,6 +71,7 @@ class WebMessageBridge(
     melillaBatchAdapter: MelillaBatchBridgeAdapter? = null,
     extremaduraBatchAdapter: ExtremaduraBatchBridgeAdapter? = null,
     laPalmaBatchAdapter: LaPalmaBatchBridgeAdapter? = null,
+    veaMultiModeAdapter: VeaMultiModeBridgeAdapter? = null,
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
@@ -140,6 +145,18 @@ class WebMessageBridge(
             miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
             onMelillaBatchRequest != null
 
+    private val veaMultiModeBridgeAdapter = veaMultiModeAdapter ?: VeaMultiModeBridgeAdapter(
+        activeProfileId = activeProfileId,
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentDocumentId = currentDocumentId,
+        currentOrigin = currentOrigin,
+    )
+
+    private val juntaMultiModeEnabled: Boolean
+        get() = profileId.value == VeaMultiModeBridgeAdapter.PROFILE_ID &&
+            miniAppletMode == MiniAppletBridgeMode.FUNCTIONAL &&
+            onVeaMultiModeRequest != null
+
     private val replyRegistry = MiniAppletReplyRegistry(
         currentNavigationEpoch = currentNavigationEpoch,
         currentOrigin = currentOrigin,
@@ -174,6 +191,11 @@ class WebMessageBridge(
                     setOf(checkNotNull(batchRuntime).sourceOrigin)
                 } else {
                     emptySet()
+                } +
+                if (juntaMultiModeEnabled) {
+                    setOf(VeaMultiModeBridgeAdapter.SOURCE_ORIGIN)
+                } else {
+                    emptySet()
                 }
             ).toSet()
         if (originRules.isEmpty()) {
@@ -196,6 +218,7 @@ class WebMessageBridge(
             profileId = profileId,
             profileActive = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
             melillaBatchEnabled = staBatchEnabled,
+            juntaMultiModeEnabled = juntaMultiModeEnabled,
         )
         val scriptHandler = if (
             WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
@@ -213,6 +236,7 @@ class WebMessageBridge(
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
+                    juntaMultiModeCompatibilityEnabled = shimFlags.juntaMultiMode,
                 ),
                 originRules,
             )
@@ -368,6 +392,59 @@ class WebMessageBridge(
                     return
                 }
                 MelillaBatchBridgeRouteResult.NotApplicable -> Unit
+            }
+        }
+
+        if (juntaMultiModeEnabled) {
+            val multiModeConsumer = checkNotNull(onVeaMultiModeRequest)
+            when (
+                val mmResult = veaMultiModeBridgeAdapter.route(
+                    rawMessage = rawMessage,
+                    sourceOrigin = sourceOrigin,
+                    isMainFrame = isMainFrame,
+                    navigationEpoch = currentNavigationEpoch(),
+                )
+            ) {
+                is VeaMultiModeBridgeRouteResult.Accepted -> {
+                    val reply = VeaMultiModeReplyChannel(
+                        requestId = mmResult.request.requestId,
+                        documentId = mmResult.request.documentId,
+                        navigationEpoch = mmResult.request.navigationEpoch,
+                        sourceOrigin = mmResult.request.sourceOrigin,
+                        postMessage = replyProxy::postMessage,
+                        currentNavigationEpoch = currentNavigationEpoch,
+                        currentOrigin = currentOrigin,
+                        currentDocumentId = currentDocumentId,
+                    )
+                    runCatching { multiModeConsumer(mmResult.request, reply) }.onFailure {
+                        logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                        reply.failure(SigningErrorCode.PROTOCOL_FAILED)
+                    }
+                    return
+                }
+                is VeaMultiModeBridgeRouteResult.Cancelled -> {
+                    veaMultiModeBridgeAdapter.abandon(mmResult.requestId)
+                    runCatching { onVeaMultiModeCancel(mmResult.requestId) }
+                    return
+                }
+                is VeaMultiModeBridgeRouteResult.Rejected -> {
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    mmResult.requestId?.let { reqId ->
+                        val reply = VeaMultiModeReplyChannel(
+                            requestId = reqId,
+                            documentId = reqId,
+                            navigationEpoch = currentNavigationEpoch(),
+                            sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
+                            postMessage = replyProxy::postMessage,
+                            currentNavigationEpoch = currentNavigationEpoch,
+                            currentOrigin = currentOrigin,
+                            currentDocumentId = currentDocumentId,
+                        )
+                        reply.failure(mmResult.code)
+                    }
+                    return
+                }
+                VeaMultiModeBridgeRouteResult.NotApplicable -> Unit
             }
         }
 
@@ -605,11 +682,13 @@ class WebMessageBridge(
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
+        private const val JUNTA_SEDE_PROFILE_ID = "junta-andalucia-sede"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
             profileActive: Boolean,
             melillaBatchEnabled: Boolean,
+            juntaMultiModeEnabled: Boolean = false,
         ): AfirmaShimCompatibilityFlags = AfirmaShimCompatibilityFlags(
             ugr = profileActive && profileId.value == UGR_PROFILE_ID,
             cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
@@ -618,6 +697,7 @@ class WebMessageBridge(
             melillaBatch = melillaBatchEnabled,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
+            juntaMultiMode = juntaMultiModeEnabled || (profileActive && profileId.value == JUNTA_SEDE_PROFILE_ID),
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"

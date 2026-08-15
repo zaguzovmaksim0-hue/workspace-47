@@ -391,4 +391,49 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("successCallback(certificateB64)"))
         assertFalse(enabled.contains("validarCertificado"))
     }
+
+    @Test
+    fun juntaVeaMultiModeShimHasTheObservedContractAndIsProfileScoped() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            juntaMultiModeCompatibilityEnabled = true,
+        )
+
+        assertTrue(disabled.contains("const juntaMultiModeCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("const juntaMultiModeCompatibilityEnabled = true"))
+        assertTrue(enabled.contains("https://veaja.cloud.juntadeandalucia.es"))
+        assertTrue(enabled.contains("multiModeSign"))
+        assertTrue(enabled.contains("MINIAPPLET_MULTIMODE_SIGN"))
+        assertTrue(enabled.contains("MINIAPPLET_MULTIMODE_RESULT"))
+        assertTrue(enabled.contains("MINIAPPLET_MULTIMODE_CANCEL"))
+        assertTrue(enabled.contains("pendingMultiModeCallbacks"))
+        assertTrue(enabled.contains("if (includeJuntaMultiMode)"))
+        assertTrue(enabled.contains("call === \"MULTI_MODE_SIGN\""))
+        assertTrue(enabled.length <= AfirmaJavascriptShim.MAX_SCRIPT_CHARS)
+    }
+
+    @Test
+    fun activeJuntaSedeProfileEnablesTheRuntimeMultiModeShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("junta-andalucia-sede"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+            juntaMultiModeEnabled = true,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertFalse(flags.sevillaAtse)
+        assertFalse(flags.melillaBatch)
+        assertTrue(flags.juntaMultiMode)
+    }
 }

@@ -21,6 +21,7 @@
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
   const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
+  const juntaMultiModeCompatibilityEnabled = __JFM_JUNTA_MULTIMODE_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -38,6 +39,7 @@
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  const juntaVeaOrigin = "https://veaja.cloud.juntadeandalucia.es";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -55,6 +57,7 @@
   const wrappedMethods = new WeakSet();
   const pendingCallbacks = new Map();
   const pendingBatchCallbacks = new Map();
+  const pendingMultiModeCallbacks = new Map();
   let activeMelillaBatch = null;
   let activeProbeRequestId = null;
 
@@ -511,6 +514,128 @@
     rejectDirectCall(pending.errorCallback, errorCode);
   }
 
+  function isJuntaVeaOrigin() {
+    return functionalSigningEnabled && juntaMultiModeCompatibilityEnabled &&
+      window.location.origin === juntaVeaOrigin;
+  }
+
+  function clearPendingMultiMode(requestIdValue) {
+    const pending = pendingMultiModeCallbacks.get(requestIdValue);
+    if (!pending) {
+      return null;
+    }
+    pendingMultiModeCallbacks.delete(requestIdValue);
+    clearTimeout(pending.timeoutId);
+    return pending;
+  }
+
+  function interceptJuntaMultiModeSign(args) {
+    if (!isJuntaVeaOrigin()) {
+      return false;
+    }
+    const errorCallback = args[8];
+    const successCallback = args[7];
+    const opArray = args[0];
+    const dataArray = args[1];
+    const origDataArray = args[2];
+    const arrayLen = args[3];
+    const signAlg = args[4];
+    const signFmt = args[5];
+    const signParams = args[6];
+
+    const valid = Array.isArray(opArray) && Array.isArray(dataArray) &&
+      typeof arrayLen === "number" && arrayLen > 0 && arrayLen <= 128 &&
+      opArray.length === arrayLen && dataArray.length === arrayLen &&
+      opArray.every(op => op === "sign") &&
+      dataArray.every(d => typeof d === "string" && d.length > 0 && d.length <= 512) &&
+      typeof signAlg === "string" && signAlg.length > 0 &&
+      typeof signFmt === "string" && signFmt.length > 0 &&
+      typeof signParams === "string" && signParams.length <= maxExtraPropertiesChars &&
+      typeof successCallback === "function" && typeof errorCallback === "function" &&
+      probeDocumentId;
+
+    if (!valid) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+
+    if (!bridge || typeof bridge.postMessage !== "function") {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+
+    if (pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0 ||
+        pendingMultiModeCallbacks.size !== 0) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+
+    const multiModeRequestId = secureRequestId();
+    if (!multiModeRequestId) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+
+    const timeoutId = setTimeout(() => {
+      const expired = clearPendingMultiMode(multiModeRequestId);
+      if (expired) {
+        notifyNativeCancel(multiModeRequestId, "MINIAPPLET_MULTIMODE_CANCEL");
+        rejectDirectCall(expired.errorCallback, "REQUEST_EXPIRED");
+      }
+    }, signTimeoutMillis);
+
+    pendingMultiModeCallbacks.set(multiModeRequestId, {
+      successCallback,
+      errorCallback,
+      timeoutId
+    });
+
+    const message = {
+      type: "MINIAPPLET_MULTIMODE_SIGN",
+      documentId: probeDocumentId,
+      requestId: multiModeRequestId,
+      operationArray: opArray,
+      dataArray: dataArray,
+      originalDataArray: Array.isArray(origDataArray) ? origDataArray : null,
+      arrayLength: arrayLen,
+      algorithm: signAlg,
+      format: signFmt,
+      extraProperties: signParams
+    };
+
+    try {
+      bridge.postMessage(JSON.stringify(message));
+    } catch (_) {
+      clearPendingMultiMode(multiModeRequestId);
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+    }
+    return true;
+  }
+
+  function receiveJuntaMultiModeResult(result) {
+    postQaPortalDiagnostic("RESULT_RECEIVED", result.requestId);
+    const pending = clearPendingMultiMode(result.requestId);
+    if (!pending) {
+      postQaPortalDiagnostic("RESULT_IGNORED", result.requestId);
+      return;
+    }
+    if (result.status === "success" && typeof result.signature === "string" &&
+        typeof result.certificate === "string" &&
+        base64Pattern.test(result.certificate)) {
+      postQaPortalDiagnostic("CALLBACK_STARTED", result.requestId);
+      try {
+        pending.successCallback(result.signature, result.certificate);
+        postQaPortalDiagnostic("CALLBACK_RETURNED", result.requestId);
+      } catch (_) {
+        postQaPortalDiagnostic("CALLBACK_THROWN", result.requestId);
+      }
+      return;
+    }
+    const errorCode = typeof result.errorCode === "string" &&
+      safeTokenPattern.test(result.errorCode) ? result.errorCode : "PROTOCOL_FAILED";
+    rejectDirectCall(pending.errorCallback, errorCode);
+  }
+
   function receiveMiniAppletResult(event) {
     if (!functionalSigningEnabled || !event || typeof event.data !== "string") {
       return;
@@ -523,6 +648,10 @@
     }
     if (!result || typeof result.requestId !== "string" ||
         !canonicalUuidPattern.test(result.requestId)) {
+      return;
+    }
+    if (result.type === "MINIAPPLET_MULTIMODE_RESULT") {
+      receiveJuntaMultiModeResult(result);
       return;
     }
     if (result.type === "MINIAPPLET_BATCH_RESULT") {
@@ -582,8 +711,13 @@
       clearTimeout(pending.timeoutId);
       notifyNativeCancel(pendingRequestId, "MINIAPPLET_BATCH_CANCEL");
     }
+    for (const [pendingRequestId, pending] of pendingMultiModeCallbacks.entries()) {
+      clearTimeout(pending.timeoutId);
+      notifyNativeCancel(pendingRequestId, "MINIAPPLET_MULTIMODE_CANCEL");
+    }
     pendingCallbacks.clear();
     pendingBatchCallbacks.clear();
+    pendingMultiModeCallbacks.clear();
     activeMelillaBatch = null;
   });
 
@@ -712,7 +846,8 @@
     function wrappedMiniAppletMethod(...args) {
       const observedRequestId = tryObserveMiniAppletCall(call, args);
       if (observedRequestId === null) {
-        if (call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) {
+        if ((call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) ||
+            (call === "MULTI_MODE_SIGN" && interceptJuntaMultiModeSign(args))) {
           return undefined;
         }
         if (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) {
@@ -728,6 +863,7 @@
       try {
         if ((call === "SIGN" && interceptMiniAppletSign(args)) ||
             (call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) ||
+            (call === "MULTI_MODE_SIGN" && interceptJuntaMultiModeSign(args)) ||
             (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) ||
             interceptUgrSetupCall(call, args)) {
           return undefined;
@@ -773,7 +909,8 @@
     value,
     includeUgrSetup = false,
     includeMelillaBatch = false,
-    includeIsciiiCertificateSelection = false
+    includeCertificateSelection = false,
+    includeJuntaMultiMode = false
   ) {
     if ((typeof value !== "object" || value === null) && typeof value !== "function") {
       return value;
@@ -781,8 +918,11 @@
     try {
       installMethodHook(value, "cargarMiniApplet", "LOAD");
       installMethodHook(value, "sign", "SIGN");
-      if (includeIsciiiCertificateSelection) {
+      if (includeCertificateSelection) {
         installMethodHook(value, "selectCertificate", "SELECT_CERTIFICATE");
+      }
+      if (includeJuntaMultiMode) {
+        installMethodHook(value, "multiModeSign", "MULTI_MODE_SIGN");
       }
       if (includeMelillaBatch) {
         installMethodHook(value, "createBatch", "BATCH_CREATE");
@@ -802,7 +942,7 @@
 
   const miniAppletDescriptor = Object.getOwnPropertyDescriptor(window, "MiniApplet");
   if (!miniAppletDescriptor || miniAppletDescriptor.configurable === true) {
-    let miniApplet = wrapMiniApplet(window.MiniApplet);
+    let miniApplet = wrapMiniApplet(window.MiniApplet, false, false, false, juntaMultiModeCompatibilityEnabled);
     Object.defineProperty(window, "MiniApplet", {
       enumerable: true,
       configurable: true,
@@ -810,19 +950,25 @@
         return miniApplet;
       },
       set(value) {
-        miniApplet = wrapMiniApplet(value);
+        miniApplet = wrapMiniApplet(value, false, false, false, juntaMultiModeCompatibilityEnabled);
       }
     });
     window.addEventListener("DOMContentLoaded", () => {
-      miniApplet = wrapMiniApplet(miniApplet);
+      miniApplet = wrapMiniApplet(miniApplet, false, false, false, juntaMultiModeCompatibilityEnabled);
     }, { once: true });
   } else {
-    wrapMiniApplet(window.MiniApplet);
+    wrapMiniApplet(window.MiniApplet, false, false, false, juntaMultiModeCompatibilityEnabled);
   }
 
   const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
   if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
-    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled, iSel || vSel);
+    let autoScript = wrapMiniApplet(
+      window.AutoScript,
+      ugrCompatibilityEnabled,
+      melillaBatchCompatibilityEnabled,
+      iSel || vSel,
+      juntaMultiModeCompatibilityEnabled
+    );
     Object.defineProperty(window, "AutoScript", {
       enumerable: true,
       configurable: true,
@@ -835,6 +981,7 @@
           ugrCompatibilityEnabled,
           melillaBatchCompatibilityEnabled,
           iSel || vSel,
+          juntaMultiModeCompatibilityEnabled
         );
       }
     });
@@ -844,6 +991,7 @@
         ugrCompatibilityEnabled,
         melillaBatchCompatibilityEnabled,
         iSel || vSel,
+        juntaMultiModeCompatibilityEnabled
       );
     }, { once: true });
   } else {
@@ -852,6 +1000,7 @@
       ugrCompatibilityEnabled,
       melillaBatchCompatibilityEnabled,
       iSel || vSel,
+      juntaMultiModeCompatibilityEnabled
     );
   }
 

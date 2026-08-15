@@ -200,6 +200,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == VALENCIA_PROFILE_ID) {
                 validateValenciaProfile(p)
             }
+            if (p.profileId.value == JUNTA_SEDE_PROFILE_ID) {
+                validateJuntaSedeProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -813,6 +816,7 @@ object SiteProfileCatalogParser {
         "extremadura-batch-autoscript-v1",
         "la-palma-batch-autoscript-v1",
         "autoscript-select-certificate-v1",
+        "vea-multimode-autoscript-v1",
     )
     private val REGISTERED_CALLBACKS = setOf(
         "miniapplet-sign-callback-v1",
@@ -821,6 +825,7 @@ object SiteProfileCatalogParser {
         "extremadura-batch-result-v1",
         "la-palma-batch-result-v1",
         "autoscript-select-certificate-callback-v1",
+        "vea-multimode-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
     private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
@@ -969,6 +974,57 @@ object SiteProfileCatalogParser {
     private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
     private const val UGR_ORIGIN = "https://sede.ugr.es"
     private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
+    private const val JUNTA_SEDE_PROFILE_ID = "junta-andalucia-sede"
+    private const val JUNTA_SEDE_PROFILE_VERSION = 1
+    private const val JUNTA_SEDE_DISPLAY_NAME = "Sede electrónica de la Junta de Andalucía"
+    private const val JUNTA_SEDE_START_URL = "https://veaja.cloud.juntadeandalucia.es/inicio/"
+    private const val JUNTA_SEDE_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
+    private const val JUNTA_SEDE_SAFE_DESCRIPTION =
+        "Firma de solicitud en la Ventanilla Electrónica de la Junta de Andalucía"
+    private val JUNTA_SEDE_EVIDENCE_URLS = setOf(
+        "https://veaja.cloud.juntadeandalucia.es/scripts.js",
+        "https://veaja.cloud.juntadeandalucia.es/main.js",
+        "https://veaja.cloud.juntadeandalucia.es/assets/env.js",
+    )
+
+    private fun validateJuntaSedeProfile(profile: SiteProfile) {
+        require(profile.profileVersion == JUNTA_SEDE_PROFILE_VERSION)
+        require(profile.displayName == JUNTA_SEDE_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.EXPERIMENTAL)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == JUNTA_SEDE_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(JUNTA_SEDE_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = JUNTA_SEDE_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("vea-multimode-autoscript-v1"),
+                callbackContractId = CallbackContractId("vea-multimode-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(
+                    SignatureAlgorithm.SHA1_WITH_RSA,
+                    SignatureAlgorithm.SHA256_WITH_RSA,
+                    SignatureAlgorithm.SHA512_WITH_RSA,
+                ),
+                format = null,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == JUNTA_SEDE_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-15") })
+    }
 }
 
 private sealed interface JValue {

@@ -31,6 +31,8 @@ import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
 import dev.junta.firmamobile.browser.MelillaBatchSigningAdapter
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
+import dev.junta.firmamobile.browser.VeaMultiModeBridgeRequest
+import dev.junta.firmamobile.browser.VeaMultiModeReplyChannel
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.catalog.PortalId
@@ -61,6 +63,7 @@ import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
+import dev.junta.firmamobile.signing.VeaMultiModeSigningAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -91,6 +94,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
     private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter
     private lateinit var laPalmaBatchSigningAdapter: LaPalmaBatchSigningAdapter
+    private lateinit var veaMultiModeSigningAdapter: VeaMultiModeSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogSmokeHook: CatalogSmokeHook
@@ -182,6 +186,7 @@ class MainActivity : ComponentActivity() {
         laPalmaBatchSigningAdapter = LaPalmaBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
+        veaMultiModeSigningAdapter = VeaMultiModeSigningAdapter()
         val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         val laPalmaBatchProtocolAdapter = LaPalmaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
@@ -323,7 +328,9 @@ class MainActivity : ComponentActivity() {
                         },
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onWebViewChanged = { currentWebView = it },
-                            onNavigationEpochChanged = { currentNavigationEpoch = it },
+                        onNavigationEpochChanged = { currentNavigationEpoch = it },
+                        onVeaMultiModeRequest = ::prepareVeaMultiModeSigning,
+                        onVeaMultiModeCancel = signingCoordinator::cancel,
                         )
                     }
                 } else if (destination == AppDestination.Catalog && unlocked != null) {
@@ -448,6 +455,32 @@ class MainActivity : ComponentActivity() {
         val result = batchSigningCoordinator.prepare(normalized, replySink)
         if (result is SigningPreparationResult.Rejected && batchSigningCoordinator.state.value is SigningUiState.Idle) {
             signingFlowOwnership.release(SigningFlowKind.BATCH, requestId)
+        }
+    }
+
+    private fun prepareVeaMultiModeSigning(
+        request: VeaMultiModeBridgeRequest,
+        reply: VeaMultiModeReplyChannel,
+    ) {
+        val replySink = veaMultiModeSigningAdapter.replySink(reply)
+        val app = application as JuntaFirmaApplication
+        val identity = app.certificateSession.identityForSigning()
+        if (identity == null) {
+            replySink.failure(SigningErrorCode.CERTIFICATE_LOCKED)
+            return
+        }
+        val requestId = request.requestId
+        if (!signingFlowOwnership.acquire(SigningFlowKind.ORDINARY, requestId)) {
+            runCatching { replySink.failure(SigningErrorCode.PROTOCOL_FAILED) }
+            return
+        }
+        try {
+            val executed = veaMultiModeSigningAdapter.execute(request, identity, replySink)
+            if (!executed) {
+                replySink.failure(SigningErrorCode.LOCAL_SIGNATURE_FAILED)
+            }
+        } finally {
+            signingFlowOwnership.release(SigningFlowKind.ORDINARY, requestId)
         }
     }
 

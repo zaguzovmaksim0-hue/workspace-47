@@ -143,6 +143,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("autoscript-select-certificate-callback-v1"),
                 signingProtocolId = SigningProtocolId("valencia-select-certificate-v1"),
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId("junta-andalucia-sede"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("vea-multimode-autoscript-v1"),
+                callbackContractId = CallbackContractId("vea-multimode-callback-v1"),
+                signingProtocolId = SigningProtocolId("vea-multimode-autoscript-v1"),
+            ),
         ),
     )
 }

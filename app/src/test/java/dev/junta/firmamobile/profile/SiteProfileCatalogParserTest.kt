@@ -154,6 +154,67 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesTheExactJuntaSedeQaOnlyContract() {
+        val profileId = ProfileId("junta-andalucia-sede")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Sede electrónica de la Junta de Andalucía", profile.displayName)
+        assertEquals(CompatibilityStatus.EXPERIMENTAL, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(URI("https://veaja.cloud.juntadeandalucia.es/inicio/"), profile.startUrl)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://veaja.cloud.juntadeandalucia.es")),
+            profile.initiatorOrigins,
+        )
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), profile.capabilities)
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(
+            ProtocolInputAdapterId("vea-multimode-autoscript-v1"),
+            operation.inputAdapterId,
+        )
+        assertEquals(
+            CallbackContractId("vea-multimode-callback-v1"),
+            operation.callbackContractId,
+        )
+        assertEquals(
+            "Firma de solicitud en la Ventanilla Electrónica de la Junta de Andalucía",
+            operation.safeDescription,
+        )
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), operation.capabilities)
+        assertNull(operation.endpointId)
+        assertEquals(
+            setOf(
+                SignatureAlgorithm.SHA1_WITH_RSA,
+                SignatureAlgorithm.SHA256_WITH_RSA,
+                SignatureAlgorithm.SHA512_WITH_RSA,
+            ),
+            operation.algorithms,
+        )
+        assertNull(operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertEquals(SignatureMode.EXPLICIT, operation.mode)
+        assertTrue(operation.fixedExtraProperties.isEmpty())
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+    }
+
+    @Test
     fun preservesTheExactUgrQaOnlyCertificateContract() {
         val profileId = ProfileId("ugr-certificado-login")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
@@ -661,6 +722,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
+            ProfileId("junta-andalucia-sede"),
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
