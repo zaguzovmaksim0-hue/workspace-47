@@ -532,6 +532,27 @@ class VeaMultiModeBridgeAdapterTest {
     }
 
     @Test
+    fun rejectsWhenCurrentNavigationEpochIsNull() {
+        val message = validMessageJson(
+            hashes = listOf("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        )
+        val nullEpochAdapter = VeaMultiModeBridgeAdapter(
+            activeProfileId = { expectedProfileId },
+            currentNavigationEpoch = { null },
+            currentDocumentId = { documentId },
+            currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+        )
+
+        val result = nullEpochAdapter.route(message, originUri, true, 100L)
+
+        assertEquals(
+            VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED),
+            result,
+        )
+    }
+
+    @Test
     fun rejectsWhenCurrentOriginIsNullOrFailClosed() {
         val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         val message = validMessageJson(hashes = listOf(hashHex))
@@ -597,6 +618,33 @@ class VeaMultiModeBridgeAdapterTest {
         )
         val mismatchResult = mismatchedDocAdapter.route(message, originUri, true, 100L)
         assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED), mismatchResult)
+    }
+
+    @Test
+    fun rejectsNonExactPrecalculatedHashAlgorithmSpellings() {
+        val aliases = listOf("SHA256", "sha-256", "sha256")
+        for (alias in aliases) {
+            val freshAdapter = VeaMultiModeBridgeAdapter(
+                activeProfileId = { expectedProfileId },
+                currentNavigationEpoch = { 100L },
+                currentDocumentId = { documentId },
+                currentOrigin = { expectedOrigin },
+                currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+            )
+            val message = validMessageJson(
+                hashes = listOf("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+                algorithm = "SHA256withRSA",
+                params = "mode=explicit\nprecalculatedHashAlgorithm=$alias\nfilters=nonexpired:;signingCert;",
+            )
+
+            val result = freshAdapter.route(message, originUri, true, 100L)
+
+            assertEquals(
+                "Alias $alias must be rejected at the native boundary",
+                VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST),
+                result,
+            )
+        }
     }
 
     @Test
