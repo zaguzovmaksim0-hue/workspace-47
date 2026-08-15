@@ -118,6 +118,92 @@ class AfirmaShimIntegrityTest(unittest.TestCase):
     def test_no_split_declarations_around_batch_result(self) -> None:
         self.assertNotIn("const errorCode = typeof result.errorCode === \"string\" &&\n  function", self.content)
 
+    def test_vea_document_ready_binding_is_defined_and_invoked(self) -> None:
+        self.assertIn("function notifyVeaDocumentReady()", self.content)
+        self.assertIn("notifyVeaDocumentReady();", self.content)
+        self.assertIn('"VEA_DOCUMENT_READY"', self.content)
+
+    def test_vea_extra_properties_parser_regressions(self) -> None:
+        self.assertIn("parseVeaExtraProperties", self.content)
+        node_script = f"""
+        {self.content}
+
+        // Test parser directly in Node environment with shim loaded
+        """
+        # We also extract and test the parseVeaExtraProperties directly with node
+        extractor_script = """
+        const fs = require('fs');
+        const content = fs.readFileSync('""" + str(SHIM_PATH) + """', 'utf8');
+
+        // Extract maxExtraPropertiesChars and parseVeaExtraProperties function + dependencies
+        const vm = require('vm');
+        const sandbox = {
+          maxExtraPropertiesChars: 65536,
+          console: console,
+          process: process
+        };
+        const ctx = vm.createContext(sandbox);
+
+        // Find parseVeaExtraProperties function block in content
+        const match = content.match(/(const veaRequiredProperties[\\s\\S]*?function parseVeaExtraProperties[\\s\\S]*?\\n  \\})/);
+        if (!match) {
+          console.error("Could not find parseVeaExtraProperties in shim");
+          process.exit(1);
+        }
+        vm.runInContext(match[1], ctx);
+
+        const parse = sandbox.parseVeaExtraProperties;
+
+        const valid256 = "mode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert;";
+        const valid256NoSemi = "mode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert";
+        const valid512Crlf = "mode=explicit\\r\\nprecalculatedHashAlgorithm=SHA-512\\r\\nfilters=nonexpired:;signingCert;\\r\\n";
+        const validSha1 = "mode=explicit\\nprecalculatedHashAlgorithm=SHA-1\\nfilters=nonexpired:;signingCert";
+
+        // Positive tests
+        if (!parse(valid256, "SHA256WITHRSA")) { console.error("valid256 failed"); process.exit(1); }
+        if (!parse(valid256NoSemi, "SHA256WITHRSA")) { console.error("valid256NoSemi failed"); process.exit(1); }
+        if (!parse(valid512Crlf, "SHA512WITHRSA")) { console.error("valid512Crlf failed"); process.exit(1); }
+        if (!parse(validSha1, "SHA1WITHRSA")) { console.error("validSha1 failed"); process.exit(1); }
+
+        // Regressions / Negative tests
+        if (parse("xmode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert;", "SHA256WITHRSA")) {
+          console.error("xmode should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert;\\nunknownKey=value", "SHA256WITHRSA")) {
+          console.error("unknown key should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\nmode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert;", "SHA256WITHRSA")) {
+          console.error("duplicate key should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert;qualified:12345", "SHA256WITHRSA")) {
+          console.error("qualified suffix should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\nprecalculatedHashAlgorithm=SHA-1\\nfilters=nonexpired:;signingCert;", "SHA256WITHRSA")) {
+          console.error("mismatched hash SHA-1 vs SHA256withRSA should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert;", "SHA1WITHRSA")) {
+          console.error("mismatched hash SHA-256 vs SHA1withRSA should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\nprecalculatedHashAlgorithm=SHA-512\\nfilters=nonexpired:;signingCert;", "SHA256WITHRSA")) {
+          console.error("mismatched hash SHA-512 vs SHA256withRSA should fail"); process.exit(1);
+        }
+        if (parse("mode=implicit\\nprecalculatedHashAlgorithm=SHA-256\\nfilters=nonexpired:;signingCert;", "SHA256WITHRSA")) {
+          console.error("mode=implicit should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\rprecalculatedHashAlgorithm=SHA-256\\rfilters=nonexpired:;signingCert;", "SHA256WITHRSA")) {
+          console.error("standalone CR line ending should fail"); process.exit(1);
+        }
+        if (parse("mode=explicit\\nmalformedline\\nfilters=nonexpired:;signingCert;", "SHA256WITHRSA")) {
+          console.error("malformed line without = should fail"); process.exit(1);
+        }
+        """
+        result = subprocess.run(
+            ["node", "-e", extractor_script],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, result.returncode, f"Extra properties parser tests failed:\n{result.stderr}")
+
 
 if __name__ == "__main__":
     unittest.main()

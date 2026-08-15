@@ -550,6 +550,75 @@
     "CADES"
   ]);
 
+  const veaRequiredProperties = new Set([
+    "mode",
+    "precalculatedHashAlgorithm",
+    "filters"
+  ]);
+
+  function parseVeaExtraProperties(signParams, normalizedAlg) {
+    if (typeof signParams !== "string" || signParams.length === 0 ||
+        signParams.length > maxExtraPropertiesChars) {
+      return false;
+    }
+    if (/\r(?!\n)/.test(signParams)) {
+      return false;
+    }
+    const lines = signParams.split(/\r?\n/);
+    const seenKeys = new Set();
+    let mode = null;
+    let precalculatedHash = null;
+    let filters = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const rawLine = lines[i];
+      if (rawLine === "") {
+        if (i === lines.length - 1) {
+          break;
+        }
+        return false;
+      }
+      const eqIdx = rawLine.indexOf("=");
+      if (eqIdx <= 0) {
+        return false;
+      }
+      const key = rawLine.slice(0, eqIdx);
+      const value = rawLine.slice(eqIdx + 1);
+      if (!veaRequiredProperties.has(key) || seenKeys.has(key)) {
+        return false;
+      }
+      seenKeys.add(key);
+
+      if (key === "mode") {
+        if (value !== "explicit") {
+          return false;
+        }
+        mode = value;
+      } else if (key === "filters") {
+        if (value !== "nonexpired:;signingCert" && value !== "nonexpired:;signingCert;") {
+          return false;
+        }
+        filters = value;
+      } else if (key === "precalculatedHashAlgorithm") {
+        if (value !== "SHA-1" && value !== "SHA-256" && value !== "SHA-512") {
+          return false;
+        }
+        if (normalizedAlg === "SHA1WITHRSA" && value !== "SHA-1") {
+          return false;
+        }
+        if (normalizedAlg === "SHA256WITHRSA" && value !== "SHA-256") {
+          return false;
+        }
+        if (normalizedAlg === "SHA512WITHRSA" && value !== "SHA-512") {
+          return false;
+        }
+        precalculatedHash = value;
+      }
+    }
+
+    return mode !== null && precalculatedHash !== null && filters !== null;
+  }
+
   function isJuntaVeaPage() {
     if (!functionalSigningEnabled || !juntaMultiModeCompatibilityEnabled) {
       return false;
@@ -593,6 +662,8 @@
       origDataArray.every(item => item === null || (typeof item === "string" && item.length === 0))
     );
 
+    const validExtraProperties = parseVeaExtraProperties(signParams, normalizedAlg);
+
     const valid = Array.isArray(opArray) && Array.isArray(dataArray) &&
       typeof arrayLen === "number" && arrayLen > 0 && arrayLen <= 128 &&
       opArray.length === arrayLen && dataArray.length === arrayLen &&
@@ -601,11 +672,7 @@
       validOriginalData &&
       allowedVeaSignAlgorithms.has(normalizedAlg) &&
       allowedVeaSignFormats.has(normalizedFmt) &&
-      typeof signParams === "string" && signParams.length <= maxExtraPropertiesChars &&
-      signParams.includes("mode=explicit") &&
-      signParams.includes("precalculatedHashAlgorithm=") &&
-      (signParams.includes("filters=nonexpired:;signingCert") ||
-       signParams.includes("filters=nonexpired:;signingCert;")) &&
+      validExtraProperties &&
       typeof successCallback === "function" && typeof errorCallback === "function" &&
       probeDocumentId;
 
@@ -802,6 +869,27 @@
   }
 
   notifyNativeDocumentReady();
+
+  function notifyVeaDocumentReady() {
+    if (!functionalSigningEnabled || !juntaMultiModeCompatibilityEnabled ||
+        window.location.origin !== juntaVeaOrigin ||
+        !isValidVeaPath(window.location.pathname) ||
+        !bridge || typeof bridge.postMessage !== "function" ||
+        !probeDocumentId) {
+      return;
+    }
+    try {
+      bridge.postMessage(JSON.stringify({
+        type: "VEA_DOCUMENT_READY",
+        documentId: probeDocumentId,
+        pageUrl: window.location.href
+      }));
+    } catch (_) {
+      // Native lifecycle binding remains fail-closed if registration is unavailable.
+    }
+  }
+
+  notifyVeaDocumentReady();
 
   function safeToken(value) {
     return typeof value === "string" && safeTokenPattern.test(value) ? value : null;

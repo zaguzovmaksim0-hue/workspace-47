@@ -119,11 +119,11 @@ class VeaMultiModeBridgeAdapter(
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.ORIGIN_NOT_ALLOWED)
         }
         val currentDocId = currentDocumentId()
-        if (currentDocId != null && currentDocId != documentId || documentId in invalidatedDocumentIds) {
+        if (currentDocId == null || currentDocId != documentId || documentId in invalidatedDocumentIds) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
         val expectedOrigin = currentOrigin()
-        if (expectedOrigin != null && (expectedOrigin.scheme != "https" || expectedOrigin.host != "veaja.cloud.juntadeandalucia.es" || expectedOrigin.port != 443)) {
+        if (expectedOrigin == null || expectedOrigin.scheme != "https" || expectedOrigin.host != "veaja.cloud.juntadeandalucia.es" || expectedOrigin.port != 443) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.ORIGIN_NOT_ALLOWED)
         }
 
@@ -150,11 +150,12 @@ class VeaMultiModeBridgeAdapter(
             ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
 
         val runtimeUrl = currentUrl()
-        if (runtimeUrl != null) {
-            val canonicalRuntimeUrl = canonicalizeVeaUrl(runtimeUrl)
-            if (canonicalRuntimeUrl == null || canonicalRuntimeUrl != canonicalPageUrl) {
-                return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
-            }
+        if (runtimeUrl == null) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
+        }
+        val canonicalRuntimeUrl = canonicalizeVeaUrl(runtimeUrl)
+        if (canonicalRuntimeUrl == null || canonicalRuntimeUrl != canonicalPageUrl) {
+            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
         }
 
         if (activeRequestId != null || replayLedger.contains(requestId)) {
@@ -325,16 +326,25 @@ class VeaMultiModeBridgeAdapter(
     )
 
     private fun parseExtraParams(raw: String): ParsedVeaParams? {
-        val lines = raw.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        if (raw.isEmpty() || raw.length > MAX_EXTRA_PROPERTIES_CHARS) return null
+        if (STANDALONE_CR_PATTERN.containsMatchIn(raw)) return null
+        val lines = raw.split(LINE_SPLIT_PATTERN)
         var mode: String? = null
         var hashAlgo: PrecalculatedHashAlgorithm? = null
         var filters: String? = null
+        val seenKeys = mutableSetOf<String>()
 
-        for (line in lines) {
-            val eqIdx = line.indexOf('=')
-            if (eqIdx == -1) return null
-            val key = line.substring(0, eqIdx).trim()
-            val value = line.substring(eqIdx + 1).trim()
+        for ((index, rawLine) in lines.withIndex()) {
+            if (rawLine.isEmpty()) {
+                if (index == lines.lastIndex) break
+                return null
+            }
+            val eqIdx = rawLine.indexOf('=')
+            if (eqIdx <= 0) return null
+            val key = rawLine.substring(0, eqIdx)
+            val value = rawLine.substring(eqIdx + 1)
+            if (!seenKeys.add(key)) return null
+
             when (key) {
                 "mode" -> {
                     if (value != "explicit") return null
@@ -359,8 +369,7 @@ class VeaMultiModeBridgeAdapter(
     }
 
     private fun isValidVeaFilter(filterStr: String): Boolean {
-        val cleaned = filterStr.trim()
-        return cleaned == "nonexpired:;signingCert" || cleaned == "nonexpired:;signingCert;"
+        return filterStr == "nonexpired:;signingCert" || filterStr == "nonexpired:;signingCert;"
     }
 
     private fun String.uniqueTopLevelKeys(): Set<String>? = try {
@@ -399,8 +408,12 @@ class VeaMultiModeBridgeAdapter(
         const val CANCEL_TYPE = "MINIAPPLET_MULTIMODE_CANCEL"
         const val RESULT_TYPE = "MINIAPPLET_MULTIMODE_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
+        const val MAX_EXTRA_PROPERTIES_CHARS = 65_536
         const val MAX_DOCUMENTS = 128
         const val MAX_INVALIDATED_DOCUMENTS = 64
+
+        private val STANDALONE_CR_PATTERN = Regex("\r(?!\n)")
+        private val LINE_SPLIT_PATTERN = Regex("\r?\n")
 
         private val UUID_PATTERN = Regex(
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
@@ -530,15 +543,13 @@ class VeaMultiModeReplyChannel(
         val curEpoch = currentNavigationEpoch()
         if (curEpoch != navigationEpoch) return false
         val curDoc = currentDocumentId()
-        if (curDoc != null && curDoc != documentId) return false
+        if (curDoc == null || curDoc != documentId) return false
         val curOrig = currentOrigin()
-        if (curOrig != null && curOrig != sourceOrigin) return false
-        val curUrl = currentPageUrl()
-        if (curUrl != null) {
-            val canonicalCur = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(curUrl)
-            val canonicalReq = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(pageUrl)
-            if (canonicalCur == null || canonicalCur != canonicalReq) return false
-        }
+        if (curOrig == null || curOrig != sourceOrigin) return false
+        val curUrl = currentPageUrl() ?: return false
+        val canonicalCur = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(curUrl)
+        val canonicalReq = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(pageUrl)
+        if (canonicalCur == null || canonicalCur != canonicalReq) return false
         return true
     }
 

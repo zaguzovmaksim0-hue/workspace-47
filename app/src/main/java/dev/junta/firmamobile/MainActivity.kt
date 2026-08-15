@@ -101,6 +101,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogSmokeHook: CatalogSmokeHook
     private var currentNavigationEpoch: Long = 0L
+    private var currentVeaDocumentId: UUID? = null
     private val signingJobs = SigningJobRegistry()
 
     private val certificateViewModel: CertificateViewModel by viewModels {
@@ -217,6 +218,7 @@ class MainActivity : ComponentActivity() {
             currentOrigin = { currentSigningOrigin() },
             currentNavigationEpoch = { currentNavigationEpoch },
             currentPageUrl = { currentWebView?.url },
+            currentDocumentId = { currentVeaDocumentId },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
@@ -341,11 +343,15 @@ class MainActivity : ComponentActivity() {
                         },
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onWebViewChanged = { currentWebView = it },
-                        onNavigationEpochChanged = { currentNavigationEpoch = it },
+                        onNavigationEpochChanged = {
+                            currentNavigationEpoch = it
+                            currentVeaDocumentId = null
+                        },
                         onVeaMultiModeRequest = ::prepareVeaMultiModeSigning,
                         onVeaMultiModeCancel = { requestId ->
                             cancelSigning(SigningCancelReason.JAVASCRIPT, requestId)
                         },
+                        onVeaDocumentIdChanged = { currentVeaDocumentId = it },
                         )
                     }
                 } else if (destination == AppDestination.Catalog && unlocked != null) {

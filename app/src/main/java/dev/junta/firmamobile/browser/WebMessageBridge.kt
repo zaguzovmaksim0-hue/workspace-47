@@ -67,6 +67,7 @@ class WebMessageBridge(
     private val currentOrigin: () -> TrustedOrigin? = { null },
     private val currentPageUrl: () -> String? = { null },
     private val currentDocumentId: () -> UUID? = { null },
+    private val onVeaDocumentIdChanged: (UUID?) -> Unit = {},
     private val qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
     melillaBatchAdapter: MelillaBatchBridgeAdapter? = null,
     extremaduraBatchAdapter: ExtremaduraBatchBridgeAdapter? = null,
@@ -75,6 +76,8 @@ class WebMessageBridge(
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
+    private var veaDocumentId: UUID? = null
+    private var veaDocumentEpoch: Long? = null
 
     private val certificateSelectionAdapter: (
         rawMessage: String,
@@ -148,7 +151,7 @@ class WebMessageBridge(
     private val veaMultiModeBridgeAdapter = veaMultiModeAdapter ?: VeaMultiModeBridgeAdapter(
         activeProfileId = activeProfileId,
         currentNavigationEpoch = currentNavigationEpoch,
-        currentDocumentId = currentDocumentId,
+        currentDocumentId = { veaCurrentDocumentId() },
         currentOrigin = currentOrigin,
         currentUrl = currentPageUrl,
     )
@@ -266,6 +269,9 @@ class WebMessageBridge(
             return
         }
         if (receiveBatchDocumentReady(rawMessage, sourceOrigin, isMainFrame)) {
+            return
+        }
+        if (receiveVeaDocumentReady(rawMessage, sourceOrigin, isMainFrame)) {
             return
         }
 
@@ -416,7 +422,7 @@ class WebMessageBridge(
                         postMessage = replyProxy::postMessage,
                         currentNavigationEpoch = currentNavigationEpoch,
                         currentOrigin = currentOrigin,
-                        currentDocumentId = currentDocumentId,
+                        currentDocumentId = { veaCurrentDocumentId() },
                         currentPageUrl = currentPageUrl,
                     )
                     runCatching { multiModeConsumer(mmResult.request, reply) }.onFailure {
@@ -438,11 +444,11 @@ class WebMessageBridge(
                             documentId = reqId,
                             navigationEpoch = currentNavigationEpoch(),
                             sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
-                            pageUrl = "https://veaja.cloud.juntadeandalucia.es/",
+                            pageUrl = currentPageUrl() ?: "https://veaja.cloud.juntadeandalucia.es/",
                             postMessage = replyProxy::postMessage,
                             currentNavigationEpoch = currentNavigationEpoch,
                             currentOrigin = currentOrigin,
-                            currentDocumentId = currentDocumentId,
+                            currentDocumentId = { veaCurrentDocumentId() },
                             currentPageUrl = currentPageUrl,
                         )
                         reply.failure(mmResult.code)
@@ -616,6 +622,72 @@ class WebMessageBridge(
             ?.let { batchDocumentId }
     }
 
+    @Synchronized
+    private fun receiveVeaDocumentReady(
+        rawMessage: String,
+        sourceOrigin: Uri,
+        isMainFrame: Boolean,
+    ): Boolean {
+        val json = runCatching { JSONObject(rawMessage) }.getOrNull()
+            ?: return false
+        if (json.optString(DOCUMENT_READY_FIELD) != VEA_DOCUMENT_READY_TYPE) return false
+
+        val accepted = juntaMultiModeEnabled &&
+            isMainFrame &&
+            isExactVeaSourceOrigin(sourceOrigin)
+        if (!accepted || json.keys().asSequence().toSet() != VEA_DOCUMENT_READY_KEYS) {
+            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+            return true
+        }
+
+        val rawDocumentId = json.opt("documentId") as? String
+        val documentId = rawDocumentId
+            ?.takeIf { DOCUMENT_UUID_PATTERN.matches(it) }
+            ?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+            ?.takeIf { it.toString().equals(rawDocumentId, ignoreCase = true) }
+
+        val pageUrl = json.optString("pageUrl", "").trim()
+        val canonicalPageUrl = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(pageUrl)
+
+        val runtimeUrl = currentPageUrl()
+        val canonicalRuntimeUrl = runtimeUrl?.let { VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(it) }
+
+        val epoch = currentNavigationEpoch()
+        if (documentId == null || canonicalPageUrl == null || canonicalRuntimeUrl == null ||
+            canonicalPageUrl != canonicalRuntimeUrl || epoch < 0L || epoch == Long.MAX_VALUE ||
+            currentDocumentId()?.let { it != documentId } == true
+        ) {
+            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+            return true
+        }
+
+        if (veaDocumentId != null && veaDocumentId != documentId) {
+            veaMultiModeBridgeAdapter.invalidateDocument(veaDocumentId)
+        }
+        veaDocumentId = documentId
+        veaDocumentEpoch = epoch
+        runCatching { onVeaDocumentIdChanged(documentId) }
+        return true
+    }
+
+    @Synchronized
+    private fun veaCurrentDocumentId(): UUID? {
+        val externallyBound = runCatching { currentDocumentId() }.getOrNull()
+        if (externallyBound != null) return externallyBound
+        return veaDocumentEpoch
+            ?.takeIf { it == runCatching { currentNavigationEpoch() }.getOrNull() }
+            ?.let { veaDocumentId }
+    }
+
+    private fun isExactVeaSourceOrigin(uri: Uri): Boolean =
+        uri.scheme == "https" &&
+            uri.host == "veaja.cloud.juntadeandalucia.es" &&
+            uri.port in setOf(-1, 443) &&
+            uri.encodedUserInfo == null &&
+            uri.path.isNullOrEmpty() &&
+            uri.query == null &&
+            uri.fragment == null
+
     private fun abandonAllMiniAppletRequests() {
         certificateSelectionReplyRegistry.abandonAll().forEach { requestId ->
             runCatching { onCertificateSelectionCancel(requestId) }
@@ -627,6 +699,13 @@ class WebMessageBridge(
         }
         batchDocumentId = null
         batchDocumentEpoch = null
+
+        veaMultiModeBridgeAdapter.invalidateDocument(veaCurrentDocumentId())
+        veaMultiModeBridgeAdapter.abandonAll()
+        veaDocumentId = null
+        veaDocumentEpoch = null
+        runCatching { onVeaDocumentIdChanged(null) }
+
         replyRegistry.abandonAll().forEach { requestId ->
             runCatching { onMiniAppletCancel(requestId) }
         }
@@ -708,7 +787,9 @@ class WebMessageBridge(
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
         private const val DOCUMENT_READY_FIELD = "type"
         private const val DOCUMENT_READY_TYPE = "MINIAPPLET_DOCUMENT_READY"
+        private const val VEA_DOCUMENT_READY_TYPE = "VEA_DOCUMENT_READY"
         private val DOCUMENT_READY_KEYS = setOf("type", "documentId")
+        private val VEA_DOCUMENT_READY_KEYS = setOf("type", "documentId", "pageUrl")
         private val DOCUMENT_UUID_PATTERN = Regex(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-" +
                 "[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}",

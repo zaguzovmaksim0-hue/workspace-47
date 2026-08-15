@@ -22,6 +22,7 @@ class VeaMultiModeSigningCoordinatorTest {
     private val identity = syntheticIdentity()
     private val session = CertificateSession(clock).apply { unlock(identity) }
     private val origin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443)
+    private val defaultDocumentId = UUID.randomUUID()
     private val adapter = VeaMultiModeSigningAdapter()
     private val expiryScheduler = RecordingExpiryScheduler()
 
@@ -30,6 +31,8 @@ class VeaMultiModeSigningCoordinatorTest {
         adapter = adapter,
         currentOrigin = { origin },
         currentNavigationEpoch = { 100L },
+        currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+        currentDocumentId = { defaultDocumentId },
         expiryScheduler = expiryScheduler,
         profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
     )
@@ -37,7 +40,7 @@ class VeaMultiModeSigningCoordinatorTest {
     @Test
     fun prepareTransitionsToAwaitingConfirmationWithoutSigning() {
         val requestId = UUID.randomUUID()
-        val documentId = UUID.randomUUID()
+        val documentId = defaultDocumentId
         val hashBytes = ByteArray(32) { 0x11 }
         val request = VeaMultiModeBridgeRequest(
             requestId = requestId,
@@ -216,6 +219,140 @@ class VeaMultiModeSigningCoordinatorTest {
         assertTrue(cancelled)
         assertEquals(listOf("failure:USER_CANCELLED"), reply.events)
         assertTrue(coordinator.state.value is SigningUiState.Failed)
+    }
+
+    @Test
+    fun prepareRejectsWhenCurrentOriginIsNullOrMismatched() {
+        var currentOrig: TrustedOrigin? = null
+        val dynCoordinator = VeaMultiModeSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            currentOrigin = { currentOrig },
+            currentNavigationEpoch = { 100L },
+            currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+            currentDocumentId = { defaultDocumentId },
+            expiryScheduler = expiryScheduler,
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+
+        val requestId = UUID.randomUUID()
+        val request = validRequest(requestId, documentId = defaultDocumentId)
+        val reply = RecordingVeaReply(requestId)
+
+        val nullResult = dynCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.ORIGIN_NOT_ALLOWED), nullResult)
+        assertEquals(listOf("failure:ORIGIN_NOT_ALLOWED"), reply.events)
+
+        reply.events.clear()
+        currentOrig = TrustedOrigin("https", "attacker.com", 443)
+        val mismatchResult = dynCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.ORIGIN_NOT_ALLOWED), mismatchResult)
+        assertEquals(listOf("failure:ORIGIN_NOT_ALLOWED"), reply.events)
+    }
+
+    @Test
+    fun prepareRejectsWhenCurrentPageUrlIsNullOrMismatched() {
+        var currentUrl: String? = null
+        val dynCoordinator = VeaMultiModeSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            currentOrigin = { origin },
+            currentNavigationEpoch = { 100L },
+            currentPageUrl = { currentUrl },
+            currentDocumentId = { defaultDocumentId },
+            expiryScheduler = expiryScheduler,
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+
+        val requestId = UUID.randomUUID()
+        val request = validRequest(requestId, pageUrl = "https://veaja.cloud.juntadeandalucia.es/inicio/", documentId = defaultDocumentId)
+        val reply = RecordingVeaReply(requestId)
+
+        val nullResult = dynCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.NAVIGATION_CHANGED), nullResult)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+
+        reply.events.clear()
+        currentUrl = "https://veaja.cloud.juntadeandalucia.es/borrador/other"
+        val mismatchResult = dynCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.NAVIGATION_CHANGED), mismatchResult)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+    }
+
+    @Test
+    fun prepareRejectsWhenCurrentDocumentIdIsNullOrMismatched() {
+        var currentDoc: UUID? = null
+        val dynCoordinator = VeaMultiModeSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            currentOrigin = { origin },
+            currentNavigationEpoch = { 100L },
+            currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+            currentDocumentId = { currentDoc },
+            expiryScheduler = expiryScheduler,
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+
+        val requestId = UUID.randomUUID()
+        val request = validRequest(requestId, documentId = defaultDocumentId)
+        val reply = RecordingVeaReply(requestId)
+
+        val nullResult = dynCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.NAVIGATION_CHANGED), nullResult)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+
+        reply.events.clear()
+        currentDoc = UUID.randomUUID()
+        val mismatchResult = dynCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.NAVIGATION_CHANGED), mismatchResult)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+    }
+
+    @Test
+    fun confirmFailsWhenOriginOrUrlOrDocumentIdBecomesNull() = runBlocking {
+        var curOrigin: TrustedOrigin? = origin
+        var curUrl: String? = "https://veaja.cloud.juntadeandalucia.es/inicio/"
+        var curDoc: UUID? = defaultDocumentId
+
+        val dynCoordinator = VeaMultiModeSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            currentOrigin = { curOrigin },
+            currentNavigationEpoch = { 100L },
+            currentPageUrl = { curUrl },
+            currentDocumentId = { curDoc },
+            expiryScheduler = expiryScheduler,
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+
+        // 1. Origin becomes null before confirm
+        val req1 = UUID.randomUUID()
+        val reply1 = RecordingVeaReply(req1)
+        dynCoordinator.prepare(validRequest(req1, documentId = defaultDocumentId), reply1)
+        curOrigin = null
+        val confirmOriginNull = dynCoordinator.confirm(req1)
+        assertEquals(SigningExecutionResult.Failed(SigningErrorCode.ORIGIN_NOT_ALLOWED), confirmOriginNull)
+        assertEquals(listOf("failure:ORIGIN_NOT_ALLOWED"), reply1.events)
+
+        // 2. URL becomes null before confirm
+        curOrigin = origin
+        val req2 = UUID.randomUUID()
+        val reply2 = RecordingVeaReply(req2)
+        dynCoordinator.prepare(validRequest(req2, documentId = defaultDocumentId), reply2)
+        curUrl = null
+        val confirmUrlNull = dynCoordinator.confirm(req2)
+        assertEquals(SigningExecutionResult.Failed(SigningErrorCode.NAVIGATION_CHANGED), confirmUrlNull)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply2.events)
+
+        // 3. DocumentId becomes null before confirm
+        curUrl = "https://veaja.cloud.juntadeandalucia.es/inicio/"
+        val req3 = UUID.randomUUID()
+        val reply3 = RecordingVeaReply(req3)
+        dynCoordinator.prepare(validRequest(req3, documentId = defaultDocumentId), reply3)
+        curDoc = null
+        val confirmDocNull = dynCoordinator.confirm(req3)
+        assertEquals(SigningExecutionResult.Failed(SigningErrorCode.NAVIGATION_CHANGED), confirmDocNull)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply3.events)
     }
 
     private fun validRequest(

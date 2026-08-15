@@ -150,6 +150,7 @@ fun BrowserScreen(
     onMelillaBatchCancel: (UUID) -> Unit = {},
     onVeaMultiModeRequest: ((VeaMultiModeBridgeRequest, VeaMultiModeReplyChannel) -> Unit)? = null,
     onVeaMultiModeCancel: (UUID) -> Unit = {},
+    onVeaDocumentIdChanged: (UUID?) -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -776,6 +777,7 @@ fun BrowserScreen(
                                         }
                                     },
                                     currentPageUrl = { webView.url },
+                                    onVeaDocumentIdChanged = onVeaDocumentIdChanged,
                                 ).attach(webView)
                                 bridgeAttachmentLease.bind(webView, attachment)
                                 if (!attachment.listenerAttached ||

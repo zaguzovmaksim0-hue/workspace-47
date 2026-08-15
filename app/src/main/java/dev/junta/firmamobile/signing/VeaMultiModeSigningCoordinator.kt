@@ -184,15 +184,13 @@ class VeaMultiModeSigningCoordinator(
         val currentEpoch = currentNavigationEpoch()
         if (currentEpoch != request.navigationEpoch) return SigningErrorCode.NAVIGATION_CHANGED
         val curOrigin = currentOrigin()
-        if (curOrigin != null && curOrigin != request.sourceOrigin) return SigningErrorCode.ORIGIN_NOT_ALLOWED
+        if (curOrigin == null || curOrigin != request.sourceOrigin) return SigningErrorCode.ORIGIN_NOT_ALLOWED
         val curDocId = currentDocumentId()
-        if (curDocId != null && curDocId != request.documentId) return SigningErrorCode.NAVIGATION_CHANGED
-        val curUrl = currentPageUrl()
-        if (curUrl != null) {
-            val canonicalCur = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(curUrl)
-            val canonicalReq = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(request.pageUrl)
-            if (canonicalCur == null || canonicalCur != canonicalReq) return SigningErrorCode.NAVIGATION_CHANGED
-        }
+        if (curDocId == null || curDocId != request.documentId) return SigningErrorCode.NAVIGATION_CHANGED
+        val curUrl = currentPageUrl() ?: return SigningErrorCode.NAVIGATION_CHANGED
+        val canonicalCur = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(curUrl)
+        val canonicalReq = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(request.pageUrl)
+        if (canonicalCur == null || canonicalCur != canonicalReq) return SigningErrorCode.NAVIGATION_CHANGED
         return null
     }
 
