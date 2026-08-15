@@ -520,7 +520,8 @@
       const p = clearPending(result.requestId);
       if (!p || p.selection !== true) return;
       if (result.status === "success" && typeof result.certificate === "string" && base64Pattern.test(result.certificate)) {
-        try { p.successCallback(result.certificate); } catch (_) {} return;
+        const certificateB64 = result.certificate;
+        try { p.successCallback(certificateB64); } catch (_) {} return;
       }
       rejectDirectCall(p.errorCallback, typeof result.errorCode === "string" && safeTokenPattern.test(result.errorCode) ? result.errorCode : "PROTOCOL_FAILED"); return;
     }
@@ -807,10 +808,7 @@
 
   const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
   if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
-    let autoScript = wrapMiniApplet(
-      window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled,
-      iSel
-    );
+    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled, iSel);
     Object.defineProperty(window, "AutoScript", {
       enumerable: true,
       configurable: true,
