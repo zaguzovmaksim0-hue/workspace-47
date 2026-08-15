@@ -439,19 +439,13 @@ class WebMessageBridge(
                 is VeaMultiModeBridgeRouteResult.Rejected -> {
                     logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
                     mmResult.requestId?.let { reqId ->
-                        val reply = VeaMultiModeReplyChannel(
-                            requestId = reqId,
-                            documentId = reqId,
-                            navigationEpoch = currentNavigationEpoch(),
-                            sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
-                            pageUrl = currentPageUrl() ?: "https://veaja.cloud.juntadeandalucia.es/",
-                            postMessage = replyProxy::postMessage,
-                            currentNavigationEpoch = currentNavigationEpoch,
-                            currentOrigin = currentOrigin,
-                            currentDocumentId = { veaCurrentDocumentId() },
-                            currentPageUrl = currentPageUrl,
-                        )
-                        reply.failure(mmResult.code)
+                        runCatching {
+                            replyProxy.postMessage(
+                                veaMultiModeFailureReplyJson(reqId, mmResult.code),
+                            )
+                        }.onFailure {
+                            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                        }
                     }
                     return
                 }

@@ -37,6 +37,20 @@ class VeaMultiModeBridgeAdapterTest {
     )
 
     @Test
+    fun rejectedRequestFailureReplyCannotCarrySuccessMaterial() {
+        val json = JSONObject(
+            veaMultiModeFailureReplyJson(requestId, SigningErrorCode.INVALID_REQUEST),
+        )
+
+        assertEquals(VeaMultiModeBridgeAdapter.RESULT_TYPE, json.getString("type"))
+        assertEquals(requestId.toString(), json.getString("requestId"))
+        assertEquals("failure", json.getString("status"))
+        assertEquals(SigningErrorCode.INVALID_REQUEST.name, json.getString("errorCode"))
+        assertFalse(json.has("signature"))
+        assertFalse(json.has("certificate"))
+    }
+
+    @Test
     fun routesValidMultiModeSingleDocumentSignRequest() {
         val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         val message = validMessageJson(

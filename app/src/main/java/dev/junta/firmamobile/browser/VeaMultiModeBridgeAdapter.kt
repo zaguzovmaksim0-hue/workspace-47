@@ -494,6 +494,16 @@ class VeaMultiModeBridgeAdapter(
     }
 }
 
+internal fun veaMultiModeFailureReplyJson(
+    requestId: UUID,
+    code: SigningErrorCode,
+): String = JSONObject()
+    .put("type", VeaMultiModeBridgeAdapter.RESULT_TYPE)
+    .put("requestId", requestId.toString())
+    .put("status", "failure")
+    .put("errorCode", code.name)
+    .toString()
+
 class VeaMultiModeReplyChannel(
     val requestId: UUID,
     private val documentId: UUID,
