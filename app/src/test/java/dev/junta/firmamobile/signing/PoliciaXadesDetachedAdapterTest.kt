@@ -23,7 +23,11 @@ import javax.xml.parsers.DocumentBuilderFactory
 import kotlinx.coroutines.test.runTest
 import org.apache.xml.security.Init
 import org.apache.xml.security.c14n.Canonicalizer
+import org.bouncycastle.asn1.DERPrintableString
+import org.bouncycastle.asn1.DERUTF8String
+import org.bouncycastle.asn1.x500.RDN
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.KeyUsage
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
@@ -265,6 +269,167 @@ class PoliciaXadesDetachedAdapterTest {
         assertTrue(result5 is ProtocolPrepareResult.Failure)
         assertEquals(SigningErrorCode.INVALID_REQUEST, (result5 as ProtocolPrepareResult.Failure).code)
         req5.close()
+    }
+
+    @Test
+    fun acceptsExactDnieIssuerAttributesInDifferentRdnOrder() = runTest {
+        val reorderedIssuer = X500Name(
+            arrayOf(
+                RDN(BCStyle.C, DERPrintableString("ES")),
+                RDN(BCStyle.O, DERUTF8String("DIRECCION GENERAL DE LA POLICIA")),
+                RDN(BCStyle.OU, DERUTF8String("DNIE")),
+                RDN(BCStyle.CN, DERUTF8String("AC DNIE 004")),
+            ),
+        )
+        val reorderedIdentity = testIdentity(
+            commonName = "Ciudadano DNIe Reordenado",
+            issuer = reorderedIssuer,
+            keyUsage = KeyUsage.nonRepudiation,
+        )
+
+        assertTrue(PoliciaXadesDetachedAdapter.isDnieCertificate(reorderedIdentity.certificate))
+
+        val req = request()
+        val result = adapter.prepare(req, reorderedIdentity.chain)
+        assertTrue(result is ProtocolPrepareResult.Success)
+        req.close()
+    }
+
+    @Test
+    fun rejectsDnieIssuerWithMissingOu() = runTest {
+        val missingOuIssuer = X500Name(
+            arrayOf(
+                RDN(BCStyle.CN, DERUTF8String("AC DNIE 004")),
+                RDN(BCStyle.O, DERUTF8String("DIRECCION GENERAL DE LA POLICIA")),
+                RDN(BCStyle.C, DERPrintableString("ES")),
+            ),
+        )
+        val identity = testIdentity(
+            commonName = "Ciudadano DNIe Sin OU",
+            issuer = missingOuIssuer,
+            keyUsage = KeyUsage.digitalSignature,
+        )
+
+        assertFalse(PoliciaXadesDetachedAdapter.isDnieCertificate(identity.certificate))
+
+        val req = request()
+        val result = adapter.prepare(req, identity.chain)
+        assertTrue(result is ProtocolPrepareResult.Failure)
+        assertEquals(SigningErrorCode.INVALID_REQUEST, (result as ProtocolPrepareResult.Failure).code)
+        req.close()
+    }
+
+    @Test
+    fun rejectsDnieIssuerWithWrongOrgSubstring() = runTest {
+        val wrongOrgIssuer = X500Name(
+            arrayOf(
+                RDN(BCStyle.CN, DERUTF8String("AC DNIE 004")),
+                RDN(BCStyle.OU, DERUTF8String("DNIE")),
+                RDN(BCStyle.O, DERUTF8String("DIRECCION GENERAL DE LA POLICIA NACIONAL")),
+                RDN(BCStyle.C, DERPrintableString("ES")),
+            ),
+        )
+        val identity = testIdentity(
+            commonName = "Ciudadano Org Erronea",
+            issuer = wrongOrgIssuer,
+            keyUsage = KeyUsage.digitalSignature,
+        )
+
+        assertFalse(PoliciaXadesDetachedAdapter.isDnieCertificate(identity.certificate))
+
+        val req = request()
+        val result = adapter.prepare(req, identity.chain)
+        assertTrue(result is ProtocolPrepareResult.Failure)
+        assertEquals(SigningErrorCode.INVALID_REQUEST, (result as ProtocolPrepareResult.Failure).code)
+        req.close()
+    }
+
+    @Test
+    fun rejectsDnieIssuerWithDuplicateCnOrOu() = runTest {
+        val duplicateCnIssuer = X500Name(
+            arrayOf(
+                RDN(BCStyle.CN, DERUTF8String("AC DNIE 004")),
+                RDN(BCStyle.CN, DERUTF8String("AC DNIE 005")),
+                RDN(BCStyle.OU, DERUTF8String("DNIE")),
+                RDN(BCStyle.O, DERUTF8String("DIRECCION GENERAL DE LA POLICIA")),
+                RDN(BCStyle.C, DERPrintableString("ES")),
+            ),
+        )
+        val duplicateCnIdentity = testIdentity(
+            commonName = "Ciudadano CN Duplicado",
+            issuer = duplicateCnIssuer,
+            keyUsage = KeyUsage.digitalSignature,
+        )
+
+        assertFalse(PoliciaXadesDetachedAdapter.isDnieCertificate(duplicateCnIdentity.certificate))
+
+        val req1 = request()
+        val result1 = adapter.prepare(req1, duplicateCnIdentity.chain)
+        assertTrue(result1 is ProtocolPrepareResult.Failure)
+        assertEquals(SigningErrorCode.INVALID_REQUEST, (result1 as ProtocolPrepareResult.Failure).code)
+        req1.close()
+
+        val duplicateOuIssuer = X500Name(
+            arrayOf(
+                RDN(BCStyle.CN, DERUTF8String("AC DNIE 004")),
+                RDN(BCStyle.OU, DERUTF8String("DNIE")),
+                RDN(BCStyle.OU, DERUTF8String("OTRA UNIDAD")),
+                RDN(BCStyle.O, DERUTF8String("DIRECCION GENERAL DE LA POLICIA")),
+                RDN(BCStyle.C, DERPrintableString("ES")),
+            ),
+        )
+        val duplicateOuIdentity = testIdentity(
+            commonName = "Ciudadano OU Duplicado",
+            issuer = duplicateOuIssuer,
+            keyUsage = KeyUsage.digitalSignature,
+        )
+
+        assertFalse(PoliciaXadesDetachedAdapter.isDnieCertificate(duplicateOuIdentity.certificate))
+
+        val req2 = request()
+        val result2 = adapter.prepare(req2, duplicateOuIdentity.chain)
+        assertTrue(result2 is ProtocolPrepareResult.Failure)
+        assertEquals(SigningErrorCode.INVALID_REQUEST, (result2 as ProtocolPrepareResult.Failure).code)
+        req2.close()
+    }
+
+    @Test
+    fun rejectsSubjectOnlyDnieLookalike() = runTest {
+        val subjectDnieIssuerOther = testIdentity(
+            commonName = "AC DNIE 004",
+            subjectOu = "DNIE",
+            subjectOrg = "DIRECCION GENERAL DE LA POLICIA",
+            issuer = X500Name("CN=Autoridad Emisora Distinta,O=Otra Entidad,C=ES"),
+            keyUsage = KeyUsage.digitalSignature,
+        )
+
+        assertFalse(PoliciaXadesDetachedAdapter.isDnieCertificate(subjectDnieIssuerOther.certificate))
+
+        val req = request()
+        val result = adapter.prepare(req, subjectDnieIssuerOther.chain)
+        assertTrue(result is ProtocolPrepareResult.Failure)
+        assertEquals(SigningErrorCode.INVALID_REQUEST, (result as ProtocolPrepareResult.Failure).code)
+        req.close()
+    }
+
+    @Test
+    fun rejectsDnieIssuerWithoutNonRepudiationKeyUsage() = runTest {
+        val dnieNoNonRepudiationIdentity = testIdentity(
+            commonName = "Ciudadano DNIe Sin No Repudio",
+            issuerCn = "AC DNIE 004",
+            issuerOu = "DNIE",
+            issuerOrg = "DIRECCION GENERAL DE LA POLICIA",
+            keyUsage = KeyUsage.digitalSignature,
+        )
+
+        assertFalse(PoliciaXadesDetachedAdapter.isDnieCertificate(dnieNoNonRepudiationIdentity.certificate))
+        assertFalse(PoliciaXadesDetachedAdapter.hasNonRepudiationKeyUsage(dnieNoNonRepudiationIdentity.certificate))
+
+        val req = request()
+        val result = adapter.prepare(req, dnieNoNonRepudiationIdentity.chain)
+        assertTrue(result is ProtocolPrepareResult.Failure)
+        assertEquals(SigningErrorCode.INVALID_REQUEST, (result as ProtocolPrepareResult.Failure).code)
+        req.close()
     }
 
     @Test
@@ -513,6 +678,9 @@ class PoliciaXadesDetachedAdapterTest {
         issuerCn: String = commonName,
         issuerOu: String? = null,
         issuerOrg: String = "Junta Firma Mobile Tests",
+        subjectOu: String? = null,
+        subjectOrg: String = issuerOrg,
+        issuer: X500Name? = null,
         notBefore: Instant = Instant.parse("2029-01-01T00:00:00Z"),
         notAfter: Instant = Instant.parse("2031-01-01T00:00:00Z"),
         keyUsage: Int = KeyUsage.digitalSignature or KeyUsage.nonRepudiation,
@@ -520,8 +688,15 @@ class PoliciaXadesDetachedAdapterTest {
         val generator = KeyPairGenerator.getInstance("RSA")
         generator.initialize(2048)
         val keyPair = generator.generateKeyPair()
-        val subject = X500Name("CN=$commonName,O=$issuerOrg,C=ES")
-        val issuer = X500Name(
+        val subject = X500Name(
+            listOfNotNull(
+                "CN=$commonName",
+                subjectOu?.let { "OU=$it" },
+                "O=$subjectOrg",
+                "C=ES",
+            ).joinToString(","),
+        )
+        val effectiveIssuer = issuer ?: X500Name(
             listOfNotNull(
                 "CN=$issuerCn",
                 issuerOu?.let { "OU=$it" },
@@ -530,7 +705,7 @@ class PoliciaXadesDetachedAdapterTest {
             ).joinToString(","),
         )
         val builder = JcaX509v3CertificateBuilder(
-            issuer,
+            effectiveIssuer,
             BigInteger.valueOf(System.nanoTime()),
             Date.from(notBefore),
             Date.from(notAfter),

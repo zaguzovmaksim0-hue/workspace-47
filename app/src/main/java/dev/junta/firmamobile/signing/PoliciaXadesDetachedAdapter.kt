@@ -22,6 +22,9 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import org.apache.xml.security.Init
 import org.apache.xml.security.c14n.Canonicalizer
+import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x500.style.BCStyle
+import org.bouncycastle.asn1.x500.style.IETFUtils
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
@@ -142,19 +145,59 @@ class PoliciaXadesDetachedAdapter internal constructor(
             "filters.1" to "dnie:;nonexpired:",
             "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
         )
-        private val DNIE_ISSUER_CANONICAL = Regex(
-            "^cn=ac dnie [^,+]+,ou=dnie,o=direccion general de la policia,c=es$",
-        )
+        private val DNIE_CN_REGEX = Regex("^AC DNIE\\s+[A-Za-z0-9_.-]+$", RegexOption.IGNORE_CASE)
+        private val WHITESPACE_REGEX = Regex("\\s+")
 
         fun isDnieCertificate(cert: X509Certificate): Boolean {
-            val issuer = runCatching {
-                cert.issuerX500Principal.getName(javax.security.auth.x500.X500Principal.CANONICAL)
+            if (!hasNonRepudiationKeyUsage(cert)) {
+                return false
+            }
+
+            val x500Name = runCatching {
+                X500Name.getInstance(cert.issuerX500Principal.encoded)
             }.getOrNull() ?: return false
-            // AutoFirma SignatureDNIeFilter requires issuer attributes
-            // CN=AC DNIE *, OU=DNIE, O=DIRECCION GENERAL DE LA POLICIA, C=ES
-            // plus the signing/nonRepudiation KeyUsage. This canonical-DN check is
-            // intentionally narrower (fixed RDN order) rather than broader.
-            return DNIE_ISSUER_CANONICAL.matches(issuer) && hasNonRepudiationKeyUsage(cert)
+
+            val rdns = x500Name.rdNs ?: return false
+            val cnValues = mutableListOf<String>()
+            val ouValues = mutableListOf<String>()
+            val oValues = mutableListOf<String>()
+            val cValues = mutableListOf<String>()
+
+            for (rdn in rdns) {
+                for (tav in rdn.typesAndValues) {
+                    val valueStr = IETFUtils.valueToString(tav.value)
+                    when (tav.type) {
+                        BCStyle.CN -> cnValues.add(valueStr)
+                        BCStyle.OU -> ouValues.add(valueStr)
+                        BCStyle.O -> oValues.add(valueStr)
+                        BCStyle.C -> cValues.add(valueStr)
+                    }
+                }
+            }
+
+            if (cnValues.size != 1 || ouValues.size != 1 || oValues.size != 1 || cValues.size != 1) {
+                return false
+            }
+
+            val cn = cnValues[0].trim()
+            val ou = ouValues[0].trim()
+            val o = oValues[0].trim().replace(WHITESPACE_REGEX, " ")
+            val c = cValues[0].trim()
+
+            if (!DNIE_CN_REGEX.matches(cn)) {
+                return false
+            }
+            if (!ou.equals("DNIE", ignoreCase = true)) {
+                return false
+            }
+            if (!o.equals("DIRECCION GENERAL DE LA POLICIA", ignoreCase = true)) {
+                return false
+            }
+            if (!c.equals("ES", ignoreCase = true)) {
+                return false
+            }
+
+            return true
         }
 
         fun hasNonRepudiationKeyUsage(cert: X509Certificate): Boolean {
