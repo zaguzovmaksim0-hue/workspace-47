@@ -63,6 +63,18 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             sum(entry["profileId"] is not None for entry in catalog["entries"]),
             profile_count,
         )
+        pag_reg = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-pag-reg"
+        )
+        self.assertEqual("reg-age-redsara", pag_reg["profileId"])
+        self.assertEqual("https://reg.redsara.es/es/", pag_reg["launchUrl"])
+        self.assertEqual("E2E_PENDING", pag_reg["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", pag_reg["inventoryStatus"])
+        self.assertIn("reg-age", pag_reg["limitations"].lower())
+        self.assertIn("qa", pag_reg["limitations"].lower())
+        self.assertIn("e2e", pag_reg["limitations"].lower())
+
         redsara = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "age-reg-redsara"
