@@ -2790,7 +2790,7 @@
     {
       "portalId": "euskadi-sede-electronica",
       "inventoryId": "ES-PUB-0115",
-      "profileId": null,
+      "profileId": "euskadi-sede-electronica",
       "displayName": "Sede electrónica de Euskadi",
       "organization": "Gobierno Vasco",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",

@@ -365,6 +365,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_euskadi_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        euskadi = next(entry for entry in catalog["entries"] if entry["portalId"] == "euskadi-sede-electronica")
+
+        self.assertEqual("euskadi-sede-electronica", euskadi["profileId"])
+        self.assertEqual("ES-PUB-0115", euskadi["inventoryId"])
+        self.assertEqual("https://www.euskadi.eus/sede-electronica/", euskadi["entryUrl"])
+        self.assertNotIn("launchUrl", euskadi)
+        self.assertEqual("CATALOGED", euskadi["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", euskadi["inventoryStatus"])
+        self.assertEqual("2026-07-16", euskadi["reviewedOn"])
+        self.assertEqual([], euskadi["observedSignatureFormats"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
