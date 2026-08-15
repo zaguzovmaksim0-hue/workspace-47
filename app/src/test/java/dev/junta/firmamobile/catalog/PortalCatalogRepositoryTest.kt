@@ -71,6 +71,7 @@ class PortalCatalogRepositoryTest {
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
                 "diputacion-toledo-sede",
+                "isciii-certificate-selection",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

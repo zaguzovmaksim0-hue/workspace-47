@@ -65,6 +65,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
                 ProfileId("diputacion-toledo-sede"),
+                ProfileId("isciii-certificate-selection"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
