@@ -119,6 +119,10 @@ class PrehashedRsaSignatureEngineTest {
         assertEquals(PrecalculatedHashAlgorithm.SHA512, PrecalculatedHashAlgorithm.parse("SHA-512"))
         assertEquals(PrecalculatedHashAlgorithm.SHA1, PrecalculatedHashAlgorithm.parse("SHA1"))
         assertEquals(PrecalculatedHashAlgorithm.SHA1, PrecalculatedHashAlgorithm.parse("SHA-1"))
+        assertEquals(null, PrecalculatedHashAlgorithm.parse("SHA384"))
+        assertEquals(null, PrecalculatedHashAlgorithm.parse("SHA-384"))
+        assertEquals(null, PrecalculatedHashAlgorithm.parse("SHA224"))
+        assertEquals(null, PrecalculatedHashAlgorithm.parse("SHA-224"))
         assertEquals(null, PrecalculatedHashAlgorithm.parse("MD5"))
         assertEquals(null, PrecalculatedHashAlgorithm.parse("UNKNOWN"))
 

@@ -216,6 +216,7 @@ class MainActivity : ComponentActivity() {
             adapter = veaMultiModeSigningAdapter,
             currentOrigin = { currentSigningOrigin() },
             currentNavigationEpoch = { currentNavigationEpoch },
+            currentPageUrl = { currentWebView?.url },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )

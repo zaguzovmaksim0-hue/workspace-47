@@ -42,8 +42,78 @@ class AfirmaShimIntegrityTest(unittest.TestCase):
     def test_junta_vea_page_binding_is_pinned(self) -> None:
         self.assertIn("juntaVeaOrigin", self.content)
         self.assertIn("https://veaja.cloud.juntadeandalucia.es", self.content)
-        self.assertIn("juntaVeaAllowedPaths", self.content)
+        self.assertIn("juntaVeaExactPaths", self.content)
+        self.assertIn("juntaVeaPrefixPaths", self.content)
+        self.assertIn("isValidVeaPath", self.content)
         self.assertIn("isJuntaVeaPage", self.content)
+
+    def test_junta_vea_allowed_formats_is_pinned_to_cades_only(self) -> None:
+        formats_match = re.search(r"allowedVeaSignFormats\s*=\s*new\s+Set\(\s*\[([^\]]+)\]\s*\)", self.content)
+        self.assertIsNotNone(formats_match, "allowedVeaSignFormats Set definition not found")
+        formats_raw = formats_match.group(1)
+        formats = [f.strip().strip('"').strip("'") for f in formats_raw.split(",") if f.strip()]
+        self.assertEqual(["CADES"], formats, "allowedVeaSignFormats must contain only CADES")
+
+    def test_junta_vea_allowed_algorithms_excludes_sha224_and_sha384(self) -> None:
+        alg_match = re.search(r"allowedVeaSignAlgorithms\s*=\s*new\s+Set\(\s*\[([^\]]+)\]\s*\)", self.content)
+        self.assertIsNotNone(alg_match, "allowedVeaSignAlgorithms Set definition not found")
+        alg_raw = alg_match.group(1)
+        algorithms = set(a.strip().strip('"').strip("'") for a in alg_raw.split(",") if a.strip())
+        self.assertEqual({"SHA1WITHRSA", "SHA256WITHRSA", "SHA512WITHRSA"}, algorithms)
+        self.assertNotIn("SHA384WITHRSA", algorithms)
+        self.assertNotIn("SHA224WITHRSA", algorithms)
+
+    def test_junta_vea_path_logic_rejects_arbitrary_root_prefixes_via_node(self) -> None:
+        node_script = """
+        const juntaVeaExactPaths = new Set([
+          "/",
+          "/inicio",
+          "/confirmacion-modificacion-datos-contacto",
+          "/documentacion-voluntaria",
+          "/justificante",
+          "/datos-contacto",
+          "/area-personal"
+        ]);
+        const juntaVeaPrefixPaths = [
+          "/inicio/",
+          "/borrador/",
+          "/formulario/",
+          "/resumen-pago/",
+          "/procedimiento-detalle/",
+          "/competente/",
+          "/tarea/"
+        ];
+        function isValidVeaPath(pathname) {
+          const normalized = pathname || "/";
+          return juntaVeaExactPaths.has(normalized) ||
+            juntaVeaPrefixPaths.some(p => normalized.startsWith(p));
+        }
+
+        const tests = [
+          { path: "/", expected: true },
+          { path: "/inicio", expected: true },
+          { path: "/inicio/detail", expected: true },
+          { path: "/borrador/draft-123", expected: true },
+          { path: "/admin/secret", expected: false },
+          { path: "/anything", expected: false },
+          { path: "/other", expected: false },
+          { path: "/inicioprivado", expected: false }
+        ];
+
+        for (const t of tests) {
+          const actual = isValidVeaPath(t.path);
+          if (actual !== t.expected) {
+            console.error(`Mismatch for ${t.path}: expected ${t.expected}, got ${actual}`);
+            process.exit(1);
+          }
+        }
+        """
+        result = subprocess.run(
+            ["node", "-e", node_script],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, result.returncode, f"Path evaluation failed:\n{result.stderr}")
 
     def test_no_split_declarations_around_batch_result(self) -> None:
         self.assertNotIn("const errorCode = typeof result.errorCode === \"string\" &&\n  function", self.content)

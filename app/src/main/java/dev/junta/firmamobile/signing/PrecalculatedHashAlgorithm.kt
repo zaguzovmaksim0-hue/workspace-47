@@ -37,15 +37,6 @@ enum class PrecalculatedHashAlgorithm(
             0x1a, 0x05, 0x00, 0x04, 0x14,
         ),
         setOf(SigningAlgorithm.SHA1_WITH_RSA),
-    ),
-    SHA384(
-        "SHA-384",
-        48,
-        byteArrayOf(
-            0x30, 0x41, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86.toByte(), 0x48, 0x01,
-            0x65, 0x03, 0x04, 0x02, 0x02, 0x05, 0x00, 0x04, 0x30,
-        ),
-        emptySet(),
     );
 
     fun decodeHash(raw: String): ByteArray? {
@@ -75,7 +66,6 @@ enum class PrecalculatedHashAlgorithm(
             "SHA256" -> SHA256
             "SHA512" -> SHA512
             "SHA1" -> SHA1
-            "SHA384" -> SHA384
             else -> null
         }
     }

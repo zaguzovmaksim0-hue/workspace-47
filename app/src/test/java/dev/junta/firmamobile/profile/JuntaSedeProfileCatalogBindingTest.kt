@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.profile
 
+import dev.junta.firmamobile.browser.VeaMultiModeBridgeAdapter
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
@@ -8,6 +9,7 @@ import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
+import dev.junta.firmamobile.signing.PrecalculatedHashAlgorithm
 import dev.junta.firmamobile.signing.SignatureAlgorithm
 import dev.junta.firmamobile.signing.SignatureFormat
 import dev.junta.firmamobile.signing.SignatureMode
@@ -123,5 +125,32 @@ class JuntaSedeProfileCatalogBindingTest {
         val releaseItem = release.catalogItems().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.UNSUPPORTED_IN_RELEASE, releaseItem.supportStatus)
         assertNull(release.resolveLaunch(releaseItem))
+    }
+
+    @Test
+    fun runtimeMultiModeSupportedFormatsAndAlgorithmsMatchProfileOperationPolicyExactly() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+
+        val bridgeFormats = VeaMultiModeBridgeAdapter.SUPPORTED_FORMATS.map { SignatureFormat.valueOf(it) }.toSet()
+        assertEquals(setOf(operation.format), bridgeFormats)
+
+        val bridgeAlgorithms = VeaMultiModeBridgeAdapter.ALGORITHM_HASH_MAP.keys.map { key ->
+            when (key) {
+                "SHA1WITHRSA" -> SignatureAlgorithm.SHA1_WITH_RSA
+                "SHA256WITHRSA" -> SignatureAlgorithm.SHA256_WITH_RSA
+                "SHA512WITHRSA" -> SignatureAlgorithm.SHA512_WITH_RSA
+                else -> error("Unknown algorithm: $key")
+            }
+        }.toSet()
+        assertEquals(operation.algorithms, bridgeAlgorithms)
+
+        val hashEnums = PrecalculatedHashAlgorithm.entries.toSet()
+        val expectedHashes = setOf(
+            PrecalculatedHashAlgorithm.SHA1,
+            PrecalculatedHashAlgorithm.SHA256,
+            PrecalculatedHashAlgorithm.SHA512,
+        )
+        assertEquals(expectedHashes, hashEnums)
     }
 }

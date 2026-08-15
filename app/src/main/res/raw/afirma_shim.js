@@ -514,35 +514,40 @@
     rejectDirectCall(pending.errorCallback, errorCode);
   }
 
-  const juntaVeaAllowedPaths = [
-    "/inicio/",
-    "/inicio",
+  const juntaVeaExactPaths = new Set([
     "/",
+    "/inicio",
     "/confirmacion-modificacion-datos-contacto",
     "/documentacion-voluntaria",
+    "/justificante",
+    "/datos-contacto",
+    "/area-personal"
+  ]);
+
+  const juntaVeaPrefixPaths = [
+    "/inicio/",
     "/borrador/",
     "/formulario/",
     "/resumen-pago/",
     "/procedimiento-detalle/",
     "/competente/",
-    "/tarea/",
-    "/justificante",
-    "/datos-contacto",
-    "/area-personal"
+    "/tarea/"
   ];
+
+  function isValidVeaPath(pathname) {
+    const normalized = pathname || "/";
+    return juntaVeaExactPaths.has(normalized) ||
+      juntaVeaPrefixPaths.some(p => normalized.startsWith(p));
+  }
 
   const allowedVeaSignAlgorithms = new Set([
     "SHA256WITHRSA",
     "SHA512WITHRSA",
-    "SHA1WITHRSA",
-    "SHA384WITHRSA",
-    "SHA224WITHRSA"
+    "SHA1WITHRSA"
   ]);
 
   const allowedVeaSignFormats = new Set([
-    "CADES",
-    "XADES",
-    "PADES"
+    "CADES"
   ]);
 
   function isJuntaVeaPage() {
@@ -552,8 +557,7 @@
     if (window.location.origin !== juntaVeaOrigin) {
       return false;
     }
-    const pathname = window.location.pathname;
-    return juntaVeaAllowedPaths.some(p => pathname === p || (p.endsWith("/") && pathname.startsWith(p)));
+    return isValidVeaPath(window.location.pathname);
   }
 
   function clearPendingMultiMode(requestIdValue) {
@@ -600,7 +604,8 @@
       typeof signParams === "string" && signParams.length <= maxExtraPropertiesChars &&
       signParams.includes("mode=explicit") &&
       signParams.includes("precalculatedHashAlgorithm=") &&
-      signParams.includes("filters=") &&
+      (signParams.includes("filters=nonexpired:;signingCert") ||
+       signParams.includes("filters=nonexpired:;signingCert;")) &&
       typeof successCallback === "function" && typeof errorCallback === "function" &&
       probeDocumentId;
 

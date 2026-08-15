@@ -31,7 +31,7 @@ data class VeaMultiModeBridgeRequest(
     val profileId: ProfileId,
     val sourceOrigin: TrustedOrigin,
     val navigationEpoch: Long,
-    val pageUrl: String? = null,
+    val pageUrl: String,
 )
 
 sealed interface VeaMultiModeBridgeRouteResult {
@@ -142,13 +142,19 @@ class VeaMultiModeBridgeAdapter(
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
         }
 
-        val pageUrl = json.optString("pageUrl", "")
-        if (pageUrl.isNotEmpty() && !isValidVeaPageUrl(pageUrl)) {
+        val rawPageUrl = json.optString("pageUrl", "").trim()
+        if (rawPageUrl.isEmpty()) {
             return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
         }
+        val canonicalPageUrl = canonicalizeVeaUrl(rawPageUrl)
+            ?: return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST)
+
         val runtimeUrl = currentUrl()
-        if (runtimeUrl != null && !isValidVeaPageUrl(runtimeUrl)) {
-            return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
+        if (runtimeUrl != null) {
+            val canonicalRuntimeUrl = canonicalizeVeaUrl(runtimeUrl)
+            if (canonicalRuntimeUrl == null || canonicalRuntimeUrl != canonicalPageUrl) {
+                return VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED)
+            }
         }
 
         if (activeRequestId != null || replayLedger.contains(requestId)) {
@@ -259,7 +265,7 @@ class VeaMultiModeBridgeAdapter(
             profileId = ProfileId(PROFILE_ID),
             sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
             navigationEpoch = navigationEpoch,
-            pageUrl = pageUrl.ifEmpty { null },
+            pageUrl = canonicalPageUrl,
         )
         return VeaMultiModeBridgeRouteResult.Accepted(request)
     }
@@ -275,7 +281,7 @@ class VeaMultiModeBridgeAdapter(
     @Synchronized
     fun invalidateDocument(documentId: UUID?) {
         if (documentId != null) {
-            invalidatedDocumentIds.add(documentId)
+            recordInvalidatedDocument(documentId)
             if (activeDocumentId == documentId) {
                 activeDocumentId = null
                 activeRequestId = null
@@ -290,10 +296,23 @@ class VeaMultiModeBridgeAdapter(
         invalidatedDocumentIds.clear()
     }
 
+    internal fun invalidatedDocumentIdsSize(): Int = synchronized(this) {
+        invalidatedDocumentIds.size
+    }
+
+    private fun recordInvalidatedDocument(documentId: UUID) {
+        invalidatedDocumentIds.remove(documentId)
+        invalidatedDocumentIds.add(documentId)
+        while (invalidatedDocumentIds.size > MAX_INVALIDATED_DOCUMENTS) {
+            val oldest = invalidatedDocumentIds.iterator().next()
+            invalidatedDocumentIds.remove(oldest)
+        }
+    }
+
     private fun invalidateActiveDocument() {
         val active = activeDocumentId
         if (active != null) {
-            invalidatedDocumentIds.add(active)
+            recordInvalidatedDocument(active)
             activeDocumentId = null
             activeRequestId = null
         }
@@ -341,15 +360,7 @@ class VeaMultiModeBridgeAdapter(
 
     private fun isValidVeaFilter(filterStr: String): Boolean {
         val cleaned = filterStr.trim()
-        if (!cleaned.startsWith("nonexpired:;signingCert")) return false
-        val remainder = cleaned.removePrefix("nonexpired:;signingCert").trim()
-        if (remainder.isEmpty() || remainder == ";") return true
-        val stripped = remainder.trimStart(';')
-        if (stripped.startsWith("qualified:")) {
-            val serial = stripped.removePrefix("qualified:").trimEnd(';')
-            return serial.isNotEmpty() && serial.all { it.isLetterOrDigit() }
-        }
-        return false
+        return cleaned == "nonexpired:;signingCert" || cleaned == "nonexpired:;signingCert;"
     }
 
     private fun String.uniqueTopLevelKeys(): Set<String>? = try {
@@ -389,6 +400,7 @@ class VeaMultiModeBridgeAdapter(
         const val RESULT_TYPE = "MINIAPPLET_MULTIMODE_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
         const val MAX_DOCUMENTS = 128
+        const val MAX_INVALIDATED_DOCUMENTS = 64
 
         private val UUID_PATTERN = Regex(
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
@@ -412,43 +424,60 @@ class VeaMultiModeBridgeAdapter(
             "requestId",
         )
 
-        val SUPPORTED_FORMATS = setOf("CADES", "XADES", "PADES")
+        val SUPPORTED_FORMATS = setOf("CADES")
 
         val ALGORITHM_HASH_MAP = mapOf(
             "SHA256WITHRSA" to PrecalculatedHashAlgorithm.SHA256,
             "SHA512WITHRSA" to PrecalculatedHashAlgorithm.SHA512,
             "SHA1WITHRSA" to PrecalculatedHashAlgorithm.SHA1,
-            "SHA384WITHRSA" to PrecalculatedHashAlgorithm.SHA384,
-            "SHA224WITHRSA" to PrecalculatedHashAlgorithm.SHA224,
         )
 
-        val ALLOWED_PATH_PREFIXES = listOf(
-            "/inicio/",
-            "/inicio",
+        val ALLOWED_EXACT_PATHS = setOf(
             "/",
+            "/inicio",
             "/confirmacion-modificacion-datos-contacto",
             "/documentacion-voluntaria",
+            "/justificante",
+            "/datos-contacto",
+            "/area-personal",
+        )
+
+        val ALLOWED_PREFIX_PATHS = listOf(
+            "/inicio/",
             "/borrador/",
             "/formulario/",
             "/resumen-pago/",
             "/procedimiento-detalle/",
             "/competente/",
             "/tarea/",
-            "/justificante",
-            "/datos-contacto",
-            "/area-personal",
         )
 
-        fun isValidVeaPageUrl(rawUrl: String): Boolean {
-            val uri = runCatching { Uri.parse(rawUrl) }.getOrNull() ?: return false
-            if (uri.scheme != "https" || uri.host != "veaja.cloud.juntadeandalucia.es" || (uri.port != -1 && uri.port != 443)) {
-                return false
-            }
-            val path = uri.path ?: "/"
-            return ALLOWED_PATH_PREFIXES.any { allowed ->
-                path == allowed || (allowed.endsWith("/") && path.startsWith(allowed))
-            }
+        fun isValidVeaPath(path: String): Boolean {
+            val normalized = if (path.isEmpty()) "/" else path
+            return normalized in ALLOWED_EXACT_PATHS ||
+                ALLOWED_PREFIX_PATHS.any { prefix -> normalized.startsWith(prefix) }
         }
+
+        fun canonicalizeVeaUrl(rawUrl: String): String? {
+            val uri = runCatching { Uri.parse(rawUrl) }.getOrNull() ?: return null
+            if (uri.scheme != "https" ||
+                uri.host != "veaja.cloud.juntadeandalucia.es" ||
+                (uri.port != -1 && uri.port != 443) ||
+                uri.encodedUserInfo != null
+            ) {
+                return null
+            }
+            val rawPath = uri.path ?: "/"
+            val normalizedPath = if (rawPath.isEmpty()) "/" else rawPath
+            if (!isValidVeaPath(normalizedPath)) {
+                return null
+            }
+            val query = uri.encodedQuery
+            val querySuffix = if (query != null) "?$query" else ""
+            return "https://veaja.cloud.juntadeandalucia.es$normalizedPath$querySuffix"
+        }
+
+        fun isValidVeaPageUrl(rawUrl: String): Boolean = canonicalizeVeaUrl(rawUrl) != null
     }
 }
 
@@ -457,10 +486,12 @@ class VeaMultiModeReplyChannel(
     private val documentId: UUID,
     private val navigationEpoch: Long,
     private val sourceOrigin: TrustedOrigin,
+    val pageUrl: String,
     private val postMessage: (String) -> Unit,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
     private val currentDocumentId: () -> UUID? = { null },
+    private val currentPageUrl: () -> String? = { null },
     private val onTerminal: (UUID) -> Unit = {},
 ) {
     private val closed = AtomicBoolean(false)
@@ -502,6 +533,12 @@ class VeaMultiModeReplyChannel(
         if (curDoc != null && curDoc != documentId) return false
         val curOrig = currentOrigin()
         if (curOrig != null && curOrig != sourceOrigin) return false
+        val curUrl = currentPageUrl()
+        if (curUrl != null) {
+            val canonicalCur = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(curUrl)
+            val canonicalReq = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(pageUrl)
+            if (canonicalCur == null || canonicalCur != canonicalReq) return false
+        }
         return true
     }
 

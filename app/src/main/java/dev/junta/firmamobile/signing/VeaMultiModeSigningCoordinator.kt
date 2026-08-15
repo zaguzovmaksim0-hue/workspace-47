@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.signing
 
+import dev.junta.firmamobile.browser.VeaMultiModeBridgeAdapter
 import dev.junta.firmamobile.browser.VeaMultiModeBridgeRequest
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.CertificateSigningSnapshot
@@ -20,6 +21,8 @@ class VeaMultiModeSigningCoordinator(
     private val adapter: VeaMultiModeSigningAdapter,
     private val currentOrigin: () -> TrustedOrigin?,
     private val currentNavigationEpoch: () -> Long = { 0L },
+    private val currentPageUrl: () -> String? = { null },
+    private val currentDocumentId: () -> UUID? = { null },
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     private val expiryScheduler: SigningExpiryScheduler,
     private val profileRegistry: SiteProfileRegistry = BuiltInSiteProfiles.runtimeRegistry,
@@ -182,6 +185,14 @@ class VeaMultiModeSigningCoordinator(
         if (currentEpoch != request.navigationEpoch) return SigningErrorCode.NAVIGATION_CHANGED
         val curOrigin = currentOrigin()
         if (curOrigin != null && curOrigin != request.sourceOrigin) return SigningErrorCode.ORIGIN_NOT_ALLOWED
+        val curDocId = currentDocumentId()
+        if (curDocId != null && curDocId != request.documentId) return SigningErrorCode.NAVIGATION_CHANGED
+        val curUrl = currentPageUrl()
+        if (curUrl != null) {
+            val canonicalCur = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(curUrl)
+            val canonicalReq = VeaMultiModeBridgeAdapter.canonicalizeVeaUrl(request.pageUrl)
+            if (canonicalCur == null || canonicalCur != canonicalReq) return SigningErrorCode.NAVIGATION_CHANGED
+        }
         return null
     }
 

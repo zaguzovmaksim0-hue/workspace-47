@@ -77,7 +77,7 @@ class VeaMultiModeBridgeAdapterTest {
             hashes = listOf(hash1, hash2),
             algorithm = "SHA256withRSA",
             format = "CADES",
-            params = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\nfilters=nonexpired:;signingCert;qualified:12345",
+            params = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\nfilters=nonexpired:;signingCert;",
             pageUrl = "https://veaja.cloud.juntadeandalucia.es/borrador/draft-999",
         )
 
@@ -115,6 +115,7 @@ class VeaMultiModeBridgeAdapterTest {
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
         val result = freshAdapter.route(
             rawMessage = message,
@@ -133,6 +134,7 @@ class VeaMultiModeBridgeAdapterTest {
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
 
         val mismatchedLen = validMessageJson(hashes = listOf(hashHex), originalData = listOf("", ""))
@@ -149,21 +151,44 @@ class VeaMultiModeBridgeAdapterTest {
     }
 
     @Test
-    fun rejectsUnobservedPageUrlOrDisallowedPath() {
+    fun rejectsArbitraryRootOriginPathsWhileAcceptingExactRoot() {
         val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+        val rootAdapter = VeaMultiModeBridgeAdapter(
+            activeProfileId = { expectedProfileId },
+            currentNavigationEpoch = { 100L },
+            currentDocumentId = { documentId },
+            currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/" },
+        )
+        val exactRootMessage = validMessageJson(
+            hashes = listOf(hashHex),
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/",
+        )
+        val exactRootResult = rootAdapter.route(exactRootMessage, originUri, true, 100L)
+        assertTrue(exactRootResult is VeaMultiModeBridgeRouteResult.Accepted)
+
         val freshAdapter = VeaMultiModeBridgeAdapter(
             activeProfileId = { expectedProfileId },
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
 
-        val invalidPathMessage = validMessageJson(
+        val secretMessage = validMessageJson(
             hashes = listOf(hashHex),
             pageUrl = "https://veaja.cloud.juntadeandalucia.es/admin/secret",
         )
-        val result = freshAdapter.route(invalidPathMessage, originUri, true, 100L)
-        assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST), result)
+        val secretResult = freshAdapter.route(secretMessage, originUri, true, 100L)
+        assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST), secretResult)
+
+        val anythingMessage = validMessageJson(
+            hashes = listOf(hashHex),
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/anything",
+        )
+        val anythingResult = freshAdapter.route(anythingMessage, originUri, true, 100L)
+        assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST), anythingResult)
 
         val foreignHostMessage = validMessageJson(
             hashes = listOf(hashHex),
@@ -174,30 +199,133 @@ class VeaMultiModeBridgeAdapterTest {
     }
 
     @Test
-    fun rejectsUnsupportedSignFormat() {
+    fun rejectsEmptyOrMissingPageUrl() {
         val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-        val message = validMessageJson(
-            hashes = listOf(hashHex),
-            format = "UNKNOWN_FORMAT",
-        )
         val freshAdapter = VeaMultiModeBridgeAdapter(
             activeProfileId = { expectedProfileId },
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
-        val result = freshAdapter.route(message, originUri, true, 100L)
-        assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST), result)
+
+        val emptyUrlMessage = validMessageJson(
+            hashes = listOf(hashHex),
+            pageUrl = "",
+        )
+        val emptyResult = freshAdapter.route(emptyUrlMessage, originUri, true, 100L)
+        assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST), emptyResult)
+
+        val blankUrlMessage = validMessageJson(
+            hashes = listOf(hashHex),
+            pageUrl = "   ",
+        )
+        val blankResult = freshAdapter.route(blankUrlMessage, originUri, true, 100L)
+        assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST), blankResult)
     }
 
     @Test
-    fun rejectsUnknownExtraPropertiesOrMissingFilters() {
+    fun rejectsMismatchedPageUrlAgainstRuntime() {
         val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         val freshAdapter = VeaMultiModeBridgeAdapter(
             activeProfileId = { expectedProfileId },
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/borrador/draft-1" },
+        )
+
+        val mismatchedUrlMessage = validMessageJson(
+            hashes = listOf(hashHex),
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/borrador/draft-2",
+        )
+        val result = freshAdapter.route(mismatchedUrlMessage, originUri, true, 100L)
+        assertEquals(VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.NAVIGATION_CHANGED), result)
+
+        val fragmentMatchAdapter = VeaMultiModeBridgeAdapter(
+            activeProfileId = { expectedProfileId },
+            currentNavigationEpoch = { 100L },
+            currentDocumentId = { documentId },
+            currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/borrador/draft-1#sectionA" },
+        )
+        val fragmentMessage = validMessageJson(
+            hashes = listOf(hashHex),
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/borrador/draft-1#sectionB",
+        )
+        val fragmentResult = fragmentMatchAdapter.route(fragmentMessage, originUri, true, 100L)
+        assertTrue(fragmentResult is VeaMultiModeBridgeRouteResult.Accepted)
+    }
+
+    @Test
+    fun rejectsUnsupportedSignFormatsXadesAndPades() {
+        val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        val freshAdapter = VeaMultiModeBridgeAdapter(
+            activeProfileId = { expectedProfileId },
+            currentNavigationEpoch = { 100L },
+            currentDocumentId = { documentId },
+            currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+        )
+
+        for (format in listOf("XADES", "PADES", "XAdES", "PAdES", "XMLDSIG", "UNKNOWN_FORMAT")) {
+            val message = validMessageJson(
+                hashes = listOf(hashHex),
+                format = format,
+            )
+            val result = freshAdapter.route(message, originUri, true, 100L)
+            assertEquals(
+                "Format $format must be rejected",
+                VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST),
+                result,
+            )
+        }
+    }
+
+    @Test
+    fun rejectsUnsupportedAlgorithmsSha224AndSha384() {
+        val freshAdapter = VeaMultiModeBridgeAdapter(
+            activeProfileId = { expectedProfileId },
+            currentNavigationEpoch = { 100L },
+            currentDocumentId = { documentId },
+            currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+        )
+
+        val sha384Hex = "11".repeat(48)
+        val sha384Message = validMessageJson(
+            hashes = listOf(sha384Hex),
+            algorithm = "SHA384withRSA",
+            params = "mode=explicit\nprecalculatedHashAlgorithm=SHA-384\nfilters=nonexpired:;signingCert;",
+        )
+        val sha384Result = freshAdapter.route(sha384Message, originUri, true, 100L)
+        assertEquals(
+            VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL),
+            sha384Result,
+        )
+
+        val sha224Hex = "11".repeat(28)
+        val sha224Message = validMessageJson(
+            hashes = listOf(sha224Hex),
+            algorithm = "SHA224withRSA",
+            params = "mode=explicit\nprecalculatedHashAlgorithm=SHA-224\nfilters=nonexpired:;signingCert;",
+        )
+        val sha224Result = freshAdapter.route(sha224Message, originUri, true, 100L)
+        assertEquals(
+            VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL),
+            sha224Result,
+        )
+    }
+
+    @Test
+    fun rejectsUnknownExtraPropertiesOrQualifiedFilterSuffix() {
+        val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        val freshAdapter = VeaMultiModeBridgeAdapter(
+            activeProfileId = { expectedProfileId },
+            currentNavigationEpoch = { 100L },
+            currentDocumentId = { documentId },
+            currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
 
         val unknownKey = validMessageJson(
@@ -207,6 +335,15 @@ class VeaMultiModeBridgeAdapterTest {
         assertEquals(
             VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST),
             freshAdapter.route(unknownKey, originUri, true, 100L),
+        )
+
+        val qualifiedSuffix = validMessageJson(
+            hashes = listOf(hashHex),
+            params = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\nfilters=nonexpired:;signingCert;qualified:12345",
+        )
+        assertEquals(
+            VeaMultiModeBridgeRouteResult.Rejected(requestId, SigningErrorCode.INVALID_REQUEST),
+            freshAdapter.route(qualifiedSuffix, originUri, true, 100L),
         )
 
         val missingFilters = validMessageJson(
@@ -229,6 +366,49 @@ class VeaMultiModeBridgeAdapterTest {
     }
 
     @Test
+    fun boundsInvalidatedDocumentMemoryToMaximumCapacity() {
+        val freshAdapter = VeaMultiModeBridgeAdapter(
+            activeProfileId = { expectedProfileId },
+            currentNavigationEpoch = { 100L },
+            currentDocumentId = { null },
+            currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+        )
+
+        val docIds = List(70) { UUID.randomUUID() }
+        for (doc in docIds) {
+            freshAdapter.invalidateDocument(doc)
+        }
+
+        assertTrue(
+            "Invalidated document memory must be bounded by MAX_INVALIDATED_DOCUMENTS (64)",
+            freshAdapter.invalidatedDocumentIdsSize() <= 64,
+        )
+        assertEquals(64, freshAdapter.invalidatedDocumentIdsSize())
+
+        val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+        // Evicted oldest document (docIds[0]) is no longer rejected due to invalidation
+        val oldestDocMsg = validMessageJson(hashes = listOf(hashHex), reqId = UUID.randomUUID()).let {
+            JSONObject(it).put("documentId", docIds[0].toString()).toString()
+        }
+        val oldestResult = freshAdapter.route(oldestDocMsg, originUri, true, 100L)
+        assertTrue("Evicted oldest document must be accepted", oldestResult is VeaMultiModeBridgeRouteResult.Accepted)
+
+        // Recent document (docIds[69]) must remain rejected
+        val recentDocMsg = validMessageJson(hashes = listOf(hashHex), reqId = UUID.randomUUID()).let {
+            JSONObject(it).put("documentId", docIds[69].toString()).toString()
+        }
+        val recentResult = freshAdapter.route(recentDocMsg, originUri, true, 100L)
+        assertEquals(
+            VeaMultiModeBridgeRouteResult.Rejected(null, SigningErrorCode.NAVIGATION_CHANGED),
+            (recentResult as? VeaMultiModeBridgeRouteResult.Rejected)?.let {
+                VeaMultiModeBridgeRouteResult.Rejected(null, it.code)
+            },
+        )
+    }
+
+    @Test
     fun enforcesSingleActiveRequestAndReplayProtection() {
         val hashHex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         val freshAdapter = VeaMultiModeBridgeAdapter(
@@ -236,6 +416,7 @@ class VeaMultiModeBridgeAdapterTest {
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
 
         val msg1 = validMessageJson(hashes = listOf(hashHex), reqId = requestId)
@@ -264,6 +445,7 @@ class VeaMultiModeBridgeAdapterTest {
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
         val wrongOrigin = freshAdapter.route(
             rawMessage = message,
@@ -297,6 +479,7 @@ class VeaMultiModeBridgeAdapterTest {
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
         val result = freshAdapter.route(
             rawMessage = message,
@@ -320,6 +503,7 @@ class VeaMultiModeBridgeAdapterTest {
             currentNavigationEpoch = { 100L },
             currentDocumentId = { documentId },
             currentOrigin = { expectedOrigin },
+            currentUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
         )
         val result = freshAdapter.route(
             rawMessage = cancelJson,

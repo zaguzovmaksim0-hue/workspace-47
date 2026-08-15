@@ -49,6 +49,7 @@ class VeaMultiModeSigningAdapterTest {
             profileId = ProfileId("junta-andalucia-sede"),
             sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
             navigationEpoch = 100L,
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/inicio/",
         )
 
         var deliveredSignature: String? = null
@@ -107,6 +108,7 @@ class VeaMultiModeSigningAdapterTest {
             profileId = ProfileId("junta-andalucia-sede"),
             sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
             navigationEpoch = 100L,
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/inicio/",
         )
 
         var deliveredSignature: String? = null

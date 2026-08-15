@@ -54,6 +54,7 @@ class VeaMultiModeSigningCoordinatorTest {
             profileId = ProfileId("junta-andalucia-sede"),
             sourceOrigin = origin,
             navigationEpoch = 100L,
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/inicio/",
         )
 
         val reply = RecordingVeaReply(requestId)
@@ -92,6 +93,7 @@ class VeaMultiModeSigningCoordinatorTest {
             profileId = ProfileId("junta-andalucia-sede"),
             sourceOrigin = origin,
             navigationEpoch = 100L,
+            pageUrl = "https://veaja.cloud.juntadeandalucia.es/inicio/",
         )
 
         val reply = RecordingVeaReply(requestId)
@@ -111,6 +113,7 @@ class VeaMultiModeSigningCoordinatorTest {
             adapter = adapter,
             currentOrigin = { origin },
             currentNavigationEpoch = { 100L },
+            currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
             expiryScheduler = expiryScheduler,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
@@ -141,6 +144,67 @@ class VeaMultiModeSigningCoordinatorTest {
     }
 
     @Test
+    fun confirmFailsWhenPageUrlChangesBetweenPrepareAndConfirm() = runBlocking {
+        var dynamicPageUrl: String? = "https://veaja.cloud.juntadeandalucia.es/borrador/draft-1"
+        val dynamicCoordinator = VeaMultiModeSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            currentOrigin = { origin },
+            currentNavigationEpoch = { 100L },
+            currentPageUrl = { dynamicPageUrl },
+            expiryScheduler = expiryScheduler,
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+
+        val requestId = UUID.randomUUID()
+        val request = validRequest(requestId, pageUrl = "https://veaja.cloud.juntadeandalucia.es/borrador/draft-1")
+        val reply = RecordingVeaReply(requestId)
+
+        val prepareResult = dynamicCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Ready(requestId), prepareResult)
+        assertTrue(reply.events.isEmpty())
+
+        // SPA route change occurs while awaiting user confirmation
+        dynamicPageUrl = "https://veaja.cloud.juntadeandalucia.es/borrador/draft-2"
+
+        val confirmResult = dynamicCoordinator.confirm(requestId)
+        assertEquals(SigningExecutionResult.Failed(SigningErrorCode.NAVIGATION_CHANGED), confirmResult)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+        assertTrue(dynamicCoordinator.state.value is SigningUiState.Failed)
+    }
+
+    @Test
+    fun confirmFailsWhenDocumentIdChangesBetweenPrepareAndConfirm() = runBlocking {
+        val docId1 = UUID.randomUUID()
+        var dynamicDocId: UUID? = docId1
+        val dynamicCoordinator = VeaMultiModeSigningCoordinator(
+            certificateSession = session,
+            adapter = adapter,
+            currentOrigin = { origin },
+            currentNavigationEpoch = { 100L },
+            currentPageUrl = { "https://veaja.cloud.juntadeandalucia.es/inicio/" },
+            currentDocumentId = { dynamicDocId },
+            expiryScheduler = expiryScheduler,
+            profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+        )
+
+        val requestId = UUID.randomUUID()
+        val request = validRequest(requestId, documentId = docId1)
+        val reply = RecordingVeaReply(requestId)
+
+        val prepareResult = dynamicCoordinator.prepare(request, reply)
+        assertEquals(SigningPreparationResult.Ready(requestId), prepareResult)
+        assertTrue(reply.events.isEmpty())
+
+        // Active document changed before confirm
+        dynamicDocId = UUID.randomUUID()
+
+        val confirmResult = dynamicCoordinator.confirm(requestId)
+        assertEquals(SigningExecutionResult.Failed(SigningErrorCode.NAVIGATION_CHANGED), confirmResult)
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+    }
+
+    @Test
     fun cancelCleanlyReleasesPendingOperationAndNotifiesReply() {
         val requestId = UUID.randomUUID()
         val request = validRequest(requestId)
@@ -154,11 +218,15 @@ class VeaMultiModeSigningCoordinatorTest {
         assertTrue(coordinator.state.value is SigningUiState.Failed)
     }
 
-    private fun validRequest(requestId: UUID): VeaMultiModeBridgeRequest {
+    private fun validRequest(
+        requestId: UUID,
+        pageUrl: String = "https://veaja.cloud.juntadeandalucia.es/inicio/",
+        documentId: UUID = UUID.randomUUID(),
+    ): VeaMultiModeBridgeRequest {
         val hashBytes = ByteArray(32) { 0x33 }
         return VeaMultiModeBridgeRequest(
             requestId = requestId,
-            documentId = UUID.randomUUID(),
+            documentId = documentId,
             operationArray = listOf("sign"),
             dataArray = listOf("33".repeat(32)),
             originalDataArray = null,
@@ -171,6 +239,7 @@ class VeaMultiModeSigningCoordinatorTest {
             profileId = ProfileId("junta-andalucia-sede"),
             sourceOrigin = origin,
             navigationEpoch = 100L,
+            pageUrl = pageUrl,
         )
     }
 

@@ -150,6 +150,7 @@ class WebMessageBridge(
         currentNavigationEpoch = currentNavigationEpoch,
         currentDocumentId = currentDocumentId,
         currentOrigin = currentOrigin,
+        currentUrl = currentPageUrl,
     )
 
     private val juntaMultiModeEnabled: Boolean
@@ -411,10 +412,12 @@ class WebMessageBridge(
                         documentId = mmResult.request.documentId,
                         navigationEpoch = mmResult.request.navigationEpoch,
                         sourceOrigin = mmResult.request.sourceOrigin,
+                        pageUrl = mmResult.request.pageUrl,
                         postMessage = replyProxy::postMessage,
                         currentNavigationEpoch = currentNavigationEpoch,
                         currentOrigin = currentOrigin,
                         currentDocumentId = currentDocumentId,
+                        currentPageUrl = currentPageUrl,
                     )
                     runCatching { multiModeConsumer(mmResult.request, reply) }.onFailure {
                         logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
@@ -435,10 +438,12 @@ class WebMessageBridge(
                             documentId = reqId,
                             navigationEpoch = currentNavigationEpoch(),
                             sourceOrigin = TrustedOrigin("https", "veaja.cloud.juntadeandalucia.es", 443),
+                            pageUrl = "https://veaja.cloud.juntadeandalucia.es/",
                             postMessage = replyProxy::postMessage,
                             currentNavigationEpoch = currentNavigationEpoch,
                             currentOrigin = currentOrigin,
                             currentDocumentId = currentDocumentId,
+                            currentPageUrl = currentPageUrl,
                         )
                         reply.failure(mmResult.code)
                     }
