@@ -53,6 +53,8 @@ import dev.junta.firmamobile.browser.ClientAuthGrant
 import dev.junta.firmamobile.browser.ClientCertPreferenceClearRequest
 import dev.junta.firmamobile.browser.ClientCertPreferenceClearResult
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
+import dev.junta.firmamobile.browser.CertificateSelectionBridgeRequest
+import dev.junta.firmamobile.browser.CertificateSelectionReplyChannel
 import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
 import dev.junta.firmamobile.browser.ClientAuthNavigationAuthorizer
 import dev.junta.firmamobile.browser.ClientAuthRequestHandler
@@ -82,7 +84,30 @@ import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
 import java.util.UUID
 import java.net.URI
+import java.security.MessageDigest
+import java.util.Base64
 import java.util.concurrent.atomic.AtomicReference
+
+private data class PendingCertificateSelection(
+    val request: CertificateSelectionBridgeRequest,
+    val reply: CertificateSelectionReplyChannel,
+    val certificateFingerprint: String,
+    val certificateOwner: String,
+)
+
+internal fun certificateSelectionFingerprint(identity: UnlockedIdentity): String? = runCatching {
+    val certificateDer = identity.certificate.encoded
+    try {
+        val digest = MessageDigest.getInstance("SHA-256").digest(certificateDer)
+        try {
+            Base64.getEncoder().encodeToString(digest)
+        } finally {
+            digest.fill(0)
+        }
+    } finally {
+        certificateDer.fill(0)
+    }
+}.getOrNull()
 
 @Composable
 fun BrowserScreen(
@@ -164,6 +189,9 @@ fun BrowserScreen(
         mutableStateOf<AuthorizedClientAuthTarget?>(null)
     }
     var pendingRequest by remember { mutableStateOf<AfirmaRequest?>(null) }
+    var pendingCertificateSelection by remember {
+        mutableStateOf<PendingCertificateSelection?>(null)
+    }
     var blockedReason by remember { mutableStateOf<NavigationBlockReason?>(null) }
     var browserError by remember { mutableStateOf<BrowserErrorCode?>(null) }
     var compatibilityError by remember { mutableStateOf(false) }
@@ -182,6 +210,40 @@ fun BrowserScreen(
         check(navigationEpoch.longValue != Long.MAX_VALUE)
         navigationEpoch.longValue++
         onNavigationEpochChanged(navigationEpoch.longValue)
+    }
+
+    fun cancelPendingCertificateSelection(code: dev.junta.firmamobile.signing.SigningErrorCode) {
+        pendingCertificateSelection?.reply?.failure(code)
+        pendingCertificateSelection = null
+    }
+
+    fun prepareCertificateSelection(
+        request: CertificateSelectionBridgeRequest,
+        reply: CertificateSelectionReplyChannel,
+    ) {
+        if (pendingCertificateSelection != null ||
+            request.context.profileId != selectedServiceId.value ||
+            request.context.navigationEpoch != navigationEpoch.longValue
+        ) {
+            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
+            return
+        }
+        val identity = clientCertificateIdentityProvider()
+        if (identity == null) {
+            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED)
+            return
+        }
+        val fingerprint = certificateSelectionFingerprint(identity)
+        if (fingerprint == null) {
+            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
+            return
+        }
+        pendingCertificateSelection = PendingCertificateSelection(
+            request = request,
+            reply = reply,
+            certificateFingerprint = fingerprint,
+            certificateOwner = identity.summary.ownerName,
+        )
     }
 
     fun cancelClientAuthClearCallback() {
@@ -477,12 +539,18 @@ fun BrowserScreen(
             if (!leavingClientAuth) webViewRef.get()?.reload()
         },
         onChangeCertificate = {
+            cancelPendingCertificateSelection(
+                dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
+            )
             clientAuthGrant = null
             abandonClientAuth()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             onChangeCertificate()
         },
         onLockCertificate = {
+            cancelPendingCertificateSelection(
+                dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
+            )
             clientAuthGrant = null
             abandonClientAuth()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
@@ -646,6 +714,14 @@ fun BrowserScreen(
                                         onMiniAppletRequest(request, reply)
                                     },
                                     onMiniAppletCancel = onMiniAppletCancel,
+                                    onCertificateSelectionRequest = { request, reply ->
+                                        prepareCertificateSelection(request, reply)
+                                    },
+                                    onCertificateSelectionCancel = { requestId ->
+                                        if (pendingCertificateSelection?.request?.requestId == requestId) {
+                                            pendingCertificateSelection = null
+                                        }
+                                    },
                                     onMelillaBatchRequest = {
                                         request: MelillaBatchBridgeRequest,
                                         reply: MelillaBatchReplyChannel,
@@ -736,6 +812,37 @@ fun BrowserScreen(
             request = request,
             certificateOwner = certificateState.summary.ownerName,
             onDismiss = { pendingRequest = null },
+        )
+    }
+
+    pendingCertificateSelection?.let { pending ->
+        CertificateSelectionConfirmationDialog(
+            host = pending.request.context.origin.host,
+            certificateOwner = pending.certificateOwner,
+            safeDescription = pending.request.safeDescription,
+            onContinue = {
+                val current = pendingCertificateSelection
+                if (current?.request?.requestId != pending.request.requestId) return@CertificateSelectionConfirmationDialog
+                val identity = clientCertificateIdentityProvider()
+                val currentFingerprint = identity?.let(::certificateSelectionFingerprint)
+                if (identity == null || currentFingerprint != pending.certificateFingerprint) {
+                    pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED)
+                } else {
+                    val certificateDer = runCatching { identity.certificate.encoded }.getOrNull()
+                    if (certificateDer == null) {
+                        pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
+                    } else {
+                        pending.reply.success(certificateDer)
+                    }
+                }
+                pendingCertificateSelection = null
+            },
+            onCancel = {
+                if (pendingCertificateSelection?.request?.requestId == pending.request.requestId) {
+                    pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.USER_CANCELLED)
+                    pendingCertificateSelection = null
+                }
+            },
         )
     }
 
@@ -1026,6 +1133,34 @@ internal fun profileRequiresWebMessageBridge(
         capability == dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE ||
         capability == dev.junta.firmamobile.profile.Capability.AFIRMA_URI
 } == true
+
+@Composable
+private fun CertificateSelectionConfirmationDialog(
+    host: String,
+    certificateOwner: String,
+    safeDescription: String,
+    onContinue: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Compartir certificado") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Dominio: $host")
+                Text("Operación: $safeDescription")
+                Text("Certificado: $certificateOwner")
+                Text("Solo se compartirá el certificado público; la clave privada no sale del dispositivo.")
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onContinue) { Text("Compartir") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
+        },
+    )
+}
 
 @Composable
 private fun ClientAuthConfirmationDialog(

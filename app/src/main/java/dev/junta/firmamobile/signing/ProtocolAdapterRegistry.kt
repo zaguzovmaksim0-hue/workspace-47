@@ -123,6 +123,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = ExtremaduraBatchProtocolAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId("isciii-certificate-selection"),
+                operation = ProtocolOperation.SELECT_CERTIFICATE,
+                inputAdapterId = ProtocolInputAdapterId("autoscript-select-certificate-v1"),
+                callbackContractId = CallbackContractId("autoscript-select-certificate-callback-v1"),
+                signingProtocolId = SigningProtocolId("isciii-select-certificate-v1"),
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("la-palma-sede-electronica"),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("la-palma-batch-autoscript-v1"),

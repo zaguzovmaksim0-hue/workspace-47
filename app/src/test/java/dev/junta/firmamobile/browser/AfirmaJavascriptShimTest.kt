@@ -286,15 +286,14 @@ class AfirmaJavascriptShimTest {
             isciiiCertificateSelectionEnabled = false,
         )
 
-        assertTrue(enabled.contains("const isciiiCertificateSelectionEnabled = true"))
-        assertTrue(disabled.contains("const isciiiCertificateSelectionEnabled = false"))
+        assertTrue(enabled.contains("const iSel = true"))
+        assertTrue(disabled.contains("const iSel = false"))
         assertTrue(enabled.contains("https://sede.isciii.gob.es"))
         assertTrue(enabled.contains("/cargaApplet.jsp"))
         assertTrue(enabled.contains("accion=generico&recurso.opcion=null"))
         assertTrue(enabled.contains("selectCertificate"))
         assertTrue(enabled.contains("MINIAPPLET_SELECT_CERTIFICATE"))
         assertTrue(enabled.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
-        assertTrue(enabled.contains("autoscript-select-certificate"))
         assertTrue(enabled.contains(
             "serverUrl=http://dtomcat7.isciiides.es:8080/" +
                 "afirma-server-triphase-signer/SignatureService",

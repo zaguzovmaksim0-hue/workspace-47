@@ -141,15 +141,19 @@ class PortalCatalogRepository(
     private fun SiteProfile.isImplementedAndActive(): Boolean {
         if (registry.profile(profileId) == null) return false
         if (Capability.CLIENT_TLS_AUTH in capabilities && clientAuthPolicy == null) return false
-        if (Capability.SIGN in capabilities) {
-            val operation = operationPolicies[ProtocolOperation.SIGN] ?: return false
-            val binding = BuiltInProtocolAdapterRegistry.registry
-                .resolve(profileId, ProtocolOperation.SIGN)
-                ?: return false
-            if (binding.inputAdapterId != operation.inputAdapterId ||
-                binding.callbackContractId != operation.callbackContractId
-            ) {
-                return false
+        setOf(
+            Capability.SIGN to ProtocolOperation.SIGN,
+            Capability.SELECT_CERTIFICATE to ProtocolOperation.SELECT_CERTIFICATE,
+        ).forEach { (capability, operationType) ->
+            if (capability in capabilities) {
+                val operation = operationPolicies[operationType] ?: return false
+                val binding = BuiltInProtocolAdapterRegistry.registry
+                    .resolve(profileId, operationType) ?: return false
+                if (binding.inputAdapterId != operation.inputAdapterId ||
+                    binding.callbackContractId != operation.callbackContractId
+                ) {
+                    return false
+                }
             }
         }
         return true

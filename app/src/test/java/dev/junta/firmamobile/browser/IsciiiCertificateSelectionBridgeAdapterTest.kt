@@ -7,6 +7,8 @@ import dev.junta.firmamobile.signing.SigningErrorCode
 import java.util.UUID
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -72,6 +74,27 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
             currentPageUrl = START_URL,
         ) as CertificateSelectionBridgeRouteResult.Rejected
         assertEquals(SigningErrorCode.INVALID_REQUEST, wrongParameters.code)
+    }
+
+    @Test
+    fun certificateReplyIsOneShotContainsNoSignatureAndClearsOwnedDer() {
+        val messages = mutableListOf<String>()
+        val channel = CertificateSelectionReplyChannel(
+            requestId = UUID.fromString(REQUEST_ID),
+            postMessage = messages::add,
+        )
+        val certificateDer = byteArrayOf(1, 2, 3, 4, 5)
+
+        assertTrue(channel.success(certificateDer))
+        assertTrue(certificateDer.all { it == 0.toByte() })
+        assertFalse(channel.failure(SigningErrorCode.PROTOCOL_FAILED))
+        assertEquals(1, messages.size)
+        val result = JSONObject(messages.single())
+        assertEquals("MINIAPPLET_SELECT_CERTIFICATE_RESULT", result.getString("type"))
+        assertEquals("success", result.getString("status"))
+        assertEquals("AQIDBAU=", result.getString("certificate"))
+        assertFalse(result.has("signature"))
+        assertFalse(result.has("serverUrl"))
     }
 
     @Test

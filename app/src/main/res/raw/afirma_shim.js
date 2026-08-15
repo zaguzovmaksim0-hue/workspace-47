@@ -19,6 +19,7 @@
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
+  const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -32,6 +33,8 @@
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
   const melillaBatchOrigin = "https://sede.melilla.es";
+  const iPage="https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
+  const iProps="serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -163,6 +166,28 @@
     } catch (_) {
       return false;
     }
+  }
+
+  function interceptISelect(a) {
+    if (!iSel) return false;
+    if (location.href !== iPage || a.length !== 3 || a[0] !== iProps ||
+        typeof a[1] !== "function" || typeof a[2] !== "function") {
+      rejectDirectCall(a[2], "INVALID_REQUEST"); return true;
+    }
+    if (!functionalSigningEnabled || !bridge || typeof bridge.postMessage !== "function" ||
+        !canonicalUuidPattern.test(probeDocumentId) || pendingCallbacks.size) {
+      rejectDirectCall(a[2], "PROTOCOL_FAILED"); return true;
+    }
+    const id = secureRequestId();
+    if (!id) { rejectDirectCall(a[2], "PROTOCOL_FAILED"); return true; }
+    const timeoutId = setTimeout(() => { if (clearPending(id)) {
+      notifyNativeCancel(id, "MINIAPPLET_SELECT_CERTIFICATE_CANCEL");
+      rejectDirectCall(a[2], "REQUEST_EXPIRED"); } }, signTimeoutMillis);
+    pendingCallbacks.set(id, { selection: true, successCallback: a[1], errorCallback: a[2], timeoutId });
+    try { bridge.postMessage(JSON.stringify({ type: "MINIAPPLET_SELECT_CERTIFICATE",
+      documentId: probeDocumentId, requestId: id, extraProperties: a[0] })); }
+    catch (_) { clearPending(id); rejectDirectCall(a[2], "PROTOCOL_FAILED"); }
+    return true;
   }
 
   function interceptMiniAppletSign(args) {
@@ -491,6 +516,14 @@
       receiveMelillaBatchResult(result);
       return;
     }
+    if (result.type === "MINIAPPLET_SELECT_CERTIFICATE_RESULT") {
+      const p = clearPending(result.requestId);
+      if (!p || p.selection !== true) return;
+      if (result.status === "success" && typeof result.certificate === "string" && base64Pattern.test(result.certificate)) {
+        try { p.successCallback(result.certificate); } catch (_) {} return;
+      }
+      rejectDirectCall(p.errorCallback, typeof result.errorCode === "string" && safeTokenPattern.test(result.errorCode) ? result.errorCode : "PROTOCOL_FAILED"); return;
+    }
     if (result.type !== "MINIAPPLET_RESULT") {
       return;
     }
@@ -528,7 +561,8 @@
   window.addEventListener("pagehide", () => {
     for (const [pendingRequestId, pending] of pendingCallbacks.entries()) {
       clearTimeout(pending.timeoutId);
-      notifyNativeCancel(pendingRequestId);
+      notifyNativeCancel(pendingRequestId, pending.selection === true ?
+        "MINIAPPLET_SELECT_CERTIFICATE_CANCEL" : "MINIAPPLET_CANCEL");
     }
     for (const [pendingRequestId, pending] of pendingBatchCallbacks.entries()) {
       clearTimeout(pending.timeoutId);
@@ -664,6 +698,9 @@
     function wrappedMiniAppletMethod(...args) {
       const observedRequestId = tryObserveMiniAppletCall(call, args);
       if (observedRequestId === null) {
+        if (call === "SELECT_CERTIFICATE" && interceptISelect(args)) {
+          return undefined;
+        }
         if (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) {
           return undefined;
         }
@@ -720,7 +757,8 @@
   function wrapMiniApplet(
     value,
     includeUgrSetup = false,
-    includeMelillaBatch = false
+    includeMelillaBatch = false,
+    includeIsciiiCertificateSelection = false
   ) {
     if ((typeof value !== "object" || value === null) && typeof value !== "function") {
       return value;
@@ -728,6 +766,9 @@
     try {
       installMethodHook(value, "cargarMiniApplet", "LOAD");
       installMethodHook(value, "sign", "SIGN");
+      if (includeIsciiiCertificateSelection) {
+        installMethodHook(value, "selectCertificate", "SELECT_CERTIFICATE");
+      }
       if (includeMelillaBatch) {
         installMethodHook(value, "createBatch", "BATCH_CREATE");
         installMethodHook(value, "addDocumentToBatch", "BATCH_ADD_DOCUMENT");
@@ -766,7 +807,10 @@
 
   const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
   if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
-    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled);
+    let autoScript = wrapMiniApplet(
+      window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled,
+      iSel
+    );
     Object.defineProperty(window, "AutoScript", {
       enumerable: true,
       configurable: true,
@@ -778,6 +822,7 @@
           value,
           ugrCompatibilityEnabled,
           melillaBatchCompatibilityEnabled,
+          iSel,
         );
       }
     });
@@ -786,6 +831,7 @@
         autoScript,
         ugrCompatibilityEnabled,
         melillaBatchCompatibilityEnabled,
+        iSel,
       );
     }, { once: true });
   } else {
@@ -793,6 +839,7 @@
       window.AutoScript,
       ugrCompatibilityEnabled,
       melillaBatchCompatibilityEnabled,
+      iSel,
     );
   }
 

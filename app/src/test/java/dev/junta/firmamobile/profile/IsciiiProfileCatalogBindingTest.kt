@@ -93,7 +93,8 @@ class IsciiiProfileCatalogBindingTest {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.portalId == portalId }
         assertEquals(profileId, entry.profileId)
-        assertEquals(startUrl, entry.launchUrl)
+        assertEquals(startUrl, entry.entryUrl)
+        assertNull(entry.launchUrl)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
         assertEquals("2026-08-15", entry.reviewedOn.toString())
