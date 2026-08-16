@@ -412,6 +412,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_leon_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        leon = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-leon-sede"
+        )
+
+        self.assertEqual("diputacion-leon-sede", leon["profileId"])
+        self.assertEqual("ES-PUB-0161", leon["inventoryId"])
+        self.assertEqual(
+            "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270",
+            leon["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", leon["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", leon["inventoryStatus"])
+        self.assertEqual("2026-08-16", leon["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", leon["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", leon["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", leon["observedMechanisms"])
+        self.assertEqual([], leon["observedSignatureFormats"])
+        self.assertIn("qa", leon["limitations"].lower())
+        self.assertIn("e2e", leon["limitations"].lower())
+        self.assertIn("firma", leon["limitations"].lower())
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
