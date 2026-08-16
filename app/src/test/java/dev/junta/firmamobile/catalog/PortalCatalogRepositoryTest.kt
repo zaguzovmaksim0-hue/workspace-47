@@ -70,6 +70,7 @@ class PortalCatalogRepositoryTest {
                 "la-palma-sede-electronica",
                 "diputacion-huesca-portal",
                 "diputacion-lugo-sede",
+                "diputacion-leon-sede",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",

@@ -64,6 +64,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("la-palma-sede-electronica"),
                 ProfileId("diputacion-huesca-portal"),
                 ProfileId("diputacion-lugo-sede"),
+                ProfileId("diputacion-leon-sede"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
