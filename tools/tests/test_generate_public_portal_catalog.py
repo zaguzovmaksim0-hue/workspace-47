@@ -334,6 +334,26 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("tls 1.2", tea["limitations"].lower())
         self.assertIn("e2e", tea["limitations"].lower())
 
+    def test_tenerife_institutional_alias_binds_exact_qa_sede_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        tenerife = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "tenerife-portal-institucional"
+        )
+
+        self.assertEqual("tenerife-sede-electronica", tenerife["profileId"])
+        self.assertEqual("ES-PUB-0127", tenerife["inventoryId"])
+        self.assertEqual("https://www.tenerife.es/", tenerife["entryUrl"])
+        self.assertEqual("https://sede.tenerife.es/", tenerife["launchUrl"])
+        self.assertEqual("E2E_PENDING", tenerife["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", tenerife["inventoryStatus"])
+        self.assertEqual("2026-08-16", tenerife["reviewedOn"])
+        self.assertEqual("DELEGACION_TENERIFE_SEDE", tenerife["protocolFamily"])
+        self.assertEqual([], tenerife["observedMechanisms"])
+        self.assertEqual([], tenerife["observedSignatureFormats"])
+        self.assertIn("alias", tenerife["limitations"].lower())
+        self.assertIn("e2e", tenerife["limitations"].lower())
+
     def test_tenerife_autoscript_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tenerife = next(
