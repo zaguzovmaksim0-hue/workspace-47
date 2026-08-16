@@ -4051,7 +4051,7 @@
     {
       "portalId": "diputacion-palencia-sede",
       "inventoryId": "ES-PUB-0166",
-      "profileId": null,
+      "profileId": "diputacion-palencia-sede",
       "displayName": "Sede electrónica de Diputación Provincial de Palencia",
       "organization": "Diputación Provincial de Palencia",
       "governmentLevel": "LOCAL_ADMINISTRATION",

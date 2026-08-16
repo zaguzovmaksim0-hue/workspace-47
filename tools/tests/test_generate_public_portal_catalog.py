@@ -365,6 +365,20 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_diputacion_palencia_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-palencia-sede")
+
+        self.assertEqual("diputacion-palencia-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0166", target["inventoryId"])
+        self.assertEqual("https://sede.diputaciondepalencia.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
