@@ -487,6 +487,88 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactPoliciaAutoScriptCallNormalizesToOwnedSha1XadesRequest() {
+        val result = policiaAdapter().route(
+            rawMessage = policiaMessage(),
+            sourceOrigin = POLICIA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 52,
+            currentPageUrl = POLICIA_PROCEDURE_PAGE,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(POLICIA_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.policia.gob.es", request.context.origin.host)
+            assertEquals(52, request.context.navigationEpoch)
+            assertEquals(POLICIA_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.XADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(POLICIA_DOCUMENT, data)
+                    val parsed = java.util.Properties().apply { load(properties.reader()) }
+                    assertEquals("XAdES Detached", parsed.getProperty("format"))
+                    assertEquals("dnie:;nonexpired:", parsed.getProperty("filters.1"))
+                    assertEquals("keyusage.nonrepudiation:true;nonexpired:", parsed.getProperty("filters.2"))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun policiaBridgeKeepsWrongPageOriginAlgorithmFormatAndExtraPropertiesFailClosed() {
+        val adapter = policiaAdapter()
+        fun rejected(
+            rawMessage: String = policiaMessage(),
+            origin: Uri = POLICIA_ORIGIN,
+            pageUrl: String? = POLICIA_PROCEDURE_PAGE,
+        ) = adapter.route(
+            rawMessage = rawMessage,
+            sourceOrigin = origin,
+            isMainFrame = true,
+            currentPageUrl = pageUrl,
+        ) is MiniAppletBridgeRouteResult.Rejected
+
+        // Origin rejection
+        assertTrue(rejected(origin = Uri.parse("https://sede.policia.gob.es.evil.example")))
+        // Procedure page pin rejection: root, other page, query params, fragment, null
+        assertTrue(rejected(pageUrl = POLICIA_START_URL))
+        assertTrue(rejected(pageUrl = "https://sede.policia.gob.es/otra.xhtml"))
+        assertTrue(rejected(pageUrl = "$POLICIA_PROCEDURE_PAGE?param=val"))
+        assertTrue(rejected(pageUrl = "$POLICIA_PROCEDURE_PAGE#step"))
+        assertTrue(rejected(pageUrl = null))
+        // Algorithm rejection
+        assertTrue(rejected(rawMessage = policiaMessage(algorithm = "SHA256withRSA")))
+        // Format rejection: XAdES Detached as API format argument is rejected, only XAdES accepted
+        assertTrue(rejected(rawMessage = policiaMessage(format = "XAdES Detached")))
+        assertTrue(rejected(rawMessage = policiaMessage(format = "CAdES")))
+        // Extra properties rejection
+        assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "mode=invalid")))
+        assertTrue(rejected(rawMessage = policiaMessage(extraProperties = JSONObject.NULL)))
+        assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "filters=keyusage.nonrepudiation:true;nonexpired:\nformat=XAdES Detached")))
+        assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "format=XAdES Detached\nfilters.1=dnie:;nonexpired:")))
+        assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "format=XAdES Detached\nfilters.2=keyusage.nonrepudiation:true;nonexpired:")))
+        val reorderedProperties = policiaAdapter().route(
+            rawMessage = policiaMessage(
+                extraProperties = "filters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:\nformat=XAdES Detached",
+            ),
+            sourceOrigin = POLICIA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 52,
+            currentPageUrl = POLICIA_PROCEDURE_PAGE,
+        ) as MiniAppletBridgeRouteResult.Accepted
+        reorderedProperties.request.normalized.use { request ->
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { _, properties ->
+                    assertEquals(POLICIA_EXTRA_PROPERTIES_STR, properties)
+                }
+            }
+        }
+        assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "format=XAdES Detached\nfilters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:\nextra=val")))
+    }
+
+    @Test
     fun exactJccmProbeNormalizesOnlyTheFiveDecodedAsciiBytes() {
         val result = adapterFor(JCCM_PROFILE_ID).route(
             rawMessage = jccmMessage(),
@@ -905,6 +987,64 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
+    private fun policiaAdapter(): ProfileMiniAppletBridgeAdapter {
+        val profile = SiteProfile(
+            profileId = ProfileId(POLICIA_PROFILE_ID),
+            profileVersion = 1,
+            displayName = "Policía Nacional — Solicitud genérica",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
+            activation = ProfileActivation.QA_ONLY,
+            startUrl = URI(POLICIA_START_URL),
+            initiatorOrigins = setOf(ExactOrigin.parse(POLICIA_ORIGIN.toString())),
+            redirectOrigins = emptySet(),
+            trustedBrowseOrigins = emptySet(),
+            endpoints = emptyMap(),
+            operationPolicies = mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = POLICIA_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                    format = SignatureFormat.XADES,
+                    packaging = SignaturePackaging.DETACHED,
+                    mode = null,
+                    fixedExtraProperties = linkedMapOf(
+                        "format" to "XAdES Detached",
+                        "filters.1" to "dnie:;nonexpired:",
+                        "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
+                    ),
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+            capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+            clientAuthPolicy = null,
+            certificateRules = CertificateFilterRules(setOf("RSA"), false),
+            evidence = emptyList(),
+        )
+        return ProfileMiniAppletBridgeAdapter(
+            clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+            profileRegistry = SiteProfileRegistry(
+                SiteProfileCatalog(schemaVersion = 1, catalogVersion = 1, profiles = listOf(profile)),
+                BuildTrustPolicy.QA,
+            ),
+            adapterRegistry = ProtocolAdapterRegistry(
+                listOf(
+                    ProtocolAdapterBinding(
+                        profileId = profile.profileId,
+                        operation = ProtocolOperation.SIGN,
+                        inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                        callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                        signingProtocolId = SigningProtocolId(POLICIA_PROTOCOL_ID),
+                    ),
+                ),
+            ),
+            activeProfileId = { profile.profileId },
+        )
+    }
+
     private fun adapterFor(profileId: String): MiniAppletBridgeAdapter = MiniAppletBridgeAdapter(
         clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
         activeProfileId = { dev.junta.firmamobile.profile.ProfileId(profileId) },
@@ -955,6 +1095,21 @@ class MiniAppletBridgeAdapterTest {
         algorithm: String = "SHA1withRSA",
         format: String = "XAdES",
         extraProperties: Any = JSONObject.NULL,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
+    private fun policiaMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(POLICIA_DOCUMENT),
+        algorithm: String = "SHA1withRSA",
+        format: String = "XAdES",
+        extraProperties: Any = POLICIA_EXTRA_PROPERTIES_STR,
     ): String = JSONObject()
         .put("type", "MINIAPPLET_SIGN")
         .put("documentId", DOCUMENT_ID)
@@ -1091,5 +1246,17 @@ class MiniAppletBridgeAdapterTest {
         val DATA = "synthetic-miniapplet-data".encodeToByteArray()
         val SIGNATURE = byteArrayOf(1, 2, 3, 4)
         val CERTIFICATE = byteArrayOf(5, 6, 7, 8)
+        val POLICIA_ORIGIN: Uri = Uri.parse("https://sede.policia.gob.es")
+        const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
+        const val POLICIA_PROTOCOL_ID = "policia-xades-detached-v1"
+        const val POLICIA_START_URL = "https://sede.policia.gob.es/"
+        const val POLICIA_PROCEDURE_PAGE =
+            "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml"
+        const val POLICIA_SAFE_DESCRIPTION = "Firma de solicitud en la Sede de la Policía Nacional"
+        const val POLICIA_EXTRA_PROPERTIES_STR =
+            "format=XAdES Detached\nfilters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:"
+        val POLICIA_DOCUMENT =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><solicitud><campo>policia-doc</campo></solicitud>"
+                .encodeToByteArray()
     }
 }

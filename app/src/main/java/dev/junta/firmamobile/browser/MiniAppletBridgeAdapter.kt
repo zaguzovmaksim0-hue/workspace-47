@@ -208,6 +208,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == SEVILLA_ATSE_PROFILE_ID && !isSevillaAtseContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isPoliciaContract = isExactPoliciaContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == POLICIA_PROFILE_ID && !isPoliciaContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -230,12 +240,12 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract) {
+            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract || isPoliciaContract) {
                 null
             } else {
                 SigningFormat.XADES to SignatureFormat.XADES
             }
-            FORMAT_XADES -> if (isSevillaAtseContract) {
+            FORMAT_XADES -> if (isSevillaAtseContract || isPoliciaContract) {
                 SigningFormat.XADES to SignatureFormat.XADES
             } else {
                 null
@@ -293,6 +303,23 @@ internal class ProfileMiniAppletBridgeAdapter(
                 )
             }
             ""
+        } else if (isPoliciaContract) {
+            val raw = json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+            if (raw.length > MAX_EXTRA_PROPERTIES_CHARS || !raw.hasSafeControls()) {
+                return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+            }
+            canonicalExtraProperties(raw, operation.fixedExtraProperties)
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (operation.fixedExtraProperties.isEmpty()) {
             if (json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
                 return MiniAppletBridgeRouteResult.Rejected(
@@ -514,6 +541,43 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == SEVILLA_ATSE_PROTOCOL_ID
 
+    private fun isExactPoliciaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        profile.profileId.value == POLICIA_PROFILE_ID &&
+            profile.profileVersion == POLICIA_PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == POLICIA_START_URL &&
+            origin.serialized == POLICIA_ORIGIN &&
+            currentPageUrl == POLICIA_PROCEDURE_PAGE &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(POLICIA_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == POLICIA_SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.XADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == POLICIA_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == POLICIA_PROTOCOL_ID
+
     private fun ByteArray.isExactSevillaAtseChallenge(): Boolean =
         size == SEVILLA_ATSE_CHALLENGE_BYTES && all { byte ->
             val value = byte.toInt() and 0xff
@@ -649,6 +713,20 @@ internal class ProfileMiniAppletBridgeAdapter(
             "Acceso con certificado a la Agencia Tributaria de Sevilla"
         private const val SEVILLA_ATSE_PROTOCOL_ID = "sevilla-atse-xades-enveloping-v1"
         private const val SEVILLA_ATSE_CHALLENGE_BYTES = 40
+        private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
+        private const val POLICIA_PROFILE_VERSION = 1
+        private const val POLICIA_START_URL = "https://sede.policia.gob.es/"
+        private const val POLICIA_PROCEDURE_PAGE =
+            "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml"
+        private const val POLICIA_ORIGIN = "https://sede.policia.gob.es"
+        private const val POLICIA_SAFE_DESCRIPTION =
+            "Firma de solicitud en la Sede de la Policía Nacional"
+        private const val POLICIA_PROTOCOL_ID = "policia-xades-detached-v1"
+        private val POLICIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "format" to "XAdES Detached",
+            "filters.1" to "dnie:;nonexpired:",
+            "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
+        )
         private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
         private const val JCCM_START_URL =
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +

@@ -29,6 +29,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val cantabria: Boolean,
     val jccm: Boolean,
     val sevillaAtse: Boolean,
+    val policia: Boolean,
     val melillaBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
@@ -210,6 +211,7 @@ class WebMessageBridge(
                     cantabriaCompatibilityEnabled = shimFlags.cantabria,
                     jccmCompatibilityEnabled = shimFlags.jccm,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
+                    policiaCompatibilityEnabled = shimFlags.policia,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
@@ -605,6 +607,7 @@ class WebMessageBridge(
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
+        private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -615,6 +618,7 @@ class WebMessageBridge(
             cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
+            policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
             melillaBatch = melillaBatchEnabled,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,

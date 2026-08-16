@@ -200,6 +200,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == VALENCIA_PROFILE_ID) {
                 validateValenciaProfile(p)
             }
+            if (p.profileId.value == POLICIA_PROFILE_ID) {
+                validatePoliciaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -341,13 +344,19 @@ object SiteProfileCatalogParser {
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
                             require(
-                                op.algorithms == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                                op.algorithms == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID || p.profileId.value == POLICIA_PROFILE_ID) {
                                     setOf(SignatureAlgorithm.SHA1_WITH_RSA)
                                 } else {
                                     setOf(SignatureAlgorithm.SHA512_WITH_RSA)
                                 },
                             )
-                            require(op.fixedExtraProperties.isEmpty())
+                            require(
+                                op.fixedExtraProperties == if (p.profileId.value == POLICIA_PROFILE_ID) {
+                                    POLICIA_FIXED_EXTRA_PROPERTIES
+                                } else {
+                                    emptyMap()
+                                },
+                            )
                         }
                         SignatureFormat.PADES, SignatureFormat.FACTURAE -> error("unsupported adapter format")
                         null -> error("signing format required")
@@ -588,6 +597,39 @@ object SiteProfileCatalogParser {
                 packaging = SignaturePackaging.DETACHED,
                 mode = null,
                 fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+    private fun validatePoliciaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == POLICIA_PROFILE_VERSION)
+        require(profile.displayName == POLICIA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == POLICIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(POLICIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = POLICIA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.XADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = POLICIA_FIXED_EXTRA_PROPERTIES,
                 allowedExtraProperties = emptySet(),
             ),
         )
@@ -907,6 +949,18 @@ object SiteProfileCatalogParser {
     private const val TENERIFE_SAFE_DESCRIPTION =
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
+    private const val POLICIA_PROFILE_VERSION = 1
+    private const val POLICIA_DISPLAY_NAME = "Policía Nacional — Solicitud genérica"
+    private const val POLICIA_START_URL = "https://sede.policia.gob.es/"
+    private const val POLICIA_ORIGIN = "https://sede.policia.gob.es"
+    private const val POLICIA_SAFE_DESCRIPTION =
+        "Firma de solicitud en la Sede de la Policía Nacional"
+    private val POLICIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+        "format" to "XAdES Detached",
+        "filters.1" to "dnie:;nonexpired:",
+        "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
+    )
     private val TENERIFE_EVIDENCE_URLS = setOf(
         TENERIFE_START_URL,
         "https://sede.tenerife.es/76.81426d6ba0b90ca6.js",

@@ -359,6 +359,7 @@ class AfirmaJavascriptShimTest {
         assertFalse(flags.cantabria)
         assertFalse(flags.jccm)
         assertFalse(flags.sevillaAtse)
+        assertFalse(flags.policia)
         assertFalse(flags.melillaBatch)
         assertFalse(flags.isciiiCertificateSelection)
         assertTrue(flags.valenciaCertificateSelection)
@@ -390,5 +391,41 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
         assertTrue(enabled.contains("successCallback(certificateB64)"))
         assertFalse(enabled.contains("validarCertificado"))
+    }
+
+    @Test
+    fun activePoliciaProfileEnablesTheRuntimePoliciaShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("policia-solicitud-generica"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertFalse(flags.sevillaAtse)
+        assertTrue(flags.policia)
+        assertFalse(flags.melillaBatch)
+        assertFalse(flags.isciiiCertificateSelection)
+        assertFalse(flags.valenciaCertificateSelection)
+    }
+
+    @Test
+    fun policiaCompatibilityIsProfileScopedToTheExactSha1XadesTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            policiaCompatibilityEnabled = true,
+        )
+
+        assertTrue(script.contains("const policiaCompatibilityEnabled = true"))
+        assertTrue(script.contains("https://sede.policia.gob.es"))
+        assertTrue(script.contains("https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml"))
+        assertTrue(script.contains("args[1] === \"SHA1withRSA\""))
+        assertTrue(script.contains("args[2] === \"XAdES\""))
+        assertTrue(script.contains("isPoliciaProcedurePage"))
     }
 }

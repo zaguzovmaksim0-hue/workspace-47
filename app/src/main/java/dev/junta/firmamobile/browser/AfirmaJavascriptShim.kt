@@ -21,6 +21,7 @@ object AfirmaJavascriptShim {
         cantabriaCompatibilityEnabled: Boolean = false,
         jccmCompatibilityEnabled: Boolean = false,
         sevillaAtseCompatibilityEnabled: Boolean = false,
+        policiaCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
         isciiiCertificateSelectionEnabled: Boolean = false,
         valenciaCertificateSelectionEnabled: Boolean = false,
@@ -34,6 +35,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(CANTABRIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(JCCM_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
         check(script.countOccurrences(VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
@@ -63,6 +65,10 @@ object AfirmaJavascriptShim {
                 if (sevillaAtseCompatibilityEnabled) "true" else "false",
             )
             .replace(
+                POLICIA_COMPATIBILITY_PLACEHOLDER,
+                if (policiaCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
                 MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
                 if (melillaBatchCompatibilityEnabled) "true" else "false",
             )
@@ -89,6 +95,8 @@ object AfirmaJavascriptShim {
     private const val JCCM_COMPATIBILITY_PLACEHOLDER = "__JFM_JCCM_COMPATIBILITY_ENABLED__"
     private const val SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER =
         "__JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__"
+    private const val POLICIA_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_POLICIA_COMPATIBILITY_ENABLED__"
     private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
     private const val ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER =

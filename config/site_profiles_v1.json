@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 22,
+  "catalogVersion": 23,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -707,6 +707,26 @@
       "evidence": [
         {"url":"https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info","reviewedOn":"2026-07-16"},
         {"url":"https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info","reviewedOn":"2026-07-16"}
+      ]
+    },
+    {
+      "profileId": "policia-solicitud-generica",
+      "profileVersion": 1,
+      "displayName": "Policía Nacional — Solicitud genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.policia.gob.es/",
+      "initiatorOrigins": ["https://sede.policia.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de solicitud en la Sede de la Policía Nacional","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"XADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{"format":"XAdES Detached","filters.1":"dnie:;nonexpired:","filters.2":"keyusage.nonrepudiation:true;nonexpired:"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.policia.gob.es/","reviewedOn":"2026-08-15"},
+        {"url":"https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml","reviewedOn":"2026-08-15"}
       ]
     }
   ]

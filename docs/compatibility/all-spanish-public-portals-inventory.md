@@ -1620,29 +1620,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Cuerpo Nacional de Policía"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica de la Policía Nacional — Solicitud genérica"
     surface_type: "SEDE"
     origin: "https://sede.policia.gob.es"
     official_site: "https://sede.policia.gob.es/"
     e_sede: "https://sede.policia.gob.es/"
     entry_url: "https://sede.policia.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    procedure_page: "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / customsign.js"
+    protocol_family: "AUTOSCRIPT_LOCAL_XADES"
+    signature_format: "XAdES detached"
+    signature_algorithm: "SHA1withRSA"
+    endpoint: "Sin endpoint trifásico: customsign.js invoca AutoScript.sign localmente con SHA1withRSA, XAdES y filtros DNIe/no expirado, devolviendo signatureB64 al formulario."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma de solicitud genérica en la Sede de la Policía Nacional mediante AutoScript.sign en formato XAdES Detached con SHA1withRSA."
+    protocol_evidence: "solicitudGenerica.xhtml y customsign.js cargan AutoScript y llaman AutoScript.sign(dataB64, 'SHA1withRSA', 'XAdES', extraProperties, callback) con filtros de certificado DNIe/nonexpired y keyusage.nonrepudiation."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "POLICIA-SEDE-2026-08-15", "POLICIA-SOLICITUD-2026-08-15"]
+    reason: "Contrato de firma XAdES Detached implementado solo en QA; no se realizó E2E físico/manual, autenticación real ni presentación administrativa. El perfil no promueve release ni VERIFIED_E2E."
+    reviewed_at: "2026-08-15"
+    next_gate: "E2E físico/manual autorizado sobre el flujo real; no promover release ni VERIFIED_E2E sin evidencia separada."
     notes: "Ministerio(s) enumerador(es): Ministerio del Interior."
 
   - inventory_id: "ES-PUB-0039"
@@ -6227,6 +6227,9 @@ Orden de expansión recomendado:
 [D12]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/WP_CabildosConsejos.html
 
 ### Evidencia portal-specific
+
+[POLICIA-SEDE-2026-08-15]: https://sede.policia.gob.es/
+[POLICIA-SOLICITUD-2026-08-15]: https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml
 
 [P01]: https://sede.administracion.gob.es/PAG_Sede/ServiciosElectronicos/RegistroElectronicoGeneral.html?idioma=es&imprimir=1
 [P01B]: https://sede.administracion.gob.es/PAG_Sede/LaSedePAG/SistemasFirmaAceptados.html?hc=1

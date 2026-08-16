@@ -351,6 +351,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("firma", toledo["limitations"].lower())
         self.assertIn("e2e", toledo["limitations"].lower())
 
+    def test_policia_autoscript_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        policia = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-cuerpo-nacional-de-policia"
+        )
+
+        self.assertEqual("policia-solicitud-generica", policia["profileId"])
+        self.assertEqual("ES-PUB-0038", policia["inventoryId"])
+        self.assertEqual("https://sede.policia.gob.es/", policia["entryUrl"])
+        self.assertNotIn("launchUrl", policia)
+        self.assertEqual("E2E_PENDING", policia["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", policia["inventoryStatus"])
+        self.assertEqual("2026-08-15", policia["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", policia["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", policia["observedMechanisms"])
+        self.assertEqual(["XADES"], policia["observedSignatureFormats"])
+        self.assertIn("xades", policia["limitations"].lower())
+        self.assertIn("e2e", policia["limitations"].lower())
 
     def test_ceuta_browse_only_profile_binds_exact_catalog_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
