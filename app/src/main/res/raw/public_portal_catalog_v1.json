@@ -4238,7 +4238,7 @@
     {
       "portalId": "diputacion-teruel-sede",
       "inventoryId": "ES-PUB-0173",
-      "profileId": null,
+      "profileId": "diputacion-teruel-sede",
       "displayName": "Sede electrónica de Diputación Provincial de Teruel",
       "organization": "Diputación Provincial de Teruel",
       "governmentLevel": "LOCAL_ADMINISTRATION",
