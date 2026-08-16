@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "5c6bdcfce4ad599708fd60ae0715924fe0f17d99094d20efd21b17f016efa037",
+  "sourceRevision": "da42324291725a404e67c95256e33761081f345d41a60b3a7560ef36ee859455",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2355,31 +2355,33 @@
     {
       "portalId": "cantabria-sede",
       "inventoryId": "ES-PUB-0100",
-      "profileId": null,
+      "profileId": "cantabria-rec-cert-login",
       "displayName": "Sede electrónica del Gobierno de Cantabria",
       "organization": "Gobierno de Cantabria",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Cantabria",
-      "purpose": "Catálogo y tramitación con sistemas de firma admitidos según el procedimiento.",
+      "purpose": "La Sede de Cantabria delega el acceso público al Registro Electrónico Común mediante un enlace exacto al REC ya implementado en QA.",
       "entryUrl": "https://sede.cantabria.es/sede/",
+      "launchUrl": "https://rec.cantabria.es/rec/bienvenida.htm",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_CANTABRIA_REC",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A06A",
         "A06B",
         "A06C",
-        "A06D"
+        "A06D",
+        "A06E"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado y firma son condicionales; cliente JS, formato y endpoint siguen sin verificar."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente cantabria-rec-cert-login por igualdad exacta del launch URL oficial; se conserva la Sede como entry URL, no se atribuye al origen sede.cantabria.es el ABI del REC y falta E2E físico."
     },
     {
       "portalId": "cantabria-registro-electronico-comun",
@@ -3139,26 +3141,27 @@
     {
       "portalId": "la-palma-portal-institucional",
       "inventoryId": "ES-PUB-0129",
-      "profileId": null,
+      "profileId": "la-palma-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de La Palma",
       "organization": "Cabildo Insular de La Palma",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la administración electrónica mediante un enlace exacto a la Sede de La Palma ya implementada en QA.",
       "entryUrl": "https://www.cabildodelapalma.es/",
+      "launchUrl": "https://sedeelectronica.cabildodelapalma.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_SEDE_LA_PALMA",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I07A",
         "I07B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente la-palma-sede-electronica por igualdad exacta del launch URL oficial; se conserva el portal institucional como entry URL, no se hereda trust al origin institucional y falta E2E físico."
     },
     {
       "portalId": "la-palma-sede-electronica",

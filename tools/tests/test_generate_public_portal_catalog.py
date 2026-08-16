@@ -392,6 +392,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "no inventory entry"):
                 GENERATOR.generate(path, SITE_PROFILES)
 
+    def test_cantabria_sede_alias_binds_exact_existing_rec_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "cantabria-sede")
+
+        self.assertEqual("cantabria-rec-cert-login", target["profileId"])
+        self.assertEqual("https://sede.cantabria.es/sede/", target["entryUrl"])
+        self.assertEqual("https://rec.cantabria.es/rec/bienvenida.htm", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+    def test_la_palma_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "la-palma-portal-institucional")
+
+        self.assertEqual("la-palma-sede-electronica", target["profileId"])
+        self.assertEqual("https://www.cabildodelapalma.es/", target["entryUrl"])
+        self.assertEqual("https://sedeelectronica.cabildodelapalma.es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
     def test_unknown_alias_launch_url_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
         exact = '    launch_url: "https://reg.redsara.es/es/"\n'

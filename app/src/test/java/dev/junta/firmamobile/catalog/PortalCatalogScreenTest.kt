@@ -49,7 +49,20 @@ class PortalCatalogScreenTest {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
-        assertEquals(24, compatible.items.size)
+        val expectedCompatible = repository.portals().filter {
+            it.supportStatus in setOf(
+                PortalSupportStatus.VERIFIED_E2E,
+                PortalSupportStatus.IMPLEMENTED_NOT_E2E,
+            )
+        }
+        assertEquals(expectedCompatible.map { it.portalId }.toSet(), compatible.items.map { it.portalId }.toSet())
+        assertEquals(expectedCompatible.size, compatible.items.size)
+        assertTrue(
+            setOf(
+                PortalId("cantabria-sede"),
+                PortalId("la-palma-portal-institucional"),
+            ).all { aliasId -> compatible.items.any { it.portalId == aliasId } },
+        )
         val verifiedIds = setOf("carne-joven-andalucia", "aragon-siraw", "junta-ofvirtual", "unizar-tramitador")
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }

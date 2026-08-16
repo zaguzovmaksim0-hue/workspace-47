@@ -39,7 +39,19 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(26, catalog.entries.count { it.profileId != null })
+        val boundEntries = catalog.entries.filter { it.profileId != null }
+        val aliasEntries = boundEntries.filter { it.launchUrl != null }
+        assertEquals(BuiltInSiteProfiles.catalog.profiles.size, boundEntries.mapNotNull { it.profileId }.toSet().size)
+        assertEquals(BuiltInSiteProfiles.catalog.profiles.size + aliasEntries.size, boundEntries.size)
+        assertEquals(
+            setOf(
+                PortalId("age-pag-reg"),
+                PortalId("us-sede"),
+                PortalId("cantabria-sede"),
+                PortalId("la-palma-portal-institucional"),
+            ),
+            aliasEntries.map { it.portalId }.toSet(),
+        )
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -72,7 +84,7 @@ class PublicPortalCatalogParserTest {
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 70)
-        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 152)
+        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 150)
     }
 
     @Test
