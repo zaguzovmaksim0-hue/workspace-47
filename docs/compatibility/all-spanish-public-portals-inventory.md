@@ -215,8 +215,8 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 10 |
-| `VERIFIED_CONTRACT` | 1 |
+| `IMPLEMENTED_NOT_E2E` | 11 |
+| `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 162 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
@@ -553,12 +553,12 @@ records:
     signature_algorithm: "SHA1withRSA en doSignSolicitud; rama genérica NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "VERIFIED_CONTRACT"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Helper estático para firmar una solicitud; rama genérica gobernada por formulario."
     protocol_evidence: "AutoScript.sign y callbacks publicados por el origin; uso runtime en un procedimiento concreto no observado."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["P15", "P15A", "P15B", "D11"]
-    reason: "Contrato estático probado, pero faltan procedimiento exacto, endpoint servidor, implementación y aceptación E2E."
+    reason: "Implementación PAdES local verificada bajo contrato estático doSignSolicitud; falta prueba de aceptación E2E con formulario real."
     reviewed_at: "2026-07-15"
     next_gate: "Demostrar invocación portal-specific en un procedimiento y después E2E."
 

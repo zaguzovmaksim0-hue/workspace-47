@@ -713,8 +713,8 @@
       "profileId": "age-acceda",
       "profileVersion": 1,
       "displayName": "Plataforma ACCEDA — Sede electrónica",
-      "compatibilityStatus": "BROWSE_ONLY",
-      "activation": "ENABLED",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
       "startUrl": "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
       "initiatorOrigins": [
         "https://sede.administracionespublicas.gob.es"
@@ -722,8 +722,35 @@
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [],
-      "capabilities": [],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Firma de solicitud en Plataforma ACCEDA",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "miniapplet-sign-callback-v1",
+          "capabilities": [
+            "SIGN",
+            "LEGACY_SHA1"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA1_WITH_RSA"
+          ],
+          "format": "PADES",
+          "packaging": "DETACHED",
+          "mode": null,
+          "fixedExtraProperties": {
+            "format": "PAdES Detached",
+            "expPolicy": "FirmaAGE",
+            "nonexpired": "true"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN",
+        "LEGACY_SHA1"
+      ],
       "clientAuthPolicy": null,
       "certificateRules": {
         "allowedKeyAlgorithms": [

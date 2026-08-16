@@ -304,6 +304,64 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactAccedaAutoScriptCallNormalizesToSha1Pades() {
+        val result = adapterFor(ACCEDA_PROFILE_ID).route(
+            rawMessage = accedaMessage(),
+            sourceOrigin = ACCEDA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 33,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(ACCEDA_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(ACCEDA_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.administracionespublicas.gob.es", request.context.origin.host)
+            assertEquals(33, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.PADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(ACCEDA_PDF, data)
+                    assertEquals(ACCEDA_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun accedaRejectsWrongProfileOriginTupleAndPropertiesWithoutBroadening() {
+        assertTrue(
+            adapterFor(ACCEDA_PROFILE_ID).route(
+                accedaMessage(),
+                Uri.parse("https://sede.administracionespublicas.gob.es.evil.example"),
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor("junta-andalucia").route(
+                accedaMessage(),
+                ACCEDA_ORIGIN,
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        listOf(
+            accedaMessage(algorithm = "SHA256withRSA"),
+            accedaMessage(algorithm = "SHA512withRSA"),
+            accedaMessage(format = "CAdES"),
+            accedaMessage(format = "XAdES Detached"),
+            accedaMessage(extraProperties = "format=CAdES"),
+            accedaMessage(extraProperties = JSONObject.NULL),
+            accedaMessage(dataB64 = Base64.getEncoder().encodeToString("not-a-pdf".toByteArray())),
+        ).forEach { message ->
+            assertTrue(
+                adapterFor(ACCEDA_PROFILE_ID).route(message, ACCEDA_ORIGIN, true) is
+                    MiniAppletBridgeRouteResult.Rejected,
+            )
+        }
+    }
+
+    @Test
     fun cantabriaRecRejectsWrongProfileOriginChallengeTupleAndPropertiesWithoutGenericBroadening() {
         assertEquals(
             SigningErrorCode.ORIGIN_NOT_ALLOWED,
@@ -1035,6 +1093,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun accedaMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(ACCEDA_PDF),
+        algorithm: String = "SHA1withRSA",
+        format: String = "PAdES",
+        extraProperties: Any = ACCEDA_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private fun cantabriaRejected(
         rawMessage: String = cantabriaMessage(),
         origin: Uri = CANTABRIA_ORIGIN,
@@ -1089,6 +1162,18 @@ class MiniAppletBridgeAdapterTest {
                 "serverUrl=https://ws024.juntadeandalucia.es/" +
                 "afirma-validator-miniapplet-1_5/sign/TriPhaseSignatureService"
         val DATA = "synthetic-miniapplet-data".encodeToByteArray()
+        val ACCEDA_ORIGIN: Uri = Uri.parse("https://sede.administracionespublicas.gob.es")
+        const val ACCEDA_PROFILE_ID = "age-acceda"
+        const val ACCEDA_PROTOCOL_ID = "age-acceda-local-pades-v1"
+        const val ACCEDA_EXTRA_PROPERTIES = "format=PAdES Detached\nexpPolicy=FirmaAGE\nnonexpired:true"
+        val ACCEDA_PDF = (
+            "%PDF-1.4\n" +
+                "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n" +
+                "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n" +
+                "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n" +
+                "xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n" +
+                "trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n193\n%%EOF\n"
+            ).toByteArray(Charsets.US_ASCII)
         val SIGNATURE = byteArrayOf(1, 2, 3, 4)
         val CERTIFICATE = byteArrayOf(5, 6, 7, 8)
     }

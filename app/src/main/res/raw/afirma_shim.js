@@ -21,6 +21,7 @@
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
   const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
+  const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -38,6 +39,8 @@
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  const accedaOrigin = "https://sede.administracionespublicas.gob.es";
+  const accedaExtraProperties = "format=PAdES Detached\nexpPolicy=FirmaAGE\nnonexpired:true";
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -224,6 +227,23 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isAccedaOrigin =
+      accedaCompatibilityEnabled && window.location.origin === accedaOrigin;
+    const isExactAccedaCall =
+      isAccedaOrigin &&
+      args.length === 6 &&
+      typeof args[0] === "string" &&
+      base64Pattern.test(args[0]) &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "PAdES" &&
+      typeof args[3] === "string" &&
+      args[3].trim() === accedaExtraProperties &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isAccedaOrigin && !isExactAccedaCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isExactUgrLiteralCall =
       ugrCompatibilityEnabled &&
       window.location.origin === ugrOrigin &&
@@ -270,7 +290,8 @@
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
-          !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall)) {
+          !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
+          !isExactAccedaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

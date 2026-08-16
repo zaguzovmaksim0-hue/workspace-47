@@ -32,6 +32,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val melillaBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
+    val acceda: Boolean,
 )
 
 class WebMessageBridge(
@@ -213,6 +214,7 @@ class WebMessageBridge(
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
+                    accedaCompatibilityEnabled = shimFlags.acceda,
                 ),
                 originRules,
             )
@@ -605,6 +607,7 @@ class WebMessageBridge(
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
+        private const val ACCEDA_PROFILE_ID = "age-acceda"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -618,6 +621,7 @@ class WebMessageBridge(
             melillaBatch = melillaBatchEnabled,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
+            acceda = profileActive && profileId.value == ACCEDA_PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"

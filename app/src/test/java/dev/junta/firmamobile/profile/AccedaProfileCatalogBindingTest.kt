@@ -10,10 +10,12 @@ import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.SignatureFormat
 import java.net.URI
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -28,36 +30,55 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class AccedaProfileCatalogBindingTest {
-    private val profileId = ProfileId("age-acceda")
+    private val profileId = ProfileId(AccedaPadesAdapter.PROFILE_ID)
     private val portalId = PortalId("age-acceda")
     private val startUrl = URI("https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES")
 
     @Test
-    fun profilePreservesExactBrowseOnlyContractAndExposesNoSensitiveCapabilities() {
+    fun qaProfilePreservesExactAccedaSignerContractAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
         assertEquals(1, profile.profileVersion)
         assertEquals("Plataforma ACCEDA — Sede electrónica", profile.displayName)
-        assertEquals(CompatibilityStatus.BROWSE_ONLY, profile.compatibilityStatus)
-        assertEquals(ProfileActivation.ENABLED, profile.activation)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://sede.administracionespublicas.gob.es")), profile.initiatorOrigins)
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), profile.capabilities)
         assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertTrue(profile.evidence.isNotEmpty())
 
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), operation.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), operation.callbackContractId)
+        assertEquals(setOf(SignatureAlgorithm.SHA1_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.PADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertNull(operation.mode)
+        assertEquals(
+            mapOf(
+                "format" to "PAdES Detached",
+                "expPolicy" to "FirmaAGE",
+                "nonexpired" to "true",
+            ),
+            operation.fixedExtraProperties,
+        )
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(profile, BuiltInSiteProfiles.releaseRegistry.profile(profileId))
-        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
-        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.releaseRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://evil.sede.administracionespublicas.gob.es/")))
     }
 
     @Test
-    fun securityPolicyRejectsNonMatchingSeedsAndInjectsNoNativeBridge() {
+    fun securityPolicyRejectsNonMatchingSeedsAndBindsProtocolInQa() {
         listOf(
             "http://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
             "https://user@sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
@@ -70,33 +91,53 @@ class AccedaProfileCatalogBindingTest {
             assertNull(rejected, BuiltInSiteProfiles.qaRegistry.resolve(URI(rejected)))
         }
 
-        assertNull(BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SIGN))
+        val binding = BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SIGN)
+        assertEquals(AccedaPadesAdapter.ID, binding?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), binding?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), binding?.callbackContractId)
         assertNull(BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SELECT_CERTIFICATE))
 
-        assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
-        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES"), profileId))
-        assertEquals(setOf("sede.administracionespublicas.gob.es"), JuntaOriginPolicy.browserAllowedHosts(profileId))
+        assertEquals(
+            setOf("https://sede.administracionespublicas.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(profileId),
+        )
+        assertEquals(
+            "https://sede.administracionespublicas.gob.es",
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES"),
+                profileId,
+            )?.serialized,
+        )
+        assertEquals(
+            setOf("sede.administracionespublicas.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(profileId),
+        )
     }
 
     @Test
-    fun publicCatalogBindsTheExactBrowseOnlyEntry() {
+    fun publicCatalogBindsTheExactImplementedEntry() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.portalId == portalId }
         assertEquals(profileId, entry.profileId)
         assertEquals("ES-PUB-0003", entry.inventoryId)
         assertEquals(startUrl, entry.entryUrl)
         assertNull(entry.launchUrl)
-        assertEquals(PortalInventoryStatus.VERIFIED_CONTRACT, entry.inventoryStatus)
-        assertEquals(PublicCatalogStatus.CATALOGED, entry.catalogStatus)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
         assertEquals("2026-07-15", entry.reviewedOn.toString())
         assertEquals(
-            setOf(PortalMechanism.AUTOSCRIPT, PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.ELECTRONIC_SIGNATURE),
+            setOf(
+                PortalMechanism.AUTOSCRIPT,
+                PortalMechanism.CERTIFICATE_ACCESS,
+                PortalMechanism.ELECTRONIC_SIGNATURE,
+            ),
             entry.observedMechanisms,
         )
         assertEquals(
             setOf(SignatureFormat.PADES, SignatureFormat.XADES),
             entry.observedSignatureFormats,
         )
+        assertTrue(entry.limitations.contains("E2E", ignoreCase = true))
 
         val qa = PortalCatalogRepository(
             BuiltInSiteProfiles.qaRegistry,
@@ -111,12 +152,12 @@ class AccedaProfileCatalogBindingTest {
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
 
-        assertEquals(PortalSupportStatus.BROWSE_ONLY, qaPortal.supportStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
 
-        assertEquals(PortalSupportStatus.BROWSE_ONLY, releasePortal.supportStatus)
-        assertTrue(releasePortal.isEnabled)
-        assertEquals(PortalLaunchTarget(profileId, startUrl), release.resolveLaunch(releasePortal))
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertNull(release.resolveLaunch(releasePortal))
     }
 }

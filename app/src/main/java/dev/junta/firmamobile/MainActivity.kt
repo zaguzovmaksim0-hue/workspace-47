@@ -50,6 +50,7 @@ import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
 import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
+import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
@@ -133,6 +134,7 @@ class MainActivity : ComponentActivity() {
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
         val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
+        val accedaAdapter = AccedaPadesAdapter()
         signingCoordinator = SigningCoordinator(
             certificateSession = app.certificateSession,
             adapter = juntaAdapter,
@@ -164,6 +166,7 @@ class MainActivity : ComponentActivity() {
                     tenerifeAdapter.id -> tenerifeAdapter
                     sevillaAdapter.id -> sevillaAdapter
                     unizarAdapter.id -> unizarAdapter
+                    accedaAdapter.id -> accedaAdapter
                     else -> null
                 }
             },

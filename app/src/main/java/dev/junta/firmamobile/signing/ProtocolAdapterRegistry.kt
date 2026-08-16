@@ -143,6 +143,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("autoscript-select-certificate-callback-v1"),
                 signingProtocolId = SigningProtocolId("valencia-select-certificate-v1"),
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(AccedaPadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = AccedaPadesAdapter.ID,
+            ),
         ),
     )
 }

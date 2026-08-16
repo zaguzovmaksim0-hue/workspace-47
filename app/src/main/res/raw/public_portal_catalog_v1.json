@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "5c6bdcfce4ad599708fd60ae0715924fe0f17d99094d20efd21b17f016efa037",
+  "sourceRevision": "7028b8177ce1aaed908750b6ed11646013f73cd4fdecca1ff3c01a05452c628f",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -84,8 +84,8 @@
         "XADES"
       ],
       "protocolFamily": "AUTOSCRIPT_LOCAL",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "VERIFIED_CONTRACT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P15",
@@ -94,7 +94,7 @@
         "D11"
       ],
       "reviewedOn": "2026-07-15",
-      "limitations": "Contrato estático probado, pero faltan procedimiento exacto, endpoint servidor, implementación y aceptación E2E."
+      "limitations": "Implementación PAdES local verificada bajo contrato estático doSignSolicitud; falta prueba de aceptación E2E con formulario real."
     },
     {
       "portalId": "aeat-sede",

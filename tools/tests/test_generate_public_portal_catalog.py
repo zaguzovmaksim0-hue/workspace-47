@@ -365,7 +365,7 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
-    def test_acceda_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+    def test_acceda_profile_binds_exact_catalog_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         acceda = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-acceda")
 
@@ -376,8 +376,8 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             acceda["entryUrl"],
         )
         self.assertNotIn("launchUrl", acceda)
-        self.assertEqual("CATALOGED", acceda["catalogStatus"])
-        self.assertEqual("VERIFIED_CONTRACT", acceda["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", acceda["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", acceda["inventoryStatus"])
         self.assertEqual("2026-07-15", acceda["reviewedOn"])
         self.assertEqual(["PADES", "XADES"], acceda["observedSignatureFormats"])
         self.assertEqual(
