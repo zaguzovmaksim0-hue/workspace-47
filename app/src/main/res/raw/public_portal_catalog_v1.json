@@ -4132,7 +4132,7 @@
     {
       "portalId": "diputacion-segovia-sede",
       "inventoryId": "ES-PUB-0169",
-      "profileId": null,
+      "profileId": "diputacion-segovia-sede",
       "displayName": "Sede electrónica de Diputación de Segovia",
       "organization": "Diputación de Segovia",
       "governmentLevel": "LOCAL_ADMINISTRATION",
