@@ -365,6 +365,132 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_diputacion_lugo_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-lugo-sede")
+
+        self.assertEqual("diputacion-lugo-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0163", target["inventoryId"])
+        self.assertEqual("https://sede.deputacionlugo.org", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_malaga_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-malaga-sede")
+
+        self.assertEqual("diputacion-malaga-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0164", target["inventoryId"])
+        self.assertEqual("https://sede.malaga.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_ourense_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-ourense-sede")
+
+        self.assertEqual("diputacion-ourense-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0165", target["inventoryId"])
+        self.assertEqual("https://sede.depourense.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_palencia_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-palencia-sede")
+
+        self.assertEqual("diputacion-palencia-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0166", target["inventoryId"])
+        self.assertEqual("https://sede.diputaciondepalencia.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_salamanca_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-salamanca-sede")
+
+        self.assertEqual("diputacion-salamanca-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0168", target["inventoryId"])
+        self.assertEqual("https://sede.diputaciondesalamanca.gob.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_segovia_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-segovia-sede")
+
+        self.assertEqual("diputacion-segovia-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0169", target["inventoryId"])
+        self.assertEqual("https://sede.dipsegovia.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_teruel_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-teruel-sede")
+
+        self.assertEqual("diputacion-teruel-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0173", target["inventoryId"])
+        self.assertEqual("https://dpteruel.sedelectronica.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_zamora_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-zamora-sede")
+
+        self.assertEqual("diputacion-zamora-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0177", target["inventoryId"])
+        self.assertEqual("https://diputaciondezamora.sedelectronica.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
+    def test_diputacion_zaragoza_sede_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-zaragoza-sede")
+
+        self.assertEqual("diputacion-zaragoza-sede", target["profileId"])
+        self.assertEqual("ES-PUB-0178", target["inventoryId"])
+        self.assertEqual("https://dpz.sedelectronica.es", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATALOGED", target["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", target["inventoryStatus"])
+        self.assertEqual("2026-07-16", target["reviewedOn"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
