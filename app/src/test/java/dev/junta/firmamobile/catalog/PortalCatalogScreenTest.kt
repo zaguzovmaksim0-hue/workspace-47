@@ -59,16 +59,16 @@ class PortalCatalogScreenTest {
             compatible.items.filterNot { it.profileId?.value in verifiedIds }
                 .all { it.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E },
         )
-        val contractPending = sections.single { it.kind == PortalCatalogSectionKind.CONTRACT_PENDING }
-        assertEquals(
-            setOf(PortalId("age-acceda")),
-            contractPending.items.map { it.portalId }.toSet(),
-        )
+        val contractPending = sections.singleOrNull { it.kind == PortalCatalogSectionKind.CONTRACT_PENDING }
+        assertEquals(null, contractPending)
         val fullCatalog = sections.single { it.kind == PortalCatalogSectionKind.FULL_CATALOG }
         assertEquals(
-            repository.portals().size - compatible.items.size - contractPending.items.size,
+            repository.portals().size - compatible.items.size,
             fullCatalog.items.size,
         )
+        val acceda = fullCatalog.items.single { it.portalId == PortalId("age-acceda") }
+        assertEquals(PortalSupportStatus.BROWSE_ONLY, acceda.supportStatus)
+        assertTrue(acceda.isEnabled)
         val education = fullCatalog.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
         assertEquals(PortalSupportStatus.BROWSE_ONLY, education.supportStatus)
         assertTrue(education.isEnabled)

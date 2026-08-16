@@ -365,6 +365,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_acceda_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        acceda = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-acceda")
+
+        self.assertEqual("age-acceda", acceda["profileId"])
+        self.assertEqual("ES-PUB-0003", acceda["inventoryId"])
+        self.assertEqual(
+            "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
+            acceda["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", acceda)
+        self.assertEqual("CATALOGED", acceda["catalogStatus"])
+        self.assertEqual("VERIFIED_CONTRACT", acceda["inventoryStatus"])
+        self.assertEqual("2026-07-15", acceda["reviewedOn"])
+        self.assertEqual(["PADES", "XADES"], acceda["observedSignatureFormats"])
+        self.assertEqual(
+            ["AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            acceda["observedMechanisms"],
+        )
+
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}

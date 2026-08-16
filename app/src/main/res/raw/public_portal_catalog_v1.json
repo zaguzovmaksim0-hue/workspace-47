@@ -67,7 +67,7 @@
     {
       "portalId": "age-acceda",
       "inventoryId": "ES-PUB-0003",
-      "profileId": null,
+      "profileId": "age-acceda",
       "displayName": "Plataforma ACCEDA",
       "organization": "Administración General del Estado",
       "governmentLevel": "STATE",
