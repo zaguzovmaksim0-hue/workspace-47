@@ -3,6 +3,8 @@ package dev.junta.firmamobile.browser
 import android.content.Context
 import dev.junta.firmamobile.BuildConfig
 import dev.junta.firmamobile.R
+import java.net.URI
+import org.json.JSONObject
 
 object AfirmaJavascriptShim {
     const val MAX_SCRIPT_CHARS = 48 * 1024
@@ -23,6 +25,7 @@ object AfirmaJavascriptShim {
         sevillaAtseCompatibilityEnabled: Boolean = false,
         policiaCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
+        staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
         isciiiCertificateSelectionEnabled: Boolean = false,
         valenciaCertificateSelectionEnabled: Boolean = false,
     ): String {
@@ -37,7 +40,15 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
         check(script.countOccurrences(ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
+        val batchOrigin = URI(staBatchOrigin)
+        require(
+            !batchOrigin.isOpaque && batchOrigin.scheme == "https" && batchOrigin.host != null &&
+                batchOrigin.userInfo == null && (batchOrigin.port == -1 || batchOrigin.port == 443) &&
+                (batchOrigin.rawPath.isNullOrEmpty() || batchOrigin.rawPath == "/") &&
+                batchOrigin.rawQuery == null && batchOrigin.rawFragment == null
+        )
         check(script.countOccurrences(VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
         val configured = script
             .replace(
@@ -72,6 +83,7 @@ object AfirmaJavascriptShim {
                 MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
                 if (melillaBatchCompatibilityEnabled) "true" else "false",
             )
+            .replace(STA_BATCH_ORIGIN_PLACEHOLDER, JSONObject.quote(staBatchOrigin.removeSuffix("/")))
             .replace(
                 ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER,
                 if (isciiiCertificateSelectionEnabled) "true" else "false",
@@ -99,6 +111,7 @@ object AfirmaJavascriptShim {
         "__JFM_POLICIA_COMPATIBILITY_ENABLED__"
     private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
+    private const val STA_BATCH_ORIGIN_PLACEHOLDER = "__JFM_STA_BATCH_ORIGIN__"
     private const val ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER =
         "__JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__"
     private const val VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER =
