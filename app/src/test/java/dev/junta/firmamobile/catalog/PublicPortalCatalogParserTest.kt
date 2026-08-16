@@ -218,6 +218,31 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `BNE alias retains the official register page while resolving exact REG AGE launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-biblioteca-nacional-de-espana")
+        }
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://sede.bne.gob.es/es/tramites/quejas-sugerencias"), portal.entryUrl)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `strict parser rejects unknown duplicate insecure and malformed records`() {
         listOf(
             json.replaceFirst("\"schemaVersion\": 1", "\"schemaVersion\": 1, \"unknown\": true"),
