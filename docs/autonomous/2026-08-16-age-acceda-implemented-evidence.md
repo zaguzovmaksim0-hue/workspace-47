@@ -95,5 +95,5 @@ function doSignSolicitud(data, nif, tipo_certificado_logeado) {
   * `AccedaProfileCatalogBindingTest.kt`: Valida resolución `IMPLEMENTED_NOT_E2E` en QA, ausencia del perfil `QA_ONLY` en el registry de Release y políticas de origen; el catálogo público de Release conserva `VERIFIED_CONTRACT` deshabilitado.
   * `MiniAppletBridgeAdapterTest.kt`: Valida enrutamiento y normalización de peticiones `PAdES` de ACCEDA.
   * `AfirmaJavascriptShimTest.kt`: Valida inyección de flags y script JS para ACCEDA.
-* **Validación PDF independiente:** Poppler `pdfsig` abrió el PDF sintético generado por el adapter, detectó el campo `Signature1`, `ETSI.CAdES.detached`, cobertura de todo el documento y reportó `Signature is Valid`. La advertencia de certificado expirado corresponde exclusivamente al certificado sintético de pruebas y no invalida la verificación criptográfica/estructural de la firma.
+* **Validación PDF independiente:** Poppler `pdfinfo` abrió el PDF sintético como `Form: AcroForm`; `pdfsig 26.02.0` detectó `Signature1`, tipo `ETSI.CAdES.detached`, cobertura de todo el documento y `Signature Validation: Signature is Valid`. La advertencia de validez temporal corresponde al certificado sintético de pruebas y no se usa como evidencia E2E.
 * **Integridad Git:** `git diff --check` ejecutado sin errores.

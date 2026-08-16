@@ -79,12 +79,6 @@ class AccedaPadesAdapterTest {
         assertTrue(resultText.contains("/SubFilter /ETSI.CAdES.detached"))
         assertTrue(resultText.contains("/ByteRange [ 0 "))
 
-        val scratchDir = java.io.File("/data/data/com.termux/files/home/.antigravity-accounts/acc2-home/.gemini/antigravity-cli/brain/f8a38482-3d46-4fcc-983b-be56268f1e49/scratch")
-        if (scratchDir.exists()) {
-            java.io.File(scratchDir, "kotlin_signed_output.pdf").writeBytes(result)
-            java.io.File(scratchDir, "kotlin_cert.der").writeBytes(identity.certificate.encoded)
-        }
-
         completed.signature.close()
         local.signature.close()
         prepared.preSign.close()

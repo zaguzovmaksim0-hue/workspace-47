@@ -199,7 +199,10 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.webMessageOriginRules(valencia),
         )
         assertEquals(setOf("sede.administracionespublicas.gob.es"), JuntaOriginPolicy.browserAllowedHosts(acceda))
-        assertTrue(JuntaOriginPolicy.webMessageOriginRules(acceda).isEmpty())
+        assertEquals(
+            setOf("https://sede.administracionespublicas.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(acceda),
+        )
     }
 
     @Test

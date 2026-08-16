@@ -49,7 +49,7 @@ class PortalCatalogScreenTest {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
 
-        assertEquals(24, compatible.items.size)
+        assertEquals(25, compatible.items.size)
         val verifiedIds = setOf("carne-joven-andalucia", "aragon-siraw", "junta-ofvirtual", "unizar-tramitador")
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }
@@ -66,8 +66,8 @@ class PortalCatalogScreenTest {
             repository.portals().size - compatible.items.size,
             fullCatalog.items.size,
         )
-        val acceda = fullCatalog.items.single { it.portalId == PortalId("age-acceda") }
-        assertEquals(PortalSupportStatus.BROWSE_ONLY, acceda.supportStatus)
+        val acceda = compatible.items.single { it.portalId == PortalId("age-acceda") }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, acceda.supportStatus)
         assertTrue(acceda.isEnabled)
         val education = fullCatalog.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
         assertEquals(PortalSupportStatus.BROWSE_ONLY, education.supportStatus)
