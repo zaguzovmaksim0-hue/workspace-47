@@ -4024,7 +4024,7 @@
     {
       "portalId": "diputacion-ourense-sede",
       "inventoryId": "ES-PUB-0165",
-      "profileId": null,
+      "profileId": "diputacion-ourense-sede",
       "displayName": "Sede electrónica de Deputación de Ourense",
       "organization": "Deputación de Ourense",
       "governmentLevel": "LOCAL_ADMINISTRATION",
