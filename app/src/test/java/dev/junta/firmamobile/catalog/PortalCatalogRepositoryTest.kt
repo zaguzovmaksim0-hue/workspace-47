@@ -74,11 +74,20 @@ class PortalCatalogRepositoryTest {
                 "diputacion-toledo-sede",
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
+                "diputacion-lugo-sede",
+                "diputacion-malaga-sede",
+                "diputacion-ourense-sede",
+                "diputacion-palencia-sede",
+                "diputacion-salamanca-sede",
+                "diputacion-segovia-sede",
+                "diputacion-teruel-sede",
+                "diputacion-zamora-sede",
+                "diputacion-zaragoza-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 26, metadataOnly.size)
+        assertEquals(qaPortals.size - 35, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -98,7 +107,7 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
         qaPortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
-            val expectedStatus = if (portal.profileId in setOf(ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede"))) {
+            val expectedStatus = if (portal.profileId in setOf(ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede"), ProfileId("diputacion-lugo-sede"), ProfileId("diputacion-malaga-sede"), ProfileId("diputacion-ourense-sede"), ProfileId("diputacion-palencia-sede"), ProfileId("diputacion-salamanca-sede"), ProfileId("diputacion-segovia-sede"), ProfileId("diputacion-teruel-sede"), ProfileId("diputacion-zamora-sede"), ProfileId("diputacion-zaragoza-sede"))) {
                 PortalSupportStatus.BROWSE_ONLY
             } else {
                 PortalSupportStatus.IMPLEMENTED_NOT_E2E
@@ -114,7 +123,7 @@ class PortalCatalogRepositoryTest {
         }
         releasePortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
             when (portal.profileId) {
-                ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede") -> {
+                ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede"), ProfileId("diputacion-lugo-sede"), ProfileId("diputacion-malaga-sede"), ProfileId("diputacion-ourense-sede"), ProfileId("diputacion-palencia-sede"), ProfileId("diputacion-salamanca-sede"), ProfileId("diputacion-segovia-sede"), ProfileId("diputacion-teruel-sede"), ProfileId("diputacion-zamora-sede"), ProfileId("diputacion-zaragoza-sede") -> {
                     assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                     assertTrue(portal.isEnabled)
                 }

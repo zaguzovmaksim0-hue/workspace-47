@@ -41,6 +41,15 @@ class JuntaOriginPolicyTest {
     private val tenerife = ProfileId("tenerife-sede-electronica")
     private val toledo = ProfileId("diputacion-toledo-sede")
     private val valencia = ProfileId("diputacion-valencia-sede")
+    private val lugo = ProfileId("diputacion-lugo-sede")
+    private val malaga = ProfileId("diputacion-malaga-sede")
+    private val ourense = ProfileId("diputacion-ourense-sede")
+    private val palencia = ProfileId("diputacion-palencia-sede")
+    private val salamanca = ProfileId("diputacion-salamanca-sede")
+    private val segovia = ProfileId("diputacion-segovia-sede")
+    private val teruel = ProfileId("diputacion-teruel-sede")
+    private val zamora = ProfileId("diputacion-zamora-sede")
+    private val zaragoza = ProfileId("diputacion-zaragoza-sede")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -77,6 +86,15 @@ class JuntaOriginPolicyTest {
             "diputacion.toledo.gob.es",
             "sede.isciii.gob.es",
             "portafirmas.dival.es",
+            "sede.deputacionlugo.org",
+            "sede.malaga.es",
+            "sede.depourense.es",
+            "sede.diputaciondepalencia.es",
+            "sede.diputaciondesalamanca.gob.es",
+            "sede.dipsegovia.es",
+            "dpteruel.sedelectronica.es",
+            "diputaciondezamora.sedelectronica.es",
+            "dpz.sedelectronica.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -147,6 +165,24 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.melilla.es"), JuntaOriginPolicy.browserAllowedHosts(melilla))
         assertEquals(setOf("sede.ceuta.es"), JuntaOriginPolicy.browserAllowedHosts(ceuta))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(ceuta).isEmpty())
+        assertEquals(setOf("sede.deputacionlugo.org"), JuntaOriginPolicy.browserAllowedHosts(lugo))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(lugo).isEmpty())
+        assertEquals(setOf("sede.malaga.es"), JuntaOriginPolicy.browserAllowedHosts(malaga))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(malaga).isEmpty())
+        assertEquals(setOf("sede.depourense.es"), JuntaOriginPolicy.browserAllowedHosts(ourense))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(ourense).isEmpty())
+        assertEquals(setOf("sede.diputaciondepalencia.es"), JuntaOriginPolicy.browserAllowedHosts(palencia))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(palencia).isEmpty())
+        assertEquals(setOf("sede.diputaciondesalamanca.gob.es"), JuntaOriginPolicy.browserAllowedHosts(salamanca))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(salamanca).isEmpty())
+        assertEquals(setOf("sede.dipsegovia.es"), JuntaOriginPolicy.browserAllowedHosts(segovia))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(segovia).isEmpty())
+        assertEquals(setOf("dpteruel.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(teruel))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(teruel).isEmpty())
+        assertEquals(setOf("diputaciondezamora.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(zamora))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(zamora).isEmpty())
+        assertEquals(setOf("dpz.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(zaragoza))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(zaragoza).isEmpty())
         assertEquals(
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),

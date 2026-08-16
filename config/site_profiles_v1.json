@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 22,
+  "catalogVersion": 31,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -707,6 +707,177 @@
       "evidence": [
         {"url":"https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info","reviewedOn":"2026-07-16"},
         {"url":"https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info","reviewedOn":"2026-07-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-lugo-sede",
+      "profileVersion": 1,
+      "displayName": "Deputación de Lugo — Sede electrónica",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.deputacionlugo.org",
+      "initiatorOrigins": ["https://sede.deputacionlugo.org"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.deputacionlugo.org","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-malaga-sede",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Málaga — Sede electrónica",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.malaga.es",
+      "initiatorOrigins": ["https://sede.malaga.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.malaga.es","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-ourense-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de Deputación de Ourense",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.depourense.es",
+      "initiatorOrigins": ["https://sede.depourense.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.depourense.es","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-palencia-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de Diputación Provincial de Palencia",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.diputaciondepalencia.es",
+      "initiatorOrigins": ["https://sede.diputaciondepalencia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.diputaciondepalencia.es","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-salamanca-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de Diputación de Salamanca",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.diputaciondesalamanca.gob.es",
+      "initiatorOrigins": ["https://sede.diputaciondesalamanca.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.diputaciondesalamanca.gob.es","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-segovia-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de Diputación de Segovia",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.dipsegovia.es",
+      "initiatorOrigins": ["https://sede.dipsegovia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dipsegovia.es","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-teruel-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de Diputación Provincial de Teruel",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://dpteruel.sedelectronica.es",
+      "initiatorOrigins": ["https://dpteruel.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://dpteruel.sedelectronica.es","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-zamora-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de Diputación Provincial de Zamora",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://diputaciondezamora.sedelectronica.es",
+      "initiatorOrigins": ["https://diputaciondezamora.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://diputaciondezamora.sedelectronica.es","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-zaragoza-sede",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de Diputación Provincial de Zaragoza",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://dpz.sedelectronica.es",
+      "initiatorOrigins": ["https://dpz.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://dpz.sedelectronica.es","reviewedOn":"2026-08-16"}
       ]
     }
   ]

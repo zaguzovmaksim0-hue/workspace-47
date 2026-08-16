@@ -39,7 +39,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(26, catalog.entries.count { it.profileId != null })
+        assertEquals(35, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -68,6 +68,15 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-toledo-sede"),
                 ProfileId("isciii-certificate-selection"),
                 ProfileId("diputacion-valencia-sede"),
+                ProfileId("diputacion-lugo-sede"),
+                ProfileId("diputacion-malaga-sede"),
+                ProfileId("diputacion-ourense-sede"),
+                ProfileId("diputacion-palencia-sede"),
+                ProfileId("diputacion-salamanca-sede"),
+                ProfileId("diputacion-segovia-sede"),
+                ProfileId("diputacion-teruel-sede"),
+                ProfileId("diputacion-zamora-sede"),
+                ProfileId("diputacion-zaragoza-sede"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
