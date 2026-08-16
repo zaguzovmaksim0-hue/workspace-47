@@ -34,6 +34,55 @@ class ProfileHttpTransportTest {
     private val directDnsExecutor = DirectTestExecutorService()
 
     @Test
+    fun requestUsesExactlyOneWireCarrierBodyOrQuery() {
+        assertThrows(IllegalArgumentException::class.java) {
+            ProfileHttpRequest(
+                requestUrl,
+                "op=pre".encodeToByteArray(),
+                encodedQuery = "xml=c3ludGhldGlj&certs=Y2VydA==",
+            )
+        }
+
+        ProfileHttpRequest(
+            requestUrl,
+            ByteArray(0),
+            encodedQuery = "xml=c3ludGhldGlj&certs=Y2VydA==",
+        ).close()
+    }
+
+    @Test
+    fun encodedQueryIsBoundedInjectionSafeAndPassedToExecutorExactly() {
+        val query = "xml=c3ludGhldGlj&certs=Y2VydA=="
+        listOf(
+            "xml=x?evil=1",
+            "xml=x#fragment",
+            "xml=/slash",
+            "xml=x y",
+            "xml=x%0AInjected:1",
+            "&xml=x",
+            "xml=x&",
+        ).forEach { unsafe ->
+            assertThrows(IllegalArgumentException::class.java) {
+                ProfileHttpRequest(requestUrl, ByteArray(0), encodedQuery = unsafe)
+            }
+        }
+
+        val executor = QueueExecutor(RawProfileHttpResponse(200, "text/plain", null, "ok".encodeToByteArray()))
+        val transport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
+            executor = executor,
+            dnsExecutor = directDnsExecutor,
+        )
+        val result = ProfileHttpRequest(requestUrl, ByteArray(0), encodedQuery = query).use {
+            transport.post(it, ProfileHttpCancellation())
+        }
+        (result as ProfileHttpResult.Success).response.close()
+
+        assertEquals(URI(requestUrl.uri.toASCIIString() + "?" + query), executor.urls.single())
+        assertTrue(executor.bodies.single().isEmpty())
+    }
+
+    @Test
     fun publicExactEndpointReturnsOneOwnedBoundedBody() {
         val body = "synthetic-response".encodeToByteArray()
         val executor = QueueExecutor(
@@ -570,6 +619,7 @@ class ProfileHttpTransportTest {
         private val responses = ArrayDeque(responses.toList())
         val calls = AtomicInteger()
         val bodies = mutableListOf<ByteArray>()
+        val urls = mutableListOf<URI>()
         val resolvedAddresses = mutableListOf<List<InetAddress>>()
 
         override fun post(
@@ -583,6 +633,7 @@ class ProfileHttpTransportTest {
             tracker: ProfileHttpCallPhaseTracker,
         ): RawProfileHttpResponse {
             calls.incrementAndGet()
+            urls += url
             bodies += body.copyOf()
             this.resolvedAddresses += resolvedAddresses.toList()
             return responses.removeFirst()

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "c90595ababefe482b88ecd25904392f85650778c77828d8c1e37b798a4214341",
+  "sourceRevision": "11607923e940e9b34ca12b98ef0cda37b5f965c211605cfde47251f8c6c0baa0",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3990,29 +3990,36 @@
     {
       "portalId": "diputacion-lugo-sede",
       "inventoryId": "ES-PUB-0163",
-      "profileId": null,
+      "profileId": "diputacion-lugo-sede",
       "displayName": "Sede electrónica de Deputación de Lugo",
       "organization": "Deputación de Lugo",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Galicia",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.deputacionlugo.org",
+      "purpose": "La página pública de acceso con certificado construye un lote CAdES explícito sobre hash SHA-256 y lo entrega a AutoScript.signBatch; soporte limitado al acceso con certificado, origin exacto y un único elemento observado.",
+      "entryUrl": "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_XML_BATCH_TRIFASICO_PREHASH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP25A",
-        "DP25B"
+        "DP25B",
+        "DP25C",
+        "DP25D",
+        "DP25E",
+        "DP25F"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-16",
+      "limitations": "IMPLEMENTED_NOT_E2E: contrato QA limitado al acceso público con certificado, un lote CAdES explícito de un hash SHA-256 y endpoints multi-node exactos; no se realizó autenticación, firma real, recuperación de firma ni envío administrativo."
     },
     {
       "portalId": "diputacion-malaga-sede",

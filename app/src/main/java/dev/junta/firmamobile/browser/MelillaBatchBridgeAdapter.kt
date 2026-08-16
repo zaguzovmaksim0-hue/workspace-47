@@ -645,11 +645,17 @@ private class StaBatchBridgeAdapter(
 }
 
 
+enum class BatchReplyValidationMode {
+    STRICT_JSON,
+    BASE64_XML,
+}
+
 class MelillaBatchReplyChannel internal constructor(
     val requestId: UUID,
     private val postMessage: (String) -> Unit,
     private val onTerminal: () -> Unit = {},
     private val canDeliver: () -> Boolean = { true },
+    private val validationMode: BatchReplyValidationMode = BatchReplyValidationMode.STRICT_JSON,
 ) {
     private val terminal = AtomicBoolean(false)
 
@@ -657,7 +663,7 @@ class MelillaBatchReplyChannel internal constructor(
         if (!terminal.compareAndSet(false, true)) return false
         if (!runCatching(canDeliver).getOrDefault(false) ||
             validationResponse.length > MelillaBatchBridgeAdapter.MAX_MESSAGE_CHARS ||
-            !isStrictJsonValue(validationResponse)
+            !isValidResponse(validationResponse)
         ) {
             onTerminal()
             return false
@@ -710,6 +716,19 @@ class MelillaBatchReplyChannel internal constructor(
         return true
     }
 
+
+    private fun isValidResponse(raw: String): Boolean = when (validationMode) {
+        BatchReplyValidationMode.STRICT_JSON -> isStrictJsonValue(raw)
+        BatchReplyValidationMode.BASE64_XML ->
+            raw.isNotEmpty() && BASE64_XML.matches(raw) && runCatching {
+                val decoded = java.util.Base64.getDecoder().decode(raw)
+                val ok = decoded.isNotEmpty() && decoded.size <= MelillaBatchBridgeAdapter.MAX_MESSAGE_CHARS &&
+                    decoded.toString(Charsets.UTF_8).trimStart().startsWith("<")
+                decoded.fill(0)
+                ok
+            }.getOrDefault(false)
+    }
+
     private fun isStrictJsonValue(raw: String): Boolean = try {
         JsonReader(StringReader(raw)).use { reader ->
             reader.isLenient = false
@@ -747,5 +766,6 @@ class MelillaBatchReplyChannel internal constructor(
 
     private companion object {
         const val MAX_JSON_DEPTH = 16
+        val BASE64_XML = Regex("(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?")
     }
 }

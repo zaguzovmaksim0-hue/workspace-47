@@ -39,7 +39,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(28, catalog.entries.count { it.profileId != null })
+        assertEquals(29, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -63,6 +63,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-valladolid-sede"),
                 ProfileId("la-palma-sede-electronica"),
                 ProfileId("diputacion-huesca-portal"),
+                ProfileId("diputacion-lugo-sede"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
@@ -74,7 +75,21 @@ class PublicPortalCatalogParserTest {
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 68)
-        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 150)
+        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 149)
+    }
+
+    @Test
+    fun `Lugo catalog entry exposes only the bounded XML batch contract`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val lugo = catalog.entries.single { it.portalId == PortalId("diputacion-lugo-sede") }
+
+        assertEquals(ProfileId("diputacion-lugo-sede"), lugo.profileId)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, lugo.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, lugo.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in lugo.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in lugo.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in lugo.observedMechanisms)
+        assertTrue(lugo.limitations.contains("un lote CAdES", ignoreCase = true))
     }
 
     @Test

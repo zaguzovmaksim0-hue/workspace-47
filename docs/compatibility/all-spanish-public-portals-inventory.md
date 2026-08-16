@@ -5471,24 +5471,24 @@ records:
     origin: "https://sede.deputacionlugo.org"
     official_site: "https://sede.deputacionlugo.org"
     e_sede: "https://sede.deputacionlugo.org"
-    entry_url: "https://sede.deputacionlugo.org"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+    procedure_page: "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    js_client: "AutoScript 1.8.0 / clientSigner"
+    protocol_family: "AUTOSCRIPT_XML_BATCH_TRIFASICO_PREHASH"
+    signature_format: "CAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "Runtime multi-node: /opencms/clientsigner/{BatchPresigner,BatchPostsigner}/service/{JSESSIONID}; query POST xml/certs/tridata"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La página pública de acceso con certificado construye un lote CAdES explícito sobre hash SHA-256 y lo entrega a AutoScript.signBatch; soporte limitado al acceso con certificado, origin exacto y un único elemento observado."
+    protocol_evidence: "autenticacion.jsp publica authenticate con SHA256withRSA/CAdES/hashToSign; clientSigner.js publica signBatch, BatchPresigner/BatchPostsigner multi-node, XML signbatch, precalculatedHashAlgorithm=SHA-256 y callback signresult. El wire PRE/PK1 se contrastó con el cliente AutoFirma oficial."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP25A", "DP25B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP25A", "DP25B", "DP25C", "DP25D", "DP25E", "DP25F"]
+    reason: "IMPLEMENTED_NOT_E2E: contrato QA limitado al acceso público con certificado, un lote CAdES explícito de un hash SHA-256 y endpoints multi-node exactos; no se realizó autenticación, firma real, recuperación de firma ni envío administrativo."
+    reviewed_at: "2026-08-16"
+    next_gate: "E2E solo con entorno de prueba autorizado y credenciales/certificado de prueba; no usar identidad real ni producir efectos administrativos."
 
   - inventory_id: "ES-PUB-0164"
     surface_key: "diputacion-malaga-sede"
@@ -6458,6 +6458,10 @@ availability, certificado, firma ni contrato técnico.
 [DP24B]: https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2
 [DP25A]: https://sede.deputacionlugo.org
 [DP25B]: https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/footer/requisitos
+[DP25C]: https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp
+[DP25D]: https://sede.deputacionlugo.org/opencms/common-js/clientSigner.js
+[DP25E]: https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/acceso_sede
+[DP25F]: https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/instalar_autofirma
 [DP26A]: https://sede.malaga.es
 [DP26B]: https://sede.malaga.es/politica-de-firma-electronica/
 [DP27A]: https://sede.depourense.es
