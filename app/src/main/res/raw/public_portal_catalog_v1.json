@@ -4377,7 +4377,7 @@
     {
       "portalId": "diputacion-zaragoza-sede",
       "inventoryId": "ES-PUB-0178",
-      "profileId": null,
+      "profileId": "diputacion-zaragoza-sede",
       "displayName": "Sede electrónica de Diputación Provincial de Zaragoza",
       "organization": "Diputación Provincial de Zaragoza",
       "governmentLevel": "LOCAL_ADMINISTRATION",
