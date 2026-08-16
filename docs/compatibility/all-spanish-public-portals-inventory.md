@@ -2426,30 +2426,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Derechos Sociales, Consumo y Agenda 2030"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "V Certamen Artístico Amigos de los Animales — vía REG alternativa"
     surface_type: "SEDE"
-    origin: "https://dsca.sede.gob.es"
-    official_site: "https://dsca.sede.gob.es/"
+    origin: "https://www.dsca.gob.es"
+    official_site: "https://www.dsca.gob.es/"
     e_sede: "https://dsca.sede.gob.es/"
-    entry_url: "https://dsca.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    entry_url: "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La convocatoria 2026 del Ministerio ofrece, además del formulario propio, una vía alternativa explícita por Registro Electrónico General dirigida a la Dirección General de Derechos de los Animales."
+    protocol_evidence: "La página oficial vigente del V Certamen indica plazo 13-07-2026 a 10-10-2026 y enlaza literalmente la vía alternativa REG a https://reg.redsara.es/es/; el launch URL coincide exactamente con el startUrl del perfil reg-age-redsara, sin inferir un ABI de firma propio de DSCA."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Derechos Sociales, Consumo y Agenda 2030."
+    evidence_ids: ["D11", "DSCA-REG-2026-08-16", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página ministerial como entry URL, no se amplía la confianza de firma al origen www.dsca.gob.es y no se realizó E2E físico."
+    reviewed_at: "2026-08-16"
+    next_gate: "E2E físico seguro DSCA → REG-AGE sin completar ni presentar una candidatura administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La implementación cubre únicamente la vía alternativa REG publicada por el Ministerio para esta convocatoria, no el formulario propio dsca.sede.gob.es/procedimiento/portada?idProc=155723."
 
   - inventory_id: "ES-PUB-0065"
     surface_key: "age-ministerio-de-economia-comercio-y-empresa"
@@ -6228,6 +6229,7 @@ Orden de expansión recomendado:
 
 ### Evidencia portal-specific
 
+[DSCA-REG-2026-08-16]: https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje
 [POLICIA-SEDE-2026-08-15]: https://sede.policia.gob.es/
 [POLICIA-SOLICITUD-2026-08-15]: https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml
 
