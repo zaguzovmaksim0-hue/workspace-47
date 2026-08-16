@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 22,
+  "catalogVersion": 23,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -708,6 +708,35 @@
         {"url":"https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info","reviewedOn":"2026-07-16"},
         {"url":"https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info","reviewedOn":"2026-07-16"}
       ]
+    },
+    {
+          "profileId": "diputacion-zamora-sede",
+          "profileVersion": 1,
+          "displayName": "Sede electrónica de Diputación Provincial de Zamora",
+          "compatibilityStatus": "BROWSE_ONLY",
+          "activation": "ENABLED",
+          "startUrl": "https://diputaciondezamora.sedelectronica.es",
+          "initiatorOrigins": [
+                "https://diputaciondezamora.sedelectronica.es"
+          ],
+          "redirectOrigins": [],
+          "trustedBrowseOrigins": [],
+          "endpoints": [],
+          "operationPolicies": [],
+          "capabilities": [],
+          "clientAuthPolicy": null,
+          "certificateRules": {
+                "allowedKeyAlgorithms": [
+                      "RSA"
+                ],
+                "requireDigitalSignatureKeyUsage": true
+          },
+          "evidence": [
+                {
+                      "url": "https://diputaciondezamora.sedelectronica.es",
+                      "reviewedOn": "2026-08-16"
+                }
+          ]
     }
   ]
 }

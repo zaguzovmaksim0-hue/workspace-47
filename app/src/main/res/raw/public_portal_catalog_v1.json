@@ -4351,7 +4351,7 @@
     {
       "portalId": "diputacion-zamora-sede",
       "inventoryId": "ES-PUB-0177",
-      "profileId": null,
+      "profileId": "diputacion-zamora-sede",
       "displayName": "Sede electrónica de Diputación Provincial de Zamora",
       "organization": "Diputación Provincial de Zamora",
       "governmentLevel": "LOCAL_ADMINISTRATION",
