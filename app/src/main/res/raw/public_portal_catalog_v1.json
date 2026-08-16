@@ -3970,7 +3970,7 @@
     {
       "portalId": "diputacion-lugo-sede",
       "inventoryId": "ES-PUB-0163",
-      "profileId": null,
+      "profileId": "diputacion-lugo-sede",
       "displayName": "Sede electrónica de Deputación de Lugo",
       "organization": "Deputación de Lugo",
       "governmentLevel": "LOCAL_ADMINISTRATION",
