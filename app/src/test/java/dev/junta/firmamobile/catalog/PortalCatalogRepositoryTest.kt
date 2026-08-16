@@ -170,6 +170,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-sevilla-sede",
                 "diputacion-a-coruna-solicitud-general",
                 "euskadi-sede-electronica",
+                "formentera-sede-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -653,6 +654,37 @@ class PortalCatalogRepositoryTest {
 
         val redSara = qaRepository.portals().single { it.portalId == PortalId("age-reg-redsara") }
         assertEquals(setOf(SignatureFormat.XADES), redSara.signatureFormats)
+    }
+
+    @Test
+    fun `formentera pending navigation launch accepts only the exact canonical seed URL in qa`() {
+        val id = ProfileId("formentera-sede-electronica")
+        val exact = java.net.URI("https://ovac.conselldeformentera.cat/")
+        val qaItem = qaRepository.portals().single { it.profileId == id }
+
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaItem.supportStatus)
+        assertTrue(qaItem.isEnabled)
+        assertTrue(qaItem.capabilities.isEmpty())
+        assertTrue(qaItem.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(id, exact), qaRepository.resolveLaunch(qaItem))
+        assertEquals(PortalLaunchTarget(id, exact), qaRepository.resolveLaunch(id, exact))
+
+        val releaseItem = releaseRepository.portals().single { it.profileId == id }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releaseItem.supportStatus)
+        assertFalse(releaseItem.isEnabled)
+        assertNull(releaseRepository.resolveLaunch(releaseItem))
+        assertNull(releaseRepository.resolveLaunch(id, exact))
+
+        listOf(
+            "http://ovac.conselldeformentera.cat/",
+            "https://user@ovac.conselldeformentera.cat/",
+            "https://ovac.conselldeformentera.cat:8443/",
+            "https://evil.ovac.conselldeformentera.cat/",
+            "https://ovac.conselldeformentera.cat/ovac/",
+            "https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp",
+        ).forEach { rejected ->
+            assertNull(rejected, qaRepository.resolveLaunch(id, java.net.URI(rejected)))
+        }
     }
 
     @Test

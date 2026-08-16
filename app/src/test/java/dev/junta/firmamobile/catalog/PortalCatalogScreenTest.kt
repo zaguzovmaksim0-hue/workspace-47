@@ -78,6 +78,9 @@ class PortalCatalogScreenTest {
         val education = compatible.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, education.supportStatus)
         assertTrue(education.isEnabled)
+        val formentera = fullCatalog.items.single { it.portalId == PortalId("formentera-sede-electronica") }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, formentera.supportStatus)
+        assertTrue(formentera.isEnabled)
     }
 
     @Test

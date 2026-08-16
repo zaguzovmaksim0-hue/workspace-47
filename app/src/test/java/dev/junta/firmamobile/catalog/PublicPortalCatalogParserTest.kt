@@ -162,11 +162,27 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cmt-public-navigation"),
                 ProfileId("diputacion-palencia-solicitud-general"),
                 ProfileId("el-hierro-solicitud-general"),
+                ProfileId("formentera-sede-electronica"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.any { it.catalogStatus == PublicCatalogStatus.DISCOVERED })
         assertTrue(catalog.entries.any { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
+    }
+
+    @Test
+    fun `Formentera catalog entry binds the exact pending navigation contract`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val formentera = catalog.entries.single { it.portalId == PortalId("formentera-sede-electronica") }
+
+        assertEquals(ProfileId("formentera-sede-electronica"), formentera.profileId)
+        assertEquals("ES-PUB-0124", formentera.inventoryId)
+        assertEquals("https://ovac.conselldeformentera.cat/", formentera.entryUrl.toString())
+        assertEquals("ABSIS_OVAC_PUBLIC_NAVIGATION", formentera.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, formentera.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, formentera.catalogStatus)
+        assertTrue(formentera.observedSignatureFormats.isEmpty())
+        assertEquals("2026-08-16", formentera.reviewedOn.toString())
     }
 
     @Test

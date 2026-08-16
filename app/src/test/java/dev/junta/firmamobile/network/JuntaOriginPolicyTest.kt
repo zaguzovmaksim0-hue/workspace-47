@@ -59,6 +59,7 @@ class JuntaOriginPolicyTest {
     private val transparencia = ProfileId("age-portal-de-la-transparencia")
     private val toledo = ProfileId("diputacion-toledo-sede")
     private val valencia = ProfileId("diputacion-valencia-sede")
+    private val formentera = ProfileId("formentera-sede-electronica")
     private val acceda = ProfileId("age-acceda")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
@@ -192,6 +193,7 @@ class JuntaOriginPolicyTest {
             "diputacion.toledo.gob.es",
             "sede.isciii.gob.es",
             "portafirmas.dival.es",
+            "ovac.conselldeformentera.cat",
             "sede.administracionespublicas.gob.es",
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
@@ -952,6 +954,8 @@ class JuntaOriginPolicyTest {
             setOf("https://portafirmas.dival.es"),
             JuntaOriginPolicy.webMessageOriginRules(valencia),
         )
+        assertEquals(setOf("ovac.conselldeformentera.cat"), JuntaOriginPolicy.browserAllowedHosts(formentera))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(formentera).isEmpty())
         assertEquals(setOf("sede.administracionespublicas.gob.es"), JuntaOriginPolicy.browserAllowedHosts(acceda))
         assertEquals(
             setOf("https://sede.administracionespublicas.gob.es"),

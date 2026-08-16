@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 48,
+  "catalogVersion": 49,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3043,6 +3043,26 @@
         {"url":"https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL","reviewedOn":"2026-08-21"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-08-21"},
         {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "formentera-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica / OVAC del Consell Insular de Formentera",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://ovac.conselldeformentera.cat/",
+      "initiatorOrigins": ["https://ovac.conselldeformentera.cat"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://ovac.conselldeformentera.cat/","reviewedOn":"2026-08-16"},
+        {"url":"https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp","reviewedOn":"2026-08-16"}
       ]
     },
     {
