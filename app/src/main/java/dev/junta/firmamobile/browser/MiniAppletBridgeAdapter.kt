@@ -240,7 +240,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract) {
+            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract || isPoliciaContract) {
                 null
             } else {
                 SigningFormat.XADES to SignatureFormat.XADES
