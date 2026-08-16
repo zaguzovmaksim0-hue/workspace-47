@@ -3,6 +3,7 @@ package dev.junta.firmamobile.signing
 import android.util.JsonReader
 import android.util.JsonToken
 import dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy
+import dev.junta.firmamobile.network.HuescaBatchUrlPolicy
 import dev.junta.firmamobile.network.LaPalmaBatchUrlPolicy
 import dev.junta.firmamobile.network.MelillaBatchUrlOperation
 import dev.junta.firmamobile.network.MelillaBatchUrlPolicy
@@ -144,6 +145,46 @@ class LaPalmaBatchProtocolAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("la-palma-batch-autoscript-v1")
         private const val PROFILE_ID = "la-palma-sede-electronica"
+        private const val PROFILE_VERSION = 1
+    }
+}
+
+/**
+ * Executes the observed STA batch wire contract for Diputación de Huesca's fixed OVC profile.
+ */
+class HuescaBatchProtocolAdapter internal constructor(
+    transport: ProfileHttpTransport,
+    urlPolicy: HuescaBatchUrlPolicy = HuescaBatchUrlPolicy(),
+) : BatchSigningProtocolAdapter {
+    private val delegate = StaBatchProtocolAdapter(
+        transport = transport,
+        contract = StaBatchProtocolContract(
+            id = ID,
+            profileId = PROFILE_ID,
+            profileVersion = PROFILE_VERSION,
+            origin = TrustedOrigin("https", "ovc24.dphuesca.es", 443),
+            urlValidator = StaBatchUrlValidator { rawUrl, operation, operationId, documentId ->
+                urlPolicy.validate(rawUrl, operation, operationId, documentId)
+            },
+        ),
+    )
+
+    override val id: SigningProtocolId = ID
+
+    override fun prepare(
+        request: NormalizedBatchSigningRequest,
+        certificateChain: List<X509Certificate>,
+    ): BatchProtocolPrepareResult = delegate.prepare(request, certificateChain)
+
+    override fun complete(
+        request: NormalizedBatchSigningRequest,
+        preSign: BatchPreSignResult,
+        localSignatures: List<LocalSignature>,
+    ): BatchProtocolCompletionResult = delegate.complete(request, preSign, localSignatures)
+
+    companion object {
+        val ID = SigningProtocolId("huesca-batch-autoscript-v1")
+        private const val PROFILE_ID = "diputacion-huesca-portal"
         private const val PROFILE_VERSION = 1
     }
 }

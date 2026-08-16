@@ -185,6 +185,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LA_PALMA_PROFILE_ID) {
                 validateLaPalmaProfile(p)
             }
+            if (p.profileId.value == HUESCA_PROFILE_ID) {
+                validateHuescaProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -626,6 +629,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateHuescaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == HUESCA_PROFILE_VERSION)
+        require(profile.displayName == HUESCA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == HUESCA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(HUESCA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = HUESCA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("huesca-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("huesca-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -812,6 +848,7 @@ object SiteProfileCatalogParser {
         "melilla-batch-autoscript-v1",
         "extremadura-batch-autoscript-v1",
         "la-palma-batch-autoscript-v1",
+        "huesca-batch-autoscript-v1",
         "autoscript-select-certificate-v1",
     )
     private val REGISTERED_CALLBACKS = setOf(
@@ -820,6 +857,7 @@ object SiteProfileCatalogParser {
         "melilla-batch-result-v1",
         "extremadura-batch-result-v1",
         "la-palma-batch-result-v1",
+        "huesca-batch-result-v1",
         "autoscript-select-certificate-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
@@ -933,6 +971,14 @@ object SiteProfileCatalogParser {
     private const val LA_PALMA_ORIGIN = "https://sedeelectronica.cabildodelapalma.es"
     private const val LA_PALMA_SAFE_DESCRIPTION =
         "Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma"
+    private const val HUESCA_PROFILE_ID = "diputacion-huesca-portal"
+    private const val HUESCA_PROFILE_VERSION = 1
+    private const val HUESCA_DISPLAY_NAME = "Diputación Provincial de Huesca — Oficina Virtual"
+    private const val HUESCA_START_URL =
+        "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME"
+    private const val HUESCA_ORIGIN = "https://ovc24.dphuesca.es"
+    private const val HUESCA_SAFE_DESCRIPTION =
+        "Firma por lotes en la Oficina Virtual de la Diputación Provincial de Huesca"
     private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
     private const val SEVILLA_ATSE_PROFILE_VERSION = 1
     private const val SEVILLA_ATSE_DISPLAY_NAME =

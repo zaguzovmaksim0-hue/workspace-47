@@ -67,6 +67,7 @@ class WebMessageBridge(
     melillaBatchAdapter: MelillaBatchBridgeAdapter? = null,
     extremaduraBatchAdapter: ExtremaduraBatchBridgeAdapter? = null,
     laPalmaBatchAdapter: LaPalmaBatchBridgeAdapter? = null,
+    huescaBatchAdapter: HuescaBatchBridgeAdapter? = null,
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
@@ -125,6 +126,18 @@ class WebMessageBridge(
             trustedOrigin = TrustedOrigin("https", "sedeelectronica.cabildodelapalma.es", 443),
             adapter = StaBatchBridgeAdapterOps.from(
                 laPalmaBatchAdapter ?: LaPalmaBatchBridgeAdapter(
+                    activeProfileId = activeProfileId,
+                    currentNavigationEpoch = currentNavigationEpoch,
+                    currentDocumentId = { batchCurrentDocumentId() },
+                    currentOrigin = currentOrigin,
+                ),
+            ),
+        )
+        HuescaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
+            sourceOrigin = HuescaBatchBridgeAdapter.SOURCE_ORIGIN,
+            trustedOrigin = TrustedOrigin("https", "ovc24.dphuesca.es", 443),
+            adapter = StaBatchBridgeAdapterOps.from(
+                huescaBatchAdapter ?: HuescaBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
                     currentNavigationEpoch = currentNavigationEpoch,
                     currentDocumentId = { batchCurrentDocumentId() },
@@ -211,6 +224,7 @@ class WebMessageBridge(
                     jccmCompatibilityEnabled = shimFlags.jccm,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
+                    staBatchOrigin = batchRuntime?.sourceOrigin ?: MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
                 ),
@@ -663,6 +677,15 @@ private class StaBatchBridgeAdapterOps(
         )
 
         fun from(adapter: LaPalmaBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
+            route = { raw, origin, mainFrame, epoch ->
+                adapter.route(raw, origin, mainFrame, epoch)
+            },
+            abandon = adapter::abandon,
+            invalidateDocument = adapter::invalidateDocument,
+            abandonAll = adapter::abandonAll,
+        )
+
+        fun from(adapter: HuescaBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
             route = { raw, origin, mainFrame, epoch ->
                 adapter.route(raw, origin, mainFrame, epoch)
             },

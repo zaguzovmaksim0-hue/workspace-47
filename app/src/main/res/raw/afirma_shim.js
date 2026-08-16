@@ -33,7 +33,7 @@
   const jccmPayloadBase64 = "QUJDREU=";
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
-  const melillaBatchOrigin = "https://sede.melilla.es";
+  const staBatchOrigin = __JFM_STA_BATCH_ORIGIN__;
   const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
@@ -328,7 +328,7 @@
 
   function isMelillaBatchPage() {
     return functionalSigningEnabled && melillaBatchCompatibilityEnabled &&
-      window.location.origin === melillaBatchOrigin;
+      window.location.origin === staBatchOrigin;
   }
 
   function isSafeBatchIdentifier(value) {
@@ -596,7 +596,7 @@
 
   function notifyNativeDocumentReady() {
     if (!functionalSigningEnabled || !melillaBatchCompatibilityEnabled ||
-        window.location.origin !== melillaBatchOrigin ||
+        window.location.origin !== staBatchOrigin ||
         !bridge || typeof bridge.postMessage !== "function" ||
         !probeDocumentId) {
       return;
