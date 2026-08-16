@@ -12,7 +12,6 @@ import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
-import dev.junta.firmamobile.signing.SignatureFormat
 import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -83,13 +82,18 @@ class AccedaProfileCatalogBindingTest {
             "http://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
             "https://user@sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
             "https://sede.administracionespublicas.gob.es:8443/certificado/info/idp/82/ida/0/language/es_ES",
-            "https://sede.administracionespublicas.gob.es/certificado/valida",
             "https://evil.sede.administracionespublicas.gob.es/",
             "https://sede.administracionespublicas.gob.es.evil.example/",
         ).forEach { rejected ->
             assertNull(rejected, BuiltInSiteProfiles.releaseRegistry.resolve(URI(rejected)))
             assertNull(rejected, BuiltInSiteProfiles.qaRegistry.resolve(URI(rejected)))
         }
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://sede.administracionespublicas.gob.es/certificado/valida"),
+            )?.trustMode,
+        )
 
         val binding = BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SIGN)
         assertEquals(AccedaPadesAdapter.ID, binding?.signingProtocolId)

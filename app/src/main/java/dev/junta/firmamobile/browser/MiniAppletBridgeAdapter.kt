@@ -214,6 +214,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin = resolved.origin,
             operation = operation,
             signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
         )
         if (profile.profileId.value == AccedaPadesAdapter.PROFILE_ID && !isAccedaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
@@ -382,7 +383,9 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val extraProperties = if (isCantabriaContract) {
+        val extraProperties = if (isAccedaContract) {
+            AccedaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isCantabriaContract) {
             CANTABRIA_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
@@ -650,8 +653,10 @@ internal class ProfileMiniAppletBridgeAdapter(
         origin: ExactOrigin,
         operation: OperationPolicy,
         signingProtocolId: String,
+        currentPageUrl: String?,
     ): Boolean =
-        profile.profileId.value == AccedaPadesAdapter.PROFILE_ID &&
+        currentPageUrl == AccedaPadesAdapter.START_URL &&
+            profile.profileId.value == AccedaPadesAdapter.PROFILE_ID &&
             profile.profileVersion == AccedaPadesAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&

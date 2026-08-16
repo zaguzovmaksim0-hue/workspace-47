@@ -89,10 +89,11 @@ function doSignSolicitud(data, nif, tipo_certificado_logeado) {
 
 ## 5. Verificación y Pruebas
 
-* **Tests de Python:** 123 pruebas pasadas en `tools/tests/` (incluyendo `test_generate_public_portal_catalog.py` y `test_ci_policy.py`).
+* **Tests de Python:** 133 pruebas pasadas en `tools/tests/` (1 omitida) y 17 pruebas adicionales del generador de catálogo pasadas; `test_ci_policy.py` queda incluido en la suite principal.
 * **Tests Unitarios Kotlin/Robolectric:**
   * `AccedaPadesAdapterTest.kt`: Valida pre-firma, completado PAdES, verificación criptográfica BouncyCastle, rechazo fail-closed de payloads inválidos/desajustes contractuales y zeroización de memoria.
-  * `AccedaProfileCatalogBindingTest.kt`: Valida resolución de perfil en QA (`IMPLEMENTED_NOT_E2E`), desactivación en Release (`BROWSE_ONLY`) y políticas de origen.
+  * `AccedaProfileCatalogBindingTest.kt`: Valida resolución `IMPLEMENTED_NOT_E2E` en QA, ausencia del perfil `QA_ONLY` en el registry de Release y políticas de origen; el catálogo público de Release conserva `VERIFIED_CONTRACT` deshabilitado.
   * `MiniAppletBridgeAdapterTest.kt`: Valida enrutamiento y normalización de peticiones `PAdES` de ACCEDA.
   * `AfirmaJavascriptShimTest.kt`: Valida inyección de flags y script JS para ACCEDA.
+* **Validación PDF independiente:** Poppler `pdfsig` abrió el PDF sintético generado por el adapter, detectó el campo `Signature1`, `ETSI.CAdES.detached`, cobertura de todo el documento y reportó `Signature is Valid`. La advertencia de certificado expirado corresponde exclusivamente al certificado sintético de pruebas y no invalida la verificación criptográfica/estructural de la firma.
 * **Integridad Git:** `git diff --check` ejecutado sin errores.

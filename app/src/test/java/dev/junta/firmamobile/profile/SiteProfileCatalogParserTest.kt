@@ -685,7 +685,7 @@ class SiteProfileCatalogParserTest {
             CompatibilityStatus.EXPERIMENTAL,
             BuiltInSiteProfiles.qaRegistry.profile(junta)?.compatibilityStatus,
         )
-        setOf(education, ceuta, acceda).forEach { profileId ->
+        setOf(education, ceuta).forEach { profileId ->
             assertEquals(
                 CompatibilityStatus.BROWSE_ONLY,
                 BuiltInSiteProfiles.releaseRegistry.profile(profileId)?.compatibilityStatus,

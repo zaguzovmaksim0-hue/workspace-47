@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.SensitiveSignatureCopyObserver
@@ -310,6 +311,7 @@ class MiniAppletBridgeAdapterTest {
             sourceOrigin = ACCEDA_ORIGIN,
             isMainFrame = true,
             navigationEpoch = 33,
+            currentPageUrl = AccedaPadesAdapter.START_URL,
         ) as MiniAppletBridgeRouteResult.Accepted
 
         result.request.normalized.use { request ->
@@ -336,6 +338,7 @@ class MiniAppletBridgeAdapterTest {
                 accedaMessage(),
                 Uri.parse("https://sede.administracionespublicas.gob.es.evil.example"),
                 true,
+                currentPageUrl = AccedaPadesAdapter.START_URL,
             ) is MiniAppletBridgeRouteResult.Rejected,
         )
         assertTrue(
@@ -343,6 +346,7 @@ class MiniAppletBridgeAdapterTest {
                 accedaMessage(),
                 ACCEDA_ORIGIN,
                 true,
+                currentPageUrl = AccedaPadesAdapter.START_URL,
             ) is MiniAppletBridgeRouteResult.Rejected,
         )
         listOf(
@@ -355,8 +359,27 @@ class MiniAppletBridgeAdapterTest {
             accedaMessage(dataB64 = Base64.getEncoder().encodeToString("not-a-pdf".toByteArray())),
         ).forEach { message ->
             assertTrue(
-                adapterFor(ACCEDA_PROFILE_ID).route(message, ACCEDA_ORIGIN, true) is
-                    MiniAppletBridgeRouteResult.Rejected,
+                adapterFor(ACCEDA_PROFILE_ID).route(
+                    message,
+                    ACCEDA_ORIGIN,
+                    true,
+                    currentPageUrl = AccedaPadesAdapter.START_URL,
+                ) is MiniAppletBridgeRouteResult.Rejected,
+            )
+        }
+        listOf(
+            null,
+            "https://sede.administracionespublicas.gob.es/certificado/valida",
+            AccedaPadesAdapter.START_URL + "?unexpected=1",
+            AccedaPadesAdapter.START_URL + "#fragment",
+        ).forEach { pageUrl ->
+            assertTrue(
+                adapterFor(ACCEDA_PROFILE_ID).route(
+                    rawMessage = accedaMessage(),
+                    sourceOrigin = ACCEDA_ORIGIN,
+                    isMainFrame = true,
+                    currentPageUrl = pageUrl,
+                ) is MiniAppletBridgeRouteResult.Rejected,
             )
         }
     }
