@@ -29,6 +29,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val cantabria: Boolean,
     val jccm: Boolean,
     val sevillaAtse: Boolean,
+    val cdti: Boolean,
     val policia: Boolean,
     val melillaBatch: Boolean,
     val lugoBatch: Boolean,
@@ -238,6 +239,7 @@ class WebMessageBridge(
                     cantabriaCompatibilityEnabled = shimFlags.cantabria,
                     jccmCompatibilityEnabled = shimFlags.jccm,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
+                    cdtiCompatibilityEnabled = shimFlags.cdti,
                     policiaCompatibilityEnabled = shimFlags.policia,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     lugoBatchCompatibilityEnabled = shimFlags.lugoBatch,
@@ -634,6 +636,7 @@ class WebMessageBridge(
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+        private const val CDTI_PROFILE_ID = "cdti-certificate-validation"
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
@@ -647,6 +650,7 @@ class WebMessageBridge(
             cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
+            cdti = profileActive && profileId.value == CDTI_PROFILE_ID,
             policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
             melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID,
             lugoBatch = melillaBatchEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID,

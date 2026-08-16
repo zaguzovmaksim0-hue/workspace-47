@@ -31,6 +31,7 @@ class JuntaOriginPolicyTest {
     private val cantabria = ProfileId("cantabria-rec-cert-login")
     private val jccm = ProfileId("jccm-certificate-login-probe")
     private val sevilla = ProfileId("sevilla-atse-certificate-login")
+    private val cdti = ProfileId("cdti-certificate-validation")
     private val melilla = ProfileId("melilla-sede")
     private val ceuta = ProfileId("ceuta-sede")
     private val extremadura = ProfileId("extremadura-tramites")
@@ -68,6 +69,7 @@ class JuntaOriginPolicyTest {
             "rec.cantabria.es",
             "ventanillaelectronica.jccm.es",
             "www.sevilla.org",
+            "sede.cdti.gob.es",
             "sede.melilla.es",
             "sede.ceuta.es",
             "tramites.juntaex.es",
@@ -150,6 +152,7 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(jccm),
         )
         assertEquals(setOf("www.sevilla.org"), JuntaOriginPolicy.browserAllowedHosts(sevilla))
+        assertEquals(setOf("sede.cdti.gob.es"), JuntaOriginPolicy.browserAllowedHosts(cdti))
         assertEquals(setOf("sede.melilla.es"), JuntaOriginPolicy.browserAllowedHosts(melilla))
         assertEquals(setOf("sede.ceuta.es"), JuntaOriginPolicy.browserAllowedHosts(ceuta))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(ceuta).isEmpty())
@@ -184,6 +187,10 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://www.sevilla.org"),
             JuntaOriginPolicy.webMessageOriginRules(sevilla),
+        )
+        assertEquals(
+            setOf("https://sede.cdti.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(cdti),
         )
         assertEquals(
             setOf("https://sede.melilla.es"),

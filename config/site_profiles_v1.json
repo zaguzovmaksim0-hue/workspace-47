@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 23,
+  "catalogVersion": 24,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -446,6 +446,62 @@
         {
           "url": "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
           "reviewedOn": "2026-08-09"
+        }
+      ]
+    },
+    {
+      "profileId": "cdti-certificate-validation",
+      "profileVersion": 1,
+      "displayName": "CDTI — Validación de certificado digital",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+      "initiatorOrigins": [
+        "https://sede.cdti.gob.es"
+      ],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [
+        {
+          "operation": "SIGN",
+          "safeDescription": "Validación de certificado digital en CDTI",
+          "inputAdapterId": "miniapplet-autoscript-v1",
+          "callbackContractId": "autoscript-sign-callback-v1",
+          "capabilities": [
+            "SIGN"
+          ],
+          "endpointId": null,
+          "algorithms": [
+            "SHA512_WITH_RSA"
+          ],
+          "format": "XADES",
+          "packaging": "ATTACHED",
+          "mode": null,
+          "fixedExtraProperties": {
+            "filters": "nonexpired"
+          },
+          "allowedExtraProperties": []
+        }
+      ],
+      "capabilities": [
+        "SIGN"
+      ],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+          "reviewedOn": "2026-08-16"
+        },
+        {
+          "url": "https://sede.cdti.gob.es/AreaPrivada/Expedientes/r/firma/js/miniappletAuto.js",
+          "reviewedOn": "2026-08-16"
         }
       ]
     },

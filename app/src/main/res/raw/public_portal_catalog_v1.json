@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "11607923e940e9b34ca12b98ef0cda37b5f965c211605cfde47251f8c6c0baa0",
+  "sourceRevision": "3e9e589b73e097716f5928cb82c3b608f6ff22a61788ac7196cb19dcd581b8f8",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -773,24 +773,32 @@
     {
       "portalId": "age-centro-para-el-desarrollo-tecnologico-industrial-cdti",
       "inventoryId": "ES-PUB-0030",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "cdti-certificate-validation",
+      "displayName": "Validar certificado digital — CDTI",
       "organization": "Centro para el Desarrollo Tecnológico Industrial (CDTI)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.cdti.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Validación pública de certificado: la página carga AutoScript, firma un reto dinámico CertExp con XAdES Enveloping y reenvía firma y certificado en campos ocultos.",
+      "entryUrl": "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_XADES_ENVELOPING",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CDTI-CERT-2026-08-16"
+      ],
+      "reviewedOn": "2026-08-16",
+      "limitations": "Contrato pre-auth completo y acotado implementado en QA con XAdES Enveloping local; sin ampliar confianza fuera de la URL exacta y sin promover release antes de E2E físico."
     },
     {
       "portalId": "age-comisionado-para-el-mercado-de-tabacos-cmt",
