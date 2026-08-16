@@ -549,7 +549,22 @@ class MiniAppletBridgeAdapterTest {
         assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "filters=keyusage.nonrepudiation:true;nonexpired:\nformat=XAdES Detached")))
         assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "format=XAdES Detached\nfilters.1=dnie:;nonexpired:")))
         assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "format=XAdES Detached\nfilters.2=keyusage.nonrepudiation:true;nonexpired:")))
-        assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "filters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:\nformat=XAdES Detached")))
+        val reorderedProperties = policiaAdapter().route(
+            rawMessage = policiaMessage(
+                extraProperties = "filters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:\nformat=XAdES Detached",
+            ),
+            sourceOrigin = POLICIA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 52,
+            currentPageUrl = POLICIA_PROCEDURE_PAGE,
+        ) as MiniAppletBridgeRouteResult.Accepted
+        reorderedProperties.request.normalized.use { request ->
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { _, properties ->
+                    assertEquals(POLICIA_EXTRA_PROPERTIES_STR, properties)
+                }
+            }
+        }
         assertTrue(rejected(rawMessage = policiaMessage(extraProperties = "format=XAdES Detached\nfilters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:\nextra=val")))
     }
 
