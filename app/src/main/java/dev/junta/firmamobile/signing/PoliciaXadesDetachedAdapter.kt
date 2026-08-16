@@ -253,6 +253,7 @@ internal object PoliciaXadesDetachedCodec {
         val signingCertificate = certificateChain.first()
         val rsaPublicKey = signingCertificate.publicKey as? RSAPublicKey
             ?: error("RSA certificate required")
+        require(!containsDoctypeDeclaration(data))
 
         val xmlDoc = tryParseXml(data)
         val isXml = xmlDoc != null
@@ -624,6 +625,15 @@ internal object PoliciaXadesDetachedCodec {
         return secureDocumentBuilderFactory().newDocumentBuilder().parse(ByteArrayInputStream(bytes))
     }
 
+    private fun containsDoctypeDeclaration(bytes: ByteArray): Boolean = runCatching {
+        Charsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(bytes))
+            .toString()
+            .contains("<!DOCTYPE", ignoreCase = true)
+    }.getOrDefault(false)
+
     private fun tryParseXml(bytes: ByteArray): Document? = runCatching {
         require(bytes.isNotEmpty())
         val decoded = Charsets.UTF_8.newDecoder()
@@ -657,8 +667,8 @@ internal object PoliciaXadesDetachedCodec {
         val stream = ClearingByteArrayOutputStream()
         TransformerFactory.newInstance().apply {
             runCatching { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
-            runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "") }
-            runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "") }
+            runCatching { setAttribute(ACCESS_EXTERNAL_DTD, "") }
+            runCatching { setAttribute(ACCESS_EXTERNAL_STYLESHEET, "") }
         }.newTransformer().apply {
             setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no")
             setOutputProperty(OutputKeys.ENCODING, "UTF-8")
@@ -708,6 +718,9 @@ internal object PoliciaXadesDetachedCodec {
     private const val SHA512_URI = "http://www.w3.org/2001/04/xmlenc#sha512"
     private const val SIGNED_PROPERTIES_TYPE = "http://uri.etsi.org/01903#SignedProperties"
     private const val JCA_SIGNATURE = "SHA1withRSA"
+    private const val ACCESS_EXTERNAL_DTD = "http://javax.xml.XMLConstants/property/accessExternalDTD"
+    private const val ACCESS_EXTERNAL_STYLESHEET =
+        "http://javax.xml.XMLConstants/property/accessExternalStylesheet"
     private const val SHA_256 = "SHA-256"
     private const val SHA_256_BYTES = 32
     private const val MAX_INPUT_BYTES = 4 * 1024 * 1024

@@ -213,7 +213,9 @@ class PoliciaXadesDetachedAdapterTest {
         val reorderedProperties = request(
             extraProperties = "filters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:\nformat=XAdES Detached",
         )
-        assertTrue(adapter.prepare(reorderedProperties, nonRepudiationIdentity.chain) is ProtocolPrepareResult.Failure)
+        val reorderedResult = adapter.prepare(reorderedProperties, nonRepudiationIdentity.chain)
+        assertTrue(reorderedResult is ProtocolPrepareResult.Success)
+        (reorderedResult as ProtocolPrepareResult.Success).preSign.close()
         reorderedProperties.close()
 
         val extraProperties = request(
@@ -241,11 +243,13 @@ class PoliciaXadesDetachedAdapterTest {
         assertTrue(adapter.prepare(req2, dnieIdentity.chain) is ProtocolPrepareResult.Success)
         req2.close()
 
-        // A DNIE-looking issuer without the exact OU=DNIE attribute is rejected.
+        // It is not a DNIe certificate, but it still matches the alternative nonRepudiation filter.
+        assertFalse(PoliciaXadesDetachedAdapter.isDnieCertificate(dnieLookalikeIdentity.certificate))
+        assertTrue(PoliciaXadesDetachedAdapter.hasNonRepudiationKeyUsage(dnieLookalikeIdentity.certificate))
         val lookalike = request()
         val lookalikeResult = adapter.prepare(lookalike, dnieLookalikeIdentity.chain)
-        assertTrue(lookalikeResult is ProtocolPrepareResult.Failure)
-        assertEquals(SigningErrorCode.INVALID_REQUEST, (lookalikeResult as ProtocolPrepareResult.Failure).code)
+        assertTrue(lookalikeResult is ProtocolPrepareResult.Success)
+        (lookalikeResult as ProtocolPrepareResult.Success).preSign.close()
         lookalike.close()
 
         // Digital signature only (not DNIe, no nonRepudiation) rejected
@@ -724,14 +728,10 @@ class PoliciaXadesDetachedAdapterTest {
             certificate = certificate,
             chain = listOf(certificate),
             summary = dev.junta.firmamobile.certificate.CertificateSummary(
-                alias = commonName,
-                subject = commonName,
-                issuer = issuerCn,
-                serialNumber = certificate.serialNumber.toString(),
-                notBefore = notBefore,
-                notAfter = notAfter,
-                keyAlgorithm = "RSA",
-                keySize = 2048,
+                ownerName = commonName,
+                issuerName = issuerCn,
+                validFrom = notBefore,
+                validUntil = notAfter,
             ),
         )
     }
@@ -761,14 +761,10 @@ class PoliciaXadesDetachedAdapterTest {
             certificate = certificate,
             chain = listOf(certificate),
             summary = dev.junta.firmamobile.certificate.CertificateSummary(
-                alias = "EC Identity",
-                subject = "EC Identity",
-                issuer = "EC Identity",
-                serialNumber = certificate.serialNumber.toString(),
-                notBefore = Instant.parse("2029-01-01T00:00:00Z"),
-                notAfter = Instant.parse("2031-01-01T00:00:00Z"),
-                keyAlgorithm = "EC",
-                keySize = 256,
+                ownerName = "EC Identity",
+                issuerName = "EC Identity",
+                validFrom = Instant.parse("2029-01-01T00:00:00Z"),
+                validUntil = Instant.parse("2031-01-01T00:00:00Z"),
             ),
         )
     }

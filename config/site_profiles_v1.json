@@ -720,7 +720,7 @@
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
-      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de solicitud en la Sede de la Policía Nacional","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1withRSA"],"format":"XAdES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{"format":"XAdES Detached","filters.1":"dnie:;nonexpired:","filters.2":"keyusage.nonrepudiation:true;nonexpired:"},"allowedExtraProperties":[]}],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de solicitud en la Sede de la Policía Nacional","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"XADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{"format":"XAdES Detached","filters.1":"dnie:;nonexpired:","filters.2":"keyusage.nonrepudiation:true;nonexpired:"},"allowedExtraProperties":[]}],
       "capabilities": ["SIGN", "LEGACY_SHA1"],
       "clientAuthPolicy": null,
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
