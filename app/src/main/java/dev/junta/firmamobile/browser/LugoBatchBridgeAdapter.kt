@@ -1,11 +1,14 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import android.util.JsonReader
+import android.util.JsonToken
 import dev.junta.firmamobile.network.LugoBatchUrlPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.SigningErrorCode
 import java.io.ByteArrayInputStream
+import java.io.StringReader
 import java.util.Base64
 import java.util.UUID
 import javax.xml.XMLConstants
@@ -26,10 +29,17 @@ class LugoBatchBridgeAdapter(
 
     @Synchronized
     fun route(rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L): MelillaBatchBridgeRouteResult {
+        if (rawMessage.length > MAX_MESSAGE_CHARS) {
+            return MelillaBatchBridgeRouteResult.Rejected(null, SigningErrorCode.REQUEST_TOO_LARGE)
+        }
+        val streamedKeys = rawMessage.uniqueTopLevelKeys()
         val json = runCatching { JSONObject(rawMessage) }.getOrNull()
             ?: return MelillaBatchBridgeRouteResult.NotApplicable
         val type = json.optString("type")
         if (type != TYPE && type != CANCEL_TYPE) return MelillaBatchBridgeRouteResult.NotApplicable
+        if (streamedKeys == null || json.keys().asSequence().toSet() != streamedKeys) {
+            return rejected(json.optString("requestId").strictUuid(), SigningErrorCode.INVALID_REQUEST)
+        }
         val requestId = json.optString("requestId").strictUuid()
         val documentId = json.optString("documentId").strictUuid()
         if (requestId == null || documentId == null) return rejected(requestId, SigningErrorCode.INVALID_REQUEST)
@@ -126,6 +136,23 @@ class LugoBatchBridgeAdapter(
         MelillaBatchDocument(id = id, dataReference = data, format = FORMAT, suboperation = SUBOPERATION)
     }.getOrNull()
 
+    private fun String.uniqueTopLevelKeys(): Set<String>? = try {
+        JsonReader(StringReader(this)).use { reader ->
+            reader.isLenient = false
+            val names = linkedSetOf<String>()
+            reader.beginObject()
+            while (reader.hasNext()) {
+                if (!names.add(reader.nextName())) return null
+                reader.skipValue()
+            }
+            reader.endObject()
+            if (reader.peek() != JsonToken.END_DOCUMENT) return null
+            names
+        }
+    } catch (_: Exception) {
+        null
+    }
+
     private fun Element.childElements(): List<Element> = buildList {
         val nodes = childNodes
         for (i in 0 until nodes.length) (nodes.item(i) as? Element)?.let(::add)
@@ -144,6 +171,7 @@ class LugoBatchBridgeAdapter(
         const val TYPE = "LUGO_XML_BATCH"
         const val CANCEL_TYPE = "LUGO_XML_BATCH_CANCEL"
         const val EXTRA_PROPERTIES = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\n"
+        const val MAX_MESSAGE_CHARS = 786_432
         private const val ALGORITHM = "SHA256withRSA"
         private const val FORMAT = "CAdES"
         private const val SUBOPERATION = "sign"

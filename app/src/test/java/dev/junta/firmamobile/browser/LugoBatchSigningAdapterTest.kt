@@ -31,8 +31,11 @@ class LugoBatchSigningAdapterTest {
         assertEquals(HASH, normalized.documents.single().dataReference)
         normalized.close()
 
+        val wrongEndpoint = JSONObject(envelope())
+            .put("batchPreSignerUrl", "https://evil.example/opencms/clientsigner/BatchPresigner/service/$SESSION")
+            .toString()
         val wrong = LugoBatchBridgeAdapter(activeProfileId = { ProfileId(LugoBatchBridgeAdapter.PROFILE_ID) })
-            .route(envelope().replace(ORIGIN, "https://evil.example"), Uri.parse(ORIGIN), true, 4L)
+            .route(wrongEndpoint, Uri.parse(ORIGIN), true, 4L)
         assertEquals(true, wrong is MelillaBatchBridgeRouteResult.Rejected)
     }
 
@@ -43,6 +46,12 @@ class LugoBatchSigningAdapterTest {
         assertEquals(true, bridge.route(badProps, Uri.parse(ORIGIN), true, 4L) is MelillaBatchBridgeRouteResult.Rejected)
         val badSession = JSONObject(envelope()).put("batchPostSignerUrl", "$ORIGIN/opencms/clientsigner/BatchPostsigner/service/$OTHER_SESSION").toString()
         assertEquals(true, bridge.route(badSession, Uri.parse(ORIGIN), true, 4L) is MelillaBatchBridgeRouteResult.Rejected)
+
+        val duplicateRequestId = envelope().dropLast(1) + ",\"requestId\":\"$REQUEST_ID\"}"
+        assertEquals(
+            true,
+            bridge.route(duplicateRequestId, Uri.parse(ORIGIN), true, 4L) is MelillaBatchBridgeRouteResult.Rejected,
+        )
     }
 
     private fun envelope(): String = JSONObject()

@@ -58,6 +58,13 @@ The public Lugo helper is consistent with the official Cliente @firma batch clie
 
 Workspace-47 therefore uses an empty HTTP request body plus a bounded encoded query for this exact protocol. The generic transport remains fail-closed: an HTTP request may use a body or an encoded query, never both.
 
+Primary implementation references used for the wire semantics:
+
+- `https://github.com/ctt-gob-es/clienteafirma/blob/master/afirma-crypto-batch-client/src/main/java/es/gob/afirma/signers/batch/client/BatchSigner.java`
+- `https://github.com/ctt-gob-es/clienteafirma/blob/master/afirma-core/src/main/java/es/gob/afirma/core/signers/TriphaseDataSigner.java`
+
+`BatchSigner.signXML` sends `xml`/`certs` and later `xml`/`certs`/`tridata` in the URL query while using HTTP POST. `TriphaseDataSigner` adds `PK1` and removes `PRE` unless `NEED_PRE` is true.
+
 ## Final result contract
 
 The live Lugo callback Base64-decodes the post-signer XML and accepts only `signresult` values:
@@ -73,9 +80,7 @@ Live public FAQ:
 
 `https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/acceso_sede`
 
-Fresh HTTP 200 SHA-256:
-
-`ceee32508aa6c571ae2b5604c4bc0acbd8e53c7177a9cccf50dc95ff0b6b43cd`
+Fresh unauthenticated GET returned HTTP 200. The FAQ is server-rendered and is not assigned a durable body hash here.
 
 It states that certificate access to the Sede requires a valid certificate and AutoFirma.
 
@@ -83,9 +88,7 @@ Live public AutoFirma FAQ:
 
 `https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/instalar_autofirma`
 
-Fresh HTTP 200 SHA-256:
-
-`c5a2a1eb6105b2848c4a398ac08d2e6db706012f8647d2137bb088c2c2a1fe72`
+Fresh unauthenticated GET returned HTTP 200. This server-rendered FAQ is likewise not assigned a durable body hash.
 
 The previously drafted `.../faq/requisitos_tecnicos?lang=es` URL returned HTTP 404 on revalidation and must not be used as evidence.
 

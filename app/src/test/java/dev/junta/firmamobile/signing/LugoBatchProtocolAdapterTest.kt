@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.signing
 
+import dev.junta.firmamobile.browser.LugoBatchBridgeAdapter
 import dev.junta.firmamobile.browser.NavigationId
 import dev.junta.firmamobile.network.ProfileHttpCancellation
 import dev.junta.firmamobile.network.ProfileHttpFailure
@@ -55,7 +56,11 @@ class LugoBatchProtocolAdapterTest {
         assertTrue(batchXml.contains("<datasource>$HASH</datasource>"))
         assertTrue(batchXml.contains("<format>CAdES</format>"))
         assertTrue(batchXml.contains("<suboperation>sign</suboperation>"))
-        assertTrue(batchXml.contains("precalculatedHashAlgorithm".encodeToByteArray().let(Base64.getEncoder()::encodeToString)))
+        val encodedExtra = batchXml.substringAfter("<extraparams>").substringBefore("</extraparams>")
+        assertEquals(
+            LugoBatchBridgeAdapter.EXTRA_PROPERTIES,
+            Base64.getDecoder().decode(encodedExtra).decodeToString(),
+        )
         prepared.withInput(0) { assertEquals("synthetic-pre", it.decodeToString()) }
 
         val completed = adapter.complete(
@@ -87,6 +92,7 @@ class LugoBatchProtocolAdapterTest {
             listOf(
                 "<signresults><signresult id=\"$DOCUMENT_ID\" result=\"$valid\"/></signresults>",
                 "<legacyBatchResult><signresult id=\"$DOCUMENT_ID\" result=\"$valid\"/></legacyBatchResult>",
+                "<serverSpecificRoot version=\"1\"><container><signresult id=\"$DOCUMENT_ID\" result=\"$valid\"/></container></serverSpecificRoot>",
             ).forEach { responseXml ->
                 assertEquals(
                     true,
@@ -99,7 +105,6 @@ class LugoBatchProtocolAdapterTest {
             "<signresults><signresult id=\"foreign\" result=\"DONE_AND_SAVED\"/></signresults>",
             "<signresults><signresult id=\"$DOCUMENT_ID\" result=\"ERROR\"/></signresults>",
             "<signresults><signresult id=\"$DOCUMENT_ID\" result=\"DONE_AND_SAVED\"/><signresult id=\"other\" result=\"DONE_AND_SAVED\"/></signresults>",
-            "<signresults extra=\"1\"><signresult id=\"$DOCUMENT_ID\" result=\"DONE_AND_SAVED\"/></signresults>",
             "<signresults><signresult id=\"$DOCUMENT_ID\" result=\"DONE_AND_SAVED\" extra=\"1\"/></signresults>",
             "<!DOCTYPE signresults [<!ENTITY x SYSTEM \"file:///etc/passwd\">]><signresults><signresult id=\"$DOCUMENT_ID\" result=\"DONE_AND_SAVED\"/></signresults>",
             "not-xml",

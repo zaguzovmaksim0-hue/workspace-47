@@ -12,8 +12,9 @@ class LugoBatchUrlPolicyTest {
     fun acceptsOnlyExactLugoMultiNodePairWithSameSession() {
         val pre = "$ORIGIN/opencms/clientsigner/BatchPresigner/service/$SESSION"
         val post = "$ORIGIN/opencms/clientsigner/BatchPostsigner/service/$SESSION"
-        val pair = assertNotNull(policy.validatePair(pre, post)) as Pair<*, *>
-        assertEquals(SESSION, (pair.first as LugoBatchUrlBinding).sessionId)
+        val pair = policy.validatePair(pre, post)
+        assertNotNull(pair)
+        assertEquals(SESSION, pair?.first?.sessionId)
 
         assertNull(policy.validatePair(pre, post.replace(SESSION, OTHER_SESSION)))
         assertNull(policy.validate(pre.replace("https://", "http://"), LugoBatchOperation.PRESIGN))

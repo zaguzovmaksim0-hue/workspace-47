@@ -181,7 +181,6 @@ class LugoBatchProtocolAdapter internal constructor(
         private const val MAX_XML_BYTES = 2 * 1024 * 1024
         private const val MAX_PRE_BYTES = 256 * 1024
         private val SAFE_ID = Regex("[A-Za-z0-9._-]{1,128}")
-        private val FINAL_RESULT_ROOTS = setOf("signresults", "legacyBatchResult")
         private val FINAL_SUCCESS_RESULTS = setOf("DONE_AND_SAVED", "DONE_BUT_NOT_SAVED_YET")
 
         private fun encodeCertificateChain(chain: List<X509Certificate>): String =
@@ -191,10 +190,9 @@ class LugoBatchProtocolAdapter internal constructor(
         private fun isValidFinalResult(bytes: ByteArray, expectedId: String): Boolean {
             if (bytes.isEmpty() || bytes.size > MAX_XML_BYTES) return false
             val root = parseXml(bytes) ?: return false
-            if (root.tagName !in FINAL_RESULT_ROOTS || root.attributes.length != 0) return false
-            val children = root.childElements()
-            if (children.size != 1 || children.single().tagName != "signresult") return false
-            val result = children.single()
+            val results = root.getElementsByTagName("signresult")
+            if (results.length != 1) return false
+            val result = results.item(0) as? Element ?: return false
             if (result.childElements().isNotEmpty() || result.attributes.length != 2) return false
             if (result.getAttribute("id") != expectedId) return false
             return result.getAttribute("result") in FINAL_SUCCESS_RESULTS

@@ -42,6 +42,7 @@
     "format=XAdES Detached\nfilters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:";
   const staBatchOrigin = __JFM_STA_BATCH_ORIGIN__;
   const lugoOrigin = "https://sede.deputacionlugo.org";
+  const lugoClientBase = "https://sede.deputacionlugo.org/opencms";
   const lugoExtraProperties = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\n";
   const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
@@ -498,6 +499,14 @@
     return true;
   }
 
+  function interceptLugoSetupCall(call, args) {
+    if (!lugoBatchCompatibilityEnabled || window.location.origin !== lugoOrigin) {
+      return false;
+    }
+    return call === "LUGO_CARGAR_APP_AFIRMA" &&
+      args.length === 1 && args[0] === lugoClientBase;
+  }
+
   function interceptLugoBatchSign(args) {
     if (!lugoBatchCompatibilityEnabled || window.location.origin !== lugoOrigin) {
       return false;
@@ -815,6 +824,9 @@
         if (call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)) {
           return undefined;
         }
+        if (interceptLugoSetupCall(call, args)) {
+          return undefined;
+        }
         if (interceptUgrSetupCall(call, args)) {
           return undefined;
         }
@@ -827,6 +839,7 @@
             (call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) ||
             (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) ||
             (call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)) ||
+            interceptLugoSetupCall(call, args) ||
             interceptUgrSetupCall(call, args)) {
           return undefined;
         }
@@ -889,6 +902,7 @@
         installMethodHook(value, "signBatchProcess", "BATCH_SIGN");
       }
       if (includeLugoBatch) {
+        installMethodHook(value, "cargarAppAfirma", "LUGO_CARGAR_APP_AFIRMA");
         installMethodHook(value, "signBatch", "LUGO_BATCH_SIGN");
       }
       if (includeUgrSetup) {
