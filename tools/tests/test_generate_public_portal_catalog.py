@@ -75,6 +75,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", pag_reg["limitations"].lower())
         self.assertIn("e2e", pag_reg["limitations"].lower())
 
+        exteriores = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-asuntos-exteriores-union-europea-y-cooperacion"
+        )
+        self.assertEqual("reg-age-redsara", exteriores["profileId"])
+        self.assertEqual("ES-PUB-0060", exteriores["inventoryId"])
+        self.assertEqual(
+            "https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula",
+            exteriores["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", exteriores["launchUrl"])
+        self.assertEqual("E2E_PENDING", exteriores["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", exteriores["inventoryStatus"])
+        self.assertEqual("REVIEWED", exteriores["discoveryState"])
+        self.assertEqual("2026-08-16", exteriores["reviewedOn"])
+        self.assertIn("reg-age", exteriores["limitations"].lower())
+        self.assertIn("qa", exteriores["limitations"].lower())
+        self.assertIn("e2e", exteriores["limitations"].lower())
+
         redsara = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "age-reg-redsara"
