@@ -76,11 +76,12 @@ class PortalCatalogRepositoryTest {
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
                 "policia-solicitud-generica",
+                "cdti-certificate-validation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 28, metadataOnly.size)
+        assertEquals(qaPortals.size - 29, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -132,6 +133,25 @@ class PortalCatalogRepositoryTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `CDTI exact validation page is QA enabled and release fail closed`() {
+        val profileId = ProfileId("cdti-certificate-validation")
+        val exact = java.net.URI(
+            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+        )
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(exact, qaPortal.entryUrl)
+        assertEquals(setOf(SignatureFormat.XADES), qaPortal.signatureFormats)
+        assertEquals(PortalLaunchTarget(profileId, exact), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
     }
 
     @Test

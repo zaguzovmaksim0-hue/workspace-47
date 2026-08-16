@@ -18,6 +18,7 @@
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
+  const cdtiCompatibilityEnabled = __JFM_CDTI_COMPATIBILITY_ENABLED__;
   const policiaCompatibilityEnabled = __JFM_POLICIA_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
@@ -34,6 +35,11 @@
   const jccmPayloadBase64 = "QUJDREU=";
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
+  const cdtiOrigin = "https://sede.cdti.gob.es";
+  const cdtiPage =
+    "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx";
+  const cdtiChallengePattern = /^CertExp[0-9a-f]{32}[0-9a-z]{24}$/;
+  const cdtiExtraProperties = "filters=nonexpired";
   const policiaOrigin = "https://sede.policia.gob.es";
   const policiaProcedurePage =
     "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml";
@@ -230,6 +236,22 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isCdtiOrigin =
+      cdtiCompatibilityEnabled && window.location.origin === cdtiOrigin;
+    const isCdtiPage =
+      isCdtiOrigin && window.location.href === cdtiPage &&
+      window.location.search === "" && window.location.hash === "";
+    const isExactCdtiCall =
+      isCdtiPage && args.length === 6 &&
+      typeof args[0] === "string" && cdtiChallengePattern.test(args[0]) &&
+      args[1] === "SHA512withRSA" &&
+      args[2] === "XAdES Enveloping" &&
+      args[3] === cdtiExtraProperties &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isCdtiOrigin && !isExactCdtiCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isPoliciaOrigin =
       policiaCompatibilityEnabled && window.location.origin === policiaOrigin;
     const isPoliciaProcedurePage =
@@ -277,7 +299,8 @@
       (args[3] === null || args[3] === "");
     const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
-        globalThis.btoa(args[0]) : args[0];
+        globalThis.btoa(args[0]) :
+      isExactCdtiCall ? args[0] + "=" : args[0];
     const hasValidUgrDataEncoding = base64Pattern.test(dataB64);
     const hasValidCantabriaDataEncoding = isExactCantabriaCall &&
       typeof globalThis.btoa === "function" &&
@@ -294,12 +317,12 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !isExactSevillaAtseCall && !base64Pattern.test(args[0])) ||
+          !isExactSevillaAtseCall && !isExactCdtiCall && !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
           !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
-          !isExactPoliciaCall)) {
+          !isExactCdtiCall && !isExactPoliciaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

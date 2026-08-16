@@ -16,6 +16,7 @@ import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
+import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
@@ -208,6 +209,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == SEVILLA_ATSE_PROFILE_ID && !isSevillaAtseContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isCdtiContract = isExactCdtiContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == CdtiXadesEnvelopingAdapter.PROFILE_ID && !isCdtiContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isPoliciaContract = isExactPoliciaContract(
             profile = profile,
             origin = resolved.origin,
@@ -240,12 +251,19 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_XADES_DETACHED -> if (isSevillaAtseContract || isPoliciaContract) {
+            FORMAT_XADES_DETACHED -> if (
+                isSevillaAtseContract || isPoliciaContract || isCdtiContract
+            ) {
                 null
             } else {
                 SigningFormat.XADES to SignatureFormat.XADES
             }
             FORMAT_XADES -> if (isSevillaAtseContract || isPoliciaContract) {
+                SigningFormat.XADES to SignatureFormat.XADES
+            } else {
+                null
+            }
+            FORMAT_XADES_ENVELOPING -> if (isCdtiContract) {
                 SigningFormat.XADES to SignatureFormat.XADES
             } else {
                 null
@@ -303,6 +321,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 )
             }
             ""
+        } else if (isCdtiContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == CdtiXadesEnvelopingAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (isPoliciaContract) {
             val raw = json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?: return MiniAppletBridgeRouteResult.Rejected(
@@ -378,6 +403,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             )
         }
         if (isSevillaAtseContract && !decodedData.isExactSevillaAtseChallenge()) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
+        if (isCdtiContract && !CdtiXadesEnvelopingAdapter.isExactChallenge(decodedData)) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
@@ -540,6 +572,45 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.fixedExtraProperties.isEmpty() &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == SEVILLA_ATSE_PROTOCOL_ID
+
+    private fun isExactCdtiContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == CdtiXadesEnvelopingAdapter.START_URL &&
+            profile.profileId.value == CdtiXadesEnvelopingAdapter.PROFILE_ID &&
+            profile.profileVersion == CdtiXadesEnvelopingAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == CdtiXadesEnvelopingAdapter.START_URL &&
+            origin.serialized == CdtiXadesEnvelopingAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(CdtiXadesEnvelopingAdapter.INITIATOR_ORIGIN),
+            ) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == CdtiXadesEnvelopingAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA) &&
+            operation.format == SignatureFormat.XADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == linkedMapOf("filters" to "nonexpired") &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == CdtiXadesEnvelopingAdapter.ID.value
 
     private fun isExactPoliciaContract(
         profile: SiteProfile,
@@ -704,6 +775,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val FORMAT_CADES = "CAdES"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val FORMAT_XADES = "XAdES"
+        private const val FORMAT_XADES_ENVELOPING = "XAdES Enveloping"
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val SEVILLA_ATSE_PROFILE_VERSION = 1
         private const val SEVILLA_ATSE_START_URL =

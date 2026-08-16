@@ -176,6 +176,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
                 validateSevillaAtseProfile(p)
             }
+            if (p.profileId.value == CDTI_PROFILE_ID) {
+                validateCdtiProfile(p)
+            }
             if (p.profileId.value == MELILLA_PROFILE_ID) {
                 validateMelillaProfile(p)
             }
@@ -283,7 +286,10 @@ object SiteProfileCatalogParser {
                 if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
                     require(op.operation == ProtocolOperation.SIGN)
                     require(
-                        op.packaging == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                        op.packaging == if (
+                            p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
+                            p.profileId.value == CDTI_PROFILE_ID
+                        ) {
                             SignaturePackaging.ATTACHED
                         } else {
                             SignaturePackaging.DETACHED
@@ -353,13 +359,12 @@ object SiteProfileCatalogParser {
                                     setOf(SignatureAlgorithm.SHA512_WITH_RSA)
                                 },
                             )
-                            require(
-                                op.fixedExtraProperties == if (p.profileId.value == POLICIA_PROFILE_ID) {
-                                    POLICIA_FIXED_EXTRA_PROPERTIES
-                                } else {
-                                    emptyMap()
-                                },
-                            )
+                            val expectedXadesProperties = when (p.profileId.value) {
+                                POLICIA_PROFILE_ID -> POLICIA_FIXED_EXTRA_PROPERTIES
+                                CDTI_PROFILE_ID -> CDTI_FIXED_EXTRA_PROPERTIES
+                                else -> emptyMap()
+                            }
+                            require(op.fixedExtraProperties == expectedXadesProperties)
                         }
                         SignatureFormat.PADES, SignatureFormat.FACTURAE -> error("unsupported adapter format")
                         null -> error("signing format required")
@@ -737,6 +742,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateCdtiProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CDTI_PROFILE_VERSION)
+        require(profile.displayName == CDTI_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CDTI_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CDTI_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = CDTI_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                format = SignatureFormat.XADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = null,
+                fixedExtraProperties = CDTI_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateJccmProfile(profile: SiteProfile) {
         require(profile.profileVersion == JCCM_PROFILE_VERSION)
         require(profile.displayName == JCCM_DISPLAY_NAME)
@@ -1033,6 +1071,14 @@ object SiteProfileCatalogParser {
     private const val HUESCA_ORIGIN = "https://ovc24.dphuesca.es"
     private const val HUESCA_SAFE_DESCRIPTION =
         "Firma por lotes en la Oficina Virtual de la Diputación Provincial de Huesca"
+    private const val CDTI_PROFILE_ID = "cdti-certificate-validation"
+    private const val CDTI_PROFILE_VERSION = 1
+    private const val CDTI_DISPLAY_NAME = "CDTI — Validación de certificado digital"
+    private const val CDTI_START_URL =
+        "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"
+    private const val CDTI_ORIGIN = "https://sede.cdti.gob.es"
+    private const val CDTI_SAFE_DESCRIPTION = "Validación de certificado digital en CDTI"
+    private val CDTI_FIXED_EXTRA_PROPERTIES = linkedMapOf("filters" to "nonexpired")
     private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
     private const val SEVILLA_ATSE_PROFILE_VERSION = 1
     private const val SEVILLA_ATSE_DISPLAY_NAME =

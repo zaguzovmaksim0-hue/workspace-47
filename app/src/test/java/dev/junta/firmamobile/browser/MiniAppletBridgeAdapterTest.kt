@@ -487,6 +487,74 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactCdtiAutoScriptCallNormalizesTheDynamicChallengeToSha512XadesEnveloping() {
+        val result = cdtiAdapter().route(
+            rawMessage = cdtiMessage(),
+            sourceOrigin = CDTI_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 51,
+            currentPageUrl = CDTI_START_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(CDTI_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.cdti.gob.es", request.context.origin.host)
+            assertEquals(51, request.context.navigationEpoch)
+            assertEquals(CDTI_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA512_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.XADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(
+                        Base64.getDecoder().decode(CDTI_CHALLENGE + "="),
+                        data,
+                    )
+                    assertEquals(CDTI_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun cdtiBridgeKeepsWrongPageOriginChallengeTupleAndPropertiesFailClosed() {
+        val adapter = cdtiAdapter()
+        fun rejected(
+            rawMessage: String = cdtiMessage(),
+            origin: Uri = CDTI_ORIGIN,
+            pageUrl: String? = CDTI_START_URL,
+        ) = adapter.route(
+            rawMessage = rawMessage,
+            sourceOrigin = origin,
+            isMainFrame = true,
+            currentPageUrl = pageUrl,
+        ) is MiniAppletBridgeRouteResult.Rejected
+
+        assertTrue(rejected(origin = Uri.parse("https://sede.cdti.gob.es.evil.example")))
+        assertTrue(rejected(pageUrl = null))
+        assertTrue(rejected(pageUrl = "https://sede.cdti.gob.es/AreaPrivada/Expedientes/"))
+        assertTrue(rejected(pageUrl = "$CDTI_START_URL?unexpected=1"))
+        assertTrue(rejected(rawMessage = cdtiMessage(algorithm = "SHA256withRSA")))
+        assertTrue(rejected(rawMessage = cdtiMessage(format = "XAdES")))
+        assertTrue(rejected(rawMessage = cdtiMessage(format = "XAdES Detached")))
+        assertTrue(rejected(rawMessage = cdtiMessage(extraProperties = "filters=expired")))
+        assertTrue(
+            rejected(
+                rawMessage = cdtiMessage(
+                    dataB64 = (CDTI_CHALLENGE.dropLast(1) + "A") + "=",
+                ),
+            ),
+        )
+        assertTrue(
+            rejected(
+                rawMessage = cdtiMessage(
+                    dataB64 = ("CertExp" + "A".repeat(32) + "a".repeat(24)) + "=",
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun exactPoliciaAutoScriptCallNormalizesToOwnedSha1XadesRequest() {
         val result = policiaAdapter().route(
             rawMessage = policiaMessage(),
@@ -987,6 +1055,60 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
+    private fun cdtiAdapter(): ProfileMiniAppletBridgeAdapter {
+        val profile = SiteProfile(
+            profileId = ProfileId(CDTI_PROFILE_ID),
+            profileVersion = 1,
+            displayName = "CDTI — Validación de certificado digital",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
+            activation = ProfileActivation.QA_ONLY,
+            startUrl = URI(CDTI_START_URL),
+            initiatorOrigins = setOf(ExactOrigin.parse(CDTI_ORIGIN.toString())),
+            redirectOrigins = emptySet(),
+            trustedBrowseOrigins = emptySet(),
+            endpoints = emptyMap(),
+            operationPolicies = mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = CDTI_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                    format = SignatureFormat.XADES,
+                    packaging = SignaturePackaging.ATTACHED,
+                    mode = null,
+                    fixedExtraProperties = linkedMapOf("filters" to "nonexpired"),
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+            capabilities = setOf(Capability.SIGN),
+            clientAuthPolicy = null,
+            certificateRules = CertificateFilterRules(setOf("RSA"), true),
+            evidence = emptyList(),
+        )
+        return ProfileMiniAppletBridgeAdapter(
+            clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+            profileRegistry = SiteProfileRegistry(
+                SiteProfileCatalog(schemaVersion = 1, catalogVersion = 1, profiles = listOf(profile)),
+                BuildTrustPolicy.QA,
+            ),
+            adapterRegistry = ProtocolAdapterRegistry(
+                listOf(
+                    ProtocolAdapterBinding(
+                        profileId = profile.profileId,
+                        operation = ProtocolOperation.SIGN,
+                        inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                        callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                        signingProtocolId = SigningProtocolId(CDTI_PROTOCOL_ID),
+                    ),
+                ),
+            ),
+            activeProfileId = { profile.profileId },
+        )
+    }
+
     private fun policiaAdapter(): ProfileMiniAppletBridgeAdapter {
         val profile = SiteProfile(
             profileId = ProfileId(POLICIA_PROFILE_ID),
@@ -1095,6 +1217,21 @@ class MiniAppletBridgeAdapterTest {
         algorithm: String = "SHA1withRSA",
         format: String = "XAdES",
         extraProperties: Any = JSONObject.NULL,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
+    private fun cdtiMessage(
+        dataB64: String = CDTI_CHALLENGE + "=",
+        algorithm: String = "SHA512withRSA",
+        format: String = "XAdES Enveloping",
+        extraProperties: Any = CDTI_EXTRA_PROPERTIES,
     ): String = JSONObject()
         .put("type", "MINIAPPLET_SIGN")
         .put("documentId", DOCUMENT_ID)
@@ -1219,6 +1356,15 @@ class MiniAppletBridgeAdapterTest {
         const val SEVILLA_SAFE_DESCRIPTION =
             "Acceso con certificado a la Agencia Tributaria de Sevilla"
         const val SEVILLA_CHALLENGE = "0123456789abcdef0123456789abcdefABCDEFGH"
+        val CDTI_ORIGIN: Uri = Uri.parse("https://sede.cdti.gob.es")
+        const val CDTI_PROFILE_ID = "cdti-certificate-validation"
+        const val CDTI_PROTOCOL_ID = "cdti-xades-enveloping-v1"
+        const val CDTI_START_URL =
+            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"
+        const val CDTI_SAFE_DESCRIPTION = "Validación de certificado digital en CDTI"
+        const val CDTI_CHALLENGE =
+            "CertExp94e51ba8192c41ccbd1693a238fcd217aranjiffmrytnu55nzy5az45"
+        const val CDTI_EXTRA_PROPERTIES = "filters=nonexpired"
         const val UGR_PROFILE_ID = "ugr-certificado-login"
         const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         const val JCCM_START_URL =
