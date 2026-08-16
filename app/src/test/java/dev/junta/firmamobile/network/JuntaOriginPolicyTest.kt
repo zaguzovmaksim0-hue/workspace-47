@@ -35,6 +35,7 @@ class JuntaOriginPolicyTest {
     private val ceuta = ProfileId("ceuta-sede")
     private val extremadura = ProfileId("extremadura-tramites")
     private val valladolid = ProfileId("diputacion-valladolid-sede")
+    private val burgos = ProfileId("diputacion-burgos-portal")
     private val laPalma = ProfileId("la-palma-sede-electronica")
     private val huesca = ProfileId("diputacion-huesca-portal")
     private val lugo = ProfileId("diputacion-lugo-sede")
@@ -73,6 +74,7 @@ class JuntaOriginPolicyTest {
             "sede.ceuta.es",
             "tramites.juntaex.es",
             "www.sede.diputaciondevalladolid.es",
+            "registro.diputaciondeburgos.es",
             "sedeelectronica.cabildodelapalma.es",
             "ovc24.dphuesca.es",
             "sede.deputacionlugo.org",
@@ -165,6 +167,14 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(valladolid),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(valladolid).isEmpty())
+        assertEquals(
+            setOf("registro.diputaciondeburgos.es"),
+            JuntaOriginPolicy.browserAllowedHosts(burgos),
+        )
+        assertEquals(
+            setOf("https://registro.diputaciondeburgos.es"),
+            JuntaOriginPolicy.webMessageOriginRules(burgos),
+        )
         assertEquals(
             setOf("sedeelectronica.cabildodelapalma.es"),
             JuntaOriginPolicy.browserAllowedHosts(laPalma),

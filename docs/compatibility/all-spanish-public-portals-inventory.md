@@ -4960,25 +4960,25 @@ records:
     surface_type: "PORTAL_SERVICIO"
     origin: "https://burgos.es"
     official_site: "https://burgos.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://burgos.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    e_sede: "https://sede.diputaciondeburgos.es"
+    entry_url: "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO"
+    procedure_page: "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / STAAutofirmaLote"
+    protocol_family: "AUTOSCRIPT_STA_BATCH_TRIFASICO"
+    signature_format: "CAdES / PAdES / XAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "URLs runtime bajo /sta/AutofirmaLote/{presign,postsign,getdata}; valores concretos suministrados por backend"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Instancia Genérica pública del Registro electrónico exige certificado reconocido y firma electrónica y ofrece AutoFirma; el soporte queda limitado al origin exacto registro.diputaciondeburgos.es."
+    protocol_evidence: "El Registro público carga AutoScript, sta-autofirma-lote.js y webAppsFwk.js byte-idénticos al seam STA ya validado; firmarLote devuelve PRESENTAR_FIRMA y el helper fija SHA256withRSA/CAdES/sign. El servlet público confirma /{op}/{operacionId}."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP08A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP08A", "DP08B", "DP08C", "DP08D", "DP08E", "DP08F", "DP08G", "DP08H"]
+    reason: "Implementación QA limitada a https://registro.diputaciondeburgos.es y al contrato STA observado; no se realizó autenticación, certificado real, firma real ni E2E administrativo."
+    reviewed_at: "2026-08-16"
+    next_gate: "Mantener QA_ONLY hasta una verificación E2E autorizada con el flujo real; no inferir soporte para burgos.es, sede.diputaciondeburgos.es u otros hosts."
 
   - inventory_id: "ES-PUB-0147"
     surface_key: "diputacion-caceres-portal"
@@ -6424,6 +6424,13 @@ availability, certificado, firma ni contrato técnico.
 [DP07A]: https://www.diba.cat/es/
 [DP07B]: https://seuelectronica.diba.cat/es/suport-a-la-tramitaci%C3%B3
 [DP08A]: https://burgos.es
+[DP08B]: https://sede.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO
+[DP08C]: https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO
+[DP08D]: https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FAQS2
+[DP08E]: https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMA
+[DP08F]: https://registro.diputaciondeburgos.es/sta/resources/js/sta-autofirma-lote.js
+[DP08G]: https://registro.diputaciondeburgos.es/sta/resources/js/autoscript.js
+[DP08H]: https://registro.diputaciondeburgos.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.3
 [DP09A]: https://www.dip-caceres.es
 [DP10A]: https://www.dipucadiz.es
 [DP10B]: https://sede.dipucadiz.es/web/sede/inicio

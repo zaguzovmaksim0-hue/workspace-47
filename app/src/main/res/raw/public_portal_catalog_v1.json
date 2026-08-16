@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "49f648b05090ad1432127eed35fe6a0b8cfa63a5873f66295525d7620bd20939",
+  "sourceRevision": "a58c334684b362b732fbcb641eb2b1f1642dd22fccc7b48174adf11094fa5bea",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3558,25 +3558,40 @@
     {
       "portalId": "diputacion-burgos-portal",
       "inventoryId": "ES-PUB-0146",
-      "profileId": null,
+      "profileId": "diputacion-burgos-portal",
       "displayName": "Portal oficial de Diputación Provincial de Burgos",
       "organization": "Diputación Provincial de Burgos",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://burgos.es",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "purpose": "La Instancia Genérica pública del Registro electrónico exige certificado reconocido y firma electrónica y ofrece AutoFirma; el soporte queda limitado al origin exacto registro.diputaciondeburgos.es.",
+      "entryUrl": "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
+      "observedSignatureFormats": [
+        "CADES",
+        "PADES",
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_STA_BATCH_TRIFASICO",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP08A"
+        "DP08A",
+        "DP08B",
+        "DP08C",
+        "DP08D",
+        "DP08E",
+        "DP08F",
+        "DP08G",
+        "DP08H"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Implementación QA limitada a https://registro.diputaciondeburgos.es y al contrato STA observado; no se realizó autenticación, certificado real, firma real ni E2E administrativo."
     },
     {
       "portalId": "diputacion-caceres-portal",

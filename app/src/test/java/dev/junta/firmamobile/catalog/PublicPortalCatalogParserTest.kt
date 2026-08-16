@@ -39,7 +39,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(30, catalog.entries.count { it.profileId != null })
+        assertEquals(31, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -61,6 +61,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ceuta-sede"),
                 ProfileId("extremadura-tramites"),
                 ProfileId("diputacion-valladolid-sede"),
+                ProfileId("diputacion-burgos-portal"),
                 ProfileId("la-palma-sede-electronica"),
                 ProfileId("diputacion-huesca-portal"),
                 ProfileId("diputacion-lugo-sede"),
@@ -76,7 +77,7 @@ class PublicPortalCatalogParserTest {
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 68)
-        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 148)
+        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 147)
     }
 
     @Test
@@ -91,6 +92,7 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in lugo.observedMechanisms)
         assertTrue(PortalMechanism.AUTOSCRIPT in lugo.observedMechanisms)
         assertTrue(lugo.limitations.contains("un lote CAdES", ignoreCase = true))
+
     }
 
     @Test

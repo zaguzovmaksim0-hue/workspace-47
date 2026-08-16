@@ -220,6 +220,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LA_PALMA_PROFILE_ID) {
                 validateLaPalmaProfile(p)
             }
+            if (p.profileId.value == BURGOS_PROFILE_ID) {
+                validateBurgosProfile(p)
+            }
             if (p.profileId.value == HUESCA_PROFILE_ID) {
                 validateHuescaProfile(p)
             }
@@ -724,6 +727,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateBurgosProfile(profile: SiteProfile) {
+        require(profile.profileVersion == BURGOS_PROFILE_VERSION)
+        require(profile.displayName == BURGOS_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == BURGOS_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(BURGOS_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = BURGOS_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("burgos-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("burgos-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateHuescaProfile(profile: SiteProfile) {
         require(profile.profileVersion == HUESCA_PROFILE_VERSION)
         require(profile.displayName == HUESCA_DISPLAY_NAME)
@@ -1011,6 +1047,7 @@ object SiteProfileCatalogParser {
         "la-palma-batch-autoscript-v1",
         "huesca-batch-autoscript-v1",
         "lugo-clientsigner-xml-batch-v1",
+        "burgos-batch-autoscript-v1",
         "autoscript-select-certificate-v1",
     )
     private val REGISTERED_CALLBACKS = setOf(
@@ -1021,6 +1058,7 @@ object SiteProfileCatalogParser {
         "la-palma-batch-result-v1",
         "huesca-batch-result-v1",
         "lugo-clientsigner-batch-result-v1",
+        "burgos-batch-result-v1",
         "autoscript-select-certificate-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
@@ -1146,6 +1184,14 @@ object SiteProfileCatalogParser {
     private const val LA_PALMA_ORIGIN = "https://sedeelectronica.cabildodelapalma.es"
     private const val LA_PALMA_SAFE_DESCRIPTION =
         "Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma"
+    private const val BURGOS_PROFILE_ID = "diputacion-burgos-portal"
+    private const val BURGOS_PROFILE_VERSION = 1
+    private const val BURGOS_DISPLAY_NAME = "Diputación Provincial de Burgos — Registro electrónico"
+    private const val BURGOS_START_URL =
+        "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO"
+    private const val BURGOS_ORIGIN = "https://registro.diputaciondeburgos.es"
+    private const val BURGOS_SAFE_DESCRIPTION =
+        "Firma por lotes de Instancia Genérica en el Registro electrónico de la Diputación Provincial de Burgos"
     private const val HUESCA_PROFILE_ID = "diputacion-huesca-portal"
     private const val HUESCA_PROFILE_VERSION = 1
     private const val HUESCA_DISPLAY_NAME = "Diputación Provincial de Huesca — Oficina Virtual"

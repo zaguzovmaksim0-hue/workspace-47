@@ -52,6 +52,7 @@ class BrowserScreenTest {
         assertTrue(profileRequiresWebMessageBridge(profile("diputacion-valencia-sede")))
         assertTrue(profileRequiresWebMessageBridge(profile("unizar-tramitador")))
         assertTrue(profileRequiresWebMessageBridge(profile("diputacion-huesca-portal")))
+        assertTrue(profileRequiresWebMessageBridge(profile("diputacion-burgos-portal")))
         assertTrue(!profileRequiresWebMessageBridge(profile("carne-joven-andalucia")))
     }
 

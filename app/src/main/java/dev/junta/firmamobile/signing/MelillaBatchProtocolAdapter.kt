@@ -2,6 +2,7 @@ package dev.junta.firmamobile.signing
 
 import android.util.JsonReader
 import android.util.JsonToken
+import dev.junta.firmamobile.network.BurgosBatchUrlPolicy
 import dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy
 import dev.junta.firmamobile.network.HuescaBatchUrlPolicy
 import dev.junta.firmamobile.network.LaPalmaBatchUrlPolicy
@@ -185,6 +186,40 @@ class HuescaBatchProtocolAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("huesca-batch-autoscript-v1")
         private const val PROFILE_ID = "diputacion-huesca-portal"
+        private const val PROFILE_VERSION = 1
+    }
+}
+
+
+/** Executes the observed STA batch contract for the exact Burgos Registro profile. */
+class BurgosBatchProtocolAdapter internal constructor(
+    transport: ProfileHttpTransport,
+    urlPolicy: BurgosBatchUrlPolicy = BurgosBatchUrlPolicy(),
+) : BatchSigningProtocolAdapter {
+    private val delegate = StaBatchProtocolAdapter(
+        transport = transport,
+        contract = StaBatchProtocolContract(
+            id = ID,
+            profileId = PROFILE_ID,
+            profileVersion = PROFILE_VERSION,
+            origin = TrustedOrigin("https", "registro.diputaciondeburgos.es", 443),
+            urlValidator = StaBatchUrlValidator { rawUrl, operation, operationId, documentId ->
+                urlPolicy.validate(rawUrl, operation, operationId, documentId)
+            },
+        ),
+    )
+    override val id: SigningProtocolId = ID
+    override fun prepare(request: NormalizedBatchSigningRequest, certificateChain: List<X509Certificate>): BatchProtocolPrepareResult =
+        delegate.prepare(request, certificateChain)
+    override fun complete(
+        request: NormalizedBatchSigningRequest,
+        preSign: BatchPreSignResult,
+        localSignatures: List<LocalSignature>,
+    ): BatchProtocolCompletionResult = delegate.complete(request, preSign, localSignatures)
+
+    companion object {
+        val ID = SigningProtocolId("burgos-batch-autoscript-v1")
+        private const val PROFILE_ID = "diputacion-burgos-portal"
         private const val PROFILE_VERSION = 1
     }
 }
