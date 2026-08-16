@@ -188,6 +188,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == HUESCA_PROFILE_ID) {
                 validateHuescaProfile(p)
             }
+            if (p.profileId.value == LUGO_PROFILE_ID) {
+                validateLugoProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -704,6 +707,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateLugoProfile(profile: SiteProfile) {
+        require(profile.profileVersion == LUGO_PROFILE_VERSION)
+        require(profile.displayName == LUGO_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == LUGO_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(LUGO_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = LUGO_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("lugo-clientsigner-xml-batch-v1"),
+                callbackContractId = CallbackContractId("lugo-clientsigner-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = mapOf("precalculatedHashAlgorithm" to "SHA-256"),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -891,6 +927,7 @@ object SiteProfileCatalogParser {
         "extremadura-batch-autoscript-v1",
         "la-palma-batch-autoscript-v1",
         "huesca-batch-autoscript-v1",
+        "lugo-clientsigner-xml-batch-v1",
         "autoscript-select-certificate-v1",
     )
     private val REGISTERED_CALLBACKS = setOf(
@@ -900,6 +937,7 @@ object SiteProfileCatalogParser {
         "extremadura-batch-result-v1",
         "la-palma-batch-result-v1",
         "huesca-batch-result-v1",
+        "lugo-clientsigner-batch-result-v1",
         "autoscript-select-certificate-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
@@ -1033,6 +1071,14 @@ object SiteProfileCatalogParser {
     private const val HUESCA_ORIGIN = "https://ovc24.dphuesca.es"
     private const val HUESCA_SAFE_DESCRIPTION =
         "Firma por lotes en la Oficina Virtual de la Diputación Provincial de Huesca"
+    private const val LUGO_PROFILE_ID = "diputacion-lugo-sede"
+    private const val LUGO_PROFILE_VERSION = 1
+    private const val LUGO_DISPLAY_NAME = "Deputación de Lugo — Sede electrónica"
+    private const val LUGO_START_URL =
+        "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+    private const val LUGO_ORIGIN = "https://sede.deputacionlugo.org"
+    private const val LUGO_SAFE_DESCRIPTION =
+        "Acceso con certificado mediante lote XML clientSigner de la Sede de la Deputación de Lugo"
     private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
     private const val SEVILLA_ATSE_PROFILE_VERSION = 1
     private const val SEVILLA_ATSE_DISPLAY_NAME =

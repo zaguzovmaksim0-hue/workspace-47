@@ -610,6 +610,28 @@
       ]
     },
     {
+      "profileId": "diputacion-lugo-sede",
+      "profileVersion": 1,
+      "displayName": "Deputación de Lugo — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp",
+      "initiatorOrigins": ["https://sede.deputacionlugo.org"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado mediante lote XML clientSigner de la Sede de la Deputación de Lugo","inputAdapterId":"lugo-clientsigner-xml-batch-v1","callbackContractId":"lugo-clientsigner-batch-result-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"precalculatedHashAlgorithm":"SHA-256"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp","reviewedOn":"2026-08-16"},
+        {"url":"https://sede.deputacionlugo.org/opencms/common-js/clientSigner.js","reviewedOn":"2026-08-16"},
+        {"url":"https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/acceso_sede","reviewedOn":"2026-08-16"},
+        {"url":"https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/instalar_autofirma","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
       "profileId": "tenerife-sede-electronica",
       "profileVersion": 1,
       "displayName": "Cabildo Insular de Tenerife — Sede electrónica",

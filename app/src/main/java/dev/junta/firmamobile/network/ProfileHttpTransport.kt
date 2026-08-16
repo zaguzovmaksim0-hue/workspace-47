@@ -38,11 +38,15 @@ class ProfileHttpRequest internal constructor(
     val url: ValidatedNetworkUrl,
     body: ByteArray,
     internal val requestId: UUID = UUID.randomUUID(),
+    internal val encodedQuery: String? = null,
 ) : Closeable {
     private var ownedBody: ByteArray? = body
 
     init {
-        require(body.isNotEmpty() && body.size <= MAX_REQUEST_BYTES)
+        val hasBody = body.isNotEmpty()
+        val hasQuery = !encodedQuery.isNullOrEmpty()
+        require(hasBody.xor(hasQuery) && body.size <= MAX_REQUEST_BYTES)
+        require(encodedQuery == null || isSafeEncodedQuery(encodedQuery))
     }
 
     @Synchronized
@@ -57,6 +61,7 @@ class ProfileHttpRequest internal constructor(
         url = url,
         body = checkNotNull(ownedBody) { "HTTP request body is closed" }.copyOf(),
         requestId = requestId,
+        encodedQuery = encodedQuery,
     )
 
     @Synchronized
@@ -67,6 +72,12 @@ class ProfileHttpRequest internal constructor(
 
     internal companion object {
         const val MAX_REQUEST_BYTES = 4 * 1024 * 1024
+        const val MAX_QUERY_CHARS = 4 * 1024 * 1024
+        private val SAFE_QUERY = Regex("[A-Za-z0-9_.~=&;-]+")
+
+        private fun isSafeEncodedQuery(value: String): Boolean =
+            value.isNotEmpty() && value.length <= MAX_QUERY_CHARS &&
+                SAFE_QUERY.matches(value) && !value.startsWith('&') && !value.endsWith('&')
     }
 }
 
@@ -251,9 +262,16 @@ class HttpsProfileHttpTransport internal constructor(
         } catch (_: Exception) {
             return ProfileHttpResult.Failure(tracker.failure(ProfileHttpFailure.NETWORK_ERROR))
         }
+        val executionUrl = try {
+            request.encodedQuery?.let { query -> URI(request.url.uri.toASCIIString() + "?" + query) }
+                ?: request.url.uri
+        } catch (_: Exception) {
+            bodyCopy.fill(0)
+            return ProfileHttpResult.Failure(tracker.failure(ProfileHttpFailure.INVALID_ENDPOINT))
+        }
         val raw = try {
             executor.post(
-                url = request.url.uri,
+                url = executionUrl,
                 resolvedAddresses = approvedAddresses,
                 body = bodyCopy,
                 connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS,

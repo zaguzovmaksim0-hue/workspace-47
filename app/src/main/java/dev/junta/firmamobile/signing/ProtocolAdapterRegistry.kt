@@ -144,6 +144,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = HuescaBatchProtocolAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(LugoBatchProtocolAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("lugo-clientsigner-xml-batch-v1"),
+                callbackContractId = CallbackContractId("lugo-clientsigner-batch-result-v1"),
+                signingProtocolId = LugoBatchProtocolAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("diputacion-valencia-sede"),
                 operation = ProtocolOperation.SELECT_CERTIFICATE,
                 inputAdapterId = ProtocolInputAdapterId("autoscript-select-certificate-v1"),

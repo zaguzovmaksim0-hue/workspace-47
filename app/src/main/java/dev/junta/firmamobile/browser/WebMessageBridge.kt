@@ -31,6 +31,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val sevillaAtse: Boolean,
     val policia: Boolean,
     val melillaBatch: Boolean,
+    val lugoBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
 )
@@ -69,6 +70,7 @@ class WebMessageBridge(
     extremaduraBatchAdapter: ExtremaduraBatchBridgeAdapter? = null,
     laPalmaBatchAdapter: LaPalmaBatchBridgeAdapter? = null,
     huescaBatchAdapter: HuescaBatchBridgeAdapter? = null,
+    lugoBatchAdapter: LugoBatchBridgeAdapter? = null,
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
@@ -139,6 +141,18 @@ class WebMessageBridge(
             trustedOrigin = TrustedOrigin("https", "ovc24.dphuesca.es", 443),
             adapter = StaBatchBridgeAdapterOps.from(
                 huescaBatchAdapter ?: HuescaBatchBridgeAdapter(
+                    activeProfileId = activeProfileId,
+                    currentNavigationEpoch = currentNavigationEpoch,
+                    currentDocumentId = { batchCurrentDocumentId() },
+                    currentOrigin = currentOrigin,
+                ),
+            ),
+        )
+        LugoBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
+            sourceOrigin = LugoBatchBridgeAdapter.SOURCE_ORIGIN,
+            trustedOrigin = TrustedOrigin("https", "sede.deputacionlugo.org", 443),
+            adapter = StaBatchBridgeAdapterOps.from(
+                lugoBatchAdapter ?: LugoBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
                     currentNavigationEpoch = currentNavigationEpoch,
                     currentDocumentId = { batchCurrentDocumentId() },
@@ -226,6 +240,7 @@ class WebMessageBridge(
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
                     policiaCompatibilityEnabled = shimFlags.policia,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
+                    lugoBatchCompatibilityEnabled = shimFlags.lugoBatch,
                     staBatchOrigin = batchRuntime?.sourceOrigin ?: MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
@@ -633,7 +648,8 @@ class WebMessageBridge(
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
             policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
-            melillaBatch = melillaBatchEnabled,
+            melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID,
+            lugoBatch = melillaBatchEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
         )
@@ -690,6 +706,15 @@ private class StaBatchBridgeAdapterOps(
         )
 
         fun from(adapter: HuescaBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
+            route = { raw, origin, mainFrame, epoch ->
+                adapter.route(raw, origin, mainFrame, epoch)
+            },
+            abandon = adapter::abandon,
+            invalidateDocument = adapter::invalidateDocument,
+            abandonAll = adapter::abandonAll,
+        )
+
+        fun from(adapter: LugoBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
             route = { raw, origin, mainFrame, epoch ->
                 adapter.route(raw, origin, mainFrame, epoch)
             },
@@ -870,6 +895,11 @@ internal class MelillaBatchReplyRegistry(
                 onTerminal(request.requestId)
             },
             canDeliver = { isCurrent(binding) },
+            validationMode = if (request.profileId.value == LugoBatchBridgeAdapter.PROFILE_ID) {
+                BatchReplyValidationMode.BASE64_XML
+            } else {
+                BatchReplyValidationMode.STRICT_JSON
+            },
         )
         pending[request.requestId] = PendingReply(binding, channel)
         return channel

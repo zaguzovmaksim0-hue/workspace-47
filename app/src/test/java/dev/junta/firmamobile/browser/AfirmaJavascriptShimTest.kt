@@ -204,6 +204,32 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun lugoXmlBatchShimIsExactOriginAndSeparatelyFeatureGated() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            lugoBatchCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const lugoBatchCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const lugoBatchCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("const lugoOrigin = \"https://sede.deputacionlugo.org\""))
+        assertTrue(enabled.contains("installMethodHook(value, \"signBatch\", \"LUGO_BATCH_SIGN\")"))
+        assertTrue(enabled.contains("type: \"LUGO_XML_BATCH\""))
+        assertTrue(enabled.contains("const isLugoBatchDocument = lugoBatchCompatibilityEnabled"))
+        assertTrue(enabled.contains("window.location.origin === lugoOrigin"))
+        assertTrue(enabled.contains("pending.lugoXml === true"))
+        assertFalse(enabled.contains("__JFM_LUGO_BATCH_COMPATIBILITY_ENABLED__"))
+    }
+
+    @Test
     fun ugrCompatibilityPathIsProfileScopedAndUsesOnlyTheExactObservedContract() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(
@@ -449,5 +475,22 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("args[1] === \"SHA1withRSA\""))
         assertTrue(script.contains("args[2] === \"XAdES\""))
         assertTrue(script.contains("isPoliciaProcedurePage"))
+    }
+
+    @Test
+    fun lugoBatchHookIsPreservedForNonConfigurableAutoScriptObjects() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val script = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            lugoBatchCompatibilityEnabled = true,
+        )
+        val fallback = script
+            .substringAfter("  } else {\n    wrapMiniApplet(\n      window.AutoScript,", missingDelimiterValue = "")
+            .substringBefore("    );", missingDelimiterValue = "")
+
+        assertTrue(fallback.isNotEmpty())
+        assertTrue(fallback.contains("lugoBatchCompatibilityEnabled"))
     }
 }
