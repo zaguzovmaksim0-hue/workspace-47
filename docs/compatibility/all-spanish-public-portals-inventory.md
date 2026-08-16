@@ -5360,7 +5360,7 @@ records:
     signature_format: "CAdES / PAdES / XAdES"
     signature_algorithm: "SHA256withRSA"
     endpoint: "URLs runtime bajo /sta/AutofirmaLote/{presign,postsign,getdata}; valores concretos suministrados por backend"
-    discovery_state: "VERIFIED_CONTRACT"
+    discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "La OVC de la Diputación de Huesca expone Portafirmas y un contrato STA AutoFirma por lotes; el soporte queda limitado al origin exacto de la OVC."
     protocol_evidence: "La OVC pública carga AutoScript, sta-autofirma-lote.js y webAppsFwk.js byte-idénticos al seam STA ya validado; firmarLote usa SHA256withRSA/CAdES/sign y devuelve PRESENTAR_FIRMA. El servlet público confirma la gramática /{op}/{operacionId}."

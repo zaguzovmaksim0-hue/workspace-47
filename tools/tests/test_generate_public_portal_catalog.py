@@ -247,6 +247,7 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertNotIn("launchUrl", huesca)
         self.assertEqual("E2E_PENDING", huesca["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", huesca["inventoryStatus"])
+        self.assertEqual("REVIEWED", huesca["discoveryState"])
         self.assertEqual("2026-08-16", huesca["reviewedOn"])
         self.assertIn("AUTOSCRIPT", huesca["observedMechanisms"])
         self.assertIn("ELECTRONIC_SIGNATURE", huesca["observedMechanisms"])

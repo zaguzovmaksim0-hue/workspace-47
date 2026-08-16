@@ -2,6 +2,7 @@ package dev.junta.firmamobile.browser
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import org.json.JSONObject
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -192,7 +193,11 @@ class AfirmaJavascriptShimTest {
             staBatchOrigin = HuescaBatchBridgeAdapter.SOURCE_ORIGIN,
         )
 
-        assertTrue(huesca.contains("const staBatchOrigin = \"https://ovc24.dphuesca.es\""))
+        assertTrue(
+            huesca.contains(
+                "const staBatchOrigin = ${JSONObject.quote(HuescaBatchBridgeAdapter.SOURCE_ORIGIN)}",
+            ),
+        )
         assertTrue(huesca.contains("window.location.origin === staBatchOrigin"))
         assertFalse(huesca.contains("const staBatchOrigin = \"https://sede.melilla.es\""))
         assertFalse(huesca.contains("__JFM_STA_BATCH_ORIGIN__"))

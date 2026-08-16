@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "50d23f9af21ac79f7eae6586ac132587d51767ed960f2a93b8c9092955010586",
+  "sourceRevision": "c90595ababefe482b88ecd25904392f85650778c77828d8c1e37b798a4214341",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3891,7 +3891,7 @@
       "protocolFamily": "AUTOSCRIPT_STA_BATCH_TRIFASICO",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
-      "discoveryState": "VERIFIED_CONTRACT",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP21A",
