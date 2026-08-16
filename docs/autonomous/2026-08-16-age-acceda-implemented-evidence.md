@@ -52,6 +52,7 @@ function doSignSolicitud(data, nif, tipo_certificado_logeado) {
 
 * **ID de Protocolo:** `age-acceda-local-pades-v1`.
 * **`PadesDetachedCodec`:**
+  * **Bounded PDF subset:** currently supports classic xref/trailer object graphs up to 512 KiB; xref streams/object streams and malformed structures fail closed with `PROTOCOL_FAILED` rather than emitting a signature.
   * Valida la estructura PDF (encabezado `%PDF-`, delimitación de tamaño `<= 524,288` bytes, presencia de `%%EOF`).
   * Construye la actualización incremental con objeto `/Type /Sig`, `/Filter /Adobe.PPKLite`, `/SubFilter /ETSI.CAdES.detached`.
   * Calcula con precisión atómica las posiciones de `/ByteRange [ 0 off1 off2 len2 ]` y reserva el campo `/Contents <...>` (16.384 caracteres hexadecimales = 8.192 bytes DER).
@@ -74,7 +75,7 @@ function doSignSolicitud(data, nif, tipo_certificado_logeado) {
 * `BuiltInProtocolAdapterRegistry.kt`: Se añadió la vinculación de `age-acceda` + `ProtocolOperation.SIGN` -> `AccedaPadesAdapter.ID`.
 * `MainActivity.kt`: Se registró `AccedaPadesAdapter` en el `adapterResolver` del `SigningCoordinator`.
 * `config/site_profiles_v1.json`: Perfil `age-acceda` actualizado con `compatibilityStatus: "VERIFIED_CONTRACT"`, `activation: "QA_ONLY"`, `capabilities: ["SIGN", "LEGACY_SHA1"]` y la política de operación PAdES correspondiente.
-* `docs/compatibility/all-spanish-public-portals-inventory.md`: Registro `ES-PUB-0003` actualizado a `inventory_status: "IMPLEMENTED_NOT_E2E"` y métricas de resumen actualizadas (`IMPLEMENTED_NOT_E2E: 11`, `VERIFIED_CONTRACT: 0`).
+* `docs/compatibility/all-spanish-public-portals-inventory.md`: Registro `ES-PUB-0003` actualizado a `inventory_status: "IMPLEMENTED_NOT_E2E"` y métricas de resumen actualizadas (`IMPLEMENTED_NOT_E2E: 21`, `VERIFIED_CONTRACT: 0`).
 * `public_portal_catalog_v1.json`: Regenerado determinísticamente mediante `tools/generate_public_portal_catalog.py`.
 
 ---

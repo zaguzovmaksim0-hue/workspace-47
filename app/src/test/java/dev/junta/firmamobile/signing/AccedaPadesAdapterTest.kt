@@ -25,7 +25,18 @@ class AccedaPadesAdapterTest {
             "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n" +
             "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n" +
             "xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n" +
-            "trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n193\n%%EOF\n"
+            "trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n186\n%%EOF\n"
+        ).toByteArray(Charsets.US_ASCII)
+
+    private val samplePdfWithExistingAcroForm = (
+        "%PDF-1.4\n" +
+            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R /AcroForm 4 0 R >>\nendobj\n" +
+            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n" +
+            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Annots [ 5 0 R ] >>\nendobj\n" +
+            "4 0 obj\n<< /Fields [ 5 0 R ] /SigFlags 1 >>\nendobj\n" +
+            "5 0 obj\n<< /FT /Tx /Type /Annot /Subtype /Widget /Rect [ 10 10 100 30 ] /T (ExistingTextField) >>\nendobj\n" +
+            "xref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000074 00000 n \n0000000131 00000 n \n0000000219 00000 n \n0000000277 00000 n \n" +
+            "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n388\n%%EOF\n"
         ).toByteArray(Charsets.US_ASCII)
 
     @Test
@@ -56,6 +67,24 @@ class AccedaPadesAdapterTest {
             ),
         )
 
+        val resultText = String(result, Charsets.ISO_8859_1)
+        assertTrue(resultText.contains("/AcroForm"))
+        assertTrue(resultText.contains("/Fields"))
+        assertTrue(resultText.contains("/SigFlags 3"))
+        assertTrue(resultText.contains("/FT /Sig"))
+        assertTrue(resultText.contains("/Widget"))
+        assertTrue(resultText.contains("/Annots"))
+        assertTrue(resultText.contains("/Type /Sig"))
+        assertTrue(resultText.contains("/Filter /Adobe.PPKLite"))
+        assertTrue(resultText.contains("/SubFilter /ETSI.CAdES.detached"))
+        assertTrue(resultText.contains("/ByteRange [ 0 "))
+
+        val scratchDir = java.io.File("/data/data/com.termux/files/home/.antigravity-accounts/acc2-home/.gemini/antigravity-cli/brain/f8a38482-3d46-4fcc-983b-be56268f1e49/scratch")
+        if (scratchDir.exists()) {
+            java.io.File(scratchDir, "kotlin_signed_output.pdf").writeBytes(result)
+            java.io.File(scratchDir, "kotlin_cert.der").writeBytes(identity.certificate.encoded)
+        }
+
         completed.signature.close()
         local.signature.close()
         prepared.preSign.close()
@@ -63,6 +92,75 @@ class AccedaPadesAdapterTest {
         result.fill(0)
         document.fill(0)
         fingerprint.fill(0)
+    }
+
+    @Test
+    fun supportsPdfWithExistingAcroFormAndAnnots() = runTest {
+        val document = samplePdfWithExistingAcroForm.copyOf()
+        val request = request(document.copyOf())
+        val prepared = adapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
+        val local = prepared.preSign.withBytesToSign { signedAttributes ->
+            JcaLocalSignatureEngine().sign(
+                signedAttributes,
+                identity,
+                SigningAlgorithm.SHA1_WITH_RSA,
+            )
+        } as LocalSignatureResult.Success
+
+        val completed = adapter.complete(request, prepared.preSign, local.signature)
+            as ProtocolCompletionResult.Success
+        val result = completed.signature.withBytes { it.copyOf() }
+        val fingerprint = MessageDigest.getInstance("SHA-256").digest(identity.certificate.encoded)
+
+        assertTrue(result.isNotEmpty())
+        assertTrue(
+            PadesDetachedCodec.validate(
+                signatureDocument = result,
+                expectedCertificateFingerprint = fingerprint,
+                signingAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
+            ),
+        )
+
+        val resultText = String(result, Charsets.ISO_8859_1)
+        assertTrue(resultText.contains("/Fields [ 5 0 R"))
+        assertTrue(resultText.contains("/Annots [ 5 0 R"))
+        assertTrue(resultText.contains("/SigFlags 3"))
+
+        completed.signature.close()
+        local.signature.close()
+        prepared.preSign.close()
+        request.close()
+        result.fill(0)
+        document.fill(0)
+        fingerprint.fill(0)
+    }
+
+    @Test
+    fun rejectsOrphanSignatureDictionaryWithoutAcroform() {
+        val orphanPdf = (
+            "%PDF-1.4\n" +
+                "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n" +
+                "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n" +
+                "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n" +
+                "4 0 obj\n<< /Type /Sig /Filter /Adobe.PPKLite /SubFilter /ETSI.CAdES.detached /ByteRange [ 0 0000000300 0000000400 0000000100 ] /Contents <0000> >>\nendobj\n" +
+                "xref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000193 00000 n \n" +
+                "trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n340\n%%EOF\n"
+            ).toByteArray(Charsets.US_ASCII)
+
+        assertFalse(PadesDetachedCodec.validate(orphanPdf))
+    }
+
+    @Test
+    fun rejectsMalformedXrefAndMissingAcroform() {
+        assertFalse(PadesDetachedCodec.validate(ByteArray(0)))
+        assertFalse(PadesDetachedCodec.validate("not a valid pdf".toByteArray()))
+
+        val malformedXrefPdf = (
+            "%PDF-1.4\n" +
+                "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n" +
+                "trailer\n<< /Size 2 /Root 1 0 R >>\nstartxref\n99999\n%%EOF\n"
+            ).toByteArray(Charsets.US_ASCII)
+        assertFalse(PadesDetachedCodec.validate(malformedXrefPdf))
     }
 
     @Test
