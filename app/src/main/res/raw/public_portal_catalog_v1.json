@@ -3997,7 +3997,7 @@
     {
       "portalId": "diputacion-malaga-sede",
       "inventoryId": "ES-PUB-0164",
-      "profileId": null,
+      "profileId": "diputacion-malaga-sede",
       "displayName": "Sede electrónica de Diputación Provincial de Málaga",
       "organization": "Diputación Provincial de Málaga",
       "governmentLevel": "LOCAL_ADMINISTRATION",

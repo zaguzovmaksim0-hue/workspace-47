@@ -365,6 +365,20 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_diputacion_malaga_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        malaga = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-malaga-sede")
+
+        self.assertEqual("diputacion-malaga-sede", malaga["profileId"])
+        self.assertEqual("ES-PUB-0164", malaga["inventoryId"])
+        self.assertEqual("https://sede.malaga.es", malaga["entryUrl"])
+        self.assertNotIn("launchUrl", malaga)
+        self.assertEqual("CATALOGED", malaga["catalogStatus"])
+        self.assertEqual("BROWSE_ONLY", malaga["inventoryStatus"])
+        self.assertEqual("2026-07-16", malaga["reviewedOn"])
+        self.assertEqual([], malaga["observedSignatureFormats"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], malaga["observedMechanisms"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
