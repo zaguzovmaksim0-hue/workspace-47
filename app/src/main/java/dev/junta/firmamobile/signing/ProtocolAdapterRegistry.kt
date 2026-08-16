@@ -137,6 +137,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = LaPalmaBatchProtocolAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId("diputacion-huesca-portal"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("huesca-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("huesca-batch-result-v1"),
+                signingProtocolId = HuescaBatchProtocolAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("diputacion-valencia-sede"),
                 operation = ProtocolOperation.SELECT_CERTIFICATE,
                 inputAdapterId = ProtocolInputAdapterId("autoscript-select-certificate-v1"),

@@ -231,6 +231,33 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", extremadura["limitations"].lower())
         self.assertNotEqual("VERIFIED_E2E", extremadura["inventoryStatus"])
 
+    def test_huesca_sta_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        huesca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-huesca-portal"
+        )
+
+        self.assertEqual("diputacion-huesca-portal", huesca["profileId"])
+        self.assertEqual("ES-PUB-0159", huesca["inventoryId"])
+        self.assertEqual(
+            "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME",
+            huesca["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", huesca)
+        self.assertEqual("E2E_PENDING", huesca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", huesca["inventoryStatus"])
+        self.assertEqual("2026-08-16", huesca["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", huesca["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", huesca["observedMechanisms"])
+        self.assertEqual(
+            {"CADES", "PADES", "XADES"},
+            set(huesca["observedSignatureFormats"]),
+        )
+        self.assertIn("e2e", huesca["limitations"].lower())
+        self.assertIn("qa", huesca["limitations"].lower())
+        self.assertNotEqual("VERIFIED_E2E", huesca["inventoryStatus"])
+
     def test_jccm_certificate_probe_binds_separate_public_catalog_surface(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         broad = next(

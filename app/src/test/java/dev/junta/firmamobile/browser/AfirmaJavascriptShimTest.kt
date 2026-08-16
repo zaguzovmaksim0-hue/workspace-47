@@ -182,6 +182,23 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun staBatchShimBindsTheExactActivePortalOrigin() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val huesca = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            melillaBatchCompatibilityEnabled = true,
+            staBatchOrigin = HuescaBatchBridgeAdapter.SOURCE_ORIGIN,
+        )
+
+        assertTrue(huesca.contains("const staBatchOrigin = \"https://ovc24.dphuesca.es\""))
+        assertTrue(huesca.contains("window.location.origin === staBatchOrigin"))
+        assertFalse(huesca.contains("const staBatchOrigin = \"https://sede.melilla.es\""))
+        assertFalse(huesca.contains("__JFM_STA_BATCH_ORIGIN__"))
+    }
+
+    @Test
     fun ugrCompatibilityPathIsProfileScopedAndUsesOnlyTheExactObservedContract() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(

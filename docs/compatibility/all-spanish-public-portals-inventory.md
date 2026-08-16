@@ -5350,25 +5350,25 @@ records:
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dphuesca.es"
     official_site: "https://www.dphuesca.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dphuesca.es"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://ovc24.dphuesca.es"
+    entry_url: "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME"
+    procedure_page: "https://ovc24.dphuesca.es/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=OVC_PORTAFIRMAS"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    js_client: "AutoScript / STAAutofirmaLote"
+    protocol_family: "AUTOSCRIPT_STA_BATCH_TRIFASICO"
+    signature_format: "CAdES / PAdES / XAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "URLs runtime bajo /sta/AutofirmaLote/{presign,postsign,getdata}; valores concretos suministrados por backend"
+    discovery_state: "VERIFIED_CONTRACT"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La OVC de la Diputación de Huesca expone Portafirmas y un contrato STA AutoFirma por lotes; el soporte queda limitado al origin exacto de la OVC."
+    protocol_evidence: "La OVC pública carga AutoScript, sta-autofirma-lote.js y webAppsFwk.js byte-idénticos al seam STA ya validado; firmarLote usa SHA256withRSA/CAdES/sign y devuelve PRESENTAR_FIRMA. El servlet público confirma la gramática /{op}/{operacionId}."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP21A", "DP21B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP21A", "DP21B", "DP21C", "DP21D", "DP21E", "DP21F", "DP21G", "DP21H", "DP21I"]
+    reason: "Implementación QA limitada a https://ovc24.dphuesca.es y al contrato STA observado; no se realizó autenticación, certificado real, firma real ni E2E administrativo."
+    reviewed_at: "2026-08-16"
+    next_gate: "Mantener QA_ONLY hasta una verificación E2E autorizada con el flujo real; no inferir soporte para otros hosts de la Diputación."
 
   - inventory_id: "ES-PUB-0160"
     surface_key: "diputacion-jaen-sede"
@@ -6444,6 +6444,13 @@ availability, certificado, firma ni contrato técnico.
 [DP20A]: https://www.diphuelva.es
 [DP21A]: https://www.dphuesca.es
 [DP21B]: https://diputaciondehuesca.transparencialocal.gob.es/es_ES/media/49636
+[DP21C]: https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME
+[DP21D]: https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_FAQS2
+[DP21E]: https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_REQUISITOS
+[DP21F]: https://ovc24.dphuesca.es/sta/resources/js/sta-autofirma-lote.js
+[DP21G]: https://ovc24.dphuesca.es/sta/resources/js/autoscript.js
+[DP21H]: https://ovc24.dphuesca.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2
+[DP21I]: https://ovc24.dphuesca.es/sta/AutofirmaLote
 [DP22A]: https://sede.dipujaen.es
 [DP22B]: https://sede.dipujaen.es/CertificadoElectronico
 [DP23A]: https://sede.dipuleon.es

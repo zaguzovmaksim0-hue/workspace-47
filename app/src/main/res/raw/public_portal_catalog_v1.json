@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d912deae91b5d5279cea054d7fe2ed41bcbf997a5757a2f4c49112cdffad3394",
+  "sourceRevision": "50d23f9af21ac79f7eae6586ac132587d51767ed960f2a93b8c9092955010586",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3871,29 +3871,41 @@
     {
       "portalId": "diputacion-huesca-portal",
       "inventoryId": "ES-PUB-0159",
-      "profileId": null,
+      "profileId": "diputacion-huesca-portal",
       "displayName": "Portal oficial de Diputación Provincial de Huesca",
       "organization": "Diputación Provincial de Huesca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Aragón",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://www.dphuesca.es",
+      "purpose": "La OVC de la Diputación de Huesca expone Portafirmas y un contrato STA AutoFirma por lotes; el soporte queda limitado al origin exacto de la OVC.",
+      "entryUrl": "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "REVIEWED",
+      "observedSignatureFormats": [
+        "CADES",
+        "PADES",
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_STA_BATCH_TRIFASICO",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "VERIFIED_CONTRACT",
       "evidenceIds": [
         "D06",
         "DP21A",
-        "DP21B"
+        "DP21B",
+        "DP21C",
+        "DP21D",
+        "DP21E",
+        "DP21F",
+        "DP21G",
+        "DP21H",
+        "DP21I"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Implementación QA limitada a https://ovc24.dphuesca.es y al contrato STA observado; no se realizó autenticación, certificado real, firma real ni E2E administrativo."
     },
     {
       "portalId": "diputacion-jaen-sede",

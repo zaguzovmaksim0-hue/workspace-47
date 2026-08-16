@@ -51,6 +51,7 @@ class BrowserScreenTest {
         assertTrue(profileRequiresWebMessageBridge(profile("isciii-certificate-selection")))
         assertTrue(profileRequiresWebMessageBridge(profile("diputacion-valencia-sede")))
         assertTrue(profileRequiresWebMessageBridge(profile("unizar-tramitador")))
+        assertTrue(profileRequiresWebMessageBridge(profile("diputacion-huesca-portal")))
         assertTrue(!profileRequiresWebMessageBridge(profile("carne-joven-andalucia")))
     }
 

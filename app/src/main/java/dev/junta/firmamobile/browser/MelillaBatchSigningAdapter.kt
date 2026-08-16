@@ -11,6 +11,7 @@ import dev.junta.firmamobile.signing.BatchProtocolResponse
 import dev.junta.firmamobile.signing.BatchSigningFormat
 import dev.junta.firmamobile.signing.BatchSigningReplySink
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
+import dev.junta.firmamobile.signing.HuescaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.NormalizedBatchSigningDocument
@@ -79,6 +80,26 @@ internal class LaPalmaBatchSigningAdapter(
             profileId = LaPalmaBatchBridgeAdapter.PROFILE_ID,
             profileVersion = 1,
             protocolId = LaPalmaBatchProtocolAdapter.ID,
+        ),
+    )
+
+    fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? =
+        delegate.normalize(request)
+    fun replySink(channel: MelillaBatchReplyChannel): BatchSigningReplySink = delegate.replySink(channel)
+}
+
+
+internal class HuescaBatchSigningAdapter(
+    registry: SiteProfileRegistry,
+    clock: Clock = Clock.systemUTC(),
+) {
+    private val delegate = StaBatchSigningAdapter(
+        registry = registry,
+        clock = clock,
+        contract = StaBatchSigningContract(
+            profileId = HuescaBatchBridgeAdapter.PROFILE_ID,
+            profileVersion = 1,
+            protocolId = HuescaBatchProtocolAdapter.ID,
         ),
     )
 

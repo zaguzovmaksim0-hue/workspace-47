@@ -586,6 +586,30 @@
       ]
     },
     {
+      "profileId": "diputacion-huesca-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Huesca — Oficina Virtual",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME",
+      "initiatorOrigins": ["https://ovc24.dphuesca.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma por lotes en la Oficina Virtual de la Diputación Provincial de Huesca","inputAdapterId":"huesca-batch-autoscript-v1","callbackContractId":"huesca-batch-result-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME","reviewedOn":"2026-08-16"},
+        {"url":"https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_FAQS2","reviewedOn":"2026-08-16"},
+        {"url":"https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_REQUISITOS","reviewedOn":"2026-08-16"},
+        {"url":"https://ovc24.dphuesca.es/sta/resources/js/sta-autofirma-lote.js","reviewedOn":"2026-08-16"},
+        {"url":"https://ovc24.dphuesca.es/sta/resources/js/autoscript.js","reviewedOn":"2026-08-16"},
+        {"url":"https://ovc24.dphuesca.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
       "profileId": "tenerife-sede-electronica",
       "profileVersion": 1,
       "displayName": "Cabildo Insular de Tenerife — Sede electrónica",

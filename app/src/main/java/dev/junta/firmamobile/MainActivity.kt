@@ -24,6 +24,8 @@ import androidx.lifecycle.lifecycleScope
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
+import dev.junta.firmamobile.browser.HuescaBatchBridgeAdapter
+import dev.junta.firmamobile.browser.HuescaBatchSigningAdapter
 import dev.junta.firmamobile.browser.LaPalmaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.LaPalmaBatchSigningAdapter
 import dev.junta.firmamobile.browser.MelillaBatchBridgeAdapter
@@ -59,6 +61,7 @@ import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
+import dev.junta.firmamobile.signing.HuescaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
@@ -92,6 +95,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
     private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter
     private lateinit var laPalmaBatchSigningAdapter: LaPalmaBatchSigningAdapter
+    private lateinit var huescaBatchSigningAdapter: HuescaBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogSmokeHook: CatalogSmokeHook
@@ -185,9 +189,13 @@ class MainActivity : ComponentActivity() {
         laPalmaBatchSigningAdapter = LaPalmaBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
+        huescaBatchSigningAdapter = HuescaBatchSigningAdapter(
+            registry = BuiltInSiteProfiles.runtimeRegistry,
+        )
         val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         val laPalmaBatchProtocolAdapter = LaPalmaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
+        val huescaBatchProtocolAdapter = HuescaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         batchSigningCoordinator = BatchSigningCoordinator(
             certificateSession = app.certificateSession,
             adapter = melillaBatchProtocolAdapter,
@@ -196,6 +204,7 @@ class MainActivity : ComponentActivity() {
                     melillaBatchProtocolAdapter.id -> melillaBatchProtocolAdapter
                     extremaduraBatchProtocolAdapter.id -> extremaduraBatchProtocolAdapter
                     laPalmaBatchProtocolAdapter.id -> laPalmaBatchProtocolAdapter
+                    huescaBatchProtocolAdapter.id -> huescaBatchProtocolAdapter
                     else -> null
                 }
             },
@@ -427,12 +436,14 @@ class MainActivity : ComponentActivity() {
             MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.normalize(request)
             ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.normalize(request)
             LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.normalize(request)
+            HuescaBatchBridgeAdapter.PROFILE_ID -> huescaBatchSigningAdapter.normalize(request)
             else -> null
         }
         val replySink = when (request.profileId.value) {
             MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.replySink(reply)
             ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.replySink(reply)
             LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.replySink(reply)
+            HuescaBatchBridgeAdapter.PROFILE_ID -> huescaBatchSigningAdapter.replySink(reply)
             else -> {
                 runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
                 return
