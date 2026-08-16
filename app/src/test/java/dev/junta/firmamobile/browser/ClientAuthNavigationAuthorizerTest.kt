@@ -86,6 +86,56 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun leonDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+        val leon = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = leon.observeTopLevelNavigation(
+            LEON_PROFILE, LEON_SOURCE, LEON_TARGET, 70, true,
+        )
+
+        assertEquals(LEON_PROFILE, authorized?.profileId)
+        assertEquals("identificacionssl.sedipualba.es", authorized?.target?.host)
+        assertEquals("/", authorized?.target?.rawPath)
+        assertEquals(
+            "idtoken=$LEON_TOKEN&idioma=es&entidad=24000",
+            authorized?.target?.rawQuery,
+        )
+        assertNull(leon.observeTopLevelNavigation(LEON_PROFILE, LEON_SOURCE, LEON_TARGET, 70, true))
+    }
+
+    @Test
+    fun leonDynamicSourceRejectsTokenHostPathAndQueryExpansion() {
+        val attacks = listOf(
+            LEON_SOURCE.replace(LEON_TOKEN, LEON_OTHER_TOKEN) to LEON_TARGET,
+            LEON_SOURCE.replace("idioma=es", "idioma=en") to LEON_TARGET,
+            "$LEON_SOURCE&extra=1" to LEON_TARGET,
+            LEON_SOURCE to LEON_TARGET.replace(LEON_TOKEN, LEON_OTHER_TOKEN),
+            LEON_SOURCE to LEON_TARGET.replace("idioma=es", "idioma=en"),
+            LEON_SOURCE to LEON_TARGET.replace("entidad=24000", "entidad=02000"),
+            LEON_SOURCE to "$LEON_TARGET&extra=1",
+            LEON_SOURCE to LEON_TARGET.replace("identificacionssl.sedipualba.es", "identificacionssl.sedipualba.es.evil.example"),
+            LEON_SOURCE to LEON_TARGET.replace("https://identificacionssl.sedipualba.es/", "https://identificacionssl.sedipualba.es/other"),
+            LEON_SOURCE to "$LEON_TARGET#fragment",
+        )
+
+        attacks.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    LEON_PROFILE, source, target, 71L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTeaAlegacionesDirectTransitionProducesOneBoundedTarget() {
         val result = authorizer.observeTopLevelNavigation(
             activeProfileId = TEA_PROFILE,
@@ -617,6 +667,13 @@ class ClientAuthNavigationAuthorizerTest {
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val TEA_PROFILE = ProfileId("tea-alegaciones-certificado")
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        val LEON_PROFILE = ProfileId("diputacion-leon-sede")
+        const val LEON_TOKEN = "12345678-w47SyntheticLeonToken0123456789"
+        const val LEON_OTHER_TOKEN = "87654321-w47OtherLeonToken9876543210"
+        const val LEON_SOURCE =
+            "https://sede.dipuleon.es/segex/identificacion_opciones.aspx?idtoken=$LEON_TOKEN&idioma=es"
+        const val LEON_TARGET =
+            "https://identificacionssl.sedipualba.es/?idtoken=$LEON_TOKEN&idioma=es&entidad=24000"
         val SANIDAD_PROFILE = ProfileId("ministerio-sanidad-certificado")
         val TOLEDO_PROFILE = ProfileId("diputacion-toledo-sede")
         const val AEAT_SOURCE =

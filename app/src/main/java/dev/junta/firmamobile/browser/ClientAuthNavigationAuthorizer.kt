@@ -101,7 +101,9 @@ class ClientAuthNavigationAuthorizer internal constructor(
         val source = currentUrl?.let(::strictHttpsUri) ?: run {
             return null
         }
-        if (source !in policy.sourceUrls || !target.matches(policy)) {
+        if (!source.matchesSource(policy) || !target.matches(policy) ||
+            !source.hasLinkedEphemeralParameters(target, policy)
+        ) {
             return null
         }
         val previous = consumedDirect
@@ -207,6 +209,44 @@ class ClientAuthNavigationAuthorizer internal constructor(
         return runCatching { ExactOrigin.parse("https://${current.host}") }.getOrNull() in profile.initiatorOrigins
     }
 
+    private fun URI.matchesSource(policy: ClientAuthPolicy): Boolean {
+        if (rawFragment != null) return false
+        if (policy.sourceFixedQueryParameters.isEmpty() &&
+            policy.sourceRequiredEphemeralQueryParameters.isEmpty()
+        ) {
+            return this in policy.sourceUrls
+        }
+        val effectivePort = if (port == -1) 443 else port
+        val baseMatches = policy.sourceUrls.any { base ->
+            val basePort = if (base.port == -1) 443 else base.port
+            scheme == "https" && host == base.host && effectivePort == basePort &&
+                rawPath == base.rawPath && base.rawQuery == null && base.rawFragment == null
+        }
+        if (!baseMatches) return false
+        val expectedNames = policy.sourceFixedQueryParameters.keys +
+            policy.sourceRequiredEphemeralQueryParameters
+        val parameters = parseQuery(rawQuery ?: return false) ?: return false
+        if (parameters.keys != expectedNames) return false
+        if (policy.sourceFixedQueryParameters.any { (name, value) -> parameters[name] != value }) {
+            return false
+        }
+        return policy.sourceRequiredEphemeralQueryParameters.all { name ->
+            val value = parameters[name]
+            value != null && value.isNotEmpty() && value.length <= MAX_EPHEMERAL_CHARS &&
+                value.none(Char::isISOControl) &&
+                (name != LEON_IDTOKEN_PARAMETER || LEON_IDTOKEN.matches(value))
+        }
+    }
+
+    private fun URI.hasLinkedEphemeralParameters(target: URI, policy: ClientAuthPolicy): Boolean {
+        if (policy.linkedEphemeralQueryParameters.isEmpty()) return true
+        val sourceParameters = parseQuery(rawQuery ?: return false) ?: return false
+        val targetParameters = parseQuery(target.rawQuery ?: return false) ?: return false
+        return policy.linkedEphemeralQueryParameters.all { name ->
+            sourceParameters[name] == targetParameters[name]
+        }
+    }
+
     private fun URI.matches(policy: ClientAuthPolicy): Boolean {
         if (rawPath != policy.requestPath || rawFragment != null) return false
         val effectivePort = if (port == -1) 443 else port
@@ -224,7 +264,8 @@ class ClientAuthNavigationAuthorizer internal constructor(
         return policy.requiredEphemeralQueryParameters.all { name ->
             val value = parameters[name]
             value != null && value.isNotEmpty() && value.length <= MAX_EPHEMERAL_CHARS &&
-                value.none(Char::isISOControl)
+                value.none(Char::isISOControl) &&
+                (name != LEON_IDTOKEN_PARAMETER || LEON_IDTOKEN.matches(value))
         }
     }
 
@@ -311,5 +352,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         const val MAX_QUERY_CHARS = 4_096
         const val MAX_EPHEMERAL_CHARS = 1_024
         val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+        const val LEON_IDTOKEN_PARAMETER = "idtoken"
+        val LEON_IDTOKEN = Regex("[0-9]{8}-[A-Za-z0-9_-]{20,64}")
     }
 }

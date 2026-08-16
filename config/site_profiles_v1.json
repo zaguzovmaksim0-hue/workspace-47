@@ -756,6 +756,40 @@
       ]
     },
     {
+      "profileId": "diputacion-leon-sede",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de León — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270",
+      "initiatorOrigins": ["https://sede.dipuleon.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://identificacionssl.sedipualba.es"],
+        "sourceUrls": ["https://sede.dipuleon.es/segex/identificacion_opciones.aspx"],
+        "sourceFixedQueryParameters": {"idioma":"es"},
+        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
+        "linkedEphemeralQueryParameters": ["idtoken"],
+        "requestPath": "/",
+        "fixedQueryParameters": {"idioma":"es","entidad":"24000"},
+        "requiredEphemeralQueryParameters": ["idtoken"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270","reviewedOn":"2026-08-16"},
+        {"url":"https://sede.dipuleon.es/carpetaciudadana/login.aspx","reviewedOn":"2026-08-16"},
+        {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
       "profileId": "policia-solicitud-generica",
       "profileVersion": 1,
       "displayName": "Policía Nacional — Solicitud genérica",

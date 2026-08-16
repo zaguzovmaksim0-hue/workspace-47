@@ -112,22 +112,54 @@ object SiteProfileCatalogParser {
             "transitionMode", "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
             "requiredEphemeralQueryParameters", "allowEmptyIssuerList", "grantTtlSeconds",
         )
+        val optionalKeys = listOf(
+            "requestPort",
+            "sourceFixedQueryParameters",
+            "sourceRequiredEphemeralQueryParameters",
+            "linkedEphemeralQueryParameters",
+        ).filter { it in o.values }
+        o.exact(*(baseKeys.toList() + optionalKeys).toTypedArray())
         val requestPort = if ("requestPort" in o.values) {
-            o.exact(*baseKeys, "requestPort")
             o.int("requestPort").also { require(it in 1..65_535) }
         } else {
-            o.exact(*baseKeys)
             443
         }
         val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
         val fixed = stringMap(o.objValue("fixedQueryParameters"))
         val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
+        val sourceFixed = if ("sourceFixedQueryParameters" in o.values) {
+            stringMap(o.objValue("sourceFixedQueryParameters"))
+        } else {
+            emptyMap()
+        }
+        val sourceEphemeral = if ("sourceRequiredEphemeralQueryParameters" in o.values) {
+            strings(o.array("sourceRequiredEphemeralQueryParameters"))
+        } else {
+            emptySet()
+        }
+        val linkedEphemeral = if ("linkedEphemeralQueryParameters" in o.values) {
+            strings(o.array("linkedEphemeralQueryParameters"))
+        } else {
+            emptySet()
+        }
         require((fixed.keys intersect ephemeral).isEmpty())
+        require((sourceFixed.keys intersect sourceEphemeral).isEmpty())
+        require(linkedEphemeral.all { it in ephemeral && it in sourceEphemeral })
         when (transitionMode) {
-            ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE ->
+            ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
+                require(sourceFixed.isEmpty() && sourceEphemeral.isEmpty() && linkedEphemeral.isEmpty())
                 require(fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443)
-            ClientAuthTransitionMode.DIRECT_FROM_SOURCE ->
-                require(ephemeral.isEmpty())
+            }
+            ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
+                if (ephemeral.isNotEmpty()) {
+                    require(linkedEphemeral == ephemeral)
+                }
+                if (sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()) {
+                    require(linkedEphemeral.isNotEmpty())
+                } else {
+                    require(ephemeral.isEmpty())
+                }
+            }
         }
         return ClientAuthPolicy(
             transitionMode = transitionMode,
@@ -142,6 +174,9 @@ object SiteProfileCatalogParser {
             allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
             grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
             requestPort = requestPort,
+            sourceFixedQueryParameters = sourceFixed,
+            sourceRequiredEphemeralQueryParameters = sourceEphemeral,
+            linkedEphemeralQueryParameters = linkedEphemeral,
         )
     }
 
@@ -190,6 +225,9 @@ object SiteProfileCatalogParser {
             }
             if (p.profileId.value == LUGO_PROFILE_ID) {
                 validateLugoProfile(p)
+            }
+            if (p.profileId.value == LEON_PROFILE_ID) {
+                validateLeonProfile(p)
             }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
@@ -248,15 +286,27 @@ object SiteProfileCatalogParser {
                 ) {
                     require(
                         p.profileId.value == SANIDAD_PROFILE_ID ||
-                            p.profileId.value == TEA_PROFILE_ID
+                            p.profileId.value == TEA_PROFILE_ID ||
+                            p.profileId.value == LEON_PROFILE_ID
                     )
                 }
-                require(policy.sourceUrls.all { it.origin() in p.initiatorOrigins })
+                require(policy.sourceUrls.all { source ->
+                    source.origin() in p.initiatorOrigins &&
+                        (policy.sourceFixedQueryParameters.isEmpty() &&
+                            policy.sourceRequiredEphemeralQueryParameters.isEmpty() ||
+                            source.rawQuery == null)
+                })
                 require(policy.fixedQueryParameters.keys.all(PARAMETER_NAME::matches))
                 require(policy.fixedQueryParameters.values.all { value ->
                     value.length <= 2_048 && value.none(Char::isISOControl)
                 })
                 require(policy.requiredEphemeralQueryParameters.all(PARAMETER_NAME::matches))
+                require(policy.sourceFixedQueryParameters.keys.all(PARAMETER_NAME::matches))
+                require(policy.sourceFixedQueryParameters.values.all { value ->
+                    value.length <= 2_048 && value.none(Char::isISOControl)
+                })
+                require(policy.sourceRequiredEphemeralQueryParameters.all(PARAMETER_NAME::matches))
+                require(policy.linkedEphemeralQueryParameters.all(PARAMETER_NAME::matches))
             }
             p.operationPolicies.values.forEach { op ->
                 require(op.capabilities.all { it in p.capabilities })
@@ -740,6 +790,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateLeonProfile(profile: SiteProfile) {
+        require(profile.profileVersion == LEON_PROFILE_VERSION)
+        require(profile.displayName == LEON_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == LEON_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(LEON_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(LEON_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(LEON_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "24000"),
+                requiredEphemeralQueryParameters = setOf("idtoken"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
+                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
+                linkedEphemeralQueryParameters = setOf("idtoken"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == LEON_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-16") })
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -1079,6 +1162,20 @@ object SiteProfileCatalogParser {
     private const val LUGO_ORIGIN = "https://sede.deputacionlugo.org"
     private const val LUGO_SAFE_DESCRIPTION =
         "Acceso con certificado mediante lote XML clientSigner de la Sede de la Deputación de Lugo"
+    private const val LEON_PROFILE_ID = "diputacion-leon-sede"
+    private const val LEON_PROFILE_VERSION = 1
+    private const val LEON_DISPLAY_NAME = "Diputación Provincial de León — acceso con certificado"
+    private const val LEON_START_URL =
+        "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270"
+    private const val LEON_ORIGIN = "https://sede.dipuleon.es"
+    private const val LEON_SOURCE_URL =
+        "https://sede.dipuleon.es/segex/identificacion_opciones.aspx"
+    private const val LEON_CLIENT_AUTH_ORIGIN = "https://identificacionssl.sedipualba.es"
+    private val LEON_EVIDENCE_URLS = setOf(
+        LEON_START_URL,
+        "https://sede.dipuleon.es/carpetaciudadana/login.aspx",
+        "https://identificacionssl.sedipualba.es/",
+    )
     private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
     private const val SEVILLA_ATSE_PROFILE_VERSION = 1
     private const val SEVILLA_ATSE_DISPLAY_NAME =

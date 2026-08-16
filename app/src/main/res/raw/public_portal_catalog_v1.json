@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "11607923e940e9b34ca12b98ef0cda37b5f965c211605cfde47251f8c6c0baa0",
+  "sourceRevision": "49f648b05090ad1432127eed35fe6a0b8cfa63a5873f66295525d7620bd20939",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3937,28 +3937,31 @@
     {
       "portalId": "diputacion-leon-sede",
       "inventoryId": "ES-PUB-0161",
-      "profileId": null,
+      "profileId": "diputacion-leon-sede",
       "displayName": "Sede electrónica de Diputación Provincial de León",
       "organization": "Diputación Provincial de León",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.dipuleon.es",
+      "purpose": "Acceso con certificado al trámite Instancia General mediante el servidor SSL de identificación compartido de SEDIPUALBA; la firma documental posterior permanece fuera del contrato implementado.",
+      "entryUrl": "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP23A"
+        "DP23A",
+        "LEON-INSTANCIA-2026-08-16",
+        "LEON-SSL-IDENT-2026-08-16"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-16",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior."
     },
     {
       "portalId": "diputacion-lleida-sede",
