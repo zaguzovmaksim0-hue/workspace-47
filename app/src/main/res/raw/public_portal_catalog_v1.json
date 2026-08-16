@@ -4105,7 +4105,7 @@
     {
       "portalId": "diputacion-salamanca-sede",
       "inventoryId": "ES-PUB-0168",
-      "profileId": null,
+      "profileId": "diputacion-salamanca-sede",
       "displayName": "Sede electrónica de Diputación de Salamanca",
       "organization": "Diputación de Salamanca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
