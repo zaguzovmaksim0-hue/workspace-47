@@ -147,8 +147,23 @@ internal object SevillaAtseXadesEnvelopingCodec {
         data: ByteArray,
         certificateChain: List<X509Certificate>,
         clock: Clock,
+    ): SevillaAtseXadesPreSignMaterial = createPreSign(
+        data = data,
+        certificateChain = certificateChain,
+        clock = clock,
+        signingAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        payloadValidator = ByteArray::isExactSevillaAtseChallenge,
+    )
+
+    internal fun createPreSign(
+        data: ByteArray,
+        certificateChain: List<X509Certificate>,
+        clock: Clock,
+        signingAlgorithm: SigningAlgorithm,
+        payloadValidator: (ByteArray) -> Boolean,
     ): SevillaAtseXadesPreSignMaterial {
-        require(data.isExactSevillaAtseChallenge())
+        require(payloadValidator(data))
+        require(signingAlgorithm in SUPPORTED_SIGNATURE_ALGORITHMS)
         require(certificateChain.isNotEmpty() && certificateChain.size <= MAX_CERTIFICATES)
         val signingCertificate = certificateChain.first()
         val rsaPublicKey = signingCertificate.publicKey as? RSAPublicKey
@@ -200,6 +215,7 @@ internal object SevillaAtseXadesEnvelopingCodec {
             signedPropertiesDigest = digest(canonicalize(signedProperties)),
             keyInfoId = keyInfoId,
             keyInfoDigest = digest(canonicalize(keyInfo)),
+            signatureMethod = signingAlgorithm.xadesSignatureMethod(),
         )
         signature.insertBefore(signedInfo, signatureValue)
 
@@ -217,7 +233,22 @@ internal object SevillaAtseXadesEnvelopingCodec {
         unsignedDocument: ByteArray,
         signingCertificateFingerprint: ByteArray,
         signatureValue: ByteArray,
+    ): ByteArray = complete(
+        unsignedDocument = unsignedDocument,
+        signingCertificateFingerprint = signingCertificateFingerprint,
+        signatureValue = signatureValue,
+        signingAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        payloadValidator = ByteArray::isExactSevillaAtseChallenge,
+    )
+
+    internal fun complete(
+        unsignedDocument: ByteArray,
+        signingCertificateFingerprint: ByteArray,
+        signatureValue: ByteArray,
+        signingAlgorithm: SigningAlgorithm,
+        payloadValidator: (ByteArray) -> Boolean,
     ): ByteArray {
+        require(signingAlgorithm in SUPPORTED_SIGNATURE_ALGORITHMS)
         require(unsignedDocument.isNotEmpty() && unsignedDocument.size <= MAX_OUTPUT_BYTES)
         require(signatureValue.isNotEmpty() && signatureValue.size <= MAX_SIGNATURE_BYTES)
         require(signingCertificateFingerprint.size == SHA_256_BYTES)
@@ -227,14 +258,34 @@ internal object SevillaAtseXadesEnvelopingCodec {
         signatureValueElement.textContent = b64(signatureValue)
         val result = serialize(document)
         require(result.size <= MAX_OUTPUT_BYTES)
-        require(validate(result, signingCertificateFingerprint))
+        require(
+            validate(
+                signatureDocument = result,
+                expectedCertificateFingerprint = signingCertificateFingerprint,
+                signingAlgorithm = signingAlgorithm,
+                payloadValidator = payloadValidator,
+            ),
+        )
         return result
     }
 
     internal fun validate(
         signatureDocument: ByteArray,
         expectedCertificateFingerprint: ByteArray? = null,
+    ): Boolean = validate(
+        signatureDocument = signatureDocument,
+        expectedCertificateFingerprint = expectedCertificateFingerprint,
+        signingAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        payloadValidator = ByteArray::isExactSevillaAtseChallenge,
+    )
+
+    internal fun validate(
+        signatureDocument: ByteArray,
+        expectedCertificateFingerprint: ByteArray? = null,
+        signingAlgorithm: SigningAlgorithm,
+        payloadValidator: (ByteArray) -> Boolean,
     ): Boolean = runCatching {
+        require(signingAlgorithm in SUPPORTED_SIGNATURE_ALGORITHMS)
         val document = parse(signatureDocument)
         val signature = document.documentElement
         require(signature.namespaceURI == DS_NS && signature.localName == "Signature")
@@ -244,7 +295,10 @@ internal object SevillaAtseXadesEnvelopingCodec {
         require(
             signedInfo.singleChildDs("CanonicalizationMethod").getAttribute("Algorithm") == C14N,
         )
-        require(signedInfo.singleChildDs("SignatureMethod").getAttribute("Algorithm") == RSA_SHA1)
+        require(
+            signedInfo.singleChildDs("SignatureMethod").getAttribute("Algorithm") ==
+                signingAlgorithm.xadesSignatureMethod(),
+        )
         val references = signedInfo.directChildrenDs("Reference")
         require(references.size == 3)
 
@@ -257,7 +311,7 @@ internal object SevillaAtseXadesEnvelopingCodec {
         require(dataObject.getAttribute(ENCODING) == BASE64_ENCODING)
         val decodedData = Base64.getDecoder().decode(dataObject.textContent.trim())
         try {
-            require(decodedData.isExactSevillaAtseChallenge())
+            require(payloadValidator(decodedData))
             require(
                 MessageDigest.isEqual(
                     digest(decodedData),
@@ -315,7 +369,7 @@ internal object SevillaAtseXadesEnvelopingCodec {
             val signatureBytes = Base64.getDecoder().decode(signature.singleChildDs("SignatureValue").textContent)
             try {
                 require(signatureBytes.isNotEmpty() && signatureBytes.size <= MAX_SIGNATURE_BYTES)
-                require(Signature.getInstance(JCA_SIGNATURE).run {
+                require(Signature.getInstance(signingAlgorithm.jcaName()).run {
                     initVerify(certificate.publicKey)
                     update(canonicalize(signedInfo))
                     verify(signatureBytes)
@@ -342,9 +396,10 @@ internal object SevillaAtseXadesEnvelopingCodec {
         signedPropertiesDigest: ByteArray,
         keyInfoId: String,
         keyInfoDigest: ByteArray,
+        signatureMethod: String,
     ): Element = document.ds("SignedInfo").apply {
         appendChild(document.ds("CanonicalizationMethod").apply { setAttribute("Algorithm", C14N) })
-        appendChild(document.ds("SignatureMethod").apply { setAttribute("Algorithm", RSA_SHA1) })
+        appendChild(document.ds("SignatureMethod").apply { setAttribute("Algorithm", signatureMethod) })
         appendChild(document.ds("Reference").apply {
             setAttribute(ID, referenceId)
             setAttribute("URI", "#$dataObjectId")
@@ -535,13 +590,13 @@ internal object SevillaAtseXadesEnvelopingCodec {
     private const val C14N = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
     private const val SHA512_URI = "http://www.w3.org/2001/04/xmlenc#sha512"
     private const val RSA_SHA1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1"
+    private const val RSA_SHA512 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
     private const val BASE64_TRANSFORM = "http://www.w3.org/2000/09/xmldsig#base64"
     private const val BASE64_ENCODING = "http://www.w3.org/2000/09/xmldsig#base64"
     private const val DEFAULT_MIME_TYPE = "application/octet-stream"
     private const val DEFAULT_CONTENT_OID_URN = "urn:oid:1.2.840.113549.1.7.1"
     private const val SHA_512 = "SHA-512"
     private const val SHA_256 = "SHA-256"
-    private const val JCA_SIGNATURE = "SHA1withRSA"
     private const val MAX_OUTPUT_BYTES = 2_097_152
     private const val MAX_SIGNATURE_BYTES = 16_384
     private const val MAX_CERTIFICATES = 8
@@ -549,6 +604,16 @@ internal object SevillaAtseXadesEnvelopingCodec {
     private const val ACCESS_EXTERNAL_DTD = "http://javax.xml.XMLConstants/property/accessExternalDTD"
     private const val ACCESS_EXTERNAL_STYLESHEET =
         "http://javax.xml.XMLConstants/property/accessExternalStylesheet"
+    private val SUPPORTED_SIGNATURE_ALGORITHMS = setOf(
+        SigningAlgorithm.SHA1_WITH_RSA,
+        SigningAlgorithm.SHA512_WITH_RSA,
+    )
+
+    private fun SigningAlgorithm.xadesSignatureMethod(): String = when (this) {
+        SigningAlgorithm.SHA1_WITH_RSA -> RSA_SHA1
+        SigningAlgorithm.SHA512_WITH_RSA -> RSA_SHA512
+        SigningAlgorithm.SHA256_WITH_RSA -> error("unsupported XAdES Enveloping signature algorithm")
+    }
 }
 
 private fun ByteArray.isExactSevillaAtseChallenge(): Boolean =
