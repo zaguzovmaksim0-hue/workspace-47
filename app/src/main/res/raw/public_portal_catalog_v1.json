@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "50d69e63cc52a2b0abaedfb131c0d5fe2fb0975aec43c4cde95b97eae1099d19",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2093,24 +2093,28 @@
     {
       "portalId": "age-secretaria-de-estado-de-comercio",
       "inventoryId": "ES-PUB-0087",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Excepciones al comercio internacional de servicios — vía REG",
       "organization": "Secretaría de Estado de Comercio",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.comercio.gob.es/",
+      "purpose": "El catálogo público de Comercio mantiene el procedimiento SIA 3057517 y, mientras se habilita su procedimiento administrativo específico, indica que la solicitud puede presentarse por el Registro Electrónico General de la AGE.",
+      "entryUrl": "https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "COMERCIO-SURFACE-2026-08-17",
+        "COMERCIO-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y destino exacto; se conserva el procedimiento público de Comercio como entry URL, no se amplía la confianza criptográfica REG-AGE a sede.mineco.gob.es y no se realizó E2E físico."
     },
     {
       "portalId": "age-sede-electronica-central-del-ministerio",

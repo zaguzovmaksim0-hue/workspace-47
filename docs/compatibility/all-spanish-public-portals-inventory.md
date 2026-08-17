@@ -190,16 +190,16 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Entradas D06 ya presentes por exact origin | 1 |
 | Registros nuevos creados desde D06 | 40 |
 | Registros totales del snapshot | 183 |
-| Origins primarios distintos | 181 |
+| Origins primarios distintos | 180 |
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 209 |
-| Fuentes oficiales totales registradas | 221 |
+| Fuentes oficiales portal-specific registradas | 211 |
+| Fuentes oficiales totales registradas | 223 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -3151,30 +3151,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Secretaría de Estado de Comercio"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Excepciones al comercio internacional de servicios — vía REG"
     surface_type: "SEDE"
-    origin: "https://sede.comercio.gob.es"
-    official_site: "https://sede.comercio.gob.es/"
-    e_sede: "https://sede.comercio.gob.es/"
-    entry_url: "https://sede.comercio.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://sede.mineco.gob.es"
+    official_site: "https://comercio.gob.es/"
+    e_sede: "https://sede.mineco.gob.es/"
+    entry_url: "https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El catálogo público de Comercio mantiene el procedimiento SIA 3057517 y, mientras se habilita su procedimiento administrativo específico, indica que la solicitud puede presentarse por el Registro Electrónico General de la AGE."
+    protocol_evidence: "El portal oficial comercio.gob.es enlaza la relación vigente de procedimientos de Comercio en sede.mineco.gob.es. El detalle público SIA 3057517, cargado desde la lista pública SedeProcedures, publica literalmente https://reg.redsara.es como enlace del Registro Electrónico General; un contexto Chromium X11 público nuevo observó el mismo aviso y un segundo contexto nuevo resolvió el root REG mediante HTTP 302 a https://reg.redsara.es/es/, exactamente el startUrl de reg-age-redsara."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "COMERCIO-SURFACE-2026-08-17", "COMERCIO-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y destino exacto; se conserva el procedimiento público de Comercio como entry URL, no se amplía la confianza criptográfica REG-AGE a sede.mineco.gob.es y no se realizó E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición del procedimiento SIA 3057517 hacia REG-AGE sin completar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La antigua URL D11 https://sede.comercio.gob.es/ redirige actualmente a la Sede de Industria y Turismo; por ello la superficie se reancla en la relación de procedimientos de Comercio que el portal oficial comercio.gob.es publica en sede.mineco.gob.es. No se infieren certificado, firma, formato, algoritmo ni endpoint propios de Comercio."
 
   - inventory_id: "ES-PUB-0088"
     surface_key: "age-sede-electronica-central-del-ministerio"
@@ -6523,3 +6524,5 @@ availability, certificado, firma ni contrato técnico.
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
+[COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
+[COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
