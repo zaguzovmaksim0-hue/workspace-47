@@ -330,4 +330,22 @@ class PublicPortalCatalogParserTest {
             repository.resolveLaunch(portal),
         )
     }
+
+    @Test
+    fun `Tenerife institutional alias binds only the exact Sede launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("tenerife-portal-institucional")
+        }
+
+        assertEquals("ES-PUB-0127", portal.inventoryId)
+        assertEquals(ProfileId("tenerife-sede-electronica"), portal.profileId)
+        assertEquals(URI("https://www.tenerife.es/"), portal.entryUrl)
+        assertEquals(URI("https://sede.tenerife.es/"), portal.launchUrl)
+        assertEquals("DELEGACION_TENERIFE_SEDE", portal.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.observedMechanisms.isEmpty())
+        assertTrue(portal.observedSignatureFormats.isEmpty())
+    }
 }
