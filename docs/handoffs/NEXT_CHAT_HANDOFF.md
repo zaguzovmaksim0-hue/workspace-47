@@ -1,5 +1,7 @@
 # NEXT CHAT HANDOFF — Workspace-47 autonomous portal-first cycle
 
+> **HISTÓRICO — NO USAR COMO CONTABILIDAD ACTUAL.** Este handoff corresponde al ciclo del 2026-08-12 y conserva cifras de aquel checkpoint. El estado operativo actual debe obtenerse desde `main` con `python tools/report_public_portal_coverage.py`; no se deben propagar los KPI de este documento a nuevos handoffs.
+
 Date: 2026-08-12
 Task: `workspace-47-autonomous-20260803-01`
 Last Cloud-accepted product checkpoint before this documentation publication:
