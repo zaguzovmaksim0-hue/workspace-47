@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "15444c7b00669abd20b7d245f0dfd61c87dc2b9e8ea5b41fdffcfdc5f938f556",
+  "sourceRevision": "634820123bcbe978927328895d16ee9fb66758d4211e67563d67bbda58c34137",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2392,31 +2392,33 @@
     {
       "portalId": "cantabria-sede",
       "inventoryId": "ES-PUB-0100",
-      "profileId": null,
+      "profileId": "cantabria-rec-cert-login",
       "displayName": "Sede electrónica del Gobierno de Cantabria",
       "organization": "Gobierno de Cantabria",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Cantabria",
-      "purpose": "Catálogo y tramitación con sistemas de firma admitidos según el procedimiento.",
+      "purpose": "La Sede de Cantabria delega el acceso público al Registro Electrónico Común mediante un enlace exacto al REC ya implementado en QA.",
       "entryUrl": "https://sede.cantabria.es/sede/",
+      "launchUrl": "https://rec.cantabria.es/rec/bienvenida.htm",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_CANTABRIA_REC",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A06A",
         "A06B",
         "A06C",
-        "A06D"
+        "A06D",
+        "A06E"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado y firma son condicionales; cliente JS, formato y endpoint siguen sin verificar."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente cantabria-rec-cert-login por igualdad exacta del launch URL oficial; se conserva la Sede como entry URL, no se atribuye al origen sede.cantabria.es el ABI del REC y falta E2E físico."
     },
     {
       "portalId": "cantabria-registro-electronico-comun",

@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 205 |
 | Fuentes oficiales totales registradas | 217 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 33 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 37 |
-| Entradas restantes fuera de ambos estados | 146 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 34 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 38 |
+| Entradas restantes fuera de ambos estados | 145 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 33 |
+| `IMPLEMENTED_NOT_E2E` | 34 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 139 |
+| `BROWSE_ONLY` | 138 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3560,23 +3560,24 @@ records:
     official_site: "https://sede.cantabria.es/sede/"
     e_sede: "https://sede.cantabria.es/sede/"
     entry_url: "https://sede.cantabria.es/sede/"
+    launch_url: "https://rec.cantabria.es/rec/bienvenida.htm"
     procedure_page: "https://sede.cantabria.es/sede/catalogo-de-tramites/tramite/emision-de-certificados-de-los-datos-que-consten-en-los-registros-de-asociaciones/2645"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_CANTABRIA_REC"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Catálogo y tramitación con sistemas de firma admitidos según el procedimiento."
-    protocol_evidence: "La sede publica sistemas de firma admitidos, sin ABI ni contrato de entrega."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede de Cantabria delega el acceso público al Registro Electrónico Común mediante un enlace exacto al REC ya implementado en QA."
+    protocol_evidence: "La portada oficial de la Sede enlaza exactamente https://rec.cantabria.es/rec/bienvenida.htm; ese launch URL coincide byte a byte con startUrl del perfil cantabria-rec-cert-login ya IMPLEMENTED_NOT_E2E. No se infiere un ABI nuevo para sede.cantabria.es."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A06A", "A06B", "A06C", "A06D"]
-    reason: "Certificado y firma son condicionales; cliente JS, formato y endpoint siguen sin verificar."
-    reviewed_at: "2026-07-16"
-    next_gate: "Inspeccionar un procedimiento que invoque firma sin presentar solicitud."
+    evidence_ids: ["D03", "A06A", "A06B", "A06C", "A06D", "A06E"]
+    reason: "Alias QA-only al perfil existente cantabria-rec-cert-login por igualdad exacta del launch URL oficial; se conserva la Sede como entry URL, no se atribuye al origen sede.cantabria.es el ABI del REC y falta E2E físico."
+    reviewed_at: "2026-08-16"
+    next_gate: "E2E físico seguro desde la Sede hasta el REC sin autenticación real ni presentación administrativa; mantener QA_ONLY hasta evidencia separada."
 
   - inventory_id: "ES-PUB-0101"
     surface_key: "cantabria-registro-electronico-comun"
