@@ -573,4 +573,35 @@ class PublicPortalCatalogParserTest {
             repository.resolveLaunch(portal),
         )
     }
+    @Test
+    fun `Hacienda central alias retains institutional Sede while resolving exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single {
+            it.portalId == PortalId("age-sede-electronica-central-del-ministerio")
+        }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0088", metadata.inventoryId)
+        assertEquals(ProfileId("reg-age-redsara"), metadata.profileId)
+        assertEquals(URI("https://sede.hacienda.gob.es/"), metadata.entryUrl)
+        assertEquals(URI("https://reg.redsara.es/es/"), metadata.launchUrl)
+        assertEquals("DELEGACION_REG_AGE", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("reg-age-redsara"), URI("https://reg.redsara.es/es/")),
+            repository.resolveLaunch(portal),
+        )
+    }
+
 }
