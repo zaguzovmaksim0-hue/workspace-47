@@ -26,6 +26,7 @@ object AfirmaJavascriptShim {
         cdtiCompatibilityEnabled: Boolean = false,
         policiaCompatibilityEnabled: Boolean = false,
         granCanariaCompatibilityEnabled: Boolean = false,
+        canariasCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
         lugoBatchCompatibilityEnabled: Boolean = false,
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
@@ -44,6 +45,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(CDTI_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(CANARIAS_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(LUGO_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
@@ -94,6 +96,10 @@ object AfirmaJavascriptShim {
                 if (granCanariaCompatibilityEnabled) "true" else "false",
             )
             .replace(
+                CANARIAS_COMPATIBILITY_PLACEHOLDER,
+                if (canariasCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
                 MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
                 if (melillaBatchCompatibilityEnabled) "true" else "false",
             )
@@ -131,6 +137,8 @@ object AfirmaJavascriptShim {
         "__JFM_POLICIA_COMPATIBILITY_ENABLED__"
     private const val GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__"
+    private const val CANARIAS_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_CANARIAS_COMPATIBILITY_ENABLED__"
     private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
     private const val LUGO_BATCH_COMPATIBILITY_PLACEHOLDER =

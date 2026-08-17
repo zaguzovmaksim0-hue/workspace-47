@@ -417,6 +417,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("tls 1.2", tea["limitations"].lower())
         self.assertIn("e2e", tea["limitations"].lower())
 
+    def test_canarias_certificate_login_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(
+            item for item in catalog["entries"]
+            if item["portalId"] == "canarias-sede"
+        )
+
+        self.assertEqual("canarias-sede", entry["profileId"])
+        self.assertEqual("ES-PUB-0099", entry["inventoryId"])
+        self.assertEqual(
+            "https://sede.gobiernodecanarias.org/sede/la_sede",
+            entry["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", entry)
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("2026-08-17", entry["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", entry["observedMechanisms"])
+        self.assertIn("MINIAPPLET", entry["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", entry["observedMechanisms"])
+        self.assertEqual(["CADES"], entry["observedSignatureFormats"])
+        self.assertEqual("AUTOSCRIPT_MINIAPPLET_LOCAL_CADES", entry["protocolFamily"])
+        self.assertIn("e2e", entry["limitations"].lower())
+
     def test_gran_canaria_pades_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entry = next(

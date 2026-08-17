@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "bd22f20c2a23d29b0540e60e278d75b3e22e94752a8dde17e082e8defb936c3d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2383,29 +2383,33 @@
     {
       "portalId": "canarias-sede",
       "inventoryId": "ES-PUB-0099",
-      "profileId": null,
+      "profileId": "canarias-sede",
       "displayName": "Sede electrónica del Gobierno de Canarias",
       "organization": "Gobierno de Canarias",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Canarias",
-      "purpose": "Tramitación con certificado y AutoFirma cuando el procedimiento lo requiere.",
+      "purpose": "Acceso con certificado mediante AutoScript: reto UTC efímero firmado localmente como CAdES detached antes del POST de autenticación.",
       "entryUrl": "https://sede.gobiernodecanarias.org/sede/la_sede",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_MINIAPPLET_LOCAL_CADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A05A",
         "A05B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Producto, formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Contrato público exacto implementado en perfil QA_ONLY fail-closed; falta E2E físico con certificado real y por ello no se afirma autenticación completada ni presentación administrativa."
     },
     {
       "portalId": "cantabria-sede",

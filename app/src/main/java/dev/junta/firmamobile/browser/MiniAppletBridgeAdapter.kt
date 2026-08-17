@@ -17,6 +17,7 @@ import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
+import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
@@ -253,6 +254,18 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isCanariasContract = isExactCanariasContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == CanariasCertificateLoginCadesAdapter.PROFILE_ID &&
+            !isCanariasContract
+        ) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -345,6 +358,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isGranCanariaContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isCanariasContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == CanariasCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -459,10 +479,19 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
+        if (isCanariasContract && !CanariasCertificateLoginCadesAdapter.isExactChallenge(decodedData)) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
         val extraProperties = if (isCantabriaContract) {
             CANTABRIA_EXTRA_PROPERTIES
         } else if (isGranCanariaContract) {
             GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isCanariasContract) {
+            CanariasCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
         } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
@@ -817,6 +846,45 @@ internal class ProfileMiniAppletBridgeAdapter(
             byte.toInt() in 0x30..0x39 ||
                 byte.toInt() in 0x61..0x66
         }
+
+    private fun isExactCanariasContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == CanariasCertificateLoginCadesAdapter.SIGNING_PAGE_URL &&
+            profile.profileId.value == CanariasCertificateLoginCadesAdapter.PROFILE_ID &&
+            profile.profileVersion == CanariasCertificateLoginCadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == CanariasCertificateLoginCadesAdapter.PUBLIC_START_URL &&
+            origin.serialized == CanariasCertificateLoginCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(CanariasCertificateLoginCadesAdapter.INITIATOR_ORIGIN),
+            ) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == CanariasCertificateLoginCadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.EXPLICIT &&
+            operation.fixedExtraProperties == CanariasCertificateLoginCadesAdapter.EXPECTED_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == CanariasCertificateLoginCadesAdapter.ID.value
 
     private fun isExactDiputacionLleidaContract(
         profile: SiteProfile,
