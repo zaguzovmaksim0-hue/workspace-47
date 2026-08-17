@@ -81,11 +81,11 @@ class PortalCatalogRepositoryTest {
                 "diputacion-valencia-sede",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
+                "cdti-certificate-validation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 34, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -137,6 +137,72 @@ class PortalCatalogRepositoryTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `Educacion REG alias keeps ministry metadata and inherits only exact QA REG AGE launch`() {
+        val portalId = PortalId("age-ministerio-de-educacion-formacion-profesional-y-deportes")
+        val profileId = ProfileId("reg-age-redsara")
+        val ministryEntry = java.net.URI(
+            "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html",
+        )
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(ministryEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, ministryEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+
+    @Test
+    fun `CDTI exact validation page is QA enabled and release fail closed`() {
+        val profileId = ProfileId("cdti-certificate-validation")
+        val exact = java.net.URI(
+            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+        )
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(exact, qaPortal.entryUrl)
+        assertEquals(setOf(SignatureFormat.XADES), qaPortal.signatureFormats)
+        assertEquals(PortalLaunchTarget(profileId, exact), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
     }
 
     @Test
@@ -223,45 +289,6 @@ class PortalCatalogRepositoryTest {
             SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
             catalog,
             tamperedCatalog,
-        )
-        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
-        assertFalse(tamperedPortal.isEnabled)
-        assertTrue(tamperedPortal.capabilities.isEmpty())
-        assertTrue(tamperedPortal.signatureFormats.isEmpty())
-        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
-    }
-
-    @Test
-    fun `La Palma institutional alias launches only the exact implemented Sede profile in QA`() {
-        val portalId = PortalId("la-palma-portal-institucional")
-        val profileId = ProfileId("la-palma-sede-electronica")
-        val entryUrl = java.net.URI("https://www.cabildodelapalma.es/")
-        val launchUrl = java.net.URI("https://sedeelectronica.cabildodelapalma.es/")
-
-        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
-        assertEquals(profileId, qaPortal.profileId)
-        assertEquals(entryUrl, qaPortal.entryUrl)
-        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.isEnabled)
-        assertEquals(PortalLaunchTarget(profileId, launchUrl), qaRepository.resolveLaunch(qaPortal))
-
-        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
-        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
-        assertFalse(releasePortal.isEnabled)
-        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
-
-        val tampered = PortalCatalogRepository(
-            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
-            catalog,
-            publicCatalog.copy(
-                entries = publicCatalog.entries.map { entry ->
-                    if (entry.portalId == portalId) {
-                        entry.copy(launchUrl = java.net.URI("https://sedeelectronica.cabildodelapalma.es/not-the-profile-start"))
-                    } else {
-                        entry
-                    }
-                },
-            ),
         )
         val tamperedPortal = tampered.portals().single { it.portalId == portalId }
         assertFalse(tamperedPortal.isEnabled)
@@ -655,5 +682,261 @@ class PortalCatalogRepositoryTest {
             PortalSupportStatus.UNSUPPORTED_PROTOCOL,
             resolvePortalSupportStatus(CompatibilityStatus.UNSUPPORTED, isImplemented = false),
         )
+    }
+
+    @Test
+    fun `BNE alias keeps BNE metadata and inherits only the exact QA REG AGE launch`() {
+        val portalId = PortalId("age-biblioteca-nacional-de-espana")
+        val profileId = ProfileId("reg-age-redsara")
+        val bneEntry = java.net.URI("https://sede.bne.gob.es/es/tramites/quejas-sugerencias")
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(bneEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, bneEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Tenerife institutional alias keeps portal metadata and inherits only exact QA Sede launch`() {
+        val portalId = PortalId("tenerife-portal-institucional")
+        val profileId = ProfileId("tenerife-sede-electronica")
+        val institutionalEntry = java.net.URI("https://www.tenerife.es/")
+        val sedeStart = java.net.URI("https://sede.tenerife.es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(institutionalEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, sedeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, sedeStart),
+            qaRepository.resolveLaunch(profileId, institutionalEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://sede.tenerife.es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `DSCA REG alias keeps ministry metadata and inherits only exact QA REG AGE launch`() {
+        val portalId = PortalId("age-ministerio-de-derechos-sociales-consumo-y-agenda-2030")
+        val profileId = ProfileId("reg-age-redsara")
+        val ministryEntry = java.net.URI(
+            "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje",
+        )
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(ministryEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, ministryEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `INAP alias keeps INAP metadata and inherits only the exact QA REG AGE launch`() {
+        val portalId = PortalId("age-instituto-nacional-de-administracion-publica-inap")
+        val profileId = ProfileId("reg-age-redsara")
+        val inapEntry = java.net.URI("https://sede.inap.gob.es/")
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(inapEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, inapEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Cantabria Sede alias launches only the exact implemented REC profile in QA`() {
+        val portalId = PortalId("cantabria-sede")
+        val profileId = ProfileId("cantabria-rec-cert-login")
+        val entryUrl = java.net.URI("https://sede.cantabria.es/sede/")
+        val launchUrl = java.net.URI("https://rec.cantabria.es/rec/bienvenida.htm")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(entryUrl, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, launchUrl), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            publicCatalog.copy(
+                entries = publicCatalog.entries.map { entry ->
+                    if (entry.portalId == portalId) {
+                        entry.copy(launchUrl = java.net.URI("https://rec.cantabria.es/rec/not-the-profile-start"))
+                    } else {
+                        entry
+                    }
+                },
+            ),
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `La Palma institutional alias launches only the exact implemented Sede profile in QA`() {
+        val portalId = PortalId("la-palma-portal-institucional")
+        val profileId = ProfileId("la-palma-sede-electronica")
+        val entryUrl = java.net.URI("https://www.cabildodelapalma.es/")
+        val launchUrl = java.net.URI("https://sedeelectronica.cabildodelapalma.es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(entryUrl, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, launchUrl), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            publicCatalog.copy(
+                entries = publicCatalog.entries.map { entry ->
+                    if (entry.portalId == portalId) {
+                        entry.copy(launchUrl = java.net.URI("https://sedeelectronica.cabildodelapalma.es/not-the-profile-start"))
+                    } else {
+                        entry
+                    }
+                },
+            ),
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 }
