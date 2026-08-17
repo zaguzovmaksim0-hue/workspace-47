@@ -156,7 +156,12 @@ class PortalCatalogScreenTest {
         }
 
         rule.onNodeWithText("Buscar servicio u organismo").performTextInput("UNED")
-        rule.onNodeWithText("Universidad Nacional de Educación a Distancia (UNED)")
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasText("Registro Electrónico General (REG-AGE)"),
+        )
+        rule.onNodeWithText("Registro Electrónico General (REG-AGE)")
+            .assertIsDisplayed()
+        rule.onNodeWithText("IMPLEMENTADO · E2E PENDIENTE")
             .performScrollTo()
             .assertIsDisplayed()
         rule.onNodeWithText("Abrir sede").performScrollTo().performClick()
