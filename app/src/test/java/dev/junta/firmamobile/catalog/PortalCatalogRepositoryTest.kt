@@ -81,6 +81,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-valencia-sede",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
+                "oepm-protegeo-general",
                 "cdti-certificate-validation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
