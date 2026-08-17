@@ -431,6 +431,64 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Cantabria Sede alias binds only the exact implemented REC launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single { it.portalId == PortalId("cantabria-sede") }
+
+        assertEquals(ProfileId("cantabria-rec-cert-login"), portal.profileId)
+        assertEquals("ES-PUB-0100", portal.inventoryId)
+        assertEquals("https://sede.cantabria.es/sede/", portal.entryUrl.toString())
+        assertEquals(java.net.URI("https://rec.cantabria.es/rec/bienvenida.htm"), portal.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.limitations.contains("alias", ignoreCase = true))
+    }
+
+    @Test
+    fun `La Palma institutional alias binds only the exact implemented Sede launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single { it.portalId == PortalId("la-palma-portal-institucional") }
+
+        assertEquals(ProfileId("la-palma-sede-electronica"), portal.profileId)
+        assertEquals("ES-PUB-0129", portal.inventoryId)
+        assertEquals("https://www.cabildodelapalma.es/", portal.entryUrl.toString())
+        assertEquals(java.net.URI("https://sedeelectronica.cabildodelapalma.es/"), portal.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.limitations.contains("alias", ignoreCase = true))
+    }
+
+    @Test
+    fun `MITECO REG alias retains ministry evidence while resolving only exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html"),
+            portal.entryUrl,
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `AEMPS alias retains the official Sede URL while resolving the exact REG-AGE launch URL`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
