@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 24,
+  "catalogVersion": 25,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -729,6 +729,28 @@
       "evidence": [
         {"url":"https://sede.grancanaria.com/informacion-instancia","reviewedOn":"2026-08-17"},
         {"url":"https://sede.grancanaria.com/informacion-instancia?p_p_id=Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_cacheability=cacheLevelPage&p_p_col_id=&p_p_col_count=0&_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_javax.faces.resource=AFIRMA%2Foperaciones.js&_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_ln=js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "ministerio-economia-instancia-generica",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Economía, Comercio y Empresa — Instancia Genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG",
+      "initiatorOrigins": ["https://serviciosede.mineco.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": ["https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es"],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma PAdES de Instancia Genérica del Ministerio de Economía, Comercio y Empresa","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"filters":"signingCert:;nonexpired:","expPolicy":"FirmaAGE","signatureSubFilter":"ETSI.CAdES.detached"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG","reviewedOn":"2026-08-17"},
+        {"url":"https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx","reviewedOn":"2026-08-17"},
+        {"url":"https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf","reviewedOn":"2026-08-17"}
       ]
     },
     {

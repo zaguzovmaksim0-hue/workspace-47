@@ -817,5 +817,25 @@ records:
         self.assertIn("e2e", mapa["limitations"].lower())
 
 
+    def test_mineco_instancia_generica_binds_exact_qa_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0065")
+
+        self.assertEqual("ministerio-economia-instancia-generica", target["profileId"])
+        self.assertEqual(
+            "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG",
+            target["entryUrl"],
+        )
+        self.assertEqual("MINIAPPLET_LOCAL_PADES", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual(["PADES"], target["observedSignatureFormats"])
+        self.assertIn("AUTOFIRMA", target["observedMechanisms"])
+        self.assertIn("MINIAPPLET", target["observedMechanisms"])
+        self.assertIn("CLIENT_TLS_AUTH", target["observedMechanisms"])
+        self.assertEqual("2026-08-17", target["reviewedOn"])
+
+
+
 if __name__ == "__main__":
     unittest.main()

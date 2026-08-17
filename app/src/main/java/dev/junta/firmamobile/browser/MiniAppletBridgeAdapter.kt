@@ -22,6 +22,7 @@ import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
+import dev.junta.firmamobile.signing.MinecoPadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.NormalizedSignRequest
@@ -211,6 +212,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == GranCanariaPadesAdapter.PROFILE_ID && !isGranCanariaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isMinecoContract = isExactMinecoContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == MinecoPadesAdapter.PROFILE_ID && !isMinecoContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isSevillaAtseContract = isExactSevillaAtseContract(
             profile = profile,
             origin = resolved.origin,
@@ -275,7 +286,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_PADES -> if (isGranCanariaContract) {
+            FORMAT_PADES -> if (isGranCanariaContract || isMinecoContract) {
                 SigningFormat.PADES to SignatureFormat.PADES
             } else {
                 null
@@ -345,6 +356,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isGranCanariaContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isMinecoContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -463,6 +481,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             CANTABRIA_EXTRA_PROPERTIES
         } else if (isGranCanariaContract) {
             GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isMinecoContract) {
+            MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
         } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
@@ -617,6 +637,43 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.fixedExtraProperties == GRAN_CANARIA_FIXED_EXTRA_PROPERTIES &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == GranCanariaPadesAdapter.ID.value
+
+    private fun isExactMinecoContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == MinecoPadesAdapter.SIGNING_PAGE_URL &&
+            profile.profileId.value == MinecoPadesAdapter.PROFILE_ID &&
+            profile.profileVersion == MinecoPadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == MinecoPadesAdapter.PUBLIC_START_URL &&
+            origin.serialized == MinecoPadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(MinecoPadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins == MINECO_TRUSTED_BROWSE_ORIGINS &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == MinecoPadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA) &&
+            operation.format == SignatureFormat.PADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == MINECO_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == MinecoPadesAdapter.ID.value
 
     private fun isExactSevillaAtseContract(
         profile: SiteProfile,
@@ -936,6 +993,15 @@ internal class ProfileMiniAppletBridgeAdapter(
         private val GRAN_CANARIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "headless" to "true",
             "filters" to "nonexpired:",
+        )
+        private val MINECO_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "filters" to "signingCert:;nonexpired:",
+            "expPolicy" to "FirmaAGE",
+            "signatureSubFilter" to "ETSI.CAdES.detached",
+        )
+        private val MINECO_TRUSTED_BROWSE_ORIGINS = setOf(
+            ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
         )
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         private const val CANTABRIA_PROFILE_VERSION = 1

@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 209 |
 | Fuentes oficiales totales registradas | 221 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2468,31 +2468,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Economía, Comercio y Empresa"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Instancia Genérica — Ministerio de Economía, Comercio y Empresa"
     surface_type: "SEDE"
-    origin: "https://sede.mineco.gob.es"
+    origin: "https://serviciosede.mineco.gob.es"
     official_site: "https://sede.mineco.gob.es/"
     e_sede: "https://sede.mineco.gob.es/"
-    entry_url: "https://sede.mineco.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
+    entry_url: "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG"
+    procedure_page: "https://sede.mineco.gob.es/es/servicios-comunes"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "MiniApplet / AutoFirma"
+    protocol_family: "MINIAPPLET_LOCAL_PADES"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA512withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Rama local Firmar y Enviar: firma PAdES del PDF generado por la Instancia Genérica mediante MiniApplet/AutoFirma; Cl@veFirma queda fuera del contrato implementado."
+    protocol_evidence: "Controlled authenticated observation 2026-08-17: /FB/solicitud/firma.aspx invokes MiniApplet.sign(unsignedPdfBase64, SHA512withRSA, PAdES, filters=signingCert:;nonexpired: + expPolicy=FirmaAGE + signatureSubFilter=ETSI.CAdES.detached, showResultCallback, showErrorCallback). Current official AutoFirma source maps FirmaAGE PAdES policy 1.9 to OID 2.16.724.1.3.1.1.2.1.9, SHA-1 policy hash G7roucf600+f03r/o0bAOQ6WAs0= and the official policy qualifier URL."
+    client_tls_auth: "SI"
     evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
-
+    reason: "Contrato exacto de la rama local Firmar y Enviar implementado en QA y pendiente de E2E físico; la autenticación eIdentifier usa certificado TLS por separado y Cl@veFirma no se infiere ni se implementa."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E controlado de la rama local sin presentación administrativa; validar callback signedPdf y abortar antes del postback final de registro."
+    notes: "La autenticación con certificado Cl@ve/eIdentifier y la firma del escrito son contratos distintos. El perfil implementa solo SIGN local PAdES; los orígenes Cl@ve quedan limitados a navegación de confianza y no se declara una operación CLIENT_TLS_AUTH en el perfil."
   - inventory_id: "ES-PUB-0066"
     surface_key: "age-ministerio-de-educacion-formacion-profesional-y-deportes"
     administrative_level: "ESTATAL"
