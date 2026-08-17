@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 201 |
-| Fuentes oficiales totales registradas | 213 |
+| Fuentes oficiales portal-specific registradas | 202 |
+| Fuentes oficiales totales registradas | 214 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 27 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 31 |
-| Entradas restantes fuera de ambos estados | 152 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 28 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 32 |
+| Entradas restantes fuera de ambos estados | 151 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 27 |
+| `IMPLEMENTED_NOT_E2E` | 28 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 145 |
+| `BROWSE_ONLY` | 144 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 109 |
+| `REVIEWED` | 110 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 69 |
+| `DISCOVERED` | 68 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 202 fuentes porque las
+47/50; no se publica un cociente agregado para las 203 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -1377,30 +1377,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Centro para el Desarrollo Tecnológico Industrial (CDTI)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Validar certificado digital — CDTI"
     surface_type: "SEDE"
     origin: "https://sede.cdti.gob.es"
     official_site: "https://sede.cdti.gob.es/"
     e_sede: "https://sede.cdti.gob.es/"
-    entry_url: "https://sede.cdti.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Ciencia, Innovación y Universidades."
+    entry_url: "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"
+    procedure_page: "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / MiniApplet"
+    protocol_family: "AUTOSCRIPT_LOCAL_XADES_ENVELOPING"
+    signature_format: "XAdES Enveloping"
+    signature_algorithm: "SHA512withRSA; la rama macOS pública usa SHA256withRSA y queda fuera del perfil Android"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Validación pública de certificado: la página carga AutoScript, firma un reto dinámico CertExp con XAdES Enveloping y reenvía firma y certificado en campos ocultos."
+    protocol_evidence: "La página pública ejecuta AutoScript.sign(dataB64, SHA512withRSA, XAdES Enveloping, filters=nonexpired, SignatureOKFunction, SignatureErrorFunction) fuera de macOS. Tres GET independientes del 2026-08-16 mostraron tokens Base64 sin padding distintos con forma estable CertExp + 32 hex minúsculas + 24 alfanuméricos minúsculos; el bridge valida la forma literal antes de decodificar; el perfil restaura el único padding = y valida que los bytes decodificados puedan proceder de esa forma exacta, tolerando únicamente los bits Base64 finales no significativos observados; el callback permanece exacto."
+    client_tls_auth: "NO"
+    evidence_ids: ["D11", "CDTI-CERT-2026-08-16"]
+    reason: "Contrato pre-auth completo y acotado implementado en QA con XAdES Enveloping local; sin ampliar confianza fuera de la URL exacta y sin promover release antes de E2E físico."
+    reviewed_at: "2026-08-16"
+    next_gate: "E2E físico seguro de la validación de certificado en Android, sin presentar solicitud administrativa."
+    notes: "El perfil implementa únicamente la rama no-macOS observada: SHA512withRSA. La rama macOS SHA256withRSA permanece fail-closed."
 
   - inventory_id: "ES-PUB-0031"
     surface_key: "age-comisionado-para-el-mercado-de-tabacos-cmt"
@@ -6506,3 +6506,4 @@ availability, certificado, firma ni contrato técnico.
 [DP39B]: https://www.ebizkaia.eus/es/medios-de-identificacion
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
+[CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
