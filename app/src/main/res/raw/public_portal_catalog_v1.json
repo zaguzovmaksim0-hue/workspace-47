@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "7ef4ea65876e49d24956020e8e9a4aa09d99cf2c49aca9c6793ea3ec0895c655",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1706,24 +1706,27 @@
     {
       "portalId": "age-ministerio-de-juventud-e-infancia",
       "inventoryId": "ES-PUB-0070",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Formulario genérico — vía Registro Electrónico General",
       "organization": "Ministerio de Juventud e Infancia",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://juventudeinfancia.sede.gob.es/",
+      "purpose": "La Sede publica un formulario genérico para solicitudes, escritos y comunicaciones sin procedimiento normalizado y remite expresamente al Registro Electrónico General (REG-AGE).",
+      "entryUrl": "https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "JUVENTUD-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita a REG-AGE y resolución exacta del launch español al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
     },
     {
       "portalId": "age-ministerio-de-la-presidencia-justicia-y-relaciones-con-las-cortes",
