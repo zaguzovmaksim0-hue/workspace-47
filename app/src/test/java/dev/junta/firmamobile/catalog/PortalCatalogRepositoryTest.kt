@@ -51,6 +51,7 @@ class PortalCatalogRepositoryTest {
         assertEquals(
             setOf(
                 "junta-andalucia",
+                "junta-andalucia-vea-peg",
                 "reg-age-redsara",
                 "unizar-tramitador",
                 "carne-joven-andalucia",

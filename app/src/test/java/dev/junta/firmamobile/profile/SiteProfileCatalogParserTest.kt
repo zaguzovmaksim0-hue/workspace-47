@@ -861,7 +861,7 @@ class SiteProfileCatalogParserTest {
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
-        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
     }
 
 }

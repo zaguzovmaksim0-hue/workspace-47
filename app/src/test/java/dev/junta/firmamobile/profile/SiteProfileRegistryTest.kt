@@ -178,7 +178,7 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.activation)
-        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://api-veaja.cloud.juntadeandalucia.es/auth/login")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))

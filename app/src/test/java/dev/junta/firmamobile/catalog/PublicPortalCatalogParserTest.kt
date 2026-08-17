@@ -44,6 +44,7 @@ class PublicPortalCatalogParserTest {
         assertEquals(
             setOf(
                 ProfileId("junta-andalucia"),
+                ProfileId("junta-andalucia-vea-peg"),
                 ProfileId("reg-age-redsara"),
                 ProfileId("unizar-tramitador"),
                 ProfileId("carne-joven-andalucia"),
