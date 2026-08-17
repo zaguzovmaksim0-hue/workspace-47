@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8507e3f241a0591c83e6530f8ccbac808f618edfb985d9ce8cd88156074389b7",
+  "sourceRevision": "b3d0e3652f72f4191d42eb573865c66b9d4c6fda891feaaa28e31188f40e0e87",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3147,26 +3147,27 @@
     {
       "portalId": "la-palma-portal-institucional",
       "inventoryId": "ES-PUB-0129",
-      "profileId": null,
+      "profileId": "la-palma-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de La Palma",
       "organization": "Cabildo Insular de La Palma",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la administración electrónica mediante un enlace exacto a la Sede de La Palma ya implementada en QA.",
       "entryUrl": "https://www.cabildodelapalma.es/",
+      "launchUrl": "https://sedeelectronica.cabildodelapalma.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_SEDE_LA_PALMA",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I07A",
         "I07B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente la-palma-sede-electronica por igualdad exacta del launch URL oficial; se conserva el portal institucional como entry URL, no se hereda trust al origin institucional y falta E2E físico."
     },
     {
       "portalId": "la-palma-sede-electronica",

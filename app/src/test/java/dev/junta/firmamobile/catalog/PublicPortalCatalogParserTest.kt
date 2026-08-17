@@ -39,7 +39,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(33, catalog.entries.count { it.profileId != null })
+        assertEquals(34, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -79,7 +79,21 @@ class PublicPortalCatalogParserTest {
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 68)
-        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 145)
+        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 144)
+    }
+
+    @Test
+    fun `La Palma institutional alias binds only the exact implemented Sede launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single { it.portalId == PortalId("la-palma-portal-institucional") }
+
+        assertEquals(ProfileId("la-palma-sede-electronica"), portal.profileId)
+        assertEquals("ES-PUB-0129", portal.inventoryId)
+        assertEquals("https://www.cabildodelapalma.es/", portal.entryUrl.toString())
+        assertEquals(java.net.URI("https://sedeelectronica.cabildodelapalma.es/"), portal.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.limitations.contains("alias", ignoreCase = true))
     }
 
     @Test
