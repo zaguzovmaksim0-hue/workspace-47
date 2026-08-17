@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "13806b603278945ec2f23e88a21c59331bca31c5b401cdb968d8a43b945005ed",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1983,24 +1983,25 @@
     {
       "portalId": "age-oficina-espanola-de-patentes-y-marcas",
       "inventoryId": "ES-PUB-0082",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "oepm-protegeo-general",
+      "displayName": "Solicitud de propósito general / ProtegeO",
       "organization": "Oficina Española de Patentes y Marcas",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.oepm.gob.es/",
+      "purpose": "Navegación QA integrada exclusivamente al inicio público de ProtegeO para la Solicitud electrónica de propósito general remitida a la OEPM; el flujo POST posterior, autenticación y firma quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "OEPM_PROTEGEO_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "OEPM-PROTEGEO-2026-08-17"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch público exacto de ProtegeO y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. La tarjeta current first-party indica acceso con Cl@ve y «No requiere certificado electrónico», mientras el texto desplegable conserva instrucciones legacy de Java Applet/certificado; por esa contradicción no se modelan constantes de firma ni certificado. Falta E2E físico."
     },
     {
       "portalId": "age-portal-de-la-transparencia",

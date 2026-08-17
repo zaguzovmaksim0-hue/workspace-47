@@ -81,6 +81,25 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `OEPM ProtegeO public launch is compatible while sensitive capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val oepm = compatible.items.single {
+            it.portalId == PortalId("age-oficina-espanola-de-patentes-y-marcas")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("oepm-protegeo-general"), oepm.profileId)
+        assertEquals(
+            java.net.URI("https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM"),
+            oepm.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, oepm.supportStatus)
+        assertTrue(oepm.capabilities.isEmpty())
+        assertTrue(oepm.signatureFormats.isEmpty())
+        assertTrue(oepm.isEnabled)
+    }
+
+    @Test
     fun `contract pending browse only and unsupported are separated and disabled correctly`() {
         val base = repository.portals().first()
         val pending = base.copy(
