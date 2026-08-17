@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 24,
+  "catalogVersion": 25,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -927,6 +927,26 @@
       "evidence": [
         {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "junta-andalucia-vea-peg",
+      "profileVersion": 1,
+      "displayName": "Junta de Andalucía — Presentación electrónica general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA",
+      "initiatorOrigins": ["https://veaja.cloud.juntadeandalucia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.juntadeandalucia.es/servicios/sede/tramites.html","reviewedOn":"2026-08-17"},
+        {"url":"https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA","reviewedOn":"2026-08-17"}
       ]
     }
   ]

@@ -193,6 +193,22 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Junta VEA PEG is compatible navigation but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single { it.portalId == PortalId("junta-andalucia-sede") }
+
+        assertEquals("junta-andalucia-vea-peg", target.profileId?.value)
+        assertEquals(
+            java.net.URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"),
+            target.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.isEnabled)
+        assertTrue(target.capabilities.isEmpty())
+    }
+
+    @Test
     fun `metadata only browse record explains why integrated navigation is blocked`() {
         rule.setContent {
             JuntaFirmaTheme {
