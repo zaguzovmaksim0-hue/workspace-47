@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8507e3f241a0591c83e6530f8ccbac808f618edfb985d9ce8cd88156074389b7",
+  "sourceRevision": "fd460b1b01223978ec9533d72c41ef1cc7a8f9ccb80e4bd6a4ed22bc2e2d676c",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -729,24 +729,30 @@
     {
       "portalId": "age-biblioteca-nacional-de-espana",
       "inventoryId": "ES-PUB-0028",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Quejas y sugerencias — Biblioteca Nacional de España",
       "organization": "Biblioteca Nacional de España",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.bne.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "La Sede BNE ofrece el Registro Electrónico General como vía electrónica para presentar quejas o sugerencias dirigidas a la Biblioteca Nacional de España.",
+      "entryUrl": "https://sede.bne.gob.es/es/tramites/quejas-sugerencias",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "BNE-REG-2026-08-16",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página BNE como entry URL, no se amplía trust al origin BNE y falta E2E físico de la transición."
     },
     {
       "portalId": "age-centro-de-investigaciones-energeticas-medioambientales-y-tecnologicas-ciemat",
