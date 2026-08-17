@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "471cdb9da1510b64c7711bed07d1d9c2b00e8a232c5f025bea5d675c33702081",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1662,24 +1662,28 @@
     {
       "portalId": "age-ministerio-de-inclusion-seguridad-social-y-migraciones",
       "inventoryId": "ES-PUB-0068",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Ministerio de Inclusión, Seguridad Social y Migraciones",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio de Inclusión publica un acceso al Registro Electrónico de la Administración General del Estado; su enlace legacy REC migra mediante redirección HTTP al actual origin REG-AGE.",
       "entryUrl": "https://sede.inclusion.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INCLUSION-REG-2026-08-17",
+        "PAG-REG-AGE-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede de Inclusión delega explícitamente al registro AGE y la ruta legacy publicada migra al origin REG-AGE actual; el catálogo usa solo el startUrl canónico exacto del perfil existente. Falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-industria-y-turismo",
