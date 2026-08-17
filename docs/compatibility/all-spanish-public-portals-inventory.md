@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 201 |
-| Fuentes oficiales totales registradas | 213 |
+| Fuentes oficiales portal-specific registradas | 202 |
+| Fuentes oficiales totales registradas | 214 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 27 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 31 |
-| Entradas restantes fuera de ambos estados | 152 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 28 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 32 |
+| Entradas restantes fuera de ambos estados | 151 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 27 |
+| `IMPLEMENTED_NOT_E2E` | 28 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 145 |
+| `BROWSE_ONLY` | 144 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 109 |
+| `REVIEWED` | 110 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 69 |
+| `DISCOVERED` | 68 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 202 fuentes porque las
+47/50; no se publica un cociente agregado para las 203 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -2282,23 +2282,24 @@ records:
     official_site: "https://sede.mapa.gob.es/portal/site/seMAPA"
     e_sede: "https://sede.mapa.gob.es/portal/site/seMAPA"
     entry_url: "https://sede.mapa.gob.es/portal/site/seMAPA"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.mapa.gob.es/portal/site/seMAPA"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del MAPA enlaza públicamente con el Registro Electrónico General; Workspace-47 representa esa salida como una delegación acotada al perfil REG-AGE existente."
+    protocol_evidence: "La portada oficial de la Sede MAPA incluye en su pie un enlace HTTPS directo a https://reg.redsara.es/ mediante el recurso reg_footer.png. Workspace-47 no asume un ABI de firma propio del MAPA ni un redirect de ese root: el alias usa únicamente el startUrl canónico ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara, sin ampliar orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "MAPA-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara basado en el enlace público de la Sede MAPA al REG; faltan validación E2E física de la transición y cualquier atribución de contrato de firma específico del MAPA."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición MAPA → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
     notes: "Ministerio(s) enumerador(es): Ministerio de Agricultura, Pesca y Alimentación."
 
   - inventory_id: "ES-PUB-0060"

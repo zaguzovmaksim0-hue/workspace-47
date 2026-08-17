@@ -87,6 +87,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("administrativa", redsara["limitations"].lower())
         self.assertIn("xades", redsara["limitations"].lower())
 
+        mapa = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-agricultura-pesca-y-alimentacion"
+        )
+        self.assertEqual("reg-age-redsara", mapa["profileId"])
+        self.assertEqual("https://sede.mapa.gob.es/portal/site/seMAPA", mapa["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", mapa["launchUrl"])
+        self.assertEqual("E2E_PENDING", mapa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mapa["inventoryStatus"])
+        self.assertEqual("2026-08-17", mapa["reviewedOn"])
+        self.assertEqual([], mapa["observedMechanisms"])
+        self.assertEqual([], mapa["observedSignatureFormats"])
+        self.assertIn("reg-age", mapa["limitations"].lower())
+        self.assertIn("qa", mapa["limitations"].lower())
+        self.assertIn("e2e", mapa["limitations"].lower())
+
         aeat = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "aeat-sede"
