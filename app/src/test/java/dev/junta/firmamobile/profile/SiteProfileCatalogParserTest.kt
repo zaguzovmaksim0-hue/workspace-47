@@ -310,6 +310,32 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun rejectsAnyExpansionOfTheCanariasCertificateLoginProfileContract() {
+        val mutations = listOf(
+            "\"SHA1_WITH_RSA\"" to "\"SHA256_WITH_RSA\"",
+            "\"format\":\"CAdES Detached\"" to "\"format\":\"CAdES\"",
+            "referencesDigestMethod\":\"http://www.w3.org/2001/04/xmlenc#sha512" to
+                "referencesDigestMethod\":\"http://www.w3.org/2001/04/xmlenc#sha256",
+            "signingCert:true;issuer.rfc2254" to "signingCert:false;issuer.rfc2254",
+        )
+
+        mutations.forEach { (expected, replacement) ->
+            val canariasStart = BuiltInSiteProfiles.JSON.indexOf("\"profileId\": \"canarias-sede\"")
+            assertTrue(canariasStart >= 0)
+            val nextProfile = BuiltInSiteProfiles.JSON.indexOf("\"profileId\":", canariasStart + 1)
+            val end = if (nextProfile >= 0) nextProfile else BuiltInSiteProfiles.JSON.length
+            val block = BuiltInSiteProfiles.JSON.substring(canariasStart, end)
+            assertTrue("missing Canarias contract fragment: $expected", block.contains(expected))
+            val changedBlock = block.replaceFirst(expected, replacement)
+            val mutated = BuiltInSiteProfiles.JSON.substring(0, canariasStart) + changedBlock +
+                BuiltInSiteProfiles.JSON.substring(end)
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(mutated)
+            }
+        }
+    }
+
+    @Test
     fun preservesTheExactCantabriaRecQaOnlyCertificateContract() {
         val profileId = ProfileId("cantabria-rec-cert-login")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
