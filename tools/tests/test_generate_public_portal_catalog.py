@@ -145,6 +145,21 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("reg-age", us["limitations"].lower())
         self.assertIn("e2e", us["limitations"].lower())
 
+        inap = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-instituto-nacional-de-administracion-publica-inap"
+        )
+        self.assertEqual("reg-age-redsara", inap["profileId"])
+        self.assertEqual("https://sede.inap.gob.es/", inap["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", inap["launchUrl"])
+        self.assertEqual("E2E_PENDING", inap["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", inap["inventoryStatus"])
+        self.assertEqual("2026-08-17", inap["reviewedOn"])
+        self.assertIn("reg-age", inap["limitations"].lower())
+        self.assertIn("qa", inap["limitations"].lower())
+        self.assertIn("e2e", inap["limitations"].lower())
+
+
         cantabria = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "cantabria-registro-electronico-comun"

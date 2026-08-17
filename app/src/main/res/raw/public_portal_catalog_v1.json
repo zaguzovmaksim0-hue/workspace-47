@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8507e3f241a0591c83e6530f8ccbac808f618edfb985d9ce8cd88156074389b7",
+  "sourceRevision": "f8347136b068db90516fe6447ca034b6211aa38a292c4c299aacf5a7775783f5",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1335,24 +1335,27 @@
     {
       "portalId": "age-instituto-nacional-de-administracion-publica-inap",
       "inventoryId": "ES-PUB-0055",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Instituto Nacional de Administración Pública (INAP)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del INAP ofrece públicamente el Registro Electrónico General como vía de registro electrónico y delega esa actuación al servicio REG-AGE.",
       "entryUrl": "https://sede.inap.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INAP-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la sede INAP delega públicamente en REG-AGE y se lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-instituto-nacional-de-estadistica-ine",
