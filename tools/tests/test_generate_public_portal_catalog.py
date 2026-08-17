@@ -723,5 +723,17 @@ records:
         self.assertIn("alias", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_la_palma_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "la-palma-portal-institucional")
+
+        self.assertEqual("la-palma-sede-electronica", target["profileId"])
+        self.assertEqual("https://www.cabildodelapalma.es/", target["entryUrl"])
+        self.assertEqual("https://sedeelectronica.cabildodelapalma.es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
 if __name__ == "__main__":
     unittest.main()
