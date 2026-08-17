@@ -137,6 +137,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = LaPalmaBatchProtocolAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId("diputacion-burgos-portal"),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("burgos-batch-autoscript-v1"),
+                callbackContractId = CallbackContractId("burgos-batch-result-v1"),
+                signingProtocolId = BurgosBatchProtocolAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("diputacion-huesca-portal"),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("huesca-batch-autoscript-v1"),

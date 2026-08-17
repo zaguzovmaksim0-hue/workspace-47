@@ -259,6 +259,34 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", huesca["limitations"].lower())
         self.assertNotEqual("VERIFIED_E2E", huesca["inventoryStatus"])
 
+    def test_burgos_sta_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        burgos = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-burgos-portal"
+        )
+
+        self.assertEqual("diputacion-burgos-portal", burgos["profileId"])
+        self.assertEqual("ES-PUB-0146", burgos["inventoryId"])
+        self.assertEqual(
+            "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO",
+            burgos["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", burgos)
+        self.assertEqual("E2E_PENDING", burgos["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", burgos["inventoryStatus"])
+        self.assertEqual("REVIEWED", burgos["discoveryState"])
+        self.assertEqual("2026-08-16", burgos["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", burgos["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", burgos["observedMechanisms"])
+        self.assertEqual(
+            {"CADES", "PADES", "XADES"},
+            set(burgos["observedSignatureFormats"]),
+        )
+        self.assertIn("e2e", burgos["limitations"].lower())
+        self.assertIn("qa", burgos["limitations"].lower())
+        self.assertNotEqual("VERIFIED_E2E", burgos["inventoryStatus"])
+
     def test_jccm_certificate_probe_binds_separate_public_catalog_surface(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         broad = next(

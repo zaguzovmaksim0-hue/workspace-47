@@ -10,6 +10,7 @@ import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.signing.BatchProtocolResponse
 import dev.junta.firmamobile.signing.BatchSigningFormat
 import dev.junta.firmamobile.signing.BatchSigningReplySink
+import dev.junta.firmamobile.signing.BurgosBatchProtocolAdapter
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.HuescaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
@@ -169,6 +170,24 @@ internal class LugoBatchSigningAdapter(
         override fun failure(code: SigningErrorCode): Boolean = channel.failure(code)
         override fun abandon(): Boolean = channel.abandon()
     }
+}
+
+internal class BurgosBatchSigningAdapter(
+    registry: SiteProfileRegistry,
+    clock: Clock = Clock.systemUTC(),
+) {
+    private val delegate = StaBatchSigningAdapter(
+        registry = registry,
+        clock = clock,
+        contract = StaBatchSigningContract(
+            profileId = BurgosBatchBridgeAdapter.PROFILE_ID,
+            profileVersion = 1,
+            protocolId = BurgosBatchProtocolAdapter.ID,
+        ),
+    )
+    fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? = delegate.normalize(request)
+    fun replySink(channel: MelillaBatchReplyChannel): BatchSigningReplySink = delegate.replySink(channel)
+
 }
 
 private data class StaBatchSigningContract(

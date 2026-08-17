@@ -231,6 +231,32 @@ class HuescaBatchUrlPolicy {
     }
 }
 
+
+/** Exact-host STA batch URL policy for Diputación Provincial de Burgos Registro. */
+class BurgosBatchUrlPolicy {
+    private val delegate = StaBatchUrlPolicy(HOST)
+
+    fun validate(rawUrl: String): MelillaBatchUrlValidation = delegate.validate(rawUrl)
+    fun validate(rawUrl: String, expectedOperationId: String?, expectedDocumentId: String? = null): MelillaBatchUrlValidation =
+        delegate.validate(rawUrl, expectedOperationId, expectedDocumentId)
+    fun validate(
+        rawUrl: String,
+        expectedOperation: MelillaBatchUrlOperation,
+        expectedOperationId: String? = null,
+        expectedDocumentId: String? = null,
+    ): MelillaBatchUrlValidation = delegate.validate(rawUrl, expectedOperation, expectedOperationId, expectedDocumentId)
+    fun validatePreSignerUrl(rawUrl: String): MelillaBatchUrlBinding? = delegate.validatePreSignerUrl(rawUrl)
+    fun validatePostSignerUrl(rawUrl: String): MelillaBatchUrlBinding? = delegate.validatePostSignerUrl(rawUrl)
+    fun validateDataReference(rawUrl: String, expectedOperacionId: String? = null, expectedDocId: String? = null): MelillaBatchUrlBinding? =
+        delegate.validateDataReference(rawUrl, expectedOperacionId, expectedDocId)
+
+    companion object {
+        const val ORIGIN = "https://registro.diputaciondeburgos.es"
+        const val PATH = STA_BATCH_PATH
+        private const val HOST = "registro.diputaciondeburgos.es"
+    }
+}
+
 private class StaBatchUrlPolicy(
     private val host: String,
 ) {
