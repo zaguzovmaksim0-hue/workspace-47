@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8507e3f241a0591c83e6530f8ccbac808f618edfb985d9ce8cd88156074389b7",
+  "sourceRevision": "fb528823c4d496247fbed89e7351e1fc9ac87d645990d053ed01538e01877879",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1870,24 +1870,30 @@
     {
       "portalId": "age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico",
       "inventoryId": "ES-PUB-0079",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Información pública DPMT Murcia — vía REG",
       "organization": "Ministerio para la Transición Ecológica y el Reto Demográfico",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.miteco.gob.es/portal/site/seMITECO",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "La página oficial de información pública de Costas permite remitir documentación y observaciones y publica, para quien disponga de certificado o DNIe, la vía del Registro Electrónico General de la AGE.",
+      "entryUrl": "https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "MITECO-REG-2026-08-17",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL publicado; se conserva la página ministerial como entry URL, no se amplía la confianza de firma al origen www.miteco.gob.es y no se realizó E2E físico."
     },
     {
       "portalId": "age-museo-nacional-centro-de-arte-reina-sofia",

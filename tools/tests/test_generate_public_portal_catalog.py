@@ -75,6 +75,26 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", pag_reg["limitations"].lower())
         self.assertIn("e2e", pag_reg["limitations"].lower())
 
+        miteco = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico"
+        )
+        self.assertEqual("reg-age-redsara", miteco["profileId"])
+        self.assertEqual("ES-PUB-0079", miteco["inventoryId"])
+        self.assertEqual(
+            "https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html",
+            miteco["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", miteco["launchUrl"])
+        self.assertEqual("E2E_PENDING", miteco["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", miteco["inventoryStatus"])
+        self.assertEqual("REVIEWED", miteco["discoveryState"])
+        self.assertEqual("2026-08-17", miteco["reviewedOn"])
+        self.assertIn("reg-age", miteco["limitations"].lower())
+        self.assertIn("qa", miteco["limitations"].lower())
+        self.assertIn("e2e", miteco["limitations"].lower())
+
+
         redsara = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "age-reg-redsara"
