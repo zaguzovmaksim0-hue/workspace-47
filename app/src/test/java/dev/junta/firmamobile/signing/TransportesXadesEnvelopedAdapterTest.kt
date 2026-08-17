@@ -68,13 +68,22 @@ class TransportesXadesEnvelopedAdapterTest {
         assertFailure(request(origin = "sede.transportes.gob.es.evil.example"))
         assertFailure(request(algorithm = SigningAlgorithm.SHA256_WITH_RSA))
         assertFailure(request(format = SigningFormat.CADES))
-        assertFailure(request(properties = "format=XAdES Enveloped\n"))
-        assertFailure(request(challenge = CHALLENGE.replace("tag1_timestamp", "other")))
+        assertFailure(
+            request(properties = "format=XAdES Enveloped\n"),
+            SigningErrorCode.PROTOCOL_FAILED,
+        )
+        assertFailure(
+            request(challenge = CHALLENGE.replace("tag1_timestamp", "other")),
+            SigningErrorCode.PROTOCOL_FAILED,
+        )
     }
 
-    private suspend fun assertFailure(request: NormalizedSignRequest) {
+    private suspend fun assertFailure(
+        request: NormalizedSignRequest,
+        expectedCode: SigningErrorCode = SigningErrorCode.UNSUPPORTED_PROTOCOL,
+    ) {
         val result = adapter.prepare(request, identity.chain)
-        assertEquals(ProtocolPrepareResult.Failure(SigningErrorCode.UNSUPPORTED_PROTOCOL), result)
+        assertEquals(ProtocolPrepareResult.Failure(expectedCode), result)
         request.close()
     }
 
