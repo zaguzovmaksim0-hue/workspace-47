@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 209 |
-| Fuentes oficiales totales registradas | 221 |
+| Fuentes oficiales portal-specific registradas | 210 |
+| Fuentes oficiales totales registradas | 222 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -3275,30 +3275,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Tesoro Público"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Adhesión al Código de Buenas Prácticas — vía Registro Electrónico Común"
     surface_type: "SEDE"
     origin: "https://www.tesoropublico.gob.es"
     official_site: "https://www.tesoropublico.gob.es/"
     e_sede: "https://www.tesoropublico.gob.es/"
-    entry_url: "https://www.tesoropublico.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Tesoro indica que la comunicación de adhesión al Código de Buenas Prácticas para deudores hipotecarios en riesgo de vulnerabilidad se presenta por el Registro Electrónico Común y publica su acceso directo."
+    protocol_evidence: "La página pública actual del Tesoro publica dos enlaces exactos a https://rec.redsara.es/registro/action/are/acceso.do para este trámite. En una sesión Chromium pública y aislada, ese URL respondió con 301 a https://reg.redsara.es/ y, con contexto de navegador español, el root REG respondió con 302 a https://reg.redsara.es/es/, que coincide exactamente con el startUrl del perfil existente reg-age-redsara. La página del Tesoro menciona certificado electrónico/DNIe y AutoFirma, pero no se infieren de ello algoritmo, formato, endpoint ni ABI de firma propios del Tesoro."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "TESORO-REC-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública exacta y cadena de redirección acotada; la página del Tesoro permanece como entry URL y no se amplía la confianza criptográfica REG-AGE al origen www.tesoropublico.gob.es. E2E físico no realizado."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Tesoro → REC/REG-AGE sin completar ni presentar una comunicación administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La implementación cubre únicamente la vía REC/REG publicada para esta adhesión. Otros servicios del Tesoro (pagos, FCT, SECAD, compra-venta, sandbox, creadores de mercado) tienen superficies distintas y no se incorporan ni se infieren en este perfil."
 
   - inventory_id: "ES-PUB-0092"
     surface_key: "age-universidad-nacional-de-educacion-a-distancia-uned"
@@ -6288,6 +6289,7 @@ Orden de expansión recomendado:
 [P13]: https://sede.us.es/opencms/system/modules/sede/contents/pages/requisitosTecnicos
 [P13A]: https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01
 [BNE-REG-2026-08-16]: https://sede.bne.gob.es/es/tramites/quejas-sugerencias
+[TESORO-REC-2026-08-17]: https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de
 [P14]: https://reg.redsara.es/es/
 [P14A]: https://reg.redsara.es/preguntas-frecuentes
 [P14B]: https://reg.redsara.es/es/media/es/REG-ManualUsuario.pdf
