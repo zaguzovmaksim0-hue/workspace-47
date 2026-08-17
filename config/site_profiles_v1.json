@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 23,
+  "catalogVersion": 24,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -831,6 +831,26 @@
       "evidence": [
         {"url":"https://sede.policia.gob.es/","reviewedOn":"2026-08-15"},
         {"url":"https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml","reviewedOn":"2026-08-15"}
+      ]
+    },
+    {
+      "profileId": "diputacion-lleida-sede",
+      "profileVersion": 1,
+      "displayName": "Diputació de Lleida — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seu.diputaciolleida.cat",
+      "initiatorOrigins": ["https://seu.diputaciolleida.cat"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Diputació de Lleida","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"policy":"FirmaAGE","headless":"true","filters":"nonexpired:true;authCert:true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
+        {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
       ]
     }
   ]

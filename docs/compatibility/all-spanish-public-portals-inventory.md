@@ -215,10 +215,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 10 |
+| `IMPLEMENTED_NOT_E2E` | 21 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 162 |
+| `BROWSE_ONLY` | 151 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5442,23 +5442,23 @@ records:
     official_site: "https://seu.diputaciolleida.cat"
     e_sede: "https://seu.diputaciolleida.cat"
     entry_url: "https://seu.diputaciolleida.cat"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    procedure_page: "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MINIAPPLET"
+    protocol_family: "MINIAPPLET"
+    signature_format: "CADES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "NO_APLICA"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Diputació de Lleida mediante firma local CAdES-detached SHA256withRSA."
+    protocol_evidence: "firmar(formLogin.shaLogin.value, errorText, '', 'TEXTO', 0, pulsarFirmarIdentificateCallback, pulsarFirmarIdentificateCallbackError, true) invoca MiniApplet.sign con CAdES SHA256withRSA y extraProperties policy=FirmaAGE, headless=true, filters=nonexpired:true;authCert:true."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP24A", "DP24B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+    evidence_ids: ["D06", "DP24A", "DP24B", "LLEIDA-LOGIN-2026-08-16"]
+    reason: "Contrato público de login con certificado implementado en QA: firma local CAdES-detached SHA256withRSA sobre el shaLogin del formulario con extraProperties exactas (policy=FirmaAGE, headless=true, filters=nonexpired:true;authCert:true) y retorno de resFirma al callback. Sin pruebas E2E en dispositivo físico."
     reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    next_gate: "Verificar E2E en dispositivo físico que el callback completa la autenticación en la Sede electrónica de la Diputació de Lleida sin emitir transacciones no deseadas."
 
   - inventory_id: "ES-PUB-0163"
     surface_key: "diputacion-lugo-sede"

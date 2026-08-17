@@ -171,6 +171,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
                 signingProtocolId = PoliciaXadesDetachedAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(DiputacionLleidaCadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = DiputacionLleidaCadesAdapter.ID,
+            ),
         ),
     )
 }

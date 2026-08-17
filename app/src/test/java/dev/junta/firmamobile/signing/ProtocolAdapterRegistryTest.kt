@@ -109,6 +109,20 @@ class ProtocolAdapterRegistryTest {
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), policia?.inputAdapterId)
         assertEquals(CallbackContractId("autoscript-sign-callback-v1"), policia?.callbackContractId)
 
+        val lleida = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId(DiputacionLleidaCadesAdapter.PROFILE_ID),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(DiputacionLleidaCadesAdapter.ID, lleida?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), lleida?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), lleida?.callbackContractId)
+        assertNull(
+            BuiltInProtocolAdapterRegistry.registry.resolve(
+                ProfileId(DiputacionLleidaCadesAdapter.PROFILE_ID),
+                ProtocolOperation.SELECT_CERTIFICATE,
+            ),
+        )
+
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),

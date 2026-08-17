@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a58c334684b362b732fbcb641eb2b1f1642dd22fccc7b48174adf11094fa5bea",
+  "sourceRevision": "66a3281e95efcc225639c738da07e16522252b9c403387f0f16c5d24b392eb92",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3981,29 +3981,33 @@
     {
       "portalId": "diputacion-lleida-sede",
       "inventoryId": "ES-PUB-0162",
-      "profileId": null,
+      "profileId": "diputacion-lleida-sede",
       "displayName": "Sede electrónica de Diputació de Lleida",
       "organization": "Diputació de Lleida",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Cataluña",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "purpose": "Acceso con certificado a la Diputació de Lleida mediante firma local CAdES-detached SHA256withRSA.",
       "entryUrl": "https://seu.diputaciolleida.cat",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP24A",
-        "DP24B"
+        "DP24B",
+        "LLEIDA-LOGIN-2026-08-16"
       ],
       "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "limitations": "Contrato público de login con certificado implementado en QA: firma local CAdES-detached SHA256withRSA sobre el shaLogin del formulario con extraProperties exactas (policy=FirmaAGE, headless=true, filters=nonexpired:true;authCert:true) y retorno de resFirma al callback. Sin pruebas E2E en dispositivo físico."
     },
     {
       "portalId": "diputacion-lugo-sede",
