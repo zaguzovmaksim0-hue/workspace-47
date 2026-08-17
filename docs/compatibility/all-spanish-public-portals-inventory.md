@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 201 |
 | Fuentes oficiales totales registradas | 213 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 27 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 31 |
-| Entradas restantes fuera de ambos estados | 152 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 28 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 32 |
+| Entradas restantes fuera de ambos estados | 151 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 27 |
+| `IMPLEMENTED_NOT_E2E` | 28 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 145 |
+| `BROWSE_ONLY` | 144 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 109 |
+| `REVIEWED` | 110 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 69 |
+| `DISCOVERED` | 68 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2344,23 +2344,24 @@ records:
     official_site: "https://ciencia.sede.gob.es/"
     e_sede: "https://ciencia.sede.gob.es/"
     entry_url: "https://ciencia.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://ciencia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Ciencia publica un servicio específico de acceso al Registro Electrónico General de la AGE (REG-AGE) y enlaza al servicio estatal."
+    protocol_evidence: "La página pública /servicio?id=Registro-Electrónico-General identifica expresamente el Registro Electrónico General de la Administración General del Estado (REG-AGE) y contiene un enlace HTTPS directo a https://reg.redsara.es/. Workspace-47 conserva ciencia.sede.gob.es como entryUrl y utiliza únicamente el startUrl canónico ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara; no se atribuye a ciencia.sede.gob.es un ABI de firma propio ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CIENCIA-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara basado en el servicio REG-AGE publicado por la propia Sede; falta E2E físico de la transición y no se infiere contrato de firma específico del Ministerio."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Ciencia → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
     notes: "Ministerio(s) enumerador(es): Ministerio de Ciencia, Innovación y Universidades."
 
   - inventory_id: "ES-PUB-0062"
