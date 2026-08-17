@@ -81,6 +81,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-valencia-sede",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
+                "cdti-certificate-validation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -184,6 +185,25 @@ class PortalCatalogRepositoryTest {
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 
+
+    @Test
+    fun `CDTI exact validation page is QA enabled and release fail closed`() {
+        val profileId = ProfileId("cdti-certificate-validation")
+        val exact = java.net.URI(
+            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+        )
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(exact, qaPortal.entryUrl)
+        assertEquals(setOf(SignatureFormat.XADES), qaPortal.signatureFormats)
+        assertEquals(PortalLaunchTarget(profileId, exact), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
 
     @Test
     fun `PAG REG alias keeps PAG metadata and inherits only the exact QA REG AGE launch`() {

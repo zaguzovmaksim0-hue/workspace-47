@@ -74,6 +74,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-valencia-sede"),
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
+                ProfileId("cdti-certificate-validation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -94,6 +95,28 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.AUTOSCRIPT in lugo.observedMechanisms)
         assertTrue(lugo.limitations.contains("un lote CAdES", ignoreCase = true))
 
+    }
+
+    @Test
+    fun `CDTI certificate validation exposes only the exact QA XAdES Enveloping contract`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val cdti = catalog.entries.single {
+            it.portalId == PortalId("age-centro-para-el-desarrollo-tecnologico-industrial-cdti")
+        }
+
+        assertEquals(ProfileId("cdti-certificate-validation"), cdti.profileId)
+        assertEquals("ES-PUB-0030", cdti.inventoryId)
+        assertEquals(
+            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+            cdti.entryUrl.toString(),
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, cdti.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, cdti.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in cdti.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in cdti.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in cdti.observedMechanisms)
+        assertTrue(PortalMechanism.MINIAPPLET in cdti.observedMechanisms)
+        assertEquals(setOf(SignatureFormat.XADES), cdti.observedSignatureFormats)
     }
 
     @Test

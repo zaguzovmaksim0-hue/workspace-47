@@ -133,6 +133,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", ugr["limitations"].lower())
         self.assertIn("storage", ugr["limitations"].lower())
 
+        cdti = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-centro-para-el-desarrollo-tecnologico-industrial-cdti"
+        )
+        self.assertEqual("cdti-certificate-validation", cdti["profileId"])
+        self.assertEqual("ES-PUB-0030", cdti["inventoryId"])
+        self.assertEqual(
+            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+            cdti["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", cdti)
+        self.assertEqual("E2E_PENDING", cdti["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", cdti["inventoryStatus"])
+        self.assertEqual("2026-08-16", cdti["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", cdti["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", cdti["observedMechanisms"])
+        self.assertEqual(["XADES"], cdti["observedSignatureFormats"])
+        self.assertIn("e2e", cdti["limitations"].lower())
+
         sevilla = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "sevilla-sede"
