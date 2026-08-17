@@ -600,5 +600,17 @@ records:
         self.assertNotIn('const val JSON = """', registry)
 
 
+    def test_cantabria_sede_alias_binds_exact_existing_rec_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "cantabria-sede")
+
+        self.assertEqual("cantabria-rec-cert-login", target["profileId"])
+        self.assertEqual("https://sede.cantabria.es/sede/", target["entryUrl"])
+        self.assertEqual("https://rec.cantabria.es/rec/bienvenida.htm", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
 if __name__ == "__main__":
     unittest.main()

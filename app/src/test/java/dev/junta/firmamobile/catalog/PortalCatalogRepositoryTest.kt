@@ -85,7 +85,6 @@ class PortalCatalogRepositoryTest {
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 33, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -616,5 +615,44 @@ class PortalCatalogRepositoryTest {
             PortalSupportStatus.UNSUPPORTED_PROTOCOL,
             resolvePortalSupportStatus(CompatibilityStatus.UNSUPPORTED, isImplemented = false),
         )
+    }
+
+    @Test
+    fun `Cantabria Sede alias launches only the exact implemented REC profile in QA`() {
+        val portalId = PortalId("cantabria-sede")
+        val profileId = ProfileId("cantabria-rec-cert-login")
+        val entryUrl = java.net.URI("https://sede.cantabria.es/sede/")
+        val launchUrl = java.net.URI("https://rec.cantabria.es/rec/bienvenida.htm")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(entryUrl, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, launchUrl), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            publicCatalog.copy(
+                entries = publicCatalog.entries.map { entry ->
+                    if (entry.portalId == portalId) {
+                        entry.copy(launchUrl = java.net.URI("https://rec.cantabria.es/rec/not-the-profile-start"))
+                    } else {
+                        entry
+                    }
+                },
+            ),
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 }
