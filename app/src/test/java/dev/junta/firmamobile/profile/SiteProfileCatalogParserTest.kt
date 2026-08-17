@@ -3,6 +3,7 @@ package dev.junta.firmamobile.profile
 import dev.junta.firmamobile.BuildConfig
 import java.net.URI
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
