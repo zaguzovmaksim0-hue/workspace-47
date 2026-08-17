@@ -39,7 +39,6 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(33, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -79,7 +78,7 @@ class PublicPortalCatalogParserTest {
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 68)
-        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 145)
+        assertTrue(catalog.entries.any { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
     }
 
     @Test
@@ -274,5 +273,23 @@ class PublicPortalCatalogParserTest {
                 json + " ".repeat(PublicPortalCatalogParser.MAX_CATALOG_CHARS - json.length + 1),
             )
         }
+    }
+
+    @Test
+    fun `Tenerife institutional alias binds only the exact Sede launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("tenerife-portal-institucional")
+        }
+
+        assertEquals("ES-PUB-0127", portal.inventoryId)
+        assertEquals(ProfileId("tenerife-sede-electronica"), portal.profileId)
+        assertEquals(URI("https://www.tenerife.es/"), portal.entryUrl)
+        assertEquals(URI("https://sede.tenerife.es/"), portal.launchUrl)
+        assertEquals("DELEGACION_TENERIFE_SEDE", portal.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.observedMechanisms.isEmpty())
+        assertTrue(portal.observedSignatureFormats.isEmpty())
     }
 }

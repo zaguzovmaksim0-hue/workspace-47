@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8507e3f241a0591c83e6530f8ccbac808f618edfb985d9ce8cd88156074389b7",
+  "sourceRevision": "46f6b9b472fea9a0e8ce81ba147129f4393ec2654b983a5e1ce06164905e618b",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3093,26 +3093,27 @@
     {
       "portalId": "tenerife-portal-institucional",
       "inventoryId": "ES-PUB-0127",
-      "profileId": null,
+      "profileId": "tenerife-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de Tenerife",
       "organization": "Cabildo Insular de Tenerife",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la tramitación electrónica en la Sede oficial https://sede.tenerife.es/, cuyo launch exacto ya dispone de perfil QA-only independiente.",
       "entryUrl": "https://www.tenerife.es/",
+      "launchUrl": "https://sede.tenerife.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_TENERIFE_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I06A",
         "I06B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente tenerife-sede-electronica por delegación oficial exacta a https://sede.tenerife.es/; no se hereda confianza al origin institucional y falta E2E físico desde la entrada www.tenerife.es."
     },
     {
       "portalId": "tenerife-sede-electronica",
