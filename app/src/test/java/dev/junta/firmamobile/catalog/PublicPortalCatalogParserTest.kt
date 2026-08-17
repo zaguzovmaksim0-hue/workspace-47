@@ -39,7 +39,7 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(33, catalog.entries.count { it.profileId != null })
+        assertEquals(34, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -79,7 +79,7 @@ class PublicPortalCatalogParserTest {
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 68)
-        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 145)
+        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 144)
     }
 
     @Test
@@ -172,6 +172,37 @@ class PublicPortalCatalogParserTest {
         assertTrue(SignatureFormat.CADES in portal.observedSignatureFormats)
         assertTrue(portal.limitations.contains("E2E", ignoreCase = true))
     }
+
+    @Test
+    fun `Educacion REG alias retains ministry procedure metadata while resolving only exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-educacion-formacion-profesional-y-deportes")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html"),
+            portal.entryUrl,
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
 
     @Test
     fun `PAG REG alias retains the official PAG URL while resolving the exact REG AGE launch URL`() {

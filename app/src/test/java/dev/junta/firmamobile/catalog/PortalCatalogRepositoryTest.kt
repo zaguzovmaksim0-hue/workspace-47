@@ -85,7 +85,7 @@ class PortalCatalogRepositoryTest {
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
         val metadataOnly = qaPortals.filter { it.profileId == null }
-        assertEquals(qaPortals.size - 33, metadataOnly.size)
+        assertEquals(qaPortals.size - 34, metadataOnly.size)
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
@@ -138,6 +138,53 @@ class PortalCatalogRepositoryTest {
             }
         }
     }
+
+    @Test
+    fun `Educacion REG alias keeps ministry metadata and inherits only exact QA REG AGE launch`() {
+        val portalId = PortalId("age-ministerio-de-educacion-formacion-profesional-y-deportes")
+        val profileId = ProfileId("reg-age-redsara")
+        val ministryEntry = java.net.URI(
+            "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html",
+        )
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(ministryEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, ministryEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
 
     @Test
     fun `PAG REG alias keeps PAG metadata and inherits only the exact QA REG AGE launch`() {

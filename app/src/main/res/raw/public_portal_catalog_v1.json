@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8507e3f241a0591c83e6530f8ccbac808f618edfb985d9ce8cd88156074389b7",
+  "sourceRevision": "5e8d6507c8945f037cd3e1c0c6390f3af0c2f6717d0acb6771e09323bb6c35ed",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1577,24 +1577,30 @@
     {
       "portalId": "age-ministerio-de-educacion-formacion-profesional-y-deportes",
       "inventoryId": "ES-PUB-0066",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Proceso selectivo Liceo Cervantes Roma 2026 — vía REG",
       "organization": "Ministerio de Educación, Formación Profesional y Deportes",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.educacion.gob.es/portada.html",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "La ficha oficial del proceso selectivo 2026 documenta que la presentación telemática se realiza a través del Registro Electrónico General de la AGE; el plazo de solicitudes de esa convocatoria ya está finalizado.",
+      "entryUrl": "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "EDU-REG-2026-08-17",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL publicado; se conserva la ficha ministerial como entry URL, no se amplía la confianza de firma al origen www.educacionfpydeportes.gob.es y no se realizó E2E físico."
     },
     {
       "portalId": "age-ministerio-de-igualdad",
