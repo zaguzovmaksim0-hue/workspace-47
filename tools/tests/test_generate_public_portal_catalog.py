@@ -773,6 +773,28 @@ records:
         self.assertIn("e2e", miteco["limitations"].lower())
 
 
+    def test_exteriores_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        exteriores = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-asuntos-exteriores-union-europea-y-cooperacion"
+        )
+        self.assertEqual("reg-age-redsara", exteriores["profileId"])
+        self.assertEqual("ES-PUB-0060", exteriores["inventoryId"])
+        self.assertEqual(
+            "https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula",
+            exteriores["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", exteriores["launchUrl"])
+        self.assertEqual("E2E_PENDING", exteriores["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", exteriores["inventoryStatus"])
+        self.assertEqual("REVIEWED", exteriores["discoveryState"])
+        self.assertEqual("2026-08-16", exteriores["reviewedOn"])
+        self.assertIn("reg-age", exteriores["limitations"].lower())
+        self.assertIn("qa", exteriores["limitations"].lower())
+        self.assertIn("e2e", exteriores["limitations"].lower())
+
+
     def test_mapa_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         mapa = next(
@@ -793,7 +815,6 @@ records:
         self.assertIn("reg-age", mapa["limitations"].lower())
         self.assertIn("qa", mapa["limitations"].lower())
         self.assertIn("e2e", mapa["limitations"].lower())
-
 
 
 if __name__ == "__main__":

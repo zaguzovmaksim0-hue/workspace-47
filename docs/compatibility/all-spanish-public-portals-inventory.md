@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 208 |
-| Fuentes oficiales totales registradas | 220 |
+| Fuentes oficiales portal-specific registradas | 209 |
+| Fuentes oficiales totales registradas | 221 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 38 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 42 |
-| Entradas restantes fuera de ambos estados | 141 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
+| Entradas restantes fuera de ambos estados | 140 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 38 |
+| `IMPLEMENTED_NOT_E2E` | 39 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 134 |
+| `BROWSE_ONLY` | 133 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 117 |
+| `REVIEWED` | 118 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 61 |
+| `DISCOVERED` | 60 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 206 fuentes porque las
+47/50; no se publica un cociente agregado para las 207 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -2311,30 +2311,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Asuntos Exteriores, Unión Europea y Cooperación"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Baja del Registro de Matrícula Consular — vía REG desde España"
     surface_type: "SEDE"
-    origin: "https://sede.maec.gob.es"
-    official_site: "https://sede.maec.gob.es/"
+    origin: "https://www.exteriores.gob.es"
+    official_site: "https://www.exteriores.gob.es/"
     e_sede: "https://sede.maec.gob.es/"
-    entry_url: "https://sede.maec.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    entry_url: "https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La página consular oficial permite a quien ya se encuentre en España solicitar la baja del Registro de Matrícula mediante el Registro Electrónico General."
+    protocol_evidence: "La página oficial de Servicios Consulares indica literalmente que, cuando el solicitante se encuentre ya en España, puede solicitar la baja mediante Registro Electrónico en https://reg.redsara.es/es/; el launch URL coincide exactamente con el startUrl del perfil reg-age-redsara y no se infiere un ABI de firma propio de Exteriores."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Asuntos Exteriores, Unión Europea y Cooperación."
+    evidence_ids: ["D11", "MAEC-REG-2026-08-16", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página consular de Exteriores como entry URL, no se amplía la confianza de firma al origen www.exteriores.gob.es y no se realizó E2E físico."
+    reviewed_at: "2026-08-16"
+    next_gate: "E2E físico seguro Exteriores → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La implementación cubre únicamente la vía REG publicada para solicitantes que ya se encuentren en España; no modela otros canales consulares ni un contrato criptográfico propio de Exteriores."
 
   - inventory_id: "ES-PUB-0061"
     surface_key: "age-ministerio-de-ciencia-innovacion-y-universidades"
@@ -6521,3 +6522,4 @@ availability, certificado, firma ni contrato técnico.
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
+[MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula

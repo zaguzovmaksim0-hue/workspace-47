@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "ccc36f0a56762141ad45e878e066f83418822f6fa17c556dfcf8146ff71bf354",
+  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1468,24 +1468,30 @@
     {
       "portalId": "age-ministerio-de-asuntos-exteriores-union-europea-y-cooperacion",
       "inventoryId": "ES-PUB-0060",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Baja del Registro de Matrícula Consular — vía REG desde España",
       "organization": "Ministerio de Asuntos Exteriores, Unión Europea y Cooperación",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.maec.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "La página consular oficial permite a quien ya se encuentre en España solicitar la baja del Registro de Matrícula mediante el Registro Electrónico General.",
+      "entryUrl": "https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "MAEC-REG-2026-08-16",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página consular de Exteriores como entry URL, no se amplía la confianza de firma al origen www.exteriores.gob.es y no se realizó E2E físico."
     },
     {
       "portalId": "age-ministerio-de-ciencia-innovacion-y-universidades",
