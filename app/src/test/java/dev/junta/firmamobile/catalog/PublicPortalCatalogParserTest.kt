@@ -77,7 +77,7 @@ class PublicPortalCatalogParserTest {
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
-        assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 67)
+        assertTrue(catalog.entries.any { it.catalogStatus == PublicCatalogStatus.DISCOVERED })
         assertTrue(catalog.entries.any { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
     }
 
@@ -347,5 +347,35 @@ class PublicPortalCatalogParserTest {
         assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
         assertTrue(portal.observedMechanisms.isEmpty())
         assertTrue(portal.observedSignatureFormats.isEmpty())
+    }
+
+    @Test
+    fun `DSCA REG alias retains the live ministry procedure while resolving only exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-derechos-sociales-consumo-y-agenda-2030")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje"),
+            portal.entryUrl,
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
     }
 }

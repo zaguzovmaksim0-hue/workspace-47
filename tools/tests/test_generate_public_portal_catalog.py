@@ -546,6 +546,21 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "no inventory entry"):
                 GENERATOR.generate(path, SITE_PROFILES)
 
+    def test_dsca_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        dsca = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030")
+        self.assertEqual("reg-age-redsara", dsca["profileId"])
+        self.assertEqual("ES-PUB-0064", dsca["inventoryId"])
+        self.assertEqual("https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje", dsca["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", dsca["launchUrl"])
+        self.assertEqual("E2E_PENDING", dsca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", dsca["inventoryStatus"])
+        self.assertEqual("REVIEWED", dsca["discoveryState"])
+        self.assertIn("reg-age", dsca["limitations"].lower())
+        self.assertIn("qa", dsca["limitations"].lower())
+        self.assertIn("e2e", dsca["limitations"].lower())
+
+
     def test_unknown_alias_launch_url_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
         exact = '    launch_url: "https://reg.redsara.es/es/"\n'
