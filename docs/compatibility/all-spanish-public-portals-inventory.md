@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 209 |
-| Fuentes oficiales totales registradas | 221 |
+| Fuentes oficiales portal-specific registradas | 210 |
+| Fuentes oficiales totales registradas | 222 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2747,30 +2747,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Trabajo y Economía Social"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica — acceso con certificado"
     surface_type: "SEDE"
     origin: "https://sede.mites.gob.es"
     official_site: "https://sede.mites.gob.es/"
     e_sede: "https://sede.mites.gob.es/"
     entry_url: "https://sede.mites.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    procedure_page: "https://sede.mites.gob.es/inicio/detalleProcedimiento/38"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / MiniApplet"
+    protocol_family: "AUTOSCRIPT_LOCAL_CADES_IMPLICIT"
+    signature_format: "CAdES / IMPLICIT"
+    signature_algorithm: "SHA512withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Sede MITES mediante firma local CAdES de un challenge aleatorio de 10 letras ASCII minúsculas."
+    protocol_evidence: "La API pública del procedimiento 38 acredita Quejas y Sugerencias activo y exige identificación y firma digital. El bundle público /auth genera exactamente 10 letras minúsculas, carga AutoFirma y llama AutoScript.sign(challenge, SHA512withRSA, CAdES, mode=implicit + filters.1=signingCert:;keyusage.nonrepudiation:true;nonexpired:). El bridge queda limitado a /auth, al origin MITES y a esa tupla exacta; no se implementa ni se atribuye el flujo PAdES posterior de presentación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Trabajo y Economía Social."
+    evidence_ids: ["D11", "MITES-CERT-2026-08-17"]
+    reason: "Contrato público de acceso con certificado implementado en QA con validación fail-closed de página, origin, challenge, algoritmo, formato y propiedades; falta aceptación E2E física y no se realizaron login, firma real ni presentación administrativa."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E físico seguro limitado al login con certificado en /auth; no continuar a formularios, firma PAdES ni presentación administrativa."
+    notes: "El script AutoFirma se sirve desde expinterweb.mites.gob.es, pero ese origin no recibe confianza de navegación ni firma; el perfil mantiene como único initiator origin https://sede.mites.gob.es."
 
   - inventory_id: "ES-PUB-0075"
     surface_key: "age-ministerio-de-transportes-y-movilidad-sostenible"
@@ -6523,3 +6523,4 @@ availability, certificado, firma ni contrato técnico.
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
+[MITES-CERT-2026-08-17]: https://sede.mites.gob.es/inicio/detalleProcedimiento/38

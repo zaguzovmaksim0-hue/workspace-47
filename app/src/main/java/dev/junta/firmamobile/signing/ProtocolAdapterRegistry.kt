@@ -123,6 +123,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = JccmCertificateLoginProbeCadesAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(MitesCertificateLoginCadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                signingProtocolId = MitesCertificateLoginCadesAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("melilla-sede"),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("melilla-batch-autoscript-v1"),

@@ -242,6 +242,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             catalog["sourceRevision"],
         )
 
+    def test_mites_certificate_login_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mites = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-trabajo-y-economia-social"
+        )
+
+        self.assertEqual("mites-certificate-login", mites["profileId"])
+        self.assertEqual("ES-PUB-0074", mites["inventoryId"])
+        self.assertEqual("https://sede.mites.gob.es/", mites["entryUrl"])
+        self.assertNotIn("launchUrl", mites)
+        self.assertEqual("E2E_PENDING", mites["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mites["inventoryStatus"])
+        self.assertEqual("REVIEWED", mites["discoveryState"])
+        self.assertEqual("2026-08-17", mites["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", mites["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", mites["observedMechanisms"])
+        self.assertEqual(["CADES"], mites["observedSignatureFormats"])
+        self.assertIn("e2e", mites["limitations"].lower())
+        self.assertIn("qa", mites["limitations"].lower())
+        self.assertNotEqual("VERIFIED_E2E", mites["inventoryStatus"])
+
     def test_melilla_batch_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         melilla = next(

@@ -61,6 +61,7 @@ import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
+import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
 import dev.junta.firmamobile.signing.TenerifeCadesDetachedAdapter
 import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
@@ -147,6 +148,7 @@ class MainActivity : ComponentActivity() {
         val lleidaAdapter = DiputacionLleidaCadesAdapter()
         val ugrAdapter = UgrCadesDetachedAdapter()
         val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
+        val mitesAdapter = MitesCertificateLoginCadesAdapter()
         val granCanariaAdapter = GranCanariaPadesAdapter()
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
         val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
@@ -182,6 +184,7 @@ class MainActivity : ComponentActivity() {
                     lleidaAdapter.id -> lleidaAdapter
                     ugrAdapter.id -> ugrAdapter
                     jccmAdapter.id -> jccmAdapter
+                    mitesAdapter.id -> mitesAdapter
                     granCanariaAdapter.id -> granCanariaAdapter
                     tenerifeAdapter.id -> tenerifeAdapter
                     sevillaAdapter.id -> sevillaAdapter
