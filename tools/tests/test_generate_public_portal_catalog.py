@@ -612,6 +612,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", inap["limitations"].lower())
 
 
+    def test_defensa_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        defensa = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-defensa")
+        self.assertEqual("reg-age-redsara", defensa["profileId"])
+        self.assertEqual("ES-PUB-0063", defensa["inventoryId"])
+        self.assertEqual("https://sede.defensa.gob.es/", defensa["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", defensa["launchUrl"])
+        self.assertEqual("E2E_PENDING", defensa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", defensa["inventoryStatus"])
+        self.assertEqual("REVIEWED", defensa["discoveryState"])
+        self.assertEqual("2026-08-17", defensa["reviewedOn"])
+        self.assertIn("reg-age", defensa["limitations"].lower())
+        self.assertIn("qa", defensa["limitations"].lower())
+        self.assertIn("e2e", defensa["limitations"].lower())
+
+
     def test_unknown_alias_launch_url_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
         exact = '    launch_url: "https://reg.redsara.es/es/"\n'

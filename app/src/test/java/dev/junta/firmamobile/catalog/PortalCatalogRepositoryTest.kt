@@ -1116,4 +1116,49 @@ class PortalCatalogRepositoryTest {
         assertTrue(tamperedPortal.signatureFormats.isEmpty())
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
+
+    @Test
+    fun `Defensa alias keeps Ministry metadata and inherits only the exact QA REG AGE launch`() {
+        val portalId = PortalId("age-ministerio-de-defensa")
+        val profileId = ProfileId("reg-age-redsara")
+        val defensaEntry = java.net.URI("https://sede.defensa.gob.es/")
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(defensaEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, defensaEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/en/"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
 }
