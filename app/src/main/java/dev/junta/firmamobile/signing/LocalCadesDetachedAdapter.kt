@@ -381,8 +381,8 @@ internal object CadesDetachedCodec {
             require(sequence.size() == 3)
             require(ASN1ObjectIdentifier.getInstance(sequence.getObjectAt(0)).id == expected.policyIdentifierOid)
             val digestInfo = DigestInfo.getInstance(sequence.getObjectAt(1))
-            require(digestInfo.algorithm.algorithm.id == expected.hashAlgorithmOid)
-            require(digestInfo.algorithm.parameters?.toASN1Primitive() == DERNull.INSTANCE)
+            require(digestInfo.algorithmId.algorithm.id == expected.hashAlgorithmOid)
+            require(digestInfo.algorithmId.parameters?.toASN1Primitive() == DERNull.INSTANCE)
             val expectedHash = Base64.getDecoder().decode(expected.policyHashBase64)
             try {
                 require(MessageDigest.isEqual(digestInfo.digest, expectedHash))
