@@ -464,6 +464,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", leon["limitations"].lower())
         self.assertIn("firma", leon["limitations"].lower())
 
+    def test_diputacion_lleida_implemented_not_e2e_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        lleida = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-lleida-sede")
+
+        self.assertEqual("diputacion-lleida-sede", lleida["profileId"])
+        self.assertEqual("ES-PUB-0162", lleida["inventoryId"])
+        self.assertEqual("https://seu.diputaciolleida.cat", lleida["entryUrl"])
+        self.assertNotIn("launchUrl", lleida)
+        self.assertEqual("E2E_PENDING", lleida["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", lleida["inventoryStatus"])
+        self.assertEqual("2026-07-16", lleida["reviewedOn"])
+        self.assertEqual(["CADES"], lleida["observedSignatureFormats"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}

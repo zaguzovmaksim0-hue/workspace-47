@@ -304,6 +304,76 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactDiputacionLleidaAutoScriptCallNormalizesTheLoginChallengeToSha256Cades() {
+        val result = adapterFor(LLEIDA_PROFILE_ID).route(
+            rawMessage = lleidaMessage(),
+            sourceOrigin = LLEIDA_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 49,
+            currentPageUrl = LLEIDA_LOGIN_PAGE_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(LLEIDA_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(LLEIDA_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("seu.diputaciolleida.cat", request.context.origin.host)
+            assertEquals(49, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA256_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(LLEIDA_CHALLENGE.encodeToByteArray(), data)
+                    assertEquals(LLEIDA_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun diputacionLleidaRejectsWrongProfileOriginTupleAndPropertiesWithoutBroadening() {
+        assertTrue(
+            adapterFor(LLEIDA_PROFILE_ID).route(
+                lleidaMessage(),
+                Uri.parse("https://seu.diputaciolleida.cat.evil.example"),
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor("junta-andalucia").route(
+                lleidaMessage(),
+                LLEIDA_ORIGIN,
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor(LLEIDA_PROFILE_ID).route(
+                lleidaMessage(),
+                LLEIDA_ORIGIN,
+                true,
+                currentPageUrl = "https://seu.diputaciolleida.cat/portal/inicio.do",
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        listOf(
+            lleidaMessage(algorithm = "SHA1withRSA"),
+            lleidaMessage(algorithm = "SHA512withRSA"),
+            lleidaMessage(format = "XAdES Detached"),
+            lleidaMessage(extraProperties = "mode=implicit"),
+            lleidaMessage(extraProperties = JSONObject.NULL),
+            lleidaMessage(dataB64 = Base64.getEncoder().encodeToString(byteArrayOf(0x00, 0x01))),
+        ).forEach { message ->
+            assertTrue(
+                adapterFor(LLEIDA_PROFILE_ID).route(
+                    message,
+                    LLEIDA_ORIGIN,
+                    true,
+                    currentPageUrl = LLEIDA_LOGIN_PAGE_URL,
+                ) is MiniAppletBridgeRouteResult.Rejected,
+            )
+        }
+    }
+
+    @Test
     fun cantabriaRecRejectsWrongProfileOriginChallengeTupleAndPropertiesWithoutGenericBroadening() {
         assertEquals(
             SigningErrorCode.ORIGIN_NOT_ALLOWED,
@@ -1200,6 +1270,21 @@ class MiniAppletBridgeAdapterTest {
         isMainFrame = true,
     ) as MiniAppletBridgeRouteResult.Rejected).code
 
+    private fun lleidaMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(LLEIDA_CHALLENGE.encodeToByteArray()),
+        algorithm: String = "SHA256withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = LLEIDA_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
@@ -1237,6 +1322,14 @@ class MiniAppletBridgeAdapterTest {
         const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"
         const val CANTABRIA_CHALLENGE = "0123456789abcdef0123456789abcdef01234567"
         const val CANTABRIA_EXTRA_PROPERTIES = "filters=\nmode=implicit"
+        val LLEIDA_ORIGIN: Uri = Uri.parse("https://seu.diputaciolleida.cat")
+        const val LLEIDA_PROFILE_ID = "diputacion-lleida-sede"
+        const val LLEIDA_PROTOCOL_ID = "diputacion-lleida-login-cades-v1"
+        const val LLEIDA_CHALLENGE = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        const val LLEIDA_EXTRA_PROPERTIES =
+            "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true"
+        const val LLEIDA_LOGIN_PAGE_URL =
+            "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
         val JCCM_DATA = "ABCDE".encodeToByteArray()
         const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =

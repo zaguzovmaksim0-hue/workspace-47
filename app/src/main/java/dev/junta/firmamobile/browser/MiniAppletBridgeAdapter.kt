@@ -18,6 +18,7 @@ import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
+import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
@@ -218,6 +219,18 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == POLICIA_PROFILE_ID && !isPoliciaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isDiputacionLleidaContract = isExactDiputacionLleidaContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == DiputacionLleidaCadesAdapter.PROFILE_ID &&
+            !isDiputacionLleidaContract
+        ) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -378,6 +391,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             )
         }
         if (isSevillaAtseContract && !decodedData.isExactSevillaAtseChallenge()) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
+        if (isDiputacionLleidaContract && !decodedData.isExactDiputacionLleidaChallenge()) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
@@ -665,6 +685,49 @@ internal class ProfileMiniAppletBridgeAdapter(
                 byte.toInt() in 0x61..0x66
         }
 
+    private fun isExactDiputacionLleidaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == LLEIDA_LOGIN_PAGE_URL &&
+            profile.profileId.value == DiputacionLleidaCadesAdapter.PROFILE_ID &&
+            profile.profileVersion == DiputacionLleidaCadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == LLEIDA_START_URL &&
+            origin.serialized == DiputacionLleidaCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(DiputacionLleidaCadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == DiputacionLleidaCadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.EXPLICIT &&
+            operation.fixedExtraProperties == LLEIDA_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == DiputacionLleidaCadesAdapter.ID.value
+
+    private fun ByteArray.isExactDiputacionLleidaChallenge(): Boolean =
+        isNotEmpty() && size <= MAX_LLEIDA_CHALLENGE_BYTES && all { byte ->
+            val value = byte.toInt() and 0xff
+            value in 0x20..0x7e
+        }
+
     private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
         val observed = linkedMapOf<String, String>()
         val lines = raw.split('\n')
@@ -728,6 +791,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
         )
         private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
+        private const val LLEIDA_LOGIN_PAGE_URL =
+            "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
         private const val JCCM_START_URL =
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
                 "formularios/identificacion.phtml"
@@ -748,6 +813,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             "mode" to "implicit",
         )
         private const val CANTABRIA_CHALLENGE_BYTES = 40
+        private const val LLEIDA_START_URL = "https://seu.diputaciolleida.cat"
+        private const val MAX_LLEIDA_CHALLENGE_BYTES = 512
+        private val LLEIDA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "policy" to "FirmaAGE",
+            "headless" to "true",
+            "filters" to "nonexpired:true;authCert:true",
+        )
         private const val MAX_EXTRA_PROPERTY_COUNT = 32
         private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
         private val PROPERTY_KEY = Regex("[A-Za-z][A-Za-z0-9._-]{0,63}")

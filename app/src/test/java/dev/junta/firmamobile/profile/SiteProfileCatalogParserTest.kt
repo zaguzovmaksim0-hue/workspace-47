@@ -653,6 +653,7 @@ class SiteProfileCatalogParserTest {
         val carne = ProfileId("carne-joven-andalucia")
         val education = ProfileId("educacion-convocatoria")
         val ceuta = ProfileId("ceuta-sede")
+        val lleida = ProfileId("diputacion-lleida-sede")
         val aragon = ProfileId("aragon-siraw")
         val ofvirtual = ProfileId("junta-ofvirtual")
         val unizar = ProfileId("unizar-tramitador")
@@ -662,6 +663,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
+            lleida,
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
