@@ -596,6 +596,23 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", dsca["limitations"].lower())
 
 
+    def test_cervantes_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        cervantes = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-cervantes")
+        self.assertEqual("reg-age-redsara", cervantes["profileId"])
+        self.assertEqual("ES-PUB-0049", cervantes["inventoryId"])
+        self.assertEqual("https://cervantes.sede.gob.es/", cervantes["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", cervantes["launchUrl"])
+        self.assertEqual("E2E_PENDING", cervantes["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", cervantes["inventoryStatus"])
+        self.assertEqual("REVIEWED", cervantes["discoveryState"])
+        self.assertEqual("2026-08-17", cervantes["reviewedOn"])
+        self.assertEqual([], cervantes["observedSignatureFormats"])
+        self.assertIn("reg-age", cervantes["limitations"].lower())
+        self.assertIn("qa", cervantes["limitations"].lower())
+        self.assertIn("e2e", cervantes["limitations"].lower())
+
+
     def test_inap_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         inap = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-nacional-de-administracion-publica-inap")

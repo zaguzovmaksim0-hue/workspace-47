@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "ba55a470b74449baf439c9523d0cf3c595ab9a1b9195e91dca14968d8f6a84ac",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1216,24 +1216,27 @@
     {
       "portalId": "age-instituto-cervantes",
       "inventoryId": "ES-PUB-0049",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Instituto Cervantes",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Instituto Cervantes publica un servicio específico de acceso al Registro Electrónico General de la Administración General del Estado (REG-AGE) para escritos sin procedimiento electrónico o formulario normalizado específico.",
       "entryUrl": "https://cervantes.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CERVANTES-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede Cervantes delega explícitamente en REG-AGE y la raíz oficial publicada negocia idioma hasta el startUrl español exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-instituto-de-astrofisica-de-canarias-iac",

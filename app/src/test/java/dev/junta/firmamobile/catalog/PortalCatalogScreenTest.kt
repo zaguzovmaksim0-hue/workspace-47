@@ -81,6 +81,27 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Cervantes REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val cervantes = compatible.items.single {
+            it.portalId == PortalId("age-instituto-cervantes")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), cervantes.profileId)
+        assertEquals(java.net.URI("https://cervantes.sede.gob.es/"), cervantes.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, cervantes.supportStatus)
+        assertTrue(cervantes.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(cervantes),
+        )
+    }
+
+    @Test
     fun `contract pending browse only and unsupported are separated and disabled correctly`() {
         val base = repository.portals().first()
         val pending = base.copy(
