@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "5def7e3931728a48a4a7107fc20c5f0e8ce99bdae9f010951177d4495debe31a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2714,25 +2714,33 @@
     {
       "portalId": "extremadura-sede-anterior",
       "inventoryId": "ES-PUB-0110",
-      "profileId": null,
+      "profileId": "extremadura-tramites",
       "displayName": "Sede electrónica anterior de la Junta de Extremadura",
       "organization": "Junta de Extremadura",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Extremadura",
-      "purpose": "Entrada histórica de sede cuya relación con el portal de trámites actual no está resuelta.",
+      "purpose": "La sede anterior permanece pública y delega expresamente la tramitación electrónica en Trámites de la Junta de Extremadura, cuyo launch exacto ya dispone de un perfil QA-only independiente.",
       "entryUrl": "https://sede.juntaex.es/SEDE/",
+      "launchUrl": "https://tramites.juntaex.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_EXTREMADURA_TRAMITES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
-        "A13C"
+        "A13C",
+        "EXT-SEDE-ALIAS-2026-08-18",
+        "A13A",
+        "A13B",
+        "A13E",
+        "A13F",
+        "A13G",
+        "A13H"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "No se ha acreditado retirada, sustitución, operación vigente ni contrato técnico; se conserva sin promoción."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Alias QA-only al perfil existente extremadura-tramites por delegación oficial actual de la sede anterior al portal tramites.juntaex.es; faltan E2E físico de la transición y cualquier atribución de contrato criptográfico específico a la sede anterior."
     },
     {
       "portalId": "extremadura-portal-tributario",

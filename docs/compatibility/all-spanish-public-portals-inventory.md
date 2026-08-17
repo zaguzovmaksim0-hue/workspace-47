@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 209 |
 | Fuentes oficiales totales registradas | 221 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -3865,23 +3865,24 @@ records:
     official_site: "https://sede.juntaex.es/SEDE/"
     e_sede: "https://sede.juntaex.es/SEDE/"
     entry_url: "https://sede.juntaex.es/SEDE/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://tramites.juntaex.es/"
+    procedure_page: "https://sede.juntaex.es/SEDE/"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_EXTREMADURA_TRAMITES"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Entrada histórica de sede cuya relación con el portal de trámites actual no está resuelta."
-    protocol_evidence: "La entrada contiene referencias a AutoFirma, pero no se verificó su vigencia ni contrato."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La sede anterior permanece pública y delega expresamente la tramitación electrónica en Trámites de la Junta de Extremadura, cuyo launch exacto ya dispone de un perfil QA-only independiente."
+    protocol_evidence: "La portada oficial sede.juntaex.es/SEDE/ enlaza su banner «Tramita» a https://tramites.juntaex.es y su «Registro Electrónico General» al STA actual bajo tramites.juntaex.es. El alias conserva la sede anterior como entry URL y reutiliza únicamente el startUrl canónico https://tramites.juntaex.es/ del perfil extremadura-tramites; no se atribuye un ABI de firma propio a sede.juntaex.es ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A13C"]
-    reason: "No se ha acreditado retirada, sustitución, operación vigente ni contrato técnico; se conserva sin promoción."
-    reviewed_at: "2026-07-16"
-    next_gate: "Resolver oficialmente su relación con tramites.juntaex.es y revisar una operación vigente."
+    evidence_ids: ["D03", "A13C", "EXT-SEDE-ALIAS-2026-08-18", "A13A", "A13B", "A13E", "A13F", "A13G", "A13H"]
+    reason: "Alias QA-only al perfil existente extremadura-tramites por delegación oficial actual de la sede anterior al portal tramites.juntaex.es; faltan E2E físico de la transición y cualquier atribución de contrato criptográfico específico a la sede anterior."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar físicamente la transición sede.juntaex.es → tramites.juntaex.es sin autenticarse, firmar ni presentar una actuación administrativa; mantener QA_ONLY hasta entonces."
 
   - inventory_id: "ES-PUB-0111"
     surface_key: "extremadura-portal-tributario"
@@ -6371,6 +6372,7 @@ Orden de expansión recomendado:
 [A13A]: https://tramites.juntaex.es/
 [A13B]: https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMA
 [A13C]: https://sede.juntaex.es/SEDE/
+[EXT-SEDE-ALIAS-2026-08-18]: ../autonomous/2026-08-18-extremadura-sede-anterior-alias.md
 [A13D]: https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos
 [A13E]: https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_REGGENERAL_INFO
 [A13F]: https://tramites.juntaex.es/sta/resources/js/sta-autofirma-lote.js
