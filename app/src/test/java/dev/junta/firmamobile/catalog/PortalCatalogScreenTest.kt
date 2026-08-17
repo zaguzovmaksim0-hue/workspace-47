@@ -48,6 +48,7 @@ class PortalCatalogScreenTest {
     fun `implemented profiles are shown in compatible section`() {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+
         assertEquals(
             repository.portals().count {
                 it.supportStatus == PortalSupportStatus.VERIFIED_E2E ||
