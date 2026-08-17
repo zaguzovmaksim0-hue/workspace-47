@@ -85,6 +85,7 @@ class JuntaOriginPolicyTest {
             "sede.tea.hacienda.gob.es",
             "www1.tea.hacienda.gob.es",
             "sede.tenerife.es",
+            "sede.grancanaria.com",
             "diputacion.toledo.gob.es",
             "sede.isciii.gob.es",
             "portafirmas.dival.es",

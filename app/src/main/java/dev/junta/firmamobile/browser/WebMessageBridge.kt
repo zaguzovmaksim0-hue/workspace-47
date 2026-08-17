@@ -30,6 +30,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val jccm: Boolean,
     val sevillaAtse: Boolean,
     val policia: Boolean,
+    val granCanaria: Boolean,
     val melillaBatch: Boolean,
     val lugoBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
@@ -252,6 +253,7 @@ class WebMessageBridge(
                     jccmCompatibilityEnabled = shimFlags.jccm,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
                     policiaCompatibilityEnabled = shimFlags.policia,
+                    granCanariaCompatibilityEnabled = shimFlags.granCanaria,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     lugoBatchCompatibilityEnabled = shimFlags.lugoBatch,
                     staBatchOrigin = batchRuntime?.sourceOrigin ?: MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
@@ -650,6 +652,7 @@ class WebMessageBridge(
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
+        private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -661,6 +664,7 @@ class WebMessageBridge(
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
             policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
+            granCanaria = profileActive && profileId.value == GRAN_CANARIA_PROFILE_ID,
             melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID,
             lugoBatch = melillaBatchEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,

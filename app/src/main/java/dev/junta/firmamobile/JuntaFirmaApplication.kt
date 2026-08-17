@@ -3,6 +3,7 @@ package dev.junta.firmamobile
 import android.app.Application
 import android.os.SystemClock
 import android.util.Log
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
 import dev.junta.firmamobile.certificate.AndroidKeystoreCertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateGateway
@@ -40,6 +41,7 @@ class JuntaFirmaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        PDFBoxResourceLoader.init(this)
         sanitizedLogger = ApplicationSanitizedLoggerFactory.create(
             filesDirectory = filesDir,
             qaEnabled = BuildConfig.ALLOW_QA_PROFILES,

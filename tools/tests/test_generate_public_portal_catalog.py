@@ -362,6 +362,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("tls 1.2", tea["limitations"].lower())
         self.assertIn("e2e", tea["limitations"].lower())
 
+    def test_gran_canaria_pades_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(
+            item for item in catalog["entries"]
+            if item["portalId"] == "gran-canaria-sede-electronica"
+        )
+
+        self.assertEqual("gran-canaria-sede-electronica", entry["profileId"])
+        self.assertEqual("ES-PUB-0138", entry["inventoryId"])
+        self.assertEqual(
+            "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
+            entry["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", entry)
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("2026-08-17", entry["reviewedOn"])
+        self.assertIn("AUTOFIRMA", entry["observedMechanisms"])
+        self.assertIn("MINIAPPLET", entry["observedMechanisms"])
+        self.assertEqual(["PADES"], entry["observedSignatureFormats"])
+        self.assertIn("e2e", entry["limitations"].lower())
+
     def test_tenerife_autoscript_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tenerife = next(

@@ -357,6 +357,11 @@ dependencies {
     implementation(libs.bouncycastle.pkix)
     implementation(libs.okhttp)
     implementation(libs.xmlsec)
+    implementation(libs.pdfbox.android) {
+        exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
+        exclude(group = "org.bouncycastle", module = "bcpkix-jdk15to18")
+        exclude(group = "org.bouncycastle", module = "bcutil-jdk15to18")
+    }
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

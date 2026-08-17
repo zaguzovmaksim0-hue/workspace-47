@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "66a3281e95efcc225639c738da07e16522252b9c403387f0f16c5d24b392eb92",
+  "sourceRevision": "5f83756e2533c62e7d8b42bd65bc033a06a68b3d23364b28ea14213f7a68b68f",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3367,24 +3367,31 @@
     {
       "portalId": "gran-canaria-sede-electronica",
       "inventoryId": "ES-PUB-0138",
-      "profileId": null,
+      "profileId": "gran-canaria-sede-electronica",
       "displayName": "Sede electrónica del Cabildo Insular de Gran Canaria",
       "organization": "Cabildo Insular de Gran Canaria",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
-      "entryUrl": "https://sede.grancanaria.com/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "purpose": "Firma PAdES local de solicitud; el perfil QA reproduce únicamente el contrato MiniApplet exacto publicado por la información pública de la Sede.",
+      "entryUrl": "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "I11B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Contrato first-party pre-auth completo implementado en QA mediante PAdES local exacto; no se promueve a VERIFIED_E2E sin prueba física segura."
     },
     {
       "portalId": "diputacion-alicante-portal",

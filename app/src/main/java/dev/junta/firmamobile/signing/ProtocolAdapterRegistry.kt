@@ -95,6 +95,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = SigningProtocolId("cantabria-rec-cert-login-cades-v1"),
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(GranCanariaPadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = GranCanariaPadesAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId(TenerifeCadesDetachedAdapter.PROFILE_ID),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),

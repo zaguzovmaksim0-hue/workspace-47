@@ -24,6 +24,7 @@ object AfirmaJavascriptShim {
         jccmCompatibilityEnabled: Boolean = false,
         sevillaAtseCompatibilityEnabled: Boolean = false,
         policiaCompatibilityEnabled: Boolean = false,
+        granCanariaCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
         lugoBatchCompatibilityEnabled: Boolean = false,
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
@@ -40,6 +41,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(JCCM_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(LUGO_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
@@ -82,6 +84,10 @@ object AfirmaJavascriptShim {
                 if (policiaCompatibilityEnabled) "true" else "false",
             )
             .replace(
+                GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER,
+                if (granCanariaCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
                 MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
                 if (melillaBatchCompatibilityEnabled) "true" else "false",
             )
@@ -115,6 +121,8 @@ object AfirmaJavascriptShim {
         "__JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__"
     private const val POLICIA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_POLICIA_COMPATIBILITY_ENABLED__"
+    private const val GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__"
     private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
     private const val LUGO_BATCH_COMPATIBILITY_PLACEHOLDER =

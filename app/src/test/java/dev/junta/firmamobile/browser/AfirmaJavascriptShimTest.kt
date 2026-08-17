@@ -464,6 +464,31 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun granCanariaCompatibilityIsProfileScopedToTheExactSha512PadesTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            granCanariaCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            granCanariaCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const granCanariaCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const granCanariaCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://sede.grancanaria.com"))
+        assertTrue(enabled.contains("headless=true\\nfilters=nonexpired:"))
+        assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdES\""))
+        assertTrue(enabled.contains("isExactGranCanariaCall"))
+    }
+
+    @Test
     fun policiaCompatibilityIsProfileScopedToTheExactSha1XadesTuple() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(

@@ -19,6 +19,7 @@
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
   const policiaCompatibilityEnabled = __JFM_POLICIA_COMPATIBILITY_ENABLED__;
+  const granCanariaCompatibilityEnabled = __JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const lugoBatchCompatibilityEnabled = __JFM_LUGO_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
@@ -36,6 +37,8 @@
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
   const policiaOrigin = "https://sede.policia.gob.es";
+  const granCanariaOrigin = "https://sede.grancanaria.com";
+  const granCanariaExtraProperties = "headless=true\nfilters=nonexpired:";
   const policiaProcedurePage =
     "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml";
   const policiaExtraProperties =
@@ -234,6 +237,24 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isGranCanariaOrigin =
+      granCanariaCompatibilityEnabled && window.location.origin === granCanariaOrigin;
+    const isExactGranCanariaCall =
+      isGranCanariaOrigin &&
+      args.length === 6 &&
+      typeof args[0] === "string" &&
+      args[0].length > 0 &&
+      args[0].length <= maxDirectDataChars &&
+      base64Pattern.test(args[0]) &&
+      args[1] === "SHA512withRSA" &&
+      args[2] === "PAdES" &&
+      args[3] === granCanariaExtraProperties &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isGranCanariaOrigin && !isExactGranCanariaCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isPoliciaOrigin =
       policiaCompatibilityEnabled && window.location.origin === policiaOrigin;
     const isPoliciaProcedurePage =
@@ -298,12 +319,12 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !isExactSevillaAtseCall && !base64Pattern.test(args[0])) ||
+          !isExactSevillaAtseCall && !isExactGranCanariaCall && !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
           !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
-          !isExactPoliciaCall)) {
+          !isExactPoliciaCall && !isExactGranCanariaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
