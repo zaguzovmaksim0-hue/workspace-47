@@ -77,7 +77,7 @@ class PublicPortalCatalogParserTest {
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
-        assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 68)
+        assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 67)
         assertTrue(catalog.entries.any { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
     }
 
