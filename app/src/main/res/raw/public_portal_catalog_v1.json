@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "37f6410f2d9599d66070c98d9075289f56f6c0864f5d2f7fbc2eb3b8d9b055ba",
+  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1443,24 +1443,27 @@
     {
       "portalId": "age-ministerio-de-agricultura-pesca-y-alimentacion",
       "inventoryId": "ES-PUB-0059",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Ministerio de Agricultura, Pesca y Alimentación",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del MAPA enlaza públicamente con el Registro Electrónico General; Workspace-47 representa esa salida como una delegación acotada al perfil REG-AGE existente.",
       "entryUrl": "https://sede.mapa.gob.es/portal/site/seMAPA",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "MAPA-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara basado en el enlace público de la Sede MAPA al REG; faltan validación E2E física de la transición y cualquier atribución de contrato de firma específico del MAPA."
     },
     {
       "portalId": "age-ministerio-de-asuntos-exteriores-union-europea-y-cooperacion",
