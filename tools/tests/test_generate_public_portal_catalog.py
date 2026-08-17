@@ -75,6 +75,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", pag_reg["limitations"].lower())
         self.assertIn("e2e", pag_reg["limitations"].lower())
 
+        educacion = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-educacion-formacion-profesional-y-deportes"
+        )
+        self.assertEqual("reg-age-redsara", educacion["profileId"])
+        self.assertEqual("ES-PUB-0066", educacion["inventoryId"])
+        self.assertEqual(
+            "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html",
+            educacion["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", educacion["launchUrl"])
+        self.assertEqual("E2E_PENDING", educacion["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", educacion["inventoryStatus"])
+        self.assertEqual("REVIEWED", educacion["discoveryState"])
+        self.assertEqual("2026-08-17", educacion["reviewedOn"])
+        self.assertIn("reg-age", educacion["limitations"].lower())
+        self.assertIn("qa", educacion["limitations"].lower())
+        self.assertIn("e2e", educacion["limitations"].lower())
+
         redsara = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "age-reg-redsara"
