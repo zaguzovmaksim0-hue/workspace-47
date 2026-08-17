@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8507e3f241a0591c83e6530f8ccbac808f618edfb985d9ce8cd88156074389b7",
+  "sourceRevision": "4230dcca83d3444b434c247f041867141d16789a3d6be4585f31ad31c99a61d3",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1533,24 +1533,30 @@
     {
       "portalId": "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030",
       "inventoryId": "ES-PUB-0064",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "V Certamen Artístico Amigos de los Animales — vía REG alternativa",
       "organization": "Ministerio de Derechos Sociales, Consumo y Agenda 2030",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://dsca.sede.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "La convocatoria 2026 del Ministerio ofrece, además del formulario propio, una vía alternativa explícita por Registro Electrónico General dirigida a la Dirección General de Derechos de los Animales.",
+      "entryUrl": "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "DSCA-REG-2026-08-16",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página ministerial como entry URL, no se amplía la confianza de firma al origen www.dsca.gob.es y no se realizó E2E físico."
     },
     {
       "portalId": "age-ministerio-de-economia-comercio-y-empresa",

@@ -75,6 +75,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", pag_reg["limitations"].lower())
         self.assertIn("e2e", pag_reg["limitations"].lower())
 
+        dsca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030"
+        )
+        self.assertEqual("reg-age-redsara", dsca["profileId"])
+        self.assertEqual("ES-PUB-0064", dsca["inventoryId"])
+        self.assertEqual(
+            "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje",
+            dsca["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", dsca["launchUrl"])
+        self.assertEqual("E2E_PENDING", dsca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", dsca["inventoryStatus"])
+        self.assertEqual("REVIEWED", dsca["discoveryState"])
+        self.assertEqual("2026-08-16", dsca["reviewedOn"])
+        self.assertIn("reg-age", dsca["limitations"].lower())
+        self.assertIn("qa", dsca["limitations"].lower())
+        self.assertIn("e2e", dsca["limitations"].lower())
+
         redsara = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "age-reg-redsara"
