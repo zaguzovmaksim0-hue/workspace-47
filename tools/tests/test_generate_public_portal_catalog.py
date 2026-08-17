@@ -75,24 +75,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", pag_reg["limitations"].lower())
         self.assertIn("e2e", pag_reg["limitations"].lower())
 
-        exteriores = next(
+        educacion = next(
             entry for entry in catalog["entries"]
-            if entry["portalId"] == "age-ministerio-de-asuntos-exteriores-union-europea-y-cooperacion"
+            if entry["portalId"] == "age-ministerio-de-educacion-formacion-profesional-y-deportes"
         )
-        self.assertEqual("reg-age-redsara", exteriores["profileId"])
-        self.assertEqual("ES-PUB-0060", exteriores["inventoryId"])
+        self.assertEqual("reg-age-redsara", educacion["profileId"])
+        self.assertEqual("ES-PUB-0066", educacion["inventoryId"])
         self.assertEqual(
-            "https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula",
-            exteriores["entryUrl"],
+            "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html",
+            educacion["entryUrl"],
         )
-        self.assertEqual("https://reg.redsara.es/es/", exteriores["launchUrl"])
-        self.assertEqual("E2E_PENDING", exteriores["catalogStatus"])
-        self.assertEqual("IMPLEMENTED_NOT_E2E", exteriores["inventoryStatus"])
-        self.assertEqual("REVIEWED", exteriores["discoveryState"])
-        self.assertEqual("2026-08-16", exteriores["reviewedOn"])
-        self.assertIn("reg-age", exteriores["limitations"].lower())
-        self.assertIn("qa", exteriores["limitations"].lower())
-        self.assertIn("e2e", exteriores["limitations"].lower())
+        self.assertEqual("https://reg.redsara.es/es/", educacion["launchUrl"])
+        self.assertEqual("E2E_PENDING", educacion["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", educacion["inventoryStatus"])
+        self.assertEqual("REVIEWED", educacion["discoveryState"])
+        self.assertEqual("2026-08-17", educacion["reviewedOn"])
+        self.assertIn("reg-age", educacion["limitations"].lower())
+        self.assertIn("qa", educacion["limitations"].lower())
+        self.assertIn("e2e", educacion["limitations"].lower())
+
 
         redsara = next(
             entry for entry in catalog["entries"]
@@ -105,6 +106,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("cl@ve", redsara["limitations"].lower())
         self.assertIn("administrativa", redsara["limitations"].lower())
         self.assertIn("xades", redsara["limitations"].lower())
+
+        aemps = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-agencia-espanola-de-medicamentos-y-productos-sanitarios-aemps"
+        )
+        self.assertEqual("reg-age-redsara", aemps["profileId"])
+        self.assertEqual("https://sede.aemps.gob.es/", aemps["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", aemps["launchUrl"])
+        self.assertEqual("E2E_PENDING", aemps["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", aemps["inventoryStatus"])
+        self.assertEqual("2026-08-17", aemps["reviewedOn"])
+        self.assertEqual([], aemps["observedMechanisms"])
+        self.assertEqual([], aemps["observedSignatureFormats"])
+        self.assertIn("reg-age", aemps["limitations"].lower())
+        self.assertIn("qa", aemps["limitations"].lower())
+        self.assertIn("e2e", aemps["limitations"].lower())
 
         aeat = next(
             entry for entry in catalog["entries"]
@@ -131,6 +148,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("cades", ugr["protocolFamily"].lower())
         self.assertIn("e2e", ugr["limitations"].lower())
         self.assertIn("storage", ugr["limitations"].lower())
+
+        cdti = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-centro-para-el-desarrollo-tecnologico-industrial-cdti"
+        )
+        self.assertEqual("cdti-certificate-validation", cdti["profileId"])
+        self.assertEqual("ES-PUB-0030", cdti["inventoryId"])
+        self.assertEqual(
+            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx",
+            cdti["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", cdti)
+        self.assertEqual("E2E_PENDING", cdti["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", cdti["inventoryStatus"])
+        self.assertEqual("2026-08-16", cdti["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", cdti["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", cdti["observedMechanisms"])
+        self.assertEqual(["XADES"], cdti["observedSignatureFormats"])
+        self.assertIn("e2e", cdti["limitations"].lower())
 
         sevilla = next(
             entry for entry in catalog["entries"]
@@ -545,6 +581,37 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "no inventory entry"):
                 GENERATOR.generate(path, SITE_PROFILES)
 
+    def test_dsca_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        dsca = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030")
+        self.assertEqual("reg-age-redsara", dsca["profileId"])
+        self.assertEqual("ES-PUB-0064", dsca["inventoryId"])
+        self.assertEqual("https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje", dsca["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", dsca["launchUrl"])
+        self.assertEqual("E2E_PENDING", dsca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", dsca["inventoryStatus"])
+        self.assertEqual("REVIEWED", dsca["discoveryState"])
+        self.assertIn("reg-age", dsca["limitations"].lower())
+        self.assertIn("qa", dsca["limitations"].lower())
+        self.assertIn("e2e", dsca["limitations"].lower())
+
+
+    def test_inap_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        inap = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-nacional-de-administracion-publica-inap")
+        self.assertEqual("reg-age-redsara", inap["profileId"])
+        self.assertEqual("ES-PUB-0055", inap["inventoryId"])
+        self.assertEqual("https://sede.inap.gob.es/", inap["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", inap["launchUrl"])
+        self.assertEqual("E2E_PENDING", inap["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", inap["inventoryStatus"])
+        self.assertEqual("REVIEWED", inap["discoveryState"])
+        self.assertEqual("2026-08-17", inap["reviewedOn"])
+        self.assertIn("reg-age", inap["limitations"].lower())
+        self.assertIn("qa", inap["limitations"].lower())
+        self.assertIn("e2e", inap["limitations"].lower())
+
+
     def test_unknown_alias_launch_url_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
         exact = '    launch_url: "https://reg.redsara.es/es/"\n'
@@ -617,6 +684,115 @@ records:
         registry = REGISTRY_SOURCE.read_text(encoding="utf-8")
         self.assertIn("BuildConfig.SITE_PROFILE_CATALOG_JSON", registry)
         self.assertNotIn('const val JSON = """', registry)
+
+
+    def test_bne_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        bne = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-biblioteca-nacional-de-espana"
+        )
+
+        self.assertEqual("ES-PUB-0028", bne["inventoryId"])
+        self.assertEqual("reg-age-redsara", bne["profileId"])
+        self.assertEqual(
+            "https://sede.bne.gob.es/es/tramites/quejas-sugerencias",
+            bne["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", bne["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", bne["protocolFamily"])
+        self.assertEqual("E2E_PENDING", bne["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", bne["inventoryStatus"])
+        self.assertIn("reg-age", bne["limitations"].lower())
+        self.assertIn("e2e", bne["limitations"].lower())
+
+
+    def test_tenerife_institutional_alias_binds_exact_qa_sede_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        tenerife = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "tenerife-portal-institucional"
+        )
+
+        self.assertEqual("tenerife-sede-electronica", tenerife["profileId"])
+        self.assertEqual("ES-PUB-0127", tenerife["inventoryId"])
+        self.assertEqual("https://www.tenerife.es/", tenerife["entryUrl"])
+        self.assertEqual("https://sede.tenerife.es/", tenerife["launchUrl"])
+        self.assertEqual("E2E_PENDING", tenerife["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", tenerife["inventoryStatus"])
+        self.assertEqual("2026-08-16", tenerife["reviewedOn"])
+        self.assertEqual("DELEGACION_TENERIFE_SEDE", tenerife["protocolFamily"])
+        self.assertEqual([], tenerife["observedMechanisms"])
+        self.assertEqual([], tenerife["observedSignatureFormats"])
+        self.assertIn("alias", tenerife["limitations"].lower())
+        self.assertIn("e2e", tenerife["limitations"].lower())
+
+    def test_cantabria_sede_alias_binds_exact_existing_rec_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "cantabria-sede")
+
+        self.assertEqual("cantabria-rec-cert-login", target["profileId"])
+        self.assertEqual("https://sede.cantabria.es/sede/", target["entryUrl"])
+        self.assertEqual("https://rec.cantabria.es/rec/bienvenida.htm", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+    def test_la_palma_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "la-palma-portal-institucional")
+
+        self.assertEqual("la-palma-sede-electronica", target["profileId"])
+        self.assertEqual("https://www.cabildodelapalma.es/", target["entryUrl"])
+        self.assertEqual("https://sedeelectronica.cabildodelapalma.es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+    def test_miteco_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        miteco = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico"
+        )
+        self.assertEqual("reg-age-redsara", miteco["profileId"])
+        self.assertEqual("ES-PUB-0079", miteco["inventoryId"])
+        self.assertEqual(
+            "https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html",
+            miteco["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", miteco["launchUrl"])
+        self.assertEqual("E2E_PENDING", miteco["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", miteco["inventoryStatus"])
+        self.assertEqual("REVIEWED", miteco["discoveryState"])
+        self.assertEqual("2026-08-17", miteco["reviewedOn"])
+        self.assertIn("reg-age", miteco["limitations"].lower())
+        self.assertIn("qa", miteco["limitations"].lower())
+        self.assertIn("e2e", miteco["limitations"].lower())
+
+
+    def test_exteriores_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        exteriores = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-asuntos-exteriores-union-europea-y-cooperacion"
+        )
+        self.assertEqual("reg-age-redsara", exteriores["profileId"])
+        self.assertEqual("ES-PUB-0060", exteriores["inventoryId"])
+        self.assertEqual(
+            "https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula",
+            exteriores["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", exteriores["launchUrl"])
+        self.assertEqual("E2E_PENDING", exteriores["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", exteriores["inventoryStatus"])
+        self.assertEqual("REVIEWED", exteriores["discoveryState"])
+        self.assertEqual("2026-08-16", exteriores["reviewedOn"])
+        self.assertIn("reg-age", exteriores["limitations"].lower())
+        self.assertIn("qa", exteriores["limitations"].lower())
+        self.assertIn("e2e", exteriores["limitations"].lower())
 
 
 if __name__ == "__main__":

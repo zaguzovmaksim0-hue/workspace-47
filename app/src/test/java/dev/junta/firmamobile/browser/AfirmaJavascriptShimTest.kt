@@ -298,6 +298,7 @@ class AfirmaJavascriptShimTest {
         assertFalse(flags.cantabria)
         assertFalse(flags.jccm)
         assertTrue(flags.sevillaAtse)
+        assertFalse(flags.cdti)
         assertFalse(flags.melillaBatch)
     }
 
@@ -320,6 +321,54 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("args[3] == null"))
         assertTrue(script.contains("if (isSevillaAtseOrigin && !isExactSevillaAtseCall)"))
         assertFalse(script.contains("authenticate("))
+    }
+
+    @Test
+    fun activeCdtiProfileEnablesOnlyTheRuntimeCdtiShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("cdti-certificate-validation"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertFalse(flags.sevillaAtse)
+        assertTrue(flags.cdti)
+        assertFalse(flags.policia)
+        assertFalse(flags.melillaBatch)
+        assertFalse(flags.isciiiCertificateSelection)
+        assertFalse(flags.valenciaCertificateSelection)
+    }
+
+    @Test
+    fun cdtiCompatibilityIsProfileScopedToTheExactPublicXadesEnvelopingTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            cdtiCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            cdtiCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const cdtiCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const cdtiCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://sede.cdti.gob.es"))
+        assertTrue(enabled.contains("/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"))
+        assertTrue(enabled.contains("^CertExp[0-9a-f]{32}[0-9a-z]{24}$"))
+        assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"XAdES Enveloping\""))
+        assertTrue(enabled.contains("args[3] === cdtiExtraProperties"))
+        assertTrue(enabled.contains("isExactCdtiCall ? args[0] + \"=\" : args[0]"))
+        assertTrue(enabled.contains("if (isCdtiOrigin && !isExactCdtiCall)"))
+        assertFalse(enabled.contains("SHA256withRSA\" &&\n      args[2] === \"XAdES Enveloping"))
     }
 
     @Test
@@ -457,6 +506,7 @@ class AfirmaJavascriptShimTest {
         assertFalse(flags.cantabria)
         assertFalse(flags.jccm)
         assertFalse(flags.sevillaAtse)
+        assertFalse(flags.cdti)
         assertTrue(flags.policia)
         assertFalse(flags.melillaBatch)
         assertFalse(flags.isciiiCertificateSelection)
