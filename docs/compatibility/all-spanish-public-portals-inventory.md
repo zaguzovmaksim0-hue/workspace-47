@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 209 |
-| Fuentes oficiales totales registradas | 221 |
+| Fuentes oficiales portal-specific registradas | 211 |
+| Fuentes oficiales totales registradas | 223 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2593,30 +2593,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Industria y Turismo"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / acceso al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://sede.minetur.gob.es"
     official_site: "https://sede.minetur.gob.es/"
     e_sede: "https://sede.minetur.gob.es/"
     entry_url: "https://sede.minetur.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Industria y Turismo publica una vía específica al Registro Electrónico General de la Administración General del Estado para solicitudes, escritos y comunicaciones sin aplicación específica."
+    protocol_evidence: "La página first-party https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx contiene el apartado «Acceso al Registro Electrónico General de la Administración General del Estado» y publica https://rec.redsara.es/registro/action/are/acceso.do; ese URL responde 301 hacia https://reg.redsara.es/. El PAG vigente identifica el servicio como Registro Electrónico General (REG-AGE), mientras que el startUrl canónico existente https://reg.redsara.es/es/ responde como «REG - Registro Electrónico General». Workspace-47 reutiliza únicamente ese startUrl del perfil reg-age-redsara; no atribuye a sede.minetur.gob.es ni sede.serviciosmin.gob.es un ABI de firma ni amplía sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Industria y Turismo."
+    evidence_ids: ["D11", "INDUSTRIA-REG-2026-08-17", "PAG-REG-AGE-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la Sede de Industria delega explícitamente en el Registro Electrónico General de la AGE y la ruta legacy publicada migra al origin REG actual; el catálogo lanza solo el startUrl canónico exacto del perfil existente. Falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Industria → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La entrada institucional https://sede.minetur.gob.es/ redirige públicamente a la Sede vigente en sede.serviciosmin.gob.es; esto se conserva como metadata de navegación y no amplía signing trust. La promoción no se deriva de AutoFirma genérica ni del dominio."
 
   - inventory_id: "ES-PUB-0070"
     surface_key: "age-ministerio-de-juventud-e-infancia"
@@ -6520,6 +6521,8 @@ availability, certificado, firma ni contrato técnico.
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
+[INDUSTRIA-REG-2026-08-17]: https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx
+[PAG-REG-AGE-2026-08-17]: https://administracion.gob.es/pag_Home/atencionCiudadana/Registros-electronicos-AGE.html
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
