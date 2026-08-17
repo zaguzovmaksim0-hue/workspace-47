@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 205 |
-| Fuentes oficiales totales registradas | 217 |
+| Fuentes oficiales portal-specific registradas | 206 |
+| Fuentes oficiales totales registradas | 218 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 35 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 39 |
-| Entradas restantes fuera de ambos estados | 144 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 36 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 40 |
+| Entradas restantes fuera de ambos estados | 143 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 35 |
+| `IMPLEMENTED_NOT_E2E` | 36 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 137 |
+| `BROWSE_ONLY` | 136 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 114 |
+| `REVIEWED` | 115 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 64 |
+| `DISCOVERED` | 63 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 203 fuentes porque las
+47/50; no se publica un cociente agregado para las 204 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -2899,30 +2899,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio para la Transición Ecológica y el Reto Demográfico"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Información pública DPMT Murcia — vía REG"
     surface_type: "SEDE"
-    origin: "https://sede.miteco.gob.es"
-    official_site: "https://sede.miteco.gob.es/portal/site/seMITECO"
+    origin: "https://www.miteco.gob.es"
+    official_site: "https://www.miteco.gob.es/"
     e_sede: "https://sede.miteco.gob.es/portal/site/seMITECO"
-    entry_url: "https://sede.miteco.gob.es/portal/site/seMITECO"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    entry_url: "https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La página oficial de información pública de Costas permite remitir documentación y observaciones y publica, para quien disponga de certificado o DNIe, la vía del Registro Electrónico General de la AGE."
+    protocol_evidence: "La página oficial de MITECO publica literalmente https://reg.redsara.es/es/ como destino del Registro General Electrónico de la AGE para usuarios con certificado o DNIe; el launch URL coincide exactamente con el startUrl de reg-age-redsara. El plazo concreto usado como evidencia finalizó el 27-07-2026, por lo que se acredita la delegación técnica y no disponibilidad actual del trámite."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transición Ecológica y el Reto Demográfico."
+    evidence_ids: ["D11", "MITECO-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL publicado; se conserva la página ministerial como entry URL, no se amplía la confianza de firma al origen www.miteco.gob.es y no se realizó E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E físico seguro MITECO → REG-AGE sobre una futura fase abierta que publique el mismo destino exacto, sin completar ni presentar documentación administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La información pública concreta usada como evidencia admitió documentación del 30-06-2026 al 27-07-2026; esta implementación registra únicamente la delegación exacta a REG-AGE y no un ABI criptográfico propio de MITECO."
 
   - inventory_id: "ES-PUB-0080"
     surface_key: "age-museo-nacional-centro-de-arte-reina-sofia"
@@ -6517,3 +6518,4 @@ availability, certificado, firma ni contrato técnico.
 [DP41A]: https://dpz.sedelectronica.es
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
+[MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
