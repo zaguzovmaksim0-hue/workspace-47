@@ -561,6 +561,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", dsca["limitations"].lower())
 
 
+    def test_inap_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        inap = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-nacional-de-administracion-publica-inap")
+        self.assertEqual("reg-age-redsara", inap["profileId"])
+        self.assertEqual("ES-PUB-0055", inap["inventoryId"])
+        self.assertEqual("https://sede.inap.gob.es/", inap["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", inap["launchUrl"])
+        self.assertEqual("E2E_PENDING", inap["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", inap["inventoryStatus"])
+        self.assertEqual("REVIEWED", inap["discoveryState"])
+        self.assertEqual("2026-08-17", inap["reviewedOn"])
+        self.assertIn("reg-age", inap["limitations"].lower())
+        self.assertIn("qa", inap["limitations"].lower())
+        self.assertIn("e2e", inap["limitations"].lower())
+
+
     def test_unknown_alias_launch_url_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
         exact = '    launch_url: "https://reg.redsara.es/es/"\n'
