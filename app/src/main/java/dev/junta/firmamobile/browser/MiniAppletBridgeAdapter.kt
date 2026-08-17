@@ -17,6 +17,7 @@ import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
+import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
@@ -231,6 +232,18 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == CdtiXadesEnvelopingAdapter.PROFILE_ID && !isCdtiContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isTransportesContract = isExactTransportesContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == TransportesXadesEnvelopedAdapter.PROFILE_ID &&
+            !isTransportesContract
+        ) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isPoliciaContract = isExactPoliciaContract(
             profile = profile,
             origin = resolved.origin,
@@ -287,7 +300,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             } else {
                 SigningFormat.XADES to SignatureFormat.XADES
             }
-            FORMAT_XADES -> if (isSevillaAtseContract || isPoliciaContract) {
+            FORMAT_XADES -> if (isSevillaAtseContract || isPoliciaContract || isTransportesContract) {
                 SigningFormat.XADES to SignatureFormat.XADES
             } else {
                 null
@@ -360,6 +373,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isCdtiContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == CdtiXadesEnvelopingAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isTransportesContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -452,6 +472,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
+        if (isTransportesContract && !TransportesXadesEnvelopedAdapter.isExactChallenge(decodedData)) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
         if (isDiputacionLleidaContract && !decodedData.isExactDiputacionLleidaChallenge()) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
@@ -461,6 +488,8 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val extraProperties = if (isCantabriaContract) {
             CANTABRIA_EXTRA_PROPERTIES
+        } else if (isTransportesContract) {
+            TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isGranCanariaContract) {
             GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
@@ -654,6 +683,45 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.fixedExtraProperties.isEmpty() &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == SEVILLA_ATSE_PROTOCOL_ID
+
+    private fun isExactTransportesContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == TransportesXadesEnvelopedAdapter.AUTH_PAGE_URL &&
+            profile.profileId.value == TransportesXadesEnvelopedAdapter.PROFILE_ID &&
+            profile.profileVersion == TransportesXadesEnvelopedAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == TransportesXadesEnvelopedAdapter.START_URL &&
+            origin.serialized == TransportesXadesEnvelopedAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(TransportesXadesEnvelopedAdapter.INITIATOR_ORIGIN),
+            ) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == TransportesXadesEnvelopedAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.XADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES_MAP &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == TransportesXadesEnvelopedAdapter.ID.value
 
     private fun isExactCdtiContract(
         profile: SiteProfile,

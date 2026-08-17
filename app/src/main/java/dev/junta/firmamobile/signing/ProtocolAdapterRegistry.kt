@@ -95,6 +95,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = CdtiXadesEnvelopingAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(TransportesXadesEnvelopedAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                signingProtocolId = TransportesXadesEnvelopedAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("cantabria-rec-cert-login"),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),

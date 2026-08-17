@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "70198919551bc59352df88367e3066ed67386bc863e26a09808f4b275c8ed963",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1823,24 +1823,32 @@
     {
       "portalId": "age-ministerio-de-transportes-y-movilidad-sostenible",
       "inventoryId": "ES-PUB-0075",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "transportes-qys-cert-login",
+      "displayName": "Sede electrónica — Quejas y Sugerencias",
       "organization": "Ministerio de Transportes y Movilidad Sostenible",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.mitma.gob.es/sede_electronica/lang_castellano/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Autenticación con certificado para Quejas y Sugerencias mediante firma local XAdES Enveloped del challenge XML público de la Sede.",
+      "entryUrl": "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_XADES_ENVELOPED",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "TRANSPORTES-QYS-2026-08-17"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Contrato de autenticación por firma implementado en QA con comprobación fail-closed de origin, página, challenge, algoritmo, formato y propiedades. Falta aceptación E2E física; no se realizó autenticación, POST, firma real ni presentación administrativa."
     },
     {
       "portalId": "age-ministerio-de-vivienda-y-agenda-urbana",

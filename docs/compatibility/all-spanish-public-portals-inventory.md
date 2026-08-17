@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 209 |
-| Fuentes oficiales totales registradas | 221 |
+| Fuentes oficiales portal-specific registradas | 210 |
+| Fuentes oficiales totales registradas | 222 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2778,30 +2778,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Transportes y Movilidad Sostenible"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica — Quejas y Sugerencias"
     surface_type: "SEDE"
-    origin: "https://sede.mitma.gob.es"
-    official_site: "https://sede.mitma.gob.es/sede_electronica/lang_castellano/"
-    e_sede: "https://sede.mitma.gob.es/sede_electronica/lang_castellano/"
-    entry_url: "https://sede.mitma.gob.es/sede_electronica/lang_castellano/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    origin: "https://sede.transportes.gob.es"
+    official_site: "https://sede.transportes.gob.es/"
+    e_sede: "https://sede.transportes.gob.es/"
+    entry_url: "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002"
+    procedure_page: "https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MiniApplet / AutoFirma"
+    protocol_family: "MINIAPPLET_LOCAL_XADES_ENVELOPED"
+    signature_format: "XAdES / ENVELOPED"
+    signature_algorithm: "SHA1withRSA (LEGACY_SHA1 portal-specific)"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Autenticación con certificado para Quejas y Sugerencias mediante firma local XAdES Enveloped del challenge XML público de la Sede."
+    protocol_evidence: "La ficha oficial vigente enlaza exactamente /MFOM.genericprocedure.web/?id=7002. Ese launch redirige, manteniendo sesión pública, a /MFOM.genericprocedure.web/Autenticacion.aspx. La página pública construye SignParams con signatureFormat=XAdES, FILTER_AUTHENTICATION e idToSign=tag1; CIM 3.0.1 transforma los defaults en SHA1withRSA, XAdES Enveloped, includeOnlySigningCertificate=true, nodeToSign=tag1, applySystemDate=false, filtro digitalSignature/nonexpired y sticky=true, y llama MiniApplet.sign. Tres GET públicos independientes confirmaron solo la forma estable de un challenge XML de 113 bytes con tag1_timestamp; no se persistieron valores efímeros."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
+    evidence_ids: ["D11", "TRANSPORTES-QYS-2026-08-17"]
+    reason: "Contrato de autenticación por firma implementado en QA con comprobación fail-closed de origin, página, challenge, algoritmo, formato y propiedades. Falta aceptación E2E física; no se realizó autenticación, POST, firma real ni presentación administrativa."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E físico seguro limitado a la autenticación inicial del procedimiento 7002; no completar ni presentar el trámite."
+    notes: "El URL histórico https://sede.mitma.gob.es/sede_electronica/lang_castellano/ redirige actualmente a https://sede.transportes.gob.es/. Los Storage/Retrieve de fire.transportes.gob.es aparecen en CIM_Constants.js pero no se activan como endpoints/trust del perfil ni se llamaron durante la investigación."
 
   - inventory_id: "ES-PUB-0076"
     surface_key: "age-ministerio-de-vivienda-y-agenda-urbana"
@@ -6523,3 +6523,4 @@ availability, certificado, firma ni contrato técnico.
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
+[TRANSPORTES-QYS-2026-08-17]: https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible

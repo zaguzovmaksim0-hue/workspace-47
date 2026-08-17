@@ -242,6 +242,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             catalog["sourceRevision"],
         )
 
+    def test_transportes_qys_xades_profile_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(
+            item for item in catalog["entries"]
+            if item["portalId"] == "age-ministerio-de-transportes-y-movilidad-sostenible"
+        )
+
+        self.assertEqual("ES-PUB-0075", entry["inventoryId"])
+        self.assertEqual("transportes-qys-cert-login", entry["profileId"])
+        self.assertEqual(
+            "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+            entry["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", entry)
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("REVIEWED", entry["discoveryState"])
+        self.assertEqual("2026-08-17", entry["reviewedOn"])
+        self.assertIn("MINIAPPLET", entry["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", entry["observedMechanisms"])
+        self.assertEqual(["XADES"], entry["observedSignatureFormats"])
+        self.assertIn("e2e", entry["limitations"].lower())
+        self.assertNotEqual("VERIFIED_E2E", entry["inventoryStatus"])
+
     def test_melilla_batch_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         melilla = next(
