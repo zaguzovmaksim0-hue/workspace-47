@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "227691a9187587b87c6911837cb6e2314dbfac887c3b5dcb97466500addaccf5",
+  "sourceRevision": "1a80baee832b0a57e3aa70ce8af8251f83c4656f835a02f1d6662bc67ea164b2",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -619,24 +619,27 @@
     {
       "portalId": "age-agencia-espanola-de-medicamentos-y-productos-sanitarios-aemps",
       "inventoryId": "ES-PUB-0023",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Agencia Española de Medicamentos y Productos Sanitarios (AEMPS)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede de AEMPS ofrece públicamente una entrada al Registro Electrónico General y delega esa actuación al servicio REG-AGE.",
       "entryUrl": "https://sede.aemps.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "AEMPS-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la sede AEMPS delega públicamente en el Registro Electrónico General y se lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-agencia-estatal-de-meteorologia-aemet",
