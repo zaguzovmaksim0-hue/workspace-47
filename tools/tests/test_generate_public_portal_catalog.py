@@ -620,5 +620,26 @@ records:
         self.assertNotIn('const val JSON = """', registry)
 
 
+    def test_bne_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        bne = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-biblioteca-nacional-de-espana"
+        )
+
+        self.assertEqual("ES-PUB-0028", bne["inventoryId"])
+        self.assertEqual("reg-age-redsara", bne["profileId"])
+        self.assertEqual(
+            "https://sede.bne.gob.es/es/tramites/quejas-sugerencias",
+            bne["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", bne["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", bne["protocolFamily"])
+        self.assertEqual("E2E_PENDING", bne["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", bne["inventoryStatus"])
+        self.assertIn("reg-age", bne["limitations"].lower())
+        self.assertIn("e2e", bne["limitations"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()

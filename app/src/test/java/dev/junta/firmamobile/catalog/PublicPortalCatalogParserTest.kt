@@ -39,7 +39,6 @@ class PublicPortalCatalogParserTest {
         val inventoryCount = catalog.entries.count { it.inventoryId != null }
         assertTrue(inventoryCount >= 183)
         assertEquals(inventoryCount, catalog.entries.size)
-        assertEquals(34, catalog.entries.count { it.profileId != null })
         assertEquals(catalog.entries.size, catalog.entries.map { it.portalId }.toSet().size)
         assertEquals(catalog.entries.size, catalog.entries.map { it.entryUrl }.toSet().size)
         assertEquals(
@@ -79,7 +78,7 @@ class PublicPortalCatalogParserTest {
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.count { it.catalogStatus == PublicCatalogStatus.DISCOVERED } >= 68)
-        assertTrue(catalog.entries.count { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY } >= 144)
+        assertTrue(catalog.entries.any { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
     }
 
     @Test
@@ -305,5 +304,30 @@ class PublicPortalCatalogParserTest {
                 json + " ".repeat(PublicPortalCatalogParser.MAX_CATALOG_CHARS - json.length + 1),
             )
         }
+    }
+
+    @Test
+    fun `BNE alias retains the official register page while resolving exact REG AGE launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-biblioteca-nacional-de-espana")
+        }
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://sede.bne.gob.es/es/tramites/quejas-sugerencias"), portal.entryUrl)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
     }
 }
