@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 209 |
-| Fuentes oficiales totales registradas | 221 |
+| Fuentes oficiales portal-specific registradas | 210 |
+| Fuentes oficiales totales registradas | 222 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 118 |
+| `REVIEWED` | 119 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 60 |
+| `DISCOVERED` | 59 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2871,30 +2871,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio para la Transformación Digital y de la Función Pública"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica — fallback al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://digital.sede.gob.es"
     official_site: "https://digital.sede.gob.es/"
     e_sede: "https://digital.sede.gob.es/"
     entry_url: "https://digital.sede.gob.es/"
+    launch_url: "https://reg.redsara.es/es/"
     procedure_page: "NO_VERIFICADO"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio indica que, cuando un trámite de su competencia no dispone de procedimiento electrónico específico, la solicitud, escrito o comunicación puede presentarse a través del Registro Electrónico General (REG)."
+    protocol_evidence: "La página inicial oficial digital.sede.gob.es publica el enlace exacto https://reg.redsara.es/ bajo el texto Registro Electrónico General (REG); un contexto Chromium público nuevo con Accept-Language español observó el redirect documental HTTP 302 desde ese root a https://reg.redsara.es/es/, exactamente el startUrl de reg-age-redsara."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
+    evidence_ids: ["D11", "DIGITAL-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y redirect acotado al startUrl canónico; la sede ministerial se conserva como entry URL, no se añade digital.sede.gob.es a la confianza criptográfica REG-AGE y no se realizó E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Sede Digital → REG-AGE para un caso sin procedimiento específico sin realizar una presentación administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La evidencia de AutoFirma encontrada en JavaScript genérico ACCEDA2 de la sede no se usa para inferir algoritmo, formato, endpoint ni ABI propio del Ministerio; esos campos permanecen NO_VERIFICADO."
 
   - inventory_id: "ES-PUB-0079"
     surface_key: "age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico"
@@ -6522,4 +6523,5 @@ availability, certificado, firma ni contrato técnico.
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
+[DIGITAL-REG-2026-08-17]: https://digital.sede.gob.es/
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula

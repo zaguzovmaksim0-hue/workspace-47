@@ -573,4 +573,34 @@ class PublicPortalCatalogParserTest {
             repository.resolveLaunch(portal),
         )
     }
+
+
+    @Test
+    fun `Transformacion Digital REG alias retains official Sede while resolving exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-para-la-transformacion-digital-y-de-la-funcion-publica")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://digital.sede.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
 }
