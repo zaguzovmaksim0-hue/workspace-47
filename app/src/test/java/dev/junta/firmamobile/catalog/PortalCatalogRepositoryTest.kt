@@ -76,6 +76,7 @@ class PortalCatalogRepositoryTest {
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
                 "gran-canaria-sede-electronica",
+                "ministerio-economia-instancia-generica",
                 "diputacion-toledo-sede",
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
