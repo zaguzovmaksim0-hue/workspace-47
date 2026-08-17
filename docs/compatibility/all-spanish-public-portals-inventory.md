@@ -157,6 +157,8 @@ que la investigación pública segura se agotó.
 
 ## 4. Contabilidad de cobertura del snapshot
 
+> **Fuente operativa de verdad para el estado actual:** los registros YAML de este inventario y el catálogo generado. Para evitar copiar cifras históricas entre chats, ejecutar `python tools/report_public_portal_coverage.py`; la suite de tests comprueba que las tablas resumidas de esta sección coincidan con los registros reales.
+
 El denominador nacional todavía es desconocido. Por tanto, no se publica un
 porcentaje «de España». Este snapshot conserva las 20 superficies del seed e
 ingiere de extremo a extremo el directorio oficial de sedes AGE [D11]: 79
@@ -195,6 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 201 |
 | Fuentes oficiales totales registradas | 213 |
 | Entradas `VERIFIED_E2E` | 4 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 27 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 31 |
+| Entradas restantes fuera de ambos estados | 152 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -215,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 21 |
+| `IMPLEMENTED_NOT_E2E` | 27 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 151 |
+| `BROWSE_ONLY` | 145 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -228,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 105 |
+| `REVIEWED` | 109 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 73 |
+| `DISCOVERED` | 69 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
