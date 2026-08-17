@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "25fa21b9bc35a73f17d8193e5502fc971751ced1d5dc9cffed5b4f3407d82232",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1939,24 +1939,27 @@
     {
       "portalId": "age-museo-nacional-centro-de-arte-reina-sofia",
       "inventoryId": "ES-PUB-0080",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Museo Nacional Centro de Arte Reina Sofía",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Museo Reina Sofía publica un servicio específico de acceso al Registro Electrónico General de la Administración General del Estado (REG-AGE) para solicitudes, escritos y comunicaciones sin procedimiento electrónico o formulario normalizado específico.",
       "entryUrl": "https://museoreinasofia.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "REINA-SOFIA-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede del Museo delega explícitamente en REG-AGE y la raíz oficial publicada negocia idioma hasta el startUrl español exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-mutualidad-general-judicial-mugeju",
