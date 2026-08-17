@@ -110,7 +110,7 @@ class MinecoPadesAdapter(
             throw error
         }
         var options: SignatureOptions? = null
-        var output: ClearingByteArrayOutputStream? = null
+        var output: MinecoClearingByteArrayOutputStream? = null
         var detachedContent: ByteArray? = null
         var material: CadesPreSignMaterial? = null
         try {
@@ -128,7 +128,7 @@ class MinecoPadesAdapter(
                 setPreferredSignatureSize(PREFERRED_SIGNATURE_BYTES)
             }
             document.addSignature(signature, options)
-            output = ClearingByteArrayOutputStream()
+            output = MinecoClearingByteArrayOutputStream()
             val external = document.saveIncrementalForExternalSigning(output)
             detachedContent = external.content.use { stream ->
                 val bytes = stream.readBytes()
@@ -243,7 +243,7 @@ private class MinecoPadesState(
     sourcePdf: ByteArray,
     private val signatureOptions: SignatureOptions,
     val externalSigningSupport: ExternalSigningSupport,
-    private val output: ClearingByteArrayOutputStream,
+    private val output: MinecoClearingByteArrayOutputStream,
     placeholderCms: ByteArray,
     detachedContent: ByteArray,
     signingCertificateFingerprint: ByteArray,
@@ -284,7 +284,7 @@ private class MinecoPadesState(
     }
 }
 
-private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {
+private class MinecoClearingByteArrayOutputStream : ByteArrayOutputStream() {
     fun clear() {
         buf.fill(0)
         reset()
