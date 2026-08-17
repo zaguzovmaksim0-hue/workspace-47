@@ -517,6 +517,39 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `UNED REG alias retains the current UNED service while resolving only exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-universidad-nacional-de-educacion-a-distancia-uned")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://uned.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"),
+            portal.entryUrl,
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(
+            PublicCatalogStatus.E2E_PENDING,
+            catalog.entries.single { it.portalId == portal.portalId }.catalogStatus,
+        )
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `Exteriores REG alias retains the official consular procedure while resolving only exact REG AGE`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
