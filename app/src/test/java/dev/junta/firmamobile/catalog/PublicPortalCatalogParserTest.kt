@@ -560,7 +560,10 @@ class PublicPortalCatalogParserTest {
         }
 
         assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
-        assertEquals("ES-PUB-0076", portal.inventoryId)
+        assertEquals(
+            "ES-PUB-0076",
+            catalog.entries.single { it.portalId == portal.portalId }.inventoryId,
+        )
         assertEquals(
             URI("https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"),
             portal.entryUrl,
