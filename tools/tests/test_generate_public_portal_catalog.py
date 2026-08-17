@@ -75,6 +75,26 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", pag_reg["limitations"].lower())
         self.assertIn("e2e", pag_reg["limitations"].lower())
 
+        educacion = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-educacion-formacion-profesional-y-deportes"
+        )
+        self.assertEqual("reg-age-redsara", educacion["profileId"])
+        self.assertEqual("ES-PUB-0066", educacion["inventoryId"])
+        self.assertEqual(
+            "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html",
+            educacion["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", educacion["launchUrl"])
+        self.assertEqual("E2E_PENDING", educacion["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", educacion["inventoryStatus"])
+        self.assertEqual("REVIEWED", educacion["discoveryState"])
+        self.assertEqual("2026-08-17", educacion["reviewedOn"])
+        self.assertIn("reg-age", educacion["limitations"].lower())
+        self.assertIn("qa", educacion["limitations"].lower())
+        self.assertIn("e2e", educacion["limitations"].lower())
+
+
         redsara = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "age-reg-redsara"
@@ -617,6 +637,27 @@ records:
         registry = REGISTRY_SOURCE.read_text(encoding="utf-8")
         self.assertIn("BuildConfig.SITE_PROFILE_CATALOG_JSON", registry)
         self.assertNotIn('const val JSON = """', registry)
+
+
+    def test_bne_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        bne = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-biblioteca-nacional-de-espana"
+        )
+
+        self.assertEqual("ES-PUB-0028", bne["inventoryId"])
+        self.assertEqual("reg-age-redsara", bne["profileId"])
+        self.assertEqual(
+            "https://sede.bne.gob.es/es/tramites/quejas-sugerencias",
+            bne["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", bne["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", bne["protocolFamily"])
+        self.assertEqual("E2E_PENDING", bne["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", bne["inventoryStatus"])
+        self.assertIn("reg-age", bne["limitations"].lower())
+        self.assertIn("e2e", bne["limitations"].lower())
 
 
 if __name__ == "__main__":

@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 202 |
-| Fuentes oficiales totales registradas | 214 |
+| Fuentes oficiales portal-specific registradas | 204 |
+| Fuentes oficiales totales registradas | 216 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 28 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 32 |
-| Entradas restantes fuera de ambos estados | 151 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 30 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 34 |
+| Entradas restantes fuera de ambos estados | 149 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 28 |
+| `IMPLEMENTED_NOT_E2E` | 30 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 144 |
+| `BROWSE_ONLY` | 142 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 110 |
+| `REVIEWED` | 112 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 68 |
+| `DISCOVERED` | 66 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1315,29 +1315,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Biblioteca Nacional de España"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Quejas y sugerencias — Biblioteca Nacional de España"
     surface_type: "SEDE"
     origin: "https://sede.bne.gob.es"
     official_site: "https://sede.bne.gob.es/"
     e_sede: "https://sede.bne.gob.es/"
-    entry_url: "https://sede.bne.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    entry_url: "https://sede.bne.gob.es/es/tramites/quejas-sugerencias"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.bne.gob.es/es/tramites/quejas-sugerencias"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede BNE ofrece el Registro Electrónico General como vía electrónica para presentar quejas o sugerencias dirigidas a la Biblioteca Nacional de España."
+    protocol_evidence: "La ficha oficial Quejas y sugerencias de la BNE ofrece explícitamente el Registro Electrónico General y su enlace público conduce exactamente a https://reg.redsara.es/es/; el contrato de firma pertenece al perfil REG-AGE ya cubierto y no se atribuye un ABI propio a sede.bne.gob.es."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "BNE-REG-2026-08-16", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página BNE como entry URL, no se amplía trust al origin BNE y falta E2E físico de la transición."
+    reviewed_at: "2026-08-16"
+    next_gate: "Validar físicamente la transición BNE → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
     notes: "Ministerio(s) enumerador(es): Ministerio de Cultura."
 
   - inventory_id: "ES-PUB-0029"
@@ -2493,30 +2494,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Educación, Formación Profesional y Deportes"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Proceso selectivo Liceo Cervantes Roma 2026 — vía REG"
     surface_type: "SEDE"
-    origin: "https://sede.educacion.gob.es"
-    official_site: "https://sede.educacion.gob.es/portada.html"
+    origin: "https://www.educacionfpydeportes.gob.es"
+    official_site: "https://www.educacionfpydeportes.gob.es/"
     e_sede: "https://sede.educacion.gob.es/portada.html"
-    entry_url: "https://sede.educacion.gob.es/portada.html"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    entry_url: "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La ficha oficial del proceso selectivo 2026 documenta que la presentación telemática se realiza a través del Registro Electrónico General de la AGE; el plazo de solicitudes de esa convocatoria ya está finalizado."
+    protocol_evidence: "La página oficial del Ministerio publica literalmente https://reg.redsara.es/es/ como vía de presentación de la solicitud. Ese launch URL coincide exactamente con el startUrl del perfil reg-age-redsara; no se infiere un ABI de firma propio de Educación ni se afirma que la convocatoria siga abierta."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Educación, Formación Profesional y Deportes."
+    evidence_ids: ["D11", "EDU-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL publicado; se conserva la ficha ministerial como entry URL, no se amplía la confianza de firma al origen www.educacionfpydeportes.gob.es y no se realizó E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E físico seguro Educación → REG-AGE sobre una futura convocatoria abierta que publique el mismo destino exacto, sin completar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La convocatoria concreta usada como evidencia cerró el 13-04-2026 y publicó resolución definitiva el 17-07-2026; esta implementación acredita el contrato de delegación REG, no disponibilidad temporal del proceso."
 
   - inventory_id: "ES-PUB-0067"
     surface_key: "age-ministerio-de-igualdad"
@@ -6275,6 +6277,7 @@ Orden de expansión recomendado:
 [P12A]: https://sede.ugr.es/portal/requisitos/index.html
 [P13]: https://sede.us.es/opencms/system/modules/sede/contents/pages/requisitosTecnicos
 [P13A]: https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01
+[BNE-REG-2026-08-16]: https://sede.bne.gob.es/es/tramites/quejas-sugerencias
 [P14]: https://reg.redsara.es/es/
 [P14A]: https://reg.redsara.es/preguntas-frecuentes
 [P14B]: https://reg.redsara.es/es/media/es/REG-ManualUsuario.pdf
@@ -6507,3 +6510,4 @@ availability, certificado, firma ni contrato técnico.
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
+[EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
