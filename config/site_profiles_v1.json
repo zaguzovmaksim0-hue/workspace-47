@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 24,
+  "catalogVersion": 25,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -907,6 +907,26 @@
       "evidence": [
         {"url":"https://sede.policia.gob.es/","reviewedOn":"2026-08-15"},
         {"url":"https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml","reviewedOn":"2026-08-15"}
+      ]
+    },
+    {
+      "profileId": "portal-funciona-public-home",
+      "profileVersion": 1,
+      "displayName": "Portal Funciona — inicio público",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.funciona.gob.es/es/home",
+      "initiatorOrigins": ["https://sede.funciona.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.funciona.gob.es/public/servicios","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.funciona.gob.es/es/home","reviewedOn":"2026-08-17"}
       ]
     },
     {
