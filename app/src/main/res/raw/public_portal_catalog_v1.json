@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "4dec2ca9f14828812e59e9d31adfb082a8319d4ece2be822be045d955549530c",
+  "sourceRevision": "15444c7b00669abd20b7d245f0dfd61c87dc2b9e8ea5b41fdffcfdc5f938f556",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1349,24 +1349,27 @@
     {
       "portalId": "age-instituto-nacional-de-administracion-publica-inap",
       "inventoryId": "ES-PUB-0055",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Instituto Nacional de Administración Pública (INAP)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del INAP ofrece públicamente el Registro Electrónico General como vía de registro electrónico y delega esa actuación al servicio REG-AGE.",
       "entryUrl": "https://sede.inap.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INAP-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la sede INAP delega públicamente en REG-AGE y se lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-instituto-nacional-de-estadistica-ine",
@@ -1547,24 +1550,30 @@
     {
       "portalId": "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030",
       "inventoryId": "ES-PUB-0064",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "V Certamen Artístico Amigos de los Animales — vía REG alternativa",
       "organization": "Ministerio de Derechos Sociales, Consumo y Agenda 2030",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://dsca.sede.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "La convocatoria 2026 del Ministerio ofrece, además del formulario propio, una vía alternativa explícita por Registro Electrónico General dirigida a la Dirección General de Derechos de los Animales.",
+      "entryUrl": "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "DSCA-REG-2026-08-16",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página ministerial como entry URL, no se amplía la confianza de firma al origen www.dsca.gob.es y no se realizó E2E físico."
     },
     {
       "portalId": "age-ministerio-de-economia-comercio-y-empresa",
@@ -3113,26 +3122,27 @@
     {
       "portalId": "tenerife-portal-institucional",
       "inventoryId": "ES-PUB-0127",
-      "profileId": null,
+      "profileId": "tenerife-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de Tenerife",
       "organization": "Cabildo Insular de Tenerife",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la tramitación electrónica en la Sede oficial https://sede.tenerife.es/, cuyo launch exacto ya dispone de perfil QA-only independiente.",
       "entryUrl": "https://www.tenerife.es/",
+      "launchUrl": "https://sede.tenerife.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_TENERIFE_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I06A",
         "I06B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Alias QA-only al perfil existente tenerife-sede-electronica por delegación oficial exacta a https://sede.tenerife.es/; no se hereda confianza al origin institucional y falta E2E físico desde la entrada www.tenerife.es."
     },
     {
       "portalId": "tenerife-sede-electronica",

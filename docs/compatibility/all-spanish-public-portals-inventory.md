@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 204 |
-| Fuentes oficiales totales registradas | 216 |
+| Fuentes oficiales portal-specific registradas | 205 |
+| Fuentes oficiales totales registradas | 217 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 30 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 34 |
-| Entradas restantes fuera de ambos estados | 149 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 33 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 37 |
+| Entradas restantes fuera de ambos estados | 146 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 30 |
+| `IMPLEMENTED_NOT_E2E` | 33 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 142 |
+| `BROWSE_ONLY` | 139 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 112 |
+| `REVIEWED` | 114 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 66 |
+| `DISCOVERED` | 64 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2159,23 +2159,24 @@ records:
     official_site: "https://sede.inap.gob.es/"
     e_sede: "https://sede.inap.gob.es/"
     entry_url: "https://sede.inap.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.inap.gob.es/"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del INAP ofrece públicamente el Registro Electrónico General como vía de registro electrónico y delega esa actuación al servicio REG-AGE."
+    protocol_evidence: "La portada oficial del INAP contiene tres enlaces públicos a https://reg.redsara.es/; uno está rotulado exactamente «Acceso al Registro Electrónico General». Workspace-47 reutiliza únicamente el startUrl canónico ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara, sin atribuir a sede.inap.gob.es un ABI de firma propio ni ampliar sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "INAP-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la sede INAP delega públicamente en REG-AGE y se lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición INAP → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
     notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
 
   - inventory_id: "ES-PUB-0056"
@@ -2432,30 +2433,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Derechos Sociales, Consumo y Agenda 2030"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "V Certamen Artístico Amigos de los Animales — vía REG alternativa"
     surface_type: "SEDE"
-    origin: "https://dsca.sede.gob.es"
-    official_site: "https://dsca.sede.gob.es/"
+    origin: "https://www.dsca.gob.es"
+    official_site: "https://www.dsca.gob.es/"
     e_sede: "https://dsca.sede.gob.es/"
-    entry_url: "https://dsca.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    entry_url: "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La convocatoria 2026 del Ministerio ofrece, además del formulario propio, una vía alternativa explícita por Registro Electrónico General dirigida a la Dirección General de Derechos de los Animales."
+    protocol_evidence: "La página oficial vigente del V Certamen indica plazo 13-07-2026 a 10-10-2026 y enlaza literalmente la vía alternativa REG a https://reg.redsara.es/es/; el launch URL coincide exactamente con el startUrl del perfil reg-age-redsara, sin inferir un ABI de firma propio de DSCA."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Derechos Sociales, Consumo y Agenda 2030."
+    evidence_ids: ["D11", "DSCA-REG-2026-08-16", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por igualdad exacta del launch URL oficial; se conserva la página ministerial como entry URL, no se amplía la confianza de firma al origen www.dsca.gob.es y no se realizó E2E físico."
+    reviewed_at: "2026-08-16"
+    next_gate: "E2E físico seguro DSCA → REG-AGE sin completar ni presentar una candidatura administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La implementación cubre únicamente la vía alternativa REG publicada por el Ministerio para esta convocatoria, no el formulario propio dsca.sede.gob.es/procedimiento/portada?idProc=155723."
 
   - inventory_id: "ES-PUB-0065"
     surface_key: "age-ministerio-de-economia-comercio-y-empresa"
@@ -4383,23 +4385,24 @@ records:
     official_site: "https://www.tenerife.es/"
     e_sede: "https://sede.tenerife.es/"
     entry_url: "https://www.tenerife.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://sede.tenerife.es/"
+    procedure_page: "https://sede.tenerife.es/"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_TENERIFE_SEDE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El portal institucional delega la tramitación electrónica en la Sede oficial https://sede.tenerife.es/, cuyo launch exacto ya dispone de perfil QA-only independiente."
+    protocol_evidence: "La información oficial del Cabildo ubica expresamente la Sede electrónica en sede.tenerife.es; el alias conserva www.tenerife.es como entry URL y solo resuelve el launch exacto del perfil tenerife-sede-electronica, sin habilitar capacidades en el origin institucional."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D12", "I06A", "I06B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    reason: "Alias QA-only al perfil existente tenerife-sede-electronica por delegación oficial exacta a https://sede.tenerife.es/; no se hereda confianza al origin institucional y falta E2E físico desde la entrada www.tenerife.es."
+    reviewed_at: "2026-08-16"
+    next_gate: "Validar físicamente que la entrada institucional conduce a la Sede exacta y que el perfil QA-only conserva sus límites, sin autenticarse, firmar ni presentar una actuación administrativa."
 
   - inventory_id: "ES-PUB-0128"
     surface_key: "tenerife-sede-electronica"
@@ -6236,6 +6239,7 @@ Orden de expansión recomendado:
 
 ### Evidencia portal-specific
 
+[DSCA-REG-2026-08-16]: https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje
 [POLICIA-SEDE-2026-08-15]: https://sede.policia.gob.es/
 [POLICIA-SOLICITUD-2026-08-15]: https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml
 
@@ -6509,5 +6513,5 @@ availability, certificado, firma ni contrato técnico.
 [DP39B]: https://www.ebizkaia.eus/es/medios-de-identificacion
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
-[CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
+[CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
