@@ -41,6 +41,24 @@ SPEC.loader.exec_module(GENERATOR)
 
 
 class PublicPortalCatalogGeneratorTest(unittest.TestCase):
+    def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        puertos = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-puertos-del-estado"
+        )
+        self.assertEqual("ES-PUB-0085", puertos["inventoryId"])
+        self.assertEqual("reg-age-redsara", puertos["profileId"])
+        self.assertEqual(
+            "https://puertos.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+            puertos["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", puertos["launchUrl"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", puertos["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", puertos["catalogStatus"])
+        self.assertEqual([], puertos["observedMechanisms"])
+        self.assertEqual([], puertos["observedSignatureFormats"])
+
     def test_committed_resource_is_byte_for_byte_reproducible(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         generated = json.dumps(
@@ -122,6 +140,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("reg-age", aemps["limitations"].lower())
         self.assertIn("qa", aemps["limitations"].lower())
         self.assertIn("e2e", aemps["limitations"].lower())
+
+        puertos = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-puertos-del-estado"
+        )
+        self.assertEqual("reg-age-redsara", puertos["profileId"])
+        self.assertEqual(
+            "https://puertos.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+            puertos["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", puertos["launchUrl"])
+        self.assertEqual("E2E_PENDING", puertos["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", puertos["inventoryStatus"])
+        self.assertEqual("2026-08-17", puertos["reviewedOn"])
+        self.assertEqual([], puertos["observedMechanisms"])
+        self.assertEqual([], puertos["observedSignatureFormats"])
+        self.assertIn("reg-age", puertos["limitations"].lower())
+        self.assertIn("qa", puertos["limitations"].lower())
+        self.assertIn("e2e", puertos["limitations"].lower())
 
         aeat = next(
             entry for entry in catalog["entries"]
