@@ -751,6 +751,31 @@ records:
         self.assertIn("alias", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_mivau_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mivau = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-vivienda-y-agenda-urbana"
+        )
+        self.assertEqual("reg-age-redsara", mivau["profileId"])
+        self.assertEqual("ES-PUB-0076", mivau["inventoryId"])
+        self.assertEqual(
+            "https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+            mivau["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", mivau["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", mivau["protocolFamily"])
+        self.assertEqual("E2E_PENDING", mivau["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mivau["inventoryStatus"])
+        self.assertEqual("REVIEWED", mivau["discoveryState"])
+        self.assertEqual("2026-08-17", mivau["reviewedOn"])
+        self.assertEqual([], mivau["observedMechanisms"])
+        self.assertEqual([], mivau["observedSignatureFormats"])
+        self.assertIn("reg-age", mivau["limitations"].lower())
+        self.assertIn("qa", mivau["limitations"].lower())
+        self.assertIn("e2e", mivau["limitations"].lower())
+
+
     def test_miteco_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         miteco = next(
