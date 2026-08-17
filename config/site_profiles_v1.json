@@ -656,6 +656,26 @@
       ]
     },
     {
+      "profileId": "gran-canaria-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Cabildo Insular de Gran Canaria — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
+      "initiatorOrigins": ["https://sede.grancanaria.com"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma PAdES de solicitud en la Sede del Cabildo de Gran Canaria","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"headless":"true","filters":"nonexpired:"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.grancanaria.com/informacion-instancia","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.grancanaria.com/informacion-instancia?p_p_id=Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_cacheability=cacheLevelPage&p_p_col_id=&p_p_col_count=0&_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_javax.faces.resource=AFIRMA%2Foperaciones.js&_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_ln=js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
       "profileId": "tenerife-sede-electronica",
       "profileVersion": 1,
       "displayName": "Cabildo Insular de Tenerife — Sede electrónica",

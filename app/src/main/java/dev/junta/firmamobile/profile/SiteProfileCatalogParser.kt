@@ -241,6 +241,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
             }
+            if (p.profileId.value == GRAN_CANARIA_PROFILE_ID) {
+                validateGranCanariaProfile(p)
+            }
             if (p.profileId.value == ISCIII_PROFILE_ID) {
                 validateIsciiiProfile(p)
             }
@@ -339,7 +342,10 @@ object SiteProfileCatalogParser {
                 if (op.inputAdapterId.value == "miniapplet-autoscript-v1") {
                     require(op.operation == ProtocolOperation.SIGN)
                     require(
-                        op.packaging == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
+                        op.packaging == if (
+                            p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
+                            p.profileId.value == GRAN_CANARIA_PROFILE_ID
+                        ) {
                             SignaturePackaging.ATTACHED
                         } else {
                             SignaturePackaging.DETACHED
@@ -404,6 +410,12 @@ object SiteProfileCatalogParser {
                                 }
                             }
                         }
+                        SignatureFormat.PADES -> {
+                            require(p.profileId.value == GRAN_CANARIA_PROFILE_ID)
+                            require(op.endpointId == null && op.mode == null)
+                            require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                            require(op.fixedExtraProperties == GRAN_CANARIA_EXTRA_PROPERTIES)
+                        }
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
                             require(
@@ -421,7 +433,7 @@ object SiteProfileCatalogParser {
                                 },
                             )
                         }
-                        SignatureFormat.PADES, SignatureFormat.FACTURAE -> error("unsupported adapter format")
+                        SignatureFormat.FACTURAE -> error("unsupported adapter format")
                         null -> error("signing format required")
                     }
                 }
@@ -563,6 +575,41 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TEA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateGranCanariaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == GRAN_CANARIA_PROFILE_VERSION)
+        require(profile.displayName == GRAN_CANARIA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == GRAN_CANARIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(GRAN_CANARIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(
+            profile.operationPolicies == mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = GRAN_CANARIA_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                    format = SignatureFormat.PADES,
+                    packaging = SignaturePackaging.ATTACHED,
+                    mode = null,
+                    fixedExtraProperties = GRAN_CANARIA_EXTRA_PROPERTIES,
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == GRAN_CANARIA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
     }
 
     private fun validateTenerifeProfile(profile: SiteProfile) {
@@ -1147,6 +1194,27 @@ object SiteProfileCatalogParser {
         "policy" to "FirmaAGE",
         "headless" to "true",
         "filters" to "nonexpired:true;authCert:true",
+    )
+    private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
+    private const val GRAN_CANARIA_PROFILE_VERSION = 1
+    private const val GRAN_CANARIA_DISPLAY_NAME = "Cabildo Insular de Gran Canaria — Sede electrónica"
+    private const val GRAN_CANARIA_START_URL = "https://sede.grancanaria.com/sede-privado/instancia-general?inicio"
+    private const val GRAN_CANARIA_ORIGIN = "https://sede.grancanaria.com"
+    private const val GRAN_CANARIA_SAFE_DESCRIPTION =
+        "Firma PAdES de solicitud en la Sede del Cabildo de Gran Canaria"
+    private val GRAN_CANARIA_EXTRA_PROPERTIES = linkedMapOf(
+        "headless" to "true",
+        "filters" to "nonexpired:",
+    )
+    private val GRAN_CANARIA_EVIDENCE_URLS = setOf(
+        "https://sede.grancanaria.com/informacion-instancia",
+        "https://sede.grancanaria.com/informacion-instancia?" +
+            "p_p_id=Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites&" +
+            "p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&" +
+            "p_p_cacheability=cacheLevelPage&p_p_col_id=&p_p_col_count=0&" +
+            "_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_" +
+            "javax.faces.resource=AFIRMA%2Foperaciones.js&" +
+            "_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_ln=js",
     )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
     private const val TENERIFE_PROFILE_VERSION = 1
