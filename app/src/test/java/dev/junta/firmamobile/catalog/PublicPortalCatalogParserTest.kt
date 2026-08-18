@@ -78,6 +78,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
