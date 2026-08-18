@@ -110,7 +110,7 @@ class TransparenciaPadesAdapter(
             throw error
         }
         var options: SignatureOptions? = null
-        var output: ClearingByteArrayOutputStream? = null
+        var output: TransparenciaClearingByteArrayOutputStream? = null
         var detachedContent: ByteArray? = null
         var material: CadesPreSignMaterial? = null
         try {
@@ -128,7 +128,7 @@ class TransparenciaPadesAdapter(
                 setPreferredSignatureSize(PREFERRED_SIGNATURE_BYTES)
             }
             document.addSignature(signature, options)
-            output = ClearingByteArrayOutputStream()
+            output = TransparenciaClearingByteArrayOutputStream()
             val external = document.saveIncrementalForExternalSigning(output)
             detachedContent = external.content.use { stream ->
                 val bytes = stream.readBytes()
@@ -236,7 +236,7 @@ private class TransparenciaPadesState(
     sourcePdf: ByteArray,
     private val signatureOptions: SignatureOptions,
     val externalSigningSupport: ExternalSigningSupport,
-    private val output: ClearingByteArrayOutputStream,
+    private val output: TransparenciaClearingByteArrayOutputStream,
     placeholderCms: ByteArray,
     detachedContent: ByteArray,
     signingCertificateFingerprint: ByteArray,
@@ -277,7 +277,7 @@ private class TransparenciaPadesState(
     }
 }
 
-private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {
+private class TransparenciaClearingByteArrayOutputStream : ByteArrayOutputStream() {
     fun clear() {
         buf.fill(0)
         reset()
