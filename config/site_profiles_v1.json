@@ -1013,6 +1013,26 @@
         {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
       ]
+    },
+    {
+      "profileId": "diputacion-badajoz-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación de Badajoz — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dip-badajoz.es",
+      "initiatorOrigins": ["https://sede.dip-badajoz.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Diputación de Badajoz","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"policy":"FirmaAGE","headless":"true","filters":"nonexpired:true;authCert:true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dip-badajoz.es","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1","reviewedOn":"2026-08-18"}
+      ]
     }
   ]
 }

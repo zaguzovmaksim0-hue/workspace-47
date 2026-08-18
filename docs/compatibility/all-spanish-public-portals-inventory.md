@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 228 |
 | Fuentes oficiales totales registradas | 240 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 57 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 61 |
-| Entradas restantes fuera de ambos estados | 122 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 58 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 62 |
+| Entradas restantes fuera de ambos estados | 121 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 57 |
+| `IMPLEMENTED_NOT_E2E` | 58 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 115 |
+| `BROWSE_ONLY` | 114 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4931,25 +4931,26 @@ records:
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dip-badajoz.es"
     official_site: "https://www.dip-badajoz.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dip-badajoz.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    e_sede: "https://sede.dip-badajoz.es"
+    entry_url: "https://sede.dip-badajoz.es"
+    procedure_page: "https://sede.dip-badajoz.es/sede/tramitacionElectronica.do?asu_mod_cod=67&asu_cod=68&asunto=68&aplcorreo=4&ent_id=10&idioma=1"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MINIAPPLET"
+    protocol_family: "MINIAPPLET"
+    signature_format: "CADES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "NO_APLICA"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Instancia General de la Diputación de Badajoz mediante firma local CAdES-detached SHA256withRSA; la firma documental posterior queda fuera del contrato implementado."
+    protocol_evidence: "La portada oficial enlaza la Sede; el catálogo vigente 2026 expone Instancia General. El login público invoca firmar(formLogin.shaLogin.value, errorText, '', 'TEXTO', 0, pulsarFirmarIdentificateCallback, pulsarFirmarIdentificateCallbackError, true), que en firmaDigital.js SHA-256 9e3dced47cdf634d120c4783b22ae0f9e00be3d42fad13429de38f5ef5921483 resuelve MiniApplet.sign con CAdES SHA256withRSA y extraProperties policy=FirmaAGE, headless=true, filters=nonexpired:true;authCert:true."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP06A", "DP06B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP06A", "DP06B", "BADAJOZ-INSTANCIA-2026-08-18", "BADAJOZ-LOGIN-2026-08-18"]
+    reason: "Contrato público de login con certificado implementado en QA y limitado a autenticación: CAdES-detached SHA256withRSA sobre shaLogin con parámetros exactos y callback a firmaLogin. No se atribuye este tuple a la firma documental posterior; sin E2E."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificar E2E del acceso con certificado y, por separado, observar tras autenticación el contrato de firma documental de Instancia General sin ejecutar firma ni presentación."
+
 
   - inventory_id: "ES-PUB-0145"
     surface_key: "diputacion-barcelona-portal"

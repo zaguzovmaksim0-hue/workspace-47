@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "ed0a217c5cd59348d06ea0ae2920f78b3e4924742c459e3a1b178772b9a4fd10",
+  "sourceRevision": "12a3ad952eafee49b06dd73faf3b177b44bd38d0dd0e0dd0fcaf8df2e537a405",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3636,26 +3636,34 @@
     {
       "portalId": "diputacion-badajoz-portal",
       "inventoryId": "ES-PUB-0144",
-      "profileId": null,
+      "profileId": "diputacion-badajoz-portal",
       "displayName": "Portal oficial de Diputación Provincial de Badajoz",
       "organization": "Diputación Provincial de Badajoz",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Extremadura",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.dip-badajoz.es",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "purpose": "Acceso con certificado a la Instancia General de la Diputación de Badajoz mediante firma local CAdES-detached SHA256withRSA; la firma documental posterior queda fuera del contrato implementado.",
+      "entryUrl": "https://sede.dip-badajoz.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP06A",
-        "DP06B"
+        "DP06B",
+        "BADAJOZ-INSTANCIA-2026-08-18",
+        "BADAJOZ-LOGIN-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato público de login con certificado implementado en QA y limitado a autenticación: CAdES-detached SHA256withRSA sobre shaLogin con parámetros exactos y callback a firmaLogin. No se atribuye este tuple a la firma documental posterior; sin E2E."
     },
     {
       "portalId": "diputacion-barcelona-portal",

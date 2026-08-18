@@ -147,6 +147,7 @@ class MainActivity : ComponentActivity() {
         val aragonAdapter = LocalCadesDetachedAdapter()
         val dgtAdapter = DgtVerificationCadesAdapter()
         val lleidaAdapter = DiputacionLleidaCadesAdapter()
+        val badajozAdapter = DiputacionBadajozCadesAdapter()
         val ugrAdapter = UgrCadesDetachedAdapter()
         val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
         val mitesAdapter = MitesCertificateLoginCadesAdapter()
@@ -184,6 +185,7 @@ class MainActivity : ComponentActivity() {
                     aragonAdapter.id -> aragonAdapter
                     dgtAdapter.id -> dgtAdapter
                     lleidaAdapter.id -> lleidaAdapter
+                    badajozAdapter.id -> badajozAdapter
                     ugrAdapter.id -> ugrAdapter
                     jccmAdapter.id -> jccmAdapter
                     mitesAdapter.id -> mitesAdapter
