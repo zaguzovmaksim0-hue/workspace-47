@@ -738,16 +738,18 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `Portal Funciona public home profile is QA only and exposes no sensitive capability`() {
-        val profileId = ProfileId("portal-funciona-public-home")
-        val start = URI("https://sede.funciona.gob.es/es/home")
+    fun `OEPM ProtegeO public launch profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("oepm-protegeo-general")
+        val start = URI(
+            "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
+        )
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
         assertEquals(1, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(start, profile.startUrl)
-        assertEquals(setOf(ExactOrigin.parse("https://sede.funciona.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.oepm.gob.es")), profile.initiatorOrigins)
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
@@ -762,10 +764,8 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://auth-api.redsara.es/")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://autentica.redsara.es/")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es:444/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.oepm.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.oepm.gob.es:444/")))
     }
 
     @Test
@@ -871,6 +871,38 @@ class SiteProfileCatalogParserTest {
         assertTrue(release.profileMetadata(ProfileId("junta-andalucia")) != null)
         assertTrue(qa.profile(ProfileId("junta-andalucia")) != null)
     }
+
+    @Test
+    fun `Portal Funciona public home profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("portal-funciona-public-home")
+        val start = URI("https://sede.funciona.gob.es/es/home")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.funciona.gob.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(2, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://auth-api.redsara.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://autentica.redsara.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es:444/")))
+    }
+
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")
