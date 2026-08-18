@@ -890,6 +890,41 @@
       ]
     },
     {
+      "profileId": "diputacion-albacete-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Albacete — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567",
+      "initiatorOrigins": ["https://sede.dipualba.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://identificacionssl.sedipualba.es"],
+        "sourceUrls": ["https://sede.dipualba.es/segex/identificacion_opciones.aspx"],
+        "sourceFixedQueryParameters": {"idioma":"es"},
+        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
+        "linkedEphemeralQueryParameters": ["idtoken"],
+        "requestPath": "/",
+        "fixedQueryParameters": {"idioma":"es","entidad":"02000"},
+        "requiredEphemeralQueryParameters": ["idtoken"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.dipualba.es/carpetaciudadana/login.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.dipualba.es/segex/identificacion_opciones.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "policia-solicitud-generica",
       "profileVersion": 1,
       "displayName": "Policía Nacional — Solicitud genérica",
