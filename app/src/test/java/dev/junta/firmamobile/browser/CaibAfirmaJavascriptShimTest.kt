@@ -39,7 +39,7 @@ class CaibAfirmaJavascriptShimTest {
         assertTrue(enabled.contains("CAIB_SET_SERVLETS"))
         assertTrue(enabled.contains("type: \"CAIB_XML_BATCH\""))
         assertTrue(enabled.contains("pending.caibXml === true"))
-        assertTrue(enabled.contains("/-1\/index$/"))
+        assertTrue(enabled.contains("/-1\\/index$/"))
         assertFalse(enabled.contains("__JFM_CAIB_BATCH_COMPATIBILITY_ENABLED__"))
     }
 }
