@@ -74,6 +74,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-huesca-portal",
                 "diputacion-lugo-sede",
                 "diputacion-leon-sede",
+                "consell-mallorca-sede",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",

@@ -87,6 +87,7 @@ class JuntaOriginPolicyTest {
             "sede.deputacionlugo.org",
             "sede.dipuleon.es",
             "identificacionssl.sedipualba.es",
+            "cim.secimallorca.net",
             "sede.mscbs.gob.es",
             "sede.tea.hacienda.gob.es",
             "www1.tea.hacienda.gob.es",
