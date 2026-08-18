@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 234 |
-| Fuentes oficiales totales registradas | 246 |
+| Fuentes oficiales portal-specific registradas | 236 |
+| Fuentes oficiales totales registradas | 248 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 61 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 65 |
-| Entradas restantes fuera de ambos estados | 118 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 62 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 66 |
+| Entradas restantes fuera de ambos estados | 117 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 61 |
+| `IMPLEMENTED_NOT_E2E` | 62 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 111 |
+| `BROWSE_ONLY` | 110 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3366,29 +3366,30 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "NO_APLICA"
     institution_name: "Junta de Andalucía"
-    surface_name: "Sede electrónica de la Junta de Andalucía"
+    surface_name: "Sede Electrónica General — Presentación electrónica general"
     surface_type: "SEDE"
-    origin: "https://www.juntadeandalucia.es"
-    official_site: "https://www.juntadeandalucia.es/servicios/sede"
-    e_sede: "https://www.juntadeandalucia.es/servicios/sede"
-    entry_url: "https://www.juntadeandalucia.es/servicios/sede"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    origin: "https://veaja.cloud.juntadeandalucia.es"
+    official_site: "https://www.juntadeandalucia.es/servicios/sede.html"
+    e_sede: "https://www.juntadeandalucia.es/servicios/sede.html"
+    entry_url: "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"
+    procedure_page: "https://www.juntadeandalucia.es/servicios/sede/tramites.html"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "AUTOSCRIPT_AUTOFIRMA"
+    protocol_family: "VEA_AUTOSCRIPT_DYNAMIC"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a información y servicios de la sede autonómica."
-    protocol_evidence: "Las fuentes acreditan titularidad y entrada oficial, no un flujo de certificado o firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede Electrónica General dirige la Presentación electrónica general al procedimiento PEG_VEA de Ventanilla Electrónica; Workspace-47 habilita únicamente la navegación QA al inicio público exacto, manteniendo autenticación y firma bloqueadas."
+    protocol_evidence: "La Sede enlaza públicamente PEG mediante ws094/ws050, que actualmente convergen en https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA. La página pública ofrece Certificado Electrónico y Cl@ve. El bundle vigente carga AutoScript/AutoFirma y prepara firma explícita sobre hashes, pero algoritmo, formato, hashAlgorithm y filtro cualificado final proceden de datos de borrador protegidos tras autenticación; por ello el perfil no expone SIGN, SELECT_CERTIFICATE, AFIRMA_URI ni client-auth."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A01A", "A01B"]
-    reason: "Certificado, firma, ABI, formato, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Identificar un procedimiento vigente y su contrato técnico exacto."
+    evidence_ids: ["D03", "A01A", "A01B", "JUNTA-VEA-PEG-2026-08-17", "JUNTA-VEA-RUNTIME-2026-08-17"]
+    reason: "Perfil QA-only de navegación al PEG_VEA público exacto. La firma es obligatoria en la entrega y AutoScript es observable, pero el contrato sensible exacto depende de estado autenticado/borrador; no se copian constantes de OVORION, Oficina Virtual ni otros portales Junta."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la navegación Sede → PEG_VEA y, solo con autorización separada, reabrir el contrato de autenticación/firma para observar algorithm/format/hashAlgorithm del borrador sin efectuar una presentación administrativa."
+    notes: "El perfil confía únicamente en veaja.cloud.juntadeandalucia.es para navegación. api-veaja.cloud.juntadeandalucia.es y los flujos de certificado/Cl@ve quedan fuera del trust del perfil."
 
   - inventory_id: "ES-PUB-0094"
     surface_key: "aragon-tramites-sede"
@@ -6357,6 +6358,8 @@ Orden de expansión recomendado:
 
 [A01A]: https://www.juntadeandalucia.es/servicios/sede/sobre-sede/titularidad.html
 [A01B]: https://www.juntadeandalucia.es/servicios/sede
+[JUNTA-VEA-PEG-2026-08-17]: https://www.juntadeandalucia.es/servicios/sede/tramites.html
+[JUNTA-VEA-RUNTIME-2026-08-17]: https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA
 [A02A]: https://www.aragon.es/tramites
 [A02B]: https://www.aragon.es/tramites/identificacion-y-firma-electronica
 [A03A]: https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica

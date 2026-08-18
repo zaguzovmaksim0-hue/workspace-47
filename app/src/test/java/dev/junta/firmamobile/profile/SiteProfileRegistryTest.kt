@@ -205,4 +205,19 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
     }
 
+    @Test
+    fun `Junta VEA PEG is QA-only browse and rejects auth API as profile origin`() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.activation)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://api-veaja.cloud.juntadeandalucia.es/auth/login")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))
+    }
+
 }

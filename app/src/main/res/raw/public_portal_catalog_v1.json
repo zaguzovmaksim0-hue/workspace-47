@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8399992e07ca4aa3b6f0b460355f76421a3f43674eec37f1e9be12f8ad6178a4",
+  "sourceRevision": "5de328ac0aaa1d783e1414ed37dd1595d60637c9186d5c6fce9b551586a5a6e1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2312,26 +2312,33 @@
     {
       "portalId": "junta-andalucia-sede",
       "inventoryId": "ES-PUB-0093",
-      "profileId": null,
-      "displayName": "Sede electrónica de la Junta de Andalucía",
+      "profileId": "junta-andalucia-vea-peg",
+      "displayName": "Sede Electrónica General — Presentación electrónica general",
       "organization": "Junta de Andalucía",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Andalucía",
-      "purpose": "Acceso público a información y servicios de la sede autonómica.",
-      "entryUrl": "https://www.juntadeandalucia.es/servicios/sede",
-      "observedMechanisms": [],
+      "purpose": "La Sede Electrónica General dirige la Presentación electrónica general al procedimiento PEG_VEA de Ventanilla Electrónica; Workspace-47 habilita únicamente la navegación QA al inicio público exacto, manteniendo autenticación y firma bloqueadas.",
+      "entryUrl": "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "VEA_AUTOSCRIPT_DYNAMIC",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A01A",
-        "A01B"
+        "A01B",
+        "JUNTA-VEA-PEG-2026-08-17",
+        "JUNTA-VEA-RUNTIME-2026-08-17"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Perfil QA-only de navegación al PEG_VEA público exacto. La firma es obligatoria en la entrega y AutoScript es observable, pero el contrato sensible exacto depende de estado autenticado/borrador; no se copian constantes de OVORION, Oficina Virtual ni otros portales Junta."
     },
     {
       "portalId": "aragon-tramites-sede",

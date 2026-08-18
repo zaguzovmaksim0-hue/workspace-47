@@ -23,6 +23,7 @@ class JuntaOriginPolicyTest {
     private val unizar = ProfileId("unizar-tramitador")
     private val carneJoven = ProfileId("carne-joven-andalucia")
     private val juntaOfvirtual = ProfileId("junta-ofvirtual")
+    private val juntaVeaPeg = ProfileId("junta-andalucia-vea-peg")
     private val education = ProfileId("educacion-convocatoria")
     private val aragon = ProfileId("aragon-siraw")
     private val aeat = ProfileId("aeat-mis-datos-censales")
@@ -67,6 +68,7 @@ class JuntaOriginPolicyTest {
             "ws104.juntadeandalucia.es",
             "ws235.juntadeandalucia.es",
             "ws072.juntadeandalucia.es",
+            "veaja.cloud.juntadeandalucia.es",
             "sede.educacion.gob.es",
             "aplicaciones.aragon.es",
             "sede.agenciatributaria.gob.es",
@@ -127,6 +129,14 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("tramita.unizar.es"), JuntaOriginPolicy.browserAllowedHosts(unizar))
         assertEquals(setOf("ws104.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(carneJoven))
         assertEquals(setOf("ws072.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(juntaOfvirtual))
+        assertEquals(setOf("veaja.cloud.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(juntaVeaPeg))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(juntaVeaPeg).isEmpty())
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://api-veaja.cloud.juntadeandalucia.es/auth/login"),
+                juntaVeaPeg,
+            ),
+        )
         assertEquals(setOf("sede.educacion.gob.es"), JuntaOriginPolicy.browserAllowedHosts(education))
         assertEquals(setOf("aplicaciones.aragon.es"), JuntaOriginPolicy.browserAllowedHosts(aragon))
         assertEquals(setOf("sede.agenciatributaria.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aeat))

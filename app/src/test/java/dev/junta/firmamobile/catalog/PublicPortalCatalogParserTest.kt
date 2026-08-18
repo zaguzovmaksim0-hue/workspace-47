@@ -44,6 +44,7 @@ class PublicPortalCatalogParserTest {
         assertEquals(
             setOf(
                 ProfileId("junta-andalucia"),
+                ProfileId("junta-andalucia-vea-peg"),
                 ProfileId("reg-age-redsara"),
                 ProfileId("unizar-tramitador"),
                 ProfileId("carne-joven-andalucia"),
@@ -1201,6 +1202,36 @@ class PublicPortalCatalogParserTest {
             ),
             repository.resolveLaunch(portal),
         )
+    }
+
+    @Test
+    fun `Junta VEA PEG binds exact current public start without sensitive launch alias`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0093" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
+
+        assertEquals(PortalId("junta-andalucia-sede"), metadata.portalId)
+        assertEquals(ProfileId("junta-andalucia-vea-peg"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals(null, metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf("AUTOFIRMA", "AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"),
+            metadata.observedMechanisms.map { it.name }.toSet(),
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("junta-andalucia-vea-peg"), start), repository.resolveLaunch(portal))
     }
 
 }
