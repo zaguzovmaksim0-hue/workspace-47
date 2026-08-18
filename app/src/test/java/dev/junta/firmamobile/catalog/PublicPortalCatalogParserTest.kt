@@ -44,6 +44,7 @@ class PublicPortalCatalogParserTest {
         assertEquals(
             setOf(
                 ProfileId("junta-andalucia"),
+                ProfileId("junta-andalucia-vea-peg"),
                 ProfileId("reg-age-redsara"),
                 ProfileId("unizar-tramitador"),
                 ProfileId("carne-joven-andalucia"),
@@ -55,6 +56,8 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ugr-certificado-login"),
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("jccm-certificate-login-probe"),
+                ProfileId("mites-certificate-login"),
+                ProfileId("transportes-qys-cert-login"),
                 ProfileId("sevilla-atse-certificate-login"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
@@ -75,6 +78,8 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-valencia-sede"),
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
+                ProfileId("oepm-protegeo-general"),
+                ProfileId("portal-funciona-public-home"),
                 ProfileId("cdti-certificate-validation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
@@ -96,6 +101,46 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.AUTOSCRIPT in lugo.observedMechanisms)
         assertTrue(lugo.limitations.contains("un lote CAdES", ignoreCase = true))
 
+    }
+
+    @Test
+    fun `Transportes QYS exposes only the bounded pending XAdES Enveloped login`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("age-ministerio-de-transportes-y-movilidad-sostenible")
+        }
+
+        assertEquals(ProfileId("transportes-qys-cert-login"), portal.profileId)
+        assertEquals("ES-PUB-0075", portal.inventoryId)
+        assertEquals(
+            "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+            portal.entryUrl.toString(),
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in portal.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
+        assertTrue(PortalMechanism.MINIAPPLET in portal.observedMechanisms)
+        assertEquals(setOf(SignatureFormat.XADES), portal.observedSignatureFormats)
+    }
+
+    @Test
+    fun `MITES certificate login exposes only the exact QA CAdES contract`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val mites = catalog.entries.single {
+            it.portalId == PortalId("age-ministerio-de-trabajo-y-economia-social")
+        }
+
+        assertEquals(ProfileId("mites-certificate-login"), mites.profileId)
+        assertEquals("ES-PUB-0074", mites.inventoryId)
+        assertEquals("https://sede.mites.gob.es/", mites.entryUrl.toString())
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, mites.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, mites.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in mites.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in mites.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in mites.observedMechanisms)
+        assertTrue(PortalMechanism.MINIAPPLET in mites.observedMechanisms)
+        assertEquals(setOf(SignatureFormat.CADES), mites.observedSignatureFormats)
     }
 
     @Test
@@ -404,6 +449,90 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Inclusion alias retains the official Sede URL while resolving the exact REG AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-inclusion-seguridad-social-y-migraciones")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://sede.inclusion.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Cervantes alias retains the official Sede URL while resolving the exact REG AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-instituto-cervantes")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://cervantes.sede.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Reina Sofia alias retains the official Sede URL while resolving the exact REG AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-museo-nacional-centro-de-arte-reina-sofia")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://museoreinasofia.sede.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `INAP alias retains the official Sede URL while resolving the exact REG-AGE launch URL`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
@@ -419,6 +548,34 @@ class PublicPortalCatalogParserTest {
 
         assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
         assertEquals(URI("https://sede.inap.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Igualdad alias retains the official Sede URL while resolving the exact REG AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-igualdad")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://igualdad.sede.gob.es/"), portal.entryUrl)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
         assertTrue(portal.isEnabled)
@@ -518,6 +675,36 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Puertos alias retains the official REG service URL while resolving the exact REG-AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-puertos-del-estado")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://puertos.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"),
+            portal.entryUrl,
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `Exteriores REG alias retains the official consular procedure while resolving only exact REG AGE`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
@@ -537,6 +724,41 @@ class PublicPortalCatalogParserTest {
         )
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `MIVAU REG alias retains official service while resolving only exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-vivienda-y-agenda-urbana")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            "ES-PUB-0076",
+            catalog.entries.single { it.portalId == portal.portalId }.inventoryId,
+        )
+        assertEquals(
+            URI("https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"),
+            portal.entryUrl,
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
         assertTrue(portal.isEnabled)
         assertEquals(
             PortalLaunchTarget(
@@ -574,4 +796,476 @@ class PublicPortalCatalogParserTest {
             repository.resolveLaunch(portal),
         )
     }
+
+    @Test
+    fun `Cultura REG AGE alias binds only the exact existing profile launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single { it.portalId == PortalId("age-ministerio-de-cultura") }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals("ES-PUB-0062", portal.inventoryId)
+        assertEquals(
+            "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+            portal.entryUrl.toString(),
+        )
+        assertEquals(java.net.URI("https://reg.redsara.es/es/"), portal.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.limitations.contains("reg-age", ignoreCase = true))
+        assertTrue(portal.limitations.contains("qa", ignoreCase = true))
+    }
+
+    @Test
+    fun `Juventud e Infancia alias retains the official REG service URL while resolving the exact REG-AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-juventud-e-infancia")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Defensa alias retains the official Sede URL while resolving only exact REG AGE launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-defensa")
+        }
+        val catalogEntry = catalog.entries.single { it.portalId == portal.portalId }
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals("ES-PUB-0063", catalogEntry.inventoryId)
+        assertEquals(URI("https://sede.defensa.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalogEntry.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `MPR alias retains the official REG service URL while resolving the exact REG-AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-la-presidencia-justicia-y-relaciones-con-las-cortes")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `MPTMD alias retains the official REG service URL while resolving the exact REG-AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-politica-territorial-y-memoria-democratica")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Industria alias retains the official Sede URL while resolving the exact REG AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-industria-y-turismo")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://sede.minetur.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Interior alias retains the official generic-form URL while resolving the exact REG-AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-del-interior")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Transformacion Digital REG alias retains official Sede while resolving exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-para-la-transformacion-digital-y-de-la-funcion-publica")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://digital.sede.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `OEPM ProtegeO entry binds the exact QA public launch without sensitive observations`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("age-oficina-espanola-de-patentes-y-marcas")
+        }
+        val item = repository.portals().single { it.portalId == portal.portalId }
+
+        assertEquals("ES-PUB-0082", portal.inventoryId)
+        assertEquals(ProfileId("oepm-protegeo-general"), portal.profileId)
+        assertEquals(
+            URI("https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM"),
+            portal.entryUrl,
+        )
+        assertEquals(null, portal.launchUrl)
+        assertEquals("OEPM_PROTEGEO_PUBLIC_LAUNCH", portal.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.observedMechanisms.isEmpty())
+        assertTrue(portal.observedSignatureFormats.isEmpty())
+        assertTrue(item.capabilities.isEmpty())
+        assertTrue(item.signatureFormats.isEmpty())
+        assertTrue(item.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("oepm-protegeo-general"), portal.entryUrl),
+            repository.resolveLaunch(item),
+        )
+    }
+
+    @Test
+    fun `Portal Funciona keeps official directory entry but resolves only the exact QA public home`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.portalId == PortalId("age-portal-funciona") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0084", metadata.inventoryId)
+        assertEquals(ProfileId("portal-funciona-public-home"), metadata.profileId)
+        assertEquals(URI("https://sede.funciona.gob.es/es/home"), metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("OIDC_PKCE_AUTENTICA_SAML_CLIENT_TLS_BOUNDARY", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.CLIENT_TLS_AUTH),
+            metadata.observedMechanisms,
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("portal-funciona-public-home"), URI("https://sede.funciona.gob.es/es/home")),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Comercio REG alias retains exact public procedure while resolving exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-secretaria-de-estado-de-comercio")
+        }
+        val procedure = URI(
+            "https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517",
+        )
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(procedure, portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Digital Sede REG alias retains migrated SEDIA SETID entry while resolving exact REG AGE launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-sede-electronica-de-la-s-e-de-digitalizacion-e-inteligencia-artificial-y-s-e-de-telecomunica")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(
+            PublicCatalogStatus.E2E_PENDING,
+            catalog.entries.single { it.portalId == portal.portalId }.catalogStatus,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Hacienda central alias retains institutional Sede while resolving exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single {
+            it.portalId == PortalId("age-sede-electronica-central-del-ministerio")
+        }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0088", metadata.inventoryId)
+        assertEquals(ProfileId("reg-age-redsara"), metadata.profileId)
+        assertEquals(URI("https://sede.hacienda.gob.es/"), metadata.entryUrl)
+        assertEquals(URI("https://reg.redsara.es/es/"), metadata.launchUrl)
+        assertEquals("DELEGACION_REG_AGE", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("reg-age-redsara"), URI("https://reg.redsara.es/es/")),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Tesoro REC alias retains exact public procedure while resolving exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-tesoro-publico")
+        }
+        val procedure = URI(
+            "https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de",
+        )
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(procedure, portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, catalog.entries.single { it.portalId == portal.portalId }.catalogStatus)
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Junta VEA PEG binds exact current public start without sensitive launch alias`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0093" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
+
+        assertEquals(PortalId("junta-andalucia-sede"), metadata.portalId)
+        assertEquals(ProfileId("junta-andalucia-vea-peg"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals(null, metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf("AUTOFIRMA", "AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"),
+            metadata.observedMechanisms.map { it.name }.toSet(),
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("junta-andalucia-vea-peg"), start), repository.resolveLaunch(portal))
+    }
+
+    @Test
+    fun `UNED REG alias retains the current UNED service while resolving only exact REG AGE`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-universidad-nacional-de-educacion-a-distancia-uned")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(
+            URI("https://uned.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"),
+            portal.entryUrl,
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(
+            PublicCatalogStatus.E2E_PENDING,
+            catalog.entries.single { it.portalId == portal.portalId }.catalogStatus,
+        )
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
 }
