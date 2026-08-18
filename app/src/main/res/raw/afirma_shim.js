@@ -21,6 +21,8 @@
   const cdtiCompatibilityEnabled = __JFM_CDTI_COMPATIBILITY_ENABLED__;
   const policiaCompatibilityEnabled = __JFM_POLICIA_COMPATIBILITY_ENABLED__;
   const granCanariaCompatibilityEnabled = __JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__;
+  const canariasCompatibilityEnabled = __JFM_CANARIAS_COMPATIBILITY_ENABLED__;
+  const minecoCompatibilityEnabled = __JFM_MINECO_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const lugoBatchCompatibilityEnabled = __JFM_LUGO_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
@@ -44,7 +46,20 @@
   const cdtiExtraProperties = "filters=nonexpired";
   const policiaOrigin = "https://sede.policia.gob.es";
   const granCanariaOrigin = "https://sede.grancanaria.com";
+  const canariasOrigin = "https://sede.gobiernodecanarias.org";
+  const canariasPage = "https://sede.gobiernodecanarias.org/sede/identificacion";
+  const canariasChallengePattern =
+    /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$/;
+  const canariasExtraProperties =
+    "format=CAdES Detached\n" +
+    "serverUrl=https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService\n" +
+    "referencesDigestMethod=http://www.w3.org/2001/04/xmlenc#sha512\n" +
+    "filters=nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))";
   const granCanariaExtraProperties = "headless=true\nfilters=nonexpired:";
+  const minecoOrigin = "https://serviciosede.mineco.gob.es";
+  const minecoSigningPage = "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx";
+  const minecoExtraProperties =
+    "filters=signingCert:;nonexpired:\nexpPolicy=FirmaAGE\nsignatureSubFilter=ETSI.CAdES.detached";
   const policiaProcedurePage =
     "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml";
   const policiaExtraProperties =
@@ -190,6 +205,18 @@
     }
   }
 
+  function isExactCanariasChallenge(value) {
+    if (typeof value !== "string" || !base64Pattern.test(value)) {
+      return false;
+    }
+    try {
+      const decoded = globalThis.atob(value);
+      return canariasChallengePattern.test(decoded) && globalThis.btoa(decoded) === value;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function interceptCertificateSelection(a) {
     if (!iSel && !vSel) return false;
     let valid = false;
@@ -243,6 +270,20 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isCanariasOrigin =
+      canariasCompatibilityEnabled && window.location.origin === canariasOrigin;
+    const isCanariasPage =
+      isCanariasOrigin && window.location.href === canariasPage &&
+      window.location.search === "" && window.location.hash === "";
+    const isExactCanariasCall =
+      isCanariasPage && args.length === 6 && isExactCanariasChallenge(args[0]) &&
+      args[1] === "SHA1withRSA" && args[2] === "CAdES" &&
+      args[3] === canariasExtraProperties &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isCanariasOrigin && !isExactCanariasCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isGranCanariaOrigin =
       granCanariaCompatibilityEnabled && window.location.origin === granCanariaOrigin;
     const isExactGranCanariaCall =
@@ -258,6 +299,22 @@
       typeof successCallback === "function" &&
       typeof errorCallback === "function";
     if (isGranCanariaOrigin && !isExactGranCanariaCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    const isMinecoOrigin =
+      minecoCompatibilityEnabled && window.location.origin === minecoOrigin;
+    const isMinecoSigningPage =
+      isMinecoOrigin && window.location.href === minecoSigningPage &&
+      window.location.search === "" && window.location.hash === "";
+    const isExactMinecoCall =
+      isMinecoSigningPage && args.length === 6 &&
+      typeof args[0] === "string" && args[0].length > 0 &&
+      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
+      args[1] === "SHA512withRSA" && args[2] === "PAdES" &&
+      args[3] === minecoExtraProperties &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isMinecoOrigin && !isExactMinecoCall) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -331,7 +388,7 @@
       typeof globalThis.btoa === "function" &&
       base64Pattern.test(dataB64);
     const isJuntaCades =
-      !jccmCompatibilityEnabled &&
+      !jccmCompatibilityEnabled && !canariasCompatibilityEnabled &&
       (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
       args[2] === "CAdES" && typeof args[3] === "string" &&
       args[3].length <= maxExtraPropertiesChars;
@@ -342,13 +399,15 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !isExactSevillaAtseCall && !isExactGranCanariaCall && !isExactCdtiCall &&
+          !isExactSevillaAtseCall && !isExactGranCanariaCall && !isExactCanariasCall &&
+          !isExactMinecoCall && !isExactCdtiCall &&
           !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
           !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
-          !isExactCdtiCall && !isExactPoliciaCall && !isExactGranCanariaCall)) {
+          !isExactCdtiCall && !isExactPoliciaCall && !isExactGranCanariaCall &&
+          !isExactCanariasCall && !isExactMinecoCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
