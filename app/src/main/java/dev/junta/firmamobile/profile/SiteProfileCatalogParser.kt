@@ -147,8 +147,11 @@ object SiteProfileCatalogParser {
         require(linkedEphemeral.all { it in ephemeral && it in sourceEphemeral })
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
-                require(sourceFixed.isEmpty() && sourceEphemeral.isEmpty() && linkedEphemeral.isEmpty())
-                require(fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443)
+                require(linkedEphemeral.isEmpty())
+                require(
+                    fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443 ||
+                        sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()
+                )
             }
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
                 if (ephemeral.isNotEmpty()) {
@@ -241,6 +244,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LEON_PROFILE_ID) {
                 validateLeonProfile(p)
             }
+            if (p.profileId.value == LA_RIOJA_PROFILE_ID) {
+                validateLaRiojaProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -276,8 +282,20 @@ object SiteProfileCatalogParser {
                     clientAuthOrigins == p.initiatorOrigins &&
                     clientAuthPolicy.fixedQueryParameters.isNotEmpty() &&
                     clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty()
+            val sameOriginRedirectClientAuth =
+                p.profileId.value == LA_RIOJA_PROFILE_ID &&
+                    clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE &&
+                    clientAuthPolicy.requestPort == 443 &&
+                    clientAuthOrigins == p.initiatorOrigins &&
+                    clientAuthPolicy.fixedQueryParameters.isEmpty() &&
+                    clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty() &&
+                    clientAuthPolicy.sourceFixedQueryParameters == LA_RIOJA_SOURCE_FIXED_QUERY &&
+                    clientAuthPolicy.sourceRequiredEphemeralQueryParameters == LA_RIOJA_SOURCE_EPHEMERAL_QUERY
             if (clientAuthPolicy?.requestPort == 443) {
-                require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty() || sameOriginDirectClientAuth)
+                require(
+                    (clientAuthOrigins intersect p.initiatorOrigins).isEmpty() ||
+                        sameOriginDirectClientAuth || sameOriginRedirectClientAuth
+                )
                 require((clientAuthOrigins intersect p.redirectOrigins).isEmpty())
                 require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
             }
@@ -929,6 +947,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-16") })
     }
 
+    private fun validateLaRiojaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == LA_RIOJA_PROFILE_VERSION)
+        require(profile.displayName == LA_RIOJA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == LA_RIOJA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(LA_RIOJA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(LA_RIOJA_ORIGIN)),
+                sourceUrls = setOf(URI(LA_RIOJA_SOURCE_URL)),
+                requestPath = LA_RIOJA_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = LA_RIOJA_SOURCE_FIXED_QUERY,
+                sourceRequiredEphemeralQueryParameters = LA_RIOJA_SOURCE_EPHEMERAL_QUERY,
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == LA_RIOJA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -1272,6 +1323,26 @@ object SiteProfileCatalogParser {
         VALENCIA_START_URL,
         "https://portafirmas.dival.es/signingpad/js/autoscript.js",
         "https://portafirmas.dival.es/signingpad/js/filtros.js",
+    )
+    private const val LA_RIOJA_PROFILE_ID = "la-rioja-oficina-electronica"
+    private const val LA_RIOJA_PROFILE_VERSION = 1
+    private const val LA_RIOJA_DISPLAY_NAME = "Gobierno de La Rioja — Oficina electrónica"
+    private const val LA_RIOJA_START_URL =
+        "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
+    private const val LA_RIOJA_ORIGIN = "https://ias1.larioja.org"
+    private const val LA_RIOJA_SOURCE_URL = "https://ias1.larioja.org/casLR/login"
+    private const val LA_RIOJA_REQUEST_PATH = "/clientcertSSL/login"
+    private val LA_RIOJA_SOURCE_FIXED_QUERY = linkedMapOf(
+        "inst" to "G",
+        "apli" to "OFIVIR",
+        "nodo" to "CIUDANO",
+    )
+    private val LA_RIOJA_SOURCE_EPHEMERAL_QUERY = setOf("param", "TARGET")
+    private val LA_RIOJA_EVIDENCE_URLS = setOf(
+        "https://web.larioja.org/oficina-electronica/tramite?n=24697",
+        LA_RIOJA_START_URL,
+        LA_RIOJA_SOURCE_URL,
+        "https://ias1.larioja.org/clientcertSSL/login",
     )
     private const val SANIDAD_PROFILE_ID = "ministerio-sanidad-certificado"
     private const val SANIDAD_PROFILE_VERSION = 1

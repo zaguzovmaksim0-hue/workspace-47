@@ -973,6 +973,41 @@
         {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
       ]
+    },
+    {
+      "profileId": "la-rioja-oficina-electronica",
+      "profileVersion": 1,
+      "displayName": "Gobierno de La Rioja — Oficina electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697",
+      "initiatorOrigins": ["https://ias1.larioja.org"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "REDIRECT_AFTER_SOURCE",
+        "requestOrigins": ["https://ias1.larioja.org"],
+        "sourceUrls": ["https://ias1.larioja.org/casLR/login"],
+        "sourceFixedQueryParameters": {"inst":"G","apli":"OFIVIR","nodo":"CIUDANO"},
+        "sourceRequiredEphemeralQueryParameters": ["param","TARGET"],
+        "linkedEphemeralQueryParameters": [],
+        "requestPath": "/clientcertSSL/login",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://web.larioja.org/oficina-electronica/tramite?n=24697","reviewedOn":"2026-08-18"},
+        {"url":"https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697","reviewedOn":"2026-08-18"},
+        {"url":"https://ias1.larioja.org/casLR/login","reviewedOn":"2026-08-18"},
+        {"url":"https://ias1.larioja.org/clientcertSSL/login","reviewedOn":"2026-08-18"}
+      ]
     }
   ]
 }
