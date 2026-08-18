@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 214 |
-| Fuentes oficiales totales registradas | 226 |
+| Fuentes oficiales portal-specific registradas | 215 |
+| Fuentes oficiales totales registradas | 227 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 44 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 48 |
-| Entradas restantes fuera de ambos estados | 135 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 45 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 49 |
+| Entradas restantes fuera de ambos estados | 134 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 44 |
+| `IMPLEMENTED_NOT_E2E` | 45 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 128 |
+| `BROWSE_ONLY` | 127 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 123 |
+| `REVIEWED` | 124 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 55 |
+| `DISCOVERED` | 54 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2659,29 +2659,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de la Presidencia, Justicia y Relaciones con las Cortes"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico General — vía REG-AGE"
     surface_type: "SEDE"
     origin: "https://mpr.sede.gob.es"
     official_site: "https://mpr.sede.gob.es/"
     e_sede: "https://mpr.sede.gob.es/"
-    entry_url: "https://mpr.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede oficial publica el Registro Electrónico General como vía para presentar solicitudes, escritos y comunicaciones que no dispongan de procedimiento electrónico o formulario normalizado específico."
+    protocol_evidence: "La página pública oficial «Registro Electrónico General» identifica expresamente el Registro Electrónico General de la Administración General del Estado (REG-AGE) y publica el enlace https://reg.redsara.es/. En un contexto público sin autenticación con locale es-ES, ese launch resuelve exactamente a https://reg.redsara.es/es/, que coincide con el startUrl del perfil existente reg-age-redsara. Solo se reutiliza ese launch/profile; no se atribuye a mpr.sede.gob.es ningún ABI criptográfico ni origen de confianza de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "MPR-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita a REG-AGE y resolución exacta del launch español al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición MPR → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
     notes: "Ministerio(s) enumerador(es): Ministerio de la Presidencia, Justicia y Relaciones con las Cortes."
 
   - inventory_id: "ES-PUB-0072"
@@ -6532,3 +6533,4 @@ availability, certificado, firma ni contrato técnico.
 [IGUALDAD-REG-2026-08-17]: https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General
 [DEFENSA-REG-2026-08-17]: https://sede.defensa.gob.es/
 [MITES-CERT-2026-08-17]: https://sede.mites.gob.es/inicio/detalleProcedimiento/38
+[MPR-REG-2026-08-17]: https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
