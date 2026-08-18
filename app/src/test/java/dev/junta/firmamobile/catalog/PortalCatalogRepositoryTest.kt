@@ -86,6 +86,7 @@ class PortalCatalogRepositoryTest {
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "cdti-certificate-validation",
+                "diputacion-barcelona-solicitud-generica-2057",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

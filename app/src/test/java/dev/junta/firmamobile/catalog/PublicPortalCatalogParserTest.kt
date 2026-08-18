@@ -79,6 +79,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
                 ProfileId("cdti-certificate-validation"),
+                ProfileId("diputacion-barcelona-solicitud-generica-2057"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

@@ -1013,6 +1013,27 @@
         {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
       ]
+    },
+    {
+      "profileId": "diputacion-barcelona-solicitud-generica-2057",
+      "profileVersion": 1,
+      "displayName": "Diputació de Barcelona — Solicitud genérica 2057",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica",
+      "initiatorOrigins": ["https://seuelectronica.diba.cat"],
+      "redirectOrigins": ["https://valid.aoc.cat", "https://cert.valid.aoc.cat", "https://aplicacions.diba.cat"],
+      "trustedBrowseOrigins": ["https://tramits.diba.cat"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://tramits.diba.cat/SS/","reviewedOn":"2026-08-18"},
+        {"url":"https://valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"},
+        {"url":"https://cert.valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"}
+      ]
     }
   ]
 }
