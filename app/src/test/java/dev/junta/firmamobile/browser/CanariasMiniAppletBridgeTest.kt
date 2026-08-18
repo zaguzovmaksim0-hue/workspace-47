@@ -31,7 +31,7 @@ class CanariasMiniAppletBridgeTest {
             clock = Clock.fixed(Instant.parse("2026-08-17T21:55:05Z"), ZoneOffset.UTC),
             activeProfileId = { ProfileId(PROFILE_ID) },
         ).route(
-            rawMessage = message(challenge),
+            rawMessage = message(challenge.copyOf()),
             sourceOrigin = Uri.parse(ORIGIN),
             isMainFrame = true,
             navigationEpoch = 9,

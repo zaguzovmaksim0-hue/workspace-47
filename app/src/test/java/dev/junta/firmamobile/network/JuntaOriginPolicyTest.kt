@@ -48,6 +48,7 @@ class JuntaOriginPolicyTest {
     private val valencia = ProfileId("diputacion-valencia-sede")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
+    private val canarias = ProfileId("canarias-sede")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -93,6 +94,7 @@ class JuntaOriginPolicyTest {
             "portafirmas.dival.es",
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
+            "sede.gobiernodecanarias.org",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -240,9 +242,14 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.webMessageOriginRules(valencia),
         )
         assertEquals(setOf("sede.policia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(policia))
+        assertEquals(setOf("sede.gobiernodecanarias.org"), JuntaOriginPolicy.browserAllowedHosts(canarias))
         assertEquals(
             setOf("https://sede.policia.gob.es"),
             JuntaOriginPolicy.webMessageOriginRules(policia),
+        )
+        assertEquals(
+            setOf("https://sede.gobiernodecanarias.org"),
+            JuntaOriginPolicy.webMessageOriginRules(canarias),
         )
     }
 

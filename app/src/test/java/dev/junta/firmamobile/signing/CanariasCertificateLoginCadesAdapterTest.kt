@@ -17,12 +17,12 @@ import org.junit.Test
 
 class CanariasCertificateLoginCadesAdapterTest {
     private val identity = syntheticIdentity()
-    private val clock = Clock.fixed(Instant.parse("2026-08-17T21:55:05Z"), ZoneOffset.UTC)
+    private val clock = Clock.fixed(Instant.parse("2030-01-02T03:04:05Z"), ZoneOffset.UTC)
     private val adapter = CanariasCertificateLoginCadesAdapter(clock)
 
     @Test
     fun producesSha1DetachedCadesForExactUtcLoginChallenge() = runTest {
-        val challenge = "Mon, 17 Aug 2026 21:55:05 GMT".encodeToByteArray()
+        val challenge = "Wed, 02 Jan 2030 03:04:05 GMT".encodeToByteArray()
         val request = request(challenge.copyOf())
         val prepared = adapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
         val local = prepared.preSign.withBytesToSign { signedAttributes ->
@@ -78,7 +78,7 @@ class CanariasCertificateLoginCadesAdapterTest {
     }
 
     private fun request(
-        payload: ByteArray = "Mon, 17 Aug 2026 21:55:05 GMT".encodeToByteArray(),
+        payload: ByteArray = "Wed, 02 Jan 2030 03:04:05 GMT".encodeToByteArray(),
         extraProperties: String = CanariasCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES,
         protocolId: SigningProtocolId = CanariasCertificateLoginCadesAdapter.ID,
         profileId: String = CanariasCertificateLoginCadesAdapter.PROFILE_ID,

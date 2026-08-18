@@ -82,6 +82,7 @@ class PortalCatalogRepositoryTest {
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "cdti-certificate-validation",
+                "canarias-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
