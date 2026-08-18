@@ -461,6 +461,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual(["PADES"], entry["observedSignatureFormats"])
         self.assertIn("e2e", entry["limitations"].lower())
 
+    def test_transparencia_pades_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(
+            item for item in catalog["entries"]
+            if item["portalId"] == "age-portal-de-la-transparencia"
+        )
+
+        self.assertEqual("age-portal-de-la-transparencia", entry["profileId"])
+        self.assertEqual("ES-PUB-0083", entry["inventoryId"])
+        self.assertEqual(
+            "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524",
+            entry["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", entry)
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("2026-08-18", entry["reviewedOn"])
+        self.assertIn("AUTOFIRMA", entry["observedMechanisms"])
+        self.assertIn("MINIAPPLET", entry["observedMechanisms"])
+        self.assertEqual(["PADES"], entry["observedSignatureFormats"])
+        self.assertIn("e2e", entry["limitations"].lower())
+
     def test_tenerife_autoscript_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tenerife = next(

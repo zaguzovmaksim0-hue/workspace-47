@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 24,
+  "catalogVersion": 25,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -709,6 +709,28 @@
         {"url":"https://sede.deputacionlugo.org/opencms/common-js/clientSigner.js","reviewedOn":"2026-08-16"},
         {"url":"https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/acceso_sede","reviewedOn":"2026-08-16"},
         {"url":"https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/instalar_autofirma","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "age-portal-de-la-transparencia",
+      "profileVersion": 1,
+      "displayName": "Portal de la Transparencia — Derecho de acceso",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524",
+      "initiatorOrigins": ["https://transparencia.sede.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma PAdES con certificado en el Portal de la Transparencia","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"filters":"nonexpired:true;","headless":"true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524","reviewedOn":"2026-08-18"},
+        {"url":"https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/ac2-formularios.js","reviewedOn":"2026-08-18"},
+        {"url":"https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/ac2-autofirmaFunctions.js","reviewedOn":"2026-08-18"},
+        {"url":"https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/autoscript.js","reviewedOn":"2026-08-18"}
       ]
     },
     {

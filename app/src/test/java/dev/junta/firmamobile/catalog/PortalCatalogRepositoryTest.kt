@@ -77,6 +77,7 @@ class PortalCatalogRepositoryTest {
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
                 "gran-canaria-sede-electronica",
+                "age-portal-de-la-transparencia",
                 "diputacion-toledo-sede",
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",

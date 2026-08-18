@@ -23,6 +23,7 @@ import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
+import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.NormalizedSignRequest
@@ -222,6 +223,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == GranCanariaPadesAdapter.PROFILE_ID && !isGranCanariaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isTransparenciaContract = isExactTransparenciaContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == TransparenciaPadesAdapter.PROFILE_ID && !isTransparenciaContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isSevillaAtseContract = isExactSevillaAtseContract(
             profile = profile,
             origin = resolved.origin,
@@ -286,7 +297,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_PADES -> if (isGranCanariaContract) {
+            FORMAT_PADES -> if (isGranCanariaContract || isTransparenciaContract) {
                 SigningFormat.PADES to SignatureFormat.PADES
             } else {
                 null
@@ -363,6 +374,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isGranCanariaContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isTransparenciaContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == TransparenciaPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -490,6 +508,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             MitesCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isGranCanariaContract) {
             GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isTransparenciaContract) {
+            TransparenciaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
         } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
@@ -649,6 +669,43 @@ internal class ProfileMiniAppletBridgeAdapter(
             ) &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == MitesCertificateLoginCadesAdapter.ID.value
+
+    private fun isExactTransparenciaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        TransparenciaPadesAdapter.isSigningPageUrl(currentPageUrl) &&
+            profile.profileId.value == TransparenciaPadesAdapter.PROFILE_ID &&
+            profile.profileVersion == TransparenciaPadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == TransparenciaPadesAdapter.PUBLIC_START_URL &&
+            origin.serialized == TransparenciaPadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(TransparenciaPadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == TransparenciaPadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA) &&
+            operation.format == SignatureFormat.PADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == TRANSPARENCIA_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == TransparenciaPadesAdapter.ID.value
 
     private fun isExactGranCanariaContract(
         profile: SiteProfile,
@@ -1005,6 +1062,10 @@ internal class ProfileMiniAppletBridgeAdapter(
         private val GRAN_CANARIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "headless" to "true",
             "filters" to "nonexpired:",
+        )
+        private val TRANSPARENCIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "filters" to "nonexpired:true;",
+            "headless" to "true",
         )
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         private const val CANTABRIA_PROFILE_VERSION = 1
