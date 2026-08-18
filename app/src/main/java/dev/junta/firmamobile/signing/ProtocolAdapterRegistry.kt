@@ -116,6 +116,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = GranCanariaPadesAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(EivissaCadesDetachedAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                signingProtocolId = EivissaCadesDetachedAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId(TenerifeCadesDetachedAdapter.PROFILE_ID),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),

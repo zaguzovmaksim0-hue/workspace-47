@@ -250,6 +250,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
             }
+            if (p.profileId.value == EIVISSA_PROFILE_ID) {
+                validateEivissaProfile(p)
+            }
             if (p.profileId.value == GRAN_CANARIA_PROFILE_ID) {
                 validateGranCanariaProfile(p)
             }
@@ -362,7 +365,7 @@ object SiteProfileCatalogParser {
                             SignaturePackaging.DETACHED
                         },
                     )
-                    require(op.allowedExtraProperties.isEmpty())
+                    if (p.profileId.value != EIVISSA_PROFILE_ID) require(op.allowedExtraProperties.isEmpty())
                     when (op.format) {
                         SignatureFormat.CADES -> {
                             if (op.endpointId == null) {
@@ -378,6 +381,11 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == TENERIFE_EXTRA_PROPERTIES)
+                                } else if (p.profileId.value == EIVISSA_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.IMPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
+                                    require(op.fixedExtraProperties == EIVISSA_FIXED_EXTRA_PROPERTIES)
+                                    require(op.allowedExtraProperties == setOf("filter", "mimeType"))
                                 } else if (p.profileId.value == LLEIDA_PROFILE_ID) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
@@ -629,6 +637,31 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == GRAN_CANARIA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+    }
+
+    private fun validateEivissaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == EIVISSA_PROFILE_VERSION)
+        require(profile.displayName == EIVISSA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == EIVISSA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EIVISSA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        val op = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        require(op.safeDescription == EIVISSA_SAFE_DESCRIPTION)
+        require(op.inputAdapterId == ProtocolInputAdapterId("miniapplet-autoscript-v1"))
+        require(op.callbackContractId == CallbackContractId("autoscript-sign-callback-v1"))
+        require(op.capabilities == setOf(Capability.SIGN) && op.endpointId == null)
+        require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
+        require(op.format == SignatureFormat.CADES && op.packaging == SignaturePackaging.DETACHED)
+        require(op.mode == SignatureMode.IMPLICIT)
+        require(op.fixedExtraProperties == EIVISSA_FIXED_EXTRA_PROPERTIES)
+        require(op.allowedExtraProperties == setOf("filter", "mimeType"))
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EIVISSA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
     private fun validateTenerifeProfile(profile: SiteProfile) {
@@ -1334,6 +1367,19 @@ object SiteProfileCatalogParser {
             "_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_" +
             "javax.faces.resource=AFIRMA%2Foperaciones.js&" +
             "_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_ln=js",
+    )
+    private const val EIVISSA_PROFILE_ID = "eivissa-sede-electronica"
+    private const val EIVISSA_PROFILE_VERSION = 1
+    private const val EIVISSA_DISPLAY_NAME = "Consell Insular d’Eivissa — Sede electrónica"
+    private const val EIVISSA_START_URL = "https://seu.conselldeivissa.es/"
+    private const val EIVISSA_ORIGIN = "https://seu.conselldeivissa.es"
+    private const val EIVISSA_SAFE_DESCRIPTION =
+        "Firma de Instancia General en la Sede electrónica del Consell Insular d’Eivissa"
+    private val EIVISSA_FIXED_EXTRA_PROPERTIES = linkedMapOf("headless" to "true", "mode" to "implicit")
+    private val EIVISSA_EVIDENCE_URLS = setOf(
+        EIVISSA_START_URL,
+        "https://seu.conselldeivissa.es/sta/reg/autofirma.js",
+        "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043",
     )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
     private const val TENERIFE_PROFILE_VERSION = 1

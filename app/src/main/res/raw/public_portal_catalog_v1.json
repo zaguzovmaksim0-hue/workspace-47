@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7c0d4f49fc9bde69439391a1a60479a5f9ad3af3d7e8e579cbd9452ac4d5ca1b",
+  "sourceRevision": "0647d23db011c8f1a87e9b5b80c497c202b82a96eda9a5e47ed8c0d550e2eb6a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3079,27 +3079,34 @@
     {
       "portalId": "eivissa-sede-electronica",
       "inventoryId": "ES-PUB-0122",
-      "profileId": null,
+      "profileId": "eivissa-sede-electronica",
       "displayName": "Sede electrónica del Consell Insular d’Eivissa",
       "organization": "Consell Insular d’Eivissa",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "purpose": "Firma local CAdES de Instancia General tras autenticación con certificado, sin ejecutar presentación administrativa.",
       "entryUrl": "https://seu.conselldeivissa.es/",
       "observedMechanisms": [
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_CADES_IMPLICIT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I03B"
+        "I03B",
+        "EIVISSA-INSTANCIA-GENERAL-2026-08-18",
+        "EIVISSA-REG-AUTOFIRMA-2026-08-18",
+        "EIVISSA-CONTROLLED-AUTH-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA limitado al origin/PID y al contrato Android CAdES SHA256 implícito demostrado; autenticación con certificado validada, pero no se realizó firma real, AutofirmaUpload, presentación, pago ni aceptación E2E."
     },
     {
       "portalId": "formentera-portal-institucional",

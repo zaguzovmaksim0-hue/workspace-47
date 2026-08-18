@@ -1123,6 +1123,39 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
+    @Test
+    fun eivissaBridgeAcceptsOnlyExactInstanciaGeneralSummaryCadesTuple() {
+        val cert = Base64.getEncoder().encodeToString(ByteArray(48) { (it + 1).toByte() })
+        val properties = "headless=true\nfilter=encodedcert:$cert;filter=nonexpired:\nmode=implicit\n"
+        val message = JSONObject()
+            .put("type", "MINIAPPLET_SIGN").put("documentId", DOCUMENT_ID).put("requestId", REQUEST_ID)
+            .put("dataB64", Base64.getEncoder().encodeToString("xsig".encodeToByteArray()))
+            .put("algorithm", "SHA256withRSA").put("format", "CAdES").put("extraProperties", properties).toString()
+        val page = "https://seu.conselldeivissa.es/sta/reg/tramite/6269002703260065905043/" +
+            "formulario/summary/referencia/123e4567-e89b-42d3-a456-426614174002"
+        val accepted = adapterFor("eivissa-sede-electronica").route(
+            message, Uri.parse("https://seu.conselldeivissa.es"), true, 61, page,
+        ) as MiniAppletBridgeRouteResult.Accepted
+        accepted.request.normalized.use { request ->
+            assertEquals(EivissaCadesDetachedAdapter.ID, request.protocolId)
+            assertEquals(SigningAlgorithm.SHA256_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+        }
+        listOf(
+            page.replace("/summary/", "/datos/"),
+            page + "?x=1",
+            "https://seu.conselldeivissa.es/sta/reg/tramite/OTHER/formulario/summary/referencia/123e4567-e89b-42d3-a456-426614174002",
+        ).forEach { wrongPage ->
+            assertTrue(adapterFor("eivissa-sede-electronica").route(
+                message, Uri.parse("https://seu.conselldeivissa.es"), true, 61, wrongPage,
+            ) is MiniAppletBridgeRouteResult.Rejected)
+        }
+        val wrongProps = JSONObject(message).put("extraProperties", properties.replace("mode=implicit", "mode=explicit")).toString()
+        assertTrue(adapterFor("eivissa-sede-electronica").route(
+            wrongProps, Uri.parse("https://seu.conselldeivissa.es"), true, 61, page,
+        ) is MiniAppletBridgeRouteResult.Rejected)
+    }
+
     private fun sevillaAdapter(): ProfileMiniAppletBridgeAdapter {
         val profile = SiteProfile(
             profileId = ProfileId(SEVILLA_PROFILE_ID),
