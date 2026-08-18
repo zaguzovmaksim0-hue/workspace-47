@@ -45,6 +45,7 @@ class JuntaOriginPolicyTest {
     private val sanidad = ProfileId("ministerio-sanidad-certificado")
     private val tea = ProfileId("tea-alegaciones-certificado")
     private val tenerife = ProfileId("tenerife-sede-electronica")
+    private val transparencia = ProfileId("age-portal-de-la-transparencia")
     private val toledo = ProfileId("diputacion-toledo-sede")
     private val valencia = ProfileId("diputacion-valencia-sede")
     private val policia = ProfileId("policia-solicitud-generica")
@@ -89,6 +90,7 @@ class JuntaOriginPolicyTest {
             "sede.tea.hacienda.gob.es",
             "www1.tea.hacienda.gob.es",
             "sede.tenerife.es",
+            "transparencia.sede.gob.es",
             "sede.grancanaria.com",
             "diputacion.toledo.gob.es",
             "sede.isciii.gob.es",
@@ -202,6 +204,14 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://sede.tenerife.es"),
             JuntaOriginPolicy.webMessageOriginRules(tenerife),
+        )
+        assertEquals(
+            setOf("transparencia.sede.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(transparencia),
+        )
+        assertEquals(
+            setOf("https://transparencia.sede.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(transparencia),
         )
         assertEquals(
             setOf("https://ventanillaelectronica.jccm.es"),
