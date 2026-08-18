@@ -76,6 +76,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("cdti-certificate-validation"),
+                ProfileId("caib-portafib"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

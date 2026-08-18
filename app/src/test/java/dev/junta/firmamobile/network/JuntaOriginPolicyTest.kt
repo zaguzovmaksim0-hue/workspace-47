@@ -95,6 +95,8 @@ class JuntaOriginPolicyTest {
             "portafirmas.dival.es",
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
+            "www.caib.es",
+            "intranet.caib.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)

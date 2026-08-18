@@ -83,6 +83,7 @@ class PortalCatalogRepositoryTest {
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "cdti-certificate-validation",
+                "caib-portafib",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
