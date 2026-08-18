@@ -55,6 +55,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ugr-certificado-login"),
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("jccm-certificate-login-probe"),
+                ProfileId("mites-certificate-login"),
                 ProfileId("sevilla-atse-certificate-login"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
@@ -95,6 +96,25 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.AUTOSCRIPT in lugo.observedMechanisms)
         assertTrue(lugo.limitations.contains("un lote CAdES", ignoreCase = true))
 
+    }
+
+    @Test
+    fun `MITES certificate login exposes only the exact QA CAdES contract`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val mites = catalog.entries.single {
+            it.portalId == PortalId("age-ministerio-de-trabajo-y-economia-social")
+        }
+
+        assertEquals(ProfileId("mites-certificate-login"), mites.profileId)
+        assertEquals("ES-PUB-0074", mites.inventoryId)
+        assertEquals("https://sede.mites.gob.es/", mites.entryUrl.toString())
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, mites.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, mites.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in mites.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in mites.observedMechanisms)
+        assertTrue(PortalMechanism.AUTOSCRIPT in mites.observedMechanisms)
+        assertTrue(PortalMechanism.MINIAPPLET in mites.observedMechanisms)
+        assertEquals(setOf(SignatureFormat.CADES), mites.observedSignatureFormats)
     }
 
     @Test

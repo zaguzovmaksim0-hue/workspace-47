@@ -62,6 +62,7 @@ class PortalCatalogRepositoryTest {
                 "ugr-certificado-login",
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
+                "mites-certificate-login",
                 "sevilla-atse-certificate-login",
                 "melilla-sede",
                 "ceuta-sede",
@@ -185,6 +186,24 @@ class PortalCatalogRepositoryTest {
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 
+
+    @Test
+    fun `MITES exact Sede root is QA enabled and release fail closed`() {
+        val profileId = ProfileId("mites-certificate-login")
+        val exact = java.net.URI("https://sede.mites.gob.es/")
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, qaPortal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertEquals(PortalLaunchTarget(profileId, exact), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, exact), qaRepository.resolveLaunch(profileId, exact))
+        assertEquals(null, qaRepository.resolveLaunch(profileId, java.net.URI("https://sede.mites.gob.es/auth")))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
 
     @Test
     fun `CDTI exact validation page is QA enabled and release fail closed`() {

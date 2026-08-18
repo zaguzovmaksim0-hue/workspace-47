@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "dfe8c9ad5962d6b77e7b4df02b8cbc86f901b91cc6ae5e820268744fd63c22c0",
+  "sourceRevision": "af66686b7578c36a7d46efd855de50e1073b6584debeabbc4e2de4d251f6cb73",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1813,24 +1813,32 @@
     {
       "portalId": "age-ministerio-de-trabajo-y-economia-social",
       "inventoryId": "ES-PUB-0074",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "mites-certificate-login",
+      "displayName": "Sede electrónica — acceso con certificado",
       "organization": "Ministerio de Trabajo y Economía Social",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Acceso con certificado a la Sede MITES mediante firma local CAdES de un challenge aleatorio de 10 letras ASCII minúsculas.",
       "entryUrl": "https://sede.mites.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_CADES_IMPLICIT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "MITES-CERT-2026-08-17"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Contrato público de acceso con certificado implementado en QA con validación fail-closed de página, origin, challenge, algoritmo, formato y propiedades; falta aceptación E2E física y no se realizaron login, firma real ni presentación administrativa."
     },
     {
       "portalId": "age-ministerio-de-transportes-y-movilidad-sostenible",
