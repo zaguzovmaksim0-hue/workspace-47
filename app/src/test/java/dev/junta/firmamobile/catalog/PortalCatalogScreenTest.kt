@@ -359,4 +359,18 @@ class PortalCatalogScreenTest {
         assertTrue(oepm.isEnabled)
     }
 
+    @Test
+    fun `Portal Funciona public home is compatible but sensitive auth capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val funciona = compatible.items.single { it.portalId == PortalId("age-portal-funciona") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("portal-funciona-public-home"), funciona.profileId)
+        assertEquals(java.net.URI("https://sede.funciona.gob.es/es/home"), funciona.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, funciona.supportStatus)
+        assertTrue(funciona.capabilities.isEmpty())
+        assertTrue(funciona.signatureFormats.isEmpty())
+        assertTrue(funciona.isEnabled)
+    }
+
 }

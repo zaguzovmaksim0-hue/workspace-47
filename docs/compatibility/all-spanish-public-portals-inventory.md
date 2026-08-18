@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 227 |
-| Fuentes oficiales totales registradas | 239 |
+| Fuentes oficiales portal-specific registradas | 228 |
+| Fuentes oficiales totales registradas | 240 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 56 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 60 |
-| Entradas restantes fuera de ambos estados | 123 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 57 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 61 |
+| Entradas restantes fuera de ambos estados | 122 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 56 |
+| `IMPLEMENTED_NOT_E2E` | 57 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 116 |
+| `BROWSE_ONLY` | 115 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 135 |
+| `REVIEWED` | 136 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 43 |
+| `DISCOVERED` | 42 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 209 fuentes porque las
+47/50; no se publica un cociente agregado para las 210 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -3071,30 +3071,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Portal Funciona"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede Funciona / inicio público"
     surface_type: "SEDE"
     origin: "https://sede.funciona.gob.es"
     official_site: "https://sede.funciona.gob.es/public/servicios"
     e_sede: "https://sede.funciona.gob.es/public/servicios"
-    entry_url: "https://sede.funciona.gob.es/public/servicios"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://sede.funciona.gob.es/es/home"
+    procedure_page: "https://sede.funciona.gob.es/es/home"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "OIDC_PKCE"
+    protocol_family: "OIDC_PKCE_AUTENTICA_SAML_CLIENT_TLS_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada solo al home público de Funciona. El acceso autenticado observado usa OIDC Authorization Code + PKCE hacia Autentica/SAML y alcanza una frontera TLS que solicita certificado cliente; esa cadena y la firma FNC posterior quedan fuera del contrato implementado."
+    protocol_evidence: "Chromium público abrió https://sede.funciona.gob.es/es/home y mostró «Acceder con Autentica». El click público produjo OIDC auth en auth-api.redsara.es con client_id fe66bc25-ec04-41e4-8202-809dbded381a, response_type=code, code_challenge_method=S256 y acr_values=loa:2; después broker Autentica/SAML con appId=5524. La página final de Autentica exige certificado digital o eDNI y un handshake TLS 1.2 independiente con autentica.redsara.es observó CertificateRequest. El runtime público de /es/home no expuso AutoScript, MiniApplet ni AutoFirma globals."
+    client_tls_auth: "SI"
+    evidence_ids: ["D11", "FUNCIONA-PUBLIC-2026-08-17"]
+    reason: "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY con entry_url exacto https://sede.funciona.gob.es/es/home; el URL del directorio /public/servicios se conserva como official_site/e_sede, sin SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI capabilities. La cadena auth real es multi-hop Funciona → OIDC/Keycloak → Autentica/SAML → client-certificate y no se amplía por analogía; auth-api.redsara.es y autentica.redsara.es permanecen fuera de navigation trust. FNC signing visible en bundle protegido tampoco se modela porque no se acreditaron algoritmo, formato, packaging ni callback actuales. Falta E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la navegación QA al home público. Cualquier soporte de login Autentica/client TLS o firma FNC requiere contrato separado que delimite la cadena multi-hop y sus callbacks sin usar datos reales."
+    notes: "deep_public_research=PASS en BROWSER_PUBLIC_RUNTIME: SPA/loaded chunks, OIDC metadata, red de redirects, runtime globals, ruta CSV pública y TLS CertificateRequest agotados. No se introdujeron credenciales, no se proporcionó certificado, no se llamó token/userinfo/secure backend/FNC POST, no hubo firma, carga, pago ni presentación administrativa. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0085"
     surface_key: "age-puertos-del-estado"
@@ -6304,6 +6304,7 @@ Orden de expansión recomendado:
 [P13A]: https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01
 [BNE-REG-2026-08-16]: https://sede.bne.gob.es/es/tramites/quejas-sugerencias
 [OEPM-PROTEGEO-2026-08-17]: https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/
+[FUNCIONA-PUBLIC-2026-08-17]: https://sede.funciona.gob.es/es/home
 [CERVANTES-REG-2026-08-17]: https://cervantes.sede.gob.es/servicio?id=Registro-Electrónico-General
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
 [P14]: https://reg.redsara.es/es/

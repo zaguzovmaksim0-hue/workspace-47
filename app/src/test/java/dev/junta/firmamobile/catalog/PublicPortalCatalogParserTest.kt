@@ -77,6 +77,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("oepm-protegeo-general"),
+                ProfileId("portal-funciona-public-home"),
                 ProfileId("cdti-certificate-validation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
@@ -1041,6 +1042,40 @@ class PublicPortalCatalogParserTest {
         assertEquals(
             PortalLaunchTarget(ProfileId("oepm-protegeo-general"), portal.entryUrl),
             repository.resolveLaunch(item),
+        )
+    }
+
+    @Test
+    fun `Portal Funciona keeps official directory entry but resolves only the exact QA public home`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.portalId == PortalId("age-portal-funciona") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0084", metadata.inventoryId)
+        assertEquals(ProfileId("portal-funciona-public-home"), metadata.profileId)
+        assertEquals(URI("https://sede.funciona.gob.es/es/home"), metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("OIDC_PKCE_AUTENTICA_SAML_CLIENT_TLS_BOUNDARY", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.CLIENT_TLS_AUTH),
+            metadata.observedMechanisms,
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("portal-funciona-public-home"), URI("https://sede.funciona.gob.es/es/home")),
+            repository.resolveLaunch(portal),
         )
     }
 

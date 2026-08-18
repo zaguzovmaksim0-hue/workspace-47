@@ -1161,6 +1161,29 @@ records:
         self.assertIn("e2e", oepm["limitations"].lower())
 
 
+    def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        funciona = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-portal-funciona"
+        )
+        self.assertEqual("ES-PUB-0084", funciona["inventoryId"])
+        self.assertEqual("portal-funciona-public-home", funciona["profileId"])
+        self.assertEqual("https://sede.funciona.gob.es/es/home", funciona["entryUrl"])
+        self.assertNotIn("launchUrl", funciona)
+        self.assertEqual("OIDC_PKCE_AUTENTICA_SAML_CLIENT_TLS_BOUNDARY", funciona["protocolFamily"])
+        self.assertEqual("E2E_PENDING", funciona["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", funciona["inventoryStatus"])
+        self.assertEqual("REVIEWED", funciona["discoveryState"])
+        self.assertEqual("2026-08-17", funciona["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], funciona["observedMechanisms"])
+        self.assertEqual([], funciona["observedSignatureFormats"])
+        self.assertIn("qa_only", funciona["limitations"].lower())
+        self.assertIn("auth-api.redsara.es", funciona["limitations"].lower())
+        self.assertIn("fnc", funciona["limitations"].lower())
+        self.assertIn("e2e", funciona["limitations"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()
 

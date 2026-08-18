@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 25,
+  "catalogVersion": 26,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -952,6 +952,26 @@
         {"url":"https://sede.mites.gob.es/nuevasede-ciudadano/api/public/procedimientos/38","reviewedOn":"2026-08-17"},
         {"url":"https://sede.mites.gob.es/auth.component-3JUEHJQO.js","reviewedOn":"2026-08-17"},
         {"url":"https://sede.mites.gob.es/chunk-MX4YJU4O.js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "portal-funciona-public-home",
+      "profileVersion": 1,
+      "displayName": "Portal Funciona — inicio público",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.funciona.gob.es/es/home",
+      "initiatorOrigins": ["https://sede.funciona.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.funciona.gob.es/public/servicios","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.funciona.gob.es/es/home","reviewedOn":"2026-08-17"}
       ]
     },
     {

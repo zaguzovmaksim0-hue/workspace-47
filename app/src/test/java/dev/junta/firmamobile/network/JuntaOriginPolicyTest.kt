@@ -51,6 +51,7 @@ class JuntaOriginPolicyTest {
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
+    private val funciona = ProfileId("portal-funciona-public-home")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -99,6 +100,7 @@ class JuntaOriginPolicyTest {
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
             "sede.oepm.gob.es",
+            "sede.funciona.gob.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -179,6 +181,11 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("https://seu.diputaciolleida.cat"), JuntaOriginPolicy.webMessageOriginRules(lleida))
         assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
+        assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),

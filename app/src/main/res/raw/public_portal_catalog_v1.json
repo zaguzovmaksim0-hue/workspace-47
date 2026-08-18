@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "726a98960ae2e8595f6c226b8ddd74f3825cfccdd55b0e47799571c5bdb28608",
+  "sourceRevision": "ed0a217c5cd59348d06ea0ae2920f78b3e4924742c459e3a1b178772b9a4fd10",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2088,24 +2088,28 @@
     {
       "portalId": "age-portal-funciona",
       "inventoryId": "ES-PUB-0084",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "portal-funciona-public-home",
+      "displayName": "Sede Funciona / inicio público",
       "organization": "Portal Funciona",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.funciona.gob.es/public/servicios",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Navegación QA integrada solo al home público de Funciona. El acceso autenticado observado usa OIDC Authorization Code + PKCE hacia Autentica/SAML y alcanza una frontera TLS que solicita certificado cliente; esa cadena y la firma FNC posterior quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.funciona.gob.es/es/home",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "OIDC_PKCE_AUTENTICA_SAML_CLIENT_TLS_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "FUNCIONA-PUBLIC-2026-08-17"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY con entry_url exacto https://sede.funciona.gob.es/es/home; el URL del directorio /public/servicios se conserva como official_site/e_sede, sin SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI capabilities. La cadena auth real es multi-hop Funciona → OIDC/Keycloak → Autentica/SAML → client-certificate y no se amplía por analogía; auth-api.redsara.es y autentica.redsara.es permanecen fuera de navigation trust. FNC signing visible en bundle protegido tampoco se modela porque no se acreditaron algoritmo, formato, packaging ni callback actuales. Falta E2E físico."
     },
     {
       "portalId": "age-puertos-del-estado",
