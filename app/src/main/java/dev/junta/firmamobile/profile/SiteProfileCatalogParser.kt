@@ -208,11 +208,17 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == JCCM_PROFILE_ID) {
                 validateJccmProfile(p)
             }
+            if (p.profileId.value == MITES_PROFILE_ID) {
+                validateMitesProfile(p)
+            }
             if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
                 validateSevillaAtseProfile(p)
             }
             if (p.profileId.value == CDTI_PROFILE_ID) {
                 validateCdtiProfile(p)
+            }
+            if (p.profileId.value == TRANSPORTES_PROFILE_ID) {
+                validateTransportesProfile(p)
             }
             if (p.profileId.value == MELILLA_PROFILE_ID) {
                 validateMelillaProfile(p)
@@ -348,7 +354,8 @@ object SiteProfileCatalogParser {
                         op.packaging == if (
                             p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
                             p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
-                            p.profileId.value == CDTI_PROFILE_ID
+                            p.profileId.value == CDTI_PROFILE_ID ||
+                            p.profileId.value == TRANSPORTES_PROFILE_ID
                         ) {
                             SignaturePackaging.ATTACHED
                         } else {
@@ -363,6 +370,10 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.IMPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == CANTABRIA_EXTRA_PROPERTIES)
+                                } else if (p.profileId.value == MITES_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.IMPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                                    require(op.fixedExtraProperties == MITES_EXTRA_PROPERTIES)
                                 } else if (p.profileId.value == TENERIFE_PROFILE_ID) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
@@ -423,7 +434,11 @@ object SiteProfileCatalogParser {
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
                             require(
-                                op.algorithms == if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID || p.profileId.value == POLICIA_PROFILE_ID) {
+                                op.algorithms == if (
+                                    p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
+                                    p.profileId.value == POLICIA_PROFILE_ID ||
+                                    p.profileId.value == TRANSPORTES_PROFILE_ID
+                                ) {
                                     setOf(SignatureAlgorithm.SHA1_WITH_RSA)
                                 } else {
                                     setOf(SignatureAlgorithm.SHA512_WITH_RSA)
@@ -432,6 +447,7 @@ object SiteProfileCatalogParser {
                             val expectedXadesProperties = when (p.profileId.value) {
                                 POLICIA_PROFILE_ID -> POLICIA_FIXED_EXTRA_PROPERTIES
                                 CDTI_PROFILE_ID -> CDTI_FIXED_EXTRA_PROPERTIES
+                                TRANSPORTES_PROFILE_ID -> TRANSPORTES_FIXED_EXTRA_PROPERTIES
                                 else -> emptyMap()
                             }
                             require(op.fixedExtraProperties == expectedXadesProperties)
@@ -946,6 +962,40 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateTransportesProfile(profile: SiteProfile) {
+        require(profile.profileVersion == TRANSPORTES_PROFILE_VERSION)
+        require(profile.displayName == TRANSPORTES_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == TRANSPORTES_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TRANSPORTES_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TRANSPORTES_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = TRANSPORTES_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.XADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = null,
+                fixedExtraProperties = TRANSPORTES_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateCdtiProfile(profile: SiteProfile) {
         require(profile.profileVersion == CDTI_PROFILE_VERSION)
         require(profile.displayName == CDTI_DISPLAY_NAME)
@@ -1012,6 +1062,39 @@ object SiteProfileCatalogParser {
         )
     }
 
+
+    private fun validateMitesProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MITES_PROFILE_VERSION)
+        require(profile.displayName == MITES_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MITES_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MITES_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MITES_EVIDENCE_URLS)
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = MITES_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.IMPLICIT,
+                fixedExtraProperties = MITES_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
 
     private fun validateUgrProfile(profile: SiteProfile) {
         require(profile.profileVersion == UGR_PROFILE_VERSION)
@@ -1336,6 +1419,30 @@ object SiteProfileCatalogParser {
         "https://sede.dipuleon.es/carpetaciudadana/login.aspx",
         "https://identificacionssl.sedipualba.es/",
     )
+    private const val TRANSPORTES_PROFILE_ID = "transportes-qys-cert-login"
+    private const val TRANSPORTES_PROFILE_VERSION = 1
+    private const val TRANSPORTES_DISPLAY_NAME =
+        "Ministerio de Transportes y Movilidad Sostenible — Quejas y Sugerencias"
+    private const val TRANSPORTES_START_URL =
+        "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002"
+    private const val TRANSPORTES_ORIGIN = "https://sede.transportes.gob.es"
+    private const val TRANSPORTES_SAFE_DESCRIPTION =
+        "Acceso con certificado a Quejas y Sugerencias del Ministerio de Transportes"
+    private val TRANSPORTES_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+        "format" to "XAdES Enveloped",
+        "includeOnlySigningCertificate" to "true",
+        "nodeToSign" to "tag1",
+        "applySystemDate" to "false",
+        "filters.1" to "keyusage.digitalsignature:true;nonexpired:",
+        "sticky" to "true",
+    )
+    private val TRANSPORTES_EVIDENCE_URLS = setOf(
+        "https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible",
+        "https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx",
+        "https://sede.transportes.gob.es/CIM/js/CIM_Functions.js",
+        "https://sede.transportes.gob.es/CIM/js/CIM_Classes.js",
+        "https://sede.transportes.gob.es/CIM/js/CIM_Constants.js",
+    )
     private const val CDTI_PROFILE_ID = "cdti-certificate-validation"
     private const val CDTI_PROFILE_VERSION = 1
     private const val CDTI_DISPLAY_NAME = "CDTI — Validación de certificado digital"
@@ -1364,6 +1471,22 @@ object SiteProfileCatalogParser {
     private val CANTABRIA_EXTRA_PROPERTIES = linkedMapOf(
         "filters" to "",
         "mode" to "implicit",
+    )
+    private const val MITES_PROFILE_ID = "mites-certificate-login"
+    private const val MITES_PROFILE_VERSION = 1
+    private const val MITES_DISPLAY_NAME = "Ministerio de Trabajo y Economía Social — Acceso con certificado"
+    private const val MITES_START_URL = "https://sede.mites.gob.es/"
+    private const val MITES_ORIGIN = "https://sede.mites.gob.es"
+    private const val MITES_SAFE_DESCRIPTION = "Acceso con certificado a la Sede del Ministerio de Trabajo"
+    private val MITES_EXTRA_PROPERTIES = linkedMapOf(
+        "mode" to "implicit",
+        "filters.1" to "signingCert:;keyusage.nonrepudiation:true;nonexpired:",
+    )
+    private val MITES_EVIDENCE_URLS = setOf(
+        "https://sede.mites.gob.es/inicio/detalleProcedimiento/38",
+        "https://sede.mites.gob.es/nuevasede-ciudadano/api/public/procedimientos/38",
+        "https://sede.mites.gob.es/auth.component-3JUEHJQO.js",
+        "https://sede.mites.gob.es/chunk-MX4YJU4O.js",
     )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
     private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
