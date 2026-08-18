@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7c0d4f49fc9bde69439391a1a60479a5f9ad3af3d7e8e579cbd9452ac4d5ca1b",
+  "sourceRevision": "119b9464968e95af37c4c2e65bf55db265f58c64b3f368758ee5fb7fb4c8e099",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1943,24 +1943,27 @@
     {
       "portalId": "age-ministerio-para-la-transformacion-digital-y-de-la-funcion-publica",
       "inventoryId": "ES-PUB-0078",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica — fallback al Registro Electrónico General",
       "organization": "Ministerio para la Transformación Digital y de la Función Pública",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio indica que, cuando un trámite de su competencia no dispone de procedimiento electrónico específico, la solicitud, escrito o comunicación puede presentarse a través del Registro Electrónico General (REG).",
       "entryUrl": "https://digital.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DIGITAL-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y redirect acotado al startUrl canónico; la sede ministerial se conserva como entry URL, no se añade digital.sede.gob.es a la confianza criptográfica REG-AGE y no se realizó E2E físico."
     },
     {
       "portalId": "age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico",
