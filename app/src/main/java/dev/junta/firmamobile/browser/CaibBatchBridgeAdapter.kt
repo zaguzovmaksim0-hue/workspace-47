@@ -165,7 +165,7 @@ class CaibBatchBridgeAdapter(
         private val ORIGIN = TrustedOrigin("https", "intranet.caib.es", 443)
         private val URL_BASE64 = Regex("[A-Za-z0-9_-]+={0,2}")
         private val SIGNATURE_ID = Regex("[A-Za-z0-9_-]{40}")
-        private val SAVER_CONFIG = Regex("FileName=/tmp/PluginAutofirmaBatch[0-9]+\.bin\ndebug=false")
+        private val SAVER_CONFIG = Regex("FileName=/tmp/PluginAutofirmaBatch[0-9]+\\.bin\ndebug=false")
         private val UUID_PATTERN = Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", RegexOption.IGNORE_CASE)
         private val REQUIRED_KEYS = setOf("type", "documentId", "requestId", "batchXml", "batchPreSignerUrl", "batchPostSignerUrl", "extraProperties")
 
