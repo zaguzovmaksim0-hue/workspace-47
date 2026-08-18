@@ -33,7 +33,7 @@ class EivissaCadesDetachedAdapterTest {
         val result = completed.signature.withBytes { it.copyOf() }
         val fingerprint = MessageDigest.getInstance("SHA-256").digest(identity.certificate.encoded)
         assertTrue(CMSSignedData(CMSProcessableByteArray(document), result).isDetachedSignature)
-        assertTrue(CadesDetachedCodec.validate(result, document, document.size, fingerprint, SigningAlgorithm.SHA256_WITH_RSA))
+        assertTrue(CadesDetachedCodec.validate(result, document, document.size, fingerprint, signingAlgorithm = SigningAlgorithm.SHA256_WITH_RSA))
         completed.signature.close(); local.signature.close(); prepared.preSign.close(); request.close()
         result.fill(0); document.fill(0); fingerprint.fill(0)
     }

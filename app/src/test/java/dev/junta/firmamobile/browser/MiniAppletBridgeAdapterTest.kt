@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.SensitiveSignatureCopyObserver
