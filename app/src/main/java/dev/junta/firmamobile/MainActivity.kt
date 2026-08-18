@@ -64,6 +64,7 @@ import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
 import dev.junta.firmamobile.signing.TenerifeCadesDetachedAdapter
 import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
+import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
