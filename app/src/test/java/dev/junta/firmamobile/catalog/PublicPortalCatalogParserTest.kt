@@ -77,6 +77,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("cdti-certificate-validation"),
+                ProfileId("la-rioja-oficina-electronica"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

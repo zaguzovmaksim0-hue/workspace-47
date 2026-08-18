@@ -84,6 +84,7 @@ class PortalCatalogRepositoryTest {
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "cdti-certificate-validation",
+                "la-rioja-oficina-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
