@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 222 |
-| Fuentes oficiales totales registradas | 234 |
+| Fuentes oficiales portal-specific registradas | 223 |
+| Fuentes oficiales totales registradas | 235 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 51 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 55 |
-| Entradas restantes fuera de ambos estados | 128 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 52 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 56 |
+| Entradas restantes fuera de ambos estados | 127 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 51 |
+| `IMPLEMENTED_NOT_E2E` | 52 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 121 |
+| `BROWSE_ONLY` | 120 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 130 |
+| `REVIEWED` | 131 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 48 |
+| `DISCOVERED` | 47 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2818,30 +2818,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Vivienda y Agenda Urbana"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica — Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://mivau.sede.gob.es"
     official_site: "https://mivau.sede.gob.es/"
     e_sede: "https://mivau.sede.gob.es/"
-    entry_url: "https://mivau.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Vivienda y Agenda Urbana ofrece públicamente el Registro Electrónico General como vía de registro y delega esa actuación al servicio REG-AGE."
+    protocol_evidence: "La página oficial https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General contiene un enlace público rotulado «Registro Electrónico» con href https://reg.redsara.es/. En una sesión Chromium 149 nueva y off-the-record, y de forma independiente con HTTP Accept-Language español, ese root público negocia idioma mediante 302 a https://reg.redsara.es/es/, exactamente el startUrl del perfil existente reg-age-redsara. Workspace-47 reutiliza únicamente ese startUrl canónico; no se atribuye a mivau.sede.gob.es un ABI de firma propio ni se amplían sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Vivienda y Agenda Urbana."
+    evidence_ids: ["D11", "MIVAU-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita desde la Sede MIVAU y redirect acotado del root REG a su startUrl español canónico; falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición MIVAU → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "El browser pass se realizó en contexto Chromium off-the-record sin credenciales, certificado, firma, POST ni submission. El enlace institucional publica el root locale-negotiated https://reg.redsara.es/; para el alias se usa exclusivamente https://reg.redsara.es/es/, ya cubierto por el perfil reg-age-redsara."
 
   - inventory_id: "ES-PUB-0077"
     surface_key: "age-ministerio-del-interior"
@@ -6546,3 +6547,4 @@ availability, certificado, firma ni contrato técnico.
 [INDUSTRIA-REG-2026-08-17]: https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx
 [TRANSPORTES-QYS-2026-08-17]: https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible
 [INTERIOR-REG-2026-08-17]: https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL
+[MIVAU-REG-2026-08-17]: https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General

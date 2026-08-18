@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "134222fe23f5a4cdae6b942eb9bbf706e0946302b0fb8bebda0e27bdc81e9db3",
+  "sourceRevision": "12b853d51589d782f5d0eb62b21450c0aa656c7887594d21a56237916c100a48",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1893,24 +1893,27 @@
     {
       "portalId": "age-ministerio-de-vivienda-y-agenda-urbana",
       "inventoryId": "ES-PUB-0076",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica — Registro Electrónico General",
       "organization": "Ministerio de Vivienda y Agenda Urbana",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://mivau.sede.gob.es/",
+      "purpose": "La Sede del Ministerio de Vivienda y Agenda Urbana ofrece públicamente el Registro Electrónico General como vía de registro y delega esa actuación al servicio REG-AGE.",
+      "entryUrl": "https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "MIVAU-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita desde la Sede MIVAU y redirect acotado del root REG a su startUrl español canónico; falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-del-interior",
