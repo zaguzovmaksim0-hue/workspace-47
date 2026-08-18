@@ -63,6 +63,7 @@ class PortalCatalogRepositoryTest {
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
                 "mites-certificate-login",
+                "transportes-qys-cert-login",
                 "sevilla-atse-certificate-login",
                 "melilla-sede",
                 "ceuta-sede",
