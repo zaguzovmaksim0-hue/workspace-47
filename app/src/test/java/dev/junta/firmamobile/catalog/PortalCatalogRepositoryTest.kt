@@ -84,6 +84,7 @@ class PortalCatalogRepositoryTest {
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "cdti-certificate-validation",
+                "eivissa-sede-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
