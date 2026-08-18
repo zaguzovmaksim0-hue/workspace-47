@@ -40,13 +40,7 @@ class FuerteventuraProfileCatalogBindingTest {
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse(FuerteventuraPadesAdapter.INITIATOR_ORIGIN)), profile.initiatorOrigins)
         assertTrue(profile.redirectOrigins.isEmpty())
-        assertEquals(
-            setOf(
-                ExactOrigin.parse("https://pasarela.clave.gob.es"),
-                ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
-            ),
-            profile.trustedBrowseOrigins,
-        )
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertEquals(setOf(Capability.SIGN), profile.capabilities)
         assertNull(profile.clientAuthPolicy)

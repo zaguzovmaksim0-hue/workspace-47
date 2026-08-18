@@ -772,7 +772,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin.serialized == FuerteventuraPadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(FuerteventuraPadesAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() &&
-            profile.trustedBrowseOrigins == FUERTEVENTURA_TRUSTED_BROWSE_ORIGINS &&
+            profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
             profile.capabilities == setOf(Capability.SIGN) &&
             profile.clientAuthPolicy == null &&
@@ -1201,10 +1201,6 @@ internal class ProfileMiniAppletBridgeAdapter(
             "signatureRotation" to "0",
             "includeQuestionMark" to "false",
             "obfuscateCertText" to "true",
-        )
-        private val FUERTEVENTURA_TRUSTED_BROWSE_ORIGINS = setOf(
-            ExactOrigin.parse("https://pasarela.clave.gob.es"),
-            ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
         )
         private val MINECO_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "filters" to "signingCert:;nonexpired:",

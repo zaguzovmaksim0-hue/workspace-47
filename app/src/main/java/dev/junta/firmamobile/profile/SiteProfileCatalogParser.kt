@@ -628,7 +628,7 @@ object SiteProfileCatalogParser {
         require(profile.startUrl.toASCIIString() == FUERTEVENTURA_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(FUERTEVENTURA_ORIGIN)))
         require(profile.redirectOrigins.isEmpty())
-        require(profile.trustedBrowseOrigins == FUERTEVENTURA_BROWSE_ORIGINS)
+        require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
         require(profile.capabilities == setOf(Capability.SIGN))
         require(profile.clientAuthPolicy == null)
@@ -1417,10 +1417,6 @@ object SiteProfileCatalogParser {
     private const val FUERTEVENTURA_ORIGIN = "https://sede.cabildofuer.es"
     private const val FUERTEVENTURA_SAFE_DESCRIPTION =
         "Firma PAdES de solicitud en la Sede electrónica del Cabildo Insular de Fuerteventura"
-    private val FUERTEVENTURA_BROWSE_ORIGINS = setOf(
-        ExactOrigin.parse("https://pasarela.clave.gob.es"),
-        ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
-    )
     private val FUERTEVENTURA_EXTRA_PROPERTIES = linkedMapOf(
         "signaturePositionOnPageLowerLeftX" to "50",
         "signaturePositionOnPageLowerLeftY" to "15",
