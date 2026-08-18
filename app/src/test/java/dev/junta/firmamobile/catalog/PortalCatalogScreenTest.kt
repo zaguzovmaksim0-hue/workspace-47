@@ -186,6 +186,35 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `UNED REG alias is shown as pending compatible and opens exact existing profile`() {
+        var opened: PortalCatalogItem? = null
+        rule.setContent {
+            JuntaFirmaTheme {
+                PortalCatalogScreen(
+                    repository = repository,
+                    onOpenPortal = { opened = it },
+                )
+            }
+        }
+
+        rule.onNodeWithText("Buscar servicio u organismo").performTextInput("UNED")
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasText("Registro Electrónico General (REG-AGE)"),
+        )
+        rule.onNodeWithText("Registro Electrónico General (REG-AGE)")
+            .assertIsDisplayed()
+        rule.onNodeWithText("IMPLEMENTADO · E2E PENDIENTE")
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText("Abrir sede").performScrollTo().performClick()
+
+        rule.runOnIdle {
+            assertEquals("reg-age-redsara", opened?.profileId?.value)
+            assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, opened?.supportStatus)
+        }
+    }
+
+    @Test
     fun `verified UniZAR card states portal validation and verified signature`() {
         rule.setContent {
             JuntaFirmaTheme {

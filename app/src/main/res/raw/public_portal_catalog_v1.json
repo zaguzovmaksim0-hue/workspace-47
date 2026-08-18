@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "5de328ac0aaa1d783e1414ed37dd1595d60637c9186d5c6fce9b551586a5a6e1",
+  "sourceRevision": "05a07aae5fbb18b5bb9d3fe997d1bccd5f1216133734318a4114f120dd800a2c",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2290,24 +2290,27 @@
     {
       "portalId": "age-universidad-nacional-de-educacion-a-distancia-uned",
       "inventoryId": "ES-PUB-0092",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico — Sede electrónica de la UNED",
       "organization": "Universidad Nacional de Educación a Distancia (UNED)",
       "governmentLevel": "UNIVERSITY",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.uned.es/",
+      "purpose": "La nueva Sede electrónica de la UNED publica el Registro Electrónico General de la AGE (REG-AGE) para solicitudes, escritos y comunicaciones sin formulario normalizado propio.",
+      "entryUrl": "https://uned.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "UNED-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la nueva Sede UNED delega explícitamente el Registro Electrónico General en REG-AGE y Workspace-47 lanza únicamente el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "junta-andalucia-sede",

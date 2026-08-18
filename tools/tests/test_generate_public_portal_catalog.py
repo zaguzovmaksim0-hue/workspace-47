@@ -160,6 +160,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", puertos["limitations"].lower())
         self.assertIn("e2e", puertos["limitations"].lower())
 
+        uned = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-universidad-nacional-de-educacion-a-distancia-uned"
+        )
+        self.assertEqual("ES-PUB-0092", uned["inventoryId"])
+        self.assertEqual("reg-age-redsara", uned["profileId"])
+        self.assertEqual(
+            "https://uned.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+            uned["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", uned["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", uned["protocolFamily"])
+        self.assertEqual("E2E_PENDING", uned["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", uned["inventoryStatus"])
+        self.assertEqual("REVIEWED", uned["discoveryState"])
+        self.assertEqual("2026-08-17", uned["reviewedOn"])
+        self.assertEqual([], uned["observedMechanisms"])
+        self.assertEqual([], uned["observedSignatureFormats"])
+        self.assertIn("reg-age", uned["limitations"].lower())
+        self.assertIn("qa", uned["limitations"].lower())
+        self.assertIn("e2e", uned["limitations"].lower())
+
         aeat = next(
             entry for entry in catalog["entries"]
             if entry["portalId"] == "aeat-sede"
