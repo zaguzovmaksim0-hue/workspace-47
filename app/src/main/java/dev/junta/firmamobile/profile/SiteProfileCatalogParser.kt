@@ -663,7 +663,7 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
         require(profile.endpoints.keys == setOf(EndpointId(XUNTA_ENDPOINT_ID)))
         require(
-            profile.endpoints.getValue(EndpointId(XUNTA_ENDPOINT_ID)) == EndpointPolicy(
+            profile.endpoints.getValue(EndpointId(XUNTA_ENDPOINT_ID)) == ProfileEndpoint(
                 endpointId = EndpointId(XUNTA_ENDPOINT_ID),
                 purpose = EndpointPurpose.TRIPHASE,
                 url = URI(XUNTA_ENDPOINT_URL),
