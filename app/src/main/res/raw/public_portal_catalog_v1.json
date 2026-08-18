@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "ad3eb2906c8b757e2cc35801fe5a19032af9411bf27465877afa80dd1ad96c07",
+  "sourceRevision": "18892ebfc83a461a55aeade34d577c6d0b918bf92e34adbaef39cb65c2e500c9",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1697,24 +1697,28 @@
     {
       "portalId": "age-ministerio-de-industria-y-turismo",
       "inventoryId": "ES-PUB-0069",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Ministerio de Industria y Turismo",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio de Industria y Turismo publica una vía específica al Registro Electrónico General de la Administración General del Estado para solicitudes, escritos y comunicaciones sin aplicación específica.",
       "entryUrl": "https://sede.minetur.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INDUSTRIA-REG-2026-08-17",
+        "PAG-REG-AGE-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede de Industria delega explícitamente en el Registro Electrónico General de la AGE y la ruta legacy publicada migra al origin REG actual; el catálogo lanza solo el startUrl canónico exacto del perfil existente. Falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-juventud-e-infancia",

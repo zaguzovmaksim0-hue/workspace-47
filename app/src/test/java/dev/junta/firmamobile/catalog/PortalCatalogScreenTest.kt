@@ -277,4 +277,25 @@ class PortalCatalogScreenTest {
         )
     }
 
+    @Test
+    fun `Industria REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val industria = compatible.items.single {
+            it.portalId == PortalId("age-ministerio-de-industria-y-turismo")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), industria.profileId)
+        assertEquals(java.net.URI("https://sede.minetur.gob.es/"), industria.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, industria.supportStatus)
+        assertTrue(industria.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(industria),
+        )
+    }
+
 }

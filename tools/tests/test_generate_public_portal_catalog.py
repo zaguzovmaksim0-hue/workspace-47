@@ -954,6 +954,22 @@ records:
         self.assertIn("qa", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_industria_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        industria = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-industria-y-turismo")
+        self.assertEqual("reg-age-redsara", industria["profileId"])
+        self.assertEqual("ES-PUB-0069", industria["inventoryId"])
+        self.assertEqual("https://sede.minetur.gob.es/", industria["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", industria["launchUrl"])
+        self.assertEqual("E2E_PENDING", industria["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", industria["inventoryStatus"])
+        self.assertEqual("REVIEWED", industria["discoveryState"])
+        self.assertEqual("2026-08-17", industria["reviewedOn"])
+        self.assertEqual([], industria["observedSignatureFormats"])
+        self.assertIn("reg-age", industria["limitations"].lower())
+        self.assertIn("qa", industria["limitations"].lower())
+        self.assertIn("e2e", industria["limitations"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()
