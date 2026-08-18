@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "0e9ee0b69fd69f6e85be53ba75d9bface080ebdf7f4a964a892e27431af5a994",
+  "sourceRevision": "5de328ac0aaa1d783e1414ed37dd1595d60637c9186d5c6fce9b551586a5a6e1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1216,24 +1216,27 @@
     {
       "portalId": "age-instituto-cervantes",
       "inventoryId": "ES-PUB-0049",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Instituto Cervantes",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Instituto Cervantes publica un servicio específico de acceso al Registro Electrónico General de la Administración General del Estado (REG-AGE) para escritos sin procedimiento electrónico o formulario normalizado específico.",
       "entryUrl": "https://cervantes.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CERVANTES-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede Cervantes delega explícitamente en REG-AGE y la raíz oficial publicada negocia idioma hasta el startUrl español exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-instituto-de-astrofisica-de-canarias-iac",
@@ -1518,46 +1521,52 @@
     {
       "portalId": "age-ministerio-de-cultura",
       "inventoryId": "ES-PUB-0062",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico General — Ministerio de Cultura",
       "organization": "Ministerio de Cultura",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://cultura.sede.gob.es/",
+      "purpose": "La Sede del Ministerio de Cultura publica el Registro Electrónico General de la AGE como vía para presentar solicitudes, escritos y comunicaciones sin procedimiento o formulario normalizado específico.",
+      "entryUrl": "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CULTURA-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita en REG-AGE; el launch queda limitado al startUrl exacto del perfil existente, no se amplía trust al origin Cultura y falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-defensa",
       "inventoryId": "ES-PUB-0063",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico General AGE — Ministerio de Defensa",
       "organization": "Ministerio de Defensa",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede Electrónica Central del Ministerio de Defensa ofrece públicamente el Registro Electrónico General AGE como servicio externo de registro electrónico.",
       "entryUrl": "https://sede.defensa.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DEFENSA-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita al Registro Electrónico General AGE y redirección pública del legacy endpoint REC al servicio REG; el launch queda limitado al startUrl exacto del perfil existente, no se amplía trust al origin Defensa y falta E2E físico."
     },
     {
       "portalId": "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030",
@@ -1640,134 +1649,157 @@
     {
       "portalId": "age-ministerio-de-igualdad",
       "inventoryId": "ES-PUB-0067",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Ministerio de Igualdad",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio de Igualdad publica un servicio específico de Registro Electrónico General y delega el acceso al REG-AGE.",
       "entryUrl": "https://igualdad.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "IGUALDAD-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede de Igualdad publica una delegación explícita al REG-AGE y el catálogo lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-inclusion-seguridad-social-y-migraciones",
       "inventoryId": "ES-PUB-0068",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Ministerio de Inclusión, Seguridad Social y Migraciones",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio de Inclusión publica un acceso al Registro Electrónico de la Administración General del Estado; su enlace legacy REC migra mediante redirección HTTP al actual origin REG-AGE.",
       "entryUrl": "https://sede.inclusion.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INCLUSION-REG-2026-08-17",
+        "PAG-REG-AGE-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede de Inclusión delega explícitamente al registro AGE y la ruta legacy publicada migra al origin REG-AGE actual; el catálogo usa solo el startUrl canónico exacto del perfil existente. Falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-industria-y-turismo",
       "inventoryId": "ES-PUB-0069",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Ministerio de Industria y Turismo",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio de Industria y Turismo publica una vía específica al Registro Electrónico General de la Administración General del Estado para solicitudes, escritos y comunicaciones sin aplicación específica.",
       "entryUrl": "https://sede.minetur.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INDUSTRIA-REG-2026-08-17",
+        "PAG-REG-AGE-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede de Industria delega explícitamente en el Registro Electrónico General de la AGE y la ruta legacy publicada migra al origin REG actual; el catálogo lanza solo el startUrl canónico exacto del perfil existente. Falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-juventud-e-infancia",
       "inventoryId": "ES-PUB-0070",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Formulario genérico — vía Registro Electrónico General",
       "organization": "Ministerio de Juventud e Infancia",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://juventudeinfancia.sede.gob.es/",
+      "purpose": "La Sede publica un formulario genérico para solicitudes, escritos y comunicaciones sin procedimiento normalizado y remite expresamente al Registro Electrónico General (REG-AGE).",
+      "entryUrl": "https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "JUVENTUD-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita a REG-AGE y resolución exacta del launch español al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
     },
     {
       "portalId": "age-ministerio-de-la-presidencia-justicia-y-relaciones-con-las-cortes",
       "inventoryId": "ES-PUB-0071",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico General — vía REG-AGE",
       "organization": "Ministerio de la Presidencia, Justicia y Relaciones con las Cortes",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://mpr.sede.gob.es/",
+      "purpose": "La Sede oficial publica el Registro Electrónico General como vía para presentar solicitudes, escritos y comunicaciones que no dispongan de procedimiento electrónico o formulario normalizado específico.",
+      "entryUrl": "https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "MPR-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita a REG-AGE y resolución exacta del launch español al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
     },
     {
       "portalId": "age-ministerio-de-politica-territorial-y-memoria-democratica",
       "inventoryId": "ES-PUB-0072",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico General — acceso directo REG-AGE",
       "organization": "Ministerio de Política Territorial y Memoria Democrática",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://mptmd.sede.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "La Sede oficial publica el Registro Electrónico General de la AGE para solicitudes, escritos y comunicaciones sin procedimiento específico y ofrece un acceso directo al REG; la propia página indica DNIe/certificado digital y firma de la solicitud al enviarla.",
+      "entryUrl": "https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "MPTMD-REG-2026-08-17",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y cadena de redirect exacta al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
     },
     {
       "portalId": "age-ministerio-de-sanidad",
@@ -1801,112 +1833,137 @@
     {
       "portalId": "age-ministerio-de-trabajo-y-economia-social",
       "inventoryId": "ES-PUB-0074",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "mites-certificate-login",
+      "displayName": "Sede electrónica — acceso con certificado",
       "organization": "Ministerio de Trabajo y Economía Social",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Acceso con certificado a la Sede MITES mediante firma local CAdES de un challenge aleatorio de 10 letras ASCII minúsculas.",
       "entryUrl": "https://sede.mites.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_CADES_IMPLICIT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "MITES-CERT-2026-08-17"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Contrato público de acceso con certificado implementado en QA con validación fail-closed de página, origin, challenge, algoritmo, formato y propiedades; falta aceptación E2E física y no se realizaron login, firma real ni presentación administrativa."
     },
     {
       "portalId": "age-ministerio-de-transportes-y-movilidad-sostenible",
       "inventoryId": "ES-PUB-0075",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "transportes-qys-cert-login",
+      "displayName": "Sede electrónica — Quejas y Sugerencias",
       "organization": "Ministerio de Transportes y Movilidad Sostenible",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.mitma.gob.es/sede_electronica/lang_castellano/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Autenticación con certificado para Quejas y Sugerencias mediante firma local XAdES Enveloped del challenge XML público de la Sede.",
+      "entryUrl": "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_XADES_ENVELOPED",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "TRANSPORTES-QYS-2026-08-17"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Contrato de autenticación por firma implementado en QA con comprobación fail-closed de origin, página, challenge, algoritmo, formato y propiedades. Falta aceptación E2E física; no se realizó autenticación, POST, firma real ni presentación administrativa."
     },
     {
       "portalId": "age-ministerio-de-vivienda-y-agenda-urbana",
       "inventoryId": "ES-PUB-0076",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica — Registro Electrónico General",
       "organization": "Ministerio de Vivienda y Agenda Urbana",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://mivau.sede.gob.es/",
+      "purpose": "La Sede del Ministerio de Vivienda y Agenda Urbana ofrece públicamente el Registro Electrónico General como vía de registro y delega esa actuación al servicio REG-AGE.",
+      "entryUrl": "https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "MIVAU-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita desde la Sede MIVAU y redirect acotado del root REG a su startUrl español canónico; falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-del-interior",
       "inventoryId": "ES-PUB-0077",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Formulario de propósito general — vía REG-AGE",
       "organization": "Ministerio del Interior",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.mir.gob.es/opencms/export/sites/default/es/inicio/",
+      "purpose": "La Sede actual del Ministerio del Interior publica el «Formulario de propósito general» para escritos sin formulario específico y ofrece un botón público de acceso que delega en el registro estatal.",
+      "entryUrl": "https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INTERIOR-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación first-party explícita y cadena de redirect acotada que termina exactamente en el startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
     },
     {
       "portalId": "age-ministerio-para-la-transformacion-digital-y-de-la-funcion-publica",
       "inventoryId": "ES-PUB-0078",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica — fallback al Registro Electrónico General",
       "organization": "Ministerio para la Transformación Digital y de la Función Pública",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio indica que, cuando un trámite de su competencia no dispone de procedimiento electrónico específico, la solicitud, escrito o comunicación puede presentarse a través del Registro Electrónico General (REG).",
       "entryUrl": "https://digital.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DIGITAL-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y redirect acotado al startUrl canónico; la sede ministerial se conserva como entry URL, no se añade digital.sede.gob.es a la confianza criptográfica REG-AGE y no se realizó E2E físico."
     },
     {
       "portalId": "age-ministerio-para-la-transicion-ecologica-y-el-reto-demografico",
@@ -1939,24 +1996,27 @@
     {
       "portalId": "age-museo-nacional-centro-de-arte-reina-sofia",
       "inventoryId": "ES-PUB-0080",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Museo Nacional Centro de Arte Reina Sofía",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Museo Reina Sofía publica un servicio específico de acceso al Registro Electrónico General de la Administración General del Estado (REG-AGE) para solicitudes, escritos y comunicaciones sin procedimiento electrónico o formulario normalizado específico.",
       "entryUrl": "https://museoreinasofia.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "REINA-SOFIA-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede del Museo delega explícitamente en REG-AGE y la raíz oficial publicada negocia idioma hasta el startUrl español exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-mutualidad-general-judicial-mugeju",
@@ -1983,24 +2043,25 @@
     {
       "portalId": "age-oficina-espanola-de-patentes-y-marcas",
       "inventoryId": "ES-PUB-0082",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "oepm-protegeo-general",
+      "displayName": "Solicitud de propósito general / ProtegeO",
       "organization": "Oficina Española de Patentes y Marcas",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.oepm.gob.es/",
+      "purpose": "Navegación QA integrada exclusivamente al inicio público de ProtegeO para la Solicitud electrónica de propósito general remitida a la OEPM; el flujo POST posterior, autenticación y firma quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "OEPM_PROTEGEO_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "OEPM-PROTEGEO-2026-08-17"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch público exacto de ProtegeO y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. La tarjeta current first-party indica acceso con Cl@ve y «No requiere certificado electrónico», mientras el texto desplegable conserva instrucciones legacy de Java Applet/certificado; por esa contradicción no se modelan constantes de firma ni certificado. Falta E2E físico."
     },
     {
       "portalId": "age-portal-de-la-transparencia",
@@ -2027,46 +2088,53 @@
     {
       "portalId": "age-portal-funciona",
       "inventoryId": "ES-PUB-0084",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "portal-funciona-public-home",
+      "displayName": "Sede Funciona / inicio público",
       "organization": "Portal Funciona",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.funciona.gob.es/public/servicios",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Navegación QA integrada solo al home público de Funciona. El acceso autenticado observado usa OIDC Authorization Code + PKCE hacia Autentica/SAML y alcanza una frontera TLS que solicita certificado cliente; esa cadena y la firma FNC posterior quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.funciona.gob.es/es/home",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "OIDC_PKCE_AUTENTICA_SAML_CLIENT_TLS_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "FUNCIONA-PUBLIC-2026-08-17"
+      ],
+      "reviewedOn": "2026-08-17",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY con entry_url exacto https://sede.funciona.gob.es/es/home; el URL del directorio /public/servicios se conserva como official_site/e_sede, sin SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI capabilities. La cadena auth real es multi-hop Funciona → OIDC/Keycloak → Autentica/SAML → client-certificate y no se amplía por analogía; auth-api.redsara.es y autentica.redsara.es permanecen fuera de navigation trust. FNC signing visible en bundle protegido tampoco se modela porque no se acreditaron algoritmo, formato, packaging ni callback actuales. Falta E2E físico."
     },
     {
       "portalId": "age-puertos-del-estado",
       "inventoryId": "ES-PUB-0085",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico General — acceso directo REG-AGE",
       "organization": "Puertos del Estado",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.puertos.gob.es/Paginas/Contenido.aspx",
+      "purpose": "La Sede de Puertos del Estado ofrece públicamente su servicio Registro Electrónico General y delega esa actuación al REG-AGE.",
+      "entryUrl": "https://puertos.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "PUERTOS-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede Puertos del Estado delega públicamente en REG-AGE y se lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-red-es",
@@ -2093,68 +2161,79 @@
     {
       "portalId": "age-secretaria-de-estado-de-comercio",
       "inventoryId": "ES-PUB-0087",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Excepciones al comercio internacional de servicios — vía REG",
       "organization": "Secretaría de Estado de Comercio",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.comercio.gob.es/",
+      "purpose": "El catálogo público de Comercio mantiene el procedimiento SIA 3057517 y, mientras se habilita su procedimiento administrativo específico, indica que la solicitud puede presentarse por el Registro Electrónico General de la AGE.",
+      "entryUrl": "https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "COMERCIO-SURFACE-2026-08-17",
+        "COMERCIO-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y destino exacto; se conserva el procedimiento público de Comercio como entry URL, no se amplía la confianza criptográfica REG-AGE a sede.mineco.gob.es y no se realizó E2E físico."
     },
     {
       "portalId": "age-sede-electronica-central-del-ministerio",
       "inventoryId": "ES-PUB-0088",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
-      "organization": "Sede electrónica central del Ministerio",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede Electrónica Central del Ministerio de Hacienda",
+      "organization": "Ministerio de Hacienda",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede Electrónica Central del Ministerio de Hacienda declara que el Ministerio utiliza el Registro Electrónico General de la AGE para solicitudes, escritos y comunicaciones de su ámbito; Workspace-47 representa esa vía como alias acotado al perfil REG-AGE existente.",
       "entryUrl": "https://sede.hacienda.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "HACIENDA-REG-2026-08-17",
+        "HACIENDA-PAG-REG-AGE-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara basado en una delegación first-party explícita del Ministerio de Hacienda al REG-AGE y en el launch oficial de la Sede PAG. No se infieren certificados, algoritmo, formato, callback, endpoint ni client-TLS específicos de Hacienda; falta validación E2E física de la transición."
     },
     {
       "portalId": "age-sede-electronica-de-la-s-e-de-digitalizacion-e-inteligencia-artificial-y-s-e-de-telecomunica",
       "inventoryId": "ES-PUB-0089",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede SEDIA/SETID migrada — fallback al Registro Electrónico General",
       "organization": "Sede Electrónica de la S.E. de Digitalización e Inteligencia Artificial y S.E. de Telecomunicaciones e Infraestructuras Digitales del Ministerio de Transformación Digital",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La antigua entrada SEDIA/SETID migra al portal actual del Ministerio; su sede electrónica asociada publica REG como vía para solicitudes, escritos o comunicaciones de competencia ministerial cuando no existe un procedimiento electrónico específico habilitado.",
       "entryUrl": "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DIGITAL-SEDE-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita y resolución pública exacta al startUrl canónico; se conserva la entrada histórica SEDIA/SETID como entry URL, no se copian constantes criptográficas de REG-AGE y falta E2E físico de la transición."
     },
     {
       "portalId": "age-sede-electronica-de-los-tribunales-economico-administrativos-tea",
@@ -2186,24 +2265,27 @@
     {
       "portalId": "age-tesoro-publico",
       "inventoryId": "ES-PUB-0091",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Adhesión al Código de Buenas Prácticas — vía Registro Electrónico Común",
       "organization": "Tesoro Público",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.tesoropublico.gob.es/",
+      "purpose": "La Sede del Tesoro indica que la comunicación de adhesión al Código de Buenas Prácticas para deudores hipotecarios en riesgo de vulnerabilidad se presenta por el Registro Electrónico Común y publica su acceso directo.",
+      "entryUrl": "https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "TESORO-REC-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación pública exacta y cadena de redirección acotada; la página del Tesoro permanece como entry URL y no se amplía la confianza criptográfica REG-AGE al origen www.tesoropublico.gob.es. E2E físico no realizado."
     },
     {
       "portalId": "age-universidad-nacional-de-educacion-a-distancia-uned",
