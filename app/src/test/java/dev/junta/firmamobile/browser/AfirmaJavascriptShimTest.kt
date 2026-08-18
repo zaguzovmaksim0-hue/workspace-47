@@ -572,4 +572,30 @@ class AfirmaJavascriptShimTest {
         assertTrue(fallback.isNotEmpty())
         assertTrue(fallback.contains("lugoBatchCompatibilityEnabled"))
     }
+    @Test
+    fun xuntaCompatibilityIsProfileScopedToExactPadesTriAndCertificateSelectionTuples() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            xuntaGaliciaCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            xuntaGaliciaCompatibilityEnabled = false,
+        )
+        assertTrue(enabled.contains("const xSel = true"))
+        assertTrue(disabled.contains("const xSel = false"))
+        assertTrue(enabled.contains("https://sede.xunta.gal/presenta/novo/PR004A_2025_1"))
+        assertTrue(enabled.contains("args[0] === \"doc\""))
+        assertTrue(enabled.contains("args[1] === \"SHA1withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdEStri\""))
+        assertTrue(enabled.contains("filters=nonexpired"))
+        assertTrue(enabled.contains("isExactXuntaProperties"))
+        assertTrue(enabled.contains("if (isXuntaOrigin && !isExactXuntaCall)"))
+    }
+
 }

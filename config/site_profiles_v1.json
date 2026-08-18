@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 24,
+  "catalogVersion": 25,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -972,6 +972,31 @@
       "evidence": [
         {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "xunta-galicia-solicitude-xenerica",
+      "profileVersion": 1,
+      "displayName": "Xunta de Galicia — Solicitude xenérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica",
+      "initiatorOrigins": ["https://sede.xunta.gal"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [{"endpointId":"xunta-galicia-triphase","purpose":"TRIPHASE","url":"https://sede.xunta.gal/presenta/sinatura/SignatureService","method":"POST","requestContentTypes":["application/x-www-form-urlencoded; charset=UTF-8"],"responseContentTypes":["text/plain"],"maxRequestBytes":2097152,"maxResponseBytes":2097152,"redirects":"DENY"}],
+      "operationPolicies": [
+        {"operation":"SIGN","safeDescription":"Firma PAdES de solicitud genérica en la Sede de la Xunta de Galicia","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":"xunta-galicia-triphase","algorithms":["SHA1_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"format":"PAdES","signatureSubFilter":"ETSI.CAdES.detached","serverUrl":"https://sede.xunta.gal/presenta/sinatura/SignatureService","referencesDigestMethod":"http://www.w3.org/2000/09/xmldsig#sha1","mimeType":"hash/sha256","headless":"true"},"allowedExtraProperties":["filters","locale","nif","id","codigoSeguridad","marcaFirmaCustom","dataUser","idBorrador"]},
+        {"operation":"SELECT_CERTIFICATE","safeDescription":"Seleccionar certificado para la solicitud genérica de la Xunta de Galicia","inputAdapterId":"autoscript-select-certificate-v1","callbackContractId":"autoscript-select-certificate-callback-v1","capabilities":["SELECT_CERTIFICATE"],"endpointId":null,"algorithms":[],"format":null,"packaging":null,"mode":null,"fixedExtraProperties":{"filters":"nonexpired"},"allowedExtraProperties":[]}
+      ],
+      "capabilities": ["SIGN", "SELECT_CERTIFICATE", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.xunta.gal/presenta/novo/PR004A_2025_1","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.xunta.gal/presenta/assets/js/miniapplet.js?nocache=1.7.0","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.xunta.gal/presenta/main.293423417603b2d37c80.js","reviewedOn":"2026-08-18"}
       ]
     }
   ]
