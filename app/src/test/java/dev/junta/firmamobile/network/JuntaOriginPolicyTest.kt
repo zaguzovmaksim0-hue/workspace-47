@@ -30,8 +30,10 @@ class JuntaOriginPolicyTest {
     private val ugr = ProfileId("ugr-certificado-login")
     private val cantabria = ProfileId("cantabria-rec-cert-login")
     private val jccm = ProfileId("jccm-certificate-login-probe")
+    private val mites = ProfileId("mites-certificate-login")
     private val sevilla = ProfileId("sevilla-atse-certificate-login")
     private val cdti = ProfileId("cdti-certificate-validation")
+    private val transportes = ProfileId("transportes-qys-cert-login")
     private val melilla = ProfileId("melilla-sede")
     private val ceuta = ProfileId("ceuta-sede")
     private val extremadura = ProfileId("extremadura-tramites")
@@ -71,8 +73,10 @@ class JuntaOriginPolicyTest {
             "sede.ugr.es",
             "rec.cantabria.es",
             "ventanillaelectronica.jccm.es",
+            "sede.mites.gob.es",
             "www.sevilla.org",
             "sede.cdti.gob.es",
+            "sede.transportes.gob.es",
             "sede.melilla.es",
             "sede.ceuta.es",
             "tramites.juntaex.es",
@@ -159,8 +163,13 @@ class JuntaOriginPolicyTest {
             setOf("ventanillaelectronica.jccm.es"),
             JuntaOriginPolicy.browserAllowedHosts(jccm),
         )
+        assertEquals(setOf("sede.mites.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mites))
         assertEquals(setOf("www.sevilla.org"), JuntaOriginPolicy.browserAllowedHosts(sevilla))
         assertEquals(setOf("sede.cdti.gob.es"), JuntaOriginPolicy.browserAllowedHosts(cdti))
+        assertEquals(
+            setOf("sede.transportes.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(transportes),
+        )
         assertEquals(setOf("sede.melilla.es"), JuntaOriginPolicy.browserAllowedHosts(melilla))
         assertEquals(setOf("sede.ceuta.es"), JuntaOriginPolicy.browserAllowedHosts(ceuta))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(ceuta).isEmpty())
@@ -205,12 +214,20 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.webMessageOriginRules(jccm),
         )
         assertEquals(
+            setOf("https://sede.mites.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(mites),
+        )
+        assertEquals(
             setOf("https://www.sevilla.org"),
             JuntaOriginPolicy.webMessageOriginRules(sevilla),
         )
         assertEquals(
             setOf("https://sede.cdti.gob.es"),
             JuntaOriginPolicy.webMessageOriginRules(cdti),
+        )
+        assertEquals(
+            setOf("https://sede.transportes.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(transportes),
         )
         assertEquals(
             setOf("https://sede.melilla.es"),

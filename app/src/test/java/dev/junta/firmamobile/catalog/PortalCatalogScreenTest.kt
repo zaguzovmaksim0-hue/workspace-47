@@ -214,6 +214,25 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Igualdad REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val igualdad = compatible.items.single { it.portalId == PortalId("age-ministerio-de-igualdad") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), igualdad.profileId)
+        assertEquals(java.net.URI("https://igualdad.sede.gob.es/"), igualdad.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, igualdad.supportStatus)
+        assertTrue(igualdad.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(igualdad),
+        )
+    }
+
+    @Test
     fun `metadata only browse record explains why integrated navigation is blocked`() {
         rule.setContent {
             JuntaFirmaTheme {
@@ -258,4 +277,46 @@ class PortalCatalogScreenTest {
         rule.onNodeWithText("Favorito").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Abrir sede").assertIsDisplayed()
     }
+    @Test
+    fun `Inclusion REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val inclusion = compatible.items.single {
+            it.portalId == PortalId("age-ministerio-de-inclusion-seguridad-social-y-migraciones")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), inclusion.profileId)
+        assertEquals(java.net.URI("https://sede.inclusion.gob.es/"), inclusion.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, inclusion.supportStatus)
+        assertTrue(inclusion.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(inclusion),
+        )
+    }
+
+    @Test
+    fun `Industria REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val industria = compatible.items.single {
+            it.portalId == PortalId("age-ministerio-de-industria-y-turismo")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), industria.profileId)
+        assertEquals(java.net.URI("https://sede.minetur.gob.es/"), industria.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, industria.supportStatus)
+        assertTrue(industria.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(industria),
+        )
+    }
+
 }
