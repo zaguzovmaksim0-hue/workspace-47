@@ -545,13 +545,13 @@ class SiteProfileCatalogParserTest {
     @Test
     fun navarraClientAuthMappingFailsClosedOnUnboundOrAmbiguousParameterNames() {
         val mutations = listOf(
-            "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"returnUrl\"}" to
+            "\"linkedEphemeralQueryParameterMappings\": {\"ReturnUrl\":\"returnUrl\"}" to
                 "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"wrongTarget\"}",
-            "\"sourceRequiredEphemeralQueryParameters\":[\"ReturnUrl\"]" to
+            "\"sourceRequiredEphemeralQueryParameters\": [\"ReturnUrl\"]" to
                 "\"sourceRequiredEphemeralQueryParameters\":[\"OtherSource\"]",
-            "\"requiredEphemeralQueryParameters\":[\"returnUrl\"]" to
+            "\"requiredEphemeralQueryParameters\": [\"returnUrl\"]" to
                 "\"requiredEphemeralQueryParameters\":[\"OtherTarget\"]",
-            "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"returnUrl\"}" to
+            "\"linkedEphemeralQueryParameterMappings\": {\"ReturnUrl\":\"returnUrl\"}" to
                 "\"linkedEphemeralQueryParameters\":[\"ReturnUrl\"]," +
                     "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"returnUrl\"}",
         )

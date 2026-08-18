@@ -66,6 +66,7 @@ class PortalCatalogRepositoryTest {
                 "melilla-sede",
                 "ceuta-sede",
                 "extremadura-tramites",
+                "navarra-sede-registro-general",
                 "diputacion-valladolid-sede",
                 "diputacion-burgos-portal",
                 "la-palma-sede-electronica",
