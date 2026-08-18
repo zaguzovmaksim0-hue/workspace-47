@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 210 |
-| Fuentes oficiales totales registradas | 222 |
+| Fuentes oficiales portal-specific registradas | 220 |
+| Fuentes oficiales totales registradas | 232 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
-| Entradas restantes fuera de ambos estados | 139 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 49 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 53 |
+| Entradas restantes fuera de ambos estados | 130 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 40 |
+| `IMPLEMENTED_NOT_E2E` | 49 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 132 |
+| `BROWSE_ONLY` | 123 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 119 |
+| `REVIEWED` | 128 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 59 |
+| `DISCOVERED` | 50 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2374,30 +2374,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Cultura"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico General — Ministerio de Cultura"
     surface_type: "SEDE"
     origin: "https://cultura.sede.gob.es"
     official_site: "https://cultura.sede.gob.es/"
     e_sede: "https://cultura.sede.gob.es/"
-    entry_url: "https://cultura.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Cultura publica el Registro Electrónico General de la AGE como vía para presentar solicitudes, escritos y comunicaciones sin procedimiento o formulario normalizado específico."
+    protocol_evidence: "La página oficial «Registro Electrónico General» identifica explícitamente el servicio como REG-AGE y enlaza públicamente a https://reg.redsara.es/; Workspace-47 conserva esa página ministerial como entry y usa únicamente el startUrl canónico español ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara, sin atribuir un ABI de firma propio a cultura.sede.gob.es."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Cultura."
+    evidence_ids: ["D11", "CULTURA-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita en REG-AGE; el launch queda limitado al startUrl exacto del perfil existente, no se amplía trust al origin Cultura y falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Cultura → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La evidencia acredita únicamente la delegación al REG-AGE; no se infiere certificado, firma, AutoFirma, endpoint ni contrato criptográfico propio de la Sede de Cultura."
 
   - inventory_id: "ES-PUB-0063"
     surface_key: "age-ministerio-de-defensa"
@@ -2405,30 +2406,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Defensa"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico General AGE — Ministerio de Defensa"
     surface_type: "SEDE"
     origin: "https://sede.defensa.gob.es"
     official_site: "https://sede.defensa.gob.es/"
     e_sede: "https://sede.defensa.gob.es/"
     entry_url: "https://sede.defensa.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.defensa.gob.es/"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede Electrónica Central del Ministerio de Defensa ofrece públicamente el Registro Electrónico General AGE como servicio externo de registro electrónico."
+    protocol_evidence: "La portada oficial de la Sede de Defensa publica varias entradas rotuladas «Registro Electrónico General AGE» cuyo destino es https://rec.redsara.es/; ese endpoint público responde con redirección HTTP 301 a https://reg.redsara.es/, servicio REG-AGE ya cubierto por el perfil existente. Workspace-47 usa únicamente el startUrl canónico español ya revisado https://reg.redsara.es/es/ y no atribuye un ABI de firma propio a sede.defensa.gob.es."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Defensa."
+    evidence_ids: ["D11", "DEFENSA-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita al Registro Electrónico General AGE y redirección pública del legacy endpoint REC al servicio REG; el launch queda limitado al startUrl exacto del perfil existente, no se amplía trust al origin Defensa y falta E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Defensa → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La Sede de Defensa también publica procedimientos propios con autenticación/certificado; esos contratos quedan fuera de esta implementación. Solo se cubre la delegación externa REG-AGE."
 
   - inventory_id: "ES-PUB-0064"
     surface_key: "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030"
@@ -2531,30 +2533,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Igualdad"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / acceso al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://igualdad.sede.gob.es"
     official_site: "https://igualdad.sede.gob.es/"
     e_sede: "https://igualdad.sede.gob.es/"
     entry_url: "https://igualdad.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Igualdad publica un servicio específico de Registro Electrónico General y delega el acceso al REG-AGE."
+    protocol_evidence: "La página pública oficial /servicio?id=Registro-Electrónico-General identifica expresamente el Registro Electrónico General de la AGE (REG-AGE), muestra «Acceso al Registro Electrónico General» y enlaza https://reg.redsara.es/. Workspace-47 reutiliza únicamente el startUrl canónico ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara; no atribuye a igualdad.sede.gob.es un ABI de firma ni amplía sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Igualdad."
+    evidence_ids: ["D11", "IGUALDAD-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la Sede de Igualdad publica una delegación explícita al REG-AGE y el catálogo lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Igualdad → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La evidencia usada es el servicio público REG-AGE de la propia Sede; no se deriva compatibilidad del dominio *.sede.gob.es ni del AC2/AutoFirma compartido."
 
   - inventory_id: "ES-PUB-0068"
     surface_key: "age-ministerio-de-inclusion-seguridad-social-y-migraciones"
@@ -2562,30 +2565,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Inclusión, Seguridad Social y Migraciones"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / acceso al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://sede.inclusion.gob.es"
     official_site: "https://sede.inclusion.gob.es/"
     e_sede: "https://sede.inclusion.gob.es/"
     entry_url: "https://sede.inclusion.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.inclusion.gob.es/registroelectronico"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Inclusión publica un acceso al Registro Electrónico de la Administración General del Estado; su enlace legacy REC migra mediante redirección HTTP al actual origin REG-AGE."
+    protocol_evidence: "La página first-party https://sede.inclusion.gob.es/registroelectronico indica expresamente que permite acceder al Registro Electrónico de la Administración General del Estado y publica https://rec.redsara.es/registro/action/are/acceso.do; ese URL responde 301 hacia https://reg.redsara.es/. El PAG vigente identifica ese servicio como Registro Electrónico General (REG-AGE) y publica «Acceso al REG» sobre el mismo origin. Workspace-47 lanza únicamente el startUrl canónico ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara; no atribuye a sede.inclusion.gob.es un ABI de firma ni amplía sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Inclusión, Seguridad Social y Migraciones."
+    evidence_ids: ["D11", "INCLUSION-REG-2026-08-17", "PAG-REG-AGE-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la Sede de Inclusión delega explícitamente al registro AGE y la ruta legacy publicada migra al origin REG-AGE actual; el catálogo usa solo el startUrl canónico exacto del perfil existente. Falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Inclusión → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "No se deriva compatibilidad del dominio sede.inclusion.gob.es ni de una mención genérica a firma; la promoción se limita a la delegación pública REG-AGE y conserva el origin institucional fuera del signing trust."
 
   - inventory_id: "ES-PUB-0069"
     surface_key: "age-ministerio-de-industria-y-turismo"
@@ -2593,30 +2597,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Industria y Turismo"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / acceso al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://sede.minetur.gob.es"
     official_site: "https://sede.minetur.gob.es/"
     e_sede: "https://sede.minetur.gob.es/"
     entry_url: "https://sede.minetur.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Industria y Turismo publica una vía específica al Registro Electrónico General de la Administración General del Estado para solicitudes, escritos y comunicaciones sin aplicación específica."
+    protocol_evidence: "La página first-party https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx contiene el apartado «Acceso al Registro Electrónico General de la Administración General del Estado» y publica https://rec.redsara.es/registro/action/are/acceso.do; ese URL responde 301 hacia https://reg.redsara.es/. El PAG vigente identifica el servicio como Registro Electrónico General (REG-AGE), mientras que el startUrl canónico existente https://reg.redsara.es/es/ responde como «REG - Registro Electrónico General». Workspace-47 reutiliza únicamente ese startUrl del perfil reg-age-redsara; no atribuye a sede.minetur.gob.es ni sede.serviciosmin.gob.es un ABI de firma ni amplía sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Industria y Turismo."
+    evidence_ids: ["D11", "INDUSTRIA-REG-2026-08-17", "PAG-REG-AGE-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la Sede de Industria delega explícitamente en el Registro Electrónico General de la AGE y la ruta legacy publicada migra al origin REG actual; el catálogo lanza solo el startUrl canónico exacto del perfil existente. Falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Industria → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La entrada institucional https://sede.minetur.gob.es/ redirige públicamente a la Sede vigente en sede.serviciosmin.gob.es; esto se conserva como metadata de navegación y no amplía signing trust. La promoción no se deriva de AutoFirma genérica ni del dominio."
 
   - inventory_id: "ES-PUB-0070"
     surface_key: "age-ministerio-de-juventud-e-infancia"
@@ -2624,29 +2629,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Juventud e Infancia"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Formulario genérico — vía Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://juventudeinfancia.sede.gob.es"
     official_site: "https://juventudeinfancia.sede.gob.es/"
     e_sede: "https://juventudeinfancia.sede.gob.es/"
-    entry_url: "https://juventudeinfancia.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede publica un formulario genérico para solicitudes, escritos y comunicaciones sin procedimiento normalizado y remite expresamente al Registro Electrónico General (REG-AGE)."
+    protocol_evidence: "La página pública oficial «Registro Electrónico General» describe REG-AGE y publica el enlace https://reg.redsara.es/. En un contexto público sin autenticación con locale es-ES, ese launch redirige exactamente a https://reg.redsara.es/es/, que coincide con el startUrl del perfil existente reg-age-redsara. Solo se reutiliza ese launch/profile; no se atribuye a juventudeinfancia.sede.gob.es ningún ABI criptográfico ni origen de confianza de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "JUVENTUD-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita a REG-AGE y resolución exacta del launch español al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Juventud e Infancia → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
     notes: "Ministerio(s) enumerador(es): Ministerio de Juventud e Infancia."
 
   - inventory_id: "ES-PUB-0071"
@@ -2655,29 +2661,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de la Presidencia, Justicia y Relaciones con las Cortes"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico General — vía REG-AGE"
     surface_type: "SEDE"
     origin: "https://mpr.sede.gob.es"
     official_site: "https://mpr.sede.gob.es/"
     e_sede: "https://mpr.sede.gob.es/"
-    entry_url: "https://mpr.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede oficial publica el Registro Electrónico General como vía para presentar solicitudes, escritos y comunicaciones que no dispongan de procedimiento electrónico o formulario normalizado específico."
+    protocol_evidence: "La página pública oficial «Registro Electrónico General» identifica expresamente el Registro Electrónico General de la Administración General del Estado (REG-AGE) y publica el enlace https://reg.redsara.es/. En un contexto público sin autenticación con locale es-ES, ese launch resuelve exactamente a https://reg.redsara.es/es/, que coincide con el startUrl del perfil existente reg-age-redsara. Solo se reutiliza ese launch/profile; no se atribuye a mpr.sede.gob.es ningún ABI criptográfico ni origen de confianza de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "MPR-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita a REG-AGE y resolución exacta del launch español al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición MPR → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
     notes: "Ministerio(s) enumerador(es): Ministerio de la Presidencia, Justicia y Relaciones con las Cortes."
 
   - inventory_id: "ES-PUB-0072"
@@ -2686,30 +2693,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Política Territorial y Memoria Democrática"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico General — acceso directo REG-AGE"
     surface_type: "SEDE"
     origin: "https://mptmd.sede.gob.es"
     official_site: "https://mptmd.sede.gob.es/"
     e_sede: "https://mptmd.sede.gob.es/"
-    entry_url: "https://mptmd.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    entry_url: "https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    certificate_required: "SI"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede oficial publica el Registro Electrónico General de la AGE para solicitudes, escritos y comunicaciones sin procedimiento específico y ofrece un acceso directo al REG; la propia página indica DNIe/certificado digital y firma de la solicitud al enviarla."
+    protocol_evidence: "La página pública oficial «Registro Electrónico General» identifica expresamente el Registro Electrónico General de la AGE y publica «ACCESO DIRECTO AL REGISTRO» hacia https://reg.redsara.es/. En un contexto público sin autenticación con locale es-ES, la cadena observada fue https://reg.redsara.es/ (302) → https://reg.redsara.es/es/ (200), que coincide exactamente con el startUrl del perfil existente reg-age-redsara. Solo se reutiliza ese launch/profile; no se atribuye a mptmd.sede.gob.es ningún ABI criptográfico, algoritmo, endpoint ni origen de confianza de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Política Territorial y Memoria Democrática."
+    evidence_ids: ["D11", "MPTMD-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y cadena de redirect exacta al startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición MPTMD → REG-AGE sin autenticarse, firmar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La evidencia institucional describe requisitos de certificado/firma del servicio, pero Workspace-47 no infiere formato, algoritmo, endpoint ni capacidades criptográficas propias de mptmd.sede.gob.es."
 
   - inventory_id: "ES-PUB-0073"
     surface_key: "age-ministerio-de-sanidad"
@@ -2747,30 +2755,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Trabajo y Economía Social"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica — acceso con certificado"
     surface_type: "SEDE"
     origin: "https://sede.mites.gob.es"
     official_site: "https://sede.mites.gob.es/"
     e_sede: "https://sede.mites.gob.es/"
     entry_url: "https://sede.mites.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    procedure_page: "https://sede.mites.gob.es/inicio/detalleProcedimiento/38"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / MiniApplet"
+    protocol_family: "AUTOSCRIPT_LOCAL_CADES_IMPLICIT"
+    signature_format: "CAdES / IMPLICIT"
+    signature_algorithm: "SHA512withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Sede MITES mediante firma local CAdES de un challenge aleatorio de 10 letras ASCII minúsculas."
+    protocol_evidence: "La API pública del procedimiento 38 acredita Quejas y Sugerencias activo y exige identificación y firma digital. El bundle público /auth genera exactamente 10 letras minúsculas, carga AutoFirma y llama AutoScript.sign(challenge, SHA512withRSA, CAdES, mode=implicit + filters.1=signingCert:;keyusage.nonrepudiation:true;nonexpired:). El bridge queda limitado a /auth, al origin MITES y a esa tupla exacta; no se implementa ni se atribuye el flujo PAdES posterior de presentación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Trabajo y Economía Social."
+    evidence_ids: ["D11", "MITES-CERT-2026-08-17"]
+    reason: "Contrato público de acceso con certificado implementado en QA con validación fail-closed de página, origin, challenge, algoritmo, formato y propiedades; falta aceptación E2E física y no se realizaron login, firma real ni presentación administrativa."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E físico seguro limitado al login con certificado en /auth; no continuar a formularios, firma PAdES ni presentación administrativa."
+    notes: "El script AutoFirma se sirve desde expinterweb.mites.gob.es, pero ese origin no recibe confianza de navegación ni firma; el perfil mantiene como único initiator origin https://sede.mites.gob.es."
 
   - inventory_id: "ES-PUB-0075"
     surface_key: "age-ministerio-de-transportes-y-movilidad-sostenible"
@@ -6523,4 +6531,14 @@ availability, certificado, firma ni contrato técnico.
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
+[CULTURA-REG-2026-08-17]: https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+[JUVENTUD-REG-2026-08-17]: https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+[IGUALDAD-REG-2026-08-17]: https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General
+[DEFENSA-REG-2026-08-17]: https://sede.defensa.gob.es/
+[MITES-CERT-2026-08-17]: https://sede.mites.gob.es/inicio/detalleProcedimiento/38
+[MPR-REG-2026-08-17]: https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+[INCLUSION-REG-2026-08-17]: https://sede.inclusion.gob.es/registroelectronico
+[PAG-REG-AGE-2026-08-17]: https://administracion.gob.es/pag_Home/atencionCiudadana/Registros-electronicos-AGE.html
+[MPTMD-REG-2026-08-17]: https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+[INDUSTRIA-REG-2026-08-17]: https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx
 [TRANSPORTES-QYS-2026-08-17]: https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible

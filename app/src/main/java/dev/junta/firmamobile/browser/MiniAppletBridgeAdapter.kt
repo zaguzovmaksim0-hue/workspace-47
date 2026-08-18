@@ -22,6 +22,7 @@ import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
+import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
@@ -202,6 +203,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isMitesContract = isExactMitesContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == MitesCertificateLoginCadesAdapter.PROFILE_ID && !isMitesContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isGranCanariaContract = isExactGranCanariaContract(
             profile = profile,
             origin = resolved.origin,
@@ -355,6 +366,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 )
             }
             ""
+        } else if (isMitesContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == MitesCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (isGranCanariaContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
@@ -458,6 +476,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
+        if (isMitesContract && !MitesCertificateLoginCadesAdapter.isExactChallenge(decodedData)) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
         if (isSevillaAtseContract && !decodedData.isExactSevillaAtseChallenge()) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
@@ -490,6 +515,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             CANTABRIA_EXTRA_PROPERTIES
         } else if (isTransportesContract) {
             TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isMitesContract) {
+            MitesCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isGranCanariaContract) {
             GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
@@ -609,6 +636,48 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == JccmCertificateLoginProbeCadesAdapter.ID.value
 
+
+    private fun isExactMitesContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == MitesCertificateLoginCadesAdapter.LOGIN_PAGE_URL &&
+            profile.profileId.value == MitesCertificateLoginCadesAdapter.PROFILE_ID &&
+            profile.profileVersion == MitesCertificateLoginCadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == MitesCertificateLoginCadesAdapter.START_URL &&
+            origin.serialized == MitesCertificateLoginCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(MitesCertificateLoginCadesAdapter.INITIATOR_ORIGIN),
+            ) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == MitesCertificateLoginCadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.IMPLICIT &&
+            operation.fixedExtraProperties == linkedMapOf(
+                "mode" to "implicit",
+                "filters.1" to "signingCert:;keyusage.nonrepudiation:true;nonexpired:",
+            ) &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == MitesCertificateLoginCadesAdapter.ID.value
 
     private fun isExactGranCanariaContract(
         profile: SiteProfile,

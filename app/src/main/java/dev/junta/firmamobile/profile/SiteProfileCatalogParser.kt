@@ -208,6 +208,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == JCCM_PROFILE_ID) {
                 validateJccmProfile(p)
             }
+            if (p.profileId.value == MITES_PROFILE_ID) {
+                validateMitesProfile(p)
+            }
             if (p.profileId.value == SEVILLA_ATSE_PROFILE_ID) {
                 validateSevillaAtseProfile(p)
             }
@@ -367,6 +370,10 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.IMPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == CANTABRIA_EXTRA_PROPERTIES)
+                                } else if (p.profileId.value == MITES_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.IMPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                                    require(op.fixedExtraProperties == MITES_EXTRA_PROPERTIES)
                                 } else if (p.profileId.value == TENERIFE_PROFILE_ID) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
@@ -1056,6 +1063,39 @@ object SiteProfileCatalogParser {
     }
 
 
+    private fun validateMitesProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MITES_PROFILE_VERSION)
+        require(profile.displayName == MITES_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MITES_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MITES_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MITES_EVIDENCE_URLS)
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = MITES_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.IMPLICIT,
+                fixedExtraProperties = MITES_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateUgrProfile(profile: SiteProfile) {
         require(profile.profileVersion == UGR_PROFILE_VERSION)
         require(profile.displayName == UGR_DISPLAY_NAME)
@@ -1431,6 +1471,22 @@ object SiteProfileCatalogParser {
     private val CANTABRIA_EXTRA_PROPERTIES = linkedMapOf(
         "filters" to "",
         "mode" to "implicit",
+    )
+    private const val MITES_PROFILE_ID = "mites-certificate-login"
+    private const val MITES_PROFILE_VERSION = 1
+    private const val MITES_DISPLAY_NAME = "Ministerio de Trabajo y Economía Social — Acceso con certificado"
+    private const val MITES_START_URL = "https://sede.mites.gob.es/"
+    private const val MITES_ORIGIN = "https://sede.mites.gob.es"
+    private const val MITES_SAFE_DESCRIPTION = "Acceso con certificado a la Sede del Ministerio de Trabajo"
+    private val MITES_EXTRA_PROPERTIES = linkedMapOf(
+        "mode" to "implicit",
+        "filters.1" to "signingCert:;keyusage.nonrepudiation:true;nonexpired:",
+    )
+    private val MITES_EVIDENCE_URLS = setOf(
+        "https://sede.mites.gob.es/inicio/detalleProcedimiento/38",
+        "https://sede.mites.gob.es/nuevasede-ciudadano/api/public/procedimientos/38",
+        "https://sede.mites.gob.es/auth.component-3JUEHJQO.js",
+        "https://sede.mites.gob.es/chunk-MX4YJU4O.js",
     )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
     private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
