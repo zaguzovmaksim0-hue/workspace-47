@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 24,
+  "catalogVersion": 25,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -952,6 +952,26 @@
         {"url":"https://sede.mites.gob.es/nuevasede-ciudadano/api/public/procedimientos/38","reviewedOn":"2026-08-17"},
         {"url":"https://sede.mites.gob.es/auth.component-3JUEHJQO.js","reviewedOn":"2026-08-17"},
         {"url":"https://sede.mites.gob.es/chunk-MX4YJU4O.js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "oepm-protegeo-general",
+      "profileVersion": 1,
+      "displayName": "OEPM — Solicitud de propósito general (ProtegeO)",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
+      "initiatorOrigins": ["https://sede.oepm.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM","reviewedOn":"2026-08-17"}
       ]
     },
     {

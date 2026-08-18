@@ -1100,6 +1100,30 @@ records:
         self.assertIn("e2e", target["limitations"].lower())
 
 
+    def test_oepm_protegeo_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        oepm = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-oficina-espanola-de-patentes-y-marcas"
+        )
+        self.assertEqual("ES-PUB-0082", oepm["inventoryId"])
+        self.assertEqual("oepm-protegeo-general", oepm["profileId"])
+        self.assertEqual(
+            "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
+            oepm["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", oepm)
+        self.assertEqual("OEPM_PROTEGEO_PUBLIC_LAUNCH", oepm["protocolFamily"])
+        self.assertEqual("E2E_PENDING", oepm["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", oepm["inventoryStatus"])
+        self.assertEqual("REVIEWED", oepm["discoveryState"])
+        self.assertEqual("2026-08-17", oepm["reviewedOn"])
+        self.assertEqual([], oepm["observedMechanisms"])
+        self.assertEqual([], oepm["observedSignatureFormats"])
+        self.assertIn("qa_only", oepm["limitations"].lower())
+        self.assertIn("e2e", oepm["limitations"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -76,6 +76,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-valencia-sede"),
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
+                ProfileId("oepm-protegeo-general"),
                 ProfileId("cdti-certificate-validation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
@@ -975,6 +976,41 @@ class PublicPortalCatalogParserTest {
                 entryUrl = URI("https://reg.redsara.es/es/"),
             ),
             repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `OEPM ProtegeO entry binds the exact QA public launch without sensitive observations`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("age-oficina-espanola-de-patentes-y-marcas")
+        }
+        val item = repository.portals().single { it.portalId == portal.portalId }
+
+        assertEquals("ES-PUB-0082", portal.inventoryId)
+        assertEquals(ProfileId("oepm-protegeo-general"), portal.profileId)
+        assertEquals(
+            URI("https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM"),
+            portal.entryUrl,
+        )
+        assertEquals(null, portal.launchUrl)
+        assertEquals("OEPM_PROTEGEO_PUBLIC_LAUNCH", portal.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.observedMechanisms.isEmpty())
+        assertTrue(portal.observedSignatureFormats.isEmpty())
+        assertTrue(item.capabilities.isEmpty())
+        assertTrue(item.signatureFormats.isEmpty())
+        assertTrue(item.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("oepm-protegeo-general"), portal.entryUrl),
+            repository.resolveLaunch(item),
         )
     }
 
