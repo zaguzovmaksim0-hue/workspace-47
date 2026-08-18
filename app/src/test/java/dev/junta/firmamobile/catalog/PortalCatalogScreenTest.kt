@@ -102,6 +102,27 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Reina Sofia REG alias is compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val reina = compatible.items.single {
+            it.portalId == PortalId("age-museo-nacional-centro-de-arte-reina-sofia")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), reina.profileId)
+        assertEquals(java.net.URI("https://museoreinasofia.sede.gob.es/"), reina.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, reina.supportStatus)
+        assertTrue(reina.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(reina),
+        )
+    }
+
+    @Test
     fun `contract pending browse only and unsupported are separated and disabled correctly`() {
         val base = repository.portals().first()
         val pending = base.copy(

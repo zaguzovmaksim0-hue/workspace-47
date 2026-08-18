@@ -676,6 +676,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", cervantes["limitations"].lower())
 
 
+    def test_reina_sofia_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        reina = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-museo-nacional-centro-de-arte-reina-sofia"
+        )
+        self.assertEqual("reg-age-redsara", reina["profileId"])
+        self.assertEqual("ES-PUB-0080", reina["inventoryId"])
+        self.assertEqual("https://museoreinasofia.sede.gob.es/", reina["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", reina["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", reina["protocolFamily"])
+        self.assertEqual("E2E_PENDING", reina["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", reina["inventoryStatus"])
+        self.assertEqual("REVIEWED", reina["discoveryState"])
+        self.assertEqual("2026-08-17", reina["reviewedOn"])
+        self.assertEqual([], reina["observedMechanisms"])
+        self.assertEqual([], reina["observedSignatureFormats"])
+        self.assertIn("reg-age", reina["limitations"].lower())
+        self.assertIn("qa", reina["limitations"].lower())
+        self.assertIn("e2e", reina["limitations"].lower())
+
+
     def test_inap_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         inap = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-nacional-de-administracion-publica-inap")
