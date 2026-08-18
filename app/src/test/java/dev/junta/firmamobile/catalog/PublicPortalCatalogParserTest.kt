@@ -575,6 +575,24 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Cultura REG AGE alias binds only the exact existing profile launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single { it.portalId == PortalId("age-ministerio-de-cultura") }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals("ES-PUB-0062", portal.inventoryId)
+        assertEquals(
+            "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+            portal.entryUrl.toString(),
+        )
+        assertEquals(java.net.URI("https://reg.redsara.es/es/"), portal.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.limitations.contains("reg-age", ignoreCase = true))
+        assertTrue(portal.limitations.contains("qa", ignoreCase = true))
+    }
+
+    @Test
     fun `Juventud e Infancia alias retains the official REG service URL while resolving the exact REG-AGE launch URL`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
@@ -601,4 +619,5 @@ class PublicPortalCatalogParserTest {
             repository.resolveLaunch(portal),
         )
     }
+
 }

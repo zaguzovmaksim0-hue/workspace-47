@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7ef4ea65876e49d24956020e8e9a4aa09d99cf2c49aca9c6793ea3ec0895c655",
+  "sourceRevision": "4470fbdfaf9910f6a1a3d4608163424ede2dce10eec962a186047925a38058b0",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1518,24 +1518,27 @@
     {
       "portalId": "age-ministerio-de-cultura",
       "inventoryId": "ES-PUB-0062",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Registro Electrónico General — Ministerio de Cultura",
       "organization": "Ministerio de Cultura",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://cultura.sede.gob.es/",
+      "purpose": "La Sede del Ministerio de Cultura publica el Registro Electrónico General de la AGE como vía para presentar solicitudes, escritos y comunicaciones sin procedimiento o formulario normalizado específico.",
+      "entryUrl": "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CULTURA-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita en REG-AGE; el launch queda limitado al startUrl exacto del perfil existente, no se amplía trust al origin Cultura y falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-defensa",

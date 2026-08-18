@@ -1118,6 +1118,30 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `Cultura REG AGE alias keeps Ministry metadata and inherits only the exact QA launch`() {
+        val portalId = PortalId("age-ministerio-de-cultura")
+        val profileId = ProfileId("reg-age-redsara")
+        val ministryEntry = java.net.URI("https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General")
+        val regAgeStart = java.net.URI("https://reg.redsara.es/es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(ministryEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, regAgeStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, regAgeStart),
+            qaRepository.resolveLaunch(profileId, ministryEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
+
+    @Test
     fun `Juventud e Infancia REG alias keeps ministry metadata and inherits only the exact QA REG AGE launch`() {
         val portalId = PortalId("age-ministerio-de-juventud-e-infancia")
         val profileId = ProfileId("reg-age-redsara")
@@ -1160,4 +1184,5 @@ class PortalCatalogRepositoryTest {
         assertTrue(tamperedPortal.signatureFormats.isEmpty())
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
+
 }

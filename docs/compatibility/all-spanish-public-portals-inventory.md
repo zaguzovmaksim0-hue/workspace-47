@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 210 |
-| Fuentes oficiales totales registradas | 222 |
+| Fuentes oficiales portal-specific registradas | 211 |
+| Fuentes oficiales totales registradas | 223 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
-| Entradas restantes fuera de ambos estados | 139 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 41 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 45 |
+| Entradas restantes fuera de ambos estados | 138 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 40 |
+| `IMPLEMENTED_NOT_E2E` | 41 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 132 |
+| `BROWSE_ONLY` | 131 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 119 |
+| `REVIEWED` | 120 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 59 |
+| `DISCOVERED` | 58 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 208 fuentes porque las
+47/50; no se publica un cociente agregado para las 207 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -2374,30 +2374,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Cultura"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico General — Ministerio de Cultura"
     surface_type: "SEDE"
     origin: "https://cultura.sede.gob.es"
     official_site: "https://cultura.sede.gob.es/"
     e_sede: "https://cultura.sede.gob.es/"
-    entry_url: "https://cultura.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Cultura publica el Registro Electrónico General de la AGE como vía para presentar solicitudes, escritos y comunicaciones sin procedimiento o formulario normalizado específico."
+    protocol_evidence: "La página oficial «Registro Electrónico General» identifica explícitamente el servicio como REG-AGE y enlaza públicamente a https://reg.redsara.es/; Workspace-47 conserva esa página ministerial como entry y usa únicamente el startUrl canónico español ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara, sin atribuir un ABI de firma propio a cultura.sede.gob.es."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Cultura."
+    evidence_ids: ["D11", "CULTURA-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita en REG-AGE; el launch queda limitado al startUrl exacto del perfil existente, no se amplía trust al origin Cultura y falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Cultura → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La evidencia acredita únicamente la delegación al REG-AGE; no se infiere certificado, firma, AutoFirma, endpoint ni contrato criptográfico propio de la Sede de Cultura."
 
   - inventory_id: "ES-PUB-0063"
     surface_key: "age-ministerio-de-defensa"
@@ -6524,4 +6525,5 @@ availability, certificado, firma ni contrato técnico.
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
+[CULTURA-REG-2026-08-17]: https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [JUVENTUD-REG-2026-08-17]: https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
