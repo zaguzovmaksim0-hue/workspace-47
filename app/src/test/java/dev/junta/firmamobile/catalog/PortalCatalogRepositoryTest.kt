@@ -85,6 +85,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-lleida-sede",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "diputacion-avila-instancia-general",
                 "cdti-certificate-validation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),

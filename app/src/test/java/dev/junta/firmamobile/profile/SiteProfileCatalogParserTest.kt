@@ -903,6 +903,36 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es:444/")))
     }
 
+
+    @Test
+    fun `Diputacion Avila Instancia General is QA navigation only with observed Clave redirects`() {
+        val profileId = ProfileId("diputacion-avila-instancia-general")
+        val start = URI("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://diputacionavila.sedelectronica.es")), profile.initiatorOrigins)
+        assertEquals(
+            setOf(
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+                ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
+                ExactOrigin.parse("https://pasarela-ident-sistemas.clave.gob.es"),
+            ),
+            profile.redirectOrigins,
+        )
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+    }
+
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")

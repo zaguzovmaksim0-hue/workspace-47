@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 230 |
-| Fuentes oficiales totales registradas | 242 |
+| Fuentes oficiales portal-specific registradas | 232 |
+| Fuentes oficiales totales registradas | 244 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 58 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 62 |
-| Entradas restantes fuera de ambos estados | 121 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 59 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 63 |
+| Entradas restantes fuera de ambos estados | 120 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 58 |
+| `IMPLEMENTED_NOT_E2E` | 59 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 114 |
+| `BROWSE_ONLY` | 113 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4898,29 +4898,29 @@ records:
     autonomous_community: "Castilla y León"
     province_or_municipality: "Ávila (provincia)"
     institution_name: "Diputación Provincial de Ávila"
-    surface_name: "Portal oficial de Diputación Provincial de Ávila"
+    surface_name: "Diputación Provincial de Ávila — Instancia General"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.diputacionavila.es"
+    origin: "https://diputacionavila.sedelectronica.es"
     official_site: "https://www.diputacionavila.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.diputacionavila.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    e_sede: "https://diputacionavila.sedelectronica.es/"
+    entry_url: "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
     protocol_family: "NO_VERIFICADO"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP05A", "DP05B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia General (SIA 1786719): perfil QA-only para la entrada telemática exacta y la navegación Cl@ve observada; el paso Firmar usa un submit Wicket probado hasta el límite pre-red."
+    protocol_evidence: "Runtime autenticado llegó a 4. Firmar. El control llama wicketSubmitFormById con el componente viewFolderAdmissible:confirm. En v2.4 se activó el handler con intercepción previa a red: POST a la raíz, application/x-www-form-urlencoded, con id4c_hf_0 y viewFolderAdmissible:confirm; el POST fue abortado antes de alcanzar el servidor. Formato, algoritmo, signer y resultado post-firma siguen NO_VERIFICADO."
+    client_tls_auth: "CONDICIONAL"
+    evidence_ids: ["D06", "DP05A", "DP05B", "AVILA-INSTANCIA-2026-08-18", "AVILA-FIRMAR-2026-08-18"]
+    reason: "Implementación limitada a lanzamiento/navegación QA del trámite exacto. No implementa ni afirma firma criptográfica: el request Firmar solo se observó y abortó antes de red; formato, algoritmo, callback y resultado permanecen NO_VERIFICADO."
+    reviewed_at: "2026-08-18"
+    next_gate: "Observar una sesión de pre-firma posterior al POST solo si puede garantizarse aborto antes de cualquier operación criptográfica; nunca completar firma ni registro final."
 
   - inventory_id: "ES-PUB-0144"
     surface_key: "diputacion-badajoz-portal"
@@ -6460,6 +6460,8 @@ availability, certificado, firma ni contrato técnico.
 [DP04A]: https://www.dipalme.org
 [DP05A]: https://www.diputacionavila.es
 [DP05B]: https://diputacionavila.sedelectronica.es/
+[AVILA-INSTANCIA-2026-08-18]: https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[AVILA-FIRMAR-2026-08-18]: https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [DP06A]: https://www.dip-badajoz.es
 [DP06B]: https://sede.dip-badajoz.es/
 [DP07A]: https://www.diba.cat/es/
