@@ -33,6 +33,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val policia: Boolean,
     val granCanaria: Boolean,
     val canarias: Boolean,
+    val mineco: Boolean,
     val melillaBatch: Boolean,
     val lugoBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
@@ -258,6 +259,7 @@ class WebMessageBridge(
                     policiaCompatibilityEnabled = shimFlags.policia,
                     granCanariaCompatibilityEnabled = shimFlags.granCanaria,
                     canariasCompatibilityEnabled = shimFlags.canarias,
+                    minecoCompatibilityEnabled = shimFlags.mineco,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     lugoBatchCompatibilityEnabled = shimFlags.lugoBatch,
                     staBatchOrigin = batchRuntime?.sourceOrigin ?: MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
@@ -659,6 +661,7 @@ class WebMessageBridge(
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
         private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
         private const val CANARIAS_PROFILE_ID = "canarias-sede"
+        private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -673,6 +676,7 @@ class WebMessageBridge(
             policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
             granCanaria = profileActive && profileId.value == GRAN_CANARIA_PROFILE_ID,
             canarias = profileActive && profileId.value == CANARIAS_PROFILE_ID,
+            mineco = profileActive && profileId.value == MINECO_PROFILE_ID,
             melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID,
             lugoBatch = melillaBatchEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,

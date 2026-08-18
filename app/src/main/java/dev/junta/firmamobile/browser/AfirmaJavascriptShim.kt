@@ -27,6 +27,7 @@ object AfirmaJavascriptShim {
         policiaCompatibilityEnabled: Boolean = false,
         granCanariaCompatibilityEnabled: Boolean = false,
         canariasCompatibilityEnabled: Boolean = false,
+        minecoCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
         lugoBatchCompatibilityEnabled: Boolean = false,
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
@@ -46,6 +47,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(CANARIAS_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(MINECO_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(LUGO_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
@@ -100,6 +102,10 @@ object AfirmaJavascriptShim {
                 if (canariasCompatibilityEnabled) "true" else "false",
             )
             .replace(
+                MINECO_COMPATIBILITY_PLACEHOLDER,
+                if (minecoCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
                 MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
                 if (melillaBatchCompatibilityEnabled) "true" else "false",
             )
@@ -139,6 +145,8 @@ object AfirmaJavascriptShim {
         "__JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__"
     private const val CANARIAS_COMPATIBILITY_PLACEHOLDER =
         "__JFM_CANARIAS_COMPATIBILITY_ENABLED__"
+    private const val MINECO_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_MINECO_COMPATIBILITY_ENABLED__"
     private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
     private const val LUGO_BATCH_COMPATIBILITY_PLACEHOLDER =
