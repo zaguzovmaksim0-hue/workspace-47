@@ -84,6 +84,7 @@ class PortalCatalogRepositoryTest {
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "cdti-certificate-validation",
+                "xunta-galicia-solicitude-xenerica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
