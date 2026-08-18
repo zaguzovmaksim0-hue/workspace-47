@@ -23,6 +23,7 @@ class JuntaOriginPolicyTest {
     private val unizar = ProfileId("unizar-tramitador")
     private val carneJoven = ProfileId("carne-joven-andalucia")
     private val juntaOfvirtual = ProfileId("junta-ofvirtual")
+    private val juntaVeaPeg = ProfileId("junta-andalucia-vea-peg")
     private val education = ProfileId("educacion-convocatoria")
     private val aragon = ProfileId("aragon-siraw")
     private val aeat = ProfileId("aeat-mis-datos-censales")
@@ -30,8 +31,10 @@ class JuntaOriginPolicyTest {
     private val ugr = ProfileId("ugr-certificado-login")
     private val cantabria = ProfileId("cantabria-rec-cert-login")
     private val jccm = ProfileId("jccm-certificate-login-probe")
+    private val mites = ProfileId("mites-certificate-login")
     private val sevilla = ProfileId("sevilla-atse-certificate-login")
     private val cdti = ProfileId("cdti-certificate-validation")
+    private val transportes = ProfileId("transportes-qys-cert-login")
     private val melilla = ProfileId("melilla-sede")
     private val ceuta = ProfileId("ceuta-sede")
     private val extremadura = ProfileId("extremadura-tramites")
@@ -48,6 +51,8 @@ class JuntaOriginPolicyTest {
     private val valencia = ProfileId("diputacion-valencia-sede")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
+    private val oepm = ProfileId("oepm-protegeo-general")
+    private val funciona = ProfileId("portal-funciona-public-home")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -63,6 +68,7 @@ class JuntaOriginPolicyTest {
             "ws104.juntadeandalucia.es",
             "ws235.juntadeandalucia.es",
             "ws072.juntadeandalucia.es",
+            "veaja.cloud.juntadeandalucia.es",
             "sede.educacion.gob.es",
             "aplicaciones.aragon.es",
             "sede.agenciatributaria.gob.es",
@@ -71,8 +77,10 @@ class JuntaOriginPolicyTest {
             "sede.ugr.es",
             "rec.cantabria.es",
             "ventanillaelectronica.jccm.es",
+            "sede.mites.gob.es",
             "www.sevilla.org",
             "sede.cdti.gob.es",
+            "sede.transportes.gob.es",
             "sede.melilla.es",
             "sede.ceuta.es",
             "tramites.juntaex.es",
@@ -88,11 +96,16 @@ class JuntaOriginPolicyTest {
             "www1.tea.hacienda.gob.es",
             "sede.tenerife.es",
             "sede.grancanaria.com",
+            "serviciosede.mineco.gob.es",
+            "pasarela.clave.gob.es",
+            "pasarela-ident.clave.gob.es",
             "diputacion.toledo.gob.es",
             "sede.isciii.gob.es",
             "portafirmas.dival.es",
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
+            "sede.oepm.gob.es",
+            "sede.funciona.gob.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -119,6 +132,14 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("tramita.unizar.es"), JuntaOriginPolicy.browserAllowedHosts(unizar))
         assertEquals(setOf("ws104.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(carneJoven))
         assertEquals(setOf("ws072.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(juntaOfvirtual))
+        assertEquals(setOf("veaja.cloud.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(juntaVeaPeg))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(juntaVeaPeg).isEmpty())
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://api-veaja.cloud.juntadeandalucia.es/auth/login"),
+                juntaVeaPeg,
+            ),
+        )
         assertEquals(setOf("sede.educacion.gob.es"), JuntaOriginPolicy.browserAllowedHosts(education))
         assertEquals(setOf("aplicaciones.aragon.es"), JuntaOriginPolicy.browserAllowedHosts(aragon))
         assertEquals(setOf("sede.agenciatributaria.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aeat))
@@ -159,13 +180,25 @@ class JuntaOriginPolicyTest {
             setOf("ventanillaelectronica.jccm.es"),
             JuntaOriginPolicy.browserAllowedHosts(jccm),
         )
+        assertEquals(setOf("sede.mites.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mites))
         assertEquals(setOf("www.sevilla.org"), JuntaOriginPolicy.browserAllowedHosts(sevilla))
         assertEquals(setOf("sede.cdti.gob.es"), JuntaOriginPolicy.browserAllowedHosts(cdti))
+        assertEquals(
+            setOf("sede.transportes.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(transportes),
+        )
         assertEquals(setOf("sede.melilla.es"), JuntaOriginPolicy.browserAllowedHosts(melilla))
         assertEquals(setOf("sede.ceuta.es"), JuntaOriginPolicy.browserAllowedHosts(ceuta))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(ceuta).isEmpty())
         assertEquals(setOf("seu.diputaciolleida.cat"), JuntaOriginPolicy.browserAllowedHosts(lleida))
         assertEquals(setOf("https://seu.diputaciolleida.cat"), JuntaOriginPolicy.webMessageOriginRules(lleida))
+        assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
+        assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),
@@ -205,12 +238,20 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.webMessageOriginRules(jccm),
         )
         assertEquals(
+            setOf("https://sede.mites.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(mites),
+        )
+        assertEquals(
             setOf("https://www.sevilla.org"),
             JuntaOriginPolicy.webMessageOriginRules(sevilla),
         )
         assertEquals(
             setOf("https://sede.cdti.gob.es"),
             JuntaOriginPolicy.webMessageOriginRules(cdti),
+        )
+        assertEquals(
+            setOf("https://sede.transportes.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(transportes),
         )
         assertEquals(
             setOf("https://sede.melilla.es"),
