@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 211 |
-| Fuentes oficiales totales registradas | 223 |
+| Fuentes oficiales portal-specific registradas | 212 |
+| Fuentes oficiales totales registradas | 224 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 41 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 45 |
-| Entradas restantes fuera de ambos estados | 138 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 42 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 46 |
+| Entradas restantes fuera de ambos estados | 137 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 41 |
+| `IMPLEMENTED_NOT_E2E` | 42 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 131 |
+| `BROWSE_ONLY` | 130 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 120 |
+| `REVIEWED` | 121 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 58 |
+| `DISCOVERED` | 57 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2532,30 +2532,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Igualdad"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / acceso al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://igualdad.sede.gob.es"
     official_site: "https://igualdad.sede.gob.es/"
     e_sede: "https://igualdad.sede.gob.es/"
     entry_url: "https://igualdad.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Ministerio de Igualdad publica un servicio específico de Registro Electrónico General y delega el acceso al REG-AGE."
+    protocol_evidence: "La página pública oficial /servicio?id=Registro-Electrónico-General identifica expresamente el Registro Electrónico General de la AGE (REG-AGE), muestra «Acceso al Registro Electrónico General» y enlaza https://reg.redsara.es/. Workspace-47 reutiliza únicamente el startUrl canónico ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara; no atribuye a igualdad.sede.gob.es un ABI de firma ni amplía sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Igualdad."
+    evidence_ids: ["D11", "IGUALDAD-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la Sede de Igualdad publica una delegación explícita al REG-AGE y el catálogo lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Igualdad → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La evidencia usada es el servicio público REG-AGE de la propia Sede; no se deriva compatibilidad del dominio *.sede.gob.es ni del AC2/AutoFirma compartido."
 
   - inventory_id: "ES-PUB-0068"
     surface_key: "age-ministerio-de-inclusion-seguridad-social-y-migraciones"
@@ -6527,3 +6528,4 @@ availability, certificado, firma ni contrato técnico.
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
 [CULTURA-REG-2026-08-17]: https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [JUVENTUD-REG-2026-08-17]: https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+[IGUALDAD-REG-2026-08-17]: https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General

@@ -848,6 +848,22 @@ records:
         self.assertIn("qa", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_igualdad_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        igualdad = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-igualdad")
+        self.assertEqual("reg-age-redsara", igualdad["profileId"])
+        self.assertEqual("ES-PUB-0067", igualdad["inventoryId"])
+        self.assertEqual("https://igualdad.sede.gob.es/", igualdad["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", igualdad["launchUrl"])
+        self.assertEqual("E2E_PENDING", igualdad["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", igualdad["inventoryStatus"])
+        self.assertEqual("REVIEWED", igualdad["discoveryState"])
+        self.assertEqual("2026-08-17", igualdad["reviewedOn"])
+        self.assertEqual([], igualdad["observedSignatureFormats"])
+        self.assertIn("reg-age", igualdad["limitations"].lower())
+        self.assertIn("qa", igualdad["limitations"].lower())
+        self.assertIn("e2e", igualdad["limitations"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

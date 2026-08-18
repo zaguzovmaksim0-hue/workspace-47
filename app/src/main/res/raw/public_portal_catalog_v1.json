@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "4470fbdfaf9910f6a1a3d4608163424ede2dce10eec962a186047925a38058b0",
+  "sourceRevision": "4d99cef095ab8825318a2de734c930ed5e0a7fe1a369554c9931d15175dbeaca",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1643,24 +1643,27 @@
     {
       "portalId": "age-ministerio-de-igualdad",
       "inventoryId": "ES-PUB-0067",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Ministerio de Igualdad",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio de Igualdad publica un servicio específico de Registro Electrónico General y delega el acceso al REG-AGE.",
       "entryUrl": "https://igualdad.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "IGUALDAD-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede de Igualdad publica una delegación explícita al REG-AGE y el catálogo lanza solo el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
     },
     {
       "portalId": "age-ministerio-de-inclusion-seguridad-social-y-migraciones",
