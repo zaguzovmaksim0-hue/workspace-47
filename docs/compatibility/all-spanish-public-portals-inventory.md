@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 221 |
-| Fuentes oficiales totales registradas | 233 |
+| Fuentes oficiales portal-specific registradas | 222 |
+| Fuentes oficiales totales registradas | 234 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 50 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 54 |
-| Entradas restantes fuera de ambos estados | 129 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 51 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 55 |
+| Entradas restantes fuera de ambos estados | 128 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 50 |
+| `IMPLEMENTED_NOT_E2E` | 51 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 122 |
+| `BROWSE_ONLY` | 121 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 129 |
+| `REVIEWED` | 130 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 49 |
+| `DISCOVERED` | 48 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 207 fuentes porque las
+47/50; no se publica un cociente agregado para las 208 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -2849,30 +2849,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio del Interior"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Formulario de propósito general — vía REG-AGE"
     surface_type: "SEDE"
-    origin: "https://sede.mir.gob.es"
-    official_site: "https://sede.mir.gob.es/opencms/export/sites/default/es/inicio/"
-    e_sede: "https://sede.mir.gob.es/opencms/export/sites/default/es/inicio/"
-    entry_url: "https://sede.mir.gob.es/opencms/export/sites/default/es/inicio/"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://sede.interior.gob.es"
+    official_site: "https://sede.interior.gob.es/portal/sede"
+    e_sede: "https://sede.interior.gob.es/portal/sede"
+    entry_url: "https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede actual del Ministerio del Interior publica el «Formulario de propósito general» para escritos sin formulario específico y ofrece un botón público de acceso que delega en el registro estatal."
+    protocol_evidence: "La página pública first-party https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL publica el botón «Acceso» con destino exacto https://rec.redsara.es/registro/action/are/acceso.do. En la revisión actual esa URL responde 301 a https://reg.redsara.es/, que responde 302 a https://reg.redsara.es/es/ y finaliza HTTP 200; el destino final coincide exactamente con el startUrl del perfil existente reg-age-redsara. Solo se reutiliza ese launch/profile; no se atribuye a sede.interior.gob.es ningún ABI criptográfico, algoritmo, formato, endpoint ni origen de confianza de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio del Interior."
+    evidence_ids: ["D11", "INTERIOR-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación first-party explícita y cadena de redirect acotada que termina exactamente en el startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Interior → REC legacy → REG-AGE sin autenticarse, seleccionar certificado, firmar ni presentar un escrito real; mantener release fail-closed hasta entonces."
+    notes: "El enlace histórico https://sede.mir.gob.es/opencms/export/sites/default/es/inicio/ redirige actualmente a la nueva Sede https://sede.interior.gob.es/portal/sede. La página general de sistemas de firma menciona certificados X.509 y @firma, pero esos datos no se usan para inferir el contrato de firma de este alias."
 
   - inventory_id: "ES-PUB-0078"
     surface_key: "age-ministerio-para-la-transformacion-digital-y-de-la-funcion-publica"
@@ -6544,3 +6545,4 @@ availability, certificado, firma ni contrato técnico.
 [MPTMD-REG-2026-08-17]: https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [INDUSTRIA-REG-2026-08-17]: https://sede.minetur.gob.es/es-es/procedimientoselectronicos/Paginas/consulta_registro.aspx
 [TRANSPORTES-QYS-2026-08-17]: https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible
+[INTERIOR-REG-2026-08-17]: https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "46dafaa0ff4c3dde411d6c036696102a9a599abf21cf17fde11efc335ae4d2f0",
+  "sourceRevision": "134222fe23f5a4cdae6b942eb9bbf706e0946302b0fb8bebda0e27bdc81e9db3",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1915,24 +1915,27 @@
     {
       "portalId": "age-ministerio-del-interior",
       "inventoryId": "ES-PUB-0077",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Formulario de propósito general — vía REG-AGE",
       "organization": "Ministerio del Interior",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.mir.gob.es/opencms/export/sites/default/es/inicio/",
+      "purpose": "La Sede actual del Ministerio del Interior publica el «Formulario de propósito general» para escritos sin formulario específico y ofrece un botón público de acceso que delega en el registro estatal.",
+      "entryUrl": "https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INTERIOR-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación first-party explícita y cadena de redirect acotada que termina exactamente en el startUrl existente; falta E2E físico y no se amplía la confianza criptográfica al origen institucional."
     },
     {
       "portalId": "age-ministerio-para-la-transformacion-digital-y-de-la-funcion-publica",

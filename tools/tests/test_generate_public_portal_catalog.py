@@ -1012,6 +1012,25 @@ records:
         self.assertIn("e2e", industria["limitations"].lower())
 
 
+    def test_interior_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-del-interior"
+        )
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("ES-PUB-0077", target["inventoryId"])
+        self.assertEqual("https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()
 
