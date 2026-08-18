@@ -539,6 +539,32 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun minecoCompatibilityIsProfileScopedToTheExactSha512PadesFirmaAgeTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            minecoCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            minecoCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const minecoCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const minecoCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://serviciosede.mineco.gob.es"))
+        assertTrue(enabled.contains("/FB/solicitud/firma.aspx"))
+        assertTrue(enabled.contains("filters=signingCert:;nonexpired:\\nexpPolicy=FirmaAGE\\nsignatureSubFilter=ETSI.CAdES.detached"))
+        assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdES\""))
+        assertTrue(enabled.contains("isExactMinecoCall"))
+    }
+
+    @Test
     fun policiaCompatibilityIsProfileScopedToTheExactSha1XadesTuple() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(
