@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "f68b69a553eeaf47a10c83d28c5a080df3fd90a98842634b8433f450a237dd14",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2649,31 +2649,32 @@
     {
       "portalId": "gva-sede",
       "inventoryId": "ES-PUB-0108",
-      "profileId": null,
-      "displayName": "Sede electrónica de la Generalitat Valenciana",
+      "profileId": "generalitat-valenciana-client-auth",
+      "displayName": "Generalitat Valenciana — acceso con certificado al trámite 15602",
       "organization": "Generalitat Valenciana",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Comunitat Valenciana",
-      "purpose": "Tramitación mediante los sistemas de identificación y firma admitidos.",
-      "entryUrl": "https://sede.gva.es/es/",
+      "purpose": "Acceso con certificado al flujo autenticado del trámite 15602 mediante el servicio Client TLS de la Generalitat Valenciana; la firma y presentación posteriores quedan fuera del contrato implementado.",
+      "entryUrl": "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
-        "A12A",
-        "A12B",
         "A12C",
-        "A12D"
+        "A12D",
+        "GVA-DGM15602-2026-08-18",
+        "GVA-CLIENTTLS-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El término ClientCert de la ayuda no prueba ClientCertRequest TLS; formato y endpoint tampoco están verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con source/target exactos, idSesion enlazado, idioma=es, host/path/port cerrados y TTL local acotado; sin E2E. No se infieren algoritmo, formato, endpoint ni constantes de la firma/presentación posterior."
     },
     {
       "portalId": "extremadura-tramites",

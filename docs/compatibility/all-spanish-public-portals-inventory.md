@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 209 |
 | Fuentes oficiales totales registradas | 221 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 39 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 43 |
-| Entradas restantes fuera de ambos estados | 140 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 40 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 44 |
+| Entradas restantes fuera de ambos estados | 139 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 39 |
+| `IMPLEMENTED_NOT_E2E` | 40 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 133 |
+| `BROWSE_ONLY` | 132 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3799,29 +3799,30 @@ records:
     autonomous_community: "Comunitat Valenciana"
     province_or_municipality: "NO_APLICA"
     institution_name: "Generalitat Valenciana"
-    surface_name: "Sede electrónica de la Generalitat Valenciana"
+    surface_name: "Generalitat Valenciana — acceso con certificado al trámite 15602"
     surface_type: "SEDE"
-    origin: "https://sede.gva.es"
+    origin: "https://www.tramita.gva.es"
     official_site: "https://sede.gva.es/es/"
     e_sede: "https://sede.gva.es/es/"
-    entry_url: "https://sede.gva.es/es/"
+    entry_url: "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR"
     procedure_page: "https://sede.gva.es/es/detall-tramit?id_proc=15602"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación mediante los sistemas de identificación y firma admitidos."
-    protocol_evidence: "Las fuentes acreditan certificado y firma condicionales, no un ABI exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A12A", "A12B", "A12C", "A12D"]
-    reason: "El término ClientCert de la ayuda no prueba ClientCertRequest TLS; formato y endpoint tampoco están verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Observar la entrada de certificado sin seleccionar una identidad."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al flujo autenticado del trámite 15602 mediante el servicio Client TLS de la Generalitat Valenciana; la firma y presentación posteriores quedan fuera del contrato implementado."
+    protocol_evidence: "La ficha pública enlaza DGM_GEN v4. El login público deriva el acceso por certificado a ptt-clave.gva.es y de ahí a ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html, conservando el mismo idSesion y añadiendo idioma=es. TLS 1.2 en ese host emite CertificateRequest con tipos RSA sign y ECDSA sign; no se proporcionó certificado."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A12C", "A12D", "GVA-DGM15602-2026-08-18", "GVA-CLIENTTLS-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con source/target exactos, idSesion enlazado, idioma=es, host/path/port cerrados y TTL local acotado; sin E2E. No se infieren algoritmo, formato, endpoint ni constantes de la firma/presentación posterior."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar E2E por separado el acceso con certificado; mantener firma y presentación bloqueadas hasta evidencia autenticada/autorizada independiente."
+    notes: "Investigación pública no autenticada 2026-08-18: Chromium real, inventario de red, JS de login, cadena de redirección sanitizada y handshake TLS sin certificado; no hubo POST, selección de identidad, autenticación, firma ni presentación."
 
   - inventory_id: "ES-PUB-0109"
     surface_key: "extremadura-tramites"
@@ -6523,3 +6524,5 @@ availability, certificado, firma ni contrato técnico.
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
+[GVA-DGM15602-2026-08-18]: https://sede.gva.es/es/detall-tramit?id_proc=15602
+[GVA-CLIENTTLS-2026-08-18]: https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html

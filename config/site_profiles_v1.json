@@ -890,6 +890,28 @@
       ]
     },
     {
+      "profileId": "generalitat-valenciana-client-auth",
+      "profileVersion": 1,
+      "displayName": "Generalitat Valenciana — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR",
+      "initiatorOrigins": ["https://www.tramita.gva.es", "https://ptt-clave.gva.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://ptt-clave-clientcert.gva.es"],"sourceUrls":["https://ptt-clave.gva.es/pttclave/redirigirClave.html"],"sourceFixedQueryParameters":{},"sourceRequiredEphemeralQueryParameters":["idSesion"],"linkedEphemeralQueryParameters":["idSesion"],"requestPath":"/pttclave/retornoClientCert.html","fixedQueryParameters":{"idioma":"es"},"requiredEphemeralQueryParameters":["idSesion"],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.gva.es/es/detall-tramit?id_proc=15602","reviewedOn":"2026-08-18"},
+        {"url":"https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR","reviewedOn":"2026-08-18"},
+        {"url":"https://ptt-clave.gva.es/pttclave/redirigirClave.html","reviewedOn":"2026-08-18"},
+        {"url":"https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "policia-solicitud-generica",
       "profileVersion": 1,
       "displayName": "Policía Nacional — Solicitud genérica",

@@ -235,6 +235,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LEON_PROFILE_ID) {
                 validateLeonProfile(p)
             }
+            if (p.profileId.value == GVA_PROFILE_ID) {
+                validateGvaProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -296,7 +299,8 @@ object SiteProfileCatalogParser {
                     require(
                         p.profileId.value == SANIDAD_PROFILE_ID ||
                             p.profileId.value == TEA_PROFILE_ID ||
-                            p.profileId.value == LEON_PROFILE_ID
+                            p.profileId.value == LEON_PROFILE_ID ||
+                            p.profileId.value == GVA_PROFILE_ID
                     )
                 }
                 require(policy.sourceUrls.all { source ->
@@ -913,6 +917,44 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-16") })
     }
 
+    private fun validateGvaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == GVA_PROFILE_VERSION)
+        require(profile.displayName == GVA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == GVA_START_URL)
+        require(
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(GVA_TRAMITA_ORIGIN),
+                ExactOrigin.parse(GVA_PTT_CLAVE_ORIGIN),
+            ),
+        )
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(GVA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(GVA_SOURCE_URL)),
+                requestPath = GVA_CLIENT_AUTH_PATH,
+                fixedQueryParameters = linkedMapOf("idioma" to "es"),
+                requiredEphemeralQueryParameters = setOf("idSesion"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = setOf("idSesion"),
+                linkedEphemeralQueryParameters = setOf("idSesion"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == GVA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -1335,6 +1377,24 @@ object SiteProfileCatalogParser {
         LEON_START_URL,
         "https://sede.dipuleon.es/carpetaciudadana/login.aspx",
         "https://identificacionssl.sedipualba.es/",
+    )
+    private const val GVA_PROFILE_ID = "generalitat-valenciana-client-auth"
+    private const val GVA_PROFILE_VERSION = 1
+    private const val GVA_DISPLAY_NAME = "Generalitat Valenciana — acceso con certificado"
+    private const val GVA_START_URL =
+        "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?" +
+            "tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&" +
+            "idSubfaseGuc=SOLICITUD&idCatGuc=PR"
+    private const val GVA_TRAMITA_ORIGIN = "https://www.tramita.gva.es"
+    private const val GVA_PTT_CLAVE_ORIGIN = "https://ptt-clave.gva.es"
+    private const val GVA_SOURCE_URL = "https://ptt-clave.gva.es/pttclave/redirigirClave.html"
+    private const val GVA_CLIENT_AUTH_ORIGIN = "https://ptt-clave-clientcert.gva.es"
+    private const val GVA_CLIENT_AUTH_PATH = "/pttclave/retornoClientCert.html"
+    private val GVA_EVIDENCE_URLS = setOf(
+        "https://sede.gva.es/es/detall-tramit?id_proc=15602",
+        GVA_START_URL,
+        GVA_SOURCE_URL,
+        "https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html",
     )
     private const val CDTI_PROFILE_ID = "cdti-certificate-validation"
     private const val CDTI_PROFILE_VERSION = 1

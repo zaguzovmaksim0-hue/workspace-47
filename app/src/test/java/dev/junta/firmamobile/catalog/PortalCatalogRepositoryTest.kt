@@ -72,6 +72,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-huesca-portal",
                 "diputacion-lugo-sede",
                 "diputacion-leon-sede",
+                "generalitat-valenciana-client-auth",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
