@@ -618,6 +618,23 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", dsca["limitations"].lower())
 
 
+    def test_inclusion_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        inclusion = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-inclusion-seguridad-social-y-migraciones")
+        self.assertEqual("reg-age-redsara", inclusion["profileId"])
+        self.assertEqual("ES-PUB-0068", inclusion["inventoryId"])
+        self.assertEqual("https://sede.inclusion.gob.es/", inclusion["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", inclusion["launchUrl"])
+        self.assertEqual("E2E_PENDING", inclusion["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", inclusion["inventoryStatus"])
+        self.assertEqual("REVIEWED", inclusion["discoveryState"])
+        self.assertEqual("2026-08-17", inclusion["reviewedOn"])
+        self.assertEqual([], inclusion["observedSignatureFormats"])
+        self.assertIn("reg-age", inclusion["limitations"].lower())
+        self.assertIn("qa", inclusion["limitations"].lower())
+        self.assertIn("e2e", inclusion["limitations"].lower())
+
+
     def test_inap_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         inap = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-nacional-de-administracion-publica-inap")
