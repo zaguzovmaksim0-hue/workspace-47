@@ -1175,6 +1175,25 @@ records:
         self.assertIn("e2e", target["limitations"].lower())
 
 
+    def test_diputacion_alava_binds_exact_registro_comun_qa_start_without_signer_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0140")
+        self.assertEqual("diputacion-alava-portal", target["portalId"])
+        self.assertEqual("diputacion-alava-registro-comun", target["profileId"])
+        self.assertEqual("https://egoitza.araba.eus/izapidetu/at/01/es/0000301", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("ALAVA_EGOITZA_REGISTRO_COMUN_QA_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-18", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("dinámic", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
     def test_oepm_protegeo_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         oepm = next(

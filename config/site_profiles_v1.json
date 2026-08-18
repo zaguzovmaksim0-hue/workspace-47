@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 28,
+  "catalogVersion": 29,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -992,6 +992,26 @@
       "evidence": [
         {"url":"https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/","reviewedOn":"2026-08-17"},
         {"url":"https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "diputacion-alava-registro-comun",
+      "profileVersion": 1,
+      "displayName": "Diputación Foral de Álava — Registro Electrónico Común",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://egoitza.araba.eus/izapidetu/at/01/es/0000301",
+      "initiatorOrigins": ["https://egoitza.araba.eus"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://egoitza.araba.eus/es/inicio/tramites/fitxa/registro-electronico-comun","reviewedOn":"2026-08-18"},
+        {"url":"https://egoitza.araba.eus/izapidetu/at/01/es/0000301","reviewedOn":"2026-08-18"}
       ]
     },
     {

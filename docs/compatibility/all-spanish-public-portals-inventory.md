@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 65 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 69 |
-| Entradas restantes fuera de ambos estados | 114 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 66 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 70 |
+| Entradas restantes fuera de ambos estados | 113 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 65 |
+| `IMPLEMENTED_NOT_E2E` | 66 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 107 |
+| `BROWSE_ONLY` | 106 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4813,29 +4813,29 @@ records:
     autonomous_community: "País Vasco"
     province_or_municipality: "Álava (provincia)"
     institution_name: "Diputación Foral de Álava"
-    surface_name: "Portal oficial de Diputación Foral de Álava"
-    surface_type: "PORTAL_SERVICIO"
-    origin: "https://web.araba.eus"
+    surface_name: "Registro Electrónico Común — Diputación Foral de Álava"
+    surface_type: "SEDE"
+    origin: "https://egoitza.araba.eus"
     official_site: "https://web.araba.eus/es/home"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://web.araba.eus/es/home"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://egoitza.araba.eus/es/inicio"
+    entry_url: "https://egoitza.araba.eus/izapidetu/at/01/es/0000301"
+    procedure_page: "https://egoitza.araba.eus/es/inicio/tramites/fitxa/registro-electronico-comun"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "ALAVA_EGOITZA_REGISTRO_COMUN_QA_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA al asistente vigente del Registro Electrónico Común de la Diputación Foral de Álava. El acceso autenticado con certificado alcanza el flujo protegido; la firma documental y la presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El asistente vigente 0000301 fue revalidado el 2026-08-18: tras autenticación controlada alcanza /para-quien. El frontend first-party mantiene pasos de contacto, expediente, solicitud, adjuntos y Firmar y enviar; la inicialización de firma devuelve dinámicamente urlInicioFirma. No se infiere formato, algoritmo ni ABI del firmante."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D06", "DP02A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    reason: "Perfil QA_ONLY limitado al inicio exacto del Registro Electrónico Común. La autenticación por certificado fue observada, pero no se declara CLIENT_TLS_AUTH propio del perfil ni capacidad SIGN. El signer downstream es dinámico; formato, algoritmo, callback y firma física siguen NO_VERIFICADO/E2E pendiente."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar físicamente el launch QA; ampliar el contrato de pre-firma o firma solo con evidencia exacta del signer dinámico, deteniéndose antes de firma criptográfica y presentación final."
 
   - inventory_id: "ES-PUB-0141"
     surface_key: "diputacion-albacete-portal"
