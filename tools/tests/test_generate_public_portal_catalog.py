@@ -242,6 +242,52 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             catalog["sourceRevision"],
         )
 
+    def test_transportes_qys_xades_profile_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(
+            item for item in catalog["entries"]
+            if item["portalId"] == "age-ministerio-de-transportes-y-movilidad-sostenible"
+        )
+
+        self.assertEqual("ES-PUB-0075", entry["inventoryId"])
+        self.assertEqual("transportes-qys-cert-login", entry["profileId"])
+        self.assertEqual(
+            "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+            entry["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", entry)
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("REVIEWED", entry["discoveryState"])
+        self.assertEqual("2026-08-17", entry["reviewedOn"])
+        self.assertIn("MINIAPPLET", entry["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", entry["observedMechanisms"])
+        self.assertEqual(["XADES"], entry["observedSignatureFormats"])
+        self.assertIn("e2e", entry["limitations"].lower())
+        self.assertNotEqual("VERIFIED_E2E", entry["inventoryStatus"])
+
+    def test_mites_certificate_login_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mites = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-trabajo-y-economia-social"
+        )
+
+        self.assertEqual("mites-certificate-login", mites["profileId"])
+        self.assertEqual("ES-PUB-0074", mites["inventoryId"])
+        self.assertEqual("https://sede.mites.gob.es/", mites["entryUrl"])
+        self.assertNotIn("launchUrl", mites)
+        self.assertEqual("E2E_PENDING", mites["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mites["inventoryStatus"])
+        self.assertEqual("REVIEWED", mites["discoveryState"])
+        self.assertEqual("2026-08-17", mites["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", mites["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", mites["observedMechanisms"])
+        self.assertEqual(["CADES"], mites["observedSignatureFormats"])
+        self.assertIn("e2e", mites["limitations"].lower())
+        self.assertIn("qa", mites["limitations"].lower())
+        self.assertNotEqual("VERIFIED_E2E", mites["inventoryStatus"])
+
     def test_melilla_batch_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         melilla = next(
@@ -596,6 +642,40 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", dsca["limitations"].lower())
 
 
+    def test_inclusion_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        inclusion = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-inclusion-seguridad-social-y-migraciones")
+        self.assertEqual("reg-age-redsara", inclusion["profileId"])
+        self.assertEqual("ES-PUB-0068", inclusion["inventoryId"])
+        self.assertEqual("https://sede.inclusion.gob.es/", inclusion["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", inclusion["launchUrl"])
+        self.assertEqual("E2E_PENDING", inclusion["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", inclusion["inventoryStatus"])
+        self.assertEqual("REVIEWED", inclusion["discoveryState"])
+        self.assertEqual("2026-08-17", inclusion["reviewedOn"])
+        self.assertEqual([], inclusion["observedSignatureFormats"])
+        self.assertIn("reg-age", inclusion["limitations"].lower())
+        self.assertIn("qa", inclusion["limitations"].lower())
+        self.assertIn("e2e", inclusion["limitations"].lower())
+
+
+    def test_cervantes_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        cervantes = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-cervantes")
+        self.assertEqual("reg-age-redsara", cervantes["profileId"])
+        self.assertEqual("ES-PUB-0049", cervantes["inventoryId"])
+        self.assertEqual("https://cervantes.sede.gob.es/", cervantes["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", cervantes["launchUrl"])
+        self.assertEqual("E2E_PENDING", cervantes["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", cervantes["inventoryStatus"])
+        self.assertEqual("REVIEWED", cervantes["discoveryState"])
+        self.assertEqual("2026-08-17", cervantes["reviewedOn"])
+        self.assertEqual([], cervantes["observedSignatureFormats"])
+        self.assertIn("reg-age", cervantes["limitations"].lower())
+        self.assertIn("qa", cervantes["limitations"].lower())
+        self.assertIn("e2e", cervantes["limitations"].lower())
+
+
     def test_reina_sofia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         reina = next(
@@ -632,6 +712,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("reg-age", inap["limitations"].lower())
         self.assertIn("qa", inap["limitations"].lower())
         self.assertIn("e2e", inap["limitations"].lower())
+
+
+    def test_cultura_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        cultura = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-cultura")
+        self.assertEqual("reg-age-redsara", cultura["profileId"])
+        self.assertEqual("ES-PUB-0062", cultura["inventoryId"])
+        self.assertEqual("https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General", cultura["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", cultura["launchUrl"])
+        self.assertEqual("E2E_PENDING", cultura["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", cultura["inventoryStatus"])
+        self.assertEqual("REVIEWED", cultura["discoveryState"])
+        self.assertEqual("2026-08-17", cultura["reviewedOn"])
+        self.assertIn("reg-age", cultura["limitations"].lower())
+        self.assertIn("qa", cultura["limitations"].lower())
+        self.assertIn("e2e", cultura["limitations"].lower())
 
 
     def test_unknown_alias_launch_url_fails_closed(self) -> None:
@@ -773,6 +869,31 @@ records:
         self.assertIn("alias", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_mivau_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mivau = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-vivienda-y-agenda-urbana"
+        )
+        self.assertEqual("reg-age-redsara", mivau["profileId"])
+        self.assertEqual("ES-PUB-0076", mivau["inventoryId"])
+        self.assertEqual(
+            "https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General",
+            mivau["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", mivau["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", mivau["protocolFamily"])
+        self.assertEqual("E2E_PENDING", mivau["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mivau["inventoryStatus"])
+        self.assertEqual("REVIEWED", mivau["discoveryState"])
+        self.assertEqual("2026-08-17", mivau["reviewedOn"])
+        self.assertEqual([], mivau["observedMechanisms"])
+        self.assertEqual([], mivau["observedSignatureFormats"])
+        self.assertIn("reg-age", mivau["limitations"].lower())
+        self.assertIn("qa", mivau["limitations"].lower())
+        self.assertIn("e2e", mivau["limitations"].lower())
+
+
     def test_miteco_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         miteco = next(
@@ -837,6 +958,128 @@ records:
         self.assertIn("reg-age", mapa["limitations"].lower())
         self.assertIn("qa", mapa["limitations"].lower())
         self.assertIn("e2e", mapa["limitations"].lower())
+
+
+    def test_juventud_infancia_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-juventud-e-infancia")
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("ES-PUB-0070", target["inventoryId"])
+        self.assertEqual("https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+    def test_igualdad_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        igualdad = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-igualdad")
+        self.assertEqual("reg-age-redsara", igualdad["profileId"])
+        self.assertEqual("ES-PUB-0067", igualdad["inventoryId"])
+        self.assertEqual("https://igualdad.sede.gob.es/", igualdad["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", igualdad["launchUrl"])
+        self.assertEqual("E2E_PENDING", igualdad["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", igualdad["inventoryStatus"])
+        self.assertEqual("REVIEWED", igualdad["discoveryState"])
+        self.assertEqual("2026-08-17", igualdad["reviewedOn"])
+        self.assertEqual([], igualdad["observedSignatureFormats"])
+        self.assertIn("reg-age", igualdad["limitations"].lower())
+        self.assertIn("qa", igualdad["limitations"].lower())
+        self.assertIn("e2e", igualdad["limitations"].lower())
+
+    def test_defensa_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        defensa = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-defensa")
+        self.assertEqual("reg-age-redsara", defensa["profileId"])
+        self.assertEqual("ES-PUB-0063", defensa["inventoryId"])
+        self.assertEqual("https://sede.defensa.gob.es/", defensa["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", defensa["launchUrl"])
+        self.assertEqual("E2E_PENDING", defensa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", defensa["inventoryStatus"])
+        self.assertEqual("REVIEWED", defensa["discoveryState"])
+        self.assertEqual("2026-08-17", defensa["reviewedOn"])
+        self.assertIn("reg-age", defensa["limitations"].lower())
+        self.assertIn("qa", defensa["limitations"].lower())
+        self.assertIn("e2e", defensa["limitations"].lower())
+
+    def test_mpr_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-la-presidencia-justicia-y-relaciones-con-las-cortes"
+        )
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("ES-PUB-0071", target["inventoryId"])
+        self.assertEqual("https://mpr.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+    def test_mptmd_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-politica-territorial-y-memoria-democratica"
+        )
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("ES-PUB-0072", target["inventoryId"])
+        self.assertEqual("https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+    def test_industria_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        industria = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-industria-y-turismo")
+        self.assertEqual("reg-age-redsara", industria["profileId"])
+        self.assertEqual("ES-PUB-0069", industria["inventoryId"])
+        self.assertEqual("https://sede.minetur.gob.es/", industria["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", industria["launchUrl"])
+        self.assertEqual("E2E_PENDING", industria["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", industria["inventoryStatus"])
+        self.assertEqual("REVIEWED", industria["discoveryState"])
+        self.assertEqual("2026-08-17", industria["reviewedOn"])
+        self.assertEqual([], industria["observedSignatureFormats"])
+        self.assertIn("reg-age", industria["limitations"].lower())
+        self.assertIn("qa", industria["limitations"].lower())
+        self.assertIn("e2e", industria["limitations"].lower())
+
+
+    def test_interior_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-del-interior"
+        )
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("ES-PUB-0077", target["inventoryId"])
+        self.assertEqual("https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
+if __name__ == "__main__":
+    unittest.main()
 
 
 if __name__ == "__main__":
