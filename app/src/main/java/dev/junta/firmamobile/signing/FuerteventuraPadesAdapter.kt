@@ -110,7 +110,7 @@ class FuerteventuraPadesAdapter(
             throw error
         }
         var options: SignatureOptions? = null
-        var output: ClearingByteArrayOutputStream? = null
+        var output: FuerteventuraClearingByteArrayOutputStream? = null
         var detachedContent: ByteArray? = null
         var material: CadesPreSignMaterial? = null
         try {
@@ -128,7 +128,7 @@ class FuerteventuraPadesAdapter(
                 setPreferredSignatureSize(PREFERRED_SIGNATURE_BYTES)
             }
             document.addSignature(signature, options)
-            output = ClearingByteArrayOutputStream()
+            output = FuerteventuraClearingByteArrayOutputStream()
             val external = document.saveIncrementalForExternalSigning(output)
             detachedContent = external.content.use { stream ->
                 val bytes = stream.readBytes()
@@ -242,7 +242,7 @@ private class FuerteventuraPadesState(
     sourcePdf: ByteArray,
     private val signatureOptions: SignatureOptions,
     val externalSigningSupport: ExternalSigningSupport,
-    private val output: ClearingByteArrayOutputStream,
+    private val output: FuerteventuraClearingByteArrayOutputStream,
     placeholderCms: ByteArray,
     detachedContent: ByteArray,
     signingCertificateFingerprint: ByteArray,
@@ -283,7 +283,7 @@ private class FuerteventuraPadesState(
     }
 }
 
-private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {
+private class FuerteventuraClearingByteArrayOutputStream : ByteArrayOutputStream() {
     fun clear() {
         buf.fill(0)
         reset()
