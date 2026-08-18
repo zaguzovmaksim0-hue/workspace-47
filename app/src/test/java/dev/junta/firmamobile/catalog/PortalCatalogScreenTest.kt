@@ -81,6 +81,48 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Cervantes REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val cervantes = compatible.items.single {
+            it.portalId == PortalId("age-instituto-cervantes")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), cervantes.profileId)
+        assertEquals(java.net.URI("https://cervantes.sede.gob.es/"), cervantes.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, cervantes.supportStatus)
+        assertTrue(cervantes.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(cervantes),
+        )
+    }
+
+    @Test
+    fun `Reina Sofia REG alias is compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val reina = compatible.items.single {
+            it.portalId == PortalId("age-museo-nacional-centro-de-arte-reina-sofia")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), reina.profileId)
+        assertEquals(java.net.URI("https://museoreinasofia.sede.gob.es/"), reina.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, reina.supportStatus)
+        assertTrue(reina.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(reina),
+        )
+    }
+
+    @Test
     fun `contract pending browse only and unsupported are separated and disabled correctly`() {
         val base = repository.portals().first()
         val pending = base.copy(
@@ -222,6 +264,25 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Igualdad REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val igualdad = compatible.items.single { it.portalId == PortalId("age-ministerio-de-igualdad") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), igualdad.profileId)
+        assertEquals(java.net.URI("https://igualdad.sede.gob.es/"), igualdad.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, igualdad.supportStatus)
+        assertTrue(igualdad.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(igualdad),
+        )
+    }
+
+    @Test
     fun `metadata only browse record explains why integrated navigation is blocked`() {
         rule.setContent {
             JuntaFirmaTheme {
@@ -266,4 +327,109 @@ class PortalCatalogScreenTest {
         rule.onNodeWithText("Favorito").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Abrir sede").assertIsDisplayed()
     }
+    @Test
+    fun `Inclusion REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val inclusion = compatible.items.single {
+            it.portalId == PortalId("age-ministerio-de-inclusion-seguridad-social-y-migraciones")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), inclusion.profileId)
+        assertEquals(java.net.URI("https://sede.inclusion.gob.es/"), inclusion.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, inclusion.supportStatus)
+        assertTrue(inclusion.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(inclusion),
+        )
+    }
+
+    @Test
+    fun `Industria REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val industria = compatible.items.single {
+            it.portalId == PortalId("age-ministerio-de-industria-y-turismo")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), industria.profileId)
+        assertEquals(java.net.URI("https://sede.minetur.gob.es/"), industria.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, industria.supportStatus)
+        assertTrue(industria.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(industria),
+        )
+    }
+
+    @Test
+    fun `OEPM ProtegeO public launch is compatible while sensitive capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val oepm = compatible.items.single {
+            it.portalId == PortalId("age-oficina-espanola-de-patentes-y-marcas")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("oepm-protegeo-general"), oepm.profileId)
+        assertEquals(
+            java.net.URI("https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM"),
+            oepm.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, oepm.supportStatus)
+        assertTrue(oepm.capabilities.isEmpty())
+        assertTrue(oepm.signatureFormats.isEmpty())
+        assertTrue(oepm.isEnabled)
+    }
+
+    @Test
+    fun `Portal Funciona public home is compatible but sensitive auth capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val funciona = compatible.items.single { it.portalId == PortalId("age-portal-funciona") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("portal-funciona-public-home"), funciona.profileId)
+        assertEquals(java.net.URI("https://sede.funciona.gob.es/es/home"), funciona.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, funciona.supportStatus)
+        assertTrue(funciona.capabilities.isEmpty())
+        assertTrue(funciona.signatureFormats.isEmpty())
+        assertTrue(funciona.isEnabled)
+    }
+
+    @Test
+    fun `Hacienda central REG alias is compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val hacienda = compatible.items.single {
+            it.portalId == PortalId("age-sede-electronica-central-del-ministerio")
+        }
+
+        assertEquals("reg-age-redsara", hacienda.profileId?.value)
+        assertEquals(java.net.URI("https://sede.hacienda.gob.es/"), hacienda.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, hacienda.supportStatus)
+        assertTrue(hacienda.isEnabled)
+    }
+
+    @Test
+    fun `Junta VEA PEG is compatible navigation but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single { it.portalId == PortalId("junta-andalucia-sede") }
+
+        assertEquals("junta-andalucia-vea-peg", target.profileId?.value)
+        assertEquals(
+            java.net.URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"),
+            target.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.isEnabled)
+        assertTrue(target.capabilities.isEmpty())
+    }
+
 }
