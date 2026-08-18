@@ -364,6 +364,7 @@ object SiteProfileCatalogParser {
                     require(
                         op.packaging == if (
                             p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
+                            p.profileId.value == AIREF_PROFILE_ID ||
                             p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
                             p.profileId.value == CDTI_PROFILE_ID
                         ) {
