@@ -53,6 +53,7 @@ class JuntaOriginPolicyTest {
     private val lleida = ProfileId("diputacion-lleida-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val alava = ProfileId("diputacion-alava-registro-comun")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -106,6 +107,7 @@ class JuntaOriginPolicyTest {
             "seu.diputaciolleida.cat",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "egoitza.araba.eus",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -197,6 +199,14 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
+        assertEquals(setOf("egoitza.araba.eus"), JuntaOriginPolicy.browserAllowedHosts(alava))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(alava).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://egoitza.araba.eus/izapidetu/at/01/es/0000301"),
+                alava,
+            ),
+        )
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(
