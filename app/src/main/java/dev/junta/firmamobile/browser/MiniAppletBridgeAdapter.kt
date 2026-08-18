@@ -518,12 +518,6 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-            decodedData.fill(0)
-            return MiniAppletBridgeRouteResult.Rejected(
-                canonicalRequestId,
-                SigningErrorCode.INVALID_REQUEST,
-            )
-        }
         if (isSevillaAtseContract && !decodedData.isExactSevillaAtseChallenge()) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
