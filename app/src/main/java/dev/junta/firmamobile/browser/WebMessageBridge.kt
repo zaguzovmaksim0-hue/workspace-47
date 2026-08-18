@@ -29,6 +29,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val cantabria: Boolean,
     val jccm: Boolean,
     val sevillaAtse: Boolean,
+    val airef: Boolean,
     val cdti: Boolean,
     val policia: Boolean,
     val granCanaria: Boolean,
@@ -253,6 +254,7 @@ class WebMessageBridge(
                     cantabriaCompatibilityEnabled = shimFlags.cantabria,
                     jccmCompatibilityEnabled = shimFlags.jccm,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
+                    airefCompatibilityEnabled = shimFlags.airef,
                     cdtiCompatibilityEnabled = shimFlags.cdti,
                     policiaCompatibilityEnabled = shimFlags.policia,
                     granCanariaCompatibilityEnabled = shimFlags.granCanaria,
@@ -651,6 +653,7 @@ class WebMessageBridge(
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+        private const val AIREF_PROFILE_ID = "airef-instancia-general"
         private const val CDTI_PROFILE_ID = "cdti-certificate-validation"
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
@@ -666,6 +669,7 @@ class WebMessageBridge(
             cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
+            airef = profileActive && profileId.value == AIREF_PROFILE_ID,
             cdti = profileActive && profileId.value == CDTI_PROFILE_ID,
             policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
             granCanaria = profileActive && profileId.value == GRAN_CANARIA_PROFILE_ID,

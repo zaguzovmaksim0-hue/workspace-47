@@ -150,6 +150,7 @@ class MainActivity : ComponentActivity() {
         val granCanariaAdapter = GranCanariaPadesAdapter()
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
         val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
+        val airefAdapter = AirefXadesEnvelopingAdapter()
         val cdtiAdapter = CdtiXadesEnvelopingAdapter()
         val policiaAdapter = PoliciaXadesDetachedAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
@@ -185,6 +186,7 @@ class MainActivity : ComponentActivity() {
                     granCanariaAdapter.id -> granCanariaAdapter
                     tenerifeAdapter.id -> tenerifeAdapter
                     sevillaAdapter.id -> sevillaAdapter
+                    airefAdapter.id -> airefAdapter
                     cdtiAdapter.id -> cdtiAdapter
                     policiaAdapter.id -> policiaAdapter
                     unizarAdapter.id -> unizarAdapter

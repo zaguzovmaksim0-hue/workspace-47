@@ -557,6 +557,72 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactAirefAutoScriptCallNormalizesOnlyTheProtectedDynamicPayloadTuple() {
+        val result = adapterFor(AIREF_PROFILE_ID).route(
+            rawMessage = airefMessage(),
+            sourceOrigin = AIREF_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 52,
+            currentPageUrl = AIREF_SIGNING_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(AIREF_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.airef.es", request.context.origin.host)
+            assertEquals(52, request.context.navigationEpoch)
+            assertEquals(AIREF_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.XADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(AIREF_PAYLOAD, data)
+                    assertEquals("", properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun airefBridgeRejectsEveryExpansionOfTheObservedProtectedContract() {
+        fun rejected(
+            rawMessage: String = airefMessage(),
+            origin: Uri = AIREF_ORIGIN,
+            pageUrl: String? = AIREF_SIGNING_URL,
+        ): Boolean = adapterFor(AIREF_PROFILE_ID).route(
+            rawMessage = rawMessage,
+            sourceOrigin = origin,
+            isMainFrame = true,
+            navigationEpoch = 53,
+            currentPageUrl = pageUrl,
+        ) is MiniAppletBridgeRouteResult.Rejected
+
+        assertTrue(rejected(origin = Uri.parse("https://sede.airef.es.evil.example")))
+        assertTrue(rejected(pageUrl = null))
+        assertTrue(rejected(pageUrl = "https://sede.airef.es/invesiteRE/action/solicitud/view"))
+        assertTrue(rejected(pageUrl = "$AIREF_SIGNING_URL&extra=1"))
+        assertTrue(rejected(pageUrl = "https://sede.airef.es/invesiteRE/action/solicitud/view?id=abc"))
+        assertTrue(rejected(pageUrl = "$AIREF_SIGNING_URL#fragment"))
+        assertTrue(rejected(rawMessage = airefMessage(algorithm = "SHA256withRSA")))
+        assertTrue(rejected(rawMessage = airefMessage(format = "XAdES Enveloping")))
+        assertTrue(rejected(rawMessage = airefMessage(extraProperties = "")))
+        assertTrue(
+            rejected(
+                rawMessage = airefMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(ByteArray(31) { 1 }),
+                ),
+            ),
+        )
+        assertTrue(
+            rejected(
+                rawMessage = airefMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(ByteArray(33) { 1 }),
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun exactCdtiAutoScriptCallNormalizesTheDynamicChallengeToSha512XadesEnveloping() {
         val result = cdtiAdapter().route(
             rawMessage = cdtiMessage(),
@@ -1297,6 +1363,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun airefMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(AIREF_PAYLOAD),
+        algorithm: String = "SHA1withRSA",
+        format: String = "XAdES",
+        extraProperties: Any = JSONObject.NULL,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private fun cdtiMessage(
         dataB64: String = CDTI_CHALLENGE + "=",
         algorithm: String = "SHA512withRSA",
@@ -1441,6 +1522,12 @@ class MiniAppletBridgeAdapterTest {
         const val SEVILLA_SAFE_DESCRIPTION =
             "Acceso con certificado a la Agencia Tributaria de Sevilla"
         const val SEVILLA_CHALLENGE = "0123456789abcdef0123456789abcdefABCDEFGH"
+        val AIREF_ORIGIN: Uri = Uri.parse("https://sede.airef.es")
+        const val AIREF_PROFILE_ID = "airef-instancia-general"
+        const val AIREF_PROTOCOL_ID = "airef-xades-enveloping-v1"
+        const val AIREF_SIGNING_URL =
+            "https://sede.airef.es/invesiteRE/action/solicitud/view?id=4242"
+        val AIREF_PAYLOAD = ByteArray(32) { index -> (index + 1).toByte() }
         val CDTI_ORIGIN: Uri = Uri.parse("https://sede.cdti.gob.es")
         const val CDTI_PROFILE_ID = "cdti-certificate-validation"
         const val CDTI_PROTOCOL_ID = "cdti-xades-enveloping-v1"
