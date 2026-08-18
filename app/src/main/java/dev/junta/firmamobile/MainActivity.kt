@@ -59,6 +59,7 @@ import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
+import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
@@ -148,6 +149,7 @@ class MainActivity : ComponentActivity() {
         val aragonAdapter = LocalCadesDetachedAdapter()
         val dgtAdapter = DgtVerificationCadesAdapter()
         val lleidaAdapter = DiputacionLleidaCadesAdapter()
+        val canariasAdapter = CanariasCertificateLoginCadesAdapter()
         val ugrAdapter = UgrCadesDetachedAdapter()
         val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
         val mitesAdapter = MitesCertificateLoginCadesAdapter()
@@ -186,6 +188,7 @@ class MainActivity : ComponentActivity() {
                     aragonAdapter.id -> aragonAdapter
                     dgtAdapter.id -> dgtAdapter
                     lleidaAdapter.id -> lleidaAdapter
+                    canariasAdapter.id -> canariasAdapter
                     ugrAdapter.id -> ugrAdapter
                     jccmAdapter.id -> jccmAdapter
                     mitesAdapter.id -> mitesAdapter

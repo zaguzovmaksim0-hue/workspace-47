@@ -213,6 +213,13 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = DiputacionLleidaCadesAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(CanariasCertificateLoginCadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = CanariasCertificateLoginCadesAdapter.ID,
+            ),
         ),
     )
 }

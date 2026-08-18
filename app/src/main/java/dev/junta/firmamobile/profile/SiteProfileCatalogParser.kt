@@ -256,6 +256,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == GRAN_CANARIA_PROFILE_ID) {
                 validateGranCanariaProfile(p)
             }
+            if (p.profileId.value == CANARIAS_PROFILE_ID) {
+                validateCanariasProfile(p)
+            }
             if (p.profileId.value == MINECO_PROFILE_ID) {
                 validateMinecoProfile(p)
             }
@@ -403,6 +406,7 @@ object SiteProfileCatalogParser {
                                         )
                                         UGR_PROFILE_ID -> emptyMap()
                                         JCCM_PROFILE_ID -> emptyMap()
+                                        CANARIAS_PROFILE_ID -> CANARIAS_EXTRA_PROPERTIES
                                         else -> null
                                     }
                                     require(
@@ -608,6 +612,40 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TEA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateCanariasProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CANARIAS_PROFILE_VERSION)
+        require(profile.displayName == CANARIAS_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CANARIAS_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CANARIAS_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = CANARIAS_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.CADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.EXPLICIT,
+                fixedExtraProperties = CANARIAS_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CANARIAS_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
     }
 
     private fun validateGranCanariaProfile(profile: SiteProfile) {
@@ -1400,6 +1438,28 @@ object SiteProfileCatalogParser {
         "policy" to "FirmaAGE",
         "headless" to "true",
         "filters" to "nonexpired:true;authCert:true",
+    )
+    private const val CANARIAS_PROFILE_ID = "canarias-sede"
+    private const val CANARIAS_PROFILE_VERSION = 1
+    private const val CANARIAS_DISPLAY_NAME = "Gobierno de Canarias — Sede electrónica"
+    private const val CANARIAS_START_URL = "https://sede.gobiernodecanarias.org/sede/la_sede"
+    private const val CANARIAS_ORIGIN = "https://sede.gobiernodecanarias.org"
+    private const val CANARIAS_SAFE_DESCRIPTION =
+        "Acceso con certificado a la Sede electrónica del Gobierno de Canarias"
+    private val CANARIAS_EXTRA_PROPERTIES = linkedMapOf(
+        "format" to "CAdES Detached",
+        "serverUrl" to "https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService",
+        "referencesDigestMethod" to "http://www.w3.org/2001/04/xmlenc#sha512",
+        "filters" to "nonexpired:true;signingCert:true;issuer.rfc2254:" +
+            "(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))" +
+            "(!(O=PKI))(!(O=DO_NOT_TRUST*)))",
+    )
+    private val CANARIAS_EVIDENCE_URLS = setOf(
+        CANARIAS_START_URL,
+        "https://sede.gobiernodecanarias.org/sede/tramites/6861",
+        "https://sede.gobiernodecanarias.org/sede/identificacion",
+        "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js",
+        "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js",
     )
     private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
     private const val GRAN_CANARIA_PROFILE_VERSION = 1

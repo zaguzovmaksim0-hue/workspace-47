@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 66 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 70 |
-| Entradas restantes fuera de ambos estados | 113 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 67 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 71 |
+| Entradas restantes fuera de ambos estados | 112 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 66 |
+| `IMPLEMENTED_NOT_E2E` | 67 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 106 |
+| `BROWSE_ONLY` | 105 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3553,23 +3553,23 @@ records:
     official_site: "https://sede.gobiernodecanarias.org/sede/la_sede"
     e_sede: "https://sede.gobiernodecanarias.org/sede/la_sede"
     entry_url: "https://sede.gobiernodecanarias.org/sede/la_sede"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sede.gobiernodecanarias.org/sede/tramites/6861"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    js_client: "AutoScript / MiniApplet"
+    protocol_family: "AUTOSCRIPT_MINIAPPLET_LOCAL_CADES"
+    signature_format: "CAdES Detached"
+    signature_algorithm: "SHA1withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación con certificado y AutoFirma cuando el procedimiento lo requiere."
-    protocol_evidence: "Los requisitos citan AutoFirma y AutoFirma Móvil, pero no publican el ABI portal-specific."
-    client_tls_auth: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado mediante AutoScript: reto UTC efímero firmado localmente como CAdES detached antes del POST de autenticación."
+    protocol_evidence: "El flujo público GET /sede/tramitador/creacion/tramites/6861 redirige 303 a /sede/identificacionmenu; la rama pública GET /sede/identificacion carga sfest.base.js y construye AutoScript.sign(Base64(Date.toUTCString()), SHA1withRSA, CAdES, extraProperties). Runtime Chromium confirmó CAdES Detached, serverUrl /platino/servlet_afirma/SignatureService, referencesDigestMethod SHA-512 y el filtro exacto nonexpired/signingCert/issuer.rfc2254; no se ejecutaron firma, selección de certificado ni POST."
+    client_tls_auth: "NO_EN_CONTORNO_OBSERVADO"
     evidence_ids: ["D03", "A05A", "A05B"]
-    reason: "Producto, formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento concreto y su invocación de firma."
+    reason: "Contrato público exacto implementado en perfil QA_ONLY fail-closed; falta E2E físico con certificado real y por ello no se afirma autenticación completada ni presentación administrativa."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E físico seguro del acceso con certificado en /sede/identificacion, sin presentación administrativa; mantener QA_ONLY hasta evidencia separada."
 
   - inventory_id: "ES-PUB-0100"
     surface_key: "cantabria-sede"

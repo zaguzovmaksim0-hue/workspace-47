@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 29,
+  "catalogVersion": 30,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -709,6 +709,29 @@
         {"url":"https://sede.deputacionlugo.org/opencms/common-js/clientSigner.js","reviewedOn":"2026-08-16"},
         {"url":"https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/acceso_sede","reviewedOn":"2026-08-16"},
         {"url":"https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/instalar_autofirma","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "canarias-sede",
+      "profileVersion": 1,
+      "displayName": "Gobierno de Canarias — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.gobiernodecanarias.org/sede/la_sede",
+      "initiatorOrigins": ["https://sede.gobiernodecanarias.org"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Sede electrónica del Gobierno de Canarias","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"format":"CAdES Detached","serverUrl":"https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService","referencesDigestMethod":"http://www.w3.org/2001/04/xmlenc#sha512","filters":"nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.gobiernodecanarias.org/sede/la_sede","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/sede/tramites/6861","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/sede/identificacion","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js","reviewedOn":"2026-08-17"}
       ]
     },
     {
