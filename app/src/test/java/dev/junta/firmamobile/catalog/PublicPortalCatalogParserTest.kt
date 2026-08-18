@@ -56,6 +56,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("sevilla-atse-certificate-login"),
+                ProfileId("airef-instancia-general"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
                 ProfileId("extremadura-tramites"),

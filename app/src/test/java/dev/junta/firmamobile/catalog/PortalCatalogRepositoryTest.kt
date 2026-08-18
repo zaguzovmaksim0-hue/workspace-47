@@ -63,6 +63,7 @@ class PortalCatalogRepositoryTest {
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
                 "sevilla-atse-certificate-login",
+                "airef-instancia-general",
                 "melilla-sede",
                 "ceuta-sede",
                 "extremadura-tramites",
