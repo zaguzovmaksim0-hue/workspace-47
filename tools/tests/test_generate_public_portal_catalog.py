@@ -391,6 +391,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", extremadura["limitations"].lower())
         self.assertNotEqual("VERIFIED_E2E", extremadura["inventoryStatus"])
 
+    def test_extremadura_legacy_sede_alias_binds_existing_qa_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        legacy = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "extremadura-sede-anterior"
+        )
+
+        self.assertEqual("extremadura-tramites", legacy["profileId"])
+        self.assertEqual("ES-PUB-0110", legacy["inventoryId"])
+        self.assertEqual("https://sede.juntaex.es/SEDE/", legacy["entryUrl"])
+        self.assertEqual("https://tramites.juntaex.es/", legacy["launchUrl"])
+        self.assertEqual("E2E_PENDING", legacy["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", legacy["inventoryStatus"])
+        self.assertEqual("2026-08-18", legacy["reviewedOn"])
+        self.assertNotEqual("VERIFIED_E2E", legacy["inventoryStatus"])
+
     def test_huesca_sta_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         huesca = next(
