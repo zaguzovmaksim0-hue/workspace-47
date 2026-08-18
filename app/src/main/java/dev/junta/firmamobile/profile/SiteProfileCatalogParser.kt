@@ -467,8 +467,15 @@ object SiteProfileCatalogParser {
                 require(endpointUrlOwners.put(endpoint.url, p.profileId) == null)
             }
             p.allOrigins().forEach { origin ->
-                require(navigationOriginOwners.put(origin, p.profileId) == null)
-
+                val previousOwner = navigationOriginOwners.putIfAbsent(origin, p.profileId)
+                require(
+                    previousOwner == null ||
+                        (
+                            origin == ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN) &&
+                                setOf(previousOwner.value, p.profileId.value) ==
+                                setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID)
+                        ),
+                )
             }
         }
     }
