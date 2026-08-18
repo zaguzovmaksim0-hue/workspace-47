@@ -712,6 +712,27 @@
       ]
     },
     {
+      "profileId": "fuerteventura-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Cabildo Insular de Fuerteventura — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+      "initiatorOrigins": ["https://sede.cabildofuer.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": ["https://pasarela.clave.gob.es","https://pasarela-ident.clave.gob.es"],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma PAdES de solicitud en la Sede electrónica del Cabildo Insular de Fuerteventura","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"signaturePositionOnPageLowerLeftX":"50","signaturePositionOnPageLowerLeftY":"15","signaturePositionOnPageUpperRightX":"150","signaturePositionOnPageUpperRightY":"50","signaturePages":"all","layer2Text":"Firmado por $$SUBJECTCN$$ el día $$SIGNDATE=dd/MM/yyyy$$ $$ORGANIZATION$$","layer2FontSize":"6","layer2FontFamily":"0","layer2FontStyle":"0","signatureRotation":"0","includeQuestionMark":"false","obfuscateCertText":"true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.cabildofuer.es/eAdmin/js/miniapplet.js","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "gran-canaria-sede-electronica",
       "profileVersion": 1,
       "displayName": "Cabildo Insular de Gran Canaria — Sede electrónica",

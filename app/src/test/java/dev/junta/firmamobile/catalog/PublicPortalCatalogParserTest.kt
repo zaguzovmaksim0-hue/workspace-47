@@ -71,6 +71,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
+                ProfileId("fuerteventura-sede-electronica"),
                 ProfileId("gran-canaria-sede-electronica"),
                 ProfileId("ministerio-economia-instancia-generica"),
                 ProfileId("diputacion-toledo-sede"),

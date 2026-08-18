@@ -1341,6 +1341,27 @@ records:
         self.assertIn("autenticado", target["limitations"].lower())
 
 
+    def test_fuerteventura_pades_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(item for item in catalog["entries"] if item["inventoryId"] == "ES-PUB-0134")
+
+        self.assertEqual("fuerteventura-sede-electronica", entry["portalId"])
+        self.assertEqual("fuerteventura-sede-electronica", entry["profileId"])
+        self.assertEqual(
+            "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+            entry["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", entry)
+        self.assertEqual("MINIAPPLET_LOCAL_PADES", entry["protocolFamily"])
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual(["PADES"], entry["observedSignatureFormats"])
+        self.assertIn("AUTOFIRMA", entry["observedMechanisms"])
+        self.assertIn("MINIAPPLET", entry["observedMechanisms"])
+        self.assertEqual("2026-08-18", entry["reviewedOn"])
+        self.assertIn("e2e", entry["limitations"].lower())
+
+
     def test_mineco_instancia_generica_binds_exact_qa_profile(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0065")

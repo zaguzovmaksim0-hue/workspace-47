@@ -24,6 +24,7 @@ import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
+import dev.junta.firmamobile.signing.FuerteventuraPadesAdapter
 import dev.junta.firmamobile.signing.MinecoPadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
@@ -224,6 +225,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == GranCanariaPadesAdapter.PROFILE_ID && !isGranCanariaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isFuerteventuraContract = isExactFuerteventuraContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == FuerteventuraPadesAdapter.PROFILE_ID && !isFuerteventuraContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isMinecoContract = isExactMinecoContract(
             profile = profile,
             origin = resolved.origin,
@@ -310,7 +321,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_PADES -> if (isGranCanariaContract || isMinecoContract) {
+            FORMAT_PADES -> if (isGranCanariaContract || isFuerteventuraContract || isMinecoContract) {
                 SigningFormat.PADES to SignatureFormat.PADES
             } else {
                 null
@@ -387,6 +398,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isGranCanariaContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isFuerteventuraContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == FuerteventuraPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -537,6 +555,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             MitesCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isGranCanariaContract) {
             GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isFuerteventuraContract) {
+            FuerteventuraPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isMinecoContract) {
             MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
@@ -735,6 +755,43 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.fixedExtraProperties == GRAN_CANARIA_FIXED_EXTRA_PROPERTIES &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == GranCanariaPadesAdapter.ID.value
+
+    private fun isExactFuerteventuraContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == FuerteventuraPadesAdapter.SIGNING_PAGE_URL &&
+            profile.profileId.value == FuerteventuraPadesAdapter.PROFILE_ID &&
+            profile.profileVersion == FuerteventuraPadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == FuerteventuraPadesAdapter.PUBLIC_START_URL &&
+            origin.serialized == FuerteventuraPadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(FuerteventuraPadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins == FUERTEVENTURA_TRUSTED_BROWSE_ORIGINS &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == FuerteventuraPadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.PADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == FUERTEVENTURA_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == FuerteventuraPadesAdapter.ID.value
 
     private fun isExactMinecoContract(
         profile: SiteProfile,
@@ -1130,6 +1187,24 @@ internal class ProfileMiniAppletBridgeAdapter(
         private val GRAN_CANARIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "headless" to "true",
             "filters" to "nonexpired:",
+        )
+        private val FUERTEVENTURA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "signaturePositionOnPageLowerLeftX" to "50",
+            "signaturePositionOnPageLowerLeftY" to "15",
+            "signaturePositionOnPageUpperRightX" to "150",
+            "signaturePositionOnPageUpperRightY" to "50",
+            "signaturePages" to "all",
+            "layer2Text" to "Firmado por \$\$SUBJECTCN\$\$ el día \$\$SIGNDATE=dd/MM/yyyy\$\$ \$\$ORGANIZATION\$\$",
+            "layer2FontSize" to "6",
+            "layer2FontFamily" to "0",
+            "layer2FontStyle" to "0",
+            "signatureRotation" to "0",
+            "includeQuestionMark" to "false",
+            "obfuscateCertText" to "true",
+        )
+        private val FUERTEVENTURA_TRUSTED_BROWSE_ORIGINS = setOf(
+            ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
         )
         private val MINECO_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "filters" to "signingCert:;nonexpired:",

@@ -78,6 +78,7 @@ class PortalCatalogRepositoryTest {
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
+                "fuerteventura-sede-electronica",
                 "gran-canaria-sede-electronica",
                 "ministerio-economia-instancia-generica",
                 "diputacion-toledo-sede",
