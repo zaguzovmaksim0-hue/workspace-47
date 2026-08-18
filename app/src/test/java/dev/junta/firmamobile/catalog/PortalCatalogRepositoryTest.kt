@@ -84,6 +84,7 @@ class PortalCatalogRepositoryTest {
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "cdti-certificate-validation",
+                "menorca-carpeta-ciutadana",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
