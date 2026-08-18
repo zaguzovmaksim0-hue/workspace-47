@@ -58,6 +58,7 @@ import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
+import dev.junta.firmamobile.signing.DiputacionBadajozCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
