@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 212 |
-| Fuentes oficiales totales registradas | 224 |
+| Fuentes oficiales portal-specific registradas | 213 |
+| Fuentes oficiales totales registradas | 225 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 42 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 46 |
-| Entradas restantes fuera de ambos estados | 137 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 43 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 47 |
+| Entradas restantes fuera de ambos estados | 136 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 42 |
+| `IMPLEMENTED_NOT_E2E` | 43 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 130 |
+| `BROWSE_ONLY` | 129 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 121 |
+| `REVIEWED` | 122 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 57 |
+| `DISCOVERED` | 56 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2406,30 +2406,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Defensa"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico General AGE — Ministerio de Defensa"
     surface_type: "SEDE"
     origin: "https://sede.defensa.gob.es"
     official_site: "https://sede.defensa.gob.es/"
     e_sede: "https://sede.defensa.gob.es/"
     entry_url: "https://sede.defensa.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.defensa.gob.es/"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede Electrónica Central del Ministerio de Defensa ofrece públicamente el Registro Electrónico General AGE como servicio externo de registro electrónico."
+    protocol_evidence: "La portada oficial de la Sede de Defensa publica varias entradas rotuladas «Registro Electrónico General AGE» cuyo destino es https://rec.redsara.es/; ese endpoint público responde con redirección HTTP 301 a https://reg.redsara.es/, servicio REG-AGE ya cubierto por el perfil existente. Workspace-47 usa únicamente el startUrl canónico español ya revisado https://reg.redsara.es/es/ y no atribuye un ABI de firma propio a sede.defensa.gob.es."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Defensa."
+    evidence_ids: ["D11", "DEFENSA-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita al Registro Electrónico General AGE y redirección pública del legacy endpoint REC al servicio REG; el launch queda limitado al startUrl exacto del perfil existente, no se amplía trust al origin Defensa y falta E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Defensa → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La Sede de Defensa también publica procedimientos propios con autenticación/certificado; esos contratos quedan fuera de esta implementación. Solo se cubre la delegación externa REG-AGE."
 
   - inventory_id: "ES-PUB-0064"
     surface_key: "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030"
@@ -6529,3 +6530,4 @@ availability, certificado, firma ni contrato técnico.
 [CULTURA-REG-2026-08-17]: https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [JUVENTUD-REG-2026-08-17]: https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [IGUALDAD-REG-2026-08-17]: https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General
+[DEFENSA-REG-2026-08-17]: https://sede.defensa.gob.es/
