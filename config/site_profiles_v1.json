@@ -910,6 +910,51 @@
       ]
     },
     {
+      "profileId": "transportes-qys-cert-login",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Transportes y Movilidad Sostenible — Quejas y Sugerencias",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+      "initiatorOrigins": ["https://sede.transportes.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a Quejas y Sugerencias del Ministerio de Transportes","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"XADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"format":"XAdES Enveloped","includeOnlySigningCertificate":"true","nodeToSign":"tag1","applySystemDate":"false","filters.1":"keyusage.digitalsignature:true;nonexpired:","sticky":"true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/CIM/js/CIM_Functions.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/CIM/js/CIM_Classes.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/CIM/js/CIM_Constants.js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "mites-certificate-login",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Trabajo y Economía Social — Acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.mites.gob.es/",
+      "initiatorOrigins": ["https://sede.mites.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Sede del Ministerio de Trabajo","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"IMPLICIT","fixedExtraProperties":{"mode":"implicit","filters.1":"signingCert:;keyusage.nonrepudiation:true;nonexpired:"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.mites.gob.es/inicio/detalleProcedimiento/38","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.mites.gob.es/nuevasede-ciudadano/api/public/procedimientos/38","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.mites.gob.es/auth.component-3JUEHJQO.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.mites.gob.es/chunk-MX4YJU4O.js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
       "profileId": "oepm-protegeo-general",
       "profileVersion": 1,
       "displayName": "OEPM — Solicitud de propósito general (ProtegeO)",
