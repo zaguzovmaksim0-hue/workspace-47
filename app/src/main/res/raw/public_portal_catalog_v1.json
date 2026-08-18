@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7c0d4f49fc9bde69439391a1a60479a5f9ad3af3d7e8e579cbd9452ac4d5ca1b",
+  "sourceRevision": "8f8b684cdd76b47205feee350d6d2b95e4f29063565b6d4166c33cda7dabfabf",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2960,26 +2960,33 @@
     {
       "portalId": "menorca-portal-institucional",
       "inventoryId": "ES-PUB-0117",
-      "profileId": null,
-      "displayName": "Portal institucional del Consell Insular de Menorca",
+      "profileId": "menorca-carpeta-ciutadana",
+      "displayName": "Portal institucional del Consell Insular de Menorca — Sol·licitud genèrica",
       "organization": "Consell Insular de Menorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
-      "entryUrl": "https://www.cime.es/",
-      "observedMechanisms": [],
+      "purpose": "Acceso con certificado a la Sol·licitud genèrica del Consell Insular de Menorca mediante TLS cliente; la firma AutoFirma y el envío administrativo posteriores quedan fuera del contrato implementado.",
+      "entryUrl": "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I01A",
-        "I01B"
+        "I01B",
+        "MENORCA-GENERIC-2026-08-18",
+        "MENORCA-CLIENT-TLS-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-18",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para el origin, source, target y parámetro URL enlazado exactos; E2E Android pendiente. AutoFirma está documentado por el portal, pero formato, algoritmo, payload, callback y envío final no se infieren ni se implementan."
     },
     {
       "portalId": "menorca-sede-electronica",
