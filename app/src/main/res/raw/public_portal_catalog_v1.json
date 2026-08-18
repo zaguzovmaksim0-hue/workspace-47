@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "68745d5f6fcb65724bf347e819e2c5944a80bcc19e558389f21d8f66c8e95d6e",
+  "sourceRevision": "816f5360150e5ed2d01a3d0d8438eb305c6ca20e697a680e0f1fa15b567c07c3",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2187,24 +2187,28 @@
     {
       "portalId": "age-sede-electronica-central-del-ministerio",
       "inventoryId": "ES-PUB-0088",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
-      "organization": "Sede electrónica central del Ministerio",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede Electrónica Central del Ministerio de Hacienda",
+      "organization": "Ministerio de Hacienda",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede Electrónica Central del Ministerio de Hacienda declara que el Ministerio utiliza el Registro Electrónico General de la AGE para solicitudes, escritos y comunicaciones de su ámbito; Workspace-47 representa esa vía como alias acotado al perfil REG-AGE existente.",
       "entryUrl": "https://sede.hacienda.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "HACIENDA-REG-2026-08-17",
+        "HACIENDA-PAG-REG-AGE-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara basado en una delegación first-party explícita del Ministerio de Hacienda al REG-AGE y en el launch oficial de la Sede PAG. No se infieren certificados, algoritmo, formato, callback, endpoint ni client-TLS específicos de Hacienda; falta validación E2E física de la transición."
     },
     {
       "portalId": "age-sede-electronica-de-la-s-e-de-digitalizacion-e-inteligencia-artificial-y-s-e-de-telecomunica",

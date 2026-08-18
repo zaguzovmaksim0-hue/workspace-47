@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 231 |
-| Fuentes oficiales totales registradas | 243 |
+| Fuentes oficiales portal-specific registradas | 233 |
+| Fuentes oficiales totales registradas | 245 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 59 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 63 |
-| Entradas restantes fuera de ambos estados | 120 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 60 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 64 |
+| Entradas restantes fuera de ambos estados | 119 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 59 |
+| `IMPLEMENTED_NOT_E2E` | 60 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 113 |
+| `BROWSE_ONLY` | 112 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 138 |
+| `REVIEWED` | 139 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 40 |
+| `DISCOVERED` | 39 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -3196,31 +3196,32 @@ records:
     administrative_level: "ESTATAL"
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
-    institution_name: "Sede electrónica central del Ministerio"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    institution_name: "Ministerio de Hacienda"
+    surface_name: "Sede Electrónica Central del Ministerio de Hacienda"
     surface_type: "SEDE"
     origin: "https://sede.hacienda.gob.es"
     official_site: "https://sede.hacienda.gob.es/"
     e_sede: "https://sede.hacienda.gob.es/"
     entry_url: "https://sede.hacienda.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.hacienda.gob.es/es-es/paginas/informacion"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede Electrónica Central del Ministerio de Hacienda declara que el Ministerio utiliza el Registro Electrónico General de la AGE para solicitudes, escritos y comunicaciones de su ámbito; Workspace-47 representa esa vía como alias acotado al perfil REG-AGE existente."
+    protocol_evidence: "La página first-party de Información de la Sede Hacienda declara literalmente que el Ministerio utiliza el REG-AGE y enlaza la página oficial del servicio en la Sede PAG. La página PAG identifica el servicio como Registro Electrónico General de la AGE y publica «Acceso al Registro Electrónico General» hacia https://reg.redsara.es/. Chromium confirmó esa cadena pública y que el startUrl canónico español existente https://reg.redsara.es/es/ responde como «REG - Registro Electrónico General». El alias usa únicamente ese startUrl canónico; no se atribuye a sede.hacienda.gob.es ningún ABI de firma ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    evidence_ids: ["D11", "HACIENDA-REG-2026-08-17", "HACIENDA-PAG-REG-AGE-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara basado en una delegación first-party explícita del Ministerio de Hacienda al REG-AGE y en el launch oficial de la Sede PAG. No se infieren certificados, algoritmo, formato, callback, endpoint ni client-TLS específicos de Hacienda; falta validación E2E física de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Sede Hacienda → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La Sede central también agrega procedimientos específicos de organismos con contratos propios; este alias cubre únicamente la vía REG-AGE declarada por el propio Ministerio y no hereda ni amplía esos contratos."
 
   - inventory_id: "ES-PUB-0089"
     surface_key: "age-sede-electronica-de-la-s-e-de-digitalizacion-e-inteligencia-artificial-y-s-e-de-telecomunica"
@@ -6264,6 +6265,8 @@ Orden de expansión recomendado:
 [COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
 [COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
 [DIGITAL-SEDE-REG-2026-08-17]: https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica
+[HACIENDA-REG-2026-08-17]: https://sede.hacienda.gob.es/es-es/paginas/informacion
+[HACIENDA-PAG-REG-AGE-2026-08-17]: https://sede.administracion.gob.es/servicios-electronicos/registro-electronico-general-age
 [PUERTOS-REG-2026-08-17]: https://puertos.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [DSCA-REG-2026-08-16]: https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje
 [POLICIA-SEDE-2026-08-15]: https://sede.policia.gob.es/

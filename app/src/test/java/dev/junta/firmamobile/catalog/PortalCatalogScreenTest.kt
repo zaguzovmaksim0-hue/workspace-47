@@ -373,4 +373,18 @@ class PortalCatalogScreenTest {
         assertTrue(funciona.isEnabled)
     }
 
+    @Test
+    fun `Hacienda central REG alias is compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val hacienda = compatible.items.single {
+            it.portalId == PortalId("age-sede-electronica-central-del-ministerio")
+        }
+
+        assertEquals("reg-age-redsara", hacienda.profileId?.value)
+        assertEquals(java.net.URI("https://sede.hacienda.gob.es/"), hacienda.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, hacienda.supportStatus)
+        assertTrue(hacienda.isEnabled)
+    }
+
 }

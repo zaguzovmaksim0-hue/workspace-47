@@ -1231,6 +1231,28 @@ records:
         self.assertIn("e2e", target["limitations"].lower())
 
 
+    def test_hacienda_central_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        hacienda = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-sede-electronica-central-del-ministerio"
+        )
+        self.assertEqual("ES-PUB-0088", hacienda["inventoryId"])
+        self.assertEqual("reg-age-redsara", hacienda["profileId"])
+        self.assertEqual("https://sede.hacienda.gob.es/", hacienda["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", hacienda["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", hacienda["protocolFamily"])
+        self.assertEqual("E2E_PENDING", hacienda["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", hacienda["inventoryStatus"])
+        self.assertEqual("REVIEWED", hacienda["discoveryState"])
+        self.assertEqual("2026-08-17", hacienda["reviewedOn"])
+        self.assertEqual([], hacienda["observedMechanisms"])
+        self.assertEqual([], hacienda["observedSignatureFormats"])
+        self.assertIn("reg-age", hacienda["limitations"].lower())
+        self.assertIn("qa", hacienda["limitations"].lower())
+        self.assertIn("e2e", hacienda["limitations"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()
 
