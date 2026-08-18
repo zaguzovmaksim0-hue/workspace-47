@@ -56,6 +56,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("mites-certificate-login"),
+                ProfileId("transportes-qys-cert-login"),
                 ProfileId("sevilla-atse-certificate-login"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
@@ -96,6 +97,27 @@ class PublicPortalCatalogParserTest {
         assertTrue(PortalMechanism.AUTOSCRIPT in lugo.observedMechanisms)
         assertTrue(lugo.limitations.contains("un lote CAdES", ignoreCase = true))
 
+    }
+
+    @Test
+    fun `Transportes QYS exposes only the bounded pending XAdES Enveloped login`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("age-ministerio-de-transportes-y-movilidad-sostenible")
+        }
+
+        assertEquals(ProfileId("transportes-qys-cert-login"), portal.profileId)
+        assertEquals("ES-PUB-0075", portal.inventoryId)
+        assertEquals(
+            "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+            portal.entryUrl.toString(),
+        )
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in portal.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in portal.observedMechanisms)
+        assertTrue(PortalMechanism.MINIAPPLET in portal.observedMechanisms)
+        assertEquals(setOf(SignatureFormat.XADES), portal.observedSignatureFormats)
     }
 
     @Test

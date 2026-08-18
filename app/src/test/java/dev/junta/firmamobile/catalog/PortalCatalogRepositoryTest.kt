@@ -63,6 +63,7 @@ class PortalCatalogRepositoryTest {
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
                 "mites-certificate-login",
+                "transportes-qys-cert-login",
                 "sevilla-atse-certificate-login",
                 "melilla-sede",
                 "ceuta-sede",
@@ -186,6 +187,31 @@ class PortalCatalogRepositoryTest {
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 
+
+    @Test
+    fun `Transportes QYS exact launch is QA enabled and release fail closed`() {
+        val profileId = ProfileId("transportes-qys-cert-login")
+        val exact = java.net.URI("https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002")
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, qaPortal.inventoryStatus)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, exact), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, exact), qaRepository.resolveLaunch(profileId, exact))
+        assertEquals(
+            null,
+            qaRepository.resolveLaunch(
+                profileId,
+                java.net.URI("https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx"),
+            ),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
 
     @Test
     fun `MITES exact Sede root is QA enabled and release fail closed`() {

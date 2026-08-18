@@ -81,6 +81,14 @@ class ProtocolAdapterRegistryTest {
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), jccm?.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), jccm?.callbackContractId)
 
+        val transportes = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId(TransportesXadesEnvelopedAdapter.PROFILE_ID),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(TransportesXadesEnvelopedAdapter.ID, transportes?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), transportes?.inputAdapterId)
+        assertEquals(CallbackContractId("autoscript-sign-callback-v1"), transportes?.callbackContractId)
+
         val mites = BuiltInProtocolAdapterRegistry.registry.resolve(
             ProfileId(MitesCertificateLoginCadesAdapter.PROFILE_ID),
             ProtocolOperation.SIGN,
