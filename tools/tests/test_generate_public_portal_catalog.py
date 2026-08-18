@@ -936,6 +936,24 @@ records:
         self.assertIn("qa", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_mptmd_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-politica-territorial-y-memoria-democratica"
+        )
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("ES-PUB-0072", target["inventoryId"])
+        self.assertEqual("https://mptmd.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()
