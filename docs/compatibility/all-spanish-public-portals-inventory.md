@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 224 |
 | Fuentes oficiales totales registradas | 236 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 53 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 57 |
-| Entradas restantes fuera de ambos estados | 126 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 54 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 58 |
+| Entradas restantes fuera de ambos estados | 125 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 53 |
+| `IMPLEMENTED_NOT_E2E` | 54 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 119 |
+| `BROWSE_ONLY` | 118 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4187,27 +4187,27 @@ records:
     institution_name: "Consell de Mallorca"
     surface_name: "Seu electrònica del Consell de Mallorca"
     surface_type: "SEDE"
-    origin: "https://seu.conselldemallorca.net"
+    origin: "https://cim.secimallorca.net"
     official_site: "https://seu.conselldemallorca.net/"
     e_sede: "https://seu.conselldemallorca.net/"
-    entry_url: "https://seu.conselldemallorca.net/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    entry_url: "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    procedure_page: "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://identificacionssl.sedipualba.es/"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I02B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al Registre Electrònic del Consell de Mallorca mediante el servidor SSL de identificación compartido de SEDIPUALB@; la firma documental posterior permanece fuera del contrato implementado."
+    protocol_evidence: "La sede oficial enlaza el Registre Electrònic del Consell de Mallorca. Su flujo público SEDIPUALB@ exige certificado digital y construye exactamente la transición desde /segex/identificacion_opciones.aspx?idtoken=TOKEN&idioma=ca hacia https://identificacionssl.sedipualba.es/?idtoken=TOKEN&idioma=ca&entidad=07700, enlazando el mismo idtoken. El trámite declara AutoFirma para la firma posterior, cuyo formato, algoritmo y ABI no se infieren."
+    client_tls_auth: "SI"
+    evidence_ids: ["I02B", "MALLORCA-REGISTRE-2026-08-18", "MALLORCA-SSL-IDENT-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificación E2E separada del acceso con certificado y del paso de firma; mantener firma/presentación bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0121"
     surface_key: "eivissa-portal-institucional"

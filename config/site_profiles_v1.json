@@ -890,6 +890,40 @@
       ]
     },
     {
+      "profileId": "consell-mallorca-sede",
+      "profileVersion": 1,
+      "displayName": "Consell de Mallorca — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
+      "initiatorOrigins": ["https://cim.secimallorca.net"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://identificacionssl.sedipualba.es"],
+        "sourceUrls": ["https://cim.secimallorca.net/segex/identificacion_opciones.aspx"],
+        "sourceFixedQueryParameters": {"idioma":"ca"},
+        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
+        "linkedEphemeralQueryParameters": ["idtoken"],
+        "requestPath": "/",
+        "fixedQueryParameters": {"idioma":"ca","entidad":"07700"},
+        "requiredEphemeralQueryParameters": ["idtoken"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082","reviewedOn":"2026-08-18"},
+        {"url":"https://cim.secimallorca.net/carpetaciudadana/login.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "policia-solicitud-generica",
       "profileVersion": 1,
       "displayName": "Policía Nacional — Solicitud genérica",

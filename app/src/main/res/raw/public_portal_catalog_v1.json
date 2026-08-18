@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7c0d4f49fc9bde69439391a1a60479a5f9ad3af3d7e8e579cbd9452ac4d5ca1b",
+  "sourceRevision": "48ecfe1ecda94ea4fd0cd3bc1e2e053242a620ceb701988c9492cfb98b5421e3",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3030,27 +3030,30 @@
     {
       "portalId": "mallorca-sede-electronica",
       "inventoryId": "ES-PUB-0120",
-      "profileId": null,
+      "profileId": "consell-mallorca-sede",
       "displayName": "Seu electrònica del Consell de Mallorca",
       "organization": "Consell de Mallorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
-      "entryUrl": "https://seu.conselldemallorca.net/",
+      "purpose": "Acceso con certificado al Registre Electrònic del Consell de Mallorca mediante el servidor SSL de identificación compartido de SEDIPUALB@; la firma documental posterior permanece fuera del contrato implementado.",
+      "entryUrl": "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I02B"
+        "I02B",
+        "MALLORCA-REGISTRE-2026-08-18",
+        "MALLORCA-SSL-IDENT-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior."
     },
     {
       "portalId": "eivissa-portal-institucional",

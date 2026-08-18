@@ -241,6 +241,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LEON_PROFILE_ID) {
                 validateLeonProfile(p)
             }
+            if (p.profileId.value == MALLORCA_PROFILE_ID) {
+                validateMallorcaProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -302,7 +305,8 @@ object SiteProfileCatalogParser {
                     require(
                         p.profileId.value == SANIDAD_PROFILE_ID ||
                             p.profileId.value == TEA_PROFILE_ID ||
-                            p.profileId.value == LEON_PROFILE_ID
+                            p.profileId.value == LEON_PROFILE_ID ||
+                            p.profileId.value == MALLORCA_PROFILE_ID
                     )
                 }
                 require(policy.sourceUrls.all { source ->
@@ -929,6 +933,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-16") })
     }
 
+    private fun validateMallorcaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MALLORCA_PROFILE_VERSION)
+        require(profile.displayName == MALLORCA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MALLORCA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MALLORCA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(MALLORCA_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("idioma" to "ca", "entidad" to "07700"),
+                requiredEphemeralQueryParameters = setOf("idtoken"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = linkedMapOf("idioma" to "ca"),
+                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
+                linkedEphemeralQueryParameters = setOf("idtoken"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MALLORCA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -1414,9 +1451,23 @@ object SiteProfileCatalogParser {
     private const val LEON_SOURCE_URL =
         "https://sede.dipuleon.es/segex/identificacion_opciones.aspx"
     private const val LEON_CLIENT_AUTH_ORIGIN = "https://identificacionssl.sedipualba.es"
+    private const val SEDIPUALBA_CLIENT_AUTH_ORIGIN = "https://identificacionssl.sedipualba.es"
     private val LEON_EVIDENCE_URLS = setOf(
         LEON_START_URL,
         "https://sede.dipuleon.es/carpetaciudadana/login.aspx",
+        "https://identificacionssl.sedipualba.es/",
+    )
+    private const val MALLORCA_PROFILE_ID = "consell-mallorca-sede"
+    private const val MALLORCA_PROFILE_VERSION = 1
+    private const val MALLORCA_DISPLAY_NAME = "Consell de Mallorca — acceso con certificado"
+    private const val MALLORCA_START_URL =
+        "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    private const val MALLORCA_ORIGIN = "https://cim.secimallorca.net"
+    private const val MALLORCA_SOURCE_URL =
+        "https://cim.secimallorca.net/segex/identificacion_opciones.aspx"
+    private val MALLORCA_EVIDENCE_URLS = setOf(
+        MALLORCA_START_URL,
+        "https://cim.secimallorca.net/carpetaciudadana/login.aspx",
         "https://identificacionssl.sedipualba.es/",
     )
     private const val TRANSPORTES_PROFILE_ID = "transportes-qys-cert-login"
