@@ -532,6 +532,39 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun directClientAuthCannotUseRedirectOriginAsSourceOutsideTheReviewedNavarraProfile() {
+        val navarraId = "\"profileId\": \"navarra-sede-registro-general\""
+        val unreviewedId = "\"profileId\": \"navarra-unreviewed-direct-client-auth\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(navarraId))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(navarraId, unreviewedId))
+        }
+    }
+
+    @Test
+    fun navarraClientAuthMappingFailsClosedOnUnboundOrAmbiguousParameterNames() {
+        val mutations = listOf(
+            "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"returnUrl\"}" to
+                "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"wrongTarget\"}",
+            "\"sourceRequiredEphemeralQueryParameters\":[\"ReturnUrl\"]" to
+                "\"sourceRequiredEphemeralQueryParameters\":[\"OtherSource\"]",
+            "\"requiredEphemeralQueryParameters\":[\"returnUrl\"]" to
+                "\"requiredEphemeralQueryParameters\":[\"OtherTarget\"]",
+            "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"returnUrl\"}" to
+                "\"linkedEphemeralQueryParameters\":[\"ReturnUrl\"]," +
+                    "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"returnUrl\"}",
+        )
+
+        mutations.forEach { (expected, replacement) ->
+            assertTrue("missing Navarra contract fragment: $expected", BuiltInSiteProfiles.JSON.contains(expected))
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(expected, replacement))
+            }
+        }
+    }
+
+    @Test
     fun preservesTheExactAeatClientTlsQaContract() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }

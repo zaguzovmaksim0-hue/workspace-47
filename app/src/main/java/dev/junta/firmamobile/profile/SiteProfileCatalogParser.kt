@@ -117,6 +117,7 @@ object SiteProfileCatalogParser {
             "sourceFixedQueryParameters",
             "sourceRequiredEphemeralQueryParameters",
             "linkedEphemeralQueryParameters",
+            "linkedEphemeralQueryParameterMappings",
         ).filter { it in o.values }
         o.exact(*(baseKeys.toList() + optionalKeys).toTypedArray())
         val requestPort = if ("requestPort" in o.values) {
@@ -142,20 +143,34 @@ object SiteProfileCatalogParser {
         } else {
             emptySet()
         }
+        val linkedEphemeralMappings = if ("linkedEphemeralQueryParameterMappings" in o.values) {
+            stringMap(o.objValue("linkedEphemeralQueryParameterMappings"))
+        } else {
+            emptyMap()
+        }
         require((fixed.keys intersect ephemeral).isEmpty())
         require((sourceFixed.keys intersect sourceEphemeral).isEmpty())
         require(linkedEphemeral.all { it in ephemeral && it in sourceEphemeral })
+        require(linkedEphemeralMappings.keys.all { it in sourceEphemeral })
+        require(linkedEphemeralMappings.values.all { it in ephemeral })
+        require(linkedEphemeralMappings.values.toSet().size == linkedEphemeralMappings.size)
+        require((linkedEphemeral intersect linkedEphemeralMappings.keys).isEmpty())
+        require((linkedEphemeral intersect linkedEphemeralMappings.values.toSet()).isEmpty())
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
-                require(sourceFixed.isEmpty() && sourceEphemeral.isEmpty() && linkedEphemeral.isEmpty())
+                require(
+                    sourceFixed.isEmpty() && sourceEphemeral.isEmpty() &&
+                        linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty(),
+                )
                 require(fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443)
             }
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
-                if (ephemeral.isNotEmpty()) {
-                    require(linkedEphemeral == ephemeral)
-                }
+                val boundSourceParameters = linkedEphemeral + linkedEphemeralMappings.keys
+                val boundTargetParameters = linkedEphemeral + linkedEphemeralMappings.values
+                require(sourceEphemeral == boundSourceParameters)
+                require(ephemeral == boundTargetParameters)
                 if (sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()) {
-                    require(linkedEphemeral.isNotEmpty())
+                    require(boundSourceParameters.isNotEmpty())
                 } else {
                     require(ephemeral.isEmpty())
                 }
@@ -177,6 +192,7 @@ object SiteProfileCatalogParser {
             sourceFixedQueryParameters = sourceFixed,
             sourceRequiredEphemeralQueryParameters = sourceEphemeral,
             linkedEphemeralQueryParameters = linkedEphemeral,
+            linkedEphemeralQueryParameterMappings = linkedEphemeralMappings,
         )
     }
 
@@ -235,6 +251,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LEON_PROFILE_ID) {
                 validateLeonProfile(p)
             }
+            if (p.profileId.value == NAVARRA_PROFILE_ID) {
+                validateNavarraProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -264,15 +283,16 @@ object SiteProfileCatalogParser {
             val clientAuthPolicy = p.clientAuthPolicy
             val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
             val sameOriginDirectClientAuth =
-                p.profileId.value == SANIDAD_PROFILE_ID &&
+                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID) &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     clientAuthPolicy.requestPort == 443 &&
-                    clientAuthOrigins == p.initiatorOrigins &&
-                    clientAuthPolicy.fixedQueryParameters.isNotEmpty() &&
-                    clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty()
+                    clientAuthOrigins.size == 1 &&
+                    clientAuthPolicy.sourceUrls.all { it.origin() in clientAuthOrigins } &&
+                    (clientAuthPolicy.fixedQueryParameters.isNotEmpty() ||
+                        clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty())
             if (clientAuthPolicy?.requestPort == 443) {
                 require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty() || sameOriginDirectClientAuth)
-                require((clientAuthOrigins intersect p.redirectOrigins).isEmpty())
+                require((clientAuthOrigins intersect p.redirectOrigins).isEmpty() || sameOriginDirectClientAuth)
                 require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
             }
             if (p.compatibilityStatus == CompatibilityStatus.BROWSE_ONLY ||
@@ -300,7 +320,10 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    source.origin() in p.initiatorOrigins &&
+                    (source.origin() in p.initiatorOrigins ||
+                        p.profileId.value == NAVARRA_PROFILE_ID &&
+                            policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+                            source.origin() in p.redirectOrigins) &&
                         (policy.sourceFixedQueryParameters.isEmpty() &&
                             policy.sourceRequiredEphemeralQueryParameters.isEmpty() ||
                             source.rawQuery == null)
@@ -316,6 +339,8 @@ object SiteProfileCatalogParser {
                 })
                 require(policy.sourceRequiredEphemeralQueryParameters.all(PARAMETER_NAME::matches))
                 require(policy.linkedEphemeralQueryParameters.all(PARAMETER_NAME::matches))
+                require(policy.linkedEphemeralQueryParameterMappings.keys.all(PARAMETER_NAME::matches))
+                require(policy.linkedEphemeralQueryParameterMappings.values.all(PARAMETER_NAME::matches))
             }
             p.operationPolicies.values.forEach { op ->
                 require(op.capabilities.all { it in p.capabilities })
@@ -518,6 +543,47 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == VALENCIA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-15") })
+    }
+
+    private fun validateNavarraProfile(profile: SiteProfile) {
+        require(profile.profileVersion == NAVARRA_PROFILE_VERSION)
+        require(profile.displayName == NAVARRA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == NAVARRA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(NAVARRA_ENTRY_ORIGIN)))
+        require(
+            profile.redirectOrigins == setOf(
+                ExactOrigin.parse(NAVARRA_RGE_ORIGIN),
+                ExactOrigin.parse(NAVARRA_ATEKA_ORIGIN),
+            ),
+        )
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(NAVARRA_ATEKA_ORIGIN)),
+                sourceUrls = setOf(URI(NAVARRA_SOURCE_URL)),
+                requestPath = NAVARRA_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = setOf(NAVARRA_TARGET_TOKEN_PARAMETER),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = setOf(NAVARRA_SOURCE_TOKEN_PARAMETER),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = mapOf(
+                    NAVARRA_SOURCE_TOKEN_PARAMETER to NAVARRA_TARGET_TOKEN_PARAMETER,
+                ),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == NAVARRA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
     private fun validateSanidadProfile(profile: SiteProfile) {
@@ -1189,6 +1255,24 @@ object SiteProfileCatalogParser {
         VALENCIA_START_URL,
         "https://portafirmas.dival.es/signingpad/js/autoscript.js",
         "https://portafirmas.dival.es/signingpad/js/filtros.js",
+    )
+    private const val NAVARRA_PROFILE_ID = "navarra-sede-registro-general"
+    private const val NAVARRA_PROFILE_VERSION = 1
+    private const val NAVARRA_DISPLAY_NAME = "Gobierno de Navarra — Registro General con certificado"
+    private const val NAVARRA_START_URL =
+        "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
+    private const val NAVARRA_ENTRY_ORIGIN = "https://www.navarra.es"
+    private const val NAVARRA_RGE_ORIGIN = "https://administracionelectronica.navarra.es"
+    private const val NAVARRA_ATEKA_ORIGIN = "https://ateka.navarra.es"
+    private const val NAVARRA_SOURCE_URL = "https://ateka.navarra.es/ateka/router"
+    private const val NAVARRA_REQUEST_PATH = "/ateka/Certificate/login"
+    private const val NAVARRA_SOURCE_TOKEN_PARAMETER = "ReturnUrl"
+    private const val NAVARRA_TARGET_TOKEN_PARAMETER = "returnUrl"
+    private val NAVARRA_EVIDENCE_URLS = setOf(
+        NAVARRA_START_URL,
+        "https://administracionelectronica.navarra.es/RGE2/Default.aspx?idioma=es",
+        NAVARRA_SOURCE_URL,
+        "https://ateka.navarra.es/ateka/Certificate/login",
     )
     private const val SANIDAD_PROFILE_ID = "ministerio-sanidad-certificado"
     private const val SANIDAD_PROFILE_VERSION = 1

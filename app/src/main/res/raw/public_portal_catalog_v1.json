@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1bf62f183910a047c73208e02b09311b3cd6a9a923e1362dbdb19e5fab2115db",
+  "sourceRevision": "10636d0b20a1b6fdc1519aa1608e5e920216988ac72e6ac6f8ac59be428f85cb",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2819,30 +2819,34 @@
     {
       "portalId": "navarra-sede-registro-general",
       "inventoryId": "ES-PUB-0114",
-      "profileId": null,
+      "profileId": "navarra-sede-registro-general",
       "displayName": "Sede electrónica y Registro General Electrónico de Navarra",
       "organization": "Gobierno de Navarra",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Comunidad Foral de Navarra",
-      "purpose": "Presentación en el Registro General con certificado y firma cuando corresponda.",
+      "purpose": "Acceso con certificado al Registro General Electrónico mediante ATEKA; la firma y presentación final quedan fuera del contrato implementado.",
       "entryUrl": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A17A",
         "A17B",
-        "A17C"
+        "A17C",
+        "NAVARRA-RGE-ENTRY-2026-08-18",
+        "NAVARRA-ATEKA-CLIENTCERT-2026-08-18",
+        "NAVARRA-RGE-AUTH-RUNTIME-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La documentación no acredita cliente JS, formato aceptado, callback ni endpoint."
+      "reviewedOn": "2026-08-18",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con host, path y token efímero ReturnUrl→returnUrl enlazados de forma exacta; E2E pendiente. No se infieren formato, algoritmo ni cliente de firma y no se implementa el POST final de presentación."
     },
     {
       "portalId": "euskadi-sede-electronica",
