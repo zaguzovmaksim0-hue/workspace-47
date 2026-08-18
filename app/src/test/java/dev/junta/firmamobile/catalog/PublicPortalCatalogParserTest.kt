@@ -76,6 +76,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-toledo-sede"),
                 ProfileId("isciii-certificate-selection"),
                 ProfileId("diputacion-valencia-sede"),
+                ProfileId("diputacion-alicante-solicitud-general"),
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("oepm-protegeo-general"),

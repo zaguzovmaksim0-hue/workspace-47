@@ -85,6 +85,7 @@ class JuntaOriginPolicyTest {
             "sede.ceuta.es",
             "tramites.juntaex.es",
             "www.sede.diputaciondevalladolid.es",
+            "diputacionalicante.sedelectronica.es",
             "registro.diputaciondeburgos.es",
             "sedeelectronica.cabildodelapalma.es",
             "ovc24.dphuesca.es",
