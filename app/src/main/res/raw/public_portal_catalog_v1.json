@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "ad3eb2906c8b757e2cc35801fe5a19032af9411bf27465877afa80dd1ad96c07",
+  "sourceRevision": "67b6a5eb61b37351f988d55cbd5b3851f0a7d0bbe88b44a864db9bed3ff1dc86",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2365,29 +2365,32 @@
     {
       "portalId": "caib-seu-electronica",
       "inventoryId": "ES-PUB-0097",
-      "profileId": null,
+      "profileId": "caib-portafib",
       "displayName": "Seu Electrònica de les Illes Balears",
       "organization": "Gobierno de las Illes Balears",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Illes Balears",
-      "purpose": "Acceso y firma mediante los sistemas admitidos según el trámite.",
-      "entryUrl": "https://www.caib.es/seucaib/ca/",
+      "purpose": "La Instancia genérica protegida entrega a MiniApplet.signBatch un único lote PAdES SHA256withRSA mediante PortaFIB; soporte QA limitado al contrato exacto observado y sin envío final.",
+      "entryUrl": "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros=",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_XML_BATCH_TRIFASICO_PORTAFIB_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A04A",
         "A04B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "No se verificaron cliente JS, operación, formato, algoritmo, callback ni endpoint concretos."
+      "reviewedOn": "2026-08-18",
+      "limitations": "IMPLEMENTED_NOT_E2E: bridge y adaptador QA aceptan únicamente el origin intranet.caib.es, ruta requestPlugin exacta, un lote PAdES observado y parámetros exactos; autenticación completa dentro de la app, firma criptográfica y presentación administrativa siguen sin E2E y no se ejecutaron en este pass."
     },
     {
       "portalId": "caib-registre-electronic",

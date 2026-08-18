@@ -28,6 +28,7 @@ object AfirmaJavascriptShim {
         granCanariaCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
         lugoBatchCompatibilityEnabled: Boolean = false,
+        caibBatchCompatibilityEnabled: Boolean = false,
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
         isciiiCertificateSelectionEnabled: Boolean = false,
         valenciaCertificateSelectionEnabled: Boolean = false,
@@ -46,6 +47,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(LUGO_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(CAIB_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
         check(script.countOccurrences(ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
         val batchOrigin = URI(staBatchOrigin)
@@ -101,6 +103,10 @@ object AfirmaJavascriptShim {
                 LUGO_BATCH_COMPATIBILITY_PLACEHOLDER,
                 if (lugoBatchCompatibilityEnabled) "true" else "false",
             )
+            .replace(
+                CAIB_BATCH_COMPATIBILITY_PLACEHOLDER,
+                if (caibBatchCompatibilityEnabled) "true" else "false",
+            )
             .replace(STA_BATCH_ORIGIN_PLACEHOLDER, JSONObject.quote(staBatchOrigin.removeSuffix("/")))
             .replace(
                 ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER,
@@ -135,6 +141,8 @@ object AfirmaJavascriptShim {
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
     private const val LUGO_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_LUGO_BATCH_COMPATIBILITY_ENABLED__"
+    private const val CAIB_BATCH_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_CAIB_BATCH_COMPATIBILITY_ENABLED__"
     private const val STA_BATCH_ORIGIN_PLACEHOLDER = "__JFM_STA_BATCH_ORIGIN__"
     private const val ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER =
         "__JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__"
