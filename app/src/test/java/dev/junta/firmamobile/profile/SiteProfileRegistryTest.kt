@@ -169,4 +169,40 @@ class SiteProfileRegistryTest {
         )
     }
 
+    @Test
+    fun `OEPM ProtegeO navigation profile is active only in QA and never upgrades to signing trust`() {
+        val profileId = ProfileId("oepm-protegeo-general")
+        val start = URI(
+            "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
+        )
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.oepm.gob.es.evil.example/")))
+    }
+
+    @Test
+    fun `Portal Funciona public home is browse-only trust in QA and external auth origins stay closed`() {
+        val profileId = ProfileId("portal-funciona-public-home")
+        val start = URI("https://sede.funciona.gob.es/es/home")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://auth-api.redsara.es/auth/realms/sgad-appfactory/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://autentica.redsara.es/Autentica/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
+    }
+
 }
