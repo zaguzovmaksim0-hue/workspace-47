@@ -638,6 +638,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_gva_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        gva = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "gva-sede"
+        )
+
+        self.assertEqual("generalitat-valenciana-client-auth", gva["profileId"])
+        self.assertEqual("ES-PUB-0108", gva["inventoryId"])
+        self.assertEqual(
+            "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR",
+            gva["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", gva)
+        self.assertEqual("E2E_PENDING", gva["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", gva["inventoryStatus"])
+        self.assertEqual("2026-08-18", gva["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", gva["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", gva["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", gva["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", gva["observedMechanisms"])
+        self.assertEqual([], gva["observedSignatureFormats"])
+        self.assertIn("firma", gva["limitations"].lower())
+        self.assertIn("e2e", gva["limitations"].lower())
+
     def test_leon_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         leon = next(
