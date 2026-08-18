@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7949cd9f148600f79469cea2d19ead94244d34d5d54860f21b19beef40c0bc4f",
+  "sourceRevision": "68745d5f6fcb65724bf347e819e2c5944a80bcc19e558389f21d8f66c8e95d6e",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2209,24 +2209,27 @@
     {
       "portalId": "age-sede-electronica-de-la-s-e-de-digitalizacion-e-inteligencia-artificial-y-s-e-de-telecomunica",
       "inventoryId": "ES-PUB-0089",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede SEDIA/SETID migrada — fallback al Registro Electrónico General",
       "organization": "Sede Electrónica de la S.E. de Digitalización e Inteligencia Artificial y S.E. de Telecomunicaciones e Infraestructuras Digitales del Ministerio de Transformación Digital",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La antigua entrada SEDIA/SETID migra al portal actual del Ministerio; su sede electrónica asociada publica REG como vía para solicitudes, escritos o comunicaciones de competencia ministerial cuando no existe un procedimiento electrónico específico habilitado.",
       "entryUrl": "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DIGITAL-SEDE-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita y resolución pública exacta al startUrl canónico; se conserva la entrada histórica SEDIA/SETID como entry URL, no se copian constantes criptográficas de REG-AGE y falta E2E físico de la transición."
     },
     {
       "portalId": "age-sede-electronica-de-los-tribunales-economico-administrativos-tea",

@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 230 |
-| Fuentes oficiales totales registradas | 242 |
+| Fuentes oficiales portal-specific registradas | 231 |
+| Fuentes oficiales totales registradas | 243 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 58 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 62 |
-| Entradas restantes fuera de ambos estados | 121 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 59 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 63 |
+| Entradas restantes fuera de ambos estados | 120 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 58 |
+| `IMPLEMENTED_NOT_E2E` | 59 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 114 |
+| `BROWSE_ONLY` | 113 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 137 |
+| `REVIEWED` | 138 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 41 |
+| `DISCOVERED` | 40 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 210 fuentes porque las
+47/50; no se publica un cociente agregado para las 211 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -3228,30 +3228,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Sede Electrónica de la S.E. de Digitalización e Inteligencia Artificial y S.E. de Telecomunicaciones e Infraestructuras Digitales del Ministerio de Transformación Digital"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede SEDIA/SETID migrada — fallback al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://sedediatid.digital.gob.es"
     official_site: "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx"
-    e_sede: "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx"
+    e_sede: "https://digital.sede.gob.es/"
     entry_url: "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La antigua entrada SEDIA/SETID migra al portal actual del Ministerio; su sede electrónica asociada publica REG como vía para solicitudes, escritos o comunicaciones de competencia ministerial cuando no existe un procedimiento electrónico específico habilitado."
+    protocol_evidence: "La URL histórica del directorio redirige al portal actual digital.gob.es, que enlaza la sede electrónica asociada digital.sede.gob.es. La página oficial de procedimientos electrónicos de esa sede indica expresamente que, si un trámite de competencia del Ministerio no dispone de procedimiento electrónico habilitado, puede presentarse por el Registro Electrónico General (REG) y enlaza https://reg.redsara.es/. Un navegador público fresco resolvió ese destino 302 a https://reg.redsara.es/es/, exactamente el startUrl del perfil reg-age-redsara. No se atribuye a digital.gob.es, digital.sede.gob.es ni sedediatid.digital.gob.es un ABI de firma propio ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
+    evidence_ids: ["D11", "DIGITAL-SEDE-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita y resolución pública exacta al startUrl canónico; se conserva la entrada histórica SEDIA/SETID como entry URL, no se copian constantes criptográficas de REG-AGE y falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición desde la superficie SEDIA/SETID migrada hasta REG-AGE sin completar ni presentar una actuación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La URL histórica sedediatid.digital.gob.es responde 301 hacia el portal actual del Ministerio. La sede asociada actual identifica por separado procedimientos de la Secretaría de Estado de Digitalización e Inteligencia Artificial y de la Secretaría de Estado de Telecomunicaciones e Infraestructuras Digitales."
 
   - inventory_id: "ES-PUB-0090"
     surface_key: "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
@@ -6262,6 +6263,7 @@ Orden de expansión recomendado:
 
 [COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
 [COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
+[DIGITAL-SEDE-REG-2026-08-17]: https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica
 [PUERTOS-REG-2026-08-17]: https://puertos.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [DSCA-REG-2026-08-16]: https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje
 [POLICIA-SEDE-2026-08-15]: https://sede.policia.gob.es/
