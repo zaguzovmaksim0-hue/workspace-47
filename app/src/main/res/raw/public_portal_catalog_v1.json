@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "f3d8b5025deb692eedc7cec2d5cb942bffdf07966d5a57c37e8208fe13f4b80c",
+  "sourceRevision": "d040ad5ec7535434ec58e17f414093514dc41616e4b1e4f0fbf7255f019dfe5a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3555,26 +3555,26 @@
     {
       "portalId": "diputacion-alicante-portal",
       "inventoryId": "ES-PUB-0139",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Alicante",
+      "profileId": "diputacion-alicante-solicitud-general",
+      "displayName": "Solicitud General — Sede electrónica de Diputación de Alicante",
       "organization": "Diputación Provincial de Alicante",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Comunidad Valenciana",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.diputacionalicante.es",
+      "purpose": "Navegación QA integrada exclusivamente al inicio exacto de la Solicitud General vigente de la Sede electrónica de la Diputación de Alicante; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "ALICANTE_SEDE_SOLICITUD_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP01A",
         "DP01B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch exacto de la Solicitud General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. La autenticación con certificado vía Cl@ve fue observada, pero no se modela como client-TLS propio de Alicante; el ABI de firma posterior permanece NO_VERIFICADO. Falta E2E físico."
     },
     {
       "portalId": "diputacion-alava-portal",

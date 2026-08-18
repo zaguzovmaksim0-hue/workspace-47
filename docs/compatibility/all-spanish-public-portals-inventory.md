@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 65 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 69 |
-| Entradas restantes fuera de ambos estados | 114 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 66 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 70 |
+| Entradas restantes fuera de ambos estados | 113 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 65 |
+| `IMPLEMENTED_NOT_E2E` | 66 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 107 |
+| `BROWSE_ONLY` | 106 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4783,29 +4783,30 @@ records:
     autonomous_community: "Comunidad Valenciana"
     province_or_municipality: "Alicante (provincia)"
     institution_name: "Diputación Provincial de Alicante"
-    surface_name: "Portal oficial de Diputación Provincial de Alicante"
-    surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.diputacionalicante.es"
+    surface_name: "Solicitud General — Sede electrónica de Diputación de Alicante"
+    surface_type: "SEDE"
+    origin: "https://diputacionalicante.sedelectronica.es"
     official_site: "https://www.diputacionalicante.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.diputacionalicante.es"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://diputacionalicante.sedelectronica.es/"
+    entry_url: "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb"
+    procedure_page: "https://diputacionalicante.sedelectronica.es/catalog/t/66192629-8b04-4cf8-a121-e2cb86cd45cb"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "ALICANTE_SEDE_SOLICITUD_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio exacto de la Solicitud General vigente de la Sede electrónica de la Diputación de Alicante; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La Diputación delega actualmente en diputacionalicante.sedelectronica.es y la Solicitud General SIA 2407578 abre exactamente /catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb. El runtime autenticado alcanzó el wizard Identificación -> Formulario -> Documentos -> Firmar -> Acuse de recibo y avanzó de Identificación a Formulario mediante el POST Wicket intermedio permitido por RUNBOOK v2.4. El Formulario exige Email y Móvil antes de continuar. No se observó ni se infiere ABI de firma."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D06", "DP01A", "DP01B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    reason: "Perfil nuevo QA_ONLY limitado al launch exacto de la Solicitud General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. La autenticación con certificado vía Cl@ve fue observada, pero no se modela como client-TLS propio de Alicante; el ABI de firma posterior permanece NO_VERIFICADO. Falta E2E físico."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Solicitud General; ampliar autenticación o firma solo con un contrato específico independiente."
+    notes: "RUNBOOK v2.4 permitió progresión administrativa acotada: Identificación se completó y Formulario devolvió como únicos requisitos adicionales observados Email y Móvil. No se inventaron datos de contacto, no se cargaron documentos, no se inicializó firma, no se realizó firma criptográfica, presentación final ni pago. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0140"
     surface_key: "diputacion-alava-portal"
