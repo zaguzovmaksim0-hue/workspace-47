@@ -53,6 +53,7 @@ class JuntaOriginPolicyTest {
     private val lleida = ProfileId("diputacion-lleida-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -96,6 +97,7 @@ class JuntaOriginPolicyTest {
             "www1.tea.hacienda.gob.es",
             "sede.tenerife.es",
             "sede.grancanaria.com",
+            "sede.cabildofuer.es",
             "serviciosede.mineco.gob.es",
             "pasarela.clave.gob.es",
             "pasarela-ident.clave.gob.es",
@@ -196,6 +198,17 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
+        assertEquals(setOf("sede.cabildofuer.es"), JuntaOriginPolicy.browserAllowedHosts(fuerteventura))
+        assertEquals(
+            setOf("https://sede.cabildofuer.es"),
+            JuntaOriginPolicy.webMessageOriginRules(fuerteventura),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                fuerteventura,
+            ),
+        )
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
