@@ -253,6 +253,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == GRAN_CANARIA_PROFILE_ID) {
                 validateGranCanariaProfile(p)
             }
+            if (p.profileId.value == MINECO_PROFILE_ID) {
+                validateMinecoProfile(p)
+            }
             if (p.profileId.value == ISCIII_PROFILE_ID) {
                 validateIsciiiProfile(p)
             }
@@ -354,6 +357,7 @@ object SiteProfileCatalogParser {
                         op.packaging == if (
                             p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
                             p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
+                            p.profileId.value == MINECO_PROFILE_ID ||
                             p.profileId.value == CDTI_PROFILE_ID ||
                             p.profileId.value == TRANSPORTES_PROFILE_ID
                         ) {
@@ -426,10 +430,16 @@ object SiteProfileCatalogParser {
                             }
                         }
                         SignatureFormat.PADES -> {
-                            require(p.profileId.value == GRAN_CANARIA_PROFILE_ID)
+                            require(p.profileId.value == GRAN_CANARIA_PROFILE_ID || p.profileId.value == MINECO_PROFILE_ID)
                             require(op.endpointId == null && op.mode == null)
                             require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
-                            require(op.fixedExtraProperties == GRAN_CANARIA_EXTRA_PROPERTIES)
+                            require(
+                                op.fixedExtraProperties == if (p.profileId.value == MINECO_PROFILE_ID) {
+                                    MINECO_EXTRA_PROPERTIES
+                                } else {
+                                    GRAN_CANARIA_EXTRA_PROPERTIES
+                                },
+                            )
                         }
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
@@ -628,6 +638,41 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == GRAN_CANARIA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+    }
+
+    private fun validateMinecoProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MINECO_PROFILE_VERSION)
+        require(profile.displayName == MINECO_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MINECO_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MINECO_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins == MINECO_BROWSE_ORIGINS)
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(
+            profile.operationPolicies == mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = MINECO_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                    format = SignatureFormat.PADES,
+                    packaging = SignaturePackaging.ATTACHED,
+                    mode = null,
+                    fixedExtraProperties = MINECO_EXTRA_PROPERTIES,
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MINECO_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
     }
 
@@ -1334,6 +1379,30 @@ object SiteProfileCatalogParser {
             "_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_" +
             "javax.faces.resource=AFIRMA%2Foperaciones.js&" +
             "_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_ln=js",
+    )
+    private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
+    private const val MINECO_PROFILE_VERSION = 1
+    private const val MINECO_DISPLAY_NAME =
+        "Ministerio de Economía, Comercio y Empresa — Instancia Genérica"
+    private const val MINECO_START_URL =
+        "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG"
+    private const val MINECO_ORIGIN = "https://serviciosede.mineco.gob.es"
+    private const val MINECO_SAFE_DESCRIPTION =
+        "Firma PAdES de Instancia Genérica del Ministerio de Economía, Comercio y Empresa"
+    private val MINECO_BROWSE_ORIGINS = setOf(
+        ExactOrigin.parse("https://pasarela.clave.gob.es"),
+        ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
+    )
+    private val MINECO_EXTRA_PROPERTIES = linkedMapOf(
+        "filters" to "signingCert:;nonexpired:",
+        "expPolicy" to "FirmaAGE",
+        "signatureSubFilter" to "ETSI.CAdES.detached",
+    )
+    private val MINECO_EVIDENCE_URLS = setOf(
+        MINECO_START_URL,
+        "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx",
+        "https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js",
+        "https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf",
     )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
     private const val TENERIFE_PROFILE_VERSION = 1

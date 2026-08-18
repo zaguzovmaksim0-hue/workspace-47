@@ -72,6 +72,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
                 ProfileId("gran-canaria-sede-electronica"),
+                ProfileId("ministerio-economia-instancia-generica"),
                 ProfileId("diputacion-toledo-sede"),
                 ProfileId("isciii-certificate-selection"),
                 ProfileId("diputacion-valencia-sede"),

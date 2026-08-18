@@ -21,6 +21,7 @@
   const cdtiCompatibilityEnabled = __JFM_CDTI_COMPATIBILITY_ENABLED__;
   const policiaCompatibilityEnabled = __JFM_POLICIA_COMPATIBILITY_ENABLED__;
   const granCanariaCompatibilityEnabled = __JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__;
+  const minecoCompatibilityEnabled = __JFM_MINECO_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const lugoBatchCompatibilityEnabled = __JFM_LUGO_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
@@ -45,6 +46,10 @@
   const policiaOrigin = "https://sede.policia.gob.es";
   const granCanariaOrigin = "https://sede.grancanaria.com";
   const granCanariaExtraProperties = "headless=true\nfilters=nonexpired:";
+  const minecoOrigin = "https://serviciosede.mineco.gob.es";
+  const minecoSigningPage = "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx";
+  const minecoExtraProperties =
+    "filters=signingCert:;nonexpired:\nexpPolicy=FirmaAGE\nsignatureSubFilter=ETSI.CAdES.detached";
   const policiaProcedurePage =
     "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml";
   const policiaExtraProperties =
@@ -261,6 +266,22 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isMinecoOrigin =
+      minecoCompatibilityEnabled && window.location.origin === minecoOrigin;
+    const isMinecoSigningPage =
+      isMinecoOrigin && window.location.href === minecoSigningPage &&
+      window.location.search === "" && window.location.hash === "";
+    const isExactMinecoCall =
+      isMinecoSigningPage && args.length === 6 &&
+      typeof args[0] === "string" && args[0].length > 0 &&
+      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
+      args[1] === "SHA512withRSA" && args[2] === "PAdES" &&
+      args[3] === minecoExtraProperties &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isMinecoOrigin && !isExactMinecoCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isCdtiOrigin =
       cdtiCompatibilityEnabled && window.location.origin === cdtiOrigin;
     const isCdtiPage =
@@ -342,13 +363,13 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !isExactSevillaAtseCall && !isExactGranCanariaCall && !isExactCdtiCall &&
+          !isExactSevillaAtseCall && !isExactGranCanariaCall && !isExactMinecoCall && !isExactCdtiCall &&
           !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
           !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
-          !isExactCdtiCall && !isExactPoliciaCall && !isExactGranCanariaCall)) {
+          !isExactCdtiCall && !isExactPoliciaCall && !isExactGranCanariaCall && !isExactMinecoCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "05a07aae5fbb18b5bb9d3fe997d1bccd5f1216133734318a4114f120dd800a2c",
+  "sourceRevision": "98ac2fe6bed53570c7cd8aca795db90dff8f9e5ac485c632ae67255531a78d30",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1599,24 +1599,32 @@
     {
       "portalId": "age-ministerio-de-economia-comercio-y-empresa",
       "inventoryId": "ES-PUB-0065",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "ministerio-economia-instancia-generica",
+      "displayName": "Instancia Genérica — Ministerio de Economía, Comercio y Empresa",
       "organization": "Ministerio de Economía, Comercio y Empresa",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.mineco.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "purpose": "Rama local Firmar y Enviar: firma PAdES del PDF generado por la Instancia Genérica mediante MiniApplet/AutoFirma; Cl@veFirma queda fuera del contrato implementado.",
+      "entryUrl": "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Contrato exacto de la rama local Firmar y Enviar implementado en QA y pendiente de E2E físico; la autenticación eIdentifier usa certificado TLS por separado y Cl@veFirma no se infiere ni se implementa."
     },
     {
       "portalId": "age-ministerio-de-educacion-formacion-profesional-y-deportes",
