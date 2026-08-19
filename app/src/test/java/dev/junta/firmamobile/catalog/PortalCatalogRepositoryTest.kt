@@ -63,6 +63,7 @@ class PortalCatalogRepositoryTest {
                 "ugr-certificado-login",
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
+                "jccm-registro-generico",
                 "mites-certificate-login",
                 "transportes-qys-cert-login",
                 "sevilla-atse-certificate-login",

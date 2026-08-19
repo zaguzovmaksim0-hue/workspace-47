@@ -24,6 +24,7 @@ import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
+import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
 import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
@@ -207,6 +208,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isJccmRegistroContract = isExactJccmRegistroContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == JCCM_REGISTRO_PROFILE_ID && !isJccmRegistroContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isMitesContract = isExactMitesContract(
             profile = profile,
             origin = resolved.origin,
@@ -351,7 +362,7 @@ internal class ProfileMiniAppletBridgeAdapter(
                 null
             }
             FORMAT_XADES_DETACHED -> if (
-                isSevillaAtseContract || isPoliciaContract || isCdtiContract
+                isSevillaAtseContract || isPoliciaContract || isCdtiContract || isJccmRegistroContract
             ) {
                 null
             } else {
@@ -360,6 +371,11 @@ internal class ProfileMiniAppletBridgeAdapter(
             FORMAT_XADES -> if (
                 isSevillaAtseContract || isAirefContract || isPoliciaContract || isTransportesContract
             ) {
+                SigningFormat.XADES to SignatureFormat.XADES
+            } else {
+                null
+            }
+            FORMAT_XADES_JCCM -> if (isJccmRegistroContract) {
                 SigningFormat.XADES to SignatureFormat.XADES
             } else {
                 null
@@ -467,6 +483,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isTransportesContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isJccmRegistroContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == JCCM_REGISTRO_EXTRA_PROPERTIES }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -608,6 +631,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             CanariasCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isMinecoContract) {
             MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isJccmRegistroContract) {
+            JCCM_REGISTRO_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
         } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
@@ -686,6 +711,64 @@ internal class ProfileMiniAppletBridgeAdapter(
     private fun String.hasSafeControls(): Boolean = all { character ->
         !character.isISOControl() || character == '\n' || character == '\r' || character == '\t'
     }
+    private fun isExactJccmRegistroContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean {
+        val clientAuth = profile.clientAuthPolicy
+        return isExactJccmRegistroPage(currentPageUrl) &&
+            profile.profileId.value == JCCM_REGISTRO_PROFILE_ID &&
+            profile.profileVersion == JCCM_REGISTRO_PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == JCCM_REGISTRO_START_URL &&
+            origin.serialized == JCCM_REGISTRO_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(JCCM_REGISTRO_ORIGIN)) &&
+            profile.redirectOrigins == JCCM_REGISTRO_REDIRECT_ORIGINS &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) &&
+            clientAuth != null &&
+            clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+            clientAuth.requestOrigins == setOf(ExactOrigin.parse(JCCM_REGISTRO_CLIENT_AUTH_ORIGIN)) &&
+            clientAuth.sourceUrls == setOf(java.net.URI(JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL)) &&
+            clientAuth.requestPath == JCCM_REGISTRO_CLIENT_AUTH_PATH &&
+            clientAuth.fixedQueryParameters.isEmpty() &&
+            clientAuth.requiredEphemeralQueryParameters.isEmpty() &&
+            clientAuth.sourceFixedQueryParameters.isEmpty() &&
+            clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty() &&
+            clientAuth.linkedEphemeralQueryParameters.isEmpty() &&
+            clientAuth.linkedEphemeralQueryParameterMappings.isEmpty() &&
+            clientAuth.allowEmptyIssuerList && clientAuth.grantTtlSeconds == 15 &&
+            clientAuth.requestPort == 443 &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == JCCM_REGISTRO_SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) && operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA) &&
+            operation.format == SignatureFormat.XADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.IMPLICIT &&
+            operation.fixedExtraProperties == JCCM_REGISTRO_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == LocalXadesDetachedAdapter.ID.value
+    }
+
+    private fun isExactJccmRegistroPage(raw: String?): Boolean {
+        val uri = raw?.let { runCatching { java.net.URI(it) }.getOrNull() } ?: return false
+        if (uri.isOpaque || uri.scheme != "https" || uri.host != "registrounicociudadanos.jccm.es" ||
+            uri.userInfo != null || uri.port !in setOf(-1, 443) || uri.rawFragment != null
+        ) return false
+        return uri.rawPath == "/registrounicociudadanos/accesoclvd.do" && uri.rawQuery == null
+    }
+
     private fun isExactJccmContract(
         profile: SiteProfile,
         origin: ExactOrigin,
@@ -1305,6 +1388,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val FORMAT_PADES = "PAdES"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val FORMAT_XADES = "XAdES"
+        private const val FORMAT_XADES_JCCM = "XADES"
         private const val FORMAT_XADES_ENVELOPING = "XAdES Enveloping"
         private const val AIREF_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
         private val AIREF_SIGNING_QUERY = Regex("id=[0-9]{1,20}")
@@ -1337,6 +1421,26 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val JCCM_START_URL =
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
                 "formularios/identificacion.phtml"
+        private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
+        private const val JCCM_REGISTRO_PROFILE_VERSION = 1
+        private const val JCCM_REGISTRO_START_URL =
+            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
+        private const val JCCM_REGISTRO_ORIGIN = "https://registrounicociudadanos.jccm.es"
+        private const val JCCM_REGISTRO_SAFE_DESCRIPTION =
+            "Firma del resumen XML de la Solicitud Genérica de JCCM"
+        private const val JCCM_REGISTRO_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
+        private const val JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        private const val JCCM_REGISTRO_CLIENT_AUTH_PATH = "/IdP2/AuthenticateCitizen"
+        private val JCCM_REGISTRO_REDIRECT_ORIGINS = setOf(
+            ExactOrigin.parse("https://sso.jccm.es"),
+            ExactOrigin.parse("https://pasarela.clave.gob.es"),
+        )
+        private const val JCCM_REGISTRO_EXTRA_PROPERTIES = "format=XAdES Detached\nmode=implicit"
+        private val JCCM_REGISTRO_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "format" to "XAdES Detached",
+            "mode" to "implicit",
+        )
         private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
         private val UGR_PAYLOAD = "Universidad de Granada".encodeToByteArray()
         private val TRANSPARENCIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(

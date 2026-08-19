@@ -56,6 +56,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ugr-certificado-login"),
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("jccm-certificate-login-probe"),
+                ProfileId("jccm-registro-generico"),
                 ProfileId("mites-certificate-login"),
                 ProfileId("transportes-qys-cert-login"),
                 ProfileId("sevilla-atse-certificate-login"),

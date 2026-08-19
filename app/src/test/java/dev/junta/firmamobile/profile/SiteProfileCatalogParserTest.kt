@@ -5,6 +5,7 @@ import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -253,6 +254,86 @@ class SiteProfileCatalogParserTest {
         )
     }
 
+
+    @Test
+    fun preservesTheExactJccmRegistroGenericoQaOnlyContractSeparatelyFromTheOldProbe() {
+        val profileId = ProfileId("jccm-registro-generico")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("JCCM — Registro Electrónico / Solicitud Genérica", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI("https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"),
+            profile.startUrl,
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://registrounicociudadanos.jccm.es")),
+            profile.initiatorOrigins,
+        )
+        assertEquals(
+            setOf(
+                ExactOrigin.parse("https://sso.jccm.es"),
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ),
+            profile.redirectOrigins,
+        )
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), operation.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), operation.callbackContractId)
+        assertEquals(setOf(SignatureAlgorithm.SHA512_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.XADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertEquals(SignatureMode.IMPLICIT, operation.mode)
+        assertEquals(
+            linkedMapOf("format" to "XAdES Detached", "mode" to "implicit"),
+            operation.fixedExtraProperties,
+        )
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, clientAuth.transitionMode)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+            clientAuth.requestOrigins,
+        )
+        assertEquals(
+            setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+            clientAuth.sourceUrls,
+        )
+        assertEquals("/IdP2/AuthenticateCitizen", clientAuth.requestPath)
+        assertTrue(clientAuth.fixedQueryParameters.isEmpty())
+        assertTrue(clientAuth.requiredEphemeralQueryParameters.isEmpty())
+        assertTrue(clientAuth.allowEmptyIssuerList)
+        assertEquals(15, clientAuth.grantTtlSeconds)
+        assertEquals(443, clientAuth.requestPort)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI("https://sso.jccm.es/cas-jccm-clave/login"),
+            )?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertNotEquals(
+            profile.profileId,
+            ProfileId("jccm-certificate-login-probe"),
+        )
+    }
 
     @Test
     fun preservesTheExactSevillaAtseQaOnlyCertificateLoginContract() {

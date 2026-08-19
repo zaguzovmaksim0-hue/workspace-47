@@ -31,6 +31,7 @@ class JuntaOriginPolicyTest {
     private val ugr = ProfileId("ugr-certificado-login")
     private val cantabria = ProfileId("cantabria-rec-cert-login")
     private val jccm = ProfileId("jccm-certificate-login-probe")
+    private val jccmRegistro = ProfileId("jccm-registro-generico")
     private val mites = ProfileId("mites-certificate-login")
     private val sevilla = ProfileId("sevilla-atse-certificate-login")
     private val airef = ProfileId("airef-instancia-general")
@@ -81,6 +82,8 @@ class JuntaOriginPolicyTest {
             "sede.ugr.es",
             "rec.cantabria.es",
             "ventanillaelectronica.jccm.es",
+            "registrounicociudadanos.jccm.es",
+            "sso.jccm.es",
             "sede.mites.gob.es",
             "www.sevilla.org",
             "sede.airef.es",
@@ -197,6 +200,14 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("ventanillaelectronica.jccm.es"),
             JuntaOriginPolicy.browserAllowedHosts(jccm),
+        )
+        assertEquals(
+            setOf("registrounicociudadanos.jccm.es", "sso.jccm.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(jccmRegistro),
+        )
+        assertEquals(
+            setOf("https://registrounicociudadanos.jccm.es"),
+            JuntaOriginPolicy.webMessageOriginRules(jccmRegistro),
         )
         assertEquals(setOf("sede.mites.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mites))
         assertEquals(setOf("www.sevilla.org"), JuntaOriginPolicy.browserAllowedHosts(sevilla))

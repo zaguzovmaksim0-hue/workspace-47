@@ -474,10 +474,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             if entry["portalId"] == "castilla-la-mancha-certificate-login-probe"
         )
 
-        self.assertIsNone(broad["profileId"])
-        self.assertEqual("https://www.jccm.es/", broad["entryUrl"])
-        self.assertEqual("CATALOGED", broad["catalogStatus"])
-        self.assertEqual("BROWSE_ONLY", broad["inventoryStatus"])
+        self.assertEqual("jccm-registro-generico", broad["profileId"])
+        self.assertEqual("ES-PUB-0103", broad["inventoryId"])
+        self.assertEqual(
+            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ",
+            broad["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", broad["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", broad["inventoryStatus"])
+        self.assertEqual("2026-08-19", broad["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", broad["observedMechanisms"])
+        self.assertIn("MINIAPPLET", broad["observedMechanisms"])
+        self.assertIn("CLIENT_TLS_AUTH", broad["observedMechanisms"])
+        self.assertIn("XADES", broad["observedSignatureFormats"])
 
         self.assertEqual("jccm-certificate-login-probe", probe["profileId"])
         self.assertEqual("ES-PUB-0183", probe["inventoryId"])

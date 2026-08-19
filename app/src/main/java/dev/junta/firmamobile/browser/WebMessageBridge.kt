@@ -28,6 +28,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val ugr: Boolean,
     val cantabria: Boolean,
     val jccm: Boolean,
+    val jccmRegistro: Boolean,
     val sevillaAtse: Boolean,
     val airef: Boolean,
     val cdti: Boolean,
@@ -269,6 +270,7 @@ class WebMessageBridge(
                     ugrCompatibilityEnabled = shimFlags.ugr,
                     cantabriaCompatibilityEnabled = shimFlags.cantabria,
                     jccmCompatibilityEnabled = shimFlags.jccm,
+                    jccmRegistroCompatibilityEnabled = shimFlags.jccmRegistro,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
                     airefCompatibilityEnabled = shimFlags.airef,
                     cdtiCompatibilityEnabled = shimFlags.cdti,
@@ -671,6 +673,7 @@ class WebMessageBridge(
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
+        private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val AIREF_PROFILE_ID = "airef-instancia-general"
         private const val CDTI_PROFILE_ID = "cdti-certificate-validation"
@@ -689,6 +692,7 @@ class WebMessageBridge(
             ugr = profileActive && profileId.value == UGR_PROFILE_ID,
             cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
+            jccmRegistro = profileActive && profileId.value == JCCM_REGISTRO_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
             airef = profileActive && profileId.value == AIREF_PROFILE_ID,
             cdti = profileActive && profileId.value == CDTI_PROFILE_ID,
