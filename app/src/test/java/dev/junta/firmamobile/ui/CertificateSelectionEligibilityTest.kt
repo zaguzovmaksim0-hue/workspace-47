@@ -42,7 +42,26 @@ class CertificateSelectionEligibilityTest {
         )
     }
 
+    @Test
+    fun `Xunta accepts current RSA certificate without Valencia content-commitment requirement`() {
+        assertTrue(
+            certificateEligibleForSelection(
+                XUNTA_PROFILE,
+                TestCertificateFactory.digitalSignatureCertificate(),
+                TestCertificateFactory.now,
+            ),
+        )
+        assertFalse(
+            certificateEligibleForSelection(
+                XUNTA_PROFILE,
+                TestCertificateFactory.expiredNonRepudiationCertificate(),
+                TestCertificateFactory.now,
+            ),
+        )
+    }
+
     private companion object {
         const val VALENCIA_PROFILE = "diputacion-valencia-sede"
+        const val XUNTA_PROFILE = "xunta-galicia-solicitude-xenerica"
     }
 }
