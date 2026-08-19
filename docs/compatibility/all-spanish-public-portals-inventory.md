@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 75 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 79 |
-| Entradas restantes fuera de ambos estados | 104 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 76 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 80 |
+| Entradas restantes fuera de ambos estados | 103 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 75 |
+| `IMPLEMENTED_NOT_E2E` | 76 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 97 |
+| `BROWSE_ONLY` | 96 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -758,24 +758,24 @@ records:
     origin: "https://sede.mjusticia.gob.es"
     official_site: "https://sede.mjusticia.gob.es/"
     e_sede: "https://sede.mjusticia.gob.es/"
-    entry_url: "https://sede.mjusticia.gob.es/tramites/organos-gobierno"
+    entry_url: "https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75"
     procedure_page: "https://sede.mjusticia.gob.es/tramites/organos-gobierno"
     certificate_required: "NO_VERIFICADO"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "MJUSTICIA_SEDE2_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Firma local con AutoFirma en determinados trámites."
-    protocol_evidence: "La fuente limita AutoFirma a determinados trámites, pero no publica ABI ni endpoint."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only desde la Sede del Ministerio al inicio oficial de Modificaciones estatutarias de fundaciones; autenticación y firma no implementadas."
+    protocol_evidence: "La página oficial actual enlaza 'Tramitación On-line con CL@VE con Certificado Digital' a sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75, que redirige en el mismo origin a /login/index/idp/75. La página de login ofrece Cl@ve y describe certificado/AutoFirma, pero el branch de certificado no está presente en el DOM; el módulo first-party conserva código XAdES Detached implícito sin publicar el wrapper accAfirma ni algoritmo."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P06B", "P06C", "D11"]
-    reason: "Requisito exacto de certificado, formato, algoritmo, endpoint y callback no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Capturar un procedimiento explícitamente compatible."
+    evidence_ids: ["P06B", "P06C", "D11", "MJUSTICIA-IDP75-LAUNCH-2026-08-19"]
+    reason: "Implementación QA-only limitada al launch exacto observado; no se exponen certificado, client TLS, firma, formato, algoritmo, endpoint ni callback."
+    reviewed_at: "2026-08-19"
+    next_gate: "Para ampliar capacidades, autenticar de forma controlada y avanzar hasta el primer estado pre-sign activo, deteniéndose antes de firma privada y presentación final."
 
   - inventory_id: "ES-PUB-0011"
     surface_key: "junta-andalucia-ovorion"
@@ -6297,6 +6297,7 @@ Orden de expansión recomendado:
 [P06A]: https://sedejudicial.justicia.es/documents/20142/72138908/202408_Escrito%2Biniciador%2Bde%2Bjurisdicci%C3%B3n%2Bvoluntaria_ciudadan%C3%ADa_V3.pdf/72c096fe-0e01-2293-fb9a-c9862dca89f0?t=1727245303785
 [P06B]: https://sede.mjusticia.gob.es/informacion-ayuda/preguntas-frecuentes
 [P06C]: https://sede.mjusticia.gob.es/tramites/organos-gobierno
+[MJUSTICIA-IDP75-LAUNCH-2026-08-19]: https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75
 [P07]: https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs
 [P08]: https://sede.comunidad.madrid/guia-tramitacion/realizo-solicitud
 [P08A]: https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid
