@@ -70,6 +70,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-huesca-portal"),
                 ProfileId("diputacion-lugo-sede"),
                 ProfileId("diputacion-leon-sede"),
+                ProfileId("consell-mallorca-sede"),
                 ProfileId("generalitat-valenciana-client-auth"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),

@@ -783,6 +783,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", leon["limitations"].lower())
         self.assertIn("firma", leon["limitations"].lower())
 
+    def test_mallorca_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mallorca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "mallorca-sede-electronica"
+        )
+
+        self.assertEqual("consell-mallorca-sede", mallorca["profileId"])
+        self.assertEqual("ES-PUB-0120", mallorca["inventoryId"])
+        self.assertEqual(
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
+            mallorca["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", mallorca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mallorca["inventoryStatus"])
+        self.assertEqual("2026-08-18", mallorca["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", mallorca["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", mallorca["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", mallorca["observedMechanisms"])
+        self.assertEqual([], mallorca["observedSignatureFormats"])
+        self.assertIn("qa", mallorca["limitations"].lower())
+        self.assertIn("e2e", mallorca["limitations"].lower())
+        self.assertIn("firma", mallorca["limitations"].lower())
+
     def test_diputacion_lleida_implemented_not_e2e_profile_binds_exact_catalog_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         lleida = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-lleida-sede")

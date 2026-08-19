@@ -102,6 +102,7 @@ class JuntaOriginPolicyTest {
             "sede.deputacionlugo.org",
             "sede.dipuleon.es",
             "identificacionssl.sedipualba.es",
+            "cim.secimallorca.net",
             "www.tramita.gva.es",
             "ptt-clave.gva.es",
             "ptt-clave-clientcert.gva.es",

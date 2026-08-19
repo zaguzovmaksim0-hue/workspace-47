@@ -136,6 +136,66 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun mallorcaDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+        val mallorca = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = mallorca.observeTopLevelNavigation(
+            MALLORCA_PROFILE, MALLORCA_SOURCE, MALLORCA_TARGET, 80, true,
+        )
+
+        assertEquals(MALLORCA_PROFILE, authorized?.profileId)
+        assertEquals("identificacionssl.sedipualba.es", authorized?.target?.host)
+        assertEquals("/", authorized?.target?.rawPath)
+        assertEquals(
+            "idtoken=$MALLORCA_TOKEN&idioma=ca&entidad=07700",
+            authorized?.target?.rawQuery,
+        )
+        assertNull(
+            mallorca.observeTopLevelNavigation(
+                MALLORCA_PROFILE, MALLORCA_SOURCE, MALLORCA_TARGET, 80, true,
+            ),
+        )
+    }
+
+    @Test
+    fun mallorcaDynamicSourceRejectsTokenHostPathAndQueryExpansion() {
+        val attacks = listOf(
+            MALLORCA_SOURCE.replace(MALLORCA_TOKEN, MALLORCA_OTHER_TOKEN) to MALLORCA_TARGET,
+            MALLORCA_SOURCE.replace("idioma=ca", "idioma=es") to MALLORCA_TARGET,
+            "$MALLORCA_SOURCE&extra=1" to MALLORCA_TARGET,
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace(MALLORCA_TOKEN, MALLORCA_OTHER_TOKEN),
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace("idioma=ca", "idioma=es"),
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace("entidad=07700", "entidad=24000"),
+            MALLORCA_SOURCE to "$MALLORCA_TARGET&extra=1",
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace(
+                "identificacionssl.sedipualba.es",
+                "identificacionssl.sedipualba.es.evil.example",
+            ),
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace(
+                "https://identificacionssl.sedipualba.es/",
+                "https://identificacionssl.sedipualba.es/other",
+            ),
+            MALLORCA_SOURCE to "$MALLORCA_TARGET#fragment",
+        )
+
+        attacks.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    MALLORCA_PROFILE, source, target, 81L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun navarraCaseMappedEphemeralParameterAuthorizesOnlyTheSameObservedSessionValue() {
         val navarra = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,
@@ -924,6 +984,13 @@ class ClientAuthNavigationAuthorizerTest {
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        val MALLORCA_PROFILE = ProfileId("consell-mallorca-sede")
+        const val MALLORCA_TOKEN = "12345678-w47SyntheticMallorcaToken0123456789"
+        const val MALLORCA_OTHER_TOKEN = "87654321-w47OtherMallorcaToken9876543210"
+        const val MALLORCA_SOURCE =
+            "https://cim.secimallorca.net/segex/identificacion_opciones.aspx?idtoken=$MALLORCA_TOKEN&idioma=ca"
+        const val MALLORCA_TARGET =
+            "https://identificacionssl.sedipualba.es/?idtoken=$MALLORCA_TOKEN&idioma=ca&entidad=07700"
         val NAVARRA_PROFILE = ProfileId("navarra-sede-registro-general")
         const val NAVARRA_TOKEN = "w47SyntheticNavarraSessionToken0123456789"
         const val NAVARRA_OTHER_TOKEN = "w47OtherNavarraSessionToken9876543210"
