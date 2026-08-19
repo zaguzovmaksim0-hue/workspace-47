@@ -53,7 +53,7 @@ class PortalCatalogRepository(
         val activeProfile = registry.profile(profileId) ?: return null
         val effectiveLaunchUrl = metadata.launchUrl ?: metadata.entryUrl
         if (activeProfile.startUrl.toASCIIString() != effectiveLaunchUrl.toASCIIString()) return null
-        val resolved = registry.resolve(effectiveLaunchUrl) ?: return null
+        val resolved = registry.resolveForProfile(profileId, effectiveLaunchUrl) ?: return null
         if (resolved.profile.profileId != profileId) return null
 
         return PortalLaunchTarget(profileId = profileId, entryUrl = activeProfile.startUrl)

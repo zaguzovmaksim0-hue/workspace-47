@@ -777,7 +777,7 @@ class ClientAuthNavigationAuthorizerTest {
         val invalidSources = listOf(
             ARAGON_SSLOGIN_SOURCE.replace("login.loginssl.aragon.es", "login.loginssl.aragon.es.evil.example"),
             ARAGON_SSLOGIN_SOURCE.replace("/sife_login/SSLOGIN", "/sife_login/OTHER"),
-            ARAGON_SSLOGIN_SOURCE.replace("solicitud-general", "solicitud-other"),
+            ARAGON_SSLOGIN_SOURCE.replace("consumeResponse", "otherResponse"),
             "$ARAGON_SSLOGIN_SOURCE&extra=1",
         )
         invalidSources.forEachIndexed { index, source ->
@@ -801,7 +801,7 @@ class ClientAuthNavigationAuthorizerTest {
         val invalidTargets = listOf(
             ARAGON_SSLOGIN_TARGET.replace("login1.loginssl.aragon.es", "login1.loginssl.aragon.es.evil.example"),
             ARAGON_SSLOGIN_TARGET.replace("/idByCert", "/other"),
-            ARAGON_SSLOGIN_TARGET.replace("solicitud-general", "solicitud-other"),
+            ARAGON_SSLOGIN_TARGET.replace("consumeResponse", "otherResponse"),
             "$ARAGON_SSLOGIN_TARGET&extra=1",
             ARAGON_SSLOGIN_TARGET.replace("login1.loginssl.aragon.es", "login1.loginssl.aragon.es:444"),
         )
