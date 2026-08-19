@@ -82,13 +82,25 @@ class AirefProfileCatalogBindingTest {
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
-        assertEquals(
-            TrustMode.BROWSE_ONLY,
-            BuiltInSiteProfiles.qaRegistry.resolve(URI(AirefXadesEnvelopingAdapter.CLIENT_AUTH_SOURCE_URL))?.trustMode,
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI(AirefXadesEnvelopingAdapter.CLIENT_AUTH_SOURCE_URL)))
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+            ),
         )
         assertEquals(
             TrustMode.BROWSE_ONLY,
-            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"))?.trustMode,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI(AirefXadesEnvelopingAdapter.CLIENT_AUTH_SOURCE_URL),
+            )?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+            )?.trustMode,
         )
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))

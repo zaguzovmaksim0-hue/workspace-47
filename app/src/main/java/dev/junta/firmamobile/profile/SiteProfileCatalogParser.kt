@@ -525,8 +525,11 @@ object SiteProfileCatalogParser {
                 require(endpointUrlOwners.put(endpoint.url, p.profileId) == null)
             }
             p.allOrigins().forEach { origin ->
-                require(navigationOriginOwners.put(origin, p.profileId) == null)
-
+                val previousOwner = navigationOriginOwners.putIfAbsent(origin, p.profileId)
+                require(
+                    previousOwner == null ||
+                        isReviewedSharedNavigationOrigin(origin, previousOwner, p.profileId),
+                )
             }
         }
     }
@@ -1418,6 +1421,14 @@ object SiteProfileCatalogParser {
             ),
         )
     }
+
+    private fun isReviewedSharedNavigationOrigin(
+        origin: ExactOrigin,
+        firstOwner: ProfileId,
+        secondOwner: ProfileId,
+    ): Boolean =
+        setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
+            origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
