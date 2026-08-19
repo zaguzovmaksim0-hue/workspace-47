@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 30,
+  "catalogVersion": 31,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1210,6 +1210,42 @@
       "evidence": [
         {"url":"https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros=","reviewedOn":"2026-08-18"},
         {"url":"https://intranet.caib.es/portafibback/","reviewedOn":"2026-08-18"}
+      ]
+    },
+{
+      "profileId": "asturias-miprincipado",
+      "profileVersion": 1,
+      "displayName": "Principado de Asturias — MiPrincipado / Solicitud Genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
+      "initiatorOrigins": ["https://miprincipado.asturias.es"],
+      "redirectOrigins": [
+        "https://tramita.asturias.es",
+        "https://rhsso.asturias.es",
+        "https://pasarela.clave.gob.es"
+      ],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites","reviewedOn":"2026-08-19"},
+        {"url":"https://tramita.asturias.es/sta/Relec/STARhssoManager","reviewedOn":"2026-08-19"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-19"},
+        {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-19"}
       ]
     },
 {

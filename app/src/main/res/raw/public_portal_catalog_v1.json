@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "0623a9ecff50aed009b7f91b208466786bd4ea68471d8761ed70466aae9abbec",
+  "sourceRevision": "1f2f4acaf163b97430504fd25b3eae920a159ec1b03dab0101602e4cdecbc916",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2400,28 +2400,32 @@
     {
       "portalId": "asturias-miprincipado-sede",
       "inventoryId": "ES-PUB-0095",
-      "profileId": null,
-      "displayName": "MiPrincipado",
+      "profileId": "asturias-miprincipado",
+      "displayName": "MiPrincipado — Solicitud Genérica",
       "organization": "Principado de Asturias",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Principado de Asturias",
-      "purpose": "Información de sede y acceso con sistemas de identificación admitidos.",
-      "entryUrl": "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica",
+      "purpose": "Solicitud Genérica protegida de MiPrincipado: soporte QA limitado a la autenticación con certificado mediante la frontera mTLS exacta de Cl@ve; la firma documental y la presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
       "observedMechanisms": [
-        "CERTIFICATE_ACCESS"
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A03A",
-        "A03C"
+        "A03C",
+        "ASTURIAS-CLAVE-AUTH-2026-08-19",
+        "ASTURIAS-SOLICITUD-GENERICA-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Firma, transporte del certificado, ABI, formato y endpoint no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA fail-closed limitado a la cadena MiPrincipado/STA/RHSSO/Cl@ve observada y al salto exacto https://pasarela.clave.gob.es/Proxy2/ServiceProvider -> https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen:443. La firma sigue NO_VERIFICADO: no se inventaron Órgano, Unidad Administrativa, Detalle de la solicitud ni preferencia de notificación, no se ejecutó operación de clave privada y no hubo presentación/registro final."
     },
     {
       "portalId": "asturias-sede-tramite-autofirma",
