@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "0623a9ecff50aed009b7f91b208466786bd4ea68471d8761ed70466aae9abbec",
+  "sourceRevision": "ec1e1ebf21e38e0936e9eab60da85961cec2fc7a2689b47a59528932d0d4b3c8",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2683,30 +2683,32 @@
     {
       "portalId": "catalunya-tramits-peticio-generica",
       "inventoryId": "ES-PUB-0105",
-      "profileId": null,
+      "profileId": "catalunya-peticio-generica-client-auth",
       "displayName": "Tràmits gencat — Petició genèrica",
       "organization": "Generalitat de Catalunya",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Cataluña",
-      "purpose": "Presentación de una petición genérica con identificación y firma cuando corresponda.",
+      "purpose": "Acceso con certificado a la Petició genèrica mediante la ruta Cl@ve/eIdentifier; la firma documental posterior no está implementada.",
       "entryUrl": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A09B",
         "A09C",
-        "A09D"
+        "A09D",
+        "CATALUNYA-PETICIO-CLIENTTLS-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La condición de firma no acredita cliente JS, formato, algoritmo ni callback exactos."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Implementación QA-only limitada a CLIENT_TLS_AUTH. La revalidación controlada 2026-08-19 volvió a terminar en GSIT j_acegi_security_check HTTP 500 después de autenticar; firma, formato, algoritmo, callback y aceptación E2E permanecen no verificados."
     },
     {
       "portalId": "ceuta-sede",

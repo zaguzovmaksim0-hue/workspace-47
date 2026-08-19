@@ -302,6 +302,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == AIREF_PROFILE_ID) {
                 validateAirefProfile(p)
             }
+            if (p.profileId.value == CATALUNYA_PROFILE_ID) {
+                validateCatalunyaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -370,7 +373,9 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                    val allowedSourceOrigins = if (
+                        p.profileId.value == AIREF_PROFILE_ID || p.profileId.value == CATALUNYA_PROFILE_ID
+                    ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
@@ -1013,6 +1018,42 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateCatalunyaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CATALUNYA_PROFILE_VERSION)
+        require(profile.displayName == CATALUNYA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CATALUNYA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CATALUNYA_PUBLIC_ORIGIN)))
+        require(
+            profile.redirectOrigins == setOf(
+                ExactOrigin.parse(CATALUNYA_OVT_ORIGIN),
+                ExactOrigin.parse(CATALUNYA_VALID_ORIGIN),
+                ExactOrigin.parse(CATALUNYA_CLAVE_ORIGIN),
+            ),
+        )
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(CATALUNYA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(CATALUNYA_CLIENT_AUTH_SOURCE_URL)),
+                requestPath = CATALUNYA_CLIENT_AUTH_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CATALUNYA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validatePoliciaProfile(profile: SiteProfile) {
         require(profile.profileVersion == POLICIA_PROFILE_VERSION)
         require(profile.displayName == POLICIA_DISPLAY_NAME)
@@ -1555,9 +1596,12 @@ object SiteProfileCatalogParser {
         origin: ExactOrigin,
         firstOwner: ProfileId,
         secondOwner: ProfileId,
-    ): Boolean =
-        setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
+    ): Boolean {
+        val owners = setOf(firstOwner.value, secondOwner.value)
+        val reviewedClaveOwners = setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, CATALUNYA_PROFILE_ID)
+        return owners.size == 2 && owners.all { it in reviewedClaveOwners } &&
             origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+    }
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -1858,6 +1902,33 @@ object SiteProfileCatalogParser {
         "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/",
         AIREF_START_URL,
         "https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js",
+    )
+    private const val CATALUNYA_PROFILE_ID = "catalunya-peticio-generica-client-auth"
+    private const val CATALUNYA_PROFILE_VERSION = 1
+    private const val CATALUNYA_DISPLAY_NAME =
+        "Generalitat de Catalunya — Petició genèrica — acceso con certificado"
+    private const val CATALUNYA_START_URL =
+        "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
+            "category=72461610-a82c-11e3-a972-000c29052e2c"
+    private const val CATALUNYA_PROTECTED_URL =
+        "https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?" +
+            "reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&" +
+            "urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2F" +
+            "Peticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c"
+    private const val CATALUNYA_PUBLIC_ORIGIN = "https://tramits.gencat.cat"
+    private const val CATALUNYA_OVT_ORIGIN = "https://ovt.gencat.cat"
+    private const val CATALUNYA_VALID_ORIGIN = "https://valid.aoc.cat"
+    private const val CATALUNYA_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
+    private const val CATALUNYA_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
+    private const val CATALUNYA_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val CATALUNYA_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
+    private val CATALUNYA_EVIDENCE_URLS = setOf(
+        "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
+            "category=72461610-a82c-11e3-a972-000c29052e2c",
+        CATALUNYA_START_URL,
+        CATALUNYA_PROTECTED_URL,
+        CATALUNYA_CLIENT_AUTH_SOURCE_URL,
+        "$CATALUNYA_CLIENT_AUTH_ORIGIN$CATALUNYA_CLIENT_AUTH_REQUEST_PATH",
     )
     private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
     private const val POLICIA_PROFILE_VERSION = 1
