@@ -18,6 +18,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -84,6 +85,17 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
+    }
+
+    @Test
+    fun redirectSourceAllowanceIsBoundToTheReviewedAsturiasProfileId() {
+        val reviewedId = "\"profileId\": \"asturias-miprincipado\""
+        val unreviewedId = "\"profileId\": \"asturias-unreviewed-client-auth\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(reviewedId))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(reviewedId, unreviewedId))
+        }
     }
 
     @Test

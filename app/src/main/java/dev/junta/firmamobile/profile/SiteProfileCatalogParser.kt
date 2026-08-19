@@ -370,7 +370,10 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                    val allowedSourceOrigins = if (
+                        p.profileId.value == AIREF_PROFILE_ID ||
+                        p.profileId.value == ASTURIAS_PROFILE_ID
+                    ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
@@ -1843,6 +1846,7 @@ object SiteProfileCatalogParser {
     private const val TENERIFE_SAFE_DESCRIPTION =
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private const val ASTURIAS_PROFILE_ID = "asturias-miprincipado"
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
