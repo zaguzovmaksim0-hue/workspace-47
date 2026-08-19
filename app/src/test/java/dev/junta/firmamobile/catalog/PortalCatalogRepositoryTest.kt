@@ -110,6 +110,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-bizkaia-instancia-generica",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "madrid-sede-tarjeta-azul",
                 "fondos-europeos-sede-public-home",
                 "diputacion-teruel-instancia-general",
                 "sepes-transportes-public-complaints",
