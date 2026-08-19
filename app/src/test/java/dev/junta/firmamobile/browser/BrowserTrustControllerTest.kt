@@ -69,6 +69,36 @@ class BrowserTrustControllerTest {
     }
 
     @Test
+    fun sharedAragonOriginActivatesOnlyTheExactSelectedStart() {
+        val sirawId = ProfileId("aragon-siraw")
+        val tramitesId = ProfileId("aragon-solicitud-general-client-auth")
+        val siraw = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == sirawId }
+        val tramites = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == tramitesId }
+
+        assertNull(registry.resolve(siraw.startUrl))
+        assertNull(registry.resolve(tramites.startUrl))
+
+        val sirawStart = BrowserTrustController(
+            BrowserUrlPolicy(registry, sirawId),
+            SensitiveFlowInvalidator {},
+        ).navigate(siraw.startUrl.toASCIIString())
+        assertEquals(TrustMode.TRUSTED_SIGNING, sirawStart.resolution.trustMode)
+        assertEquals(sirawId, sirawStart.activeProfileId)
+
+        val tramitesStart = BrowserTrustController(
+            BrowserUrlPolicy(registry, tramitesId),
+            SensitiveFlowInvalidator {},
+        ).navigate(tramites.startUrl.toASCIIString())
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, tramitesStart.resolution.trustMode)
+        assertEquals(tramitesId, tramitesStart.activeProfileId)
+
+        val siblingStartWithoutActivation = BrowserUrlPolicy(registry, sirawId)
+            .resolve(tramites.startUrl.toASCIIString())
+        assertEquals(TrustMode.BROWSE_ONLY, siblingStartWithoutActivation.trustMode)
+        assertNull(siblingStartWithoutActivation.site)
+    }
+
+    @Test
     fun directNavigationToAnotherActiveCatalogProfileFailsClosed() {
         val qaRegistry = SiteProfileRegistry(
             BuiltInSiteProfiles.catalog,
