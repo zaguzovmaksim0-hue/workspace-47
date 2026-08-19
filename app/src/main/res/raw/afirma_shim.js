@@ -18,6 +18,7 @@
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
+  const airefCompatibilityEnabled = __JFM_AIREF_COMPATIBILITY_ENABLED__;
   const cdtiCompatibilityEnabled = __JFM_CDTI_COMPATIBILITY_ENABLED__;
   const policiaCompatibilityEnabled = __JFM_POLICIA_COMPATIBILITY_ENABLED__;
   const granCanariaCompatibilityEnabled = __JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__;
@@ -39,6 +40,9 @@
   const jccmPayloadBase64 = "QUJDREU=";
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
+  const airefOrigin = "https://sede.airef.es";
+  const airefSigningPath = "/invesiteRE/action/solicitud/view";
+  const airefSigningQueryPattern = /^\?id=[0-9]{1,20}$/;
   const cdtiOrigin = "https://sede.cdti.gob.es";
   const cdtiPage =
     "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx";
@@ -205,6 +209,25 @@
     }
   }
 
+  function isValidAirefPayload(value) {
+    if (typeof value !== "string" || value.length !== 44 || !base64Pattern.test(value)) {
+      return false;
+    }
+    try {
+      const decoded = atob(value);
+      return decoded.length === 32 && btoa(decoded) === value;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isExactAirefSigningPage() {
+    return window.location.origin === airefOrigin &&
+      window.location.pathname === airefSigningPath &&
+      airefSigningQueryPattern.test(window.location.search) &&
+      window.location.hash === "";
+  }
+
   function isExactCanariasChallenge(value) {
     if (typeof value !== "string" || !base64Pattern.test(value)) {
       return false;
@@ -267,6 +290,21 @@
       typeof successCallback === "function" &&
       typeof errorCallback === "function";
     if (isSevillaAtseOrigin && !isExactSevillaAtseCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    const isAirefOrigin =
+      airefCompatibilityEnabled && window.location.origin === airefOrigin;
+    const isExactAirefCall =
+      isAirefOrigin && isExactAirefSigningPage() &&
+      args.length === 6 &&
+      isValidAirefPayload(args[0]) &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "XAdES" &&
+      args[3] === null &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isAirefOrigin && !isExactAirefCall) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -399,15 +437,15 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !isExactSevillaAtseCall && !isExactGranCanariaCall && !isExactCanariasCall &&
-          !isExactMinecoCall && !isExactCdtiCall &&
+          !isExactSevillaAtseCall && !isExactAirefCall && !isExactGranCanariaCall &&
+          !isExactCanariasCall && !isExactMinecoCall && !isExactCdtiCall &&
           !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
           !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
-          !isExactCdtiCall && !isExactPoliciaCall && !isExactGranCanariaCall &&
-          !isExactCanariasCall && !isExactMinecoCall)) {
+          !isExactAirefCall && !isExactCdtiCall && !isExactPoliciaCall &&
+          !isExactGranCanariaCall && !isExactCanariasCall && !isExactMinecoCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

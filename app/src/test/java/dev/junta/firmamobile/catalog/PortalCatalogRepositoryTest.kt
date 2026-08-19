@@ -66,6 +66,7 @@ class PortalCatalogRepositoryTest {
                 "mites-certificate-login",
                 "transportes-qys-cert-login",
                 "sevilla-atse-certificate-login",
+                "airef-instancia-general",
                 "melilla-sede",
                 "ceuta-sede",
                 "extremadura-tramites",

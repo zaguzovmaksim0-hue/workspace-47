@@ -15,6 +15,7 @@ import dev.junta.firmamobile.profile.SignatureFormat
 import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
+import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
@@ -245,6 +246,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == SEVILLA_ATSE_PROFILE_ID && !isSevillaAtseContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isAirefContract = isExactAirefContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == AirefXadesEnvelopingAdapter.PROFILE_ID && !isAirefContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isCdtiContract = isExactCdtiContract(
             profile = profile,
             origin = resolved.origin,
@@ -335,7 +346,9 @@ internal class ProfileMiniAppletBridgeAdapter(
             } else {
                 SigningFormat.XADES to SignatureFormat.XADES
             }
-            FORMAT_XADES -> if (isSevillaAtseContract || isPoliciaContract || isTransportesContract) {
+            FORMAT_XADES -> if (
+                isSevillaAtseContract || isAirefContract || isPoliciaContract || isTransportesContract
+            ) {
                 SigningFormat.XADES to SignatureFormat.XADES
             } else {
                 null
@@ -418,7 +431,7 @@ internal class ProfileMiniAppletBridgeAdapter(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
                 )
-        } else if (isSevillaAtseContract) {
+        } else if (isSevillaAtseContract || isAirefContract) {
             if (json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
                 return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
@@ -522,6 +535,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             )
         }
         if (isSevillaAtseContract && !decodedData.isExactSevillaAtseChallenge()) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
+        if (isAirefContract && decodedData.size != AirefXadesEnvelopingAdapter.PAYLOAD_BYTES) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
@@ -838,6 +858,71 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.fixedExtraProperties.isEmpty() &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == SEVILLA_ATSE_PROTOCOL_ID
+
+    private fun isExactAirefContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean {
+        val clientAuth = profile.clientAuthPolicy
+        return isExactAirefSigningPage(currentPageUrl) &&
+            profile.profileId.value == AirefXadesEnvelopingAdapter.PROFILE_ID &&
+            profile.profileVersion == AirefXadesEnvelopingAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == AirefXadesEnvelopingAdapter.PUBLIC_START_URL &&
+            origin.serialized == AirefXadesEnvelopingAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(AirefXadesEnvelopingAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins == setOf(ExactOrigin.parse(AIREF_CLAVE_ORIGIN)) &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH) &&
+            clientAuth != null &&
+            clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+            clientAuth.requestOrigins == setOf(
+                ExactOrigin.parse(AirefXadesEnvelopingAdapter.CLIENT_AUTH_REQUEST_ORIGIN),
+            ) &&
+            clientAuth.sourceUrls == setOf(java.net.URI(AirefXadesEnvelopingAdapter.CLIENT_AUTH_SOURCE_URL)) &&
+            clientAuth.requestPath == AirefXadesEnvelopingAdapter.CLIENT_AUTH_REQUEST_PATH &&
+            clientAuth.fixedQueryParameters.isEmpty() &&
+            clientAuth.requiredEphemeralQueryParameters.isEmpty() &&
+            clientAuth.sourceFixedQueryParameters.isEmpty() &&
+            clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty() &&
+            clientAuth.linkedEphemeralQueryParameters.isEmpty() &&
+            clientAuth.allowEmptyIssuerList &&
+            clientAuth.grantTtlSeconds == 15 &&
+            clientAuth.requestPort == 443 &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == AirefXadesEnvelopingAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.XADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties.isEmpty() &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == AirefXadesEnvelopingAdapter.ID.value
+    }
+
+    private fun isExactAirefSigningPage(raw: String?): Boolean {
+        val uri = raw?.let { runCatching { java.net.URI(it) }.getOrNull() } ?: return false
+        return !uri.isOpaque &&
+            uri.scheme == "https" &&
+            uri.host == "sede.airef.es" &&
+            uri.userInfo == null &&
+            uri.port in setOf(-1, 443) &&
+            uri.rawPath == AirefXadesEnvelopingAdapter.SIGNING_PATH &&
+            uri.rawFragment == null &&
+            uri.rawQuery?.matches(AIREF_SIGNING_QUERY) == true
+    }
 
     private fun isExactTransportesContract(
         profile: SiteProfile,
@@ -1164,6 +1249,8 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val FORMAT_XADES = "XAdES"
         private const val FORMAT_XADES_ENVELOPING = "XAdES Enveloping"
+        private const val AIREF_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
+        private val AIREF_SIGNING_QUERY = Regex("id=[0-9]{1,20}")
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val SEVILLA_ATSE_PROFILE_VERSION = 1
         private const val SEVILLA_ATSE_START_URL =

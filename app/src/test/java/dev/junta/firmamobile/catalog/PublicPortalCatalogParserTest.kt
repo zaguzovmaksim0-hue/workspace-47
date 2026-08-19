@@ -59,6 +59,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("mites-certificate-login"),
                 ProfileId("transportes-qys-cert-login"),
                 ProfileId("sevilla-atse-certificate-login"),
+                ProfileId("airef-instancia-general"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
                 ProfileId("extremadura-tramites"),

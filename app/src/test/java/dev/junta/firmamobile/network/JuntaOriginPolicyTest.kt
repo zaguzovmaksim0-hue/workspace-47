@@ -33,6 +33,7 @@ class JuntaOriginPolicyTest {
     private val jccm = ProfileId("jccm-certificate-login-probe")
     private val mites = ProfileId("mites-certificate-login")
     private val sevilla = ProfileId("sevilla-atse-certificate-login")
+    private val airef = ProfileId("airef-instancia-general")
     private val cdti = ProfileId("cdti-certificate-validation")
     private val transportes = ProfileId("transportes-qys-cert-login")
     private val melilla = ProfileId("melilla-sede")
@@ -81,6 +82,9 @@ class JuntaOriginPolicyTest {
             "ventanillaelectronica.jccm.es",
             "sede.mites.gob.es",
             "www.sevilla.org",
+            "sede.airef.es",
+            "pasarela.clave.gob.es",
+            "pasarela-ident.clave.gob.es",
             "sede.cdti.gob.es",
             "sede.transportes.gob.es",
             "sede.melilla.es",
@@ -191,6 +195,10 @@ class JuntaOriginPolicyTest {
         )
         assertEquals(setOf("sede.mites.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mites))
         assertEquals(setOf("www.sevilla.org"), JuntaOriginPolicy.browserAllowedHosts(sevilla))
+        assertEquals(
+            setOf("sede.airef.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(airef),
+        )
         assertEquals(setOf("sede.cdti.gob.es"), JuntaOriginPolicy.browserAllowedHosts(cdti))
         assertEquals(
             setOf("sede.transportes.gob.es"),
@@ -258,6 +266,10 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://www.sevilla.org"),
             JuntaOriginPolicy.webMessageOriginRules(sevilla),
+        )
+        assertEquals(
+            setOf("https://sede.airef.es"),
+            JuntaOriginPolicy.webMessageOriginRules(airef),
         )
         assertEquals(
             setOf("https://sede.cdti.gob.es"),

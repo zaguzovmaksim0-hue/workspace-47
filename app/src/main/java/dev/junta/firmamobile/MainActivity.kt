@@ -67,6 +67,7 @@ import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
 import dev.junta.firmamobile.signing.MinecoPadesAdapter
 import dev.junta.firmamobile.signing.TenerifeCadesDetachedAdapter
 import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
+import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
@@ -157,6 +158,7 @@ class MainActivity : ComponentActivity() {
         val minecoAdapter = MinecoPadesAdapter()
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
         val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
+        val airefAdapter = AirefXadesEnvelopingAdapter()
         val cdtiAdapter = CdtiXadesEnvelopingAdapter()
         val transportesAdapter = TransportesXadesEnvelopedAdapter()
         val policiaAdapter = PoliciaXadesDetachedAdapter()
@@ -196,6 +198,7 @@ class MainActivity : ComponentActivity() {
                     minecoAdapter.id -> minecoAdapter
                     tenerifeAdapter.id -> tenerifeAdapter
                     sevillaAdapter.id -> sevillaAdapter
+                    airefAdapter.id -> airefAdapter
                     cdtiAdapter.id -> cdtiAdapter
                     transportesAdapter.id -> transportesAdapter
                     policiaAdapter.id -> policiaAdapter

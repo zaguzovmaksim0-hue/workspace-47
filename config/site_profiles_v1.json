@@ -1138,6 +1138,37 @@
         {"url":"https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js","reviewedOn":"2026-08-17"},
         {"url":"https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf","reviewedOn":"2026-08-17"}
       ]
+    },
+    {
+      "profileId": "airef-instancia-general",
+      "profileVersion": 1,
+      "displayName": "AIReF — Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01",
+      "initiatorOrigins": ["https://sede.airef.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de la solicitud de Instancia General de la AIReF","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"XADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1", "CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js","reviewedOn":"2026-08-18"}
+      ]
     }
   ]
 }

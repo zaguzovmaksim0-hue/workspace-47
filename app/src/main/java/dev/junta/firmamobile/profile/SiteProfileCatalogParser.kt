@@ -290,6 +290,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == POLICIA_PROFILE_ID) {
                 validatePoliciaProfile(p)
             }
+            if (p.profileId.value == AIREF_PROFILE_ID) {
+                validateAirefProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -323,8 +326,17 @@ object SiteProfileCatalogParser {
             require(p.activation != ProfileActivation.ENABLED || p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED)
             require(Capability.CLIENT_TLS_AUTH in p.capabilities == (p.clientAuthPolicy != null))
             p.clientAuthPolicy?.let { policy ->
-                require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
-                require(p.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+                if (p.profileId.value == AIREF_PROFILE_ID) {
+                    require(p.endpoints.isEmpty())
+                    require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+                    require(
+                        p.capabilities ==
+                            setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
+                    )
+                } else {
+                    require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
+                    require(p.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+                }
                 if (policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     policy.fixedQueryParameters.isNotEmpty()
                 ) {
@@ -336,7 +348,12 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    (source.origin() in p.initiatorOrigins ||
+                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                        p.initiatorOrigins + p.redirectOrigins
+                    } else {
+                        p.initiatorOrigins
+                    }
+                    (source.origin() in allowedSourceOrigins ||
                         p.profileId.value == NAVARRA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                             source.origin() in p.redirectOrigins) &&
@@ -388,6 +405,7 @@ object SiteProfileCatalogParser {
                     require(
                         op.packaging == if (
                             p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
+                            p.profileId.value == AIREF_PROFILE_ID ||
                             p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
                             p.profileId.value == MINECO_PROFILE_ID ||
                             p.profileId.value == CDTI_PROFILE_ID ||
@@ -479,6 +497,7 @@ object SiteProfileCatalogParser {
                             require(
                                 op.algorithms == if (
                                     p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
+                                    p.profileId.value == AIREF_PROFILE_ID ||
                                     p.profileId.value == POLICIA_PROFILE_ID ||
                                     p.profileId.value == TRANSPORTES_PROFILE_ID
                                 ) {
@@ -506,8 +525,11 @@ object SiteProfileCatalogParser {
                 require(endpointUrlOwners.put(endpoint.url, p.profileId) == null)
             }
             p.allOrigins().forEach { origin ->
-                require(navigationOriginOwners.put(origin, p.profileId) == null)
-
+                val previousOwner = navigationOriginOwners.putIfAbsent(origin, p.profileId)
+                require(
+                    previousOwner == null ||
+                        isReviewedSharedNavigationOrigin(origin, previousOwner, p.profileId),
+                )
             }
         }
     }
@@ -877,6 +899,52 @@ object SiteProfileCatalogParser {
                 algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
                 format = SignatureFormat.CADES,
                 packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
+    private fun validateAirefProfile(profile: SiteProfile) {
+        require(profile.profileVersion == AIREF_PROFILE_VERSION)
+        require(profile.displayName == AIREF_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == AIREF_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(AIREF_ORIGIN)))
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(AIREF_CLAVE_ORIGIN)))
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(AIREF_CLIENT_AUTH_SOURCE_URL)),
+                requestPath = AIREF_CLIENT_AUTH_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AIREF_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = AIREF_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.XADES,
+                packaging = SignaturePackaging.ATTACHED,
                 mode = null,
                 fixedExtraProperties = emptyMap(),
                 allowedExtraProperties = emptySet(),
@@ -1354,6 +1422,14 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun isReviewedSharedNavigationOrigin(
+        origin: ExactOrigin,
+        firstOwner: ProfileId,
+        secondOwner: ProfileId,
+    ): Boolean =
+        setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
+            origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
     private fun URI.origin() = ExactOrigin.parse("https://$host")
@@ -1598,6 +1674,22 @@ object SiteProfileCatalogParser {
     private const val TENERIFE_SAFE_DESCRIPTION =
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private const val AIREF_PROFILE_ID = "airef-instancia-general"
+    private const val AIREF_PROFILE_VERSION = 1
+    private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
+    private const val AIREF_START_URL =
+        "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"
+    private const val AIREF_ORIGIN = "https://sede.airef.es"
+    private const val AIREF_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
+    private const val AIREF_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
+    private const val AIREF_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val AIREF_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
+    private const val AIREF_SAFE_DESCRIPTION = "Firma de la solicitud de Instancia General de la AIReF"
+    private val AIREF_EVIDENCE_URLS = setOf(
+        "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/",
+        AIREF_START_URL,
+        "https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js",
+    )
     private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
     private const val POLICIA_PROFILE_VERSION = 1
     private const val POLICIA_DISPLAY_NAME = "Policía Nacional — Solicitud genérica"

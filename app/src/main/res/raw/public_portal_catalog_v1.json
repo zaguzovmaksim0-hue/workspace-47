@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "088d33a261a363ea57d03e567c49f001652072a88be77a96e69115b9cb73b313",
+  "sourceRevision": "17e28edada215217c78173740bd75525f4025807fdf15350378c0a2481ee9f90",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -710,24 +710,35 @@
     {
       "portalId": "age-autoridad-independiente-de-responsabilidad-fiscal-airef",
       "inventoryId": "ES-PUB-0027",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "airef-instancia-general",
+      "displayName": "AIReF — Instancia General",
       "organization": "Autoridad Independiente de Responsabilidad Fiscal (AIReF)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://airef.sede.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Autenticación con certificado vía Cl@ve y firma local de la Instancia General AIReF mediante MiniApplet.sign sobre un payload dinámico de 32 bytes.",
+      "entryUrl": "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_XADES_CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "AIREF-PUBLIC-2026-08-18",
+        "AIREF-AUTH-2026-08-18",
+        "AIREF-SIGNING-2026-08-18"
+      ],
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato de autenticación y firma exacto implementado fail-closed solo en QA. El runtime controlado llegó hasta la vista previa sin ejecutar firma criptográfica ni presentación final; E2E de firma queda pendiente."
     },
     {
       "portalId": "age-biblioteca-nacional-de-espana",

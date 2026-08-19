@@ -276,6 +276,37 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactAirefClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val airef = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = airef.observeTopLevelNavigation(
+            AIREF_PROFILE, AIREF_SOURCE, AIREF_TARGET, 79, true,
+        )
+
+        assertEquals(AIREF_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            airef.observeTopLevelNavigation(AIREF_PROFILE, AIREF_SOURCE, AIREF_TARGET, 79, true),
+        )
+
+        listOf(
+            AIREF_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            "$AIREF_TARGET?extra=1",
+            AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+            AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
+        ).forEachIndexed { index, invalidTarget ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                invalidTarget,
+                fresh.observeTopLevelNavigation(
+                    AIREF_PROFILE, AIREF_SOURCE, invalidTarget, 80L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTwoStageValladolidRedirectAuthorizesOnlyTheObservedClientTlsPort() {
         val valladolid = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
 
@@ -716,6 +747,9 @@ class ClientAuthNavigationAuthorizerTest {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val TEA_PROFILE = ProfileId("tea-alegaciones-certificado")
+        val AIREF_PROFILE = ProfileId("airef-instancia-general")
+        const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         val NAVARRA_PROFILE = ProfileId("navarra-sede-registro-general")
         const val NAVARRA_TOKEN = "w47SyntheticNavarraSessionToken0123456789"

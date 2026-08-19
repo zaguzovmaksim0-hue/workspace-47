@@ -197,10 +197,10 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 68 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 72 |
-| Entradas restantes fuera de ambos estados | 111 |
-| Evidencia exacta de `ClientCertRequest` | 1 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 69 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 73 |
+| Entradas restantes fuera de ambos estados | 110 |
+| Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 68 |
+| `IMPLEMENTED_NOT_E2E` | 69 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 104 |
+| `BROWSE_ONLY` | 103 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 143 |
+| `REVIEWED` | 144 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 35 |
+| `DISCOVERED` | 34 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1285,30 +1285,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Autoridad Independiente de Responsabilidad Fiscal (AIReF)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "AIReF — Instancia General"
     surface_type: "SEDE"
-    origin: "https://airef.sede.gob.es"
-    official_site: "https://airef.sede.gob.es/"
-    e_sede: "https://airef.sede.gob.es/"
-    entry_url: "https://airef.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    origin: "https://sede.airef.es"
+    official_site: "https://sede.airef.es/"
+    e_sede: "https://sede.airef.es/"
+    entry_url: "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"
+    procedure_page: "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MiniApplet AutoScript"
+    protocol_family: "AUTOSCRIPT_XADES_CLIENT_TLS_AUTH"
+    signature_format: "XAdES Enveloping"
+    signature_algorithm: "SHA1withRSA"
+    endpoint: "https://sede.airef.es/invesiteRE/action/solicitud/sign"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Autenticación con certificado vía Cl@ve y firma local de la Instancia General AIReF mediante MiniApplet.sign sobre un payload dinámico de 32 bytes."
+    protocol_evidence: "Runtime autenticado controlado: Cl@ve eIdentifier solicita certificado TLS cliente en pasarela-ident.clave.gob.es y alcanza /invesiteRE/action/solicitud/view. La página protegida carga miniapplet.js SHA-256 420dc2dfe483232e775e7f3a1a5704158ce13f7df959dce2c80468383463a11c y llama MiniApplet.sign(payloadBase64 dinámico de 32 bytes, SHA1withRSA, XAdES, null, firmaExito, firmaError). firmaExito copia firma y certificado Base64 y prepara POST a /invesiteRE/action/solicitud/sign. No se invocó MiniApplet.sign ni se envió ese POST."
+    client_tls_auth: "SI"
+    evidence_ids: ["D11", "AIREF-PUBLIC-2026-08-18", "AIREF-AUTH-2026-08-18", "AIREF-SIGNING-2026-08-18"]
+    reason: "Contrato de autenticación y firma exacto implementado fail-closed solo en QA. El runtime controlado llegó hasta la vista previa sin ejecutar firma criptográfica ni presentación final; E2E de firma queda pendiente."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar en QA Android el flujo completo hasta callback de firma con credencial de prueba/autorizada y detenerse antes de cualquier presentación administrativa; promover a release solo con evidencia E2E separada."
+    notes: "SIA 216016. El payload de firma y el id de borrador son dinámicos y no se fijan como constantes. Se creó un borrador intermedio sin firma durante la inspección controlada; no se eliminó ni se registró porque las acciones destructivas y la presentación final quedan fuera de §3.1."
 
   - inventory_id: "ES-PUB-0028"
     surface_key: "age-biblioteca-nacional-de-espana"
@@ -6223,7 +6223,7 @@ grandes y explícitos:
    institucional.
 6. No existe inventario separado de proveedores compartidos, plataformas
    multi-tenant, SSO, Storage/Retrieve o endpoints tri-phase.
-7. Hay cuatro entradas con evidencia E2E delimitada y una sola evidencia exacta de `ClientCertRequest`; ningún otro registro hereda esos resultados.
+7. Hay cuatro entradas con evidencia E2E delimitada y dos evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
 8. Las variantes lingüísticas no crean registros; los dominios históricos y
    redirects solo se separan cuando existe una frontera funcional acreditada.
    Los candidatos INAGA de Aragón, el checker técnico de Castilla y León, el

@@ -776,6 +776,42 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "no inventory entry"):
                 GENERATOR.generate(path, SITE_PROFILES)
 
+    def test_airef_authenticated_xades_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        airef = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0027"
+        )
+
+        self.assertEqual(
+            "age-autoridad-independiente-de-responsabilidad-fiscal-airef",
+            airef["portalId"],
+        )
+        self.assertEqual("airef-instancia-general", airef["profileId"])
+        self.assertEqual(
+            "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01",
+            airef["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", airef)
+        self.assertEqual("AUTOSCRIPT_XADES_CLIENT_TLS_AUTH", airef["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", airef["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", airef["catalogStatus"])
+        self.assertEqual("REVIEWED", airef["discoveryState"])
+        self.assertEqual("2026-08-18", airef["reviewedOn"])
+        self.assertEqual(["XADES"], airef["observedSignatureFormats"])
+        self.assertEqual(
+            [
+                "AUTOSCRIPT",
+                "CERTIFICATE_ACCESS",
+                "CLIENT_TLS_AUTH",
+                "ELECTRONIC_SIGNATURE",
+                "MINIAPPLET",
+            ],
+            airef["observedMechanisms"],
+        )
+        self.assertIn("qa", airef["limitations"].lower())
+        self.assertIn("e2e", airef["limitations"].lower())
+
     def test_dsca_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         dsca = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030")
