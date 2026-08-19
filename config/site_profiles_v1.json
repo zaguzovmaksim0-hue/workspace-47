@@ -342,6 +342,27 @@
       ]
     },
     {
+      "profileId": "castilla-leon-quju-public",
+      "profileVersion": 1,
+      "displayName": "Junta de Castilla y León — formulario público QUJU",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://presidencia.jcyl.es/QUJU?O=1",
+      "initiatorOrigins": ["https://presidencia.jcyl.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.tramitacastillayleon.jcyl.es/web/jcyl/AdministracionElectronica/es/Plantilla100Detalle/1251181050732/Tramite/1277466706825/Tramite","reviewedOn":"2026-08-19"},
+        {"url":"https://presidencia.jcyl.es/Comun/Home/Formulario/QUJU","reviewedOn":"2026-08-19"},
+        {"url":"https://presidencia.jcyl.es/QUJU?O=1","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "jccm-certificate-login-probe",
       "profileVersion": 1,
       "displayName": "Junta de Comunidades de Castilla-La Mancha — Probe de acceso con certificado",

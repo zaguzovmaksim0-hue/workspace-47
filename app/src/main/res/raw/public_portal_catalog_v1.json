@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "088d33a261a363ea57d03e567c49f001652072a88be77a96e69115b9cb73b313",
+  "sourceRevision": "c4bb8e998890c7eb5a560006b0dc21433d0d70d4a433bebe48ce92dc1674e9d4",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2578,29 +2578,28 @@
     {
       "portalId": "castilla-leon-tramita",
       "inventoryId": "ES-PUB-0102",
-      "profileId": null,
-      "displayName": "Tramitacastillayleon",
+      "profileId": "castilla-leon-quju-public",
+      "displayName": "Sugerencias y quejas de la ciudadanía — QUJU",
       "organization": "Junta de Castilla y León",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Castilla y León",
-      "purpose": "Acceso a trámites y firma electrónica cuando la actuación la exige.",
-      "entryUrl": "https://www.tramitacastillayleon.jcyl.es/",
-      "observedMechanisms": [
-        "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
-      ],
+      "purpose": "Navegación QA integrada únicamente al formulario público QUJU exacto. El POST intermedio autorizado se aceptó en Chromium y terminó en /QUJU/Successfull sin cargar AutoScript/MiniApplet ni exponer un ABI de firma; no se implementa firma ni registro electrónico.",
+      "entryUrl": "https://presidencia.jcyl.es/QUJU?O=1",
+      "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "JCYL_QUJU_PUBLIC_FORM_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A07A",
-        "A07B"
+        "A07B",
+        "JCYL-QUJU-PROC-2026-08-19",
+        "JCYL-QUJU-RUNTIME-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La documentación de requisitos no acredita ABI, formato, callback ni endpoint concretos."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado a la navegación pública exacta de QUJU, con capabilities vacío. El POST autorizado demuestra el límite operativo actual, pero no acredita ni implementa firma, selección de certificado, client TLS, algoritmo, formato, callback ni registro electrónico; esos campos permanecen NO_VERIFICADO y falta E2E físico."
     },
     {
       "portalId": "castilla-la-mancha-sede",
