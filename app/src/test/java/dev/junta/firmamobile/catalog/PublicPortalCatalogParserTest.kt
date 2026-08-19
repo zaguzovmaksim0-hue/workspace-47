@@ -131,6 +131,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("menorca-carpeta-ciutadana"),
                 ProfileId("canarias-sede"),
                 ProfileId("comunidad-madrid-cuenta-digital-53f1"),
+                ProfileId("justicia-sede-judicial-private-area"),
                 ProfileId("diputacion-gipuzkoa-registro-public"),
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 ProfileId("la-gomera-instancia-general"),

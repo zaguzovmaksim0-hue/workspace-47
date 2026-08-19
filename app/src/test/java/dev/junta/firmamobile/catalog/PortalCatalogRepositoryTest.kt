@@ -138,6 +138,7 @@ class PortalCatalogRepositoryTest {
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
                 "comunidad-madrid-cuenta-digital-53f1",
+                "justicia-sede-judicial-private-area",
                 "diputacion-gipuzkoa-registro-public",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "la-gomera-instancia-general",
