@@ -91,6 +91,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-valencia-sede",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
+                "diputacion-badajoz-portal",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "cdti-certificate-validation",

@@ -474,7 +474,7 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == TENERIFE_EXTRA_PROPERTIES)
-                                } else if (p.profileId.value == LLEIDA_PROFILE_ID) {
+                                } else if (p.profileId.value == LLEIDA_PROFILE_ID || p.profileId.value == BADAJOZ_PROFILE_ID) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
                                     require(op.fixedExtraProperties == LLEIDA_EXTRA_PROPERTIES)
@@ -1916,6 +1916,7 @@ object SiteProfileCatalogParser {
         "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
     )
     private const val LLEIDA_PROFILE_ID = "diputacion-lleida-sede"
+    private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
     private val LLEIDA_EXTRA_PROPERTIES = linkedMapOf(
         "policy" to "FirmaAGE",
         "headless" to "true",
