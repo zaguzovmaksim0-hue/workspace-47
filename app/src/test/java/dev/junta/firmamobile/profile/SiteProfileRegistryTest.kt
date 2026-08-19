@@ -12,6 +12,7 @@ class SiteProfileRegistryTest {
         val clave = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
         val claveIdent = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
         val airef = ProfileId("airef-instancia-general")
+        val mugeju = ProfileId("mugeju-remision-documentacion-client-auth")
         val mineco = ProfileId("ministerio-economia-instancia-generica")
 
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
@@ -31,6 +32,14 @@ class SiteProfileRegistryTest {
         assertEquals(
             TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, claveIdent)?.trustMode,
         )
     }
 
