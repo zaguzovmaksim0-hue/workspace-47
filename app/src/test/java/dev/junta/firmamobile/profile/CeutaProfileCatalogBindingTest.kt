@@ -43,8 +43,8 @@ class CeutaProfileCatalogBindingTest {
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.capabilities.isEmpty())
         assertNull(profile.clientAuthPolicy)
-        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertEquals(3, profile.evidence.size)
 
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)

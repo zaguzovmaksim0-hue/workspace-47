@@ -830,7 +830,7 @@
       "operationPolicies": [{"operation":"SELECT_CERTIFICATE","safeDescription":"Compartir certificado con la Sede electrónica del ISCIII","inputAdapterId":"autoscript-select-certificate-v1","callbackContractId":"autoscript-select-certificate-callback-v1","capabilities":["SELECT_CERTIFICATE"],"endpointId":null,"algorithms":[],"format":null,"packaging":null,"mode":null,"fixedExtraProperties":{"serverUrl":"http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService"},"allowedExtraProperties":[]}],
       "capabilities": ["SELECT_CERTIFICATE"],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
         {"url":"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null","reviewedOn":"2026-08-15"},
         {"url":"https://sede.isciii.gob.es/js/autoscript/autoscript.js","reviewedOn":"2026-08-15"},
