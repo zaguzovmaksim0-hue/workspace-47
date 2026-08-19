@@ -132,6 +132,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("canarias-sede"),
                 ProfileId("comunidad-madrid-cuenta-digital-53f1"),
                 ProfileId("justicia-sede-judicial-private-area"),
+                ProfileId("madrid-sede-tarjeta-azul"),
                 ProfileId("diputacion-gipuzkoa-registro-public"),
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 ProfileId("la-gomera-instancia-general"),

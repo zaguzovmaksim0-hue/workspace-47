@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 271 |
 | Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 147 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 151 |
-| Entradas restantes fuera de ambos estados | 32 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 148 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 152 |
+| Entradas restantes fuera de ambos estados | 31 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 147 |
+| `IMPLEMENTED_NOT_E2E` | 148 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 25 |
+| `BROWSE_ONLY` | 24 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,8 +233,8 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 169 |
-| `RECHECK_REQUIRED` | 5 |
+| `REVIEWED` | 170 |
+| `RECHECK_REQUIRED` | 4 |
 | `DISCOVERED` | 9 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
@@ -361,7 +361,7 @@ requiera traducción manual.
 | `P08` | Comunidad de Madrid / gestiona2 | [P08][P08A][P08B] | Guía local-PDF y frontend que bloquea móvil. |
 | `P09` | Diputación de Valladolid | [P09][P09A] | Certificados admitidos y explicación conceptual de firma. |
 | `P10` | Ayuntamiento de Sevilla | [P10][P10A] | Requisito de certificado vigente y AutoFirma. |
-| `P11` | Ayuntamiento de Madrid | [P11] | Procedimiento oficial previamente inspeccionado; revalidación automatizada pendiente. |
+| `P11` | Ayuntamiento de Madrid | [P11] | Procedimiento oficial de Tarjeta Azul revalidado en Chromium; cadena pública observada `sede.madrid.es` → `servcla.madrid.es` → selector OIDC/PKCE en `cas.madrid.es`, con delegación `DNIe / Certificado` a Cl@ve. |
 | `P12` | Universidad de Granada | [P12][P12A] | Pantalla AutoFirma y requisitos; transporte exacto no probado. |
 | `P13` | Universidad de Sevilla | [P13][P13A] | Requisitos técnicos y ficha pública ISG_01 que delega exactamente a REG-AGE. |
 | `P14` | REG/RedSARA | [P14][P14A][P14B][P14C][P14D] | Entrada, manual y JS público con contrato estático. |
@@ -457,11 +457,14 @@ quedan para una ola posterior y no alteran el cierre primario 41/41.
 - D10 no pudo validar la cadena CA con el almacén local de `curl`, aunque una
   lectura HTTPS independiente recuperó la página oficial de RUCT; no se usó
   `--insecure` ni se debilitó TLS;
-- P11 respondió HTTP 403 al cliente CLI. Una lectura web independiente mostró
-  la página oficial, pero el registro permanece `RECHECK_REQUIRED` porque la
-  comprobación automatizada no es repetible sin cambiar de transporte.
+- P11 sigue respondiendo HTTP 403 al cliente CLI, pero el 2026-08-19 una sesión
+  Chromium pública normal cargó la misma entrada y permitió seguir la cadena
+  municipal hasta el selector OIDC/PKCE y la delegación externa de la opción
+  `DNIe / Certificado` a Cl@ve. El registro vuelve a `REVIEWED`; no se infieren
+  TLS client auth, firma ni presentación a partir de esta diferencia de transporte.
 
-No se siguió ninguna ruta autenticada ni se intentó eludir esas respuestas.
+No se introdujeron credenciales ni se realizó firma, presentación o pago durante
+esta revalidación.
 
 ## 7. Registros materializados
 
@@ -613,7 +616,7 @@ records:
     certificate_required: "SI"
     signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "OIDC_PKCE_CLAVE_CERTIFICATE_ROUTE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
@@ -981,15 +984,15 @@ records:
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "RECHECK_REQUIRED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Identificación/tramitación con certificado cuando el procedimiento lo admite."
-    protocol_evidence: "La entrada oficial fue inspeccionada previamente; el cliente CLI recibió 403 en la revalidación."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA acotada desde la Sede a la solicitud digital de Tarjeta Azul y al selector municipal OIDC/PKCE de Cl@ve, incluida la opción DNIe / Certificado."
+    protocol_evidence: "Chromium público 2026-08-19 cargó la entrada oficial; Solicitud o renovación digital de Tarjeta Azul enlaza a servcla.madrid.es/TAZUL_FTWEBINTER/, que inicia OIDC authorization-code con PKCE S256 en cas.madrid.es. El selector ofrece Cl@ve Móvil, Cl@ve Permanente, DNIe / Certificado, Ciudadanos UE e IDentifica; DNIe / Certificado invoca CLAVE/IDPCLCTM y delega a pasarela.clave.gob.es."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["P11"]
-    reason: "Firma y contrato técnico no verificados; la lectura web existe, pero la comprobación CLI no es repetible."
-    reviewed_at: "2026-07-15"
-    next_gate: "Revalidar la entrada oficial sin sortear controles del portal."
+    reason: "Se implementa únicamente el contrato de navegación/autenticación municipal observado hasta la delegación externa a Cl@ve; no se infieren TLS client auth, firma, formato, algoritmo, endpoint de firma ni presentación final."
+    reviewed_at: "2026-08-19"
+    next_gate: "Completar autenticación controlada y observar el primer estado post-login útil; detenerse antes de firma criptográfica, presentación final o pago."
 
   - inventory_id: "ES-PUB-0018"
     surface_key: "ugr-sede"

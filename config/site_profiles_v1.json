@@ -1223,6 +1223,27 @@
       ]
     },
     {
+      "profileId": "madrid-sede-tarjeta-azul",
+      "profileVersion": 1,
+      "displayName": "Ayuntamiento de Madrid — Tarjeta Azul / acceso OIDC",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD",
+      "initiatorOrigins": ["https://sede.madrid.es"],
+      "redirectOrigins": ["https://servcla.madrid.es", "https://cas.madrid.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD","reviewedOn":"2026-08-19"},
+        {"url":"https://servcla.madrid.es/TAZUL_FTWEBINTER/","reviewedOn":"2026-08-19"},
+        {"url":"https://cas.madrid.es/authenticationendpoint/login.do","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "portal-funciona-public-home",
       "profileVersion": 1,
       "displayName": "Portal Funciona — inicio público",
