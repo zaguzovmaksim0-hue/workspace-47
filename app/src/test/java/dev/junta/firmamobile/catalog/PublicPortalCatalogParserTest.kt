@@ -90,6 +90,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("la-rioja-oficina-electronica"),
                 ProfileId("menorca-carpeta-ciutadana"),
                 ProfileId("canarias-sede"),
+                ProfileId("comunidad-madrid-cuenta-digital-53f1"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -1275,6 +1276,42 @@ class PublicPortalCatalogParserTest {
             ),
             repository.resolveLaunch(portal),
         )
+    }
+
+    @Test
+    fun `Madrid Cuenta Digital 53F1 binds only bounded QA navigation`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0179" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://digital.comunidad.madrid/ext/53F1")
+
+        assertEquals(PortalId("comunidad-madrid-cuenta-digital-carne-joven"), metadata.portalId)
+        assertEquals(ProfileId("comunidad-madrid-cuenta-digital-53f1"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals("CUENTA_DIGITAL_AUTH_CLIENT_TLS_BOUNDARY", metadata.protocolFamily)
+        assertEquals(
+            setOf(
+                PortalMechanism.CERTIFICATE_ACCESS,
+                PortalMechanism.CLIENT_TLS_AUTH,
+                PortalMechanism.ELECTRONIC_SIGNATURE,
+            ),
+            metadata.observedMechanisms,
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("comunidad-madrid-cuenta-digital-53f1"), start), repository.resolveLaunch(portal))
     }
 
 }

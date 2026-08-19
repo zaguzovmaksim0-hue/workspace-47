@@ -247,4 +247,19 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))
     }
 
+    @Test
+    fun `Madrid Cuenta Digital 53F1 keeps gestiona as redirect only and gestiona2 untrusted`() {
+        val profileId = ProfileId("comunidad-madrid-cuenta-digital-53f1")
+        val start = URI("https://digital.comunidad.madrid/ext/53F1")
+        val login = URI("https://gestiona.comunidad.madrid/auto_login/acceso.jsf")
+        val postTls = URI("https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, login)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, postTls))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://digital.comunidad.madrid.evil.example/ext/53F1")))
+    }
+
 }

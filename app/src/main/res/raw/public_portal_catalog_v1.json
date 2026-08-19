@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "107db068907f2816897739f1255120102f2cccad078057c017e6193dfe1adc73",
+  "sourceRevision": "632a0d63eb790531bdd28afad0db2cec9b30f29bdca13e0d3266a1c1aaaf123d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4665,7 +4665,7 @@
     {
       "portalId": "comunidad-madrid-cuenta-digital-carne-joven",
       "inventoryId": "ES-PUB-0179",
-      "profileId": null,
+      "profileId": "comunidad-madrid-cuenta-digital-53f1",
       "displayName": "Cuenta Digital — Carné Joven 53F1",
       "organization": "Comunidad de Madrid",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
@@ -4674,12 +4674,13 @@
       "entryUrl": "https://digital.comunidad.madrid/ext/53F1",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CUENTA_DIGITAL_AUTH_CLIENT_TLS_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P18",
@@ -4688,10 +4689,11 @@
         "P18C",
         "P18D",
         "P18E",
-        "P18F"
+        "P18F",
+        "LIVE-CUENTA-DIGITAL-53F1-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La ficha acredita «Firmar y enviar» y certificado/DNIe solo como opción; el lookup autenticado de 53F1 no revela el endpoint de presentación, payload, callback, formato ni algoritmo. La cadena JS revisada solo acredita lookup/redirect."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil nuevo QA_ONLY limitado a la entrada exacta 53F1 y navegación first-party digital.comunidad.madrid -> gestiona.comunidad.madrid, sin SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. El certificado vigente usa un salto POST a gestiona2; el helper CLIENT_TLS_AUTH actual reabre targets como GET y por tanto no puede representarlo fielmente. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
     },
     {
       "portalId": "junta-andalucia-carne-joven",

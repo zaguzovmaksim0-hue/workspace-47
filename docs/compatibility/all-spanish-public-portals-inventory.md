@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 74 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 78 |
-| Entradas restantes fuera de ambos estados | 105 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 75 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 79 |
+| Entradas restantes fuera de ambos estados | 104 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 74 |
+| `IMPLEMENTED_NOT_E2E` | 75 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 98 |
+| `BROWSE_ONLY` | 97 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5983,10 +5983,11 @@ records:
 
 ### 7.6. Superficie sectorial autonómica — Carné Joven Madrid
 
-Este registro delimita la entrada oficial 53F1 de Cuenta Digital. La ficha
-publica la acción «Firmar y enviar» y permite identificación sin certificado;
-la SPA pública solo acredita lookup y redirect autenticado. No se infieren
-cliente, protocolo, formato, algoritmo ni endpoint de presentación.
+Este registro delimita la entrada oficial 53F1 de Cuenta Digital. El runtime
+vigente confirma la entrada autenticada, el selector oficial de métodos y una
+frontera TLS cliente opcional para certificado. El perfil QA implementa solo la
+navegación exacta hasta el login first-party; no reproduce el POST mTLS ni
+infiere contrato de firma o presentación.
 
 ```yaml
 records:
@@ -6006,19 +6007,19 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CUENTA_DIGITAL_AUTH_CLIENT_TLS_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Solicitud electrónica y obtención de la versión digital del Carné Joven de la Comunidad de Madrid mediante Cuenta Digital."
-    protocol_evidence: "P18C-P18F acreditan una SPA requireAuth, lookup tramites/{id} y redirect mediante data.url_tramitacion; no acreditan el contrato de firma o presentación de 53F1."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P18", "P18A", "P18B", "P18C", "P18D", "P18E", "P18F"]
-    reason: "La ficha acredita «Firmar y enviar» y certificado/DNIe solo como opción; el lookup autenticado de 53F1 no revela el endpoint de presentación, payload, callback, formato ni algoritmo. La cadena JS revisada solo acredita lookup/redirect."
-    reviewed_at: "2026-07-16"
-    next_gate: "Observar de forma controlada el flujo autenticado 53F1 y conservar evidencia sanitizada de endpoint, payload y callback exactos antes de evaluar cualquier promoción."
+    protocol_evidence: "El 2026-08-19 la entrada /ext/53F1 redirigió a /login; el selector vigente ofreció IDentifica, Cl@ve Móvil, Cl@ve Permanente, Certificado Digital y DNIe. La opción de certificado siguió auto_login/seleccion-idp.jsf -> POST gestiona2/auto_certificado/SelCertificado. Sin certificado terminó en respuestaError; con PKCS#12 autorizado y presentado transitoriamente por TLS avanzó a reqAuto.jsf -> RespuestaCertificado.jsf y volvió a Cuenta Digital. El POST mTLS no se modela porque el runtime Android actual solo puede reabrir un target TLS por URL/GET."
+    client_tls_auth: "SI"
+    evidence_ids: ["P18", "P18A", "P18B", "P18C", "P18D", "P18E", "P18F", "LIVE-CUENTA-DIGITAL-53F1-2026-08-19"]
+    reason: "Perfil nuevo QA_ONLY limitado a la entrada exacta 53F1 y navegación first-party digital.comunidad.madrid -> gestiona.comunidad.madrid, sin SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. El certificado vigente usa un salto POST a gestiona2; el helper CLIENT_TLS_AUTH actual reabre targets como GET y por tanto no puede representarlo fielmente. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
+    reviewed_at: "2026-08-19"
+    next_gate: "E2E QA del launch/navegación exactos y, por separado, soporte method-preserving para el POST mTLS o autenticación controlada por otro método antes de investigar el flujo 53F1 posterior al login."
 ```
 
 ### 7.7. Carné Joven Europeo de Andalucía — autenticación TLS

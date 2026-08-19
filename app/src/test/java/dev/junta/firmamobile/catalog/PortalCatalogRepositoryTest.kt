@@ -97,6 +97,7 @@ class PortalCatalogRepositoryTest {
                 "la-rioja-oficina-electronica",
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
+                "comunidad-madrid-cuenta-digital-53f1",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -2070,6 +2071,48 @@ class PortalCatalogRepositoryTest {
             entries = publicCatalog.entries.map { entry ->
                 if (entry.portalId == portalId) {
                     entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Madrid Cuenta Digital 53F1 opens exact QA entry while auth and signing stay fail closed`() {
+        val portalId = PortalId("comunidad-madrid-cuenta-digital-carne-joven")
+        val profileId = ProfileId("comunidad-madrid-cuenta-digital-53f1")
+        val start = java.net.URI("https://digital.comunidad.madrid/ext/53F1")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(start, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(profileId, start))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(entryUrl = java.net.URI("https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado"))
                 } else {
                     entry
                 }
