@@ -61,13 +61,18 @@ import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
+import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
+import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
+import dev.junta.firmamobile.signing.MinecoPadesAdapter
 import dev.junta.firmamobile.signing.TenerifeCadesDetachedAdapter
 import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
+import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
+import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.BurgosBatchProtocolAdapter
@@ -150,13 +155,18 @@ class MainActivity : ComponentActivity() {
         val aragonAdapter = LocalCadesDetachedAdapter()
         val dgtAdapter = DgtVerificationCadesAdapter()
         val lleidaAdapter = DiputacionLleidaCadesAdapter()
+        val canariasAdapter = CanariasCertificateLoginCadesAdapter()
         val ugrAdapter = UgrCadesDetachedAdapter()
         val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
         val mitesAdapter = MitesCertificateLoginCadesAdapter()
         val granCanariaAdapter = GranCanariaPadesAdapter()
+        val transparenciaAdapter = TransparenciaPadesAdapter()
+        val minecoAdapter = MinecoPadesAdapter()
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
         val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
+        val airefAdapter = AirefXadesEnvelopingAdapter()
         val cdtiAdapter = CdtiXadesEnvelopingAdapter()
+        val transportesAdapter = TransportesXadesEnvelopedAdapter()
         val policiaAdapter = PoliciaXadesDetachedAdapter()
         val unizarAdapter = UnizarTriPhaseAdapter()
         signingCoordinator = SigningCoordinator(
@@ -186,13 +196,18 @@ class MainActivity : ComponentActivity() {
                     aragonAdapter.id -> aragonAdapter
                     dgtAdapter.id -> dgtAdapter
                     lleidaAdapter.id -> lleidaAdapter
+                    canariasAdapter.id -> canariasAdapter
                     ugrAdapter.id -> ugrAdapter
                     jccmAdapter.id -> jccmAdapter
                     mitesAdapter.id -> mitesAdapter
                     granCanariaAdapter.id -> granCanariaAdapter
+                    transparenciaAdapter.id -> transparenciaAdapter
+                    minecoAdapter.id -> minecoAdapter
                     tenerifeAdapter.id -> tenerifeAdapter
                     sevillaAdapter.id -> sevillaAdapter
+                    airefAdapter.id -> airefAdapter
                     cdtiAdapter.id -> cdtiAdapter
+                    transportesAdapter.id -> transportesAdapter
                     policiaAdapter.id -> policiaAdapter
                     unizarAdapter.id -> unizarAdapter
                     else -> null

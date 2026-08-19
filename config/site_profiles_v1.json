@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 25,
+  "catalogVersion": 30,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -712,6 +712,29 @@
       ]
     },
     {
+      "profileId": "canarias-sede",
+      "profileVersion": 1,
+      "displayName": "Gobierno de Canarias — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.gobiernodecanarias.org/sede/la_sede",
+      "initiatorOrigins": ["https://sede.gobiernodecanarias.org"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Sede electrónica del Gobierno de Canarias","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"format":"CAdES Detached","serverUrl":"https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService","referencesDigestMethod":"http://www.w3.org/2001/04/xmlenc#sha512","filters":"nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.gobiernodecanarias.org/sede/la_sede","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/sede/tramites/6861","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/sede/identificacion","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
       "profileId": "gran-canaria-sede-electronica",
       "profileVersion": 1,
       "displayName": "Cabildo Insular de Gran Canaria — Sede electrónica",
@@ -856,6 +879,44 @@
       ]
     },
     {
+      "profileId": "navarra-sede-registro-general",
+      "profileVersion": 1,
+      "displayName": "Gobierno de Navarra — Registro General con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
+      "initiatorOrigins": ["https://www.navarra.es"],
+      "redirectOrigins": [
+        "https://administracionelectronica.navarra.es",
+        "https://ateka.navarra.es"
+      ],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://ateka.navarra.es"],
+        "sourceUrls": ["https://ateka.navarra.es/ateka/router"],
+        "sourceFixedQueryParameters": {},
+        "sourceRequiredEphemeralQueryParameters": ["ReturnUrl"],
+        "linkedEphemeralQueryParameterMappings": {"ReturnUrl":"returnUrl"},
+        "requestPath": "/ateka/Certificate/login",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": ["returnUrl"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico","reviewedOn":"2026-08-18"},
+        {"url":"https://administracionelectronica.navarra.es/RGE2/Default.aspx?idioma=es","reviewedOn":"2026-08-18"},
+        {"url":"https://ateka.navarra.es/ateka/router","reviewedOn":"2026-08-18"},
+        {"url":"https://ateka.navarra.es/ateka/Certificate/login","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "diputacion-leon-sede",
       "profileVersion": 1,
       "displayName": "Diputación Provincial de León — acceso con certificado",
@@ -890,6 +951,28 @@
       ]
     },
     {
+      "profileId": "generalitat-valenciana-client-auth",
+      "profileVersion": 1,
+      "displayName": "Generalitat Valenciana — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR",
+      "initiatorOrigins": ["https://www.tramita.gva.es", "https://ptt-clave.gva.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://ptt-clave-clientcert.gva.es"],"sourceUrls":["https://ptt-clave.gva.es/pttclave/redirigirClave.html"],"sourceFixedQueryParameters":{},"sourceRequiredEphemeralQueryParameters":["idSesion"],"linkedEphemeralQueryParameters":["idSesion"],"requestPath":"/pttclave/retornoClientCert.html","fixedQueryParameters":{"idioma":"es"},"requiredEphemeralQueryParameters":["idSesion"],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.gva.es/es/detall-tramit?id_proc=15602","reviewedOn":"2026-08-18"},
+        {"url":"https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR","reviewedOn":"2026-08-18"},
+        {"url":"https://ptt-clave.gva.es/pttclave/redirigirClave.html","reviewedOn":"2026-08-18"},
+        {"url":"https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "policia-solicitud-generica",
       "profileVersion": 1,
       "displayName": "Policía Nacional — Solicitud genérica",
@@ -907,6 +990,29 @@
       "evidence": [
         {"url":"https://sede.policia.gob.es/","reviewedOn":"2026-08-15"},
         {"url":"https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml","reviewedOn":"2026-08-15"}
+      ]
+    },
+    {
+      "profileId": "transportes-qys-cert-login",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Transportes y Movilidad Sostenible — Quejas y Sugerencias",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+      "initiatorOrigins": ["https://sede.transportes.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a Quejas y Sugerencias del Ministerio de Transportes","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"XADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"format":"XAdES Enveloped","includeOnlySigningCertificate":"true","nodeToSign":"tag1","applySystemDate":"false","filters.1":"keyusage.digitalsignature:true;nonexpired:","sticky":"true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/CIM/js/CIM_Functions.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/CIM/js/CIM_Classes.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.transportes.gob.es/CIM/js/CIM_Constants.js","reviewedOn":"2026-08-17"}
       ]
     },
     {
@@ -932,6 +1038,46 @@
       ]
     },
     {
+      "profileId": "portal-funciona-public-home",
+      "profileVersion": 1,
+      "displayName": "Portal Funciona — inicio público",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.funciona.gob.es/es/home",
+      "initiatorOrigins": ["https://sede.funciona.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.funciona.gob.es/public/servicios","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.funciona.gob.es/es/home","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "oepm-protegeo-general",
+      "profileVersion": 1,
+      "displayName": "OEPM — Solicitud de propósito general (ProtegeO)",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
+      "initiatorOrigins": ["https://sede.oepm.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
       "profileId": "diputacion-lleida-sede",
       "profileVersion": 1,
       "displayName": "Diputació de Lleida — Sede electrónica",
@@ -949,6 +1095,101 @@
       "evidence": [
         {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "junta-andalucia-vea-peg",
+      "profileVersion": 1,
+      "displayName": "Junta de Andalucía — Presentación electrónica general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA",
+      "initiatorOrigins": ["https://veaja.cloud.juntadeandalucia.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.juntadeandalucia.es/servicios/sede/tramites.html","reviewedOn":"2026-08-17"},
+        {"url":"https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "ministerio-economia-instancia-generica",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Economía, Comercio y Empresa — Instancia Genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG",
+      "initiatorOrigins": ["https://serviciosede.mineco.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": ["https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es"],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma PAdES de Instancia Genérica del Ministerio de Economía, Comercio y Empresa","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"filters":"signingCert:;nonexpired:","expPolicy":"FirmaAGE","signatureSubFilter":"ETSI.CAdES.detached"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG","reviewedOn":"2026-08-17"},
+        {"url":"https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx","reviewedOn":"2026-08-17"},
+        {"url":"https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "airef-instancia-general",
+      "profileVersion": 1,
+      "displayName": "AIReF — Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01",
+      "initiatorOrigins": ["https://sede.airef.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de la solicitud de Instancia General de la AIReF","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN","LEGACY_SHA1"],"endpointId":null,"algorithms":["SHA1_WITH_RSA"],"format":"XADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "LEGACY_SHA1", "CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "age-portal-de-la-transparencia",
+      "profileVersion": 1,
+      "displayName": "Portal de la Transparencia — Derecho de acceso",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524",
+      "initiatorOrigins": ["https://transparencia.sede.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma PAdES con certificado en el Portal de la Transparencia","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"filters":"nonexpired:true;","headless":"true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524","reviewedOn":"2026-08-18"},
+        {"url":"https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/ac2-formularios.js","reviewedOn":"2026-08-18"},
+        {"url":"https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/ac2-autofirmaFunctions.js","reviewedOn":"2026-08-18"},
+        {"url":"https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/autoscript.js","reviewedOn":"2026-08-18"}
       ]
     },
     {

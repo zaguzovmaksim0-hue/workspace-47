@@ -29,9 +29,12 @@ internal data class AfirmaShimCompatibilityFlags(
     val cantabria: Boolean,
     val jccm: Boolean,
     val sevillaAtse: Boolean,
+    val airef: Boolean,
     val cdti: Boolean,
     val policia: Boolean,
     val granCanaria: Boolean,
+    val canarias: Boolean,
+    val mineco: Boolean,
     val melillaBatch: Boolean,
     val lugoBatch: Boolean,
     val caibBatch: Boolean,
@@ -267,9 +270,12 @@ class WebMessageBridge(
                     cantabriaCompatibilityEnabled = shimFlags.cantabria,
                     jccmCompatibilityEnabled = shimFlags.jccm,
                     sevillaAtseCompatibilityEnabled = shimFlags.sevillaAtse,
+                    airefCompatibilityEnabled = shimFlags.airef,
                     cdtiCompatibilityEnabled = shimFlags.cdti,
                     policiaCompatibilityEnabled = shimFlags.policia,
                     granCanariaCompatibilityEnabled = shimFlags.granCanaria,
+                    canariasCompatibilityEnabled = shimFlags.canarias,
+                    minecoCompatibilityEnabled = shimFlags.mineco,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     lugoBatchCompatibilityEnabled = shimFlags.lugoBatch,
                     caibBatchCompatibilityEnabled = shimFlags.caibBatch,
@@ -666,11 +672,14 @@ class WebMessageBridge(
         private const val UGR_PROFILE_ID = "ugr-certificado-login"
         private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
+        private const val AIREF_PROFILE_ID = "airef-instancia-general"
         private const val CDTI_PROFILE_ID = "cdti-certificate-validation"
         private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
         private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
+        private const val CANARIAS_PROFILE_ID = "canarias-sede"
+        private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -681,9 +690,12 @@ class WebMessageBridge(
             cantabria = profileActive && profileId.value == CANTABRIA_PROFILE_ID,
             jccm = profileActive && profileId.value == JCCM_PROFILE_ID,
             sevillaAtse = profileActive && profileId.value == SEVILLA_ATSE_PROFILE_ID,
+            airef = profileActive && profileId.value == AIREF_PROFILE_ID,
             cdti = profileActive && profileId.value == CDTI_PROFILE_ID,
             policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
             granCanaria = profileActive && profileId.value == GRAN_CANARIA_PROFILE_ID,
+            canarias = profileActive && profileId.value == CANARIAS_PROFILE_ID,
+            mineco = profileActive && profileId.value == MINECO_PROFILE_ID,
             melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID && profileId.value != CaibBatchBridgeAdapter.PROFILE_ID,
             lugoBatch = melillaBatchEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID,
             caibBatch = melillaBatchEnabled && profileId.value == CaibBatchBridgeAdapter.PROFILE_ID,
