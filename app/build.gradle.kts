@@ -71,6 +71,17 @@ fun quotedBuildConfigText(value: String): String = buildString(value.length + 2)
     append('"')
 }
 
+// BuildConfig fields are Java source expressions. Keep every literal comfortably below
+// the class-file CONSTANT_Utf8 limit as the checked-in profile catalog grows.
+fun chunkedBuildConfigText(value: String): String {
+    val literals = value.chunked(4_096).map(::quotedBuildConfigText)
+    return when (literals.size) {
+        0 -> quotedBuildConfigText("")
+        1 -> literals.single()
+        else -> literals.joinToString(prefix = "String.join(\"\", ", postfix = ")")
+    }
+}
+
 fun validRelayHost(value: String): Boolean {
     if (value.isBlank() || value.length > 253 || value.any(Char::isISOControl)) return false
     if (value != value.lowercase(Locale.ROOT) || value.endsWith('.') || value == "localhost") return false
@@ -190,7 +201,7 @@ android {
         buildConfigField(
             "String",
             "SITE_PROFILE_CATALOG_JSON",
-            quotedBuildConfigText(siteProfileCatalogJson),
+            chunkedBuildConfigText(siteProfileCatalogJson),
         )
         buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
         buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")
