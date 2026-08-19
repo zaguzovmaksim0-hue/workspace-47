@@ -27,17 +27,24 @@ internal class AutoFirmaCadesTriPhaseCodec(
     private val urlPolicy: SafeNetworkUrlPolicy = SafeNetworkUrlPolicy(),
     private val expectedDocumentBytes: Int? = null,
     private val expectedExtraProperties: Map<String, String>? = null,
+    private val expectedSigningFormat: SigningFormat = SigningFormat.CADES,
+    private val wireFormat: String = CADES_FORMAT,
+    private val expectedSessionFormat: String = CADES_FORMAT,
+    private val extraPropertiesValidator: ((Map<String, String>, List<X509Certificate>) -> Boolean)? = null,
 ) : TriPhaseProtocolCodec {
     init {
         require(expectedDocumentBytes == null || expectedDocumentBytes > 0)
         require(expectedExtraProperties == null || SERVER_URL_PROPERTY in expectedExtraProperties)
+        require(expectedSigningFormat == SigningFormat.CADES || expectedSigningFormat == SigningFormat.PADES)
+        require(wireFormat == CADES_FORMAT || wireFormat == PADES_WIRE_FORMAT)
+        require(expectedSessionFormat == CADES_FORMAT || expectedSessionFormat == PADES_SESSION_FORMAT)
     }
 
     override fun decodeRequest(
         request: NormalizedSignRequest,
         certificateChain: List<X509Certificate>,
     ): JuntaTriPhaseRequestData {
-        if (request.format != SigningFormat.CADES || certificateChain.isEmpty() ||
+        if (request.format != expectedSigningFormat || certificateChain.isEmpty() ||
             certificateChain.size > MAX_CERTIFICATE_CHAIN_LENGTH
         ) {
             fail(TriPhaseCodecError.INVALID_REQUEST)
@@ -55,11 +62,15 @@ internal class AutoFirmaCadesTriPhaseCodec(
                         is NetworkUrlValidation.Allowed -> validation.url
                         is NetworkUrlValidation.Blocked -> fail(TriPhaseCodecError.ORIGIN_NOT_ALLOWED)
                     }
+                    val actualProperties =
+                        properties.stringPropertyNames().associateWith(properties::getProperty)
                     expectedExtraProperties?.let { expected ->
-                        val actual = properties.stringPropertyNames().associateWith(properties::getProperty)
-                        if (actual != expected) {
+                        if (actualProperties != expected) {
                             fail(TriPhaseCodecError.INVALID_REQUEST)
                         }
+                    }
+                    if (extraPropertiesValidator?.invoke(actualProperties, certificateChain) == false) {
+                        fail(TriPhaseCodecError.INVALID_REQUEST)
                     }
                     val certificateDer = mutableListOf<ByteArray>()
                     try {
@@ -100,7 +111,9 @@ internal class AutoFirmaCadesTriPhaseCodec(
         ProfileHttpRequest(
             url = data.endpoint,
             body = buildBody { body ->
-                body.literal("op=pre&cop=sign&format=CAdES&algo=")
+                body.literal("op=pre&cop=sign&format=")
+                body.literal(wireFormat)
+                body.literal("&algo=")
                 body.literal(data.algorithm.wireName())
                 body.literal("&cert=")
                 data.writeCertificateParameter(body)
@@ -150,7 +163,7 @@ internal class AutoFirmaCadesTriPhaseCodec(
             val root = document.documentElement
             val rootAttributes = root.attributeNames()
             val legacyRootAttributes = rootAttributes == setOf(LEGACY_FORMAT_ATTRIBUTE, OPERATION_ATTRIBUTE) &&
-                root.getAttribute(LEGACY_FORMAT_ATTRIBUTE) == CADES_FORMAT &&
+                root.getAttribute(LEGACY_FORMAT_ATTRIBUTE) == expectedSessionFormat &&
                 root.getAttribute(OPERATION_ATTRIBUTE) == LEGACY_SIGN_OPERATION
             if (root.tagName != XML_ROOT || (rootAttributes.isNotEmpty() && !legacyRootAttributes)) {
                 fail(TriPhaseCodecError.RESPONSE_FORMAT_INVALID)
@@ -163,11 +176,11 @@ internal class AutoFirmaCadesTriPhaseCodec(
             val signatureAttributes = signatures.attributeNames()
             if (signatureAttributes.isNotEmpty() &&
                 (signatureAttributes != setOf(FORMAT_ATTRIBUTE) ||
-                    signatures.getAttribute(FORMAT_ATTRIBUTE) != CADES_FORMAT)
+                    signatures.getAttribute(FORMAT_ATTRIBUTE) != expectedSessionFormat)
             ) {
                 fail(TriPhaseCodecError.RESPONSE_FORMAT_INVALID)
             }
-            val sessionFormat = if (signatureAttributes.isEmpty()) null else CADES_FORMAT
+            val sessionFormat = if (signatureAttributes.isEmpty()) null else expectedSessionFormat
             val signElements = signatures.elementChildren()
             if (signElements.size != 1 || signElements.single().tagName != XML_SIGNATURE) {
                 fail(TriPhaseCodecError.RESPONSE_FORMAT_INVALID)
@@ -266,7 +279,9 @@ internal class AutoFirmaCadesTriPhaseCodec(
             ProfileHttpRequest(
                 url = juntaState.requestData.endpoint,
                 body = buildBody { body ->
-                    body.literal("op=post&cop=sign&format=CAdES&algo=")
+                    body.literal("op=post&cop=sign&format=")
+                    body.literal(wireFormat)
+                    body.literal("&algo=")
                     body.literal(juntaState.requestData.algorithm.wireName())
                     body.literal("&cert=")
                     juntaState.requestData.writeCertificateParameter(body)
@@ -555,6 +570,8 @@ internal class AutoFirmaCadesTriPhaseCodec(
         private const val SIGN_ID_ATTRIBUTE = "signid"
         private const val NAME_ATTRIBUTE = "n"
         private const val CADES_FORMAT = "CAdES"
+        private const val PADES_WIRE_FORMAT = "pades"
+        private const val PADES_SESSION_FORMAT = "PAdES"
         private const val PRE_PARAMETER = "PRE"
         private const val PK1_PARAMETER = "PK1"
         private const val NEED_PRE_PARAMETER = "NEED_PRE"

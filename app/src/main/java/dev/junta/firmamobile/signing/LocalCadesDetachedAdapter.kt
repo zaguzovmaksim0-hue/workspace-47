@@ -11,8 +11,14 @@ import java.security.cert.X509Certificate
 import java.security.interfaces.RSAPublicKey
 import java.time.Clock
 import java.util.Date
+import java.util.Base64
 import java.util.Hashtable
+import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.asn1.ASN1Sequence
+import org.bouncycastle.asn1.DERIA5String
+import org.bouncycastle.asn1.DERNull
+import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSet
@@ -23,9 +29,12 @@ import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.asn1.cms.SignedData
 import org.bouncycastle.asn1.cms.SignerInfo
 import org.bouncycastle.asn1.cms.Time
+import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers
 import org.bouncycastle.asn1.ess.ESSCertIDv2
 import org.bouncycastle.asn1.ess.SigningCertificateV2
+import org.bouncycastle.asn1.x509.DigestInfo
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaCertStore
 import org.bouncycastle.cms.CMSProcessableByteArray
@@ -166,6 +175,13 @@ internal data class CadesPreSignMaterial(
     val signingCertificateFingerprint: ByteArray,
 )
 
+internal data class CadesSignaturePolicy(
+    val policyIdentifierOid: String,
+    val hashAlgorithmOid: String,
+    val policyHashBase64: String,
+    val qualifierUrl: String,
+)
+
 internal object CadesDetachedCodec {
     fun createPreSign(
         content: ByteArray,
@@ -174,6 +190,7 @@ internal object CadesDetachedCodec {
         clock: Clock,
         provider: Provider = BouncyCastleProvider(),
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        signaturePolicy: CadesSignaturePolicy? = null,
     ): CadesPreSignMaterial {
         requireContentSize(content, expectedContentBytes)
         require(certificateChain.isNotEmpty())
@@ -194,6 +211,9 @@ internal object CadesDetachedCodec {
                 CMSAttributes.signingTime,
                 Attribute(CMSAttributes.signingTime, DERSet(Time(Date.from(clock.instant())))),
             )
+            signaturePolicy?.let { policy ->
+                put(PKCSObjectIdentifiers.id_aa_ets_sigPolicyId, signaturePolicyAttribute(policy))
+            }
         }
         val contentSigner = CapturingContentSigner(
             rsaPublicKey.modulus.bitLength(),
@@ -237,6 +257,7 @@ internal object CadesDetachedCodec {
         signatureValue: ByteArray,
         provider: Provider = BouncyCastleProvider(),
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        signaturePolicy: CadesSignaturePolicy? = null,
     ): ByteArray {
         require(placeholderCms.isNotEmpty() && placeholderCms.size <= MAX_CMS_BYTES)
         requireContentSize(detachedContent, expectedContentBytes)
@@ -276,6 +297,7 @@ internal object CadesDetachedCodec {
                 expectedCertificateFingerprint = signingCertificateFingerprint,
                 provider = provider,
                 signingAlgorithm = signingAlgorithm,
+                signaturePolicy = signaturePolicy,
             ),
         )
         return result
@@ -288,6 +310,7 @@ internal object CadesDetachedCodec {
         expectedCertificateFingerprint: ByteArray? = null,
         provider: Provider = BouncyCastleProvider(),
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        signaturePolicy: CadesSignaturePolicy? = null,
     ): Boolean = runCatching {
         require(signatureDocument.isNotEmpty() && signatureDocument.size <= MAX_CMS_BYTES)
         requireContentSize(detachedContent, expectedContentBytes)
@@ -303,6 +326,14 @@ internal object CadesDetachedCodec {
         )
         require(signer.signedAttributes[PKCSObjectIdentifiers.id_aa_signingCertificateV2] != null)
         require(signer.signedAttributes[CMSAttributes.signingTime] != null)
+        if (signaturePolicy == null) {
+            require(signer.signedAttributes[PKCSObjectIdentifiers.id_aa_ets_sigPolicyId] == null)
+        } else {
+            require(matchesSignaturePolicy(
+                signer.signedAttributes[PKCSObjectIdentifiers.id_aa_ets_sigPolicyId],
+                signaturePolicy,
+            ))
+        }
         val certificates = cms.certificates.getMatches(null).filter(signer.sid::match)
         require(certificates.size == 1)
         val holder = certificates.single()
@@ -320,6 +351,52 @@ internal object CadesDetachedCodec {
         require(signer.verify(JcaSimpleSignerInfoVerifierBuilder().setProvider(provider).build(holder)))
         true
     }.getOrDefault(false)
+
+    private fun signaturePolicyAttribute(policy: CadesSignaturePolicy): Attribute {
+        require(policy.policyIdentifierOid.matches(Regex("[0-9]+(?:\\.[0-9]+)+")))
+        require(policy.hashAlgorithmOid == OIWObjectIdentifiers.idSHA1.id)
+        val policyHash = Base64.getDecoder().decode(policy.policyHashBase64)
+        require(policyHash.size == 20)
+        val digestInfo = DigestInfo(
+            AlgorithmIdentifier(ASN1ObjectIdentifier(policy.hashAlgorithmOid), DERNull.INSTANCE),
+            policyHash,
+        )
+        val qualifier = DERSequence(ASN1EncodableVector().apply {
+            add(PKCSObjectIdentifiers.id_spq_ets_uri)
+            add(DERIA5String(policy.qualifierUrl))
+        })
+        val signaturePolicyId = DERSequence(ASN1EncodableVector().apply {
+            add(ASN1ObjectIdentifier(policy.policyIdentifierOid))
+            add(digestInfo.toASN1Primitive())
+            add(DERSequence(qualifier))
+        })
+        policyHash.fill(0)
+        return Attribute(PKCSObjectIdentifiers.id_aa_ets_sigPolicyId, DERSet(signaturePolicyId))
+    }
+
+    private fun matchesSignaturePolicy(attribute: Attribute?, expected: CadesSignaturePolicy): Boolean =
+        runCatching {
+            require(attribute != null && attribute.attrValues.size() == 1)
+            val sequence = ASN1Sequence.getInstance(attribute.attrValues.getObjectAt(0))
+            require(sequence.size() == 3)
+            require(ASN1ObjectIdentifier.getInstance(sequence.getObjectAt(0)).id == expected.policyIdentifierOid)
+            val digestInfo = DigestInfo.getInstance(sequence.getObjectAt(1))
+            require(digestInfo.algorithmId.algorithm.id == expected.hashAlgorithmOid)
+            require(digestInfo.algorithmId.parameters?.toASN1Primitive() == DERNull.INSTANCE)
+            val expectedHash = Base64.getDecoder().decode(expected.policyHashBase64)
+            try {
+                require(MessageDigest.isEqual(digestInfo.digest, expectedHash))
+            } finally {
+                expectedHash.fill(0)
+            }
+            val qualifiers = ASN1Sequence.getInstance(sequence.getObjectAt(2))
+            require(qualifiers.size() == 1)
+            val qualifier = ASN1Sequence.getInstance(qualifiers.getObjectAt(0))
+            require(qualifier.size() == 2)
+            require(ASN1ObjectIdentifier.getInstance(qualifier.getObjectAt(0)) == PKCSObjectIdentifiers.id_spq_ets_uri)
+            require(DERIA5String.getInstance(qualifier.getObjectAt(1)).string == expected.qualifierUrl)
+            true
+        }.getOrDefault(false)
 
     private fun requireContentSize(content: ByteArray, expectedContentBytes: Int) {
         require(expectedContentBytes in 1..MAX_CONTENT_BYTES)
