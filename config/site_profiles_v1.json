@@ -2799,6 +2799,41 @@
         {"url":"https://valid.aoc.cat/o/oauth2/js/login.js","reviewedOn":"2026-08-19"},
         {"url":"https://cert.valid.aoc.cat/o/oauth2/cert","reviewedOn":"2026-08-19"}
       ]
+    },
+    {
+      "profileId": "diputacion-jaen-sede",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Jaén — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipujaen.es/SolicitudGenerica",
+      "initiatorOrigins": ["https://sede.dipujaen.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "REDIRECT_AFTER_SOURCE",
+        "requestOrigins": ["https://cert2.dipujaen.es"],
+        "sourceUrls": ["https://sede.dipujaen.es/IniciarSesion/Certificado"],
+        "sourceFixedQueryParameters": {},
+        "sourceRequiredEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameters": [],
+        "requestPath": "/",
+        "fixedQueryParameters": {"back":"https://sede.dipujaen.es/IniciarSesion/Certificado"},
+        "requiredEphemeralQueryParameters": ["key"],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dipujaen.es/SolicitudGenerica","reviewedOn":"2026-08-19"},
+        {"url":"https://sede.dipujaen.es/IniciarSesion","reviewedOn":"2026-08-19"},
+        {"url":"https://sede.dipujaen.es/IniciarSesion/Certificado","reviewedOn":"2026-08-19"},
+        {"url":"https://cert2.dipujaen.es/","reviewedOn":"2026-08-19"}
+      ]
     }
   ]
 }

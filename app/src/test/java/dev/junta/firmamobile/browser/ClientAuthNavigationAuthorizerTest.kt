@@ -1201,6 +1201,77 @@ class ClientAuthNavigationAuthorizerTest {
         }
     }
 
+    @Test
+    fun exactTwoStageJaenRedirectAuthorizesOnlyObservedCert2QueryContract() {
+        val jaen = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+
+        assertNull(
+            jaen.observeTopLevelNavigation(
+                JAEN_PROFILE,
+                JAEN_INDEX,
+                JAEN_SOURCE,
+                84,
+                true,
+            ),
+        )
+        jaen.onTopLevelPageStarted(JAEN_SOURCE, 85)
+
+        val authorized = jaen.observeTopLevelNavigation(
+            JAEN_PROFILE,
+            JAEN_SOURCE,
+            JAEN_TARGET,
+            85,
+            true,
+        )
+
+        assertEquals(JAEN_PROFILE, authorized?.profileId)
+        assertEquals("cert2.dipujaen.es", authorized?.target?.host)
+        assertEquals("/", authorized?.target?.rawPath)
+        assertEquals(443, authorized?.policy?.requestPort)
+    }
+
+    @Test
+    fun jaenTwoStageRedirectRejectsSourceTargetAndQueryExpansion() {
+        val invalidCalls = listOf(
+            JAEN_SOURCE.replace("/Certificado", "/Certificado/other") to JAEN_TARGET,
+            JAEN_SOURCE to JAEN_TARGET.replace("cert2.dipujaen.es", "cert2.dipujaen.es.evil.example"),
+            JAEN_SOURCE to JAEN_TARGET.replace("cert2.dipujaen.es", "cert2.dipujaen.es:8443"),
+            JAEN_SOURCE to JAEN_TARGET.replace("https://cert2.dipujaen.es/", "https://cert2.dipujaen.es/other"),
+            JAEN_SOURCE to JAEN_TARGET.replace("key=$JAEN_KEY", "key="),
+            JAEN_SOURCE to JAEN_TARGET.replace("key=$JAEN_KEY&", ""),
+            JAEN_SOURCE to JAEN_TARGET.replace(
+                "back=https%3A%2F%2Fsede.dipujaen.es%2FIniciarSesion%2FCertificado",
+                "back=https%3A%2F%2Fevil.example%2Fcallback",
+            ),
+            JAEN_SOURCE to "$JAEN_TARGET&extra=1",
+            JAEN_SOURCE to "$JAEN_TARGET#fragment",
+        )
+
+        invalidCalls.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    JAEN_PROFILE, JAEN_INDEX, source, 100L + index * 2, true,
+                ),
+            )
+            fresh.onTopLevelPageStarted(source, 101L + index * 2)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    JAEN_PROFILE, source, target, 101L + index * 2, true,
+                ),
+            )
+        }
+
+        val unarmed = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        assertNull(
+            unarmed.observeTopLevelNavigation(
+                JAEN_PROFILE, JAEN_SOURCE, JAEN_TARGET, 130, true,
+            ),
+        )
+    }
+
     private companion object {
         val CATALUNYA_SEU_PROFILE = ProfileId("catalunya-seu-registre-client-auth")
         const val CATALUNYA_SEU_SOURCE =
@@ -1208,6 +1279,13 @@ class ClientAuthNavigationAuthorizerTest {
                 "redirect_uri=https%3A%2F%2Fovt.gencat.cat%2Fgsitfc%2FAppJava%2Fredirectservlet&" +
                 "response_type=code&client_id=gsit.gencat.cat&approval_prompt=auto"
         const val CATALUNYA_SEU_TARGET = "https://cert.valid.aoc.cat/o/oauth2/cert"
+        val JAEN_PROFILE = ProfileId("diputacion-jaen-sede")
+        const val JAEN_KEY = "w47SyntheticJaenEphemeralKey0123456789"
+        const val JAEN_INDEX = "https://sede.dipujaen.es/SolicitudGenerica"
+        const val JAEN_SOURCE = "https://sede.dipujaen.es/IniciarSesion/Certificado"
+        const val JAEN_TARGET =
+            "https://cert2.dipujaen.es/?key=$JAEN_KEY&" +
+                "back=https%3A%2F%2Fsede.dipujaen.es%2FIniciarSesion%2FCertificado"
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val TEA_PROFILE = ProfileId("tea-alegaciones-certificado")

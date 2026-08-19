@@ -194,13 +194,13 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 277 |
-| Fuentes oficiales totales registradas | 289 |
+| Fuentes oficiales portal-specific registradas | 281 |
+| Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 152 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 156 |
-| Entradas restantes fuera de ambos estados | 27 |
-| Evidencia exacta de `ClientCertRequest` | 6 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 153 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 157 |
+| Entradas restantes fuera de ambos estados | 26 |
+| Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 152 |
+| `IMPLEMENTED_NOT_E2E` | 153 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 20 |
+| `BROWSE_ONLY` | 19 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5452,24 +5452,24 @@ records:
     origin: "https://sede.dipujaen.es"
     official_site: "https://sede.dipujaen.es"
     e_sede: "https://sede.dipujaen.es"
-    entry_url: "https://sede.dipujaen.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.dipujaen.es/SolicitudGenerica"
+    procedure_page: "https://sede.dipujaen.es/SolicitudGenerica"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://cert2.dipujaen.es/"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP22A", "DP22B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Solicitud genérica permite autenticación con certificado mediante una redirección de sesión desde /IniciarSesion/Certificado al host TLS cliente cert2.dipujaen.es; la implementación QA se limita a esa transición."
+    protocol_evidence: "El 2026-08-19 /SolicitudGenerica e /IniciarSesion seguían publicando el acceso con certificado. GET /IniciarSesion/Certificado respondió 302 hacia cert2.dipujaen.es con key efímera y back fijo; el handshake TLS de cert2.dipujaen.es emitió CertificateRequest. La misma página carga MiniApplet/AutoFirma, pero su JS público referencia appprueba:8080, por lo que no se promociona ningún contrato de firma."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP22A", "DP22B", "DP22C", "DP22D", "DP22E", "DP22F"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para la Solicitud genérica y la transición exacta sede.dipujaen.es/IniciarSesion/Certificado -> cert2.dipujaen.es:443; no se realizó autenticación E2E, firma criptográfica ni presentación/registro."
+    reviewed_at: "2026-08-19"
+    next_gate: "Mantener QA_ONLY hasta verificación E2E autorizada; revisar el contrato de firma únicamente con evidencia runtime que no dependa del endpoint público de pruebas."
 
   - inventory_id: "ES-PUB-0161"
     surface_key: "diputacion-leon-sede"
@@ -6258,7 +6258,7 @@ grandes y explícitos:
    institucional.
 6. No existe inventario separado de proveedores compartidos, plataformas
    multi-tenant, SSO, Storage/Retrieve o endpoints tri-phase.
-7. Hay cuatro entradas con evidencia E2E delimitada y dos evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
+7. Hay cuatro entradas con evidencia E2E delimitada y siete evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
 8. Las variantes lingüísticas no crean registros; los dominios históricos y
    redirects solo se separan cuando existe una frontera funcional acreditada.
    Los candidatos INAGA de Aragón, el checker técnico de Castilla y León, el
@@ -6628,6 +6628,10 @@ availability, certificado, firma ni contrato técnico.
 [DP21I]: https://ovc24.dphuesca.es/sta/AutofirmaLote
 [DP22A]: https://sede.dipujaen.es
 [DP22B]: https://sede.dipujaen.es/CertificadoElectronico
+[DP22C]: https://sede.dipujaen.es/SolicitudGenerica
+[DP22D]: https://sede.dipujaen.es/IniciarSesion
+[DP22E]: https://sede.dipujaen.es/IniciarSesion/Certificado
+[DP22F]: https://cert2.dipujaen.es/
 [DP23A]: https://sede.dipuleon.es
 [DP24A]: https://seu.diputaciolleida.cat
 [DP24B]: https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2

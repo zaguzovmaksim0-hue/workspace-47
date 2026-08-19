@@ -85,6 +85,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-lugo-sede",
                 "diputacion-leon-sede",
                 "diputacion-albacete-portal",
+                "diputacion-jaen-sede",
                 "consell-mallorca-sede",
                 "diputacion-cuenca-portal",
                 "generalitat-valenciana-client-auth",

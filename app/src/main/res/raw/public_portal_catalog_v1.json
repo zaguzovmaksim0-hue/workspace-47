@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a15c49793a874cc9fc3874e1e28b44297c02888450271ca54b39f9a30ae6673d",
+  "sourceRevision": "95c9724e98421f5d138fd329b4c72e31dfb6445f9183369d554e33d93367173d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4391,29 +4391,34 @@
     {
       "portalId": "diputacion-jaen-sede",
       "inventoryId": "ES-PUB-0160",
-      "profileId": null,
+      "profileId": "diputacion-jaen-sede",
       "displayName": "Sede electrónica de Diputación Provincial de Jaén",
       "organization": "Diputación Provincial de Jaén",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.dipujaen.es",
+      "purpose": "La Solicitud genérica permite autenticación con certificado mediante una redirección de sesión desde /IniciarSesion/Certificado al host TLS cliente cert2.dipujaen.es; la implementación QA se limita a esa transición.",
+      "entryUrl": "https://sede.dipujaen.es/SolicitudGenerica",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP22A",
-        "DP22B"
+        "DP22B",
+        "DP22C",
+        "DP22D",
+        "DP22E",
+        "DP22F"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para la Solicitud genérica y la transición exacta sede.dipujaen.es/IniciarSesion/Certificado -> cert2.dipujaen.es:443; no se realizó autenticación E2E, firma criptográfica ni presentación/registro."
     },
     {
       "portalId": "diputacion-leon-sede",
