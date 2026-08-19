@@ -299,6 +299,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == AIREF_PROFILE_ID) {
                 validateAirefProfile(p)
             }
+            if (p.profileId.value == MUGEJU_PROFILE_ID) {
+                validateMugejuProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -354,7 +357,7 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                    val allowedSourceOrigins = if (p.profileId.value in setOf(AIREF_PROFILE_ID, MUGEJU_PROFILE_ID)) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
@@ -948,6 +951,38 @@ object SiteProfileCatalogParser {
                 fixedExtraProperties = emptyMap(),
                 allowedExtraProperties = emptySet(),
             ),
+        )
+    }
+
+    private fun validateMugejuProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MUGEJU_PROFILE_VERSION)
+        require(profile.displayName == MUGEJU_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MUGEJU_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MUGEJU_ORIGIN)))
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(MUGEJU_CLAVE_ORIGIN)))
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(MUGEJU_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(MUGEJU_CLIENT_AUTH_SOURCE_URL)),
+                requestPath = MUGEJU_CLIENT_AUTH_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(
+            profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn } ==
+                MUGEJU_EVIDENCE_REVIEWS,
         )
     }
 
@@ -1774,6 +1809,22 @@ object SiteProfileCatalogParser {
     private const val TENERIFE_SAFE_DESCRIPTION =
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private const val MUGEJU_PROFILE_ID = "mugeju-remision-documentacion-client-auth"
+    private const val MUGEJU_PROFILE_VERSION = 1
+    private const val MUGEJU_DISPLAY_NAME = "MUGEJU — Remisión de documentación con certificado"
+    private const val MUGEJU_START_URL = "https://sedemugeju.gob.es/remisiondocumentacion"
+    private const val MUGEJU_ORIGIN = "https://sedemugeju.gob.es"
+    private const val MUGEJU_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
+    private const val MUGEJU_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
+    private const val MUGEJU_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val MUGEJU_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
+    private val MUGEJU_EVIDENCE_REVIEWS = mapOf(
+        MUGEJU_START_URL to LocalDate.parse("2026-08-19"),
+        "https://sedemugeju.gob.es/mutualnet3/clave/ControladorClaveCiudadanoServlet?operation=REM" to
+            LocalDate.parse("2026-08-19"),
+        MUGEJU_CLIENT_AUTH_SOURCE_URL to LocalDate.parse("2026-08-18"),
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen" to LocalDate.parse("2026-08-18"),
+    )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"

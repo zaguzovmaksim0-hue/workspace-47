@@ -307,6 +307,37 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactMugejuClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val mugeju = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = mugeju.observeTopLevelNavigation(
+            MUGEJU_PROFILE, MUGEJU_SOURCE, MUGEJU_TARGET, 80, true,
+        )
+
+        assertEquals(MUGEJU_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            mugeju.observeTopLevelNavigation(MUGEJU_PROFILE, MUGEJU_SOURCE, MUGEJU_TARGET, 80, true),
+        )
+
+        listOf(
+            MUGEJU_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            "$MUGEJU_TARGET?extra=1",
+            MUGEJU_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+            MUGEJU_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
+        ).forEachIndexed { index, invalidTarget ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                invalidTarget,
+                fresh.observeTopLevelNavigation(
+                    MUGEJU_PROFILE, MUGEJU_SOURCE, invalidTarget, 81L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTwoStageValladolidRedirectAuthorizesOnlyTheObservedClientTlsPort() {
         val valladolid = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
 
@@ -750,6 +781,9 @@ class ClientAuthNavigationAuthorizerTest {
         val AIREF_PROFILE = ProfileId("airef-instancia-general")
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val MUGEJU_PROFILE = ProfileId("mugeju-remision-documentacion-client-auth")
+        const val MUGEJU_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val MUGEJU_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         val NAVARRA_PROFILE = ProfileId("navarra-sede-registro-general")
         const val NAVARRA_TOKEN = "w47SyntheticNavarraSessionToken0123456789"

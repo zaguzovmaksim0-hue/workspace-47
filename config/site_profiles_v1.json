@@ -1171,6 +1171,38 @@
       ]
     },
     {
+      "profileId": "mugeju-remision-documentacion-client-auth",
+      "profileVersion": 1,
+      "displayName": "MUGEJU — Remisión de documentación con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedemugeju.gob.es/remisiondocumentacion",
+      "initiatorOrigins": ["https://sedemugeju.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sedemugeju.gob.es/remisiondocumentacion","reviewedOn":"2026-08-19"},
+        {"url":"https://sedemugeju.gob.es/mutualnet3/clave/ControladorClaveCiudadanoServlet?operation=REM","reviewedOn":"2026-08-19"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-18"},
+        {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "age-portal-de-la-transparencia",
       "profileVersion": 1,
       "displayName": "Portal de la Transparencia — Derecho de acceso",
