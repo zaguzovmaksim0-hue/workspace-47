@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 75 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 79 |
-| Entradas restantes fuera de ambos estados | 104 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 76 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 80 |
+| Entradas restantes fuera de ambos estados | 103 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 75 |
+| `IMPLEMENTED_NOT_E2E` | 76 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 97 |
+| `BROWSE_ONLY` | 96 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -356,7 +356,7 @@ requiera traducción manual.
 | `P03` | Seguridad Social / Import@ss | [P03][P03A] | Ayuda oficial; AutoFirma móvil rechazada en la Sede y métodos de acceso Import@ss. |
 | `P04` | SEPE | [P04] | FAQ oficial de AutoFirma de escritorio. |
 | `P05` | DGT | [P05][DGT-JS-MAIN-2026-08-09][DGT-JS-CONSTANTES-2026-08-09][DGT-JS-MINIAPPLET-2026-08-09] | Entrada y scripts oficiales con llamada MiniApplet CAdES exacta; sin endpoint de resultado. |
-| `P06` | Sede Judicial / Ministerio de Justicia | [P06][P06A][P06B][P06C] | Ayuda, guía PDF y trámite oficial; ABI no publicado. |
+| `P06` | Sede Judicial / Ministerio de Justicia | [P06][P06A][P06B][P06C][JUSTICIA-TRAMITES-2026-08-19][JUSTICIA-PRIVATE-AREA-2026-08-19][JUSTICIA-AM-CLAVE-2026-08-19] | Ayuda y guía histórica; Trámites, Área privada y bootstrap SAML actuales de Justicia hacia Cl@ve; ABI de firma no publicado. |
 | `P07` | Junta de Andalucía / Ovorion | [P07] | Entrada pública portal-specific; contrato detallado en la matriz y observaciones locales redactadas. |
 | `P08` | Comunidad de Madrid / gestiona2 | [P08][P08A][P08B] | Guía local-PDF y frontend que bloquea móvil. |
 | `P09` | Diputación de Valladolid | [P09][P09A] | Certificados admitidos y explicación conceptual de firma. |
@@ -728,8 +728,8 @@ records:
     origin: "https://sedejudicial.justicia.es"
     official_site: "https://sedejudicial.justicia.es/"
     e_sede: "https://sedejudicial.justicia.es/"
-    entry_url: "https://sedejudicial.justicia.es/firma-y-certificados-electronicos-admitidos"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sedejudicial.justicia.es/group/guest/area-privada"
+    procedure_page: "https://sedejudicial.justicia.es/group/guest/area-privada"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
@@ -738,14 +738,14 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso con Cl@ve/certificado y firma de escritos o documentos PDF con AutoFirma."
-    protocol_evidence: "PDF es el documento de la guía; no prueba el formato criptográfico de la firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso al área privada: la Sede Judicial redirige a su gateway de identidad y prepara la autenticación mediante Cl@ve."
+    protocol_evidence: "La página oficial de Trámites enlaza el área privada. El 2026-08-19 esa entrada redirigió dentro de sedejudicial.justicia.es a /idp/login y /selfservice-ext/login y después al gateway https://am.justicia.es, que generó un POST SAML hacia https://pasarela.clave.gob.es/Proxy2/ServiceProvider. El perfil local limita la navegación confiable al gateway de Justicia; no habilita el origen Cl@ve compartido ni afirma un contrato de firma documental."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P06", "P06A"]
-    reason: "Procedimiento exacto, ABI, formato criptográfico, endpoint y callback no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Separar autenticación, firma local y entrega al portal."
+    evidence_ids: ["P06", "JUSTICIA-TRAMITES-2026-08-19", "JUSTICIA-PRIVATE-AREA-2026-08-19", "JUSTICIA-AM-CLAVE-2026-08-19"]
+    reason: "Implementado en QA solo el lanzamiento exacto del área privada y la transición al gateway am.justicia.es. El origen compartido de Cl@ve, la autenticación por certificado, el ABI de firma, formato, endpoint y callback permanecen fuera del perfil hasta evidencia específica; sin aceptación E2E."
+    reviewed_at: "2026-08-19"
+    next_gate: "Capturar el contrato portal-specific posterior a Cl@ve sin habilitar el origen compartido por analogía y detenerse antes de cualquier firma o presentación final."
 
   - inventory_id: "ES-PUB-0010"
     surface_key: "mjusticia-sede"
@@ -6297,6 +6297,9 @@ Orden de expansión recomendado:
 [P06A]: https://sedejudicial.justicia.es/documents/20142/72138908/202408_Escrito%2Biniciador%2Bde%2Bjurisdicci%C3%B3n%2Bvoluntaria_ciudadan%C3%ADa_V3.pdf/72c096fe-0e01-2293-fb9a-c9862dca89f0?t=1727245303785
 [P06B]: https://sede.mjusticia.gob.es/informacion-ayuda/preguntas-frecuentes
 [P06C]: https://sede.mjusticia.gob.es/tramites/organos-gobierno
+[JUSTICIA-TRAMITES-2026-08-19]: https://sedejudicial.justicia.es/tramites
+[JUSTICIA-PRIVATE-AREA-2026-08-19]: https://sedejudicial.justicia.es/group/guest/area-privada
+[JUSTICIA-AM-CLAVE-2026-08-19]: https://am.justicia.es/selfservice-ext/saml2/sp/login/clave?issuer=https://am.justicia.es/selfservice-ext/saml2/sp/login/clavenoeidas&RelayState=https%3A%2F%2Fsedejudicial.justicia.es%2Fgroup%2Fguest%2Farea-privada
 [P07]: https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs
 [P08]: https://sede.comunidad.madrid/guia-tramitacion/realizo-solicitud
 [P08A]: https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid

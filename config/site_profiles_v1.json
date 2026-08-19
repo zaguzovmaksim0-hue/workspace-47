@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 32,
+  "catalogVersion": 33,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1326,6 +1326,27 @@
         {"url":"https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1","reviewedOn":"2026-08-18"},
         {"url":"https://www.carpetaciutadana.org/cime/Login/Login.aspx","reviewedOn":"2026-08-18"},
         {"url":"https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "justicia-sede-judicial-private-area",
+      "profileVersion": 1,
+      "displayName": "Administración de Justicia — Sede Judicial Electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedejudicial.justicia.es/group/guest/area-privada",
+      "initiatorOrigins": ["https://sedejudicial.justicia.es"],
+      "redirectOrigins": ["https://am.justicia.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sedejudicial.justicia.es/tramites","reviewedOn":"2026-08-19"},
+        {"url":"https://sedejudicial.justicia.es/group/guest/area-privada","reviewedOn":"2026-08-19"},
+        {"url":"https://am.justicia.es/selfservice-ext/saml2/sp/login/clave?issuer=https://am.justicia.es/selfservice-ext/saml2/sp/login/clavenoeidas&RelayState=https%3A%2F%2Fsedejudicial.justicia.es%2Fgroup%2Fguest%2Farea-privada","reviewedOn":"2026-08-19"}
       ]
     }
   ]
