@@ -55,12 +55,17 @@ class CeutaProfileCatalogBindingTest {
             "https://user@sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
             "https://sede.ceuta.es.evil.example/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
             "https://sede.ceuta.es:8443/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
-            "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
-            "https://sede.ceuta.es/controlador/controlador?cmd=tramite&modulo=tramites&tramite=ANI",
-            "https://sede.ceuta.es/controlador/controlador",
         ).forEach { rejected ->
             assertNull(rejected, BuiltInSiteProfiles.qaRegistry.resolve(URI(rejected)))
             assertNull(rejected, BuiltInSiteProfiles.releaseRegistry.resolve(URI(rejected)))
+        }
+        listOf(
+            "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
+            "https://sede.ceuta.es/controlador/controlador?cmd=tramite&modulo=tramites&tramite=ANI",
+            "https://sede.ceuta.es/controlador/controlador",
+        ).forEach { sameOriginBrowse ->
+            assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(URI(sameOriginBrowse))?.trustMode)
+            assertNull(sameOriginBrowse, BuiltInSiteProfiles.releaseRegistry.resolve(URI(sameOriginBrowse)))
         }
     }
 
