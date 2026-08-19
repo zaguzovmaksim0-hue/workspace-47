@@ -272,6 +272,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
+            if (p.profileId.value == MENORCA_PROFILE_ID) {
+                validateMenorcaProfile(p)
+            }
             if (p.profileId.value == TEA_PROFILE_ID) {
                 validateTeaProfile(p)
             }
@@ -313,7 +316,7 @@ object SiteProfileCatalogParser {
             val clientAuthPolicy = p.clientAuthPolicy
             val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
             val sameOriginDirectClientAuth =
-                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID) &&
+                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID, MENORCA_PROFILE_ID) &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     clientAuthPolicy.requestPort == 443 &&
                     clientAuthOrigins.size == 1 &&
@@ -714,6 +717,39 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateMenorcaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MENORCA_PROFILE_VERSION)
+        require(profile.displayName == MENORCA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MENORCA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MENORCA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(MENORCA_ORIGIN)),
+                sourceUrls = setOf(URI(MENORCA_SOURCE_URL)),
+                requestPath = MENORCA_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
+                linkedEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MENORCA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
     private fun validateTeaProfile(profile: SiteProfile) {
@@ -1813,6 +1849,21 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
+    private const val MENORCA_PROFILE_ID = "menorca-carpeta-ciutadana"
+    private const val MENORCA_PROFILE_VERSION = 1
+    private const val MENORCA_DISPLAY_NAME = "Consell Insular de Menorca — Sol·licitud genèrica"
+    private const val MENORCA_START_URL =
+        "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    private const val MENORCA_ORIGIN = "https://www.carpetaciutadana.org"
+    private const val MENORCA_SOURCE_URL = "https://www.carpetaciutadana.org/cime/Login/Login.aspx"
+    private const val MENORCA_REQUEST_PATH = "/cime/Login/LoginCert.aspx"
+    private const val MENORCA_URL_PARAMETER = "URL"
+    private val MENORCA_EVIDENCE_URLS = setOf(
+        MENORCA_START_URL,
+        "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1",
+        MENORCA_SOURCE_URL,
+        "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx",
     )
     private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"
     private const val TEA_PROFILE_VERSION = 1

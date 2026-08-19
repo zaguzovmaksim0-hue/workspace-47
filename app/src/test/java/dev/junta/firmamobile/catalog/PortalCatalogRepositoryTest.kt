@@ -95,6 +95,7 @@ class PortalCatalogRepositoryTest {
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
+                "menorca-carpeta-ciutadana",
                 "canarias-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),

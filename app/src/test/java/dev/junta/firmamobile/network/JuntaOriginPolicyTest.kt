@@ -123,6 +123,7 @@ class JuntaOriginPolicyTest {
             "seu.diputaciolleida.cat",
             "sede.xunta.gal",
             "ias1.larioja.org",
+            "www.carpetaciutadana.org",
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",

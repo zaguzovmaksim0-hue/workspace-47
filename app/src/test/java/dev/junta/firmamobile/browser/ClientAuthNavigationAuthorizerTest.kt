@@ -186,6 +186,61 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun menorcaSameOriginClientTlsAuthorizesOnlyMatchingLinkedUrlParameter() {
+        val menorca = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = menorca.observeTopLevelNavigation(
+            MENORCA_PROFILE, MENORCA_SOURCE, MENORCA_TARGET, 72, true,
+        )
+
+        assertEquals(MENORCA_PROFILE, authorized?.profileId)
+        assertEquals("www.carpetaciutadana.org", authorized?.target?.host)
+        assertEquals("/cime/Login/LoginCert.aspx", authorized?.target?.rawPath)
+        assertEquals("URL=$MENORCA_RETURN", authorized?.target?.rawQuery)
+        assertNull(
+            menorca.observeTopLevelNavigation(
+                MENORCA_PROFILE, MENORCA_SOURCE, MENORCA_TARGET, 72, true,
+            ),
+        )
+    }
+
+    @Test
+    fun menorcaSameOriginClientTlsRejectsUnlinkedOrExpandedTransition() {
+        val invalidCalls = listOf(
+            MENORCA_SOURCE.replace(MENORCA_RETURN, MENORCA_OTHER_RETURN) to MENORCA_TARGET,
+            MENORCA_SOURCE to MENORCA_TARGET.replace(MENORCA_RETURN, MENORCA_OTHER_RETURN),
+            "$MENORCA_SOURCE&extra=1" to MENORCA_TARGET,
+            MENORCA_SOURCE to "$MENORCA_TARGET&extra=1",
+            MENORCA_SOURCE.replace("/Login/Login.aspx", "/Login/Other.aspx") to MENORCA_TARGET,
+            MENORCA_SOURCE to MENORCA_TARGET.replace("/Login/LoginCert.aspx", "/Login/LoginCert.aspx/other"),
+            MENORCA_SOURCE to MENORCA_TARGET.replace(
+                "www.carpetaciutadana.org",
+                "www.carpetaciutadana.org.evil.example",
+            ),
+            MENORCA_SOURCE to MENORCA_TARGET.replace(
+                "www.carpetaciutadana.org",
+                "www.carpetaciutadana.org:8443",
+            ),
+        )
+
+        invalidCalls.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    MENORCA_PROFILE, source, target, 73L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTeaAlegacionesDirectTransitionProducesOneBoundedTarget() {
         val result = authorizer.observeTopLevelNavigation(
             activeProfileId = TEA_PROFILE,
@@ -892,6 +947,16 @@ class ClientAuthNavigationAuthorizerTest {
         const val LEON_TARGET =
             "https://identificacionssl.sedipualba.es/?idtoken=$LEON_TOKEN&idioma=es&entidad=24000"
         val SANIDAD_PROFILE = ProfileId("ministerio-sanidad-certificado")
+        val MENORCA_PROFILE = ProfileId("menorca-carpeta-ciutadana")
+        const val MENORCA_RETURN =
+            "https%3A%2F%2Fwww.carpetaciutadana.org%2Fcime%2Fsolicituds%2F" +
+                "iniciartramit.aspx%3FTIPO%3DREGE%5EIDIOMA%3D1"
+        const val MENORCA_OTHER_RETURN =
+            "https%3A%2F%2Fwww.carpetaciutadana.org%2Fcime%2Fsolicituds%2Fother.aspx"
+        const val MENORCA_SOURCE =
+            "https://www.carpetaciutadana.org/cime/Login/Login.aspx?URL=$MENORCA_RETURN"
+        const val MENORCA_TARGET =
+            "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx?URL=$MENORCA_RETURN"
         val TOLEDO_PROFILE = ProfileId("diputacion-toledo-sede")
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 31,
+  "catalogVersion": 32,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1270,6 +1270,28 @@
         {"url":"https://sede.xunta.gal/presenta/novo/PR004A_2025_1","reviewedOn":"2026-08-18"},
         {"url":"https://sede.xunta.gal/presenta/assets/js/miniapplet.js?nocache=1.7.0","reviewedOn":"2026-08-18"},
         {"url":"https://sede.xunta.gal/presenta/main.293423417603b2d37c80.js","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "menorca-carpeta-ciutadana",
+      "profileVersion": 1,
+      "displayName": "Consell Insular de Menorca — Sol·licitud genèrica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+      "initiatorOrigins": ["https://www.carpetaciutadana.org"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://www.carpetaciutadana.org"],"sourceUrls":["https://www.carpetaciutadana.org/cime/Login/Login.aspx"],"requestPath":"/cime/Login/LoginCert.aspx","fixedQueryParameters":{},"requiredEphemeralQueryParameters":["URL"],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443,"sourceFixedQueryParameters":{},"sourceRequiredEphemeralQueryParameters":["URL"],"linkedEphemeralQueryParameters":["URL"]},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262","reviewedOn":"2026-08-18"},
+        {"url":"https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1","reviewedOn":"2026-08-18"},
+        {"url":"https://www.carpetaciutadana.org/cime/Login/Login.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx","reviewedOn":"2026-08-18"}
       ]
     }
   ]

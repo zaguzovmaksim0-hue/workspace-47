@@ -88,6 +88,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),
+                ProfileId("menorca-carpeta-ciutadana"),
                 ProfileId("canarias-sede"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),

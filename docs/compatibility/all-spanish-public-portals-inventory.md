@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 73 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 77 |
-| Entradas restantes fuera de ambos estados | 106 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 74 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 78 |
+| Entradas restantes fuera de ambos estados | 105 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 73 |
+| `IMPLEMENTED_NOT_E2E` | 74 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 99 |
+| `BROWSE_ONLY` | 98 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4105,29 +4105,29 @@ records:
     autonomous_community: "Illes Balears"
     province_or_municipality: "Illes Balears"
     institution_name: "Consell Insular de Menorca"
-    surface_name: "Portal institucional del Consell Insular de Menorca"
+    surface_name: "Portal institucional del Consell Insular de Menorca — Sol·licitud genèrica"
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.cime.es"
     official_site: "https://www.cime.es/"
     e_sede: "https://seuelectronica.cime.es/"
-    entry_url: "https://www.cime.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    entry_url: "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    procedure_page: "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AUTOFIRMA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I01A", "I01B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Sol·licitud genèrica del Consell Insular de Menorca mediante TLS cliente; la firma AutoFirma y el envío administrativo posteriores quedan fuera del contrato implementado."
+    protocol_evidence: "El portal institucional enlaza la Carpeta Ciutadana actual; la Sol·licitud genèrica publica Tramitar, exige certificado para firmar y enviar y nombra AutoFirma. El flujo real pasa por Login.aspx y LoginCert.aspx conservando el parámetro efímero URL; sin certificado LoginCert devuelve 403, mientras el runtime autenticado con certificado autorizado alcanza formsol.aspx. No se observó ABI de firma antes del formulario protegido."
+    client_tls_auth: "SI"
+    evidence_ids: ["D12", "I01A", "I01B", "MENORCA-GENERIC-2026-08-18", "MENORCA-CLIENT-TLS-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para el origin, source, target y parámetro URL enlazado exactos; E2E Android pendiente. AutoFirma está documentado por el portal, pero formato, algoritmo, payload, callback y envío final no se infieren ni se implementan."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificar E2E únicamente la autenticación TLS cliente en WebView físico; mantener la firma documental y la presentación final bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0118"
     surface_key: "menorca-sede-electronica"
@@ -6556,6 +6556,8 @@ availability, certificado, firma ni contrato técnico.
 [DP39B]: https://www.ebizkaia.eus/es/medios-de-identificacion
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
+[MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
+[MENORCA-CLIENT-TLS-2026-08-18]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html

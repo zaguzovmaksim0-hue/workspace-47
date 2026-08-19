@@ -643,6 +643,21 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun rejectsMenorcaClientTlsContractWithoutLinkedUrlParameter() {
+        val linkedUrl = "\"linkedEphemeralQueryParameters\":[\"URL\"]"
+
+        assertTrue(BuiltInSiteProfiles.JSON.contains(linkedUrl))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(
+                    linkedUrl,
+                    "\"linkedEphemeralQueryParameters\":[]",
+                ),
+            )
+        }
+    }
+
+    @Test
     fun preservesTheExactCarneJovenClientTlsContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("carne-joven-andalucia")
