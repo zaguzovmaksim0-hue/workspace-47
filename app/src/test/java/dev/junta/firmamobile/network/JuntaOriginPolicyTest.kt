@@ -56,6 +56,7 @@ class JuntaOriginPolicyTest {
     private val lleida = ProfileId("diputacion-lleida-sede")
     private val xunta = ProfileId("xunta-galicia-solicitude-xenerica")
     private val canarias = ProfileId("canarias-sede")
+    private val catalunyaSeu = ProfileId("catalunya-seu-registre-client-auth")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
 
@@ -128,6 +129,11 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "web.gencat.cat",
+            "tramits.gencat.cat",
+            "ovt.gencat.cat",
+            "valid.aoc.cat",
+            "cert.valid.aoc.cat",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -334,6 +340,18 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://sede.gobiernodecanarias.org"),
             JuntaOriginPolicy.webMessageOriginRules(canarias),
+        )
+        assertEquals(
+            setOf("web.gencat.cat", "tramits.gencat.cat", "ovt.gencat.cat", "valid.aoc.cat"),
+            JuntaOriginPolicy.browserAllowedHosts(catalunyaSeu),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(catalunyaSeu).isEmpty())
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://cert.valid.aoc.cat/o/oauth2/cert")))
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://cert.valid.aoc.cat/o/oauth2/cert"),
+                catalunyaSeu,
+            ),
         )
     }
 
