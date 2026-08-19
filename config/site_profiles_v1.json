@@ -1098,6 +1098,26 @@
       ]
     },
     {
+      "profileId": "comunidad-madrid-registro-general",
+      "profileVersion": 1,
+      "displayName": "Comunidad de Madrid — Registro Electrónico General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm",
+      "initiatorOrigins": ["https://gestiona.comunidad.madrid"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid","reviewedOn":"2026-08-19"},
+        {"url":"https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "junta-andalucia-vea-peg",
       "profileVersion": 1,
       "displayName": "Junta de Andalucía — Presentación electrónica general",

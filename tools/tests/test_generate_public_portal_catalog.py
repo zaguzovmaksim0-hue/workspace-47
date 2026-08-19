@@ -1470,6 +1470,29 @@ records:
         self.assertIn("e2e", target["limitations"].lower())
 
 
+    def test_comunidad_madrid_registro_general_binds_exact_qa_launch_only(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0012")
+
+        self.assertEqual("comunidad-madrid-sede", target["portalId"])
+        self.assertEqual("comunidad-madrid-registro-general", target["profileId"])
+        self.assertEqual(
+            "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("MADRID_EREG_MULTIPART_ROUTER", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-19", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("formato", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
     def test_junta_andalucia_vea_peg_profile_binds_exact_public_start(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0093")
