@@ -242,6 +242,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == EXTREMADURA_PROFILE_ID) {
                 validateExtremaduraProfile(p)
             }
+            if (p.profileId.value == PATTEX_PROFILE_ID) {
+                validatePattexProfile(p)
+            }
             if (p.profileId.value == LA_PALMA_PROFILE_ID) {
                 validateLaPalmaProfile(p)
             }
@@ -301,13 +304,14 @@ object SiteProfileCatalogParser {
             val clientAuthPolicy = p.clientAuthPolicy
             val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
             val sameOriginDirectClientAuth =
-                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID) &&
+                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID, PATTEX_PROFILE_ID) &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     clientAuthPolicy.requestPort == 443 &&
                     clientAuthOrigins.size == 1 &&
                     clientAuthPolicy.sourceUrls.all { it.origin() in clientAuthOrigins } &&
                     (clientAuthPolicy.fixedQueryParameters.isNotEmpty() ||
-                        clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty())
+                        clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty() ||
+                        p.profileId.value == PATTEX_PROFILE_ID)
             if (clientAuthPolicy?.requestPort == 443) {
                 require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty() || sameOriginDirectClientAuth)
                 require((clientAuthOrigins intersect p.redirectOrigins).isEmpty() || sameOriginDirectClientAuth)
@@ -904,6 +908,36 @@ object SiteProfileCatalogParser {
                 allowedExtraProperties = emptySet(),
             ),
         )
+    }
+
+    private fun validatePattexProfile(profile: SiteProfile) {
+        require(profile.profileVersion == PATTEX_PROFILE_VERSION)
+        require(profile.displayName == PATTEX_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == PATTEX_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(PATTEX_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(PATTEX_ORIGIN)),
+                sourceUrls = setOf(URI(PATTEX_START_URL)),
+                requestPath = PATTEX_CLIENT_AUTH_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == PATTEX_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
     }
 
     private fun validateAirefProfile(profile: SiteProfile) {
@@ -1721,6 +1755,19 @@ object SiteProfileCatalogParser {
     private const val EXTREMADURA_ORIGIN = "https://tramites.juntaex.es"
     private const val EXTREMADURA_SAFE_DESCRIPTION =
         "Firma por lotes en Trámites de la Junta de Extremadura"
+    private const val PATTEX_PROFILE_ID = "extremadura-pattex-client-auth"
+    private const val PATTEX_PROFILE_VERSION = 1
+    private const val PATTEX_DISPLAY_NAME = "Junta de Extremadura — PATTEX acceso con certificado"
+    private const val PATTEX_START_URL =
+        "https://pattex.juntaex.es/PATTEX/externos.jsf?" +
+            "info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo"
+    private const val PATTEX_ORIGIN = "https://pattex.juntaex.es"
+    private const val PATTEX_CLIENT_AUTH_PATH = "/PATTEX/accesoCertificadoSEDE.jsf"
+    private val PATTEX_EVIDENCE_URLS = setOf(
+        "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos",
+        PATTEX_START_URL,
+        "https://pattex.juntaex.es/PATTEX/accesoCertificadoSEDE.jsf",
+    )
     private const val LA_PALMA_PROFILE_ID = "la-palma-sede-electronica"
     private const val LA_PALMA_PROFILE_VERSION = 1
     private const val LA_PALMA_DISPLAY_NAME = "Cabildo Insular de La Palma — Sede electrónica"

@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 69 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 73 |
-| Entradas restantes fuera de ambos estados | 110 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 70 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 74 |
+| Entradas restantes fuera de ambos estados | 109 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 69 |
+| `IMPLEMENTED_NOT_E2E` | 70 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 103 |
+| `BROWSE_ONLY` | 102 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3915,24 +3915,24 @@ records:
     origin: "https://portaltributario.juntaex.es"
     official_site: "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos"
     e_sede: "NO_VERIFICADO"
-    entry_url: "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo"
+    procedure_page: "https://pattex.juntaex.es/PATTEX/accesoCertificadoSEDE.jsf"
     certificate_required: "SI"
     signature_required: "SI"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pattex.juntaex.es/PATTEX/accesoCertificadoSEDE.jsf"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación tributaria con certificado y AutoFirma según los requisitos publicados."
-    protocol_evidence: "Los requisitos acreditan certificado y AutoFirma, no ABI, callback ni formato exactos."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A13D"]
-    reason: "La exigencia del producto no identifica cliente JS, algoritmo, endpoint ni TLS cliente."
-    reviewed_at: "2026-07-16"
-    next_gate: "Localizar un trámite tributario público y revisar su invocación sin enviar datos."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a PATTEX mediante renegociación TLS cliente en el salto exacto externos.jsf → accesoCertificadoSEDE.jsf; la firma documental y la presentación posterior quedan fuera del contrato implementado."
+    protocol_evidence: "El launch PATTEX exacto redirige por HTTP 302 a /PATTEX/accesoCertificadoSEDE.jsf. En TLS 1.2, la petición a esa ruta provoca HelloRequest y renegociación con CertificateRequest; el servidor anuncia rsa_sign y ecdsa_sign y una lista certificate_authorities vacía. El runtime autenticado controlado del 2026-08-18 confirmó que presentar el certificado elimina el fallo de validación y que cookie-only no basta."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A13D", "PATTEX-AUTH-RUNTIME-2026-08-18", "PATTEX-TLS-RENEGOTIATION-2026-08-19"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para source/target PATTEX exactos, host/path/port cerrados y TTL local acotado; E2E Android pendiente. La firma documental — signer ABI, formato, algoritmo y callbacks — y la presentación permanecen NO_VERIFICADO."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar E2E Android del acceso PATTEX con certificado; instrumentar por separado cualquier pre-sign/signing runtime y detenerse antes de firma criptográfica y presentación final."
 
   - inventory_id: "ES-PUB-0112"
     surface_key: "galicia-sede"

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "17e28edada215217c78173740bd75525f4025807fdf15350378c0a2481ee9f90",
+  "sourceRevision": "9b0ebb50da09d170bb4dfda5d2f04d78079a2f9f536549ceb441429da0a284bd",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2861,28 +2861,31 @@
     {
       "portalId": "extremadura-portal-tributario",
       "inventoryId": "ES-PUB-0111",
-      "profileId": null,
+      "profileId": "extremadura-pattex-client-auth",
       "displayName": "Portal Tributario de la Junta de Extremadura",
       "organization": "Junta de Extremadura",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Extremadura",
-      "purpose": "Tramitación tributaria con certificado y AutoFirma según los requisitos publicados.",
-      "entryUrl": "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos",
+      "purpose": "Acceso con certificado a PATTEX mediante renegociación TLS cliente en el salto exacto externos.jsf → accesoCertificadoSEDE.jsf; la firma documental y la presentación posterior quedan fuera del contrato implementado.",
+      "entryUrl": "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
-        "A13D"
+        "A13D",
+        "PATTEX-AUTH-RUNTIME-2026-08-18",
+        "PATTEX-TLS-RENEGOTIATION-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La exigencia del producto no identifica cliente JS, algoritmo, endpoint ni TLS cliente."
+      "reviewedOn": "2026-08-19",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para source/target PATTEX exactos, host/path/port cerrados y TTL local acotado; E2E Android pendiente. La firma documental — signer ABI, formato, algoritmo y callbacks — y la presentación permanecen NO_VERIFICADO."
     },
     {
       "portalId": "galicia-sede",

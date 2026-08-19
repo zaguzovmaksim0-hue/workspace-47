@@ -662,6 +662,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_pattex_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        pattex = next(entry for entry in catalog["entries"] if entry["portalId"] == "extremadura-portal-tributario")
+
+        self.assertEqual("extremadura-pattex-client-auth", pattex["profileId"])
+        self.assertEqual("ES-PUB-0111", pattex["inventoryId"])
+        self.assertEqual(
+            "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo",
+            pattex["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", pattex)
+        self.assertEqual("E2E_PENDING", pattex["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", pattex["inventoryStatus"])
+        self.assertEqual("CLIENT_TLS_AUTH", pattex["protocolFamily"])
+        self.assertEqual("2026-08-19", pattex["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", pattex["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", pattex["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", pattex["observedMechanisms"])
+        self.assertEqual([], pattex["observedSignatureFormats"])
+        self.assertIn("qa", pattex["limitations"].lower())
+        self.assertIn("firma", pattex["limitations"].lower())
+
     def test_navarra_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         navarra = next(
