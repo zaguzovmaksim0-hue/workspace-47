@@ -555,4 +555,20 @@ class PortalCatalogScreenTest {
         assertTrue(target.signatureFormats.isEmpty())
     }
 
+    @Test
+    fun `Madrid Cuenta Digital 53F1 is compatible navigation without sensitive capabilities`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single {
+            it.portalId == PortalId("comunidad-madrid-cuenta-digital-carne-joven")
+        }
+
+        assertEquals("comunidad-madrid-cuenta-digital-53f1", target.profileId?.value)
+        assertEquals(java.net.URI("https://digital.comunidad.madrid/ext/53F1"), target.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.isEnabled)
+        assertTrue(target.capabilities.isEmpty())
+        assertTrue(target.signatureFormats.isEmpty())
+    }
+
 }

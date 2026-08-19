@@ -1759,6 +1759,27 @@
       ]
     },
     {
+      "profileId": "comunidad-madrid-cuenta-digital-53f1",
+      "profileVersion": 1,
+      "displayName": "Comunidad de Madrid — Cuenta Digital Carné Joven 53F1",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://digital.comunidad.madrid/ext/53F1",
+      "initiatorOrigins": ["https://digital.comunidad.madrid"],
+      "redirectOrigins": ["https://gestiona.comunidad.madrid"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://digital.comunidad.madrid/ext/53F1","reviewedOn":"2026-08-19"},
+        {"url":"https://gestiona.comunidad.madrid/auto_login/acceso.jsf","reviewedOn":"2026-08-19"},
+        {"url":"https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "la-gomera-instancia-general",
       "profileVersion": 1,
       "displayName": "Cabildo Insular de La Gomera — Instancia General",
