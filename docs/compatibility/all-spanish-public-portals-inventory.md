@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 72 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 76 |
-| Entradas restantes fuera de ambos estados | 107 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 73 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 77 |
+| Entradas restantes fuera de ambos estados | 106 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 72 |
+| `IMPLEMENTED_NOT_E2E` | 73 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 100 |
+| `BROWSE_ONLY` | 99 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3947,22 +3947,23 @@ records:
     e_sede: "https://sede.xunta.gal/a-sede/identificacion-e-titularidade"
     entry_url: "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
     procedure_page: "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MiniApplet / AutoScript / AutoFirma / @firma"
+    protocol_family: "MINIAPPLET_TRIPHASE"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA1withRSA (LEGACY_SHA1 portal-specific)"
+    endpoint: "https://sede.xunta.gal/presenta/sinatura/SignatureService"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Presentación de solicitud genérica mediante sistemas de identificación y firma admitidos."
-    protocol_evidence: "La sede documenta AutoFirma y cliente móvil, sin publicar el ABI ni transporte del trámite."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A14A", "A14B", "A14C"]
-    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar los assets vigentes de la solicitud genérica sin iniciar presentación."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud genérica PR004A: autenticación TLS con certificado y firma PAdES tri-phase de la solicitud principal; el perfil QA implementa solo el contrato de firma principal y selección de certificado observado."
+    protocol_evidence: "Los assets first-party vigentes de Presenta 2026 fuerzan PAdEStri + SHA1withRSA para la solicitud principal, MiniApplet.selectCertificate(filters=nonexpired) y SignatureService en /presenta/sinatura/. El runtime controlado autenticado confirmó client-TLS y cargó PR004A sin firmar ni presentar. El wire PAdES tri-phase se contrastó con clienteafirma fe60ef3fdbae3c491e97c262a2179e2787b85776."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A14A", "A14B", "A14C", "LIVE-XUNTA-PR004A-2026-08-18"]
+    reason: "Contrato exacto de firma principal implementado fail-closed en QA; XAdES de anexos, parámetros visuales y E2E Android mTLS→firma quedan fuera hasta prueba segura específica. La presentación/registro no se ejecutó."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E físico seguro en Android del acceso mTLS, selección de certificado y firma principal PR004A, deteniéndose antes de presentar o registrar."
+    notes: "El bridge exige la página exacta /presenta/novo/PR004A_2025_1, data literal doc, SHA1withRSA, PAdEStri, endpoint SignatureService y el allowlist de propiedades observado. XAdEStri de anexos y propiedades visuales fallan cerrado. El modelo actual no combina clientAuthPolicy con operaciones SIGN; por ello el soporte permanece IMPLEMENTED_NOT_E2E."
 
   - inventory_id: "ES-PUB-0113"
     surface_key: "murcia-sede"

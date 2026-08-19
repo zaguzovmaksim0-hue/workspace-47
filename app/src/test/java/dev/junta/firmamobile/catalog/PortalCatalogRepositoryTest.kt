@@ -93,6 +93,7 @@ class PortalCatalogRepositoryTest {
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "cdti-certificate-validation",
+                "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
                 "canarias-sede",
             ),

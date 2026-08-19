@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "0623a9ecff50aed009b7f91b208466786bd4ea68471d8761ed70466aae9abbec",
+  "sourceRevision": "443a47f0386134ec50b9f2d427894bf639ac9374003cb28c7b977a9226d4804c",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2898,30 +2898,38 @@
     {
       "portalId": "galicia-sede",
       "inventoryId": "ES-PUB-0112",
-      "profileId": null,
+      "profileId": "xunta-galicia-solicitude-xenerica",
       "displayName": "Sede electrónica de la Xunta de Galicia",
       "organization": "Xunta de Galicia",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Galicia",
-      "purpose": "Presentación de solicitud genérica mediante sistemas de identificación y firma admitidos.",
+      "purpose": "Solicitud genérica PR004A: autenticación TLS con certificado y firma PAdES tri-phase de la solicitud principal; el perfil QA implementa solo el contrato de firma principal y selección de certificado observado.",
       "entryUrl": "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica",
       "observedMechanisms": [
+        "AFIRMA",
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_TRIPHASE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A14A",
         "A14B",
-        "A14C"
+        "A14C",
+        "LIVE-XUNTA-PR004A-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato exacto de firma principal implementado fail-closed en QA; XAdES de anexos, parámetros visuales y E2E Android mTLS→firma quedan fuera hasta prueba segura específica. La presentación/registro no se ejecutó."
     },
     {
       "portalId": "murcia-sede",

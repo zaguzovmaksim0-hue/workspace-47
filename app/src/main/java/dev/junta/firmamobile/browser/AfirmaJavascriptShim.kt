@@ -7,7 +7,7 @@ import java.net.URI
 import org.json.JSONObject
 
 object AfirmaJavascriptShim {
-    const val MAX_SCRIPT_CHARS = 52 * 1024
+    const val MAX_SCRIPT_CHARS = 56 * 1024
 
     fun load(context: Context): String = load(
         context,
@@ -35,6 +35,7 @@ object AfirmaJavascriptShim {
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
         isciiiCertificateSelectionEnabled: Boolean = false,
         valenciaCertificateSelectionEnabled: Boolean = false,
+        xuntaGaliciaCompatibilityEnabled: Boolean = false,
     ): String {
         val script = context.resources.openRawResource(R.raw.afirma_shim)
             .bufferedReader(Charsets.UTF_8)
@@ -64,6 +65,7 @@ object AfirmaJavascriptShim {
                 batchOrigin.rawQuery == null && batchOrigin.rawFragment == null
         )
         check(script.countOccurrences(VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
+        check(script.countOccurrences(XUNTA_GALICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         val configured = script
             .replace(
                 MODE_PLACEHOLDER,
@@ -134,6 +136,10 @@ object AfirmaJavascriptShim {
                 VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER,
                 if (valenciaCertificateSelectionEnabled) "true" else "false",
             )
+            .replace(
+                XUNTA_GALICIA_COMPATIBILITY_PLACEHOLDER,
+                if (xuntaGaliciaCompatibilityEnabled) "true" else "false",
+            )
         check(configured.isNotBlank() && configured.length <= MAX_SCRIPT_CHARS)
         return configured
     }
@@ -172,6 +178,8 @@ object AfirmaJavascriptShim {
         "__JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__"
     private const val VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER =
         "__JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__"
+    private const val XUNTA_GALICIA_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_XUNTA_GALICIA_COMPATIBILITY_ENABLED__"
 }
 
 enum class MiniAppletBridgeMode {

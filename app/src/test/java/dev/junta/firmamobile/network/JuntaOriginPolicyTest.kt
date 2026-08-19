@@ -54,6 +54,7 @@ class JuntaOriginPolicyTest {
     private val valencia = ProfileId("diputacion-valencia-sede")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
+    private val xunta = ProfileId("xunta-galicia-solicitude-xenerica")
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
@@ -120,6 +121,7 @@ class JuntaOriginPolicyTest {
             "portafirmas.dival.es",
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
+            "sede.xunta.gal",
             "ias1.larioja.org",
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
@@ -214,6 +216,8 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(ceuta).isEmpty())
         assertEquals(setOf("seu.diputaciolleida.cat"), JuntaOriginPolicy.browserAllowedHosts(lleida))
         assertEquals(setOf("https://seu.diputaciolleida.cat"), JuntaOriginPolicy.webMessageOriginRules(lleida))
+        assertEquals(setOf("sede.xunta.gal"), JuntaOriginPolicy.browserAllowedHosts(xunta))
+        assertEquals(setOf("https://sede.xunta.gal"), JuntaOriginPolicy.webMessageOriginRules(xunta))
         assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))

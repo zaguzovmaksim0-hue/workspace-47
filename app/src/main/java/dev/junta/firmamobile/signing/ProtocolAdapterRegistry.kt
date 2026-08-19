@@ -241,6 +241,20 @@ object BuiltInProtocolAdapterRegistry {
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = CanariasCertificateLoginCadesAdapter.ID,
             ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(XuntaPadesTriPhaseAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = XuntaPadesTriPhaseAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(XuntaPadesTriPhaseAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SELECT_CERTIFICATE,
+                inputAdapterId = ProtocolInputAdapterId("autoscript-select-certificate-v1"),
+                callbackContractId = CallbackContractId("autoscript-select-certificate-callback-v1"),
+                signingProtocolId = SigningProtocolId(XuntaPadesTriPhaseAdapter.SELECT_CERTIFICATE_PROTOCOL_ID),
+            ),
         ),
     )
 }

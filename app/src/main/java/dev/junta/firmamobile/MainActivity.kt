@@ -83,6 +83,7 @@ import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LugoBatchProtocolAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
+import dev.junta.firmamobile.signing.XuntaPadesTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -160,6 +161,7 @@ class MainActivity : ComponentActivity() {
         val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
         val mitesAdapter = MitesCertificateLoginCadesAdapter()
         val granCanariaAdapter = GranCanariaPadesAdapter()
+        val xuntaAdapter = XuntaPadesTriPhaseAdapter()
         val transparenciaAdapter = TransparenciaPadesAdapter()
         val minecoAdapter = MinecoPadesAdapter()
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
@@ -201,6 +203,7 @@ class MainActivity : ComponentActivity() {
                     jccmAdapter.id -> jccmAdapter
                     mitesAdapter.id -> mitesAdapter
                     granCanariaAdapter.id -> granCanariaAdapter
+                    xuntaAdapter.id -> xuntaAdapter
                     transparenciaAdapter.id -> transparenciaAdapter
                     minecoAdapter.id -> minecoAdapter
                     tenerifeAdapter.id -> tenerifeAdapter

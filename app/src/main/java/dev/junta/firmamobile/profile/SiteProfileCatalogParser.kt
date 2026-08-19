@@ -302,6 +302,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == AIREF_PROFILE_ID) {
                 validateAirefProfile(p)
             }
+            if (p.profileId.value == XUNTA_PROFILE_ID) {
+                validateXuntaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -409,16 +412,20 @@ object SiteProfileCatalogParser {
                     require(op.packaging != null && Capability.SIGN in op.capabilities)
                 }
                 if (op.inputAdapterId.value == ISCIII_INPUT_ADAPTER_ID) {
-                    require(p.profileId.value == ISCIII_PROFILE_ID || p.profileId.value == VALENCIA_PROFILE_ID)
+                    require(
+                        p.profileId.value == ISCIII_PROFILE_ID ||
+                            p.profileId.value == VALENCIA_PROFILE_ID ||
+                            p.profileId.value == XUNTA_PROFILE_ID
+                    )
                     require(op.operation == ProtocolOperation.SELECT_CERTIFICATE)
                     require(op.capabilities == setOf(Capability.SELECT_CERTIFICATE))
                     require(op.endpointId == null)
                     require(op.algorithms.isEmpty())
                     require(op.format == null && op.packaging == null && op.mode == null)
-                    if (p.profileId.value == ISCIII_PROFILE_ID) {
-                        require(op.fixedExtraProperties == ISCIII_FIXED_EXTRA_PROPERTIES)
-                    } else {
-                        require(op.fixedExtraProperties == VALENCIA_FIXED_EXTRA_PROPERTIES)
+                    when (p.profileId.value) {
+                        ISCIII_PROFILE_ID -> require(op.fixedExtraProperties == ISCIII_FIXED_EXTRA_PROPERTIES)
+                        VALENCIA_PROFILE_ID -> require(op.fixedExtraProperties == VALENCIA_FIXED_EXTRA_PROPERTIES)
+                        XUNTA_PROFILE_ID -> require(op.fixedExtraProperties == XUNTA_SELECT_FIXED_EXTRA_PROPERTIES)
                     }
                     require(op.allowedExtraProperties.isEmpty())
                 }
@@ -432,14 +439,19 @@ object SiteProfileCatalogParser {
                             p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
                             p.profileId.value == MINECO_PROFILE_ID ||
                             p.profileId.value == CDTI_PROFILE_ID ||
-                            p.profileId.value == TRANSPORTES_PROFILE_ID
+                            p.profileId.value == TRANSPORTES_PROFILE_ID ||
+                            p.profileId.value == XUNTA_PROFILE_ID
                         ) {
                             SignaturePackaging.ATTACHED
                         } else {
                             SignaturePackaging.DETACHED
                         },
                     )
-                    require(op.allowedExtraProperties.isEmpty())
+                    if (p.profileId.value == XUNTA_PROFILE_ID) {
+                        require(op.allowedExtraProperties == XUNTA_ALLOWED_EXTRA_PROPERTIES)
+                    } else {
+                        require(op.allowedExtraProperties.isEmpty())
+                    }
                     when (op.format) {
                         SignatureFormat.CADES -> {
                             if (op.endpointId == null) {
@@ -504,19 +516,25 @@ object SiteProfileCatalogParser {
                             }
                         }
                         SignatureFormat.PADES -> {
-                            require(
-                                p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
-                                    p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
-                                    p.profileId.value == MINECO_PROFILE_ID,
-                            )
-                            require(op.endpointId == null && op.mode == null)
-                            require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
-                            val expectedPadesProperties = when (p.profileId.value) {
-                                MINECO_PROFILE_ID -> MINECO_EXTRA_PROPERTIES
-                                TRANSPARENCIA_PROFILE_ID -> TRANSPARENCIA_EXTRA_PROPERTIES
-                                else -> GRAN_CANARIA_EXTRA_PROPERTIES
+                            if (p.profileId.value == XUNTA_PROFILE_ID) {
+                                require(op.endpointId == EndpointId(XUNTA_ENDPOINT_ID) && op.mode == null)
+                                require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                require(op.fixedExtraProperties == XUNTA_FIXED_EXTRA_PROPERTIES)
+                            } else {
+                                require(
+                                    p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
+                                        p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
+                                        p.profileId.value == MINECO_PROFILE_ID,
+                                )
+                                require(op.endpointId == null && op.mode == null)
+                                require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                                val expectedPadesProperties = when (p.profileId.value) {
+                                    MINECO_PROFILE_ID -> MINECO_EXTRA_PROPERTIES
+                                    TRANSPARENCIA_PROFILE_ID -> TRANSPARENCIA_EXTRA_PROPERTIES
+                                    else -> GRAN_CANARIA_EXTRA_PROPERTIES
+                                }
+                                require(op.fixedExtraProperties == expectedPadesProperties)
                             }
-                            require(op.fixedExtraProperties == expectedPadesProperties)
                         }
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
@@ -865,6 +883,69 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MINECO_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+    }
+
+    private fun validateXuntaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == XUNTA_PROFILE_VERSION)
+        require(profile.displayName == XUNTA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == XUNTA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(XUNTA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.SELECT_CERTIFICATE, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.endpoints.keys == setOf(EndpointId(XUNTA_ENDPOINT_ID)))
+        require(
+            profile.endpoints.getValue(EndpointId(XUNTA_ENDPOINT_ID)) == ProfileEndpoint(
+                endpointId = EndpointId(XUNTA_ENDPOINT_ID),
+                purpose = EndpointPurpose.TRIPHASE,
+                url = URI(XUNTA_ENDPOINT_URL),
+                method = HttpMethod.POST,
+                requestContentTypes = setOf("application/x-www-form-urlencoded; charset=UTF-8"),
+                responseContentTypes = setOf("text/plain"),
+                maxRequestBytes = 2_097_152,
+                maxResponseBytes = 2_097_152,
+                redirects = RedirectPolicy.DENY,
+            ),
+        )
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN, ProtocolOperation.SELECT_CERTIFICATE))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = XUNTA_SIGN_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = EndpointId(XUNTA_ENDPOINT_ID),
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.PADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = null,
+                fixedExtraProperties = XUNTA_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = XUNTA_ALLOWED_EXTRA_PROPERTIES,
+            ),
+        )
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SELECT_CERTIFICATE) == OperationPolicy(
+                operation = ProtocolOperation.SELECT_CERTIFICATE,
+                safeDescription = XUNTA_SELECT_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId(ISCIII_INPUT_ADAPTER_ID),
+                callbackContractId = CallbackContractId(ISCIII_CALLBACK_CONTRACT_ID),
+                capabilities = setOf(Capability.SELECT_CERTIFICATE),
+                endpointId = null,
+                algorithms = emptySet(),
+                format = null,
+                packaging = null,
+                mode = null,
+                fixedExtraProperties = XUNTA_SELECT_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == XUNTA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
     private fun validateTenerifeProfile(profile: SiteProfile) {
@@ -1834,6 +1915,35 @@ object SiteProfileCatalogParser {
         "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx",
         "https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js",
         "https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf",
+    )
+    private const val XUNTA_PROFILE_ID = "xunta-galicia-solicitude-xenerica"
+    private const val XUNTA_PROFILE_VERSION = 1
+    private const val XUNTA_DISPLAY_NAME = "Xunta de Galicia — Solicitude xenérica"
+    private const val XUNTA_START_URL = "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
+    private const val XUNTA_ORIGIN = "https://sede.xunta.gal"
+    private const val XUNTA_ENDPOINT_ID = "xunta-galicia-triphase"
+    private const val XUNTA_ENDPOINT_URL = "https://sede.xunta.gal/presenta/sinatura/SignatureService"
+    private const val XUNTA_SIGN_SAFE_DESCRIPTION =
+        "Firma PAdES de solicitud genérica en la Sede de la Xunta de Galicia"
+    private const val XUNTA_SELECT_SAFE_DESCRIPTION =
+        "Seleccionar certificado para la solicitud genérica de la Xunta de Galicia"
+    private val XUNTA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+        "format" to "PAdES",
+        "signatureSubFilter" to "ETSI.CAdES.detached",
+        "serverUrl" to XUNTA_ENDPOINT_URL,
+        "referencesDigestMethod" to "http://www.w3.org/2000/09/xmldsig#sha1",
+        "mimeType" to "hash/sha256",
+        "headless" to "true",
+    )
+    private val XUNTA_ALLOWED_EXTRA_PROPERTIES = linkedSetOf(
+        "filters", "locale", "nif", "id", "codigoSeguridad", "marcaFirmaCustom", "dataUser", "idBorrador",
+    )
+    private val XUNTA_SELECT_FIXED_EXTRA_PROPERTIES = linkedMapOf("filters" to "nonexpired")
+    private val XUNTA_EVIDENCE_URLS = setOf(
+        XUNTA_START_URL,
+        "https://sede.xunta.gal/presenta/novo/PR004A_2025_1",
+        "https://sede.xunta.gal/presenta/assets/js/miniapplet.js?nocache=1.7.0",
+        "https://sede.xunta.gal/presenta/main.293423417603b2d37c80.js",
     )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
     private const val TENERIFE_PROFILE_VERSION = 1
