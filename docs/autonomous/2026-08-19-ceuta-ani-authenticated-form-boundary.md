@@ -16,4 +16,4 @@ A v2.4-bounded direct submission of only that preflight-verified intermediate fo
 
 ## Product boundary
 
-The candidate therefore exposes only an exact QA trusted-browse launch and the observed authenticated-form contract. `SIGN`, signer ABI, signature format/algorithm, signing endpoint, callbacks, client TLS authentication, final filing, and payment remain unimplemented/unverified. Existing conservative certificate-selection rules are preserved rather than broadened without new evidence.
+The candidate therefore exposes only an exact QA trusted-browse launch and the observed authenticated-form contract. `SIGN`, signer ABI, signature format/algorithm, signing endpoint, callbacks, client TLS authentication, final filing, and payment remain unimplemented/unverified. The generic profile certificate filter is not treated as a signing capability; no certificate-selection or signing contract is promoted without evidence.
