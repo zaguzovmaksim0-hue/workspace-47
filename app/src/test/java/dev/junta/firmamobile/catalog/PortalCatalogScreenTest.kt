@@ -186,6 +186,35 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `UNED REG alias is shown as pending compatible and opens exact existing profile`() {
+        var opened: PortalCatalogItem? = null
+        rule.setContent {
+            JuntaFirmaTheme {
+                PortalCatalogScreen(
+                    repository = repository,
+                    onOpenPortal = { opened = it },
+                )
+            }
+        }
+
+        rule.onNodeWithText("Buscar servicio u organismo").performTextInput("UNED")
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasText("Registro Electrónico General (REG-AGE)"),
+        )
+        rule.onNodeWithText("Registro Electrónico General (REG-AGE)")
+            .assertIsDisplayed()
+        rule.onNodeWithText("IMPLEMENTADO · E2E PENDIENTE")
+            .performScrollTo()
+            .assertIsDisplayed()
+        rule.onNodeWithText("Abrir sede").performScrollTo().performClick()
+
+        rule.runOnIdle {
+            assertEquals("reg-age-redsara", opened?.profileId?.value)
+            assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, opened?.supportStatus)
+        }
+    }
+
+    @Test
     fun `verified UniZAR card states portal validation and verified signature`() {
         rule.setContent {
             JuntaFirmaTheme {
@@ -371,6 +400,36 @@ class PortalCatalogScreenTest {
         assertTrue(funciona.capabilities.isEmpty())
         assertTrue(funciona.signatureFormats.isEmpty())
         assertTrue(funciona.isEnabled)
+    }
+
+    @Test
+    fun `Hacienda central REG alias is compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val hacienda = compatible.items.single {
+            it.portalId == PortalId("age-sede-electronica-central-del-ministerio")
+        }
+
+        assertEquals("reg-age-redsara", hacienda.profileId?.value)
+        assertEquals(java.net.URI("https://sede.hacienda.gob.es/"), hacienda.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, hacienda.supportStatus)
+        assertTrue(hacienda.isEnabled)
+    }
+
+    @Test
+    fun `Junta VEA PEG is compatible navigation but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single { it.portalId == PortalId("junta-andalucia-sede") }
+
+        assertEquals("junta-andalucia-vea-peg", target.profileId?.value)
+        assertEquals(
+            java.net.URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"),
+            target.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.isEnabled)
+        assertTrue(target.capabilities.isEmpty())
     }
 
 }
