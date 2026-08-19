@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "443a47f0386134ec50b9f2d427894bf639ac9374003cb28c7b977a9226d4804c",
+  "sourceRevision": "f9430da333b271768a582d746dd4e3ee4ef92e726a69c2c6265da9900a2e029c",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4753,21 +4753,23 @@
       "organization": "Ministerio de Educación, Formación Profesional y Deportes",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Consulta de la convocatoria de homologación y convalidación",
+      "purpose": "Acceso con certificado a la Convocatoria 46 mediante la pasarela Cl@ve/eIdentifier; la firma documental posterior no está implementada.",
       "entryUrl": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
       "observedMechanisms": [
-        "CERTIFICATE_ACCESS"
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "CLAVE_GATEWAY_UNVERIFIED",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "LIVE-EDUCACION-ENTRY-2026-07-22"
+        "LIVE-EDUCACION-ENTRY-2026-07-22",
+        "EDUCACION-CONV46-CLIENTTLS-2026-08-19"
       ],
-      "reviewedOn": "2026-07-22",
-      "limitations": "Transporte downstream de certificado y callback no verificados; firma bloqueada."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Implementación QA-only limitada a CLIENT_TLS_AUTH; firma, formato, algoritmo, callback y aceptación E2E permanecen no verificados."
     },
     {
       "portalId": "castilla-la-mancha-certificate-login-probe",

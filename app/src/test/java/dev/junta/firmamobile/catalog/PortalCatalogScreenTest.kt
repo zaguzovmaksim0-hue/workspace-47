@@ -75,8 +75,8 @@ class PortalCatalogScreenTest {
             repository.portals().size - compatible.items.size - contractPending.items.size,
             fullCatalog.items.size,
         )
-        val education = fullCatalog.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
-        assertEquals(PortalSupportStatus.BROWSE_ONLY, education.supportStatus)
+        val education = compatible.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, education.supportStatus)
         assertTrue(education.isEnabled)
     }
 

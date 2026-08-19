@@ -75,6 +75,7 @@ class JuntaOriginPolicyTest {
             "ws072.juntadeandalucia.es",
             "veaja.cloud.juntadeandalucia.es",
             "sede.educacion.gob.es",
+            "www.educacion.gob.es",
             "aplicaciones.aragon.es",
             "sede.agenciatributaria.gob.es",
             "www1.agenciatributaria.gob.es",
@@ -160,7 +161,10 @@ class JuntaOriginPolicyTest {
                 juntaVeaPeg,
             ),
         )
-        assertEquals(setOf("sede.educacion.gob.es"), JuntaOriginPolicy.browserAllowedHosts(education))
+        assertEquals(
+            setOf("sede.educacion.gob.es", "www.educacion.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(education),
+        )
         assertEquals(setOf("aplicaciones.aragon.es"), JuntaOriginPolicy.browserAllowedHosts(aragon))
         assertEquals(setOf("sede.agenciatributaria.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aeat))
         assertEquals(setOf("sede.dgt.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgt))

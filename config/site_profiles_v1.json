@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 31,
+  "catalogVersion": 32,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -106,20 +106,20 @@
     },
     {
       "profileId": "educacion-convocatoria",
-      "profileVersion": 1,
-      "displayName": "Ministerio de Educación — Convocatorias",
-      "compatibilityStatus": "BROWSE_ONLY",
-      "activation": "ENABLED",
+      "profileVersion": 2,
+      "displayName": "Ministerio de Educación — Convocatoria 46 — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
       "startUrl": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
       "initiatorOrigins": ["https://sede.educacion.gob.es"],
-      "redirectOrigins": [],
+      "redirectOrigins": ["https://www.educacion.gob.es", "https://pasarela.clave.gob.es"],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": [],
-      "clientAuthPolicy": null,
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://pasarela-ident.clave.gob.es"],"sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],"requestPath":"/IdP2/AuthenticateCitizen","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443},
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46","reviewedOn":"2026-07-22"}]
+      "evidence": [{"url":"https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46","reviewedOn":"2026-08-19"},{"url":"https://www.educacion.gob.es/claveedu/claveEduPeticion.form","reviewedOn":"2026-08-19"},{"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-19"},{"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-08-19"},{"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-19"}]
     },
     {
       "profileId": "aragon-siraw",

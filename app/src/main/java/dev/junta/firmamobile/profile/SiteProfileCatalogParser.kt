@@ -302,6 +302,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == AIREF_PROFILE_ID) {
                 validateAirefProfile(p)
             }
+            if (p.profileId.value == EDUCATION_PROFILE_ID) {
+                validateEducationProfile(p)
+            }
             if (p.profileId.value == XUNTA_PROFILE_ID) {
                 validateXuntaProfile(p)
             }
@@ -373,7 +376,9 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                    val allowedSourceOrigins = if (
+                        p.profileId.value == AIREF_PROFILE_ID || p.profileId.value == EDUCATION_PROFILE_ID
+                    ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
@@ -1094,6 +1099,41 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateEducationProfile(profile: SiteProfile) {
+        require(profile.profileVersion == EDUCATION_PROFILE_VERSION)
+        require(profile.displayName == EDUCATION_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == EDUCATION_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EDUCATION_ORIGIN)))
+        require(
+            profile.redirectOrigins == setOf(
+                ExactOrigin.parse(EDUCATION_CLAVE_EDU_ORIGIN),
+                ExactOrigin.parse(AIREF_CLAVE_ORIGIN),
+            ),
+        )
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(EDUCATION_CLIENT_AUTH_SOURCE_URL)),
+                requestPath = AIREF_CLIENT_AUTH_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EDUCATION_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validatePoliciaProfile(profile: SiteProfile) {
         require(profile.profileVersion == POLICIA_PROFILE_VERSION)
         require(profile.displayName == POLICIA_DISPLAY_NAME)
@@ -1636,9 +1676,12 @@ object SiteProfileCatalogParser {
         origin: ExactOrigin,
         firstOwner: ProfileId,
         secondOwner: ProfileId,
-    ): Boolean =
-        setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
+    ): Boolean {
+        val owners = setOf(firstOwner.value, secondOwner.value)
+        val reviewedClaveOwners = setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, EDUCATION_PROFILE_ID)
+        return owners.size == 2 && owners.all { it in reviewedClaveOwners } &&
             origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+    }
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -1953,6 +1996,23 @@ object SiteProfileCatalogParser {
     private const val TENERIFE_SAFE_DESCRIPTION =
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private const val EDUCATION_PROFILE_ID = "educacion-convocatoria"
+    private const val EDUCATION_PROFILE_VERSION = 2
+    private const val EDUCATION_DISPLAY_NAME =
+        "Ministerio de Educación — Convocatoria 46 — acceso con certificado"
+    private const val EDUCATION_START_URL =
+        "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46"
+    private const val EDUCATION_ORIGIN = "https://sede.educacion.gob.es"
+    private const val EDUCATION_CLAVE_EDU_ORIGIN = "https://www.educacion.gob.es"
+    private const val EDUCATION_CLIENT_AUTH_SOURCE_URL =
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+    private val EDUCATION_EVIDENCE_URLS = setOf(
+        EDUCATION_START_URL,
+        "https://www.educacion.gob.es/claveedu/claveEduPeticion.form",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+        EDUCATION_CLIENT_AUTH_SOURCE_URL,
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+    )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
