@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 69 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 73 |
-| Entradas restantes fuera de ambos estados | 110 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 70 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 74 |
+| Entradas restantes fuera de ambos estados | 109 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 69 |
+| `IMPLEMENTED_NOT_E2E` | 70 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 103 |
+| `BROWSE_ONLY` | 102 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 144 |
+| `REVIEWED` | 145 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 34 |
+| `DISCOVERED` | 33 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -3039,30 +3039,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Portal de la Transparencia"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica — Derecho de acceso a la información pública"
     surface_type: "SEDE"
-    origin: "https://sede.transparencia.gob.es"
-    official_site: "https://sede.transparencia.gob.es/"
-    e_sede: "https://sede.transparencia.gob.es/"
-    entry_url: "https://sede.transparencia.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    origin: "https://transparencia.sede.gob.es"
+    official_site: "https://transparencia.sede.gob.es/"
+    e_sede: "https://transparencia.sede.gob.es/"
+    entry_url: "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524"
+    procedure_page: "https://transparencia.sede.gob.es/procedimiento/ambitos?idProc=133628"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "MiniApplet / AutoScript / AutoFirma"
+    protocol_family: "MINIAPPLET_LOCAL_PADES"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA512withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma PAdES local con certificado en la solicitud de derecho de acceso; el perfil QA queda limitado al contrato AutoScript exacto observado tras autenticación controlada."
+    protocol_evidence: "La superficie pública vigente conduce por Cl@ve al formulario protegido. En runtime autenticado autorizado, el paso de firma carga ac2-autofirmaFunctions.js (SHA-256 84da2c1d58d81c090d7e6e227b14b3fb37eec1ae83fd94ded8eada09b2dece96 el 2026-08-18), que ejecuta AutoScript.sign sobre el PDF generado con SHA512withRSA, PAdES y los parámetros exactos filters=nonexpired:true; + headless=true; el callback devuelve signatureB64, certificateB64 y extraData. No se ejecutó ninguna firma ni registro final."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
+    reason: "Contrato first-party de firma completo probado antes de la firma mediante runtime autenticado controlado; implementación QA fail-closed, pendiente de E2E físico seguro."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E físico seguro en Android del flujo de firma con certificado, abortando antes de cualquier presentación o registro final."
+    notes: "La Sede vigente usa el origin transparencia.sede.gob.es (el origin sede.transparencia.gob.es del registro previo estaba obsoleto). La autenticación controlada por certificado ocurrió en la frontera compartida de Cl@ve y no se promociona como client-TLS del portal. El portal ofrece firma básica no criptográfica o firma con certificado; el perfil implementa exclusivamente la segunda. El bridge exige perfil activo, origin HTTPS exacto, página /procedimiento/firma con idProc=133628, idAmb=101524 e idBorr server-issued, además del tuple SHA512withRSA + PAdES + filters=nonexpired:true;\nheadless=true."
 
   - inventory_id: "ES-PUB-0084"
     surface_key: "age-portal-funciona"

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "17e28edada215217c78173740bd75525f4025807fdf15350378c0a2481ee9f90",
+  "sourceRevision": "0b19673d6a80b7f8ae9c3426f882d60eeaa68c48c759d3bef3da2dc82f06d940",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2085,24 +2085,32 @@
     {
       "portalId": "age-portal-de-la-transparencia",
       "inventoryId": "ES-PUB-0083",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "age-portal-de-la-transparencia",
+      "displayName": "Sede electrónica — Derecho de acceso a la información pública",
       "organization": "Portal de la Transparencia",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.transparencia.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "purpose": "Firma PAdES local con certificado en la solicitud de derecho de acceso; el perfil QA queda limitado al contrato AutoScript exacto observado tras autenticación controlada.",
+      "entryUrl": "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato first-party de firma completo probado antes de la firma mediante runtime autenticado controlado; implementación QA fail-closed, pendiente de E2E físico seguro."
     },
     {
       "portalId": "age-portal-funciona",

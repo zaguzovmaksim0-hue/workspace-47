@@ -272,6 +272,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
             }
+            if (p.profileId.value == TRANSPARENCIA_PROFILE_ID) {
+                validateTransparenciaProfile(p)
+            }
             if (p.profileId.value == GRAN_CANARIA_PROFILE_ID) {
                 validateGranCanariaProfile(p)
             }
@@ -407,6 +410,7 @@ object SiteProfileCatalogParser {
                             p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
                             p.profileId.value == AIREF_PROFILE_ID ||
                             p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
+                            p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
                             p.profileId.value == MINECO_PROFILE_ID ||
                             p.profileId.value == CDTI_PROFILE_ID ||
                             p.profileId.value == TRANSPORTES_PROFILE_ID
@@ -481,16 +485,19 @@ object SiteProfileCatalogParser {
                             }
                         }
                         SignatureFormat.PADES -> {
-                            require(p.profileId.value == GRAN_CANARIA_PROFILE_ID || p.profileId.value == MINECO_PROFILE_ID)
+                            require(
+                                p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
+                                    p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
+                                    p.profileId.value == MINECO_PROFILE_ID,
+                            )
                             require(op.endpointId == null && op.mode == null)
                             require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
-                            require(
-                                op.fixedExtraProperties == if (p.profileId.value == MINECO_PROFILE_ID) {
-                                    MINECO_EXTRA_PROPERTIES
-                                } else {
-                                    GRAN_CANARIA_EXTRA_PROPERTIES
-                                },
-                            )
+                            val expectedPadesProperties = when (p.profileId.value) {
+                                MINECO_PROFILE_ID -> MINECO_EXTRA_PROPERTIES
+                                TRANSPARENCIA_PROFILE_ID -> TRANSPARENCIA_EXTRA_PROPERTIES
+                                else -> GRAN_CANARIA_EXTRA_PROPERTIES
+                            }
+                            require(op.fixedExtraProperties == expectedPadesProperties)
                         }
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
@@ -734,6 +741,41 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CANARIAS_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+    }
+
+    private fun validateTransparenciaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == TRANSPARENCIA_PROFILE_VERSION)
+        require(profile.displayName == TRANSPARENCIA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == TRANSPARENCIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TRANSPARENCIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(
+            profile.operationPolicies == mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = TRANSPARENCIA_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                    format = SignatureFormat.PADES,
+                    packaging = SignaturePackaging.ATTACHED,
+                    mode = null,
+                    fixedExtraProperties = TRANSPARENCIA_EXTRA_PROPERTIES,
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TRANSPARENCIA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
     private fun validateGranCanariaProfile(profile: SiteProfile) {
@@ -1620,6 +1662,24 @@ object SiteProfileCatalogParser {
         "https://sede.gobiernodecanarias.org/sede/identificacion",
         "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js",
         "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js",
+    )
+    private const val TRANSPARENCIA_PROFILE_ID = "age-portal-de-la-transparencia"
+    private const val TRANSPARENCIA_PROFILE_VERSION = 1
+    private const val TRANSPARENCIA_DISPLAY_NAME = "Portal de la Transparencia — Derecho de acceso"
+    private const val TRANSPARENCIA_START_URL =
+        "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524"
+    private const val TRANSPARENCIA_ORIGIN = "https://transparencia.sede.gob.es"
+    private const val TRANSPARENCIA_SAFE_DESCRIPTION =
+        "Firma PAdES con certificado en el Portal de la Transparencia"
+    private val TRANSPARENCIA_EXTRA_PROPERTIES = linkedMapOf(
+        "filters" to "nonexpired:true;",
+        "headless" to "true",
+    )
+    private val TRANSPARENCIA_EVIDENCE_URLS = setOf(
+        TRANSPARENCIA_START_URL,
+        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/ac2-formularios.js",
+        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/ac2-autofirmaFunctions.js",
+        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/autoscript.js",
     )
     private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
     private const val GRAN_CANARIA_PROFILE_VERSION = 1
