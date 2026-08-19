@@ -65,6 +65,7 @@ class JuntaOriginPolicyTest {
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
     private val madrid53f1 = ProfileId("comunidad-madrid-cuenta-digital-53f1")
+    private val justicia = ProfileId("justicia-sede-judicial-private-area")
     private val gipuzkoa = ProfileId("diputacion-gipuzkoa-registro-public")
     private val fondosEuropeos = ProfileId("fondos-europeos-sede-public-home")
     private val asturiasSede = ProfileId("asturias-sede-tramite-navigation")
@@ -187,6 +188,8 @@ class JuntaOriginPolicyTest {
             "sede.funciona.gob.es",
             "digital.comunidad.madrid",
             "gestiona.comunidad.madrid",
+            "sedejudicial.justicia.es",
+            "am.justicia.es",
             "egoitza.gipuzkoa.eus",
             "sede.diputaciondesalamanca.gob.es",
             "sedefondoscomunitarios.gob.es",
@@ -470,6 +473,29 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.isAllowed(
                 Uri.parse("https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado"),
                 madrid53f1,
+            ),
+        )
+        assertEquals(
+            setOf("sedejudicial.justicia.es", "am.justicia.es"),
+            JuntaOriginPolicy.browserAllowedHosts(justicia),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(justicia).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sedejudicial.justicia.es/group/guest/area-privada"),
+                justicia,
+            ),
+        )
+        assertTrue(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://am.justicia.es/selfservice-ext/saml2/sp/login/clave"),
+                justicia,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                justicia,
             ),
         )
         assertEquals(setOf("egoitza.gipuzkoa.eus"), JuntaOriginPolicy.browserAllowedHosts(gipuzkoa))
