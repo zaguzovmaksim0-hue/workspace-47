@@ -98,6 +98,7 @@ class PortalCatalogRepositoryTest {
                 "la-rioja-oficina-electronica",
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
+                "euskadi-sede-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
