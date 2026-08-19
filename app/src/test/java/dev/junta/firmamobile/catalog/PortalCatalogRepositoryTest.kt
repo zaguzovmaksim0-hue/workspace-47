@@ -94,6 +94,7 @@ class PortalCatalogRepositoryTest {
                 "portal-funciona-public-home",
                 "cdti-certificate-validation",
                 "la-rioja-oficina-electronica",
+                "asturias-miprincipado",
                 "canarias-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
