@@ -314,13 +314,21 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
 
 - **Organización:** Ayuntamiento de Madrid.
 - **Origin oficial investigado:** `https://sede.madrid.es`.
-- **Entrada:** [procedimiento oficial con canales y sistemas de
-  identificación][P11].
-- **Operación:** identificación/tramitación con certificado cuando el
-  procedimiento lo admite.
-- **Protocolo / endpoint / formato / algoritmo / callback:** no verificados.
-- **TLS client auth:** no verificado.
-- **Estado:** `BROWSE_ONLY`.
+- **Entrada:** [procedimiento oficial de Tarjeta Azul][P11].
+- **Operación observada:** la solicitud digital enlaza a
+  `https://servcla.madrid.es/TAZUL_FTWEBINTER/`, que inicia autorización OIDC
+  code con PKCE `S256` en `https://cas.madrid.es`. El selector municipal ofrece
+  `Cl@ve Móvil`, `Cl@ve Permanente`, `DNIe / Certificado`, `Ciudadanos UE` e
+  `IDentifica`; la opción `DNIe / Certificado` usa `CLAVE` / `IDPCLCTM` y delega
+  posteriormente en `https://pasarela.clave.gob.es`.
+- **Contrato implementado:** perfil QA de navegación únicamente para los origins
+  municipales observados `sede.madrid.es`, `servcla.madrid.es` y
+  `cas.madrid.es`. La pasarela Cl@ve permanece como frontera externa compartida.
+- **Firma / formato / algoritmo / endpoint / callback:** no verificados.
+- **TLS client auth:** no verificado; la presencia de `DNIe / Certificado` no se
+  interpreta como `CertificateRequest` TLS.
+- **Estado:** `IMPLEMENTED_NOT_E2E`; sin `SIGN`, `SELECT_CERTIFICATE` ni
+  `CLIENT_TLS_AUTH`.
 
 ### P12 — Universidad de Granada
 
@@ -540,10 +548,11 @@ documentos, respuestas completas con identificadores, datos personales,
 certificados, seriales, issuer DN completos, URI P12, contraseñas, firmas ni
 claves privadas.
 
-Limitación de disponibilidad: la fuente P11 devolvió HTTP 403 al cliente
-automatizado durante la revalidación del 2026-07-15. Se mantiene como entrada
-oficial previamente inspeccionada, pero no soporta ninguna afirmación técnica
-de protocolo y por eso continúa `BROWSE_ONLY`.
+Nota de disponibilidad: la fuente P11 continúa devolviendo HTTP 403 al cliente
+CLI, pero el 2026-08-19 una sesión Chromium pública normal cargó la entrada y
+permitió observar sin autenticación la cadena municipal hasta el selector OIDC
+/ Cl@ve. El 403 de CLI no se usa ya para degradar esa evidencia de navegador;
+los contratos de TLS client auth y firma continúan sin verificar.
 
 ## 7. Fuentes primarias
 

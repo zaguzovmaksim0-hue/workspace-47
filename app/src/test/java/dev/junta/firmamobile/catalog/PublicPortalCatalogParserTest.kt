@@ -86,6 +86,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("madrid-sede-tarjeta-azul"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),
