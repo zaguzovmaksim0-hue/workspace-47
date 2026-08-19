@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 32,
+  "catalogVersion": 33,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1326,6 +1326,26 @@
         {"url":"https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1","reviewedOn":"2026-08-18"},
         {"url":"https://www.carpetaciutadana.org/cime/Login/Login.aspx","reviewedOn":"2026-08-18"},
         {"url":"https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "asturias-sede-tramite-navigation",
+      "profileVersion": 1,
+      "displayName": "Principado de Asturias — trámite de Sede",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
+      "initiatorOrigins": ["https://sede.asturias.es"],
+      "redirectOrigins": ["https://miprincipado.asturias.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"},
+        {"url":"https://miprincipado.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"}
       ]
     }
   ]

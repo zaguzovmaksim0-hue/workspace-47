@@ -58,6 +58,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val asturias = ProfileId("asturias-sede-tramite-navigation")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -128,6 +129,8 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sede.asturias.es",
+            "miprincipado.asturias.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -225,6 +228,17 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
+        assertEquals(
+            setOf("sede.asturias.es", "miprincipado.asturias.es"),
+            JuntaOriginPolicy.browserAllowedHosts(asturias),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(asturias).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.asturias.es/ast/-/dboid-6269000011903512107573"),
+                asturias,
+            ),
+        )
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(

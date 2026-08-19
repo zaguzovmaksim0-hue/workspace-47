@@ -1001,6 +1001,27 @@ class SiteProfileCatalogParserTest {
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
     }
 
+    @Test
+    fun `Asturias Sede profile exposes only current redirect navigation in QA`() {
+        val profileId = ProfileId("asturias-sede-tramite-navigation")
+        val start = URI("https://sede.asturias.es/ast/-/dboid-6269000011903512107573")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.asturias.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://miprincipado.asturias.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+    }
+
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")
