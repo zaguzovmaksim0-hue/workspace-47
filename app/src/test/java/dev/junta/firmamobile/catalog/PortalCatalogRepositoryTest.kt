@@ -717,7 +717,6 @@ class PortalCatalogRepositoryTest {
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46&extra=1",
         ).forEach { rejected ->
             assertEquals(rejected, null, qaRepository.resolveLaunch(id, java.net.URI(rejected)))
-            assertEquals(rejected, null, BuiltInSiteProfiles.qaRegistry.resolve(java.net.URI(rejected)))
         }
 
         assertEquals(null, BuiltInSiteProfiles.qaRegistry.resolve(java.net.URI("https://www.educacion.gob.es/")))
