@@ -98,6 +98,7 @@ class PortalCatalogRepositoryTest {
                 "la-rioja-oficina-electronica",
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
+                "justicia-sede-judicial-private-area",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

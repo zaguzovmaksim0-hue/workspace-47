@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d95a69983f61b1e59edaae21b91e8c63dc7d515b5281348542018ecd6b5fb517",
+  "sourceRevision": "b94033ccd43b729c493d99acb65f6a6f5559dee29e6981d3f3c61087b2c4717a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -235,28 +235,30 @@
     {
       "portalId": "justicia-sede-judicial",
       "inventoryId": "ES-PUB-0009",
-      "profileId": null,
+      "profileId": "justicia-sede-judicial-private-area",
       "displayName": "Sede Judicial Electrónica",
       "organization": "Administración de Justicia",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Acceso con Cl@ve/certificado y firma de escritos o documentos PDF con AutoFirma.",
-      "entryUrl": "https://sedejudicial.justicia.es/firma-y-certificados-electronicos-admitidos",
+      "purpose": "Acceso al área privada: la Sede Judicial redirige a su gateway de identidad y prepara la autenticación mediante Cl@ve.",
+      "entryUrl": "https://sedejudicial.justicia.es/group/guest/area-privada",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P06",
-        "P06A"
+        "JUSTICIA-TRAMITES-2026-08-19",
+        "JUSTICIA-PRIVATE-AREA-2026-08-19",
+        "JUSTICIA-AM-CLAVE-2026-08-19"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Procedimiento exacto, ABI, formato criptográfico, endpoint y callback no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Implementado en QA solo el lanzamiento exacto del área privada y la transición al gateway am.justicia.es. El origen compartido de Cl@ve, la autenticación por certificado, el ABI de firma, formato, endpoint y callback permanecen fuera del perfil hasta evidencia específica; sin aceptación E2E."
     },
     {
       "portalId": "mjusticia-sede",

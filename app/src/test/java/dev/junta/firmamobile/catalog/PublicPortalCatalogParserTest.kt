@@ -91,6 +91,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("la-rioja-oficina-electronica"),
                 ProfileId("menorca-carpeta-ciutadana"),
                 ProfileId("canarias-sede"),
+                ProfileId("justicia-sede-judicial-private-area"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
