@@ -630,6 +630,124 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun laRiojaDynamicCasSourceAuthorizesOnlyExactClientCertificateEndpoint() {
+        val rioja = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        assertNull(
+            rioja.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, 900, true,
+            ),
+        )
+        rioja.onTopLevelPageStarted(LA_RIOJA_SOURCE, 901)
+
+        val authorized = rioja.observeTopLevelNavigation(
+            LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, LA_RIOJA_TARGET, 901, true,
+        )
+
+        assertEquals(LA_RIOJA_PROFILE, authorized?.profileId)
+        assertEquals("ias1.larioja.org", authorized?.target?.host)
+        assertEquals("/clientcertSSL/login", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            rioja.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, LA_RIOJA_TARGET, 901, true,
+            ),
+        )
+    }
+
+    @Test
+    fun laRiojaDynamicCasSourceRejectsEverySourceExpansion() {
+        val invalidSources = listOf(
+            LA_RIOJA_SOURCE.replace("inst=G", "inst=X"),
+            LA_RIOJA_SOURCE.replace("apli=OFIVIR", "apli=OTHER"),
+            LA_RIOJA_SOURCE.replace("nodo=CIUDANO", "nodo=OTHER"),
+            LA_RIOJA_SOURCE.replace("&param=synthetic-param", ""),
+            LA_RIOJA_SOURCE.replace("&TARGET=", "&missing="),
+            "$LA_RIOJA_SOURCE&extra=1",
+            "$LA_RIOJA_SOURCE&param=duplicate",
+            LA_RIOJA_SOURCE.replace("/casLR/login", "/casLR/other"),
+            LA_RIOJA_SOURCE.replace("ias1.larioja.org", "ias1.larioja.org.evil.example"),
+            LA_RIOJA_SOURCE.replace("ias1.larioja.org", "ias1.larioja.org:444"),
+            "$LA_RIOJA_SOURCE#fragment",
+        )
+
+        invalidSources.forEachIndexed { index, source ->
+            val rioja = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            val epoch = 920L + index * 2
+            assertNull(
+                source,
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, LA_RIOJA_INDEX, source, epoch, true,
+                ),
+            )
+            rioja.onTopLevelPageStarted(source, epoch + 1)
+            assertNull(
+                source,
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, source, LA_RIOJA_TARGET, epoch + 1, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun laRiojaDynamicCasSourceRejectsEveryTargetExpansionAndUntrustedContext() {
+        val invalidTargets = listOf(
+            LA_RIOJA_TARGET.replace("ias1.larioja.org", "ias1.larioja.org.evil.example"),
+            LA_RIOJA_TARGET.replace("/clientcertSSL/login", "/clientcertSSL/other"),
+            LA_RIOJA_TARGET.replace("ias1.larioja.org", "ias1.larioja.org:444"),
+            "$LA_RIOJA_TARGET?extra=1",
+            "$LA_RIOJA_TARGET#fragment",
+        )
+
+        invalidTargets.forEachIndexed { index, target ->
+            val rioja = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            val epoch = 960L + index * 2
+            assertNull(
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, epoch, true,
+                ),
+            )
+            rioja.onTopLevelPageStarted(LA_RIOJA_SOURCE, epoch + 1)
+            assertNull(
+                target,
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, target, epoch + 1, true,
+                ),
+            )
+        }
+
+        val wrongProfile = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+        assertNull(
+            wrongProfile.observeTopLevelNavigation(
+                PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, 980, true,
+            ),
+        )
+        assertNull(
+            wrongProfile.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, 981, false,
+            ),
+        )
+        assertNull(
+            wrongProfile.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, LA_RIOJA_TARGET, 981, true,
+            ),
+        )
+    }
+
+    @Test
     fun pendingClientAuthTtlUsesMonotonicTime() {
         val shortLived = shortTtlAuthorizer(ttlSeconds = 1)
         assertNull(
@@ -759,6 +877,14 @@ class ClientAuthNavigationAuthorizerTest {
         const val NAVARRA_TARGET =
             "https://ateka.navarra.es/ateka/Certificate/login?returnUrl=$NAVARRA_TOKEN"
         val LEON_PROFILE = ProfileId("diputacion-leon-sede")
+        val LA_RIOJA_PROFILE = ProfileId("la-rioja-oficina-electronica")
+        const val LA_RIOJA_INDEX =
+            "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
+        const val LA_RIOJA_SOURCE =
+            "https://ias1.larioja.org/casLR/login?inst=G&apli=OFIVIR&nodo=CIUDANO&" +
+                "param=synthetic-param&TARGET=https%3A%2F%2Fias1.larioja.org%2Foficinavirtual%2F" +
+                "presentacion%3Fact_codi%3D24697%26flow%3Dsynthetic"
+        const val LA_RIOJA_TARGET = "https://ias1.larioja.org/clientcertSSL/login"
         const val LEON_TOKEN = "12345678-w47SyntheticLeonToken0123456789"
         const val LEON_OTHER_TOKEN = "87654321-w47OtherLeonToken9876543210"
         const val LEON_SOURCE =

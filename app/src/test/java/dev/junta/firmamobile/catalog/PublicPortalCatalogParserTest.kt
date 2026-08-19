@@ -86,6 +86,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
                 ProfileId("cdti-certificate-validation"),
+                ProfileId("la-rioja-oficina-electronica"),
                 ProfileId("canarias-sede"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),

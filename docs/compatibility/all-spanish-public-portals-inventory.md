@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 71 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 75 |
-| Entradas restantes fuera de ambos estados | 108 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 72 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 76 |
+| Entradas restantes fuera de ambos estados | 107 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 71 |
+| `IMPLEMENTED_NOT_E2E` | 72 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 101 |
+| `BROWSE_ONLY` | 100 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4065,24 +4065,24 @@ records:
     origin: "https://web.larioja.org"
     official_site: "https://web.larioja.org/oficina-electronica/"
     e_sede: "https://web.larioja.org/oficina-electronica/"
-    entry_url: "https://web.larioja.org/oficina-electronica/"
+    entry_url: "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
     procedure_page: "https://web.larioja.org/oficina-electronica/tramite?n=24697"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación electrónica con certificado y AutoFirma cuando el trámite lo requiere."
-    protocol_evidence: "Las páginas oficiales citan certificado y AutoFirma sin ABI ni endpoint portal-specific."
-    client_tls_auth: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso del trámite 24697 mediante CAS; la vía de certificado usa client TLS en /clientcertSSL/login. La firma documental posterior permanece sin contrato verificado."
+    protocol_evidence: "El flujo actual delega en ias1.larioja.org, CAS OFIVIR y /clientcertSSL/login: sin certificado responde 401/TLS CertificateRequest y el runtime autenticado retorna a /oficinavirtual/presentacion. No se infiere ABI de firma."
+    client_tls_auth: "SI"
     evidence_ids: ["D03", "A19A", "A19B", "A19C"]
-    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Inspeccionar el trámite publicado y sus assets sin presentar datos."
+    reason: "Contrato CLIENT_TLS_AUTH acotado implementado solo en QA, sin E2E; cliente JS, formato, algoritmo, callback y endpoint de firma documental siguen deliberadamente NO_VERIFICADO."
+    reviewed_at: "2026-08-18"
+    next_gate: "Observar el contrato exacto de firma documental tras autenticación, abortando antes de ejecutar la firma o presentación final."
 
 ```
 

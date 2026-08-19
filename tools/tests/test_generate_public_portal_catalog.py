@@ -1011,6 +1011,28 @@ records:
         self.assertNotIn('const val JSON = """', registry)
 
 
+    def test_la_rioja_client_tls_profile_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0116")
+
+        self.assertEqual("la-rioja-oficina-electronica", target["portalId"])
+        self.assertEqual("la-rioja-oficina-electronica", target["profileId"])
+        self.assertEqual(
+            "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CLIENT_TLS_AUTH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-18", target["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+        self.assertIn("firma", target["limitations"].lower())
+
+
     def test_bne_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         bne = next(

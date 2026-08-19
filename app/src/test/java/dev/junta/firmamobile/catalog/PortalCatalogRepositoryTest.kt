@@ -93,6 +93,7 @@ class PortalCatalogRepositoryTest {
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "cdti-certificate-validation",
+                "la-rioja-oficina-electronica",
                 "canarias-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),

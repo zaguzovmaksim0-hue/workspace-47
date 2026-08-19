@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a21c076c4f9dbbaeb8f5223cf8bb39ed04517f07bf61f5f8790d8033c827eb18",
+  "sourceRevision": "0623a9ecff50aed009b7f91b208466786bd4ea68471d8761ed70466aae9abbec",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3014,21 +3014,22 @@
     {
       "portalId": "la-rioja-oficina-electronica",
       "inventoryId": "ES-PUB-0116",
-      "profileId": null,
+      "profileId": "la-rioja-oficina-electronica",
       "displayName": "Oficina electrónica del Gobierno de La Rioja",
       "organization": "Gobierno de La Rioja",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "La Rioja",
-      "purpose": "Tramitación electrónica con certificado y AutoFirma cuando el trámite lo requiere.",
-      "entryUrl": "https://web.larioja.org/oficina-electronica/",
+      "purpose": "Acceso del trámite 24697 mediante CAS; la vía de certificado usa client TLS en /clientcertSSL/login. La firma documental posterior permanece sin contrato verificado.",
+      "entryUrl": "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
@@ -3036,8 +3037,8 @@
         "A19B",
         "A19C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato CLIENT_TLS_AUTH acotado implementado solo en QA, sin E2E; cliente JS, formato, algoritmo, callback y endpoint de firma documental siguen deliberadamente NO_VERIFICADO."
     },
     {
       "portalId": "menorca-portal-institucional",
