@@ -90,6 +90,7 @@ class JuntaOriginPolicyTest {
             "sede.melilla.es",
             "sede.ceuta.es",
             "tramites.juntaex.es",
+            "pattex.juntaex.es",
             "www.navarra.es",
             "administracionelectronica.navarra.es",
             "ateka.navarra.es",
