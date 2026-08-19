@@ -45,6 +45,7 @@ class PublicPortalCatalogParserTest {
             setOf(
                 ProfileId("junta-andalucia"),
                 ProfileId("junta-andalucia-vea-peg"),
+                ProfileId("asturias-sede-tramite-navigation"),
                 ProfileId("reg-age-redsara"),
                 ProfileId("unizar-tramitador"),
                 ProfileId("carne-joven-andalucia"),
@@ -1276,6 +1277,31 @@ class PublicPortalCatalogParserTest {
             ),
             repository.resolveLaunch(portal),
         )
+    }
+
+    @Test
+    fun `Asturias Sede entry binds the current redirect-only QA profile`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0096" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://sede.asturias.es/ast/-/dboid-6269000011903512107573")
+
+        assertEquals(PortalId("asturias-sede-tramite-autofirma"), metadata.portalId)
+        assertEquals(ProfileId("asturias-sede-tramite-navigation"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(setOf("ELECTRONIC_SIGNATURE"), metadata.observedMechanisms.map { it.name }.toSet())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("asturias-sede-tramite-navigation"), start), repository.resolveLaunch(portal))
     }
 
 }

@@ -247,4 +247,19 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))
     }
 
+    @Test
+    fun `Asturias Sede navigation trusts only the observed miPrincipado redirect in QA`() {
+        val profileId = ProfileId("asturias-sede-tramite-navigation")
+        val start = URI("https://sede.asturias.es/ast/-/dboid-6269000011903512107573")
+        val redirected = URI("https://miprincipado.asturias.es/ast/-/dboid-6269000011903512107573")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(redirected)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, redirected)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://tramita.asturias.es/sta/Relec/STARhssoManager")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://miprincipado.asturias.es.evil.example/")))
+    }
+
 }

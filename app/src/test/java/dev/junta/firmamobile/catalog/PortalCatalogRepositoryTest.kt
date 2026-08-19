@@ -52,6 +52,7 @@ class PortalCatalogRepositoryTest {
             setOf(
                 "junta-andalucia",
                 "junta-andalucia-vea-peg",
+                "asturias-sede-tramite-navigation",
                 "reg-age-redsara",
                 "unizar-tramitador",
                 "carne-joven-andalucia",
@@ -2086,6 +2087,27 @@ class PortalCatalogRepositoryTest {
         assertTrue(tamperedPortal.capabilities.isEmpty())
         assertTrue(tamperedPortal.signatureFormats.isEmpty())
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Asturias Sede procedure keeps only exact QA redirect navigation and no signing capability`() {
+        val portalId = PortalId("asturias-sede-tramite-autofirma")
+        val profileId = ProfileId("asturias-sede-tramite-navigation")
+        val start = java.net.URI("https://sede.asturias.es/ast/-/dboid-6269000011903512107573")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(start, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
     }
 
 }
