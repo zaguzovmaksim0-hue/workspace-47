@@ -1347,6 +1347,27 @@
         {"url":"https://www.carpetaciutadana.org/cime/Login/Login.aspx","reviewedOn":"2026-08-18"},
         {"url":"https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx","reviewedOn":"2026-08-18"}
       ]
+    },
+    {
+      "profileId": "diputacion-barcelona-solicitud-generica-2057",
+      "profileVersion": 1,
+      "displayName": "Diputació de Barcelona — Solicitud genérica 2057",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica",
+      "initiatorOrigins": ["https://seuelectronica.diba.cat"],
+      "redirectOrigins": ["https://valid.aoc.cat", "https://cert.valid.aoc.cat", "https://aplicacions.diba.cat"],
+      "trustedBrowseOrigins": ["https://tramits.diba.cat"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://tramits.diba.cat/SS/","reviewedOn":"2026-08-18"},
+        {"url":"https://valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"},
+        {"url":"https://cert.valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"}
+      ]
     }
   ]
 }

@@ -59,6 +59,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -130,6 +131,11 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "seuelectronica.diba.cat",
+            "valid.aoc.cat",
+            "cert.valid.aoc.cat",
+            "aplicacions.diba.cat",
+            "tramits.diba.cat",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -231,6 +237,23 @@ class JuntaOriginPolicyTest {
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
+        assertEquals(
+            setOf(
+                "seuelectronica.diba.cat",
+                "valid.aoc.cat",
+                "cert.valid.aoc.cat",
+                "aplicacions.diba.cat",
+                "tramits.diba.cat",
+            ),
+            JuntaOriginPolicy.browserAllowedHosts(barcelona2057),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(barcelona2057).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"),
+                barcelona2057,
+            ),
+        )
         assertEquals(
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),

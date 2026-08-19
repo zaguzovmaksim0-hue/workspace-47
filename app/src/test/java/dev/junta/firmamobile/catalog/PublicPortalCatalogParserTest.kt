@@ -92,6 +92,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("la-rioja-oficina-electronica"),
                 ProfileId("menorca-carpeta-ciutadana"),
                 ProfileId("canarias-sede"),
+                ProfileId("diputacion-barcelona-solicitud-generica-2057"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

@@ -99,6 +99,7 @@ class PortalCatalogRepositoryTest {
                 "la-rioja-oficina-electronica",
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
+                "diputacion-barcelona-solicitud-generica-2057",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
