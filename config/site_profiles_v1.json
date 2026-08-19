@@ -2765,6 +2765,40 @@
         {"url":"https://idp.seg-social.es/PGIS/Login?seleccion=IPCE","reviewedOn":"2026-08-21"},
         {"url":"https://ipce.seg-social.es/IPCE/Login","reviewedOn":"2026-08-21"}
       ]
+    },
+    {
+      "profileId": "catalunya-seu-registre-client-auth",
+      "profileVersion": 1,
+      "displayName": "Generalitat de Catalunya — Registre electrònic — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/",
+      "initiatorOrigins": ["https://web.gencat.cat"],
+      "redirectOrigins": ["https://tramits.gencat.cat", "https://ovt.gencat.cat", "https://valid.aoc.cat"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://cert.valid.aoc.cat"],
+        "sourceUrls": ["https://valid.aoc.cat/o/oauth2/auth?lang=ca&scope=autenticacio_usuari&state=state&redirect_uri=https%3A%2F%2Fovt.gencat.cat%2Fgsitfc%2FAppJava%2Fredirectservlet&response_type=code&client_id=gsit.gencat.cat&approval_prompt=auto"],
+        "requestPath": "/o/oauth2/cert",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/","reviewedOn":"2026-08-19"},
+        {"url":"https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c","reviewedOn":"2026-08-19"},
+        {"url":"https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c","reviewedOn":"2026-08-19"},
+        {"url":"https://valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-19"},
+        {"url":"https://valid.aoc.cat/o/oauth2/js/login.js","reviewedOn":"2026-08-19"},
+        {"url":"https://cert.valid.aoc.cat/o/oauth2/cert","reviewedOn":"2026-08-19"}
+      ]
     }
   ]
 }

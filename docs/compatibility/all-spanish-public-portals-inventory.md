@@ -194,13 +194,13 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 276 |
-| Fuentes oficiales totales registradas | 288 |
+| Fuentes oficiales portal-specific registradas | 277 |
+| Fuentes oficiales totales registradas | 289 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 151 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 155 |
-| Entradas restantes fuera de ambos estados | 28 |
-| Evidencia exacta de `ClientCertRequest` | 5 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 152 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 156 |
+| Entradas restantes fuera de ambos estados | 27 |
+| Evidencia exacta de `ClientCertRequest` | 6 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 151 |
+| `IMPLEMENTED_NOT_E2E` | 152 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 21 |
+| `BROWSE_ONLY` | 20 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3718,24 +3718,24 @@ records:
     origin: "https://web.gencat.cat"
     official_site: "https://web.gencat.cat/ca/seu-electronica"
     e_sede: "https://web.gencat.cat/ca/seu-electronica"
-    entry_url: "https://web.gencat.cat/ca/seu-electronica"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/"
+    procedure_page: "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://cert.valid.aoc.cat/o/oauth2/cert"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Relación digital mediante sistemas de identificación y firma según el servicio."
-    protocol_evidence: "El catálogo oficial acredita sistemas admitidos, no el contrato de un trámite concreto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A09A", "A09B", "A09D"]
-    reason: "Operación, cliente JS, formato, algoritmo, callback y endpoint no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar un trámite firmado y observar su transporte público."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al flujo de Registro electrónico / Petició genèrica, limitado a autenticación TLS cliente."
+    protocol_evidence: "El servicio oficial de Registro electrónico redirige a Petició genèrica y su acceso firmado conduce a VALId. El JavaScript first-party vigente de VALId envía la opción de certificado a https://cert.valid.aoc.cat/o/oauth2/cert; el handshake TLS 1.2 de ese origen emite CertificateRequest para RSA/ECDSA."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A09A", "A09B", "A09D", "CATALUNYA-SEU-CLIENTTLS-2026-08-19"]
+    reason: "Perfil QA-only limitado al salto de autenticación TLS cliente. No se realizó autenticación E2E, firma criptográfica ni presentación; cliente JS de firma, formato, algoritmo y aceptación final siguen NO_VERIFICADO."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar en QA la selección de certificado y el retorno autenticado; detenerse antes de firma criptográfica y presentación final."
 
   - inventory_id: "ES-PUB-0105"
     surface_key: "catalunya-tramits-peticio-generica"
@@ -6725,6 +6725,7 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+[CATALUNYA-SEU-CLIENTTLS-2026-08-19]: https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/
 [DGFE-SEDE-2026-08-24]: https://sedefondoscomunitarios.gob.es/
 [SEPES-TRANSPORTES-2026-08-24]: https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones
 [SEPES-TRANSPORTES-NORMATIVA-2026-08-24]: https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede

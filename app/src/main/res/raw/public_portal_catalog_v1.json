@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "763dbed918f4539ad2279657f322ca90c3c9df46a01956ee5dcb5d920753dc77",
+  "sourceRevision": "a15c49793a874cc9fc3874e1e28b44297c02888450271ca54b39f9a30ae6673d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2791,30 +2791,32 @@
     {
       "portalId": "catalunya-seu-electronica",
       "inventoryId": "ES-PUB-0104",
-      "profileId": null,
+      "profileId": "catalunya-seu-registre-client-auth",
       "displayName": "Seu electrònica de la Generalitat de Catalunya",
       "organization": "Generalitat de Catalunya",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Cataluña",
-      "purpose": "Relación digital mediante sistemas de identificación y firma según el servicio.",
-      "entryUrl": "https://web.gencat.cat/ca/seu-electronica",
+      "purpose": "Acceso con certificado al flujo de Registro electrónico / Petició genèrica, limitado a autenticación TLS cliente.",
+      "entryUrl": "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A09A",
         "A09B",
-        "A09D"
+        "A09D",
+        "CATALUNYA-SEU-CLIENTTLS-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Operación, cliente JS, formato, algoritmo, callback y endpoint no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil QA-only limitado al salto de autenticación TLS cliente. No se realizó autenticación E2E, firma criptográfica ni presentación; cliente JS de firma, formato, algoritmo y aceptación final siguen NO_VERIFICADO."
     },
     {
       "portalId": "catalunya-tramits-peticio-generica",

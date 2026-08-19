@@ -1144,7 +1144,70 @@ class ClientAuthNavigationAuthorizerTest {
         }
     }
 
+    @Test
+    fun catalunyaSeuExactValidCertificateTransitionProducesOneBoundedTarget() {
+        val catalunya = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = catalunya.observeTopLevelNavigation(
+            CATALUNYA_SEU_PROFILE, CATALUNYA_SEU_SOURCE, CATALUNYA_SEU_TARGET, 91, true,
+        )
+
+        assertEquals(CATALUNYA_SEU_PROFILE, authorized?.profileId)
+        assertEquals("cert.valid.aoc.cat", authorized?.target?.host)
+        assertEquals("/o/oauth2/cert", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            catalunya.observeTopLevelNavigation(
+                CATALUNYA_SEU_PROFILE, CATALUNYA_SEU_SOURCE, CATALUNYA_SEU_TARGET, 91, true,
+            ),
+        )
+    }
+
+    @Test
+    fun catalunyaSeuCertificateTransitionRejectsEverySourceOrTargetExpansion() {
+        val attacks = listOf(
+            CATALUNYA_SEU_SOURCE.replace("state=state", "state=other") to CATALUNYA_SEU_TARGET,
+            CATALUNYA_SEU_SOURCE.replace("lang=ca", "lang=es") to CATALUNYA_SEU_TARGET,
+            "$CATALUNYA_SEU_SOURCE&extra=1" to CATALUNYA_SEU_TARGET,
+            CATALUNYA_SEU_SOURCE to "$CATALUNYA_SEU_TARGET?extra=1",
+            CATALUNYA_SEU_SOURCE to "$CATALUNYA_SEU_TARGET/other",
+            CATALUNYA_SEU_SOURCE to CATALUNYA_SEU_TARGET.replace(
+                "cert.valid.aoc.cat",
+                "cert.valid.aoc.cat.evil.example",
+            ),
+            CATALUNYA_SEU_SOURCE to CATALUNYA_SEU_TARGET.replace(
+                "cert.valid.aoc.cat",
+                "cert.valid.aoc.cat:8443",
+            ),
+            CATALUNYA_SEU_SOURCE to "$CATALUNYA_SEU_TARGET#fragment",
+            CATALUNYA_SEU_SOURCE.replace("valid.aoc.cat", "valid.aoc.cat.evil.example") to
+                CATALUNYA_SEU_TARGET,
+        )
+
+        attacks.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    CATALUNYA_SEU_PROFILE, source, target, 92L + index, true,
+                ),
+            )
+        }
+    }
+
     private companion object {
+        val CATALUNYA_SEU_PROFILE = ProfileId("catalunya-seu-registre-client-auth")
+        const val CATALUNYA_SEU_SOURCE =
+            "https://valid.aoc.cat/o/oauth2/auth?lang=ca&scope=autenticacio_usuari&state=state&" +
+                "redirect_uri=https%3A%2F%2Fovt.gencat.cat%2Fgsitfc%2FAppJava%2Fredirectservlet&" +
+                "response_type=code&client_id=gsit.gencat.cat&approval_prompt=auto"
+        const val CATALUNYA_SEU_TARGET = "https://cert.valid.aoc.cat/o/oauth2/cert"
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val TEA_PROFILE = ProfileId("tea-alegaciones-certificado")
