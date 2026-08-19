@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 31,
+  "catalogVersion": 32,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1270,6 +1270,27 @@
         {"url":"https://sede.xunta.gal/presenta/novo/PR004A_2025_1","reviewedOn":"2026-08-18"},
         {"url":"https://sede.xunta.gal/presenta/assets/js/miniapplet.js?nocache=1.7.0","reviewedOn":"2026-08-18"},
         {"url":"https://sede.xunta.gal/presenta/main.293423417603b2d37c80.js","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "murcia-carm-pase",
+      "profileVersion": 1,
+      "displayName": "Región de Murcia — Sede CARM / PASE",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+      "initiatorOrigins": ["https://sede.carm.es"],
+      "redirectOrigins": ["https://validate.perfdrive.com", "https://pase.carm.es", "https://conclave.carm.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288","reviewedOn":"2026-08-19"},
+        {"url":"https://sede.carm.es/presentador/inicio/385/DI155","reviewedOn":"2026-08-19"},
+        {"url":"https://conclave.carm.es/TokenServlet","reviewedOn":"2026-08-19"}
       ]
     }
   ]

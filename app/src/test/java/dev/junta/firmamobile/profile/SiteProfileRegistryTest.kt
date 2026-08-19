@@ -247,4 +247,36 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))
     }
 
+    @Test
+    fun `Murcia CARM PASE navigation is QA-only and redirect origins stay browse only`() {
+        val profileId = ProfileId("murcia-carm-pase")
+        val start = URI(
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+        )
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertTrue(profile?.endpoints?.isEmpty() == true)
+        assertTrue(profile?.operationPolicies?.isEmpty() == true)
+        assertNull(profile?.clientAuthPolicy)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+
+        listOf(
+            "https://validate.perfdrive.com/challenge",
+            "https://pase.carm.es/pase/login",
+            "https://conclave.carm.es/TokenServlet",
+        ).forEach { raw ->
+            val uri = URI(raw)
+            assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, uri)?.trustMode)
+            assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, uri)?.trustMode)
+        }
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.carm.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, URI("https://pasarela.clave.gob.es/Clave2/")))
+    }
+
 }

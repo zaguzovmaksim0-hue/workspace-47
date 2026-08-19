@@ -58,6 +58,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val murcia = ProfileId("murcia-carm-pase")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -126,6 +127,10 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sede.carm.es",
+            "validate.perfdrive.com",
+            "pase.carm.es",
+            "conclave.carm.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -225,6 +230,16 @@ class JuntaOriginPolicyTest {
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
+        assertEquals(
+            setOf("sede.carm.es", "validate.perfdrive.com", "pase.carm.es", "conclave.carm.es"),
+            JuntaOriginPolicy.browserAllowedHosts(murcia),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(murcia).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.carm.es/presentador/inicio/385/DI155"), murcia))
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://pase.carm.es/pase/login"), murcia))
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://conclave.carm.es/TokenServlet"), murcia))
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://validate.perfdrive.com/challenge"), murcia))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela.clave.gob.es/Clave2/"), murcia))
         assertEquals(
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),
