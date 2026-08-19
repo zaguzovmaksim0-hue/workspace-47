@@ -38,6 +38,7 @@ class JuntaOriginPolicyTest {
     private val melilla = ProfileId("melilla-sede")
     private val ceuta = ProfileId("ceuta-sede")
     private val extremadura = ProfileId("extremadura-tramites")
+    private val navarra = ProfileId("navarra-sede-registro-general")
     private val valladolid = ProfileId("diputacion-valladolid-sede")
     private val burgos = ProfileId("diputacion-burgos-portal")
     private val laPalma = ProfileId("la-palma-sede-electronica")
@@ -85,6 +86,9 @@ class JuntaOriginPolicyTest {
             "sede.melilla.es",
             "sede.ceuta.es",
             "tramites.juntaex.es",
+            "www.navarra.es",
+            "administracionelectronica.navarra.es",
+            "ateka.navarra.es",
             "www.sede.diputaciondevalladolid.es",
             "registro.diputaciondeburgos.es",
             "sedeelectronica.cabildodelapalma.es",
@@ -208,6 +212,11 @@ class JuntaOriginPolicyTest {
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),
         )
+        assertEquals(
+            setOf("www.navarra.es", "administracionelectronica.navarra.es", "ateka.navarra.es"),
+            JuntaOriginPolicy.browserAllowedHosts(navarra),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(navarra).isEmpty())
         assertEquals(
             setOf("www.sede.diputaciondevalladolid.es"),
             JuntaOriginPolicy.browserAllowedHosts(valladolid),

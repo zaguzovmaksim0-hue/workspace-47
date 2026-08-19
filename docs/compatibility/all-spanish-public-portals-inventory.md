@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 67 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 71 |
-| Entradas restantes fuera de ambos estados | 112 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 68 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 72 |
+| Entradas restantes fuera de ambos estados | 111 |
 | Evidencia exacta de `ClientCertRequest` | 1 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 67 |
+| `IMPLEMENTED_NOT_E2E` | 68 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 105 |
+| `BROWSE_ONLY` | 104 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4009,20 +4009,20 @@ records:
     procedure_page: "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://ateka.navarra.es/ateka/Certificate/login"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Presentación en el Registro General con certificado y firma cuando corresponda."
-    protocol_evidence: "La ayuda documenta certificado y firma de documentos, sin contrato de integración exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A17A", "A17B", "A17C"]
-    reason: "La documentación no acredita cliente JS, formato aceptado, callback ni endpoint."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar el flujo público del registro hasta antes de la autenticación."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al Registro General Electrónico mediante ATEKA; la firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El flujo oficial enlaza www.navarra.es → administracionelectronica.navarra.es/RGE2 → ateka.navarra.es/ateka/router?ReturnUrl=TOKEN → /ateka/Certificate/login?returnUrl=TOKEN. Dos sesiones públicas confirmaron que el valor efímero cambia entre sesiones y coincide exactamente source-target dentro de cada sesión. Chromium NetLog observó SSL_CLIENT_CERT_REQUESTED/URL_REQUEST_DELEGATE_CERTIFICATE_REQUESTED en /Certificate/login; el runtime autenticado controlado alcanzó RGE. En EnviarSinFirma.aspx, Firmar y enviar intentó un POST WebForms ordinario y no invocó FirmarXML/AutoScript/MiniApplet; el POST final se bloqueó antes de salir."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A17A", "A17B", "A17C", "NAVARRA-RGE-ENTRY-2026-08-18", "NAVARRA-ATEKA-CLIENTCERT-2026-08-18", "NAVARRA-RGE-AUTH-RUNTIME-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con host, path y token efímero ReturnUrl→returnUrl enlazados de forma exacta; E2E pendiente. No se infieren formato, algoritmo ni cliente de firma y no se implementa el POST final de presentación."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E físico Android del acceso ATEKA con certificado y retorno a RGE, deteniéndose antes del POST final; verificar por separado cualquier contrato de firma antes de implementarlo."
 
   - inventory_id: "ES-PUB-0115"
     surface_key: "euskadi-sede-electronica"

@@ -662,6 +662,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", ceuta["reviewedOn"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
 
+    def test_navarra_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        navarra = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "navarra-sede-registro-general"
+        )
+
+        self.assertEqual("navarra-sede-registro-general", navarra["profileId"])
+        self.assertEqual("ES-PUB-0114", navarra["inventoryId"])
+        self.assertEqual(
+            "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
+            navarra["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", navarra)
+        self.assertEqual("E2E_PENDING", navarra["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", navarra["inventoryStatus"])
+        self.assertEqual("2026-08-18", navarra["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", navarra["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", navarra["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", navarra["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", navarra["observedMechanisms"])
+        self.assertEqual([], navarra["observedSignatureFormats"])
+        self.assertIn("qa", navarra["limitations"].lower())
+        self.assertIn("e2e", navarra["limitations"].lower())
+        self.assertIn("firma", navarra["limitations"].lower())
     def test_gva_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         gva = next(

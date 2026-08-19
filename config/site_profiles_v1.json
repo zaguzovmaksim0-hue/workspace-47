@@ -879,6 +879,44 @@
       ]
     },
     {
+      "profileId": "navarra-sede-registro-general",
+      "profileVersion": 1,
+      "displayName": "Gobierno de Navarra — Registro General con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
+      "initiatorOrigins": ["https://www.navarra.es"],
+      "redirectOrigins": [
+        "https://administracionelectronica.navarra.es",
+        "https://ateka.navarra.es"
+      ],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://ateka.navarra.es"],
+        "sourceUrls": ["https://ateka.navarra.es/ateka/router"],
+        "sourceFixedQueryParameters": {},
+        "sourceRequiredEphemeralQueryParameters": ["ReturnUrl"],
+        "linkedEphemeralQueryParameterMappings": {"ReturnUrl":"returnUrl"},
+        "requestPath": "/ateka/Certificate/login",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": ["returnUrl"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico","reviewedOn":"2026-08-18"},
+        {"url":"https://administracionelectronica.navarra.es/RGE2/Default.aspx?idioma=es","reviewedOn":"2026-08-18"},
+        {"url":"https://ateka.navarra.es/ateka/router","reviewedOn":"2026-08-18"},
+        {"url":"https://ateka.navarra.es/ateka/Certificate/login","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "diputacion-leon-sede",
       "profileVersion": 1,
       "displayName": "Diputación Provincial de León — acceso con certificado",
