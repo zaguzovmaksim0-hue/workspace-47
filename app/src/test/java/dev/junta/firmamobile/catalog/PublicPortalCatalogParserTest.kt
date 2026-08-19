@@ -82,6 +82,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("castilla-leon-quju-public"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("canarias-sede"),
             ),

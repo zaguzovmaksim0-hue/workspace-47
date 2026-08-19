@@ -89,6 +89,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-lleida-sede",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "castilla-leon-quju-public",
                 "cdti-certificate-validation",
                 "canarias-sede",
             ),
