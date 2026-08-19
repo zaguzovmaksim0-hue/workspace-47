@@ -52,6 +52,7 @@ class PortalCatalogRepositoryTest {
             setOf(
                 "junta-andalucia",
                 "junta-andalucia-vea-peg",
+                "mjusticia-fundaciones-idp75",
                 "reg-age-redsara",
                 "unizar-tramitador",
                 "carne-joven-andalucia",
@@ -2071,6 +2072,50 @@ class PortalCatalogRepositoryTest {
             entries = publicCatalog.entries.map { entry ->
                 if (entry.portalId == portalId) {
                     entry.copy(launchUrl = java.net.URI("https://reg.redsara.es/es/not-the-profile-start"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `MJusticia exact fundaciones launch is QA only`() {
+        val portalId = PortalId("mjusticia-sede")
+        val profileId = ProfileId("mjusticia-fundaciones-idp75")
+        val institutionalPage = java.net.URI("https://sede.mjusticia.gob.es/tramites/organos-gobierno")
+        val launch = java.net.URI("https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(launch, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, launch), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, launch), qaRepository.resolveLaunch(profileId, launch))
+        assertEquals(null, qaRepository.resolveLaunch(profileId, institutionalPage))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(entryUrl = java.net.URI("https://sede2.mjusticia.gob.es/login/index/idp/75"))
                 } else {
                     entry
                 }
