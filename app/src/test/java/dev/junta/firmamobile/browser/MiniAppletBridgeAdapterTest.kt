@@ -773,6 +773,58 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactMitesCertificateLoginNormalizesOnlyTheBoundedChallengeContract() {
+        val result = adapterFor(MITES_PROFILE_ID).route(
+            rawMessage = mitesMessage(),
+            sourceOrigin = MITES_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 54,
+            currentPageUrl = MITES_LOGIN_PAGE_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(MITES_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.mites.gob.es", request.context.origin.host)
+            assertEquals(54, request.context.navigationEpoch)
+            assertEquals(MITES_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA512_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(MITES_CHALLENGE.encodeToByteArray(), data)
+                    assertEquals(MITES_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun mitesCertificateLoginRejectsEveryBroadenedTupleAndNonAuthPage() {
+        val valid = mitesMessage()
+        assertMitesRejected(valid, origin = Uri.parse("https://sede.mites.gob.es.evil.example"))
+        assertMitesRejected(valid, isMainFrame = false)
+        assertMitesRejected(valid, activeProfileId = "junta-andalucia")
+        assertMitesRejected(valid, currentPageUrl = "https://sede.mites.gob.es/")
+        assertMitesRejected(valid, currentPageUrl = "$MITES_LOGIN_PAGE_URL?x=1")
+        assertMitesRejected(mitesMessage(algorithm = "SHA256withRSA"))
+        assertMitesRejected(mitesMessage(format = "XAdES"))
+        assertMitesRejected(
+            mitesMessage(dataB64 = Base64.getEncoder().encodeToString("abcdefghiJ".encodeToByteArray())),
+        )
+        assertMitesRejected(
+            mitesMessage(dataB64 = Base64.getEncoder().encodeToString("abcdefghijk".encodeToByteArray())),
+        )
+        assertMitesRejected(
+            mitesMessage(
+                extraProperties =
+                    "filters.1=signingCert:;keyusage.nonrepudiation:true;nonexpired:\nmode=implicit",
+            ),
+        )
+        assertMitesRejected(mitesMessage(extraProperties = "mode=implicit"))
+    }
+
+    @Test
     fun exactJccmProbeNormalizesOnlyTheFiveDecodedAsciiBytes() {
         val result = adapterFor(JCCM_PROFILE_ID).route(
             rawMessage = jccmMessage(),
@@ -1320,6 +1372,23 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
+    private fun assertMitesRejected(
+        rawMessage: String,
+        origin: Uri = MITES_ORIGIN,
+        isMainFrame: Boolean = true,
+        activeProfileId: String = MITES_PROFILE_ID,
+        currentPageUrl: String? = MITES_LOGIN_PAGE_URL,
+    ) {
+        assertTrue(
+            adapterFor(activeProfileId).route(
+                rawMessage = rawMessage,
+                sourceOrigin = origin,
+                isMainFrame = isMainFrame,
+                currentPageUrl = currentPageUrl,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+    }
+
     private fun assertJccmRejected(
         rawMessage: String,
         origin: Uri = JCCM_ORIGIN,
@@ -1398,6 +1467,21 @@ class MiniAppletBridgeAdapterTest {
         algorithm: String = "SHA1withRSA",
         format: String = "XAdES",
         extraProperties: Any = POLICIA_EXTRA_PROPERTIES_STR,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
+    private fun mitesMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(MITES_CHALLENGE.encodeToByteArray()),
+        algorithm: String = "SHA512withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = MITES_EXTRA_PROPERTIES,
     ): String = JSONObject()
         .put("type", "MINIAPPLET_SIGN")
         .put("documentId", DOCUMENT_ID)
@@ -1543,6 +1627,13 @@ class MiniAppletBridgeAdapterTest {
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
                 "formularios/identificacion.phtml"
         const val JCCM_PROTOCOL_ID = "jccm-certificate-login-probe-local-cades-v1"
+        val MITES_ORIGIN: Uri = Uri.parse("https://sede.mites.gob.es")
+        const val MITES_PROFILE_ID = "mites-certificate-login"
+        const val MITES_PROTOCOL_ID = "mites-certificate-login-local-cades-v1"
+        const val MITES_LOGIN_PAGE_URL = "https://sede.mites.gob.es/auth"
+        const val MITES_CHALLENGE = "abcdefghij"
+        const val MITES_EXTRA_PROPERTIES =
+            "mode=implicit\nfilters.1=signingCert:;keyusage.nonrepudiation:true;nonexpired:"
         const val UGR_PROTOCOL_ID = "ugr-certificado-login-local-cades-v1"
         val UGR_DATA = "Universidad de Granada".encodeToByteArray()
         val TENERIFE_ORIGIN: Uri = Uri.parse("https://sede.tenerife.es")
