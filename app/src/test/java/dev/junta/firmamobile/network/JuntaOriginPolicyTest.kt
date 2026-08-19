@@ -128,6 +128,9 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sede.madrid.es",
+            "servcla.madrid.es",
+            "cas.madrid.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d95a69983f61b1e59edaae21b91e8c63dc7d515b5281348542018ecd6b5fb517",
+  "sourceRevision": "aa0590cc462dd95fc22161dbd9afad7236e6596ea90044bbc04b13513bd8c8e1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -462,26 +462,26 @@
     {
       "portalId": "madrid-sede",
       "inventoryId": "ES-PUB-0017",
-      "profileId": null,
+      "profileId": "madrid-sede-tarjeta-azul",
       "displayName": "Sede electrónica del Ayuntamiento de Madrid",
       "organization": "Ayuntamiento de Madrid",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Madrid (municipio)",
-      "purpose": "Identificación/tramitación con certificado cuando el procedimiento lo admite.",
+      "purpose": "Navegación QA acotada desde la Sede a la solicitud digital de Tarjeta Azul y al selector municipal OIDC/PKCE de Cl@ve, incluida la opción DNIe / Certificado.",
       "entryUrl": "https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "RECHECK_REQUIRED",
+      "protocolFamily": "OIDC_PKCE_CLAVE_CERTIFICATE_ROUTE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P11"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Firma y contrato técnico no verificados; la lectura web existe, pero la comprobación CLI no es repetible."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Se implementa únicamente el contrato de navegación/autenticación municipal observado hasta la delegación externa a Cl@ve; no se infieren TLS client auth, firma, formato, algoritmo, endpoint de firma ni presentación final."
     },
     {
       "portalId": "ugr-sede",

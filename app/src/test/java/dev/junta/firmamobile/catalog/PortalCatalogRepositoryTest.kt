@@ -93,6 +93,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-lleida-sede",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "madrid-sede-tarjeta-azul",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
