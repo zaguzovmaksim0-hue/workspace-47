@@ -114,7 +114,7 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
         qaPortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
-            val expectedStatus = if (portal.profileId in setOf(ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede"))) {
+            val expectedStatus = if (portal.profileId in setOf(ProfileId("educacion-convocatoria"))) {
                 PortalSupportStatus.BROWSE_ONLY
             } else {
                 PortalSupportStatus.IMPLEMENTED_NOT_E2E
@@ -130,7 +130,7 @@ class PortalCatalogRepositoryTest {
         }
         releasePortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
             when (portal.profileId) {
-                ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede") -> {
+                ProfileId("educacion-convocatoria") -> {
                     assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                     assertTrue(portal.isEnabled)
                 }

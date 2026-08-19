@@ -92,6 +92,28 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Ceuta ANI resolves only the exact QA authenticated form boundary without signing capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val profiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(SiteProfileRegistry(profiles, BuildTrustPolicy.QA), profiles, catalog)
+        val metadata = catalog.entries.single { it.portalId == PortalId("ceuta-sede") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI")
+        assertEquals("ES-PUB-0106", metadata.inventoryId)
+        assertEquals(ProfileId("ceuta-sede"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals("CEUTA_AUTHENTICATED_FORM_BOUNDARY", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(setOf("CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"), metadata.observedMechanisms.map { it.name }.toSet())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("ceuta-sede"), start), repository.resolveLaunch(portal))
+    }
+
+    @Test
     fun `Lugo catalog entry exposes only the bounded XML batch contract`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val lugo = catalog.entries.single { it.portalId == PortalId("diputacion-lugo-sede") }

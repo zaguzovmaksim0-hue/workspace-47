@@ -389,6 +389,19 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Ceuta ANI authenticated form boundary is compatible while signing remains absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val ceuta = compatible.items.single { it.portalId == PortalId("ceuta-sede") }
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("ceuta-sede"), ceuta.profileId)
+        assertEquals(java.net.URI("https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI"), ceuta.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, ceuta.supportStatus)
+        assertTrue(ceuta.capabilities.isEmpty())
+        assertTrue(ceuta.signatureFormats.isEmpty())
+        assertTrue(ceuta.isEnabled)
+    }
+
+    @Test
     fun `Portal Funciona public home is compatible but sensitive auth capabilities remain absent`() {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }

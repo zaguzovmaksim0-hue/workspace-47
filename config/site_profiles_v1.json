@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 30,
+  "catalogVersion": 31,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -860,11 +860,11 @@
     },
     {
       "profileId": "ceuta-sede",
-      "profileVersion": 1,
-      "displayName": "Ciudad Autónoma de Ceuta — Sede electrónica",
-      "compatibilityStatus": "BROWSE_ONLY",
-      "activation": "ENABLED",
-      "startUrl": "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
+      "profileVersion": 2,
+      "displayName": "Ciudad Autónoma de Ceuta — trámite ANI / frontera autenticada",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
       "initiatorOrigins": ["https://sede.ceuta.es"],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
@@ -872,10 +872,11 @@
       "operationPolicies": [],
       "capabilities": [],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
-        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info","reviewedOn":"2026-07-16"},
-        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info","reviewedOn":"2026-07-16"}
+        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=tramite&modulo=tramites&tramite=ANI","reviewedOn":"2026-08-19"},
+        {"url":"https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI","reviewedOn":"2026-08-19"},
+        {"url":"https://sede.ceuta.es/controlador/controlador","reviewedOn":"2026-08-19"}
       ]
     },
     {
