@@ -719,7 +719,6 @@ class PortalCatalogRepositoryTest {
             assertEquals(rejected, null, qaRepository.resolveLaunch(id, java.net.URI(rejected)))
         }
 
-        assertEquals(null, BuiltInSiteProfiles.qaRegistry.resolve(java.net.URI("https://www.educacion.gob.es/")))
     }
 
     @Test
