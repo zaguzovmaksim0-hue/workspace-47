@@ -128,6 +128,9 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "www.euskadi.eus",
+            "eidas.izenpe.com",
+            "eidas2.izenpe.com",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
