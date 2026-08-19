@@ -266,7 +266,7 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(leon).isEmpty())
         assertEquals(setOf("sede.dipujaen.es"), JuntaOriginPolicy.browserAllowedHosts(jaen))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(jaen).isEmpty())
-        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://cert2.dipujaen.es/"), jaen))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://cert2.dipujaen.es/"), jaen))
         assertEquals(setOf("sede.mscbs.gob.es"), JuntaOriginPolicy.browserAllowedHosts(sanidad))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(sanidad).isEmpty())
         assertEquals(setOf("sede.tea.hacienda.gob.es"), JuntaOriginPolicy.browserAllowedHosts(tea))
