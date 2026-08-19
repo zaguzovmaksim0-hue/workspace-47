@@ -311,6 +311,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == XUNTA_PROFILE_ID) {
                 validateXuntaProfile(p)
             }
+            if (p.profileId.value == ARAGON_TRAMITES_PROFILE_ID) {
+                validateAragonTramitesProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -388,6 +391,9 @@ object SiteProfileCatalogParser {
                     (source.origin() in allowedSourceOrigins ||
                         p.profileId.value == NAVARRA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+                            source.origin() in p.redirectOrigins ||
+                        p.profileId.value == ARAGON_TRAMITES_PROFILE_ID &&
+                            policy.transitionMode == ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE &&
                             source.origin() in p.redirectOrigins) &&
                         (policy.sourceFixedQueryParameters.isEmpty() &&
                             policy.sourceRequiredEphemeralQueryParameters.isEmpty() ||
@@ -1672,6 +1678,39 @@ object SiteProfileCatalogParser {
     }
 
 
+    private fun validateAragonTramitesProfile(profile: SiteProfile) {
+        require(profile.profileVersion == ARAGON_TRAMITES_PROFILE_VERSION)
+        require(profile.displayName == ARAGON_TRAMITES_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == ARAGON_TRAMITES_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(ARAGON_TRAMITES_ORIGIN)))
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(ARAGON_SSLOGIN_BROKER_ORIGIN)))
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(ARAGON_SSLOGIN_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(ARAGON_SSLOGIN_SOURCE_URL)),
+                requestPath = ARAGON_SSLOGIN_REQUEST_PATH,
+                fixedQueryParameters = ARAGON_SSLOGIN_FIXED_QUERY,
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = ARAGON_SSLOGIN_FIXED_QUERY,
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == ARAGON_TRAMITES_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validateCantabriaProfile(profile: SiteProfile) {
         require(profile.profileVersion == CANTABRIA_PROFILE_VERSION)
         require(profile.displayName == CANTABRIA_DISPLAY_NAME)
@@ -1713,7 +1752,10 @@ object SiteProfileCatalogParser {
         (setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
             origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)) ||
             (setOf(firstOwner.value, secondOwner.value) == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) &&
-                origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN)
+                origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN) ||
+            (setOf(firstOwner.value, secondOwner.value) ==
+                setOf(ARAGON_LOCAL_CADES_PROFILE_ID, ARAGON_TRAMITES_PROFILE_ID) &&
+                origin.serialized == ARAGON_TRAMITES_ORIGIN)
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -1760,6 +1802,32 @@ object SiteProfileCatalogParser {
     private fun validContentType(value: String): Boolean =
         value.length <= 128 && CONTENT_TYPE.matches(value)
 
+    private const val ARAGON_TRAMITES_PROFILE_ID = "aragon-solicitud-general-client-auth"
+    private const val ARAGON_TRAMITES_PROFILE_VERSION = 1
+    private const val ARAGON_TRAMITES_DISPLAY_NAME =
+        "Gobierno de Aragón — Solicitud de carácter general"
+    private const val ARAGON_TRAMITES_START_URL =
+        "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion"
+    private const val ARAGON_TRAMITES_ORIGIN = "https://aplicaciones.aragon.es"
+    private const val ARAGON_SSLOGIN_BROKER_ORIGIN = "https://login.loginssl.aragon.es"
+    private const val ARAGON_SSLOGIN_CLIENT_AUTH_ORIGIN = "https://login1.loginssl.aragon.es"
+    private const val ARAGON_SSLOGIN_SOURCE_URL =
+        "https://login.loginssl.aragon.es/sife_login/SSLOGIN"
+    private const val ARAGON_SSLOGIN_REQUEST_PATH = "/sife_login/SSLOGIN/idByCert"
+    private const val ARAGON_SSLOGIN_CONSUME_RESPONSE =
+        "https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/" +
+            "aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/" +
+            "SSLOGIN/consumeResponse"
+    private val ARAGON_SSLOGIN_FIXED_QUERY = linkedMapOf(
+        "redirect.url" to ARAGON_SSLOGIN_CONSUME_RESPONSE,
+    )
+    private val ARAGON_TRAMITES_EVIDENCE_URLS = setOf(
+        "https://www.aragon.es/tramites/registro-electronico-general",
+        ARAGON_TRAMITES_START_URL,
+        "https://aplicaciones.aragon.es/mfe_core/rest/help/MFE_IDENTIFICACION_SSL_INICIO",
+        ARAGON_SSLOGIN_SOURCE_URL,
+        "https://login1.loginssl.aragon.es/sife_login/SSLOGIN/idByCert",
+    )
     private const val ARAGON_LOCAL_CADES_PROFILE_ID = "aragon-siraw"
     private const val DGT_LOCAL_CADES_PROFILE_ID = "dgt-verificacion-equipo"
     private val REGISTERED_ADAPTERS = setOf(
@@ -1786,7 +1854,7 @@ object SiteProfileCatalogParser {
         "autoscript-select-certificate-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
-    private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+    private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_.]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
     private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
     private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"

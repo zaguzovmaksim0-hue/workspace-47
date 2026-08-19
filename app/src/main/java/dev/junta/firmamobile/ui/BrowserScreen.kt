@@ -511,9 +511,14 @@ fun BrowserScreen(
     val effectiveProfile = effectiveTopLevelProfileId?.let(
         BuiltInSiteProfiles.runtimeRegistry::profile,
     )
-    val currentResolution = runCatching {
-        BuiltInSiteProfiles.runtimeRegistry.resolve(java.net.URI(currentUrl))
-    }.getOrNull()
+    val currentResolution = effectiveTopLevelProfileId?.let { activeProfileId ->
+        runCatching {
+            BuiltInSiteProfiles.runtimeRegistry.resolveForProfile(
+                activeProfileId,
+                java.net.URI(currentUrl),
+            )
+        }.getOrNull()
+    }
     val resolvedProfileId = currentResolution?.profile?.profileId
     val isEffectiveProfileOrigin =
         resolvedProfileId != null &&
@@ -1152,7 +1157,7 @@ internal fun urlBelongsToSelectedProfile(rawUrl: String, profileId: ProfileId): 
     runCatching {
         val uri = URI(rawUrl)
         val registry = BuiltInSiteProfiles.runtimeRegistry
-        registry.resolve(uri)?.profile?.profileId == profileId ||
+        registry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId ||
             registry.resolveRedirect(profileId, uri)?.profile?.profileId == profileId
     }.getOrDefault(false)
 

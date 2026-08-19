@@ -301,6 +301,24 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             catalog["sourceRevision"],
         )
 
+    def test_aragon_tramites_binds_exact_client_tls_qa_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(item for item in catalog["entries"] if item["inventoryId"] == "ES-PUB-0094")
+
+        self.assertEqual("aragon-tramites-sede", entry["portalId"])
+        self.assertEqual("aragon-solicitud-general-client-auth", entry["profileId"])
+        self.assertEqual(
+            "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion",
+            entry["entryUrl"],
+        )
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("2026-08-19", entry["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", entry["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", entry["observedMechanisms"])
+        self.assertEqual([], entry["observedSignatureFormats"])
+        self.assertIn("qa-only", entry["limitations"].lower())
+
     def test_transportes_qys_xades_profile_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entry = next(

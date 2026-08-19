@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d95a69983f61b1e59edaae21b91e8c63dc7d515b5281348542018ecd6b5fb517",
+  "sourceRevision": "0b7251075d07337daa7ce25f9fc086b3d34d81eb060a1c8642160dc478bdbcc6",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2373,29 +2373,33 @@
     {
       "portalId": "aragon-tramites-sede",
       "inventoryId": "ES-PUB-0094",
-      "profileId": null,
+      "profileId": "aragon-solicitud-general-client-auth",
       "displayName": "Trámites del Gobierno de Aragón",
       "organization": "Gobierno de Aragón",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Aragón",
-      "purpose": "Tramitación con medios de identificación y firma según el procedimiento.",
-      "entryUrl": "https://www.aragon.es/tramites",
+      "purpose": "Workspace-47 habilita en QA únicamente el acceso con certificado de la Solicitud de carácter general mediante MFE/SSLogin y TLS cliente; no implementa firma documental ni presentación final.",
+      "entryUrl": "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH_MFE_SSLOGIN",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A02A",
-        "A02B"
+        "A02B",
+        "ARAGON-REG-2026-08-19",
+        "ARAGON-TTO-MFE-2026-08-19",
+        "ARAGON-SSLOGIN-TLS-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La mención general de firma no acredita cliente JS, formato, callback, endpoint ni TLS cliente."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil QA-only y fail-closed para la transición exacta TTO → MFE SSLOGIN → broker → TLS cliente. La firma y la presentación administrativa permanecen fuera del capability y requieren validación E2E separada."
     },
     {
       "portalId": "asturias-miprincipado-sede",

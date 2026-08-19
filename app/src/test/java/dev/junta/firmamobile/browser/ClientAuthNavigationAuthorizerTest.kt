@@ -745,6 +745,92 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun aragonSsLoginRedirectAuthorizesOnlyExactClientCertificateEndpoint() {
+        val aragon = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        assertNull(
+            aragon.observeTopLevelNavigation(
+                ARAGON_TRAMITES_PROFILE, ARAGON_TRAMITES_INDEX, ARAGON_SSLOGIN_SOURCE, 880, true,
+            ),
+        )
+        aragon.onTopLevelPageStarted(ARAGON_SSLOGIN_SOURCE, 881)
+        val authorized = aragon.observeTopLevelNavigation(
+            ARAGON_TRAMITES_PROFILE, ARAGON_SSLOGIN_SOURCE, ARAGON_SSLOGIN_TARGET, 881, true,
+        )
+
+        assertEquals(ARAGON_TRAMITES_PROFILE, authorized?.profileId)
+        assertEquals("login1.loginssl.aragon.es", authorized?.target?.host)
+        assertEquals("/sife_login/SSLOGIN/idByCert", authorized?.target?.rawPath)
+        assertEquals(443, authorized?.policy?.requestPort)
+        assertNull(
+            aragon.observeTopLevelNavigation(
+                ARAGON_TRAMITES_PROFILE, ARAGON_SSLOGIN_SOURCE, ARAGON_SSLOGIN_TARGET, 881, true,
+            ),
+        )
+    }
+
+    @Test
+    fun aragonSsLoginRedirectRejectsSourceTargetAndProfileExpansion() {
+        val invalidSources = listOf(
+            ARAGON_SSLOGIN_SOURCE.replace("login.loginssl.aragon.es", "login.loginssl.aragon.es.evil.example"),
+            ARAGON_SSLOGIN_SOURCE.replace("/sife_login/SSLOGIN", "/sife_login/OTHER"),
+            ARAGON_SSLOGIN_SOURCE.replace("solicitud-general", "solicitud-other"),
+            "$ARAGON_SSLOGIN_SOURCE&extra=1",
+        )
+        invalidSources.forEachIndexed { index, source ->
+            val aragon = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            val epoch = 890L + index * 2
+            assertNull(
+                source,
+                aragon.observeTopLevelNavigation(
+                    ARAGON_TRAMITES_PROFILE, ARAGON_TRAMITES_INDEX, source, epoch, true,
+                ),
+            )
+            aragon.onTopLevelPageStarted(source, epoch + 1)
+            assertNull(
+                source,
+                aragon.observeTopLevelNavigation(
+                    ARAGON_TRAMITES_PROFILE, source, ARAGON_SSLOGIN_TARGET, epoch + 1, true,
+                ),
+            )
+        }
+
+        val invalidTargets = listOf(
+            ARAGON_SSLOGIN_TARGET.replace("login1.loginssl.aragon.es", "login1.loginssl.aragon.es.evil.example"),
+            ARAGON_SSLOGIN_TARGET.replace("/idByCert", "/other"),
+            ARAGON_SSLOGIN_TARGET.replace("solicitud-general", "solicitud-other"),
+            "$ARAGON_SSLOGIN_TARGET&extra=1",
+            ARAGON_SSLOGIN_TARGET.replace("login1.loginssl.aragon.es", "login1.loginssl.aragon.es:444"),
+        )
+        invalidTargets.forEachIndexed { index, target ->
+            val aragon = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            val epoch = 910L + index * 2
+            assertNull(
+                aragon.observeTopLevelNavigation(
+                    ARAGON_TRAMITES_PROFILE, ARAGON_TRAMITES_INDEX, ARAGON_SSLOGIN_SOURCE, epoch, true,
+                ),
+            )
+            aragon.onTopLevelPageStarted(ARAGON_SSLOGIN_SOURCE, epoch + 1)
+            assertNull(
+                target,
+                aragon.observeTopLevelNavigation(
+                    ARAGON_TRAMITES_PROFILE, ARAGON_SSLOGIN_SOURCE, target, epoch + 1, true,
+                ),
+            )
+        }
+
+        val wrongProfile = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        assertNull(
+            wrongProfile.observeTopLevelNavigation(
+                ProfileId("aragon-siraw"), ARAGON_TRAMITES_INDEX, ARAGON_SSLOGIN_SOURCE, 940, true,
+            ),
+        )
+    }
+
+    @Test
     fun laRiojaDynamicCasSourceAuthorizesOnlyExactClientCertificateEndpoint() {
         val rioja = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,
@@ -999,6 +1085,18 @@ class ClientAuthNavigationAuthorizerTest {
         const val NAVARRA_TARGET =
             "https://ateka.navarra.es/ateka/Certificate/login?returnUrl=$NAVARRA_TOKEN"
         val LEON_PROFILE = ProfileId("diputacion-leon-sede")
+        val ARAGON_TRAMITES_PROFILE = ProfileId("aragon-solicitud-general-client-auth")
+        const val ARAGON_TRAMITES_INDEX =
+            "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion"
+        const val ARAGON_CONSUME_RESPONSE =
+            "https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/" +
+                "aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/" +
+                "SSLOGIN/consumeResponse"
+        val ARAGON_ENCODED_RETURN = java.net.URLEncoder.encode(ARAGON_CONSUME_RESPONSE, "UTF-8")
+        val ARAGON_SSLOGIN_SOURCE =
+            "https://login.loginssl.aragon.es/sife_login/SSLOGIN?redirect.url=$ARAGON_ENCODED_RETURN"
+        val ARAGON_SSLOGIN_TARGET =
+            "https://login1.loginssl.aragon.es/sife_login/SSLOGIN/idByCert?redirect.url=$ARAGON_ENCODED_RETURN"
         val LA_RIOJA_PROFILE = ProfileId("la-rioja-oficina-electronica")
         const val LA_RIOJA_INDEX =
             "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"

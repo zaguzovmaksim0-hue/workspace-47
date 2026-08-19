@@ -51,6 +51,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("junta-ofvirtual"),
                 ProfileId("educacion-convocatoria"),
                 ProfileId("aragon-siraw"),
+                ProfileId("aragon-solicitud-general-client-auth"),
                 ProfileId("aeat-mis-datos-censales"),
                 ProfileId("dgt-verificacion-equipo"),
                 ProfileId("ugr-certificado-login"),
