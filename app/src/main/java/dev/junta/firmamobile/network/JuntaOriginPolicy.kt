@@ -51,6 +51,13 @@ object JuntaOriginPolicy {
 
     fun webMessageOriginRules(profileId: ProfileId): Set<String> {
         val profile = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) ?: return emptySet()
+        if (profileId.value == EUSKADI_PROFILE_ID &&
+            profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH)
+        ) {
+            return profile.redirectOrigins
+                .filterTo(linkedSetOf()) { it.serialized == EUSKADI_IZENPE_ORIGIN }
+                .mapTo(linkedSetOf()) { it.serialized }
+        }
         val exposesNativeBridge = profile.capabilities.any { capability ->
             capability == Capability.SIGN ||
                 capability == Capability.SELECT_CERTIFICATE ||
@@ -113,6 +120,8 @@ object JuntaOriginPolicy {
         null
     }
 
+    private const val EUSKADI_PROFILE_ID = "euskadi-sede-electronica"
+    private const val EUSKADI_IZENPE_ORIGIN = "https://eidas.izenpe.com"
     private const val HTTPS_SCHEME = "https"
     private const val HTTPS_PORT = 443
 }

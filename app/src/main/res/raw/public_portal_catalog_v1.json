@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d95a69983f61b1e59edaae21b91e8c63dc7d515b5281348542018ecd6b5fb517",
+  "sourceRevision": "48e87935812f7e1827149c9798280e73ea62e56380915591ba838cdf5861b90f",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2994,30 +2994,33 @@
     {
       "portalId": "euskadi-sede-electronica",
       "inventoryId": "ES-PUB-0115",
-      "profileId": null,
+      "profileId": "euskadi-sede-electronica",
       "displayName": "Sede electrónica de Euskadi",
       "organization": "Gobierno Vasco",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "País Vasco",
-      "purpose": "Tramitación mediante medios de identificación y firma admitidos.",
-      "entryUrl": "https://www.euskadi.eus/sede-electronica/",
+      "purpose": "Acceso con certificado al Registro Electrónico General 1017701 mediante Izenpe Client TLS; la firma documental y el envío final quedan fuera del contrato implementado.",
+      "entryUrl": "https://www.euskadi.eus/web01-sedeform/es/x43kToolkitWar/form/fdp?procedureId=1017701&tipoPresentacion=19&language=es",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A18A",
         "A18B",
-        "A18C"
+        "A18C",
+        "EUSKADI-RGE-1017701-2026-08-19",
+        "EUSKADI-IZENPE-CLIENTTLS-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Las menciones documentales, incluida XAdES en escenarios delimitados, no prueban el flujo de esta superficie."
+      "reviewedOn": "2026-08-19",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con página source, POST target, nombres de campos, host/path/port, CA no vacío y TTL acotados; sin E2E. No se infieren algoritmo, formato ni contrato de firma documental posterior."
     },
     {
       "portalId": "la-rioja-oficina-electronica",

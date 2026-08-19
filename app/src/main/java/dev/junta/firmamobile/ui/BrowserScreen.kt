@@ -59,6 +59,7 @@ import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
 import dev.junta.firmamobile.browser.ClientAuthNavigationAuthorizer
 import dev.junta.firmamobile.browser.ClientAuthRequestHandler
 import dev.junta.firmamobile.browser.ClientAuthWebViewClient
+import dev.junta.firmamobile.browser.EuskadiClientAuthPostBridgeAdapter
 import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.JuntaWebViewClient
 import dev.junta.firmamobile.browser.MiniAppletBridgeMode
@@ -722,8 +723,10 @@ fun BrowserScreen(
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
                                 onClientAuthTarget = { authorized ->
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
+                                        pendingClientAuthTarget?.postBody?.fill(0)
                                         pendingClientAuthTarget = authorized
                                     } else {
+                                        authorized.postBody?.fill(0)
                                         clientAuthAuthorizer.invalidate()
                                     }
                                 },
@@ -755,6 +758,14 @@ fun BrowserScreen(
                                         }
                                     }.takeIf { onMelillaBatchRequest != null },
                                     onMelillaBatchCancel = onMelillaBatchCancel,
+                                    onEuskadiClientAuthPost = { request ->
+                                        if (request.authorized.profileId == effectiveTopLevelProfileId) {
+                                            pendingClientAuthTarget?.postBody?.fill(0)
+                                            pendingClientAuthTarget = request.authorized
+                                        } else {
+                                            request.authorized.postBody?.fill(0)
+                                        }
+                                    },
                                     activeProfileId = { effectiveTopLevelProfileId },
                                     miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
                                     currentNavigationEpoch = { navigationEpoch.longValue },
@@ -802,7 +813,16 @@ fun BrowserScreen(
                             dedicatedClientRef.set(client)
                             dedicatedWebViewRef.set(webView)
                             webView.webViewClient = client
-                            webView.loadUrl(tlsGrant.authorized.target.toASCIIString())
+                            val postBody = tlsGrant.authorized.postBody
+                            if (postBody == null) {
+                                webView.loadUrl(tlsGrant.authorized.target.toASCIIString())
+                            } else {
+                                try {
+                                    webView.postUrl(tlsGrant.authorized.target.toASCIIString(), postBody)
+                                } finally {
+                                    postBody.fill(0)
+                                }
+                            }
                         }
                         if (tlsGrant == null) {
                             val requestedUrl = pendingNormalUrl.getAndSet(null)
@@ -885,6 +905,7 @@ fun BrowserScreen(
             certificateOwner = certificateState.summary.ownerName,
             onContinue = {
                 if (authorized.profileId != effectiveTopLevelProfileId) {
+                    authorized.postBody?.fill(0)
                     pendingClientAuthTarget = null
                     abandonClientAuth()
                 } else {
@@ -902,6 +923,7 @@ fun BrowserScreen(
                 }
             },
             onCancel = {
+                authorized.postBody?.fill(0)
                 pendingClientAuthTarget = null
                 clientAuthGrant = null
                 abandonClientAuth()
@@ -1158,10 +1180,13 @@ internal fun urlBelongsToSelectedProfile(rawUrl: String, profileId: ProfileId): 
 
 internal fun profileRequiresWebMessageBridge(
     profile: dev.junta.firmamobile.profile.SiteProfile?,
-): Boolean = profile?.capabilities?.any { capability ->
-    capability == dev.junta.firmamobile.profile.Capability.SIGN ||
-        capability == dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE ||
-        capability == dev.junta.firmamobile.profile.Capability.AFIRMA_URI
+): Boolean = profile?.let { active ->
+    active.profileId.value == EuskadiClientAuthPostBridgeAdapter.PROFILE_ID ||
+        active.capabilities.any { capability ->
+            capability == dev.junta.firmamobile.profile.Capability.SIGN ||
+                capability == dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE ||
+                capability == dev.junta.firmamobile.profile.Capability.AFIRMA_URI
+        }
 } == true
 
 @Composable

@@ -272,6 +272,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == GVA_PROFILE_ID) {
                 validateGvaProfile(p)
             }
+            if (p.profileId.value == EUSKADI_PROFILE_ID) {
+                validateEuskadiProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -380,7 +383,10 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                    val allowedSourceOrigins = if (
+                        p.profileId.value == AIREF_PROFILE_ID ||
+                        p.profileId.value == EUSKADI_PROFILE_ID
+                    ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
@@ -1471,6 +1477,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
+    private fun validateEuskadiProfile(profile: SiteProfile) {
+        require(profile.profileVersion == EUSKADI_PROFILE_VERSION)
+        require(profile.displayName == EUSKADI_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == EUSKADI_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EUSKADI_ORIGIN)))
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(EUSKADI_IZENPE_ORIGIN)))
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(EUSKADI_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(EUSKADI_SOURCE_URL)),
+                requestPath = EUSKADI_CLIENT_AUTH_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EUSKADI_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -2159,6 +2198,25 @@ object SiteProfileCatalogParser {
         MALLORCA_START_URL,
         "https://cim.secimallorca.net/carpetaciudadana/login.aspx",
         "https://identificacionssl.sedipualba.es/",
+    )
+    private const val EUSKADI_PROFILE_ID = "euskadi-sede-electronica"
+    private const val EUSKADI_PROFILE_VERSION = 1
+    private const val EUSKADI_DISPLAY_NAME = "Gobierno Vasco — Registro Electrónico General"
+    private const val EUSKADI_ORIGIN = "https://www.euskadi.eus"
+    private const val EUSKADI_IZENPE_ORIGIN = "https://eidas.izenpe.com"
+    private const val EUSKADI_CLIENT_AUTH_ORIGIN = "https://eidas2.izenpe.com"
+    private const val EUSKADI_START_URL =
+        "https://www.euskadi.eus/web01-sedeform/es/x43kToolkitWar/form/fdp?" +
+            "procedureId=1017701&tipoPresentacion=19&language=es"
+    private const val EUSKADI_SOURCE_URL =
+        "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication"
+    private const val EUSKADI_CLIENT_AUTH_PATH =
+        "/cert-authn-external-validation/authenticate"
+    private val EUSKADI_EVIDENCE_URLS = setOf(
+        "https://www.euskadi.eus/registro/registro-electronico-general/web01-tramite/es/",
+        EUSKADI_START_URL,
+        EUSKADI_SOURCE_URL,
+        "$EUSKADI_CLIENT_AUTH_ORIGIN$EUSKADI_CLIENT_AUTH_PATH",
     )
     private const val GVA_PROFILE_ID = "generalitat-valenciana-client-auth"
     private const val GVA_PROFILE_VERSION = 1

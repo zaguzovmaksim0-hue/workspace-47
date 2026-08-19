@@ -30,6 +30,7 @@
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
   const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
   const xSel = __JFM_XUNTA_GALICIA_COMPATIBILITY_ENABLED__;
+  const euskadiClientAuthPostEnabled = __JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -83,6 +84,8 @@
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  const euskadiAuthPage = "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication";
+  const euskadiClientAuthTarget = "https://eidas2.izenpe.com/cert-authn-external-validation/authenticate";
   const xuntaOrigin = "https://sede.xunta.gal";
   const xuntaPage = "https://sede.xunta.gal/presenta/novo/PR004A_2025_1";
   const xuntaSelectProps = "filters=nonexpired";
@@ -131,6 +134,55 @@
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
     const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+
+  let euskadiClientAuthPostSent = false;
+  function interceptEuskadiClientAuthPost(form) {
+    if (!euskadiClientAuthPostEnabled || location.href !== euskadiAuthPage) return false;
+    if (!(form instanceof HTMLFormElement) || form.method.toLowerCase() !== "post" ||
+        form.enctype.toLowerCase() !== "application/x-www-form-urlencoded") return true;
+    let action;
+    try { action = new URL(form.action, location.href).href; } catch (_) { return true; }
+    if (action !== euskadiClientAuthTarget) return true;
+    const controls = Array.from(form.elements).filter(control => control && control.name);
+    if (controls.length !== 2 || controls.some(control => control.type !== "hidden") ||
+        controls.map(control => control.name).sort().join("|") !== "request|x_correlation_id") return true;
+    const request = form.elements.namedItem("request");
+    const correlation = form.elements.namedItem("x_correlation_id");
+    if (!request || !correlation || typeof request.value !== "string" ||
+        typeof correlation.value !== "string" || euskadiClientAuthPostSent ||
+        !bridge || typeof bridge.postMessage !== "function") return true;
+    const requestId = secureRequestId();
+    if (!requestId) return true;
+    euskadiClientAuthPostSent = true;
+    try {
+      bridge.postMessage(JSON.stringify({ type: "EUSKADI_CLIENT_AUTH_POST", requestId,
+        request: request.value, xCorrelationId: correlation.value }));
+    } catch (_) {
+      euskadiClientAuthPostSent = false;
+    }
+    return true;
+  }
+
+  if (euskadiClientAuthPostEnabled && typeof HTMLFormElement === "function") {
+    const nativeSubmit = HTMLFormElement.prototype.submit;
+    const nativeRequestSubmit = HTMLFormElement.prototype.requestSubmit;
+    try {
+      HTMLFormElement.prototype.submit = function() {
+        if (interceptEuskadiClientAuthPost(this)) return undefined;
+        return Reflect.apply(nativeSubmit, this, []);
+      };
+      if (typeof nativeRequestSubmit === "function") {
+        HTMLFormElement.prototype.requestSubmit = function(submitter) {
+          if (interceptEuskadiClientAuthPost(this)) return undefined;
+          const args = submitter === undefined ? [] : [submitter];
+          return Reflect.apply(nativeRequestSubmit, this, args);
+        };
+      }
+    } catch (_) {
+      // The exact auth POST must not fall back to an unmediated normal-WebView request.
+      try { window.stop(); } catch (_) {}
+    }
   }
 
   const closedErrorMessages = Object.freeze({

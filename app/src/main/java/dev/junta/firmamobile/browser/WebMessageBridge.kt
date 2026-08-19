@@ -41,9 +41,10 @@ internal data class AfirmaShimCompatibilityFlags(
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
     val xuntaGalicia: Boolean,
+    val euskadiClientAuthPost: Boolean,
 )
 
-class WebMessageBridge(
+internal class WebMessageBridge(
     private val profileId: ProfileId,
     private val logger: SanitizedLogger,
     private val onAfirmaRequest: (AfirmaRequest) -> Unit,
@@ -56,6 +57,7 @@ class WebMessageBridge(
     private val onMelillaBatchRequest:
         ((MelillaBatchRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     private val onMelillaBatchCancel: (UUID) -> Unit = {},
+    private val onEuskadiClientAuthPost: ((EuskadiClientAuthPostBridgeRequest) -> Unit)? = null,
     private val router: WebMessageRouter = WebMessageRouter(profileId),
     private val activeProfileId: () -> ProfileId? = { null },
     clock: Clock = Clock.systemUTC(),
@@ -115,6 +117,11 @@ class WebMessageBridge(
         }
         else -> { _, _, _, _, _ -> CertificateSelectionBridgeRouteResult.NotApplicable }
     }
+
+    private val euskadiClientAuthPostAdapter = EuskadiClientAuthPostBridgeAdapter(
+        activeProfileId = activeProfileId,
+        monotonicNanos = monotonicNanos,
+    )
 
     private val batchRuntime: StaBatchBridgeRuntime? = when (profileId.value) {
         MelillaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
@@ -292,6 +299,7 @@ class WebMessageBridge(
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
                     xuntaGaliciaCompatibilityEnabled = shimFlags.xuntaGalicia,
+                    euskadiClientAuthPostEnabled = shimFlags.euskadiClientAuthPost,
                 ),
                 originRules,
             )
@@ -321,6 +329,35 @@ class WebMessageBridge(
         }
         if (receiveBatchDocumentReady(rawMessage, sourceOrigin, isMainFrame)) {
             return
+        }
+
+        when (
+            val euskadi = euskadiClientAuthPostAdapter.route(
+                rawMessage = rawMessage,
+                sourceOrigin = sourceOrigin,
+                isMainFrame = isMainFrame,
+                navigationEpoch = currentNavigationEpoch(),
+                currentPageUrl = currentPageUrl(),
+            )
+        ) {
+            is EuskadiClientAuthPostBridgeRouteResult.Accepted -> {
+                val handler = onEuskadiClientAuthPost
+                if (handler == null) {
+                    euskadi.request.authorized.postBody?.fill(0)
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    return
+                }
+                runCatching { handler(euskadi.request) }.onFailure {
+                    euskadi.request.authorized.postBody?.fill(0)
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                }
+                return
+            }
+            is EuskadiClientAuthPostBridgeRouteResult.Rejected -> {
+                logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                return
+            }
+            EuskadiClientAuthPostBridgeRouteResult.NotApplicable -> Unit
         }
 
         when (
@@ -691,6 +728,7 @@ class WebMessageBridge(
         private const val XUNTA_PROFILE_ID = "xunta-galicia-solicitude-xenerica"
         private const val CANARIAS_PROFILE_ID = "canarias-sede"
         private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
+        private const val EUSKADI_PROFILE_ID = "euskadi-sede-electronica"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -713,6 +751,7 @@ class WebMessageBridge(
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
             xuntaGalicia = profileActive && profileId.value == XUNTA_PROFILE_ID,
+            euskadiClientAuthPost = profileActive && profileId.value == EUSKADI_PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
