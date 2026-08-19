@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 73 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 77 |
-| Entradas restantes fuera de ambos estados | 106 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 74 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 78 |
+| Entradas restantes fuera de ambos estados | 105 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 73 |
+| `IMPLEMENTED_NOT_E2E` | 74 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 99 |
+| `BROWSE_ONLY` | 98 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3523,23 +3523,25 @@ records:
     official_site: "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/"
     e_sede: "https://www.caib.es/seucaib/ca/"
     entry_url: "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/"
-    procedure_page: "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/"
+    launch_url: "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros="
+    procedure_page: "https://www.caib.es/seucaib/es/200/personas/tramites/tramite/4213695"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_CAIB_INSTANCIA_GENERICA"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Información y acceso al registro electrónico autonómico."
-    protocol_evidence: "La entrada oficial acredita la función de registro, no un contrato de autenticación o firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El Registre Electrònic autonómico delega la solicitud genérica al mismo asistente SiStra2 de Instància genèrica ya cubierto por el perfil CAIB PortaFIB."
+    protocol_evidence: "La entrada oficial vigente del Registre Electrònic enlaza la solicitud genérica a la ficha CAIB 4213695; la variante oficial en castellano de esa misma ficha publica exactamente el launch URL https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros=, que coincide byte por byte con el startUrl del perfil caib-portafib ya verificado. El alias no atribuye un ABI propio a apps.caib.es ni amplía sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A04B", "A04C"]
-    reason: "No se verificaron entrada operativa final, certificado, firma, ABI ni endpoint."
-    reviewed_at: "2026-07-16"
-    next_gate: "Resolver el frontend operativo exacto sin iniciar una presentación."
+    evidence_ids: ["D03", "A04A", "A04B", "A04C"]
+    reason: "Alias QA-only al perfil existente caib-portafib por la cadena oficial vigente hacia el launch URL exacto de la Instància genèrica; se conserva apps.caib.es como entry URL, no se añade a los orígenes de confianza del perfil y falta E2E físico de la transición desde el Registre Electrònic."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar físicamente la transición Registre Electrònic → Instància genèrica y el callback de firma en QA con identidad autorizada, deteniéndose antes de la firma criptográfica y de cualquier registro final."
+    notes: "Cadena revalidada 2026-08-19: Registre Electrònic → ficha 4213695 (SIA 2307649) → CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR / idTramiteCatalogo=4213963."
 
   - inventory_id: "ES-PUB-0099"
     surface_key: "canarias-sede"

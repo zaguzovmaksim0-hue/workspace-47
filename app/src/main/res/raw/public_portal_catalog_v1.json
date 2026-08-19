@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "443a47f0386134ec50b9f2d427894bf639ac9374003cb28c7b977a9226d4804c",
+  "sourceRevision": "25fe3fc900674369c6065776e40f1a374d386b12a5668c745679946509bf5c5e",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2481,26 +2481,28 @@
     {
       "portalId": "caib-registre-electronic",
       "inventoryId": "ES-PUB-0098",
-      "profileId": null,
+      "profileId": "caib-portafib",
       "displayName": "Registre Electrònic",
       "organization": "Gobierno de las Illes Balears",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Illes Balears",
-      "purpose": "Información y acceso al registro electrónico autonómico.",
+      "purpose": "El Registre Electrònic autonómico delega la solicitud genérica al mismo asistente SiStra2 de Instància genèrica ya cubierto por el perfil CAIB PortaFIB.",
       "entryUrl": "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/",
+      "launchUrl": "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros=",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_CAIB_INSTANCIA_GENERICA",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
+        "A04A",
         "A04B",
         "A04C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "No se verificaron entrada operativa final, certificado, firma, ABI ni endpoint."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Alias QA-only al perfil existente caib-portafib por la cadena oficial vigente hacia el launch URL exacto de la Instància genèrica; se conserva apps.caib.es como entry URL, no se añade a los orígenes de confianza del perfil y falta E2E físico de la transición desde el Registre Electrònic."
     },
     {
       "portalId": "canarias-sede",
