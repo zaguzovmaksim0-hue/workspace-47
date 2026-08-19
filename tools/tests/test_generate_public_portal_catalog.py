@@ -759,6 +759,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("firma", gva["limitations"].lower())
         self.assertIn("e2e", gva["limitations"].lower())
 
+    def test_jaen_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        jaen = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-jaen-sede"
+        )
+
+        self.assertEqual("diputacion-jaen-sede", jaen["profileId"])
+        self.assertEqual("ES-PUB-0160", jaen["inventoryId"])
+        self.assertEqual("https://sede.dipujaen.es/SolicitudGenerica", jaen["entryUrl"])
+        self.assertEqual("E2E_PENDING", jaen["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", jaen["inventoryStatus"])
+        self.assertEqual("2026-08-19", jaen["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", jaen["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", jaen["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", jaen["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", jaen["observedMechanisms"])
+        self.assertEqual([], jaen["observedSignatureFormats"])
+        self.assertIn("qa", jaen["limitations"].lower())
+        self.assertIn("e2e", jaen["limitations"].lower())
+        self.assertIn("firma", jaen["limitations"].lower())
+
     def test_leon_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         leon = next(

@@ -77,6 +77,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-huesca-portal",
                 "diputacion-lugo-sede",
                 "diputacion-leon-sede",
+                "diputacion-jaen-sede",
                 "consell-mallorca-sede",
                 "generalitat-valenciana-client-auth",
                 "ministerio-sanidad-certificado",

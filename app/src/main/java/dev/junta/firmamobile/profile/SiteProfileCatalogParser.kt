@@ -272,6 +272,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == GVA_PROFILE_ID) {
                 validateGvaProfile(p)
             }
+            if (p.profileId.value == JAEN_PROFILE_ID) {
+                validateJaenProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -1471,6 +1474,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
+    private fun validateJaenProfile(profile: SiteProfile) {
+        require(profile.profileVersion == JAEN_PROFILE_VERSION)
+        require(profile.displayName == JAEN_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == JAEN_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(JAEN_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(JAEN_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(JAEN_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("back" to JAEN_SOURCE_URL),
+                requiredEphemeralQueryParameters = setOf("key"),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == JAEN_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -2178,6 +2214,19 @@ object SiteProfileCatalogParser {
         GVA_START_URL,
         GVA_SOURCE_URL,
         "https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html",
+    )
+    private const val JAEN_PROFILE_ID = "diputacion-jaen-sede"
+    private const val JAEN_PROFILE_VERSION = 1
+    private const val JAEN_DISPLAY_NAME = "Diputación Provincial de Jaén — acceso con certificado"
+    private const val JAEN_START_URL = "https://sede.dipujaen.es/SolicitudGenerica"
+    private const val JAEN_ORIGIN = "https://sede.dipujaen.es"
+    private const val JAEN_SOURCE_URL = "https://sede.dipujaen.es/IniciarSesion/Certificado"
+    private const val JAEN_CLIENT_AUTH_ORIGIN = "https://cert2.dipujaen.es"
+    private val JAEN_EVIDENCE_URLS = setOf(
+        JAEN_START_URL,
+        "https://sede.dipujaen.es/IniciarSesion",
+        JAEN_SOURCE_URL,
+        "$JAEN_CLIENT_AUTH_ORIGIN/",
     )
     private const val TRANSPORTES_PROFILE_ID = "transportes-qys-cert-login"
     private const val TRANSPORTES_PROFILE_VERSION = 1
