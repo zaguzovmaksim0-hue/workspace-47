@@ -239,11 +239,21 @@ class ClientAuthNavigationAuthorizer internal constructor(
     }
 
     private fun URI.hasLinkedEphemeralParameters(target: URI, policy: ClientAuthPolicy): Boolean {
-        if (policy.linkedEphemeralQueryParameters.isEmpty()) return true
+        if (policy.linkedEphemeralQueryParameters.isEmpty() &&
+            policy.linkedEphemeralQueryParameterMappings.isEmpty()
+        ) {
+            return true
+        }
         val sourceParameters = parseQuery(rawQuery ?: return false) ?: return false
         val targetParameters = parseQuery(target.rawQuery ?: return false) ?: return false
-        return policy.linkedEphemeralQueryParameters.all { name ->
-            sourceParameters[name] == targetParameters[name]
+        if (policy.linkedEphemeralQueryParameters.any { name ->
+                sourceParameters[name] != targetParameters[name]
+            }
+        ) {
+            return false
+        }
+        return policy.linkedEphemeralQueryParameterMappings.all { (sourceName, targetName) ->
+            sourceParameters[sourceName] == targetParameters[targetName]
         }
     }
 

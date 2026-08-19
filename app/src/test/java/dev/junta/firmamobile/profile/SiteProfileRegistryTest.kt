@@ -8,6 +8,33 @@ import org.junit.Test
 
 class SiteProfileRegistryTest {
     @Test
+    fun `shared Clave origins stay globally ambiguous and resolve only inside the selected profile`() {
+        val clave = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
+        val claveIdent = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
+        val airef = ProfileId("airef-instancia-general")
+        val mineco = ProfileId("ministerio-economia-instancia-generica")
+
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, claveIdent)?.trustMode,
+        )
+    }
+
+    @Test
     fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")
@@ -167,6 +194,57 @@ class SiteProfileRegistryTest {
         assertNull(
             BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ugr.es:444/")),
         )
+    }
+
+    @Test
+    fun `OEPM ProtegeO navigation profile is active only in QA and never upgrades to signing trust`() {
+        val profileId = ProfileId("oepm-protegeo-general")
+        val start = URI(
+            "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM",
+        )
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.oepm.gob.es.evil.example/")))
+    }
+
+    @Test
+    fun `Portal Funciona public home is browse-only trust in QA and external auth origins stay closed`() {
+        val profileId = ProfileId("portal-funciona-public-home")
+        val start = URI("https://sede.funciona.gob.es/es/home")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://auth-api.redsara.es/auth/realms/sgad-appfactory/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://autentica.redsara.es/Autentica/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
+    }
+
+    @Test
+    fun `Junta VEA PEG is QA-only browse and rejects auth API as profile origin`() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.activation)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://api-veaja.cloud.juntadeandalucia.es/auth/login")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))
     }
 
 }

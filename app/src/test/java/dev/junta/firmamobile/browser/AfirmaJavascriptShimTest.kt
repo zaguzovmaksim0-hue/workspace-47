@@ -324,6 +324,56 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun airefCompatibilityIsProfileScopedToTheExactProtectedXadesTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            airefCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            airefCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const airefCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const airefCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://sede.airef.es"))
+        assertTrue(enabled.contains("/invesiteRE/action/solicitud/view"))
+        assertTrue(enabled.contains("^\\?id=[0-9]{1,20}$"))
+        assertTrue(enabled.contains("decoded.length === 32"))
+        assertTrue(enabled.contains("args[1] === \"SHA1withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"XAdES\""))
+        assertTrue(enabled.contains("args[3] === null"))
+        assertTrue(enabled.contains("if (isAirefOrigin && !isExactAirefCall)"))
+    }
+
+    @Test
+    fun activeAirefProfileEnablesOnlyTheRuntimeAirefShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("airef-instancia-general"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertTrue(flags.airef)
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertFalse(flags.sevillaAtse)
+        assertFalse(flags.cdti)
+        assertFalse(flags.policia)
+        assertFalse(flags.granCanaria)
+        assertFalse(flags.melillaBatch)
+        assertFalse(flags.lugoBatch)
+        assertFalse(flags.isciiiCertificateSelection)
+        assertFalse(flags.valenciaCertificateSelection)
+    }
+
+    @Test
     fun activeCdtiProfileEnablesOnlyTheRuntimeCdtiShimFlag() {
         val flags = WebMessageBridge.shimCompatibilityFlags(
             profileId = dev.junta.firmamobile.profile.ProfileId("cdti-certificate-validation"),
@@ -536,6 +586,32 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
         assertTrue(enabled.contains("args[2] === \"PAdES\""))
         assertTrue(enabled.contains("isExactGranCanariaCall"))
+    }
+
+    @Test
+    fun minecoCompatibilityIsProfileScopedToTheExactSha512PadesFirmaAgeTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            minecoCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            minecoCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const minecoCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const minecoCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://serviciosede.mineco.gob.es"))
+        assertTrue(enabled.contains("/FB/solicitud/firma.aspx"))
+        assertTrue(enabled.contains("filters=signingCert:;nonexpired:\\nexpPolicy=FirmaAGE\\nsignatureSubFilter=ETSI.CAdES.detached"))
+        assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdES\""))
+        assertTrue(enabled.contains("isExactMinecoCall"))
     }
 
     @Test

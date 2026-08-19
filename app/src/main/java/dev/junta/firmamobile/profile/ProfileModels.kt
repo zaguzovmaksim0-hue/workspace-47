@@ -120,6 +120,7 @@ data class ClientAuthPolicy(
     val sourceFixedQueryParameters: Map<String, String> = emptyMap(),
     val sourceRequiredEphemeralQueryParameters: Set<String> = emptySet(),
     val linkedEphemeralQueryParameters: Set<String> = emptySet(),
+    val linkedEphemeralQueryParameterMappings: Map<String, String> = emptyMap(),
 )
 
 data class CertificateFilterRules(
