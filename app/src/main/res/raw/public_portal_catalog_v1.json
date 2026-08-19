@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d95a69983f61b1e59edaae21b91e8c63dc7d515b5281348542018ecd6b5fb517",
+  "sourceRevision": "1f3be006df5950400b9796f12bb2f918a811087676a3b030911c5939b6ae6422",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -178,28 +178,28 @@
     {
       "portalId": "sepe-sede",
       "inventoryId": "ES-PUB-0007",
-      "profileId": null,
-      "displayName": "Sede electrónica del SEPE",
+      "profileId": "reg-age-redsara",
+      "displayName": "SEPE — Registro electrónico común",
       "organization": "Servicio Público de Empleo Estatal",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Firma con AutoFirma después de identificarse mediante certificado.",
-      "entryUrl": "https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma",
-      "observedMechanisms": [
-        "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
-      ],
+      "purpose": "La Sede electrónica del SEPE publica el Registro Electrónico Común de la Administración General del Estado como vía externa de registro electrónico.",
+      "entryUrl": "https://sede.sepe.gob.es/portalSede/registro-electronico.html",
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P04",
-        "D11"
+        "D11",
+        "SEPE-REG-2026-08-19",
+        "P14"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "El requisito de AutoFirma no autoriza un bridge sin contrato técnico exacto."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita del SEPE al Registro Electrónico Común y resolución pública actual al startUrl exacto; no se amplía trust al origin SEPE y falta E2E físico de la transición."
     },
     {
       "portalId": "dgt-sede",
