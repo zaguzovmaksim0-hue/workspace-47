@@ -1558,9 +1558,13 @@ object SiteProfileCatalogParser {
         origin: ExactOrigin,
         firstOwner: ProfileId,
         secondOwner: ProfileId,
-    ): Boolean =
-        setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
-            origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+    ): Boolean {
+        if (origin.serialized !in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)) return false
+        val owners = setOf(firstOwner.value, secondOwner.value)
+        return owners == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) ||
+            owners == setOf(MINECO_PROFILE_ID, ASTURIAS_PROFILE_ID) ||
+            owners == setOf(AIREF_PROFILE_ID, ASTURIAS_PROFILE_ID)
+    }
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
