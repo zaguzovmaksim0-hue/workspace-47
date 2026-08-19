@@ -136,6 +136,56 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun navarraCaseMappedEphemeralParameterAuthorizesOnlyTheSameObservedSessionValue() {
+        val navarra = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = navarra.observeTopLevelNavigation(
+            NAVARRA_PROFILE, NAVARRA_SOURCE, NAVARRA_TARGET, 75, true,
+        )
+
+        assertEquals(NAVARRA_PROFILE, authorized?.profileId)
+        assertEquals("ateka.navarra.es", authorized?.target?.host)
+        assertEquals("/ateka/Certificate/login", authorized?.target?.rawPath)
+        assertEquals("returnUrl=$NAVARRA_TOKEN", authorized?.target?.rawQuery)
+        assertNull(
+            navarra.observeTopLevelNavigation(
+                NAVARRA_PROFILE, NAVARRA_SOURCE, NAVARRA_TARGET, 75, true,
+            ),
+        )
+    }
+
+    @Test
+    fun navarraCaseMappedEphemeralParameterRejectsCrossSessionAndEveryTargetExpansion() {
+        val attacks = listOf(
+            NAVARRA_SOURCE.replace(NAVARRA_TOKEN, NAVARRA_OTHER_TOKEN) to NAVARRA_TARGET,
+            NAVARRA_SOURCE to NAVARRA_TARGET.replace(NAVARRA_TOKEN, NAVARRA_OTHER_TOKEN),
+            NAVARRA_SOURCE.replace("ReturnUrl=", "returnUrl=") to NAVARRA_TARGET,
+            NAVARRA_SOURCE to NAVARRA_TARGET.replace("returnUrl=", "ReturnUrl="),
+            NAVARRA_SOURCE to "$NAVARRA_TARGET&extra=1",
+            NAVARRA_SOURCE to NAVARRA_TARGET.replace("/Certificate/login", "/Certificate/login/other"),
+            NAVARRA_SOURCE to NAVARRA_TARGET.replace("ateka.navarra.es", "ateka.navarra.es.evil.example"),
+            NAVARRA_SOURCE to NAVARRA_TARGET.replace("ateka.navarra.es", "ateka.navarra.es:8443"),
+            NAVARRA_SOURCE to "$NAVARRA_TARGET#fragment",
+        )
+
+        attacks.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    NAVARRA_PROFILE, source, target, 76L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTeaAlegacionesDirectTransitionProducesOneBoundedTarget() {
         val result = authorizer.observeTopLevelNavigation(
             activeProfileId = TEA_PROFILE,
@@ -220,6 +270,37 @@ class ClientAuthNavigationAuthorizerTest {
                 "$source -> $target",
                 fresh.observeTopLevelNavigation(
                     SANIDAD_PROFILE, source, target, 50L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun exactAirefClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val airef = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = airef.observeTopLevelNavigation(
+            AIREF_PROFILE, AIREF_SOURCE, AIREF_TARGET, 79, true,
+        )
+
+        assertEquals(AIREF_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            airef.observeTopLevelNavigation(AIREF_PROFILE, AIREF_SOURCE, AIREF_TARGET, 79, true),
+        )
+
+        listOf(
+            AIREF_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            "$AIREF_TARGET?extra=1",
+            AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+            AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
+        ).forEachIndexed { index, invalidTarget ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                invalidTarget,
+                fresh.observeTopLevelNavigation(
+                    AIREF_PROFILE, AIREF_SOURCE, invalidTarget, 80L + index, true,
                 ),
             )
         }
@@ -666,7 +747,17 @@ class ClientAuthNavigationAuthorizerTest {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val TEA_PROFILE = ProfileId("tea-alegaciones-certificado")
+        val AIREF_PROFILE = ProfileId("airef-instancia-general")
+        const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        val NAVARRA_PROFILE = ProfileId("navarra-sede-registro-general")
+        const val NAVARRA_TOKEN = "w47SyntheticNavarraSessionToken0123456789"
+        const val NAVARRA_OTHER_TOKEN = "w47OtherNavarraSessionToken9876543210"
+        const val NAVARRA_SOURCE =
+            "https://ateka.navarra.es/ateka/router?ReturnUrl=$NAVARRA_TOKEN"
+        const val NAVARRA_TARGET =
+            "https://ateka.navarra.es/ateka/Certificate/login?returnUrl=$NAVARRA_TOKEN"
         val LEON_PROFILE = ProfileId("diputacion-leon-sede")
         const val LEON_TOKEN = "12345678-w47SyntheticLeonToken0123456789"
         const val LEON_OTHER_TOKEN = "87654321-w47OtherLeonToken9876543210"

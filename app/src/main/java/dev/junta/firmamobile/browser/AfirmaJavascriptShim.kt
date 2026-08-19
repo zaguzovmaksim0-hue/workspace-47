@@ -23,9 +23,12 @@ object AfirmaJavascriptShim {
         cantabriaCompatibilityEnabled: Boolean = false,
         jccmCompatibilityEnabled: Boolean = false,
         sevillaAtseCompatibilityEnabled: Boolean = false,
+        airefCompatibilityEnabled: Boolean = false,
         cdtiCompatibilityEnabled: Boolean = false,
         policiaCompatibilityEnabled: Boolean = false,
         granCanariaCompatibilityEnabled: Boolean = false,
+        canariasCompatibilityEnabled: Boolean = false,
+        minecoCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
         lugoBatchCompatibilityEnabled: Boolean = false,
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
@@ -41,9 +44,12 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(CANTABRIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(JCCM_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(AIREF_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(CDTI_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(CANARIAS_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(MINECO_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(LUGO_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
@@ -82,6 +88,10 @@ object AfirmaJavascriptShim {
                 if (sevillaAtseCompatibilityEnabled) "true" else "false",
             )
             .replace(
+                AIREF_COMPATIBILITY_PLACEHOLDER,
+                if (airefCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
                 CDTI_COMPATIBILITY_PLACEHOLDER,
                 if (cdtiCompatibilityEnabled) "true" else "false",
             )
@@ -92,6 +102,14 @@ object AfirmaJavascriptShim {
             .replace(
                 GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER,
                 if (granCanariaCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
+                CANARIAS_COMPATIBILITY_PLACEHOLDER,
+                if (canariasCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
+                MINECO_COMPATIBILITY_PLACEHOLDER,
+                if (minecoCompatibilityEnabled) "true" else "false",
             )
             .replace(
                 MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
@@ -125,12 +143,18 @@ object AfirmaJavascriptShim {
     private const val JCCM_COMPATIBILITY_PLACEHOLDER = "__JFM_JCCM_COMPATIBILITY_ENABLED__"
     private const val SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER =
         "__JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__"
+    private const val AIREF_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_AIREF_COMPATIBILITY_ENABLED__"
     private const val CDTI_COMPATIBILITY_PLACEHOLDER =
         "__JFM_CDTI_COMPATIBILITY_ENABLED__"
     private const val POLICIA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_POLICIA_COMPATIBILITY_ENABLED__"
     private const val GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__"
+    private const val CANARIAS_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_CANARIAS_COMPATIBILITY_ENABLED__"
+    private const val MINECO_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_MINECO_COMPATIBILITY_ENABLED__"
     private const val MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER =
         "__JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__"
     private const val LUGO_BATCH_COMPATIBILITY_PLACEHOLDER =
