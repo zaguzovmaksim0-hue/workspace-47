@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 237 |
 | Fuentes oficiales totales registradas | 249 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 70 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 74 |
-| Entradas restantes fuera de ambos estados | 109 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 71 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 75 |
+| Entradas restantes fuera de ambos estados | 108 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 70 |
+| `IMPLEMENTED_NOT_E2E` | 71 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 102 |
+| `BROWSE_ONLY` | 101 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3492,24 +3492,24 @@ records:
     origin: "https://www.caib.es"
     official_site: "https://www.caib.es/seucaib/ca/"
     e_sede: "https://www.caib.es/seucaib/ca/"
-    entry_url: "https://www.caib.es/seucaib/ca/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros="
+    procedure_page: "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros="
     certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    signature_required: "SI"
+    js_client: "MiniApplet 1.6.5"
+    protocol_family: "MINIAPPLET_XML_BATCH_TRIFASICO_PORTAFIB_PADES"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "Runtime requestPlugin: https://intranet.caib.es/portafibback/public/signmodule/requestPlugin/{token}/-1/{BatchPresigner,BatchPostsigner}; POST query xml/certs/tridata"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso y firma mediante los sistemas admitidos según el trámite."
-    protocol_evidence: "La información oficial cita certificado, AutoFirma, Cl@veFirma y Firma àgil sin contrato runtime."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Instancia genérica protegida entrega a MiniApplet.signBatch un único lote PAdES SHA256withRSA mediante PortaFIB; soporte QA limitado al contrato exacto observado y sin envío final."
+    protocol_evidence: "Controlled-auth autorizado alcanzó la pantalla PortaFIB previa a la firma: MiniApplet.signBatch(batchB64, BatchPresigner, BatchPostsigner, extraProperties, showResultCallback, showErrorCallback); el lote XML contiene stoponerror=false, SHA256withRSA, PAdES, datasource request-scoped, SignatureId ligado a token y SignSaverFile. El wire PRE/PK1/POST se contrastó con el cliente AutoFirma oficial; no se ejecutó la firma real."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D03", "A04A", "A04B"]
-    reason: "No se verificaron cliente JS, operación, formato, algoritmo, callback ni endpoint concretos."
-    reviewed_at: "2026-07-16"
-    next_gate: "Capturar un trámite vigente y separar identificación de firma."
+    reason: "IMPLEMENTED_NOT_E2E: bridge y adaptador QA aceptan únicamente el origin intranet.caib.es, ruta requestPlugin exacta, un lote PAdES observado y parámetros exactos; autenticación completa dentro de la app, firma criptográfica y presentación administrativa siguen sin E2E y no se ejecutaron en este pass."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E solo en entorno de prueba autorizado, con identidad/certificado de prueba y sin presentación administrativa; validar primero el retorno del callback antes de cualquier submit."
 
   - inventory_id: "ES-PUB-0098"
     surface_key: "caib-registre-electronic"

@@ -254,6 +254,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LUGO_PROFILE_ID) {
                 validateLugoProfile(p)
             }
+            if (p.profileId.value == CAIB_PROFILE_ID) {
+                validateCaibProfile(p)
+            }
             if (p.profileId.value == LEON_PROFILE_ID) {
                 validateLeonProfile(p)
             }
@@ -1159,6 +1162,41 @@ object SiteProfileCatalogParser {
         )
     }
 
+
+    private fun validateCaibProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CAIB_PROFILE_VERSION)
+        require(profile.displayName == CAIB_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CAIB_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CAIB_PUBLIC_ORIGIN), ExactOrigin.parse(CAIB_SIGNING_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CAIB_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = CAIB_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("caib-portafib-batch-v1"),
+                callbackContractId = CallbackContractId("caib-portafib-batch-result-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                format = SignatureFormat.PADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = SignatureMode.IMPLICIT,
+                fixedExtraProperties = emptyMap(),
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateLeonProfile(profile: SiteProfile) {
         require(profile.profileVersion == LEON_PROFILE_VERSION)
         require(profile.displayName == LEON_DISPLAY_NAME)
@@ -1526,6 +1564,7 @@ object SiteProfileCatalogParser {
         "la-palma-batch-autoscript-v1",
         "huesca-batch-autoscript-v1",
         "lugo-clientsigner-xml-batch-v1",
+        "caib-portafib-batch-v1",
         "burgos-batch-autoscript-v1",
         "autoscript-select-certificate-v1",
     )
@@ -1537,6 +1576,7 @@ object SiteProfileCatalogParser {
         "la-palma-batch-result-v1",
         "huesca-batch-result-v1",
         "lugo-clientsigner-batch-result-v1",
+        "caib-portafib-batch-result-v1",
         "burgos-batch-result-v1",
         "autoscript-select-certificate-callback-v1",
     )
@@ -1812,6 +1852,17 @@ object SiteProfileCatalogParser {
     private const val LUGO_ORIGIN = "https://sede.deputacionlugo.org"
     private const val LUGO_SAFE_DESCRIPTION =
         "Acceso con certificado mediante lote XML clientSigner de la Sede de la Deputación de Lugo"
+
+    private const val CAIB_PROFILE_ID = "caib-portafib"
+    private const val CAIB_PROFILE_VERSION = 1
+    private const val CAIB_DISPLAY_NAME = "Govern de les Illes Balears — Instància genèrica"
+    private const val CAIB_START_URL =
+        "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros="
+    private const val CAIB_PUBLIC_ORIGIN = "https://www.caib.es"
+    private const val CAIB_SIGNING_ORIGIN = "https://intranet.caib.es"
+    private const val CAIB_SAFE_DESCRIPTION = "Firma PAdES de la Instància genèrica mediante PortaFIB"
+    private val CAIB_EVIDENCE_URLS = setOf(CAIB_START_URL, "https://intranet.caib.es/portafibback/")
+
     private const val LEON_PROFILE_ID = "diputacion-leon-sede"
     private const val LEON_PROFILE_VERSION = 1
     private const val LEON_DISPLAY_NAME = "Diputación Provincial de León — acceso con certificado"

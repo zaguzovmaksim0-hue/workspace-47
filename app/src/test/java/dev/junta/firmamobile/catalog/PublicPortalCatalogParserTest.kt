@@ -76,6 +76,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("tenerife-sede-electronica"),
                 ProfileId("gran-canaria-sede-electronica"),
                 ProfileId("age-portal-de-la-transparencia"),
+                ProfileId("caib-portafib"),
                 ProfileId("ministerio-economia-instancia-generica"),
                 ProfileId("diputacion-toledo-sede"),
                 ProfileId("isciii-certificate-selection"),

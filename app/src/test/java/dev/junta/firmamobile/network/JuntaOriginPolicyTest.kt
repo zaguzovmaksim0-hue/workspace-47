@@ -109,6 +109,8 @@ class JuntaOriginPolicyTest {
             "www1.tea.hacienda.gob.es",
             "sede.tenerife.es",
             "transparencia.sede.gob.es",
+            "www.caib.es",
+            "intranet.caib.es",
             "sede.grancanaria.com",
             "serviciosede.mineco.gob.es",
             "pasarela.clave.gob.es",

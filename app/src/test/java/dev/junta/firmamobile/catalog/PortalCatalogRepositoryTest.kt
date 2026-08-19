@@ -83,6 +83,7 @@ class PortalCatalogRepositoryTest {
                 "tenerife-sede-electronica",
                 "gran-canaria-sede-electronica",
                 "age-portal-de-la-transparencia",
+                "caib-portafib",
                 "ministerio-economia-instancia-generica",
                 "diputacion-toledo-sede",
                 "isciii-certificate-selection",

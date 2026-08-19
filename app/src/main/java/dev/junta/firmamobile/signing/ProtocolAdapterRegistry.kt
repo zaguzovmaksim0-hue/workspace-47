@@ -200,6 +200,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = HuescaBatchProtocolAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(CaibBatchProtocolAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("caib-portafib-batch-v1"),
+                callbackContractId = CallbackContractId("caib-portafib-batch-result-v1"),
+                signingProtocolId = CaibBatchProtocolAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId(LugoBatchProtocolAdapter.PROFILE_ID),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("lugo-clientsigner-xml-batch-v1"),

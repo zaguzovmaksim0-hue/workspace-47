@@ -23,6 +23,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BurgosBatchBridgeAdapter
+import dev.junta.firmamobile.browser.CaibBatchBridgeAdapter
+import dev.junta.firmamobile.browser.CaibBatchSigningAdapter
 import dev.junta.firmamobile.browser.BurgosBatchSigningAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
@@ -74,6 +76,7 @@ import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.BurgosBatchProtocolAdapter
+import dev.junta.firmamobile.signing.CaibBatchProtocolAdapter
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.HuescaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
@@ -112,6 +115,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var laPalmaBatchSigningAdapter: LaPalmaBatchSigningAdapter
     private lateinit var huescaBatchSigningAdapter: HuescaBatchSigningAdapter
     private lateinit var lugoBatchSigningAdapter: LugoBatchSigningAdapter
+    private lateinit var caibBatchSigningAdapter: CaibBatchSigningAdapter
     private lateinit var burgosBatchSigningAdapter: BurgosBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
@@ -230,6 +234,9 @@ class MainActivity : ComponentActivity() {
         lugoBatchSigningAdapter = LugoBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
+        caibBatchSigningAdapter = CaibBatchSigningAdapter(
+            registry = BuiltInSiteProfiles.runtimeRegistry,
+        )
         burgosBatchSigningAdapter = BurgosBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
@@ -238,6 +245,7 @@ class MainActivity : ComponentActivity() {
         val laPalmaBatchProtocolAdapter = LaPalmaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         val huescaBatchProtocolAdapter = HuescaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         val lugoBatchProtocolAdapter = LugoBatchProtocolAdapter()
+        val caibBatchProtocolAdapter = CaibBatchProtocolAdapter()
         val burgosBatchProtocolAdapter = BurgosBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
         batchSigningCoordinator = BatchSigningCoordinator(
             certificateSession = app.certificateSession,
@@ -249,6 +257,7 @@ class MainActivity : ComponentActivity() {
                     laPalmaBatchProtocolAdapter.id -> laPalmaBatchProtocolAdapter
                     huescaBatchProtocolAdapter.id -> huescaBatchProtocolAdapter
                     lugoBatchProtocolAdapter.id -> lugoBatchProtocolAdapter
+                    caibBatchProtocolAdapter.id -> caibBatchProtocolAdapter
                     burgosBatchProtocolAdapter.id -> burgosBatchProtocolAdapter
                     else -> null
                 }
@@ -483,6 +492,7 @@ class MainActivity : ComponentActivity() {
             LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.normalize(request)
             HuescaBatchBridgeAdapter.PROFILE_ID -> huescaBatchSigningAdapter.normalize(request)
             LugoBatchBridgeAdapter.PROFILE_ID -> lugoBatchSigningAdapter.normalize(request)
+            CaibBatchBridgeAdapter.PROFILE_ID -> caibBatchSigningAdapter.normalize(request)
             BurgosBatchBridgeAdapter.PROFILE_ID -> burgosBatchSigningAdapter.normalize(request)
             else -> null
         }
@@ -492,6 +502,7 @@ class MainActivity : ComponentActivity() {
             LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.replySink(reply)
             HuescaBatchBridgeAdapter.PROFILE_ID -> huescaBatchSigningAdapter.replySink(reply)
             LugoBatchBridgeAdapter.PROFILE_ID -> lugoBatchSigningAdapter.replySink(reply)
+            CaibBatchBridgeAdapter.PROFILE_ID -> caibBatchSigningAdapter.replySink(reply)
             BurgosBatchBridgeAdapter.PROFILE_ID -> burgosBatchSigningAdapter.replySink(reply)
             else -> {
                 runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
