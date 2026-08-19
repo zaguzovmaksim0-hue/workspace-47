@@ -136,7 +136,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         currentEpoch: Long,
         nowNanos: Long,
     ): AuthorizedClientAuthTarget? {
-        if (target in policy.sourceUrls && currentBelongsTo(profile, currentUrl)) {
+        if (target.matchesSource(policy) && currentBelongsTo(profile, currentUrl)) {
             pending = PendingSource(
                 profileId = profile.profileId,
                 source = target,
@@ -152,7 +152,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         if (source == null || source.profileId != profile.profileId) return null
         if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) return null
         if (source.isExpiredOrInvalid(nowNanos)) return null
-        if (source.source !in policy.sourceUrls || !target.matches(policy)) return null
+        if (!source.source.matchesSource(policy) || !target.matches(policy)) return null
 
         return authorized(
             profile = profile,
@@ -239,11 +239,21 @@ class ClientAuthNavigationAuthorizer internal constructor(
     }
 
     private fun URI.hasLinkedEphemeralParameters(target: URI, policy: ClientAuthPolicy): Boolean {
-        if (policy.linkedEphemeralQueryParameters.isEmpty()) return true
+        if (policy.linkedEphemeralQueryParameters.isEmpty() &&
+            policy.linkedEphemeralQueryParameterMappings.isEmpty()
+        ) {
+            return true
+        }
         val sourceParameters = parseQuery(rawQuery ?: return false) ?: return false
         val targetParameters = parseQuery(target.rawQuery ?: return false) ?: return false
-        return policy.linkedEphemeralQueryParameters.all { name ->
-            sourceParameters[name] == targetParameters[name]
+        if (policy.linkedEphemeralQueryParameters.any { name ->
+                sourceParameters[name] != targetParameters[name]
+            }
+        ) {
+            return false
+        }
+        return policy.linkedEphemeralQueryParameterMappings.all { (sourceName, targetName) ->
+            sourceParameters[sourceName] == targetParameters[targetName]
         }
     }
 
