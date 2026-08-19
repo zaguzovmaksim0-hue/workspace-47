@@ -134,6 +134,7 @@ class PortalCatalogRepositoryTest {
                 "asturias-sede-tramite-navigation",
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
+                "diputacion-gipuzkoa-registro-public",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "la-gomera-instancia-general",
                 "lanzarote-instancia-general",
@@ -2461,6 +2462,50 @@ class PortalCatalogRepositoryTest {
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
         assertFalse(releasePortal.isEnabled)
         assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+    }
+
+    @Test
+    fun `Gipuzkoa Registro opens exact QA public start while Izenpe client auth remains unavailable`() {
+        val portalId = PortalId("diputacion-gipuzkoa-sede")
+        val profileId = ProfileId("diputacion-gipuzkoa-registro-public")
+        val start = java.net.URI(
+            "https://egoitza.gipuzkoa.eus/WAS/CORP/WATTramiteakWEB/inicio.do?idioma=C&app=00001",
+        )
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(start, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(profileId, start))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(entryUrl = java.net.URI("https://eidas2.izenpe.com/cert-authn-external-validation/authenticate"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 
 }

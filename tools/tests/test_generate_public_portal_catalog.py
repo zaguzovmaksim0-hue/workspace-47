@@ -2559,6 +2559,29 @@ records:
         self.assertIn("client_tls_auth", target["limitations"].lower())
         self.assertIn("sin e2e", target["limitations"].lower())
 
+    def test_gipuzkoa_registro_profile_binds_exact_public_start_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0157")
+
+        self.assertEqual("diputacion-gipuzkoa-sede", target["portalId"])
+        self.assertEqual("diputacion-gipuzkoa-registro-public", target["profileId"])
+        self.assertEqual(
+            "https://egoitza.gipuzkoa.eus/WAS/CORP/WATTramiteakWEB/inicio.do?idioma=C&app=00001",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("GILTZA_OAUTH_DELEGATED_CLIENT_TLS", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-19", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("eidas2.izenpe.com", target["limitations"].lower())
+        self.assertIn("post", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()
