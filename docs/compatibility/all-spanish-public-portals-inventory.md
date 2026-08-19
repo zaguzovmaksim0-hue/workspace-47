@@ -194,13 +194,13 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 237 |
-| Fuentes oficiales totales registradas | 249 |
+| Fuentes oficiales portal-specific registradas | 238 |
+| Fuentes oficiales totales registradas | 250 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 75 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 79 |
-| Entradas restantes fuera de ambos estados | 104 |
-| Evidencia exacta de `ClientCertRequest` | 2 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 76 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 80 |
+| Entradas restantes fuera de ambos estados | 103 |
+| Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 75 |
+| `IMPLEMENTED_NOT_E2E` | 76 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 97 |
+| `BROWSE_ONLY` | 96 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3703,24 +3703,24 @@ records:
     origin: "https://web.gencat.cat"
     official_site: "https://web.gencat.cat/ca/seu-electronica"
     e_sede: "https://web.gencat.cat/ca/seu-electronica"
-    entry_url: "https://web.gencat.cat/ca/seu-electronica"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/"
+    procedure_page: "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://cert.valid.aoc.cat/o/oauth2/cert"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Relación digital mediante sistemas de identificación y firma según el servicio."
-    protocol_evidence: "El catálogo oficial acredita sistemas admitidos, no el contrato de un trámite concreto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A09A", "A09B", "A09D"]
-    reason: "Operación, cliente JS, formato, algoritmo, callback y endpoint no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar un trámite firmado y observar su transporte público."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al flujo de Registro electrónico / Petició genèrica, limitado a autenticación TLS cliente."
+    protocol_evidence: "El servicio oficial de Registro electrónico redirige a Petició genèrica y su acceso firmado conduce a VALId. El JavaScript first-party vigente de VALId envía la opción de certificado a https://cert.valid.aoc.cat/o/oauth2/cert; el handshake TLS 1.2 de ese origen emite CertificateRequest para RSA/ECDSA."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A09A", "A09B", "A09D", "CATALUNYA-SEU-CLIENTTLS-2026-08-19"]
+    reason: "Perfil QA-only limitado al salto de autenticación TLS cliente. No se realizó autenticación E2E, firma criptográfica ni presentación; cliente JS de firma, formato, algoritmo y aceptación final siguen NO_VERIFICADO."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar en QA la selección de certificado y el retorno autenticado; detenerse antes de firma criptográfica y presentación final."
 
   - inventory_id: "ES-PUB-0105"
     surface_key: "catalunya-tramits-peticio-generica"
@@ -6578,3 +6578,4 @@ availability, certificado, firma ni contrato técnico.
 [TRANSPORTES-QYS-2026-08-17]: https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible
 [INTERIOR-REG-2026-08-17]: https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL
 [MIVAU-REG-2026-08-17]: https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+[CATALUNYA-SEU-CLIENTTLS-2026-08-19]: https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/
