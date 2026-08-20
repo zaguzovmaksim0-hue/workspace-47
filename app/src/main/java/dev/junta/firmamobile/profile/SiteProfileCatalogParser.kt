@@ -380,7 +380,9 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                    val allowedSourceOrigins = if (
+                        p.profileId.value == AIREF_PROFILE_ID || p.profileId.value == OURENSE_PROFILE_ID
+                    ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
