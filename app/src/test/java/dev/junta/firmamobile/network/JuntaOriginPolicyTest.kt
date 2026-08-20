@@ -209,6 +209,7 @@ class JuntaOriginPolicyTest {
             "dipcas.sedelectronica.es",
             "sede.dip-caceres.es",
             "pasarela-ident-sistemas.clave.gob.es",
+            "sede.depo.gal",
             "seu.conselldeivissa.es",
             "sede.carm.es",
             "sede.ordenacionjuego.gob.es",

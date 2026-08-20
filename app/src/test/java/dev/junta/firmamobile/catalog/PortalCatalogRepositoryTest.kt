@@ -135,6 +135,7 @@ class PortalCatalogRepositoryTest {
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
+                "diputacion-pontevedra-instancia-xenerica",
                 "eivissa-sede-electronica",
                 "diputacion-salamanca-instancia-general",
                 "catalunya-peticio-generica-client-auth",
