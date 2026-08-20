@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 241 |
 | Fuentes oficiales totales registradas | 253 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 78 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 82 |
-| Entradas restantes fuera de ambos estados | 101 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 79 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 83 |
+| Entradas restantes fuera de ambos estados | 100 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 78 |
+| `IMPLEMENTED_NOT_E2E` | 79 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 94 |
+| `BROWSE_ONLY` | 93 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5601,24 +5601,24 @@ records:
     origin: "https://sede.diputaciondepalencia.es"
     official_site: "https://sede.diputaciondepalencia.es"
     e_sede: "https://sede.diputaciondepalencia.es"
-    entry_url: "https://sede.diputaciondepalencia.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5"
+    procedure_page: "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitesinfo.action?tramitesInfoForm.id=5"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "AutoFirma"
+    protocol_family: "CLAVE_PREAUTH_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud carácter general (id=5): perfil QA-only limitado al lanzamiento exacto del trámite y a la navegación previa a autenticación Cl@ve; no implementa firma ni presentación."
+    protocol_evidence: "El catálogo vigente publica el trámite id=5 y su enlace Tramitar; el runtime redirige a /opensiac/certlogin/enter.action, cuyo formulario POST a /SPProxy2/IndexPage genera un auto-submit SAML hacia https://pasarela.clave.gob.es/Proxy2/ServiceProvider. La sede exige AutoFirma para firmar solicitudes, pero el contrato de firma posterior sigue NO_VERIFICADO."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP28A", "DP28B"]
-    reason: "Entrada oficial y origin revisados en runtime; la sede responde y delega a OpenSIAC, pero procedimiento, contrato técnico y firma real no fueron verificados."
+    evidence_ids: ["D06", "DP28A", "DP28B", "DP28C", "DP28D", "DP28E", "DP28F"]
+    reason: "Contrato QA-only ceñido al trámite general id=5 y a la transición pre-auth Cl@ve observada; no se confía en endpoints de firma, no se afirma formato/algoritmo/callback y no se realizó autenticación, firma ni registro final."
     reviewed_at: "2026-08-20"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    next_gate: "Con autenticación Cl@ve autorizada, continuar el trámite hasta el estado pre-firma y capturar únicamente el contrato de firma; detenerse antes de firma criptográfica y registro final."
 
   - inventory_id: "ES-PUB-0167"
     surface_key: "diputacion-pontevedra-sede"
@@ -6536,6 +6536,11 @@ availability, certificado, firma ni contrato técnico.
 [DP27B]: https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMASELEC
 [DP28A]: https://sede.diputaciondepalencia.es
 [DP28B]: https://sede.diputaciondepalencia.es/siac/Tramites/CertificadosElectronicosAdmitidos.aspx
+
+[DP28C]: https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitesinfo.action?tramitesInfoForm.id=5
+[DP28D]: https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5
+[DP28E]: https://sede.diputaciondepalencia.es/opensiac/personalizada?id=5
+[DP28F]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP29A]: https://sede.depo.gal
 [DP29B]: https://sede.depo.gal/web/public/dynamic/description/esignature/
 [DP30A]: https://sede.diputaciondesalamanca.gob.es

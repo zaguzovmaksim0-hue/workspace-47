@@ -1452,6 +1452,25 @@ records:
         self.assertIn("e2e", funciona["limitations"].lower())
 
 
+    def test_diputacion_palencia_solicitud_general_binds_exact_pending_preauth_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0166")
+        self.assertEqual("diputacion-palencia-sede", target["portalId"])
+        self.assertEqual("diputacion-palencia-solicitud-general", target["profileId"])
+        self.assertEqual(
+            "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5",
+            target["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-20", target["reviewedOn"])
+        self.assertEqual("CLAVE_PREAUTH_NAVIGATION", target["protocolFamily"])
+        self.assertIn("AUTOFIRMA", target["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+
     def test_diputacion_avila_instancia_general_binds_exact_pending_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0143")
