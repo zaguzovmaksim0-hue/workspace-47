@@ -820,6 +820,33 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("2026-07-16", lleida["reviewedOn"])
         self.assertEqual(["CADES"], lleida["observedSignatureFormats"])
 
+    def test_diputacion_badajoz_implemented_not_e2e_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        badajoz = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-badajoz-portal")
+
+        self.assertEqual("diputacion-badajoz-portal", badajoz["profileId"])
+        self.assertEqual("ES-PUB-0144", badajoz["inventoryId"])
+        self.assertEqual("https://sede.dip-badajoz.es", badajoz["entryUrl"])
+        self.assertNotIn("launchUrl", badajoz)
+        self.assertEqual("E2E_PENDING", badajoz["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", badajoz["inventoryStatus"])
+        self.assertEqual("2026-08-18", badajoz["reviewedOn"])
+        self.assertEqual(["CADES"], badajoz["observedSignatureFormats"])
+
+    def test_diputacion_barcelona_2057_profile_binds_exact_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0145")
+
+        self.assertEqual("diputacion-barcelona-solicitud-generica-2057", target["profileId"])
+        self.assertEqual("diputacion-barcelona-portal", target["portalId"])
+        self.assertEqual("https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica", target["entryUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-18", target["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}

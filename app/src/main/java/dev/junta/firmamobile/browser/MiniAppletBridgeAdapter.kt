@@ -22,6 +22,7 @@ import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
+import dev.junta.firmamobile.signing.DiputacionBadajozCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
@@ -334,6 +335,18 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isDiputacionBadajozContract = isExactDiputacionBadajozContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == DiputacionBadajozCadesAdapter.PROFILE_ID &&
+            !isDiputacionBadajozContract
+        ) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -623,6 +636,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             )
         }
         if (isCanariasContract && !CanariasCertificateLoginCadesAdapter.isExactChallenge(decodedData)) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
+        if (isDiputacionBadajozContract && !decodedData.isExactDiputacionBadajozChallenge()) {
             decodedData.fill(0)
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
@@ -1374,6 +1394,49 @@ internal class ProfileMiniAppletBridgeAdapter(
             value in 0x20..0x7e
         }
 
+    private fun isExactDiputacionBadajozContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == BADAJOZ_LOGIN_PAGE_URL &&
+            profile.profileId.value == DiputacionBadajozCadesAdapter.PROFILE_ID &&
+            profile.profileVersion == DiputacionBadajozCadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == BADAJOZ_START_URL &&
+            origin.serialized == DiputacionBadajozCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(DiputacionBadajozCadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == DiputacionBadajozCadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.EXPLICIT &&
+            operation.fixedExtraProperties == BADAJOZ_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == DiputacionBadajozCadesAdapter.ID.value
+
+    private fun ByteArray.isExactDiputacionBadajozChallenge(): Boolean =
+        isNotEmpty() && size <= MAX_BADAJOZ_CHALLENGE_BYTES && all { byte ->
+            val value = byte.toInt() and 0xff
+            value in 0x20..0x7e
+        }
+
     private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
         val observed = linkedMapOf<String, String>()
         val lines = raw.split('\n')
@@ -1444,6 +1507,8 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
         private const val LLEIDA_LOGIN_PAGE_URL =
             "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
+        private const val BADAJOZ_LOGIN_PAGE_URL =
+            "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
         private const val JCCM_START_URL =
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
                 "formularios/identificacion.phtml"
@@ -1484,6 +1549,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val LLEIDA_START_URL = "https://seu.diputaciolleida.cat"
         private const val MAX_LLEIDA_CHALLENGE_BYTES = 512
         private val LLEIDA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "policy" to "FirmaAGE",
+            "headless" to "true",
+            "filters" to "nonexpired:true;authCert:true",
+        )
+        private const val BADAJOZ_START_URL = "https://sede.dip-badajoz.es"
+        private const val MAX_BADAJOZ_CHALLENGE_BYTES = 512
+        private val BADAJOZ_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "policy" to "FirmaAGE",
             "headless" to "true",
             "filters" to "nonexpired:true;authCert:true",

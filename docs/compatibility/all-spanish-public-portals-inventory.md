@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 237 |
-| Fuentes oficiales totales registradas | 249 |
+| Fuentes oficiales portal-specific registradas | 239 |
+| Fuentes oficiales totales registradas | 251 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 75 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 79 |
-| Entradas restantes fuera de ambos estados | 104 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 78 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 82 |
+| Entradas restantes fuera de ambos estados | 101 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 75 |
+| `IMPLEMENTED_NOT_E2E` | 78 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 97 |
+| `BROWSE_ONLY` | 94 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4939,25 +4939,26 @@ records:
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dip-badajoz.es"
     official_site: "https://www.dip-badajoz.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dip-badajoz.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    e_sede: "https://sede.dip-badajoz.es"
+    entry_url: "https://sede.dip-badajoz.es"
+    procedure_page: "https://sede.dip-badajoz.es/sede/tramitacionElectronica.do?asu_mod_cod=67&asu_cod=68&asunto=68&aplcorreo=4&ent_id=10&idioma=1"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MINIAPPLET"
+    protocol_family: "MINIAPPLET"
+    signature_format: "CADES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "NO_APLICA"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Instancia General de la Diputación de Badajoz mediante firma local CAdES-detached SHA256withRSA; la firma documental posterior queda fuera del contrato implementado."
+    protocol_evidence: "La portada oficial enlaza la Sede; el catálogo vigente 2026 expone Instancia General. El login público invoca firmar(formLogin.shaLogin.value, errorText, '', 'TEXTO', 0, pulsarFirmarIdentificateCallback, pulsarFirmarIdentificateCallbackError, true), que en firmaDigital.js SHA-256 9e3dced47cdf634d120c4783b22ae0f9e00be3d42fad13429de38f5ef5921483 resuelve MiniApplet.sign con CAdES SHA256withRSA y extraProperties policy=FirmaAGE, headless=true, filters=nonexpired:true;authCert:true."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP06A", "DP06B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP06A", "DP06B", "BADAJOZ-INSTANCIA-2026-08-18", "BADAJOZ-LOGIN-2026-08-18"]
+    reason: "Contrato público de login con certificado implementado en QA y limitado a autenticación: CAdES-detached SHA256withRSA sobre shaLogin con parámetros exactos y callback a firmaLogin. No se atribuye este tuple a la firma documental posterior; sin E2E."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificar E2E del acceso con certificado y, por separado, observar tras autenticación el contrato de firma documental de Instancia General sin ejecutar firma ni presentación."
+
 
   - inventory_id: "ES-PUB-0145"
     surface_key: "diputacion-barcelona-portal"
@@ -4965,29 +4966,29 @@ records:
     autonomous_community: "Cataluña"
     province_or_municipality: "Barcelona (provincia)"
     institution_name: "Diputació de Barcelona"
-    surface_name: "Portal oficial de Diputació de Barcelona"
+    surface_name: "Diputació de Barcelona — Solicitud genérica 2057"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.diba.cat"
+    origin: "https://seuelectronica.diba.cat"
     official_site: "https://www.diba.cat/es/"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.diba.cat/es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
+    e_sede: "https://seuelectronica.diba.cat/es/"
+    entry_url: "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"
+    procedure_page: "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "VÀLid"
     protocol_family: "NO_VERIFICADO"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud genérica 2057 con identificación VÀLid; el perfil implementa únicamente la entrada exacta y la navegación autenticada previa a firma."
+    protocol_evidence: "El runtime vigente de 2057 redirige desde tramits.diba.cat a valid.aoc.cat; la opción de certificado continúa a cert.valid.aoc.cat, cuyo TLS 1.2 emite CertificateRequest para RSA/ECDSA. El contrato de firma posterior a altaPeticio sigue NO_VERIFICADO."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP07A", "DP07B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DIBA-2057-2026-08-18", "DIBA-VALID-2026-08-18"]
+    reason: "Perfil QA-only limitado a la entrada exacta de Solicitud genérica 2057 y sus orígenes de identificación observados; no afirma ABI, formato, algoritmo, endpoint ni aceptación E2E de firma/presentación."
+    reviewed_at: "2026-08-18"
+    next_gate: "Con una credencial VÀLid disponible, ejecutar el altaPeticio intermedio autorizado y observar el estado pre-firma; detenerse antes de firma criptográfica y registro final."
 
   - inventory_id: "ES-PUB-0146"
     surface_key: "diputacion-burgos-portal"
@@ -6479,6 +6480,8 @@ availability, certificado, firma ni contrato técnico.
 [DP06B]: https://sede.dip-badajoz.es/
 [DP07A]: https://www.diba.cat/es/
 [DP07B]: https://seuelectronica.diba.cat/es/suport-a-la-tramitaci%C3%B3
+[DIBA-VALID-2026-08-18]: https://valid.aoc.cat/o/oauth2/auth
+[DIBA-2057-2026-08-18]: https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica
 [DP08A]: https://burgos.es
 [DP08B]: https://sede.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO
 [DP08C]: https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO

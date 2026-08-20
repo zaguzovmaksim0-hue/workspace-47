@@ -1131,6 +1131,26 @@
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
       ]
     },
+{
+      "profileId": "diputacion-badajoz-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación de Badajoz — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dip-badajoz.es",
+      "initiatorOrigins": ["https://sede.dip-badajoz.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Diputación de Badajoz","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"policy":"FirmaAGE","headless":"true","filters":"nonexpired:true;authCert:true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dip-badajoz.es","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1","reviewedOn":"2026-08-18"}
+      ]
+    },
     {
       "profileId": "junta-andalucia-vea-peg",
       "profileVersion": 1,
@@ -1326,6 +1346,27 @@
         {"url":"https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1","reviewedOn":"2026-08-18"},
         {"url":"https://www.carpetaciutadana.org/cime/Login/Login.aspx","reviewedOn":"2026-08-18"},
         {"url":"https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "diputacion-barcelona-solicitud-generica-2057",
+      "profileVersion": 1,
+      "displayName": "Diputació de Barcelona — Solicitud genérica 2057",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica",
+      "initiatorOrigins": ["https://seuelectronica.diba.cat"],
+      "redirectOrigins": ["https://valid.aoc.cat", "https://cert.valid.aoc.cat", "https://aplicacions.diba.cat"],
+      "trustedBrowseOrigins": ["https://tramits.diba.cat"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://tramits.diba.cat/SS/","reviewedOn":"2026-08-18"},
+        {"url":"https://valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"},
+        {"url":"https://cert.valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"}
       ]
     },
     {

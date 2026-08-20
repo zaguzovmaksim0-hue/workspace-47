@@ -729,6 +729,7 @@ class SiteProfileCatalogParserTest {
         val education = ProfileId("educacion-convocatoria")
         val ceuta = ProfileId("ceuta-sede")
         val lleida = ProfileId("diputacion-lleida-sede")
+        val badajoz = ProfileId("diputacion-badajoz-portal")
         val aragon = ProfileId("aragon-siraw")
         val ofvirtual = ProfileId("junta-ofvirtual")
         val unizar = ProfileId("unizar-tramitador")
@@ -740,6 +741,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("dgt-verificacion-equipo"),
             ProfileId("junta-andalucia-vea-peg"),
             lleida,
+            badajoz,
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
