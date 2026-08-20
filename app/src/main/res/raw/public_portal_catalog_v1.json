@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "c89d68db708e1dcb4130ad457fb903bef0e741ae1d069ee7445f275a06b38ed2",
+  "sourceRevision": "84b50ff434142b064d23901a28938027ff8b0d3bdb11c6659d31f29986362437",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4527,29 +4527,34 @@
     {
       "portalId": "diputacion-palencia-sede",
       "inventoryId": "ES-PUB-0166",
-      "profileId": null,
+      "profileId": "diputacion-palencia-solicitud-general",
       "displayName": "Sede electrónica de Diputación Provincial de Palencia",
       "organization": "Diputación Provincial de Palencia",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.diputaciondepalencia.es",
+      "purpose": "Solicitud carácter general (id=5): perfil QA-only limitado al lanzamiento exacto del trámite y a la navegación previa a autenticación Cl@ve; no implementa firma ni presentación.",
+      "entryUrl": "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5",
       "observedMechanisms": [
+        "AUTOFIRMA",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLAVE_PREAUTH_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP28A",
-        "DP28B"
+        "DP28B",
+        "DP28C",
+        "DP28D",
+        "DP28E",
+        "DP28F"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-20",
+      "limitations": "Contrato QA-only ceñido al trámite general id=5 y a la transición pre-auth Cl@ve observada; no se confía en endpoints de firma, no se afirma formato/algoritmo/callback y no se realizó autenticación, firma ni registro final."
     },
     {
       "portalId": "diputacion-pontevedra-sede",

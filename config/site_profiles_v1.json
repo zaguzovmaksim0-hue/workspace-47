@@ -2542,6 +2542,29 @@
         {"url":"https://sede.dipsegovia.es/signature-systems","reviewedOn":"2026-08-21"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-21"}
       ]
+    },
+    {
+      "profileId": "diputacion-palencia-solicitud-general",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Palencia — Solicitud carácter general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5",
+      "initiatorOrigins": ["https://sede.diputaciondepalencia.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitesinfo.action?tramitesInfoForm.id=5","reviewedOn":"2026-08-20"},
+        {"url":"https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5","reviewedOn":"2026-08-20"},
+        {"url":"https://sede.diputaciondepalencia.es/opensiac/certlogin/enter.action","reviewedOn":"2026-08-20"},
+        {"url":"https://sede.diputaciondepalencia.es/SPProxy2/IndexPage","reviewedOn":"2026-08-20"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-20"}
+      ]
     }
   ]
 }
