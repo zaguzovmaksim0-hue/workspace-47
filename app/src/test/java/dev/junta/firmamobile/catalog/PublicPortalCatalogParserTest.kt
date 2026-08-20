@@ -114,6 +114,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("diputacion-guadalajara-instancia-general"),
+                ProfileId("diputacion-segovia-registro"),
                 ProfileId("ctbg-solicitud-informacion"),
                 ProfileId("catastro-solicitudes-genericas"),
                 ProfileId("fega-solicitud-general-ofvsg02"),

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a527fde43dcc355f78c25153362db8c70a17dba676a957e5cc95582394e4ab91",
+  "sourceRevision": "c89d68db708e1dcb4130ad457fb903bef0e741ae1d069ee7445f275a06b38ed2",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4617,28 +4617,33 @@
     {
       "portalId": "diputacion-segovia-sede",
       "inventoryId": "ES-PUB-0169",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputación de Segovia",
+      "profileId": "diputacion-segovia-registro",
+      "displayName": "Diputación de Segovia — Registro electrónico",
       "organization": "Diputación de Segovia",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.dipsegovia.es",
+      "purpose": "Entrada QA-only al Registro electrónico; /registro alcanza la pantalla oficial de Identificación electrónica y ofrece acceso Cl@ve mediante POST a pasarela.clave.gob.es.",
+      "entryUrl": "https://sede.dipsegovia.es/registro",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP31A"
+        "DP31A",
+        "SEGOVIA-HOME-2026-08-21",
+        "SEGOVIA-REGISTRO-2026-08-21",
+        "SEGOVIA-ID-2026-08-21",
+        "SEGOVIA-SIGN-INFO-2026-08-21",
+        "SEGOVIA-CLAVE-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Se implementa sólo el límite de navegación demostrado hacia Registro/Identificación y el origin Cl@ve observado; firma documental y autenticación por certificado permanecen sin verificar."
     },
     {
       "portalId": "diputacion-sevilla-sede",

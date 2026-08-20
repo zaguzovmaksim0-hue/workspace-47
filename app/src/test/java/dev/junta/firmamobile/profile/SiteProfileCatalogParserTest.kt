@@ -1688,6 +1688,36 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.gipuzkoa.eus.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.gipuzkoa.eus:444/")))
     }
+
+    @Test
+    fun `Segovia Registro profile stays bounded to public Registro and Clave navigation`() {
+        val profileId = ProfileId("diputacion-segovia-registro")
+        val start = URI("https://sede.dipsegovia.es/registro")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Diputación de Segovia — Registro electrónico", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.dipsegovia.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(5, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
+
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dipsegovia.es.evil.example/registro")))
+    }
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")

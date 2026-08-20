@@ -2603,6 +2603,28 @@ records:
         self.assertIn("post", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_segovia_registro_binds_exact_qa_navigation_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0169")
+        profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "diputacion-segovia-registro")
+
+        self.assertEqual("diputacion-segovia-sede", target["portalId"])
+        self.assertEqual("diputacion-segovia-registro", target["profileId"])
+        self.assertEqual("https://sede.dipsegovia.es/registro", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", profile["activation"])
+        self.assertEqual(["https://sede.dipsegovia.es"], profile["initiatorOrigins"])
+        self.assertEqual(["https://pasarela.clave.gob.es"], profile["redirectOrigins"])
+        self.assertEqual([], profile["trustedBrowseOrigins"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+
 
 if __name__ == "__main__":
     unittest.main()

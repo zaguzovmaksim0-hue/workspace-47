@@ -121,6 +121,7 @@ class PortalCatalogRepositoryTest {
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
                 "diputacion-guadalajara-instancia-general",
+                "diputacion-segovia-registro",
                 "ctbg-solicitud-informacion",
                 "catastro-solicitudes-genericas",
                 "fega-solicitud-general-ofvsg02",
