@@ -14,6 +14,7 @@ class SiteProfileRegistryTest {
         val airef = ProfileId("airef-instancia-general")
         val mineco = ProfileId("ministerio-economia-instancia-generica")
         val avila = ProfileId("diputacion-avila-instancia-general")
+        val palencia = ProfileId("diputacion-palencia-solicitud-general")
 
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
@@ -37,6 +38,11 @@ class SiteProfileRegistryTest {
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, clave)?.trustMode,
         )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(palencia, clave)?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(palencia, claveIdent))
         assertEquals(
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, claveIdent)?.trustMode,
