@@ -2068,6 +2068,7 @@ object SiteProfileCatalogParser {
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             SEGOVIA_PROFILE_ID,
+                            PALENCIA_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -2524,6 +2525,7 @@ object SiteProfileCatalogParser {
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
     private const val GUADALAJARA_PROFILE_ID = "diputacion-guadalajara-instancia-general"
     private const val SEGOVIA_PROFILE_ID = "diputacion-segovia-registro"
+    private const val PALENCIA_PROFILE_ID = "diputacion-palencia-solicitud-general"
     private const val CTBG_PROFILE_ID = "ctbg-solicitud-informacion"
     private const val CATASTRO_PROFILE_ID = "catastro-solicitudes-genericas"
     private const val FEGA_PROFILE_ID = "fega-solicitud-general-ofvsg02"
