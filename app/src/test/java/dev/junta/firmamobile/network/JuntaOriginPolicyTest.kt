@@ -61,6 +61,7 @@ class JuntaOriginPolicyTest {
     private val funciona = ProfileId("portal-funciona-public-home")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val salamanca = ProfileId("diputacion-salamanca-instancia-general")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -133,6 +134,7 @@ class JuntaOriginPolicyTest {
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
             "seuelectronica.diba.cat",
+            "sede.diputaciondesalamanca.gob.es",
             "valid.aoc.cat",
             "cert.valid.aoc.cat",
             "aplicacions.diba.cat",
@@ -272,6 +274,17 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(
+            setOf("sede.diputaciondesalamanca.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(salamanca),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(salamanca).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"),
+                salamanca,
             ),
         )
         assertEquals(

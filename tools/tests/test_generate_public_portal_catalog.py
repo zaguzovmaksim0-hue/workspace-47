@@ -847,6 +847,24 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
 
+    def test_diputacion_salamanca_profile_binds_exact_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0168")
+
+        self.assertEqual("diputacion-salamanca-instancia-general", target["profileId"])
+        self.assertEqual("diputacion-salamanca-sede", target["portalId"])
+        self.assertEqual(
+            "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual(["CADES"], target["observedSignatureFormats"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
