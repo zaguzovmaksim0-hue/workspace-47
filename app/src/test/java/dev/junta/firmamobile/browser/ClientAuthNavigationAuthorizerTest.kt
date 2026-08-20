@@ -301,6 +301,56 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun albaceteDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+        val albacete = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = albacete.observeTopLevelNavigation(
+            ALBACETE_PROFILE, ALBACETE_SOURCE, ALBACETE_TARGET, 80, true,
+        )
+
+        assertEquals(ALBACETE_PROFILE, authorized?.profileId)
+        assertEquals("identificacionssl.sedipualba.es", authorized?.target?.host)
+        assertEquals("/", authorized?.target?.rawPath)
+        assertEquals(
+            "idtoken=$ALBACETE_TOKEN&idioma=es&entidad=02000",
+            authorized?.target?.rawQuery,
+        )
+        assertNull(albacete.observeTopLevelNavigation(ALBACETE_PROFILE, ALBACETE_SOURCE, ALBACETE_TARGET, 80, true))
+    }
+
+    @Test
+    fun albaceteDynamicSourceRejectsTokenEntityHostPathAndQueryExpansion() {
+        val attacks = listOf(
+            ALBACETE_SOURCE.replace(ALBACETE_TOKEN, ALBACETE_OTHER_TOKEN) to ALBACETE_TARGET,
+            ALBACETE_SOURCE.replace("idioma=es", "idioma=en") to ALBACETE_TARGET,
+            "$ALBACETE_SOURCE&extra=1" to ALBACETE_TARGET,
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace(ALBACETE_TOKEN, ALBACETE_OTHER_TOKEN),
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("idioma=es", "idioma=en"),
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("entidad=02000", "entidad=24000"),
+            ALBACETE_SOURCE to "$ALBACETE_TARGET&extra=1",
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("identificacionssl.sedipualba.es", "identificacionssl.sedipualba.es.evil.example"),
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("https://identificacionssl.sedipualba.es/", "https://identificacionssl.sedipualba.es/other"),
+            ALBACETE_SOURCE to "$ALBACETE_TARGET#fragment",
+        )
+
+        attacks.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    ALBACETE_PROFILE, source, target, 81L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTeaAlegacionesDirectTransitionProducesOneBoundedTarget() {
         val result = authorizer.observeTopLevelNavigation(
             activeProfileId = TEA_PROFILE,
@@ -1007,6 +1057,13 @@ class ClientAuthNavigationAuthorizerTest {
                 "param=synthetic-param&TARGET=https%3A%2F%2Fias1.larioja.org%2Foficinavirtual%2F" +
                 "presentacion%3Fact_codi%3D24697%26flow%3Dsynthetic"
         const val LA_RIOJA_TARGET = "https://ias1.larioja.org/clientcertSSL/login"
+        val ALBACETE_PROFILE = ProfileId("diputacion-albacete-portal")
+        const val ALBACETE_TOKEN = "12345678-w47SyntheticAlbaceteToken012345"
+        const val ALBACETE_OTHER_TOKEN = "87654321-w47OtherAlbaceteToken987654"
+        const val ALBACETE_SOURCE =
+            "https://sede.dipualba.es/segex/identificacion_opciones.aspx?idtoken=$ALBACETE_TOKEN&idioma=es"
+        const val ALBACETE_TARGET =
+            "https://identificacionssl.sedipualba.es/?idtoken=$ALBACETE_TOKEN&idioma=es&entidad=02000"
         const val LEON_TOKEN = "12345678-w47SyntheticLeonToken0123456789"
         const val LEON_OTHER_TOKEN = "87654321-w47OtherLeonToken9876543210"
         const val LEON_SOURCE =

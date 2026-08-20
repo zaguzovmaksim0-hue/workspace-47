@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 241 |
-| Fuentes oficiales totales registradas | 253 |
+| Fuentes oficiales portal-specific registradas | 243 |
+| Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 79 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 83 |
-| Entradas restantes fuera de ambos estados | 100 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 80 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 84 |
+| Entradas restantes fuera de ambos estados | 99 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 79 |
+| `IMPLEMENTED_NOT_E2E` | 80 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 93 |
+| `BROWSE_ONLY` | 92 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -395,7 +395,7 @@ portal-specific; D12 no acredita por sí solo disponibilidad, certificado,
 firma ni contrato técnico.
 
 La ola provincial usa las familias `DP01` a `DP41` en el orden exacto de D06.
-Sus 67 fuentes portal-specific definen una sola URL por ID: `A` acredita la
+Sus 69 fuentes portal-specific definen una sola URL por ID: `A` acredita la
 superficie primaria y `B`, cuando existe, una evidencia oficial adicional
 delimitada. D06 aporta provenance a las 41 etiquetas; Valladolid conserva
 `ES-PUB-0015` por exact origin y las otras 40 crean registros nuevos. Las sedes
@@ -4845,29 +4845,29 @@ records:
     autonomous_community: "Castilla-La Mancha"
     province_or_municipality: "Albacete (provincia)"
     institution_name: "Diputación Provincial de Albacete"
-    surface_name: "Portal oficial de Diputación Provincial de Albacete"
-    surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.dipualba.es"
-    official_site: "https://www.dipualba.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipualba.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    surface_name: "Sede electrónica de Diputación Provincial de Albacete"
+    surface_type: "SEDE"
+    origin: "https://sede.dipualba.es"
+    official_site: "https://web.dipualba.es/"
+    e_sede: "https://sede.dipualba.es/"
+    entry_url: "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+    procedure_page: "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://identificacionssl.sedipualba.es/"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP03A", "DP03B"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al trámite Registro Electrónico/Presentación Instancia General mediante el servidor SSL de identificación compartido de SEDIPUALBA; la firma documental posterior permanece fuera del contrato implementado."
+    protocol_evidence: "La sede pública deriva el acceso al SEGEX de identificación y la página de opciones construye exactamente https://identificacionssl.sedipualba.es/?idtoken=TOKEN&idioma=es&entidad=02000, enlazando el mismo idtoken efímero de la fuente."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP03A", "DP03B", "ALBACETE-INSTANCIA-2026-08-18", "ALBACETE-SSL-IDENT-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificación E2E separada del acceso con certificado y del paso de firma; mantener firma/presentación bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0142"
     surface_key: "diputacion-almeria-portal"
@@ -6473,6 +6473,8 @@ availability, certificado, firma ni contrato técnico.
 [DP02A]: https://web.araba.eus/es/home
 [DP03A]: https://www.dipualba.es
 [DP03B]: https://sede.dipualba.es/transparencia/Home/Details/20
+[ALBACETE-INSTANCIA-2026-08-18]: https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567
+[ALBACETE-SSL-IDENT-2026-08-18]: https://sede.dipualba.es/segex/identificacion_opciones.aspx
 [DP04A]: https://www.dipalme.org
 [DP05A]: https://www.diputacionavila.es
 [DP05B]: https://diputacionavila.sedelectronica.es/

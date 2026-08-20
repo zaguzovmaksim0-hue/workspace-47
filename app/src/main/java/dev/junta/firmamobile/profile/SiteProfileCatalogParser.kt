@@ -260,6 +260,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LEON_PROFILE_ID) {
                 validateLeonProfile(p)
             }
+            if (p.profileId.value == ALBACETE_PROFILE_ID) {
+                validateAlbaceteProfile(p)
+            }
             if (p.profileId.value == MALLORCA_PROFILE_ID) {
                 validateMallorcaProfile(p)
             }
@@ -378,6 +381,7 @@ object SiteProfileCatalogParser {
                         p.profileId.value == SANIDAD_PROFILE_ID ||
                             p.profileId.value == TEA_PROFILE_ID ||
                             p.profileId.value == LEON_PROFILE_ID ||
+                            p.profileId.value == ALBACETE_PROFILE_ID ||
                             p.profileId.value == MALLORCA_PROFILE_ID ||
                             p.profileId.value == GVA_PROFILE_ID
                     )
@@ -1400,6 +1404,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-16") })
     }
 
+    private fun validateAlbaceteProfile(profile: SiteProfile) {
+        require(profile.profileVersion == ALBACETE_PROFILE_VERSION)
+        require(profile.displayName == ALBACETE_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == ALBACETE_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(ALBACETE_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(ALBACETE_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "02000"),
+                requiredEphemeralQueryParameters = setOf("idtoken"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
+                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
+                linkedEphemeralQueryParameters = setOf("idtoken"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == ALBACETE_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
     private fun validateMallorcaProfile(profile: SiteProfile) {
         require(profile.profileVersion == MALLORCA_PROFILE_VERSION)
         require(profile.displayName == MALLORCA_DISPLAY_NAME)
@@ -1748,8 +1785,11 @@ object SiteProfileCatalogParser {
                 owners.all { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID) } &&
                 origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
-            (setOf(firstOwner.value, secondOwner.value) == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) &&
-                origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN)
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
+                    owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
+                    origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
+            })
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -2198,6 +2238,20 @@ object SiteProfileCatalogParser {
         "https://identificacionssl.sedipualba.es/",
     )
     private const val SEDIPUALBA_CLIENT_AUTH_ORIGIN = "https://identificacionssl.sedipualba.es"
+    private const val ALBACETE_PROFILE_ID = "diputacion-albacete-portal"
+    private const val ALBACETE_PROFILE_VERSION = 1
+    private const val ALBACETE_DISPLAY_NAME = "Diputación Provincial de Albacete — acceso con certificado"
+    private const val ALBACETE_START_URL =
+        "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+    private const val ALBACETE_ORIGIN = "https://sede.dipualba.es"
+    private const val ALBACETE_SOURCE_URL =
+        "https://sede.dipualba.es/segex/identificacion_opciones.aspx"
+    private val ALBACETE_EVIDENCE_URLS = setOf(
+        ALBACETE_START_URL,
+        "https://sede.dipualba.es/carpetaciudadana/login.aspx",
+        ALBACETE_SOURCE_URL,
+        "https://identificacionssl.sedipualba.es/",
+    )
     private const val MALLORCA_PROFILE_ID = "consell-mallorca-sede"
     private const val MALLORCA_PROFILE_VERSION = 1
     private const val MALLORCA_DISPLAY_NAME = "Consell de Mallorca — acceso con certificado"
