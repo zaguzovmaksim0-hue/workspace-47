@@ -190,17 +190,17 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Entradas D06 ya presentes por exact origin | 1 |
 | Registros nuevos creados desde D06 | 40 |
 | Registros totales del snapshot | 183 |
-| Origins primarios distintos | 181 |
+| Origins primarios distintos | 180 |
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 229 |
-| Fuentes oficiales totales registradas | 241 |
+| Fuentes oficiales portal-specific registradas | 243 |
+| Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 57 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 61 |
-| Entradas restantes fuera de ambos estados | 122 |
-| Evidencia exacta de `ClientCertRequest` | 1 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 80 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 84 |
+| Entradas restantes fuera de ambos estados | 99 |
+| Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 57 |
+| `IMPLEMENTED_NOT_E2E` | 80 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 115 |
+| `BROWSE_ONLY` | 92 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 135 |
+| `REVIEWED` | 145 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 43 |
+| `DISCOVERED` | 33 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -413,7 +413,7 @@ territorios, tres referencias HTTPS y dieciséis referencias HTTP heredadas.
 Estas últimas se conservaron como componentes no ejecutables; las superficies
 de §7.3 proceden de 55 fuentes HTTPS portal-specific revisadas por separado.
 El cociente histórico de disponibilidad del primer conjunto sigue siendo
-47/50; no se publica un cociente agregado para las 209 fuentes porque las
+47/50; no se publica un cociente agregado para las 212 fuentes porque las
 olas usaron transportes y alcances distintos. Las tres excepciones del seed se
 conservan con la limitación exacta:
 
@@ -1285,30 +1285,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Autoridad Independiente de Responsabilidad Fiscal (AIReF)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "AIReF — Instancia General"
     surface_type: "SEDE"
-    origin: "https://airef.sede.gob.es"
-    official_site: "https://airef.sede.gob.es/"
-    e_sede: "https://airef.sede.gob.es/"
-    entry_url: "https://airef.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    origin: "https://sede.airef.es"
+    official_site: "https://sede.airef.es/"
+    e_sede: "https://sede.airef.es/"
+    entry_url: "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"
+    procedure_page: "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MiniApplet AutoScript"
+    protocol_family: "AUTOSCRIPT_XADES_CLIENT_TLS_AUTH"
+    signature_format: "XAdES Enveloping"
+    signature_algorithm: "SHA1withRSA"
+    endpoint: "https://sede.airef.es/invesiteRE/action/solicitud/sign"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Autenticación con certificado vía Cl@ve y firma local de la Instancia General AIReF mediante MiniApplet.sign sobre un payload dinámico de 32 bytes."
+    protocol_evidence: "Runtime autenticado controlado: Cl@ve eIdentifier solicita certificado TLS cliente en pasarela-ident.clave.gob.es y alcanza /invesiteRE/action/solicitud/view. La página protegida carga miniapplet.js SHA-256 420dc2dfe483232e775e7f3a1a5704158ce13f7df959dce2c80468383463a11c y llama MiniApplet.sign(payloadBase64 dinámico de 32 bytes, SHA1withRSA, XAdES, null, firmaExito, firmaError). firmaExito copia firma y certificado Base64 y prepara POST a /invesiteRE/action/solicitud/sign. No se invocó MiniApplet.sign ni se envió ese POST."
+    client_tls_auth: "SI"
+    evidence_ids: ["D11", "AIREF-PUBLIC-2026-08-18", "AIREF-AUTH-2026-08-18", "AIREF-SIGNING-2026-08-18"]
+    reason: "Contrato de autenticación y firma exacto implementado fail-closed solo en QA. El runtime controlado llegó hasta la vista previa sin ejecutar firma criptográfica ni presentación final; E2E de firma queda pendiente."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar en QA Android el flujo completo hasta callback de firma con credencial de prueba/autorizada y detenerse antes de cualquier presentación administrativa; promover a release solo con evidencia E2E separada."
+    notes: "SIA 216016. El payload de firma y el id de borrador son dinámicos y no se fijan como constantes. Se creó un borrador intermedio sin firma durante la inspección controlada; no se eliminó ni se registró porque las acciones destructivas y la presentación final quedan fuera de §3.1."
 
   - inventory_id: "ES-PUB-0028"
     surface_key: "age-biblioteca-nacional-de-espana"
@@ -2471,31 +2471,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Ministerio de Economía, Comercio y Empresa"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Instancia Genérica — Ministerio de Economía, Comercio y Empresa"
     surface_type: "SEDE"
-    origin: "https://sede.mineco.gob.es"
+    origin: "https://serviciosede.mineco.gob.es"
     official_site: "https://sede.mineco.gob.es/"
     e_sede: "https://sede.mineco.gob.es/"
-    entry_url: "https://sede.mineco.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
+    entry_url: "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG"
+    procedure_page: "https://sede.mineco.gob.es/es/servicios-comunes"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "MiniApplet / AutoFirma"
+    protocol_family: "MINIAPPLET_LOCAL_PADES"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA512withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Rama local Firmar y Enviar: firma PAdES del PDF generado por la Instancia Genérica mediante MiniApplet/AutoFirma; Cl@veFirma queda fuera del contrato implementado."
+    protocol_evidence: "Controlled authenticated observation 2026-08-17: /FB/solicitud/firma.aspx invokes MiniApplet.sign(unsignedPdfBase64, SHA512withRSA, PAdES, filters=signingCert:;nonexpired: + expPolicy=FirmaAGE + signatureSubFilter=ETSI.CAdES.detached, showResultCallback, showErrorCallback). Current official AutoFirma source maps FirmaAGE PAdES policy 1.9 to OID 2.16.724.1.3.1.1.2.1.9, SHA-1 policy hash G7roucf600+f03r/o0bAOQ6WAs0= and the official policy qualifier URL."
+    client_tls_auth: "SI"
     evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
-
+    reason: "Contrato exacto de la rama local Firmar y Enviar implementado en QA y pendiente de E2E físico; la autenticación eIdentifier usa certificado TLS por separado y Cl@veFirma no se infiere ni se implementa."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E controlado de la rama local sin presentación administrativa; validar callback signedPdf y abortar antes del postback final de registro."
+    notes: "La autenticación con certificado Cl@ve/eIdentifier y la firma del escrito son contratos distintos. El perfil implementa solo SIGN local PAdES; los orígenes Cl@ve quedan limitados a navegación de confianza y no se declara una operación CLIENT_TLS_AUTH en el perfil."
   - inventory_id: "ES-PUB-0066"
     surface_key: "age-ministerio-de-educacion-formacion-profesional-y-deportes"
     administrative_level: "ESTATAL"
@@ -3040,30 +3039,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Portal de la Transparencia"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica — Derecho de acceso a la información pública"
     surface_type: "SEDE"
-    origin: "https://sede.transparencia.gob.es"
-    official_site: "https://sede.transparencia.gob.es/"
-    e_sede: "https://sede.transparencia.gob.es/"
-    entry_url: "https://sede.transparencia.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    origin: "https://transparencia.sede.gob.es"
+    official_site: "https://transparencia.sede.gob.es/"
+    e_sede: "https://transparencia.sede.gob.es/"
+    entry_url: "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524"
+    procedure_page: "https://transparencia.sede.gob.es/procedimiento/ambitos?idProc=133628"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "MiniApplet / AutoScript / AutoFirma"
+    protocol_family: "MINIAPPLET_LOCAL_PADES"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA512withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma PAdES local con certificado en la solicitud de derecho de acceso; el perfil QA queda limitado al contrato AutoScript exacto observado tras autenticación controlada."
+    protocol_evidence: "La superficie pública vigente conduce por Cl@ve al formulario protegido. En runtime autenticado autorizado, el paso de firma carga ac2-autofirmaFunctions.js (SHA-256 84da2c1d58d81c090d7e6e227b14b3fb37eec1ae83fd94ded8eada09b2dece96 el 2026-08-18), que ejecuta AutoScript.sign sobre el PDF generado con SHA512withRSA, PAdES y los parámetros exactos filters=nonexpired:true; + headless=true; el callback devuelve signatureB64, certificateB64 y extraData. No se ejecutó ninguna firma ni registro final."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
+    reason: "Contrato first-party de firma completo probado antes de la firma mediante runtime autenticado controlado; implementación QA fail-closed, pendiente de E2E físico seguro."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E físico seguro en Android del flujo de firma con certificado, abortando antes de cualquier presentación o registro final."
+    notes: "La Sede vigente usa el origin transparencia.sede.gob.es (el origin sede.transparencia.gob.es del registro previo estaba obsoleto). La autenticación controlada por certificado ocurrió en la frontera compartida de Cl@ve y no se promociona como client-TLS del portal. El portal ofrece firma básica no criptográfica o firma con certificado; el perfil implementa exclusivamente la segunda. El bridge exige perfil activo, origin HTTPS exacto, página /procedimiento/firma con idProc=133628, idAmb=101524 e idBorr server-issued, además del tuple SHA512withRSA + PAdES + filters=nonexpired:true;\nheadless=true."
 
   - inventory_id: "ES-PUB-0084"
     surface_key: "age-portal-funciona"
@@ -3071,30 +3070,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Portal Funciona"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede Funciona / inicio público"
     surface_type: "SEDE"
     origin: "https://sede.funciona.gob.es"
     official_site: "https://sede.funciona.gob.es/public/servicios"
     e_sede: "https://sede.funciona.gob.es/public/servicios"
-    entry_url: "https://sede.funciona.gob.es/public/servicios"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://sede.funciona.gob.es/es/home"
+    procedure_page: "https://sede.funciona.gob.es/es/home"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "OIDC_PKCE"
+    protocol_family: "OIDC_PKCE_AUTENTICA_SAML_CLIENT_TLS_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada solo al home público de Funciona. El acceso autenticado observado usa OIDC Authorization Code + PKCE hacia Autentica/SAML y alcanza una frontera TLS que solicita certificado cliente; esa cadena y la firma FNC posterior quedan fuera del contrato implementado."
+    protocol_evidence: "Chromium público abrió https://sede.funciona.gob.es/es/home y mostró «Acceder con Autentica». El click público produjo OIDC auth en auth-api.redsara.es con client_id fe66bc25-ec04-41e4-8202-809dbded381a, response_type=code, code_challenge_method=S256 y acr_values=loa:2; después broker Autentica/SAML con appId=5524. La página final de Autentica exige certificado digital o eDNI y un handshake TLS 1.2 independiente con autentica.redsara.es observó CertificateRequest. El runtime público de /es/home no expuso AutoScript, MiniApplet ni AutoFirma globals."
+    client_tls_auth: "SI"
+    evidence_ids: ["D11", "FUNCIONA-PUBLIC-2026-08-17"]
+    reason: "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY con entry_url exacto https://sede.funciona.gob.es/es/home; el URL del directorio /public/servicios se conserva como official_site/e_sede, sin SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI capabilities. La cadena auth real es multi-hop Funciona → OIDC/Keycloak → Autentica/SAML → client-certificate y no se amplía por analogía; auth-api.redsara.es y autentica.redsara.es permanecen fuera de navigation trust. FNC signing visible en bundle protegido tampoco se modela porque no se acreditaron algoritmo, formato, packaging ni callback actuales. Falta E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la navegación QA al home público. Cualquier soporte de login Autentica/client TLS o firma FNC requiere contrato separado que delimite la cadena multi-hop y sus callbacks sin usar datos reales."
+    notes: "deep_public_research=PASS en BROWSER_PUBLIC_RUNTIME: SPA/loaded chunks, OIDC metadata, red de redirects, runtime globals, ruta CSV pública y TLS CertificateRequest agotados. No se introdujeron credenciales, no se proporcionó certificado, no se llamó token/userinfo/secure backend/FNC POST, no hubo firma, carga, pago ni presentación administrativa. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0085"
     surface_key: "age-puertos-del-estado"
@@ -3165,61 +3164,63 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Secretaría de Estado de Comercio"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Excepciones al comercio internacional de servicios — vía REG"
     surface_type: "SEDE"
-    origin: "https://sede.comercio.gob.es"
-    official_site: "https://sede.comercio.gob.es/"
-    e_sede: "https://sede.comercio.gob.es/"
-    entry_url: "https://sede.comercio.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://sede.mineco.gob.es"
+    official_site: "https://comercio.gob.es/"
+    e_sede: "https://sede.mineco.gob.es/"
+    entry_url: "https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El catálogo público de Comercio mantiene el procedimiento SIA 3057517 y, mientras se habilita su procedimiento administrativo específico, indica que la solicitud puede presentarse por el Registro Electrónico General de la AGE."
+    protocol_evidence: "El portal oficial comercio.gob.es enlaza la relación vigente de procedimientos de Comercio en sede.mineco.gob.es. El detalle público SIA 3057517, cargado desde la lista pública SedeProcedures, publica literalmente https://reg.redsara.es como enlace del Registro Electrónico General; un contexto Chromium X11 público nuevo observó el mismo aviso y un segundo contexto nuevo resolvió el root REG mediante HTTP 302 a https://reg.redsara.es/es/, exactamente el startUrl de reg-age-redsara."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "COMERCIO-SURFACE-2026-08-17", "COMERCIO-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública explícita y destino exacto; se conserva el procedimiento público de Comercio como entry URL, no se amplía la confianza criptográfica REG-AGE a sede.mineco.gob.es y no se realizó E2E físico."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición del procedimiento SIA 3057517 hacia REG-AGE sin completar ni presentar una solicitud administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La antigua URL D11 https://sede.comercio.gob.es/ redirige actualmente a la Sede de Industria y Turismo; por ello la superficie se reancla en la relación de procedimientos de Comercio que el portal oficial comercio.gob.es publica en sede.mineco.gob.es. No se infieren certificado, firma, formato, algoritmo ni endpoint propios de Comercio."
 
   - inventory_id: "ES-PUB-0088"
     surface_key: "age-sede-electronica-central-del-ministerio"
     administrative_level: "ESTATAL"
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
-    institution_name: "Sede electrónica central del Ministerio"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    institution_name: "Ministerio de Hacienda"
+    surface_name: "Sede Electrónica Central del Ministerio de Hacienda"
     surface_type: "SEDE"
     origin: "https://sede.hacienda.gob.es"
     official_site: "https://sede.hacienda.gob.es/"
     e_sede: "https://sede.hacienda.gob.es/"
     entry_url: "https://sede.hacienda.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.hacienda.gob.es/es-es/paginas/informacion"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede Electrónica Central del Ministerio de Hacienda declara que el Ministerio utiliza el Registro Electrónico General de la AGE para solicitudes, escritos y comunicaciones de su ámbito; Workspace-47 representa esa vía como alias acotado al perfil REG-AGE existente."
+    protocol_evidence: "La página first-party de Información de la Sede Hacienda declara literalmente que el Ministerio utiliza el REG-AGE y enlaza la página oficial del servicio en la Sede PAG. La página PAG identifica el servicio como Registro Electrónico General de la AGE y publica «Acceso al Registro Electrónico General» hacia https://reg.redsara.es/. Chromium confirmó esa cadena pública y que el startUrl canónico español existente https://reg.redsara.es/es/ responde como «REG - Registro Electrónico General». El alias usa únicamente ese startUrl canónico; no se atribuye a sede.hacienda.gob.es ningún ABI de firma ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    evidence_ids: ["D11", "HACIENDA-REG-2026-08-17", "HACIENDA-PAG-REG-AGE-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara basado en una delegación first-party explícita del Ministerio de Hacienda al REG-AGE y en el launch oficial de la Sede PAG. No se infieren certificados, algoritmo, formato, callback, endpoint ni client-TLS específicos de Hacienda; falta validación E2E física de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Sede Hacienda → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La Sede central también agrega procedimientos específicos de organismos con contratos propios; este alias cubre únicamente la vía REG-AGE declarada por el propio Ministerio y no hereda ni amplía esos contratos."
 
   - inventory_id: "ES-PUB-0089"
     surface_key: "age-sede-electronica-de-la-s-e-de-digitalizacion-e-inteligencia-artificial-y-s-e-de-telecomunica"
@@ -3227,30 +3228,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Sede Electrónica de la S.E. de Digitalización e Inteligencia Artificial y S.E. de Telecomunicaciones e Infraestructuras Digitales del Ministerio de Transformación Digital"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede SEDIA/SETID migrada — fallback al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://sedediatid.digital.gob.es"
     official_site: "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx"
-    e_sede: "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx"
+    e_sede: "https://digital.sede.gob.es/"
     entry_url: "https://sedediatid.digital.gob.es/es-es/Paginas/Index.aspx"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La antigua entrada SEDIA/SETID migra al portal actual del Ministerio; su sede electrónica asociada publica REG como vía para solicitudes, escritos o comunicaciones de competencia ministerial cuando no existe un procedimiento electrónico específico habilitado."
+    protocol_evidence: "La URL histórica del directorio redirige al portal actual digital.gob.es, que enlaza la sede electrónica asociada digital.sede.gob.es. La página oficial de procedimientos electrónicos de esa sede indica expresamente que, si un trámite de competencia del Ministerio no dispone de procedimiento electrónico habilitado, puede presentarse por el Registro Electrónico General (REG) y enlaza https://reg.redsara.es/. Un navegador público fresco resolvió ese destino 302 a https://reg.redsara.es/es/, exactamente el startUrl del perfil reg-age-redsara. No se atribuye a digital.gob.es, digital.sede.gob.es ni sedediatid.digital.gob.es un ABI de firma propio ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
+    evidence_ids: ["D11", "DIGITAL-SEDE-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita y resolución pública exacta al startUrl canónico; se conserva la entrada histórica SEDIA/SETID como entry URL, no se copian constantes criptográficas de REG-AGE y falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición desde la superficie SEDIA/SETID migrada hasta REG-AGE sin completar ni presentar una actuación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La URL histórica sedediatid.digital.gob.es responde 301 hacia el portal actual del Ministerio. La sede asociada actual identifica por separado procedimientos de la Secretaría de Estado de Digitalización e Inteligencia Artificial y de la Secretaría de Estado de Telecomunicaciones e Infraestructuras Digitales."
 
   - inventory_id: "ES-PUB-0090"
     surface_key: "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
@@ -3289,30 +3291,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Tesoro Público"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Adhesión al Código de Buenas Prácticas — vía Registro Electrónico Común"
     surface_type: "SEDE"
     origin: "https://www.tesoropublico.gob.es"
     official_site: "https://www.tesoropublico.gob.es/"
     e_sede: "https://www.tesoropublico.gob.es/"
-    entry_url: "https://www.tesoropublico.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del Tesoro indica que la comunicación de adhesión al Código de Buenas Prácticas para deudores hipotecarios en riesgo de vulnerabilidad se presenta por el Registro Electrónico Común y publica su acceso directo."
+    protocol_evidence: "La página pública actual del Tesoro publica dos enlaces exactos a https://rec.redsara.es/registro/action/are/acceso.do para este trámite. En una sesión Chromium pública y aislada, ese URL respondió con 301 a https://reg.redsara.es/ y, con contexto de navegador español, el root REG respondió con 302 a https://reg.redsara.es/es/, que coincide exactamente con el startUrl del perfil existente reg-age-redsara. La página del Tesoro menciona certificado electrónico/DNIe y AutoFirma, pero no se infieren de ello algoritmo, formato, endpoint ni ABI de firma propios del Tesoro."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "TESORO-REC-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación pública exacta y cadena de redirección acotada; la página del Tesoro permanece como entry URL y no se amplía la confianza criptográfica REG-AGE al origen www.tesoropublico.gob.es. E2E físico no realizado."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición Tesoro → REC/REG-AGE sin completar ni presentar una comunicación administrativa real; mantener release fail-closed hasta entonces."
+    notes: "La implementación cubre únicamente la vía REC/REG publicada para esta adhesión. Otros servicios del Tesoro (pagos, FCT, SECAD, compra-venta, sandbox, creadores de mercado) tienen superficies distintas y no se incorporan ni se infieren en este perfil."
 
   - inventory_id: "ES-PUB-0092"
     surface_key: "age-universidad-nacional-de-educacion-a-distancia-uned"
@@ -3320,30 +3323,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Universidad Nacional de Educación a Distancia (UNED)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro Electrónico — Sede electrónica de la UNED"
     surface_type: "SEDE"
-    origin: "https://sede.uned.es"
-    official_site: "https://sede.uned.es/"
-    e_sede: "https://sede.uned.es/"
-    entry_url: "https://sede.uned.es/"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://uned.sede.gob.es"
+    official_site: "https://uned.sede.gob.es/"
+    e_sede: "https://uned.sede.gob.es/"
+    entry_url: "https://uned.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://uned.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La nueva Sede electrónica de la UNED publica el Registro Electrónico General de la AGE (REG-AGE) para solicitudes, escritos y comunicaciones sin formulario normalizado propio."
+    protocol_evidence: "La antigua sede.uned.es anuncia que desde el 1-11-2025 los procedimientos se realizan en https://uned.sede.gob.es y enlaza su Registro Electrónico. La ficha vigente de la nueva Sede identifica expresamente el servicio como REG-AGE y publica «Acceso al Registro Electrónico» con href https://reg.redsara.es/; fresh Chromium confirma el redirect público 302 de ese root al startUrl canónico https://reg.redsara.es/es/ del perfil reg-age-redsara. No se atribuye a UNED un ABI de firma propio ni se amplían sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Ciencia, Innovación y Universidades."
+    evidence_ids: ["D11", "UNED-REG-2026-08-17", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la nueva Sede UNED delega explícitamente el Registro Electrónico General en REG-AGE y Workspace-47 lanza únicamente el startUrl canónico exacto del perfil existente; falta E2E físico de la transición."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la transición UNED → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "El directorio AGE de 2026-07-16 apuntaba a la sede legacy https://sede.uned.es/; esa propia sede publica el cambio a https://uned.sede.gob.es desde el 1-11-2025. Ministerio(s) enumerador(es): Ministerio de Ciencia, Innovación y Universidades."
 
 ```
 
@@ -3362,29 +3366,30 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "NO_APLICA"
     institution_name: "Junta de Andalucía"
-    surface_name: "Sede electrónica de la Junta de Andalucía"
+    surface_name: "Sede Electrónica General — Presentación electrónica general"
     surface_type: "SEDE"
-    origin: "https://www.juntadeandalucia.es"
-    official_site: "https://www.juntadeandalucia.es/servicios/sede"
-    e_sede: "https://www.juntadeandalucia.es/servicios/sede"
-    entry_url: "https://www.juntadeandalucia.es/servicios/sede"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    origin: "https://veaja.cloud.juntadeandalucia.es"
+    official_site: "https://www.juntadeandalucia.es/servicios/sede.html"
+    e_sede: "https://www.juntadeandalucia.es/servicios/sede.html"
+    entry_url: "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"
+    procedure_page: "https://www.juntadeandalucia.es/servicios/sede/tramites.html"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "AUTOSCRIPT_AUTOFIRMA"
+    protocol_family: "VEA_AUTOSCRIPT_DYNAMIC"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a información y servicios de la sede autonómica."
-    protocol_evidence: "Las fuentes acreditan titularidad y entrada oficial, no un flujo de certificado o firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede Electrónica General dirige la Presentación electrónica general al procedimiento PEG_VEA de Ventanilla Electrónica; Workspace-47 habilita únicamente la navegación QA al inicio público exacto, manteniendo autenticación y firma bloqueadas."
+    protocol_evidence: "La Sede enlaza públicamente PEG mediante ws094/ws050, que actualmente convergen en https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA. La página pública ofrece Certificado Electrónico y Cl@ve. El bundle vigente carga AutoScript/AutoFirma y prepara firma explícita sobre hashes, pero algoritmo, formato, hashAlgorithm y filtro cualificado final proceden de datos de borrador protegidos tras autenticación; por ello el perfil no expone SIGN, SELECT_CERTIFICATE, AFIRMA_URI ni client-auth."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A01A", "A01B"]
-    reason: "Certificado, firma, ABI, formato, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Identificar un procedimiento vigente y su contrato técnico exacto."
+    evidence_ids: ["D03", "A01A", "A01B", "JUNTA-VEA-PEG-2026-08-17", "JUNTA-VEA-RUNTIME-2026-08-17"]
+    reason: "Perfil QA-only de navegación al PEG_VEA público exacto. La firma es obligatoria en la entrega y AutoScript es observable, pero el contrato sensible exacto depende de estado autenticado/borrador; no se copian constantes de OVORION, Oficina Virtual ni otros portales Junta."
+    reviewed_at: "2026-08-17"
+    next_gate: "Validar físicamente la navegación Sede → PEG_VEA y, solo con autorización separada, reabrir el contrato de autenticación/firma para observar algorithm/format/hashAlgorithm del borrador sin efectuar una presentación administrativa."
+    notes: "El perfil confía únicamente en veaja.cloud.juntadeandalucia.es para navegación. api-veaja.cloud.juntadeandalucia.es y los flujos de certificado/Cl@ve quedan fuera del trust del perfil."
 
   - inventory_id: "ES-PUB-0094"
     surface_key: "aragon-tramites-sede"
@@ -3487,24 +3492,24 @@ records:
     origin: "https://www.caib.es"
     official_site: "https://www.caib.es/seucaib/ca/"
     e_sede: "https://www.caib.es/seucaib/ca/"
-    entry_url: "https://www.caib.es/seucaib/ca/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros="
+    procedure_page: "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros="
     certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    signature_required: "SI"
+    js_client: "MiniApplet 1.6.5"
+    protocol_family: "MINIAPPLET_XML_BATCH_TRIFASICO_PORTAFIB_PADES"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "Runtime requestPlugin: https://intranet.caib.es/portafibback/public/signmodule/requestPlugin/{token}/-1/{BatchPresigner,BatchPostsigner}; POST query xml/certs/tridata"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso y firma mediante los sistemas admitidos según el trámite."
-    protocol_evidence: "La información oficial cita certificado, AutoFirma, Cl@veFirma y Firma àgil sin contrato runtime."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Instancia genérica protegida entrega a MiniApplet.signBatch un único lote PAdES SHA256withRSA mediante PortaFIB; soporte QA limitado al contrato exacto observado y sin envío final."
+    protocol_evidence: "Controlled-auth autorizado alcanzó la pantalla PortaFIB previa a la firma: MiniApplet.signBatch(batchB64, BatchPresigner, BatchPostsigner, extraProperties, showResultCallback, showErrorCallback); el lote XML contiene stoponerror=false, SHA256withRSA, PAdES, datasource request-scoped, SignatureId ligado a token y SignSaverFile. El wire PRE/PK1/POST se contrastó con el cliente AutoFirma oficial; no se ejecutó la firma real."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D03", "A04A", "A04B"]
-    reason: "No se verificaron cliente JS, operación, formato, algoritmo, callback ni endpoint concretos."
-    reviewed_at: "2026-07-16"
-    next_gate: "Capturar un trámite vigente y separar identificación de firma."
+    reason: "IMPLEMENTED_NOT_E2E: bridge y adaptador QA aceptan únicamente el origin intranet.caib.es, ruta requestPlugin exacta, un lote PAdES observado y parámetros exactos; autenticación completa dentro de la app, firma criptográfica y presentación administrativa siguen sin E2E y no se ejecutaron en este pass."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E solo en entorno de prueba autorizado, con identidad/certificado de prueba y sin presentación administrativa; validar primero el retorno del callback antes de cualquier submit."
 
   - inventory_id: "ES-PUB-0098"
     surface_key: "caib-registre-electronic"
@@ -3548,23 +3553,23 @@ records:
     official_site: "https://sede.gobiernodecanarias.org/sede/la_sede"
     e_sede: "https://sede.gobiernodecanarias.org/sede/la_sede"
     entry_url: "https://sede.gobiernodecanarias.org/sede/la_sede"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sede.gobiernodecanarias.org/sede/tramites/6861"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    js_client: "AutoScript / MiniApplet"
+    protocol_family: "AUTOSCRIPT_MINIAPPLET_LOCAL_CADES"
+    signature_format: "CAdES Detached"
+    signature_algorithm: "SHA1withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación con certificado y AutoFirma cuando el procedimiento lo requiere."
-    protocol_evidence: "Los requisitos citan AutoFirma y AutoFirma Móvil, pero no publican el ABI portal-specific."
-    client_tls_auth: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado mediante AutoScript: reto UTC efímero firmado localmente como CAdES detached antes del POST de autenticación."
+    protocol_evidence: "El flujo público GET /sede/tramitador/creacion/tramites/6861 redirige 303 a /sede/identificacionmenu; la rama pública GET /sede/identificacion carga sfest.base.js y construye AutoScript.sign(Base64(Date.toUTCString()), SHA1withRSA, CAdES, extraProperties). Runtime Chromium confirmó CAdES Detached, serverUrl /platino/servlet_afirma/SignatureService, referencesDigestMethod SHA-512 y el filtro exacto nonexpired/signingCert/issuer.rfc2254; no se ejecutaron firma, selección de certificado ni POST."
+    client_tls_auth: "NO_EN_CONTORNO_OBSERVADO"
     evidence_ids: ["D03", "A05A", "A05B"]
-    reason: "Producto, formato, algoritmo, callback, endpoint y TLS cliente exactos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento concreto y su invocación de firma."
+    reason: "Contrato público exacto implementado en perfil QA_ONLY fail-closed; falta E2E físico con certificado real y por ello no se afirma autenticación completada ni presentación administrativa."
+    reviewed_at: "2026-08-17"
+    next_gate: "E2E físico seguro del acceso con certificado en /sede/identificacion, sin presentación administrativa; mantener QA_ONLY hasta evidencia separada."
 
   - inventory_id: "ES-PUB-0100"
     surface_key: "cantabria-sede"
@@ -3813,29 +3818,30 @@ records:
     autonomous_community: "Comunitat Valenciana"
     province_or_municipality: "NO_APLICA"
     institution_name: "Generalitat Valenciana"
-    surface_name: "Sede electrónica de la Generalitat Valenciana"
+    surface_name: "Generalitat Valenciana — acceso con certificado al trámite 15602"
     surface_type: "SEDE"
-    origin: "https://sede.gva.es"
+    origin: "https://www.tramita.gva.es"
     official_site: "https://sede.gva.es/es/"
     e_sede: "https://sede.gva.es/es/"
-    entry_url: "https://sede.gva.es/es/"
+    entry_url: "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR"
     procedure_page: "https://sede.gva.es/es/detall-tramit?id_proc=15602"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación mediante los sistemas de identificación y firma admitidos."
-    protocol_evidence: "Las fuentes acreditan certificado y firma condicionales, no un ABI exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A12A", "A12B", "A12C", "A12D"]
-    reason: "El término ClientCert de la ayuda no prueba ClientCertRequest TLS; formato y endpoint tampoco están verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Observar la entrada de certificado sin seleccionar una identidad."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al flujo autenticado del trámite 15602 mediante el servicio Client TLS de la Generalitat Valenciana; la firma y presentación posteriores quedan fuera del contrato implementado."
+    protocol_evidence: "La ficha pública enlaza DGM_GEN v4. El login público deriva el acceso por certificado a ptt-clave.gva.es y de ahí a ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html, conservando el mismo idSesion y añadiendo idioma=es. TLS 1.2 en ese host emite CertificateRequest con tipos RSA sign y ECDSA sign; no se proporcionó certificado."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A12C", "A12D", "GVA-DGM15602-2026-08-18", "GVA-CLIENTTLS-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con source/target exactos, idSesion enlazado, idioma=es, host/path/port cerrados y TTL local acotado; sin E2E. No se infieren algoritmo, formato, endpoint ni constantes de la firma/presentación posterior."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar E2E por separado el acceso con certificado; mantener firma y presentación bloqueadas hasta evidencia autenticada/autorizada independiente."
+    notes: "Investigación pública no autenticada 2026-08-18: Chromium real, inventario de red, JS de login, cadena de redirección sanitizada y handshake TLS sin certificado; no hubo POST, selección de identidad, autenticación, firma ni presentación."
 
   - inventory_id: "ES-PUB-0109"
     surface_key: "extremadura-tramites"
@@ -3879,23 +3885,24 @@ records:
     official_site: "https://sede.juntaex.es/SEDE/"
     e_sede: "https://sede.juntaex.es/SEDE/"
     entry_url: "https://sede.juntaex.es/SEDE/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://tramites.juntaex.es/"
+    procedure_page: "https://sede.juntaex.es/SEDE/"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_EXTREMADURA_TRAMITES"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Entrada histórica de sede cuya relación con el portal de trámites actual no está resuelta."
-    protocol_evidence: "La entrada contiene referencias a AutoFirma, pero no se verificó su vigencia ni contrato."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La sede anterior permanece pública y delega expresamente la tramitación electrónica en Trámites de la Junta de Extremadura, cuyo launch exacto ya dispone de un perfil QA-only independiente."
+    protocol_evidence: "La portada oficial sede.juntaex.es/SEDE/ enlaza su banner «Tramita» a https://tramites.juntaex.es y su «Registro Electrónico General» al STA actual bajo tramites.juntaex.es. El alias conserva la sede anterior como entry URL y reutiliza únicamente el startUrl canónico https://tramites.juntaex.es/ del perfil extremadura-tramites; no se atribuye un ABI de firma propio a sede.juntaex.es ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A13C"]
-    reason: "No se ha acreditado retirada, sustitución, operación vigente ni contrato técnico; se conserva sin promoción."
-    reviewed_at: "2026-07-16"
-    next_gate: "Resolver oficialmente su relación con tramites.juntaex.es y revisar una operación vigente."
+    evidence_ids: ["D03", "A13C", "EXT-SEDE-ALIAS-2026-08-18", "A13A", "A13B", "A13E", "A13F", "A13G", "A13H"]
+    reason: "Alias QA-only al perfil existente extremadura-tramites por delegación oficial actual de la sede anterior al portal tramites.juntaex.es; faltan E2E físico de la transición y cualquier atribución de contrato criptográfico específico a la sede anterior."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar físicamente la transición sede.juntaex.es → tramites.juntaex.es sin autenticarse, firmar ni presentar una actuación administrativa; mantener QA_ONLY hasta entonces."
 
   - inventory_id: "ES-PUB-0111"
     surface_key: "extremadura-portal-tributario"
@@ -3940,22 +3947,23 @@ records:
     e_sede: "https://sede.xunta.gal/a-sede/identificacion-e-titularidade"
     entry_url: "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
     procedure_page: "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MiniApplet / AutoScript / AutoFirma / @firma"
+    protocol_family: "MINIAPPLET_TRIPHASE"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA1withRSA (LEGACY_SHA1 portal-specific)"
+    endpoint: "https://sede.xunta.gal/presenta/sinatura/SignatureService"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Presentación de solicitud genérica mediante sistemas de identificación y firma admitidos."
-    protocol_evidence: "La sede documenta AutoFirma y cliente móvil, sin publicar el ABI ni transporte del trámite."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A14A", "A14B", "A14C"]
-    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar los assets vigentes de la solicitud genérica sin iniciar presentación."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud genérica PR004A: autenticación TLS con certificado y firma PAdES tri-phase de la solicitud principal; el perfil QA implementa solo el contrato de firma principal y selección de certificado observado."
+    protocol_evidence: "Los assets first-party vigentes de Presenta 2026 fuerzan PAdEStri + SHA1withRSA para la solicitud principal, MiniApplet.selectCertificate(filters=nonexpired) y SignatureService en /presenta/sinatura/. El runtime controlado autenticado confirmó client-TLS y cargó PR004A sin firmar ni presentar. El wire PAdES tri-phase se contrastó con clienteafirma fe60ef3fdbae3c491e97c262a2179e2787b85776."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A14A", "A14B", "A14C", "LIVE-XUNTA-PR004A-2026-08-18"]
+    reason: "Contrato exacto de firma principal implementado fail-closed en QA; XAdES de anexos, parámetros visuales y E2E Android mTLS→firma quedan fuera hasta prueba segura específica. La presentación/registro no se ejecutó."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E físico seguro en Android del acceso mTLS, selección de certificado y firma principal PR004A, deteniéndose antes de presentar o registrar."
+    notes: "El bridge exige la página exacta /presenta/novo/PR004A_2025_1, data literal doc, SHA1withRSA, PAdEStri, endpoint SignatureService y el allowlist de propiedades observado. XAdEStri de anexos y propiedades visuales fallan cerrado. El modelo actual no combina clientAuthPolicy con operaciones SIGN; por ello el soporte permanece IMPLEMENTED_NOT_E2E."
 
   - inventory_id: "ES-PUB-0113"
     surface_key: "murcia-sede"
@@ -4002,20 +4010,20 @@ records:
     procedure_page: "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://ateka.navarra.es/ateka/Certificate/login"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Presentación en el Registro General con certificado y firma cuando corresponda."
-    protocol_evidence: "La ayuda documenta certificado y firma de documentos, sin contrato de integración exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A17A", "A17B", "A17C"]
-    reason: "La documentación no acredita cliente JS, formato aceptado, callback ni endpoint."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar el flujo público del registro hasta antes de la autenticación."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al Registro General Electrónico mediante ATEKA; la firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El flujo oficial enlaza www.navarra.es → administracionelectronica.navarra.es/RGE2 → ateka.navarra.es/ateka/router?ReturnUrl=TOKEN → /ateka/Certificate/login?returnUrl=TOKEN. Dos sesiones públicas confirmaron que el valor efímero cambia entre sesiones y coincide exactamente source-target dentro de cada sesión. Chromium NetLog observó SSL_CLIENT_CERT_REQUESTED/URL_REQUEST_DELEGATE_CERTIFICATE_REQUESTED en /Certificate/login; el runtime autenticado controlado alcanzó RGE. En EnviarSinFirma.aspx, Firmar y enviar intentó un POST WebForms ordinario y no invocó FirmarXML/AutoScript/MiniApplet; el POST final se bloqueó antes de salir."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A17A", "A17B", "A17C", "NAVARRA-RGE-ENTRY-2026-08-18", "NAVARRA-ATEKA-CLIENTCERT-2026-08-18", "NAVARRA-RGE-AUTH-RUNTIME-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con host, path y token efímero ReturnUrl→returnUrl enlazados de forma exacta; E2E pendiente. No se infieren formato, algoritmo ni cliente de firma y no se implementa el POST final de presentación."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E físico Android del acceso ATEKA con certificado y retorno a RGE, deteniéndose antes del POST final; verificar por separado cualquier contrato de firma antes de implementarlo."
 
   - inventory_id: "ES-PUB-0115"
     surface_key: "euskadi-sede-electronica"
@@ -4058,24 +4066,24 @@ records:
     origin: "https://web.larioja.org"
     official_site: "https://web.larioja.org/oficina-electronica/"
     e_sede: "https://web.larioja.org/oficina-electronica/"
-    entry_url: "https://web.larioja.org/oficina-electronica/"
+    entry_url: "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
     procedure_page: "https://web.larioja.org/oficina-electronica/tramite?n=24697"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación electrónica con certificado y AutoFirma cuando el trámite lo requiere."
-    protocol_evidence: "Las páginas oficiales citan certificado y AutoFirma sin ABI ni endpoint portal-specific."
-    client_tls_auth: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso del trámite 24697 mediante CAS; la vía de certificado usa client TLS en /clientcertSSL/login. La firma documental posterior permanece sin contrato verificado."
+    protocol_evidence: "El flujo actual delega en ias1.larioja.org, CAS OFIVIR y /clientcertSSL/login: sin certificado responde 401/TLS CertificateRequest y el runtime autenticado retorna a /oficinavirtual/presentacion. No se infiere ABI de firma."
+    client_tls_auth: "SI"
     evidence_ids: ["D03", "A19A", "A19B", "A19C"]
-    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Inspeccionar el trámite publicado y sus assets sin presentar datos."
+    reason: "Contrato CLIENT_TLS_AUTH acotado implementado solo en QA, sin E2E; cliente JS, formato, algoritmo, callback y endpoint de firma documental siguen deliberadamente NO_VERIFICADO."
+    reviewed_at: "2026-08-18"
+    next_gate: "Observar el contrato exacto de firma documental tras autenticación, abortando antes de ejecutar la firma o presentación final."
 
 ```
 
@@ -4097,29 +4105,29 @@ records:
     autonomous_community: "Illes Balears"
     province_or_municipality: "Illes Balears"
     institution_name: "Consell Insular de Menorca"
-    surface_name: "Portal institucional del Consell Insular de Menorca"
+    surface_name: "Portal institucional del Consell Insular de Menorca — Sol·licitud genèrica"
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.cime.es"
     official_site: "https://www.cime.es/"
     e_sede: "https://seuelectronica.cime.es/"
-    entry_url: "https://www.cime.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    entry_url: "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    procedure_page: "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AUTOFIRMA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I01A", "I01B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Sol·licitud genèrica del Consell Insular de Menorca mediante TLS cliente; la firma AutoFirma y el envío administrativo posteriores quedan fuera del contrato implementado."
+    protocol_evidence: "El portal institucional enlaza la Carpeta Ciutadana actual; la Sol·licitud genèrica publica Tramitar, exige certificado para firmar y enviar y nombra AutoFirma. El flujo real pasa por Login.aspx y LoginCert.aspx conservando el parámetro efímero URL; sin certificado LoginCert devuelve 403, mientras el runtime autenticado con certificado autorizado alcanza formsol.aspx. No se observó ABI de firma antes del formulario protegido."
+    client_tls_auth: "SI"
+    evidence_ids: ["D12", "I01A", "I01B", "MENORCA-GENERIC-2026-08-18", "MENORCA-CLIENT-TLS-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para el origin, source, target y parámetro URL enlazado exactos; E2E Android pendiente. AutoFirma está documentado por el portal, pero formato, algoritmo, payload, callback y envío final no se infieren ni se implementan."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificar E2E únicamente la autenticación TLS cliente en WebView físico; mantener la firma documental y la presentación final bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0118"
     surface_key: "menorca-sede-electronica"
@@ -4189,27 +4197,27 @@ records:
     institution_name: "Consell de Mallorca"
     surface_name: "Seu electrònica del Consell de Mallorca"
     surface_type: "SEDE"
-    origin: "https://seu.conselldemallorca.net"
+    origin: "https://cim.secimallorca.net"
     official_site: "https://seu.conselldemallorca.net/"
     e_sede: "https://seu.conselldemallorca.net/"
-    entry_url: "https://seu.conselldemallorca.net/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    entry_url: "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    procedure_page: "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://identificacionssl.sedipualba.es/"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I02B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al Registre Electrònic del Consell de Mallorca mediante el servidor SSL de identificación compartido de SEDIPUALB@; la firma documental posterior permanece fuera del contrato implementado."
+    protocol_evidence: "La sede oficial enlaza el Registre Electrònic del Consell de Mallorca. Su flujo público SEDIPUALB@ exige certificado digital y construye exactamente la transición desde /segex/identificacion_opciones.aspx?idtoken=TOKEN&idioma=ca hacia https://identificacionssl.sedipualba.es/?idtoken=TOKEN&idioma=ca&entidad=07700, enlazando el mismo idtoken. El trámite declara AutoFirma para la firma posterior, cuyo formato, algoritmo y ABI no se infieren."
+    client_tls_auth: "SI"
+    evidence_ids: ["I02B", "MALLORCA-REGISTRE-2026-08-18", "MALLORCA-SSL-IDENT-2026-08-18"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificación E2E separada del acceso con certificado y del paso de firma; mantener firma/presentación bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0121"
     surface_key: "eivissa-portal-institucional"
@@ -4253,23 +4261,23 @@ records:
     official_site: "https://seu.conselldeivissa.es/"
     e_sede: "https://seu.conselldeivissa.es/"
     entry_url: "https://seu.conselldeivissa.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    procedure_page: "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / AutoFirma"
+    protocol_family: "AUTOSCRIPT_LOCAL_CADES_IMPLICIT"
+    signature_format: "CAdES / DETACHED / IMPLICIT"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "Sin endpoint de firma estático: /sta/reg/autofirma.js descarga el payload con AutofirmaDownload y sube el resultado mediante AutofirmaUpload; Storage/Retrieve son auxiliares AutoFirma."
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma local CAdES de Instancia General tras autenticación con certificado, sin ejecutar presentación administrativa."
+    protocol_evidence: "La Instancia General vigente (PID 6269002703260065905043) devuelve authentication.autofirma=true tras autenticación controlada. Summary llama window.signFiles; /sta/reg/autofirma.js fija en Android SHA256withRSA, CAdES, headless=true, filter=encodedcert:<cert>;filter=nonexpired:, mode=implicit y MIME opcional, usando AutofirmaDownload/Upload same-origin."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I03B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["I03B", "EIVISSA-INSTANCIA-GENERAL-2026-08-18", "EIVISSA-REG-AUTOFIRMA-2026-08-18", "EIVISSA-CONTROLLED-AUTH-2026-08-18"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA limitado al origin/PID y al contrato Android CAdES SHA256 implícito demostrado; autenticación con certificado validada, pero no se realizó firma real, AutofirmaUpload, presentación, pago ni aceptación E2E."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar en dispositivo físico una firma segura sin presentación y comprobar aceptación del resultado antes de cualquier promoción E2E."
 
   - inventory_id: "ES-PUB-0123"
     surface_key: "formentera-portal-institucional"
@@ -4897,29 +4905,29 @@ records:
     autonomous_community: "Castilla y León"
     province_or_municipality: "Ávila (provincia)"
     institution_name: "Diputación Provincial de Ávila"
-    surface_name: "Portal oficial de Diputación Provincial de Ávila"
+    surface_name: "Diputación Provincial de Ávila — Instancia General"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.diputacionavila.es"
+    origin: "https://diputacionavila.sedelectronica.es"
     official_site: "https://www.diputacionavila.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.diputacionavila.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    e_sede: "https://diputacionavila.sedelectronica.es/"
+    entry_url: "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
     protocol_family: "NO_VERIFICADO"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP05A", "DP05B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia General (SIA 1786719): perfil QA-only para la entrada telemática exacta y la navegación Cl@ve observada; el paso Firmar usa un submit Wicket probado hasta el límite pre-red."
+    protocol_evidence: "Runtime autenticado llegó a 4. Firmar. El control llama wicketSubmitFormById con el componente viewFolderAdmissible:confirm. En v2.4 se activó el handler con intercepción previa a red: POST a la raíz, application/x-www-form-urlencoded, con id4c_hf_0 y viewFolderAdmissible:confirm; el POST fue abortado antes de alcanzar el servidor. Formato, algoritmo, signer y resultado post-firma siguen NO_VERIFICADO."
+    client_tls_auth: "CONDICIONAL"
+    evidence_ids: ["D06", "DP05A", "DP05B", "AVILA-INSTANCIA-2026-08-18", "AVILA-FIRMAR-2026-08-18"]
+    reason: "Implementación limitada a lanzamiento/navegación QA del trámite exacto. No implementa ni afirma firma criptográfica: el request Firmar solo se observó y abortó antes de red; formato, algoritmo, callback y resultado permanecen NO_VERIFICADO."
+    reviewed_at: "2026-08-18"
+    next_gate: "Observar una sesión de pre-firma posterior al POST solo si puede garantizarse aborto antes de cualquier operación criptográfica; nunca completar firma ni registro final."
 
   - inventory_id: "ES-PUB-0144"
     surface_key: "diputacion-badajoz-portal"
@@ -4931,25 +4939,26 @@ records:
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dip-badajoz.es"
     official_site: "https://www.dip-badajoz.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dip-badajoz.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    e_sede: "https://sede.dip-badajoz.es"
+    entry_url: "https://sede.dip-badajoz.es"
+    procedure_page: "https://sede.dip-badajoz.es/sede/tramitacionElectronica.do?asu_mod_cod=67&asu_cod=68&asunto=68&aplcorreo=4&ent_id=10&idioma=1"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MINIAPPLET"
+    protocol_family: "MINIAPPLET"
+    signature_format: "CADES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "NO_APLICA"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Instancia General de la Diputación de Badajoz mediante firma local CAdES-detached SHA256withRSA; la firma documental posterior queda fuera del contrato implementado."
+    protocol_evidence: "La portada oficial enlaza la Sede; el catálogo vigente 2026 expone Instancia General. El login público invoca firmar(formLogin.shaLogin.value, errorText, '', 'TEXTO', 0, pulsarFirmarIdentificateCallback, pulsarFirmarIdentificateCallbackError, true), que en firmaDigital.js SHA-256 9e3dced47cdf634d120c4783b22ae0f9e00be3d42fad13429de38f5ef5921483 resuelve MiniApplet.sign con CAdES SHA256withRSA y extraProperties policy=FirmaAGE, headless=true, filters=nonexpired:true;authCert:true."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP06A", "DP06B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP06A", "DP06B", "BADAJOZ-INSTANCIA-2026-08-18", "BADAJOZ-LOGIN-2026-08-18"]
+    reason: "Contrato público de login con certificado implementado en QA y limitado a autenticación: CAdES-detached SHA256withRSA sobre shaLogin con parámetros exactos y callback a firmaLogin. No se atribuye este tuple a la firma documental posterior; sin E2E."
+    reviewed_at: "2026-08-18"
+    next_gate: "Verificar E2E del acceso con certificado y, por separado, observar tras autenticación el contrato de firma documental de Instancia General sin ejecutar firma ni presentación."
+
 
   - inventory_id: "ES-PUB-0145"
     surface_key: "diputacion-barcelona-portal"
@@ -4957,29 +4966,29 @@ records:
     autonomous_community: "Cataluña"
     province_or_municipality: "Barcelona (provincia)"
     institution_name: "Diputació de Barcelona"
-    surface_name: "Portal oficial de Diputació de Barcelona"
+    surface_name: "Diputació de Barcelona — Solicitud genérica 2057"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.diba.cat"
+    origin: "https://seuelectronica.diba.cat"
     official_site: "https://www.diba.cat/es/"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.diba.cat/es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
+    e_sede: "https://seuelectronica.diba.cat/es/"
+    entry_url: "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"
+    procedure_page: "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "VÀLid"
     protocol_family: "NO_VERIFICADO"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud genérica 2057 con identificación VÀLid; el perfil implementa únicamente la entrada exacta y la navegación autenticada previa a firma."
+    protocol_evidence: "El runtime vigente de 2057 redirige desde tramits.diba.cat a valid.aoc.cat; la opción de certificado continúa a cert.valid.aoc.cat, cuyo TLS 1.2 emite CertificateRequest para RSA/ECDSA. El contrato de firma posterior a altaPeticio sigue NO_VERIFICADO."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP07A", "DP07B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DIBA-2057-2026-08-18", "DIBA-VALID-2026-08-18"]
+    reason: "Perfil QA-only limitado a la entrada exacta de Solicitud genérica 2057 y sus orígenes de identificación observados; no afirma ABI, formato, algoritmo, endpoint ni aceptación E2E de firma/presentación."
+    reviewed_at: "2026-08-18"
+    next_gate: "Con una credencial VÀLid disponible, ejecutar el altaPeticio intermedio autorizado y observar el estado pre-firma; detenerse antes de firma criptográfica y registro final."
 
   - inventory_id: "ES-PUB-0146"
     surface_key: "diputacion-burgos-portal"
@@ -6216,7 +6225,7 @@ grandes y explícitos:
    institucional.
 6. No existe inventario separado de proveedores compartidos, plataformas
    multi-tenant, SSO, Storage/Retrieve o endpoints tri-phase.
-7. Hay cuatro entradas con evidencia E2E delimitada y una sola evidencia exacta de `ClientCertRequest`; ningún otro registro hereda esos resultados.
+7. Hay cuatro entradas con evidencia E2E delimitada y dos evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
 8. Las variantes lingüísticas no crean registros; los dominios históricos y
    redirects solo se separan cuando existe una frontera funcional acreditada.
    Los candidatos INAGA de Aragón, el checker técnico de Castilla y León, el
@@ -6259,6 +6268,13 @@ Orden de expansión recomendado:
 
 ### Evidencia portal-specific
 
+[COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
+[COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
+[DIGITAL-SEDE-REG-2026-08-17]: https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica
+[HACIENDA-REG-2026-08-17]: https://sede.hacienda.gob.es/es-es/paginas/informacion
+[HACIENDA-PAG-REG-AGE-2026-08-17]: https://sede.administracion.gob.es/servicios-electronicos/registro-electronico-general-age
+[TESORO-REC-2026-08-17]: https://www.tesoropublico.gob.es/es/servicios/adhesion-al-codigo-de-buenas-practicas-para-deudores-hipotecarios-en-riesgo-de
+[UNED-REG-2026-08-17]: https://uned.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [PUERTOS-REG-2026-08-17]: https://puertos.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [DSCA-REG-2026-08-16]: https://www.dsca.gob.es/es/derechos-sociales/derechos-animales/premios/artisticos/v-certamen-clipmetraje
 [POLICIA-SEDE-2026-08-15]: https://sede.policia.gob.es/
@@ -6304,6 +6320,7 @@ Orden de expansión recomendado:
 [P13A]: https://sede.us.es/oficina/tramites/acceso.do?entity=1098&proc=ISG_01
 [BNE-REG-2026-08-16]: https://sede.bne.gob.es/es/tramites/quejas-sugerencias
 [OEPM-PROTEGEO-2026-08-17]: https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/
+[FUNCIONA-PUBLIC-2026-08-17]: https://sede.funciona.gob.es/es/home
 [CERVANTES-REG-2026-08-17]: https://cervantes.sede.gob.es/servicio?id=Registro-Electrónico-General
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
 [P14]: https://reg.redsara.es/es/
@@ -6346,6 +6363,8 @@ Orden de expansión recomendado:
 
 [A01A]: https://www.juntadeandalucia.es/servicios/sede/sobre-sede/titularidad.html
 [A01B]: https://www.juntadeandalucia.es/servicios/sede
+[JUNTA-VEA-PEG-2026-08-17]: https://www.juntadeandalucia.es/servicios/sede/tramites.html
+[JUNTA-VEA-RUNTIME-2026-08-17]: https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA
 [A02A]: https://www.aragon.es/tramites
 [A02B]: https://www.aragon.es/tramites/identificacion-y-firma-electronica
 [A03A]: https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica
@@ -6389,6 +6408,7 @@ Orden de expansión recomendado:
 [A13A]: https://tramites.juntaex.es/
 [A13B]: https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMA
 [A13C]: https://sede.juntaex.es/SEDE/
+[EXT-SEDE-ALIAS-2026-08-18]: ../autonomous/2026-08-18-extremadura-sede-anterior-alias.md
 [A13D]: https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos
 [A13E]: https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_REGGENERAL_INFO
 [A13F]: https://tramites.juntaex.es/sta/resources/js/sta-autofirma-lote.js
@@ -6458,10 +6478,14 @@ availability, certificado, firma ni contrato técnico.
 [DP04A]: https://www.dipalme.org
 [DP05A]: https://www.diputacionavila.es
 [DP05B]: https://diputacionavila.sedelectronica.es/
+[AVILA-INSTANCIA-2026-08-18]: https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[AVILA-FIRMAR-2026-08-18]: https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [DP06A]: https://www.dip-badajoz.es
 [DP06B]: https://sede.dip-badajoz.es/
 [DP07A]: https://www.diba.cat/es/
 [DP07B]: https://seuelectronica.diba.cat/es/suport-a-la-tramitaci%C3%B3
+[DIBA-VALID-2026-08-18]: https://valid.aoc.cat/o/oauth2/auth
+[DIBA-2057-2026-08-18]: https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica
 [DP08A]: https://burgos.es
 [DP08B]: https://sede.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO
 [DP08C]: https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO
@@ -6539,11 +6563,15 @@ availability, certificado, firma ni contrato técnico.
 [DP39B]: https://www.ebizkaia.eus/es/medios-de-identificacion
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
+[MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
+[MENORCA-CLIENT-TLS-2026-08-18]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html
 [DIGITAL-REG-2026-08-17]: https://digital.sede.gob.es/
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
+[GVA-DGM15602-2026-08-18]: https://sede.gva.es/es/detall-tramit?id_proc=15602
+[GVA-CLIENTTLS-2026-08-18]: https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html
 [CULTURA-REG-2026-08-17]: https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [JUVENTUD-REG-2026-08-17]: https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [IGUALDAD-REG-2026-08-17]: https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General
@@ -6557,3 +6585,7 @@ availability, certificado, firma ni contrato técnico.
 [TRANSPORTES-QYS-2026-08-17]: https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible
 [INTERIOR-REG-2026-08-17]: https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL
 [MIVAU-REG-2026-08-17]: https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+
+[EIVISSA-INSTANCIA-GENERAL-2026-08-18]: https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043
+[EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
+[EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043

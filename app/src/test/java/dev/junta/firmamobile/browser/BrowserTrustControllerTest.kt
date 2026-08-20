@@ -39,6 +39,36 @@ class BrowserTrustControllerTest {
     }
 
     @Test
+    fun sharedClaveOriginIsTrustedOnlyThroughTheActiveSelectedProfile() {
+        val claveUrl = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        val airefId = ProfileId("airef-instancia-general")
+        val minecoId = ProfileId("ministerio-economia-instancia-generica")
+
+        val airef = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == airefId }
+        val airefController = BrowserTrustController(
+            BrowserUrlPolicy(registry, airefId),
+            SensitiveFlowInvalidator {},
+        )
+        assertEquals(airefId, airefController.navigate(airef.startUrl.toASCIIString()).activeProfileId)
+        val airefClave = airefController.navigate(claveUrl)
+        assertEquals(TrustMode.TRUSTED_BROWSE, airefClave.resolution.trustMode)
+        assertEquals(airefId, airefClave.activeProfileId)
+
+        val mineco = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == minecoId }
+        val minecoController = BrowserTrustController(
+            BrowserUrlPolicy(registry, minecoId),
+            SensitiveFlowInvalidator {},
+        )
+        assertEquals(minecoId, minecoController.navigate(mineco.startUrl.toASCIIString()).activeProfileId)
+        val minecoClave = minecoController.navigate(claveUrl)
+        assertEquals(TrustMode.TRUSTED_BROWSE, minecoClave.resolution.trustMode)
+        assertEquals(minecoId, minecoClave.activeProfileId)
+
+        val freshAirefPolicy = BrowserUrlPolicy(registry, airefId)
+        assertEquals(TrustMode.BROWSE_ONLY, freshAirefPolicy.resolve(claveUrl).trustMode)
+    }
+
+    @Test
     fun directNavigationToAnotherActiveCatalogProfileFailsClosed() {
         val qaRegistry = SiteProfileRegistry(
             BuiltInSiteProfiles.catalog,

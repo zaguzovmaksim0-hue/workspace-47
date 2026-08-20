@@ -29,16 +29,17 @@ class SiteProfileRegistry(
     fun profileMetadata(id: ProfileId): SiteProfile? = profiles.singleOrNull { it.profileId == id }
 
     fun resolve(uri: URI): ResolvedSiteProfile? {
-        if (!uri.scheme.equals("https", ignoreCase = true) || uri.host == null || uri.userInfo != null) return null
-        if (uri.port != -1 && uri.port != 443) return null
-        val origin = runCatching { ExactOrigin.parse("https://${uri.host}") }.getOrNull() ?: return null
+        val origin = exactOrigin(uri) ?: return null
         val resolved = resolve(origin) ?: return null
-        if (resolved.profile.compatibilityStatus == CompatibilityStatus.BROWSE_ONLY &&
-            uri.toASCIIString() != resolved.profile.startUrl.toASCIIString()
-        ) {
-            return null
-        }
-        return resolved
+        return resolved.takeIf { acceptsBrowseOnlyUrl(it.profile, uri) }
+    }
+
+    fun resolveForProfile(profileId: ProfileId, uri: URI): ResolvedSiteProfile? {
+        val profile = profile(profileId) ?: return null
+        val origin = exactOrigin(uri) ?: return null
+        val trustMode = profile.trustMode(origin) ?: return null
+        return ResolvedSiteProfile(profile, origin, trustMode)
+            .takeIf { acceptsBrowseOnlyUrl(profile, uri) }
     }
 
     fun resolve(uri: Uri): ResolvedSiteProfile? = runCatching { URI(uri.toString()) }
@@ -48,12 +49,20 @@ class SiteProfileRegistry(
         ExactOrigin.fromTrusted(origin)?.let(::resolve)
 
     fun resolveRedirect(activeProfileId: ProfileId, uri: URI): ResolvedSiteProfile? {
-        val direct = resolve(uri) ?: return null
-        if (direct.profile.profileId != activeProfileId || direct.origin !in direct.profile.redirectOrigins) {
-            return null
-        }
+        val direct = resolveForProfile(activeProfileId, uri) ?: return null
+        if (direct.origin !in direct.profile.redirectOrigins) return null
         return direct.copy(trustMode = TrustMode.TRUSTED_BROWSE)
     }
+
+    private fun exactOrigin(uri: URI): ExactOrigin? {
+        if (!uri.scheme.equals("https", ignoreCase = true) || uri.host == null || uri.userInfo != null) return null
+        if (uri.port != -1 && uri.port != 443) return null
+        return runCatching { ExactOrigin.parse("https://${uri.host}") }.getOrNull()
+    }
+
+    private fun acceptsBrowseOnlyUrl(profile: SiteProfile, uri: URI): Boolean =
+        profile.compatibilityStatus != CompatibilityStatus.BROWSE_ONLY ||
+            uri.toASCIIString() == profile.startUrl.toASCIIString()
 
     private fun resolve(origin: ExactOrigin): ResolvedSiteProfile? {
         val matches = profiles.asSequence()
