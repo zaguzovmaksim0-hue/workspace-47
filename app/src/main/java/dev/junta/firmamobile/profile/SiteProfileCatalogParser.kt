@@ -286,6 +286,7 @@ object SiteProfileCatalogParser {
             }
             if (p.profileId.value == TRANSPARENCIA_PROFILE_ID) {
                 validateTransparenciaProfile(p)
+            }
             if (p.profileId.value == EIVISSA_PROFILE_ID) {
                 validateEivissaProfile(p)
             }
