@@ -44,6 +44,19 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `Diputacion Sevilla Clave origins remain globally ambiguous and profile scoped`() {
+        val profileId = ProfileId("diputacion-sevilla-sede")
+        val source = URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
+        val target = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
+
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(source))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(target))
+        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, source)?.trustMode)
+        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, target)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+    }
+
+    @Test
     fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")

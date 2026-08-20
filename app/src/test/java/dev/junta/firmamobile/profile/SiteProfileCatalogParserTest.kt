@@ -559,6 +559,17 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun diputacionSevillaClaveOwnershipStaysClosedToTheReviewedProfileId() {
+        val reviewedId = "\"profileId\": \"diputacion-sevilla-sede\""
+        val unreviewedId = "\"profileId\": \"unreviewed-sevilla-clave-owner\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(reviewedId))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(reviewedId, unreviewedId))
+        }
+    }
+
+    @Test
     fun directClientAuthCannotUseRedirectOriginAsSourceOutsideTheReviewedNavarraProfile() {
         val navarraId = "\"profileId\": \"navarra-sede-registro-general\""
         val unreviewedId = "\"profileId\": \"navarra-unreviewed-direct-client-auth\""

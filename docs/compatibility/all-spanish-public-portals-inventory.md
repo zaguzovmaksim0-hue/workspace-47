@@ -197,10 +197,10 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 80 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 84 |
-| Entradas restantes fuera de ambos estados | 99 |
-| Evidencia exacta de `ClientCertRequest` | 2 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 81 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 85 |
+| Entradas restantes fuera de ambos estados | 98 |
+| Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 80 |
+| `IMPLEMENTED_NOT_E2E` | 81 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 92 |
+| `BROWSE_ONLY` | 91 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5726,20 +5726,19 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH_CLAVE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP32A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
-
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede ofrece acceso mediante Cl@ve; la rama DNIe/certificado delega en Cl@ve y alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior queda fuera del perfil."
+    protocol_evidence: "Chromium real y trazado HTTP público confirmaron formLogin → Proxy2/ServiceProvider → AFIRMA en Proxy2/ServiceRedirect → IdP2/AuthenticateCitizen. TLS 1.2 en pasarela-ident.clave.gob.es emitió CertificateRequest con tipos RSA/ECDSA y sin lista de CA de cliente."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP32A", "SEVILLA-SEDE-CLAVE-2026-08-21", "SEVILLA-CLAVE-TLS-2026-08-21"]
+    reason: "Perfil QA-only limitado al CLIENT_TLS_AUTH de la rama Cl@ve certificado observada; no afirma ABI/formato/algoritmo/callback de AutoFirma, procedimiento de firma exacto ni presentación E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar autenticación controlada con certificado y, por separado, observar el contrato de firma de un procedimiento exacto antes de cualquier ampliación o VERIFIED_E2E."
   - inventory_id: "ES-PUB-0171"
     surface_key: "diputacion-soria-sede"
     administrative_level: "PROVINCIAL"

@@ -472,6 +472,44 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactDiputacionSevillaClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val sevilla = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = sevilla.observeTopLevelNavigation(
+            SEVILLA_DIPUTACION_PROFILE, SEVILLA_DIPUTACION_SOURCE, SEVILLA_DIPUTACION_TARGET, 89, true,
+        )
+
+        assertEquals(SEVILLA_DIPUTACION_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            sevilla.observeTopLevelNavigation(
+                SEVILLA_DIPUTACION_PROFILE, SEVILLA_DIPUTACION_SOURCE, SEVILLA_DIPUTACION_TARGET, 89, true,
+            ),
+        )
+
+        listOf(
+            SEVILLA_DIPUTACION_SOURCE.replace("ServiceRedirect", "ServiceProvider") to SEVILLA_DIPUTACION_TARGET,
+            SEVILLA_DIPUTACION_SOURCE to SEVILLA_DIPUTACION_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            SEVILLA_DIPUTACION_SOURCE to "$SEVILLA_DIPUTACION_TARGET?extra=1",
+            SEVILLA_DIPUTACION_SOURCE to SEVILLA_DIPUTACION_TARGET.replace(
+                "pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example",
+            ),
+            SEVILLA_DIPUTACION_SOURCE to SEVILLA_DIPUTACION_TARGET.replace(
+                "pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443",
+            ),
+        ).forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    SEVILLA_DIPUTACION_PROFILE, source, target, 90L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactTwoStageValladolidRedirectAuthorizesOnlyTheObservedClientTlsPort() {
         val valladolid = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
 
@@ -1033,6 +1071,9 @@ class ClientAuthNavigationAuthorizerTest {
         val AIREF_PROFILE = ProfileId("airef-instancia-general")
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val SEVILLA_DIPUTACION_PROFILE = ProfileId("diputacion-sevilla-sede")
+        const val SEVILLA_DIPUTACION_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val SEVILLA_DIPUTACION_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         val MALLORCA_PROFILE = ProfileId("consell-mallorca-sede")
         const val MALLORCA_TOKEN = "12345678-w47SyntheticMallorcaToken0123456789"

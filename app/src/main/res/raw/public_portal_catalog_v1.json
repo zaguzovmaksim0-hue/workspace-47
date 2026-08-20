@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "e0cb6c3704f7d1db5a966d50d80e7d6658c31f0c0ad074a446bb2c74355d1352",
+  "sourceRevision": "7bad88a46f150776647f756c691ad4a6f2d65f62d5b5f2ff6e3afc1bb577134a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4452,28 +4452,31 @@
     {
       "portalId": "diputacion-sevilla-sede",
       "inventoryId": "ES-PUB-0170",
-      "profileId": null,
+      "profileId": "diputacion-sevilla-sede",
       "displayName": "Sede electrónica de Diputación de Sevilla",
       "organization": "Diputación de Sevilla",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "purpose": "La Sede ofrece acceso mediante Cl@ve; la rama DNIe/certificado delega en Cl@ve y alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior queda fuera del perfil.",
       "entryUrl": "https://sedeelectronicadipusevilla.es",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH_CLAVE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP32A"
+        "DP32A",
+        "SEVILLA-SEDE-CLAVE-2026-08-21",
+        "SEVILLA-CLAVE-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado al CLIENT_TLS_AUTH de la rama Cl@ve certificado observada; no afirma ABI/formato/algoritmo/callback de AutoFirma, procedimiento de firma exacto ni presentación E2E."
     },
     {
       "portalId": "diputacion-soria-sede",
