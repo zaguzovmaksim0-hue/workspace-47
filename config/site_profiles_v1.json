@@ -1770,6 +1770,27 @@
       ]
     },
     {
+      "profileId": "diputacion-malaga-instancia-general",
+      "profileVersion": 1,
+      "displayName": "Diputación de Málaga — Instancia general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
+      "initiatorOrigins": ["https://sede.malaga.es"],
+      "redirectOrigins": ["https://clave.malaga.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.malaga.es/instancia-general/","reviewedOn":"2026-08-20"},
+        {"url":"https://sede.malaga.es/instancia-general/nueva-instancia-general/","reviewedOn":"2026-08-20"},
+        {"url":"https://clave.malaga.es/clave.php","reviewedOn":"2026-08-20"}
+      ]
+    },
+    {
       "profileId": "diputacion-pontevedra-instancia-xenerica",
       "profileVersion": 1,
       "displayName": "Deputación de Pontevedra — Instancia xenérica",

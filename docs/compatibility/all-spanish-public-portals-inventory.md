@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 266 |
-| Fuentes oficiales totales registradas | 278 |
+| Fuentes oficiales portal-specific registradas | 269 |
+| Fuentes oficiales totales registradas | 281 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 131 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 135 |
-| Entradas restantes fuera de ambos estados | 48 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 132 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 136 |
+| Entradas restantes fuera de ambos estados | 47 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 131 |
+| `IMPLEMENTED_NOT_E2E` | 132 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 41 |
+| `BROWSE_ONLY` | 40 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5559,24 +5559,24 @@ records:
     origin: "https://sede.malaga.es"
     official_site: "https://sede.malaga.es"
     e_sede: "https://sede.malaga.es"
-    entry_url: "https://sede.malaga.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
+    procedure_page: "https://sede.malaga.es/instancia-general/"
     certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLAVE_GATEWAY_UNVERIFIED"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia general exacta con navegación QA hasta el handoff local a Cl@ve; no se expone firma, selección de certificado ni client-auth."
+    protocol_evidence: "La ficha oficial de Instancia general enlaza Iniciar el Trámite a /instancia-general/nueva-instancia-general/. Ese launch público publica un POST a https://clave.malaga.es/clave.php; el POST vigente devuelve Conectando a cl@ve... y un formulario hacia pasarela.clave.gob.es/Proxy2/ServiceProvider. El perfil permite solo sede.malaga.es y el primer handoff local clave.malaga.es; la pasarela nacional queda fail-closed y el contrato de firma posterior sigue NO_VERIFICADO."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP26A", "DP26B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP26A", "DP26B", "MALAGA-INSTANCIA-2026-08-20", "MALAGA-INSTANCIA-LAUNCH-2026-08-20", "MALAGA-CLAVE-2026-08-20"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta hasta el primer handoff Cl@ve observado. No expone SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, ABI de firma, formato, algoritmo ni endpoint; la autenticación Cl@ve completa y el registro final no se ejecutaron."
+    reviewed_at: "2026-08-20"
+    next_gate: "Con credenciales de prueba autorizadas, continuar el flujo Cl@ve hasta un estado autenticado pre-firma y observar el contrato posterior; detenerse antes de firma criptográfica y asiento registral final."
 
   - inventory_id: "ES-PUB-0165"
     surface_key: "diputacion-ourense-sede"
@@ -6603,6 +6603,9 @@ availability, certificado, firma ni contrato técnico.
 [DP25F]: https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/instalar_autofirma
 [DP26A]: https://sede.malaga.es
 [DP26B]: https://sede.malaga.es/politica-de-firma-electronica/
+[MALAGA-INSTANCIA-2026-08-20]: https://sede.malaga.es/instancia-general/
+[MALAGA-INSTANCIA-LAUNCH-2026-08-20]: https://sede.malaga.es/instancia-general/nueva-instancia-general/
+[MALAGA-CLAVE-2026-08-20]: https://clave.malaga.es/clave.php
 [DP27A]: https://sede.depourense.es
 [DP27B]: https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMASELEC
 [DP28A]: https://sede.diputaciondepalencia.es

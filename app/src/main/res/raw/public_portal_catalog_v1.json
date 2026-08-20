@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d32a4d56bea91719d2445557f16806b5f63273ec1d547713ad30b2268e8e9ba0",
+  "sourceRevision": "07fdb61d5f00121096c8ae05e00e1ee7de2feb69436989927aef4bc05ebf2b96",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4462,29 +4462,32 @@
     {
       "portalId": "diputacion-malaga-sede",
       "inventoryId": "ES-PUB-0164",
-      "profileId": null,
+      "profileId": "diputacion-malaga-instancia-general",
       "displayName": "Sede electrónica de Diputación Provincial de Málaga",
       "organization": "Diputación Provincial de Málaga",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.malaga.es",
+      "purpose": "Instancia general exacta con navegación QA hasta el handoff local a Cl@ve; no se expone firma, selección de certificado ni client-auth.",
+      "entryUrl": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLAVE_GATEWAY_UNVERIFIED",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP26A",
-        "DP26B"
+        "DP26B",
+        "MALAGA-INSTANCIA-2026-08-20",
+        "MALAGA-INSTANCIA-LAUNCH-2026-08-20",
+        "MALAGA-CLAVE-2026-08-20"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-20",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta hasta el primer handoff Cl@ve observado. No expone SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, ABI de firma, formato, algoritmo ni endpoint; la autenticación Cl@ve completa y el registro final no se ejecutaron."
     },
     {
       "portalId": "diputacion-ourense-sede",

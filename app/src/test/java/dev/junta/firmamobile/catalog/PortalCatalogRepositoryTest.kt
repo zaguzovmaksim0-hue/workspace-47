@@ -136,6 +136,7 @@ class PortalCatalogRepositoryTest {
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "diputacion-pontevedra-instancia-xenerica",
+                "diputacion-malaga-instancia-general",
                 "eivissa-sede-electronica",
                 "diputacion-salamanca-instancia-general",
                 "catalunya-peticio-generica-client-auth",

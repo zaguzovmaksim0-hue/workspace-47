@@ -75,6 +75,7 @@ class JuntaOriginPolicyTest {
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val bizkaia = ProfileId("diputacion-bizkaia-instancia-generica")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
+    private val malaga = ProfileId("diputacion-malaga-instancia-general")
     private val avila = ProfileId("diputacion-avila-instancia-general")
     private val salamanca = ProfileId("diputacion-salamanca-instancia-general")
     private val teruel = ProfileId("diputacion-teruel-instancia-general")
@@ -152,6 +153,8 @@ class JuntaOriginPolicyTest {
             "www1.tea.hacienda.gob.es",
             "sede.tenerife.es",
             "transparencia.sede.gob.es",
+            "sede.malaga.es",
+            "clave.malaga.es",
             "www.caib.es",
             "sede.cmt.gob.es",
             "intranet.caib.es",
@@ -457,6 +460,23 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"),
                 barcelona2057,
+            ),
+        )
+        assertEquals(
+            setOf("sede.malaga.es", "clave.malaga.es"),
+            JuntaOriginPolicy.browserAllowedHosts(malaga),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(malaga).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.malaga.es/instancia-general/nueva-instancia-general/"),
+                malaga,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                malaga,
             ),
         )
         assertEquals(
