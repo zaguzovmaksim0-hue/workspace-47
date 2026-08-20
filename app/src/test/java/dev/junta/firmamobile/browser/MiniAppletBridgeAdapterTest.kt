@@ -374,6 +374,76 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun exactDiputacionBadajozAutoScriptCallNormalizesTheLoginChallengeToSha256Cades() {
+        val result = adapterFor(BADAJOZ_PROFILE_ID).route(
+            rawMessage = badajozMessage(),
+            sourceOrigin = BADAJOZ_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 49,
+            currentPageUrl = BADAJOZ_LOGIN_PAGE_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(BADAJOZ_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(BADAJOZ_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.dip-badajoz.es", request.context.origin.host)
+            assertEquals(49, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA256_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(BADAJOZ_CHALLENGE.encodeToByteArray(), data)
+                    assertEquals(BADAJOZ_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun diputacionBadajozRejectsWrongProfileOriginTupleAndPropertiesWithoutBroadening() {
+        assertTrue(
+            adapterFor(BADAJOZ_PROFILE_ID).route(
+                badajozMessage(),
+                Uri.parse("https://sede.dip-badajoz.es.evil.example"),
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor("junta-andalucia").route(
+                badajozMessage(),
+                BADAJOZ_ORIGIN,
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor(BADAJOZ_PROFILE_ID).route(
+                badajozMessage(),
+                BADAJOZ_ORIGIN,
+                true,
+                currentPageUrl = "https://sede.dip-badajoz.es/portal/inicio.do",
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        listOf(
+            badajozMessage(algorithm = "SHA1withRSA"),
+            badajozMessage(algorithm = "SHA512withRSA"),
+            badajozMessage(format = "XAdES Detached"),
+            badajozMessage(extraProperties = "mode=implicit"),
+            badajozMessage(extraProperties = JSONObject.NULL),
+            badajozMessage(dataB64 = Base64.getEncoder().encodeToString(byteArrayOf(0x00, 0x01))),
+        ).forEach { message ->
+            assertTrue(
+                adapterFor(BADAJOZ_PROFILE_ID).route(
+                    message,
+                    BADAJOZ_ORIGIN,
+                    true,
+                    currentPageUrl = BADAJOZ_LOGIN_PAGE_URL,
+                ) is MiniAppletBridgeRouteResult.Rejected,
+            )
+        }
+    }
+
+    @Test
     fun cantabriaRecRejectsWrongProfileOriginChallengeTupleAndPropertiesWithoutGenericBroadening() {
         assertEquals(
             SigningErrorCode.ORIGIN_NOT_ALLOWED,
@@ -551,6 +621,72 @@ class MiniAppletBridgeAdapterTest {
                     dataB64 = Base64.getEncoder().encodeToString(
                         (SEVILLA_CHALLENGE.dropLast(1) + "!").encodeToByteArray(),
                     ),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun exactAirefAutoScriptCallNormalizesOnlyTheProtectedDynamicPayloadTuple() {
+        val result = adapterFor(AIREF_PROFILE_ID).route(
+            rawMessage = airefMessage(),
+            sourceOrigin = AIREF_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 52,
+            currentPageUrl = AIREF_SIGNING_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(AIREF_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.airef.es", request.context.origin.host)
+            assertEquals(52, request.context.navigationEpoch)
+            assertEquals(AIREF_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.XADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(AIREF_PAYLOAD, data)
+                    assertEquals("", properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun airefBridgeRejectsEveryExpansionOfTheObservedProtectedContract() {
+        fun rejected(
+            rawMessage: String = airefMessage(),
+            origin: Uri = AIREF_ORIGIN,
+            pageUrl: String? = AIREF_SIGNING_URL,
+        ): Boolean = adapterFor(AIREF_PROFILE_ID).route(
+            rawMessage = rawMessage,
+            sourceOrigin = origin,
+            isMainFrame = true,
+            navigationEpoch = 53,
+            currentPageUrl = pageUrl,
+        ) is MiniAppletBridgeRouteResult.Rejected
+
+        assertTrue(rejected(origin = Uri.parse("https://sede.airef.es.evil.example")))
+        assertTrue(rejected(pageUrl = null))
+        assertTrue(rejected(pageUrl = "https://sede.airef.es/invesiteRE/action/solicitud/view"))
+        assertTrue(rejected(pageUrl = "$AIREF_SIGNING_URL&extra=1"))
+        assertTrue(rejected(pageUrl = "https://sede.airef.es/invesiteRE/action/solicitud/view?id=abc"))
+        assertTrue(rejected(pageUrl = "$AIREF_SIGNING_URL#fragment"))
+        assertTrue(rejected(rawMessage = airefMessage(algorithm = "SHA256withRSA")))
+        assertTrue(rejected(rawMessage = airefMessage(format = "XAdES Enveloping")))
+        assertTrue(rejected(rawMessage = airefMessage(extraProperties = "")))
+        assertTrue(
+            rejected(
+                rawMessage = airefMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(ByteArray(31) { 1 }),
+                ),
+            ),
+        )
+        assertTrue(
+            rejected(
+                rawMessage = airefMessage(
+                    dataB64 = Base64.getEncoder().encodeToString(ByteArray(33) { 1 }),
                 ),
             ),
         )
@@ -1366,6 +1502,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun airefMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(AIREF_PAYLOAD),
+        algorithm: String = "SHA1withRSA",
+        format: String = "XAdES",
+        extraProperties: Any = JSONObject.NULL,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private fun cdtiMessage(
         dataB64: String = CDTI_CHALLENGE + "=",
         algorithm: String = "SHA512withRSA",
@@ -1506,6 +1657,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun badajozMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(BADAJOZ_CHALLENGE.encodeToByteArray()),
+        algorithm: String = "SHA256withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = BADAJOZ_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
@@ -1525,6 +1691,12 @@ class MiniAppletBridgeAdapterTest {
         const val SEVILLA_SAFE_DESCRIPTION =
             "Acceso con certificado a la Agencia Tributaria de Sevilla"
         const val SEVILLA_CHALLENGE = "0123456789abcdef0123456789abcdefABCDEFGH"
+        val AIREF_ORIGIN: Uri = Uri.parse("https://sede.airef.es")
+        const val AIREF_PROFILE_ID = "airef-instancia-general"
+        const val AIREF_PROTOCOL_ID = "airef-xades-enveloping-v1"
+        const val AIREF_SIGNING_URL =
+            "https://sede.airef.es/invesiteRE/action/solicitud/view?id=4242"
+        val AIREF_PAYLOAD = ByteArray(32) { index -> (index + 1).toByte() }
         val CDTI_ORIGIN: Uri = Uri.parse("https://sede.cdti.gob.es")
         const val CDTI_PROFILE_ID = "cdti-certificate-validation"
         const val CDTI_PROTOCOL_ID = "cdti-xades-enveloping-v1"
@@ -1567,6 +1739,14 @@ class MiniAppletBridgeAdapterTest {
             "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true"
         const val LLEIDA_LOGIN_PAGE_URL =
             "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
+        val BADAJOZ_ORIGIN: Uri = Uri.parse("https://sede.dip-badajoz.es")
+        const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
+        const val BADAJOZ_PROTOCOL_ID = "diputacion-badajoz-login-cades-v1"
+        const val BADAJOZ_CHALLENGE = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        const val BADAJOZ_EXTRA_PROPERTIES =
+            "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true"
+        const val BADAJOZ_LOGIN_PAGE_URL =
+            "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
         val JCCM_DATA = "ABCDE".encodeToByteArray()
         const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =
