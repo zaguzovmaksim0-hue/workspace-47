@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "57ccb40a6a5e58aa1174a80b0931694f5fe7cbeb315ed5966e2188fbf4e9aeb9",
+  "sourceRevision": "a28d86b786551a330315c9051792172dca0ae9e94a4e5e33215786cf30483d2b",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4353,8 +4353,8 @@
         "DP28A",
         "DP28B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-20",
+      "limitations": "Entrada oficial y origin revisados en runtime; la sede responde y delega a OpenSIAC, pero procedimiento, contrato técnico y firma real no fueron verificados."
     },
     {
       "portalId": "diputacion-pontevedra-sede",

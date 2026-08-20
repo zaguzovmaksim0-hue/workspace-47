@@ -5616,8 +5616,8 @@ records:
     protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D06", "DP28A", "DP28B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
+    reason: "Entrada oficial y origin revisados en runtime; la sede responde y delega a OpenSIAC, pero procedimiento, contrato técnico y firma real no fueron verificados."
+    reviewed_at: "2026-08-20"
     next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
 
   - inventory_id: "ES-PUB-0167"
