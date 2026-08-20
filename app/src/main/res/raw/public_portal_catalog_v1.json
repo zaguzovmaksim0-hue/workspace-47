@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "cf260bfb127c56669e1775defd646f3928ae7c85c6ff0bae0229981c9ba839cb",
+  "sourceRevision": "57ccb40a6a5e58aa1174a80b0931694f5fe7cbeb315ed5966e2188fbf4e9aeb9",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3702,26 +3702,31 @@
     {
       "portalId": "diputacion-avila-portal",
       "inventoryId": "ES-PUB-0143",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Ávila",
+      "profileId": "diputacion-avila-instancia-general",
+      "displayName": "Diputación Provincial de Ávila — Instancia General",
       "organization": "Diputación Provincial de Ávila",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.diputacionavila.es",
-      "observedMechanisms": [],
+      "purpose": "Instancia General (SIA 1786719): perfil QA-only para la entrada telemática exacta y la navegación Cl@ve observada; el paso Firmar usa un submit Wicket probado hasta el límite pre-red.",
+      "entryUrl": "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP05A",
-        "DP05B"
+        "DP05B",
+        "AVILA-INSTANCIA-2026-08-18",
+        "AVILA-FIRMAR-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Implementación limitada a lanzamiento/navegación QA del trámite exacto. No implementa ni afirma firma criptográfica: el request Firmar solo se observó y abortó antes de red; formato, algoritmo, callback y resultado permanecen NO_VERIFICADO."
     },
     {
       "portalId": "diputacion-badajoz-portal",

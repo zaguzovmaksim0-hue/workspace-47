@@ -1710,8 +1710,11 @@ object SiteProfileCatalogParser {
         firstOwner: ProfileId,
         secondOwner: ProfileId,
     ): Boolean =
-        (setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
-            origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)) ||
+        (setOf(firstOwner.value, secondOwner.value).let { owners ->
+            owners.size == 2 &&
+                owners.all { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID) } &&
+                origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+        }) ||
             (setOf(firstOwner.value, secondOwner.value) == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) &&
                 origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN)
 
@@ -2045,6 +2048,7 @@ object SiteProfileCatalogParser {
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
+    private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
     private const val AIREF_START_URL =

@@ -87,6 +87,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-badajoz-portal"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),

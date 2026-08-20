@@ -60,6 +60,7 @@ class JuntaOriginPolicyTest {
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
+    private val avila = ProfileId("diputacion-avila-instancia-general")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -136,6 +137,8 @@ class JuntaOriginPolicyTest {
             "cert.valid.aoc.cat",
             "aplicacions.diba.cat",
             "tramits.diba.cat",
+            "diputacionavila.sedelectronica.es",
+            "pasarela-ident-sistemas.clave.gob.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -252,6 +255,22 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"),
                 barcelona2057,
+            ),
+        )
+        assertEquals(
+            setOf(
+                "diputacionavila.sedelectronica.es",
+                "pasarela.clave.gob.es",
+                "pasarela-ident.clave.gob.es",
+                "pasarela-ident-sistemas.clave.gob.es",
+            ),
+            JuntaOriginPolicy.browserAllowedHosts(avila),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(avila).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
+                avila,
             ),
         )
         assertEquals(
