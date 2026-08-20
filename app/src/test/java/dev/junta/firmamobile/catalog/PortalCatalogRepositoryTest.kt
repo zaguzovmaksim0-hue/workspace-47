@@ -152,6 +152,7 @@ class PortalCatalogRepositoryTest {
                 "csn-sede-public",
                 "csd-sede-public",
                 "cmt-public-navigation",
+                "diputacion-palencia-solicitud-general",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

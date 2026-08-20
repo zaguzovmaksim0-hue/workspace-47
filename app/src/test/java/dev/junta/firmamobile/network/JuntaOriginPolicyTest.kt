@@ -230,6 +230,7 @@ class JuntaOriginPolicyTest {
             "sede.guardiacivil.gob.es",
             "sede.csn.gob.es",
             "sede.csd.gob.es",
+            "sede.diputaciondepalencia.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
