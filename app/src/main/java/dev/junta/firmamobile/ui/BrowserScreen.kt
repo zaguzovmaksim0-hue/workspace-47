@@ -72,6 +72,7 @@ import dev.junta.firmamobile.browser.SiteDataCleaner
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
 import dev.junta.firmamobile.browser.ValenciaCertificateSelectionBridgeAdapter
+import dev.junta.firmamobile.browser.XuntaCertificateSelectionBridgeAdapter
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
 import dev.junta.firmamobile.browser.WebViewProfileCapabilities
 import dev.junta.firmamobile.network.JuntaOriginPolicy
@@ -118,9 +119,12 @@ internal fun certificateEligibleForSelection(
     certificate: X509Certificate,
     now: Instant = Instant.now(),
 ): Boolean {
-    if (profileId != ValenciaCertificateSelectionBridgeAdapter.PROFILE_ID) return true
+    if (profileId != ValenciaCertificateSelectionBridgeAdapter.PROFILE_ID &&
+        profileId != XuntaCertificateSelectionBridgeAdapter.PROFILE_ID
+    ) return true
     if (!certificate.publicKey.algorithm.equals("RSA", ignoreCase = true)) return false
     if (runCatching { certificate.checkValidity(Date.from(now)) }.isFailure) return false
+    if (profileId == XuntaCertificateSelectionBridgeAdapter.PROFILE_ID) return true
     val keyUsage = certificate.keyUsage ?: return false
     return keyUsage.size > 1 && keyUsage[1]
 }
