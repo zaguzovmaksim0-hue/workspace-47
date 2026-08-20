@@ -1608,6 +1608,35 @@ records:
         self.assertEqual("2026-08-17", target["reviewedOn"])
 
 
+    def test_pontevedra_instancia_xenerica_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0167")
+        profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "diputacion-pontevedra-instancia-xenerica")
+
+        self.assertEqual("diputacion-pontevedra-sede", target["portalId"])
+        self.assertEqual("diputacion-pontevedra-instancia-xenerica", target["profileId"])
+        self.assertEqual(
+            "https://sede.depo.gal/web/public/catalog-detail/50709505",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-20", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", profile["activation"])
+        self.assertEqual([], profile["operationPolicies"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertIn("clienteFirma".lower(), target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()
 

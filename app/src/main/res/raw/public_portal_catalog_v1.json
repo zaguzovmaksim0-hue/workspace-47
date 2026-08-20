@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "57ccb40a6a5e58aa1174a80b0931694f5fe7cbeb315ed5966e2188fbf4e9aeb9",
+  "sourceRevision": "3fc63a1aa54ad3b078572ea1a0b8dc5dec56ffa1938cf1d3804315a9ade44f83",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4359,29 +4359,32 @@
     {
       "portalId": "diputacion-pontevedra-sede",
       "inventoryId": "ES-PUB-0167",
-      "profileId": null,
-      "displayName": "Sede electrónica de Deputación de Pontevedra",
+      "profileId": "diputacion-pontevedra-instancia-xenerica",
+      "displayName": "Deputación de Pontevedra — Instancia xenérica",
       "organization": "Deputación de Pontevedra",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Galicia",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.depo.gal",
+      "purpose": "Entrada QA-only a la Instancia xenérica 50709505 y navegación same-origin hasta el límite de identificación de la Sede.",
+      "entryUrl": "https://sede.depo.gal/web/public/catalog-detail/50709505",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP29A",
-        "DP29B"
+        "DP29B",
+        "PONTEVEDRA-INSTANCIA-2026-08-20",
+        "PONTEVEDRA-LOGIN-2026-08-20",
+        "PONTEVEDRA-FIRMAJS-2026-08-20"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-20",
+      "limitations": "Perfil QA-only limitado a la ficha pública exacta y navegación same-origin hasta el login. No expone bridge ClienteFirma, no afirma autenticación completada, ABI de firma documental, formato/algoritmo de la presentación, aceptación E2E ni registro final."
     },
     {
       "portalId": "diputacion-salamanca-sede",
