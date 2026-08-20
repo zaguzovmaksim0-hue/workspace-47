@@ -100,6 +100,7 @@ class PortalCatalogRepositoryTest {
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
+                "euskadi-sede-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

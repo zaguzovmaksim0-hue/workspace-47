@@ -136,6 +136,9 @@ class JuntaOriginPolicyTest {
             "cert.valid.aoc.cat",
             "aplicacions.diba.cat",
             "tramits.diba.cat",
+            "www.euskadi.eus",
+            "eidas.izenpe.com",
+            "eidas2.izenpe.com",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)

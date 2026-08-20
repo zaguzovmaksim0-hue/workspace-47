@@ -20,6 +20,7 @@ data class AuthorizedClientAuthTarget internal constructor(
     internal val certificateRules: dev.junta.firmamobile.profile.CertificateFilterRules,
     internal val observedAtMonotonicNanos: Long,
     internal val lifetimeNanos: Long,
+    internal val postBody: ByteArray? = null,
 ) {
     internal fun isExpiredOrInvalid(
         nowNanos: Long = MonotonicSecurityTime.nowNanos(),
