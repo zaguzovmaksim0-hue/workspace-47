@@ -8,6 +8,42 @@ import org.junit.Test
 
 class SiteProfileRegistryTest {
     @Test
+    fun `shared Clave origins stay globally ambiguous and resolve only inside the selected profile`() {
+        val clave = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
+        val claveIdent = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
+        val airef = ProfileId("airef-instancia-general")
+        val mineco = ProfileId("ministerio-economia-instancia-generica")
+        val avila = ProfileId("diputacion-avila-instancia-general")
+
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, claveIdent)?.trustMode,
+        )
+    }
+
+    @Test
     fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")
