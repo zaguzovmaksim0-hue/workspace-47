@@ -61,6 +61,7 @@ class JuntaOriginPolicyTest {
     private val funciona = ProfileId("portal-funciona-public-home")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val segovia = ProfileId("diputacion-segovia-registro")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -140,6 +141,7 @@ class JuntaOriginPolicyTest {
             "diputacionavila.sedelectronica.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
+            "sede.dipsegovia.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -272,6 +274,23 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(
+            setOf("sede.dipsegovia.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(segovia),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(segovia).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.dipsegovia.es/registro"),
+                segovia,
+            ),
+        )
+        assertTrue(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                segovia,
             ),
         )
         assertEquals(

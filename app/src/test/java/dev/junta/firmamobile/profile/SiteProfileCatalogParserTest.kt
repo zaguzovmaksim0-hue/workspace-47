@@ -1033,6 +1033,30 @@ class SiteProfileCatalogParserTest {
     }
 
 
+    @Test
+    fun `Diputacion Segovia Registro is QA navigation only with the observed Clave origin`() {
+        val profileId = ProfileId("diputacion-segovia-registro")
+        val start = URI("https://sede.dipsegovia.es/registro")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.dipsegovia.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(5, profile.evidence.size)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+    }
+
+
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")

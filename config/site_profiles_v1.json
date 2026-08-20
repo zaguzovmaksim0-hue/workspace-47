@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 32,
+  "catalogVersion": 33,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1388,6 +1388,29 @@
         {"url":"https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
         {"url":"https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "diputacion-segovia-registro",
+      "profileVersion": 1,
+      "displayName": "Diputación de Segovia — Registro electrónico",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipsegovia.es/registro",
+      "initiatorOrigins": ["https://sede.dipsegovia.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.dipsegovia.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipsegovia.es/registro","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipsegovia.es/id-systems","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipsegovia.es/signature-systems","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-21"}
       ]
     },
     {
