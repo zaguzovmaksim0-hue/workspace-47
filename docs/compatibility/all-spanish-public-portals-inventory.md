@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 241 |
 | Fuentes oficiales totales registradas | 253 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 78 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 82 |
-| Entradas restantes fuera de ambos estados | 101 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 79 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 83 |
+| Entradas restantes fuera de ambos estados | 100 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 78 |
+| `IMPLEMENTED_NOT_E2E` | 79 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 94 |
+| `BROWSE_ONLY` | 93 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4261,23 +4261,23 @@ records:
     official_site: "https://seu.conselldeivissa.es/"
     e_sede: "https://seu.conselldeivissa.es/"
     entry_url: "https://seu.conselldeivissa.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    procedure_page: "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript / AutoFirma"
+    protocol_family: "AUTOSCRIPT_LOCAL_CADES_IMPLICIT"
+    signature_format: "CAdES / DETACHED / IMPLICIT"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "Sin endpoint de firma estático: /sta/reg/autofirma.js descarga el payload con AutofirmaDownload y sube el resultado mediante AutofirmaUpload; Storage/Retrieve son auxiliares AutoFirma."
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La entrada oficial menciona certificados o sistemas de firma de forma condicional, sin publicar ABI, formato, algoritmo ni endpoint exactos."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Firma local CAdES de Instancia General tras autenticación con certificado, sin ejecutar presentación administrativa."
+    protocol_evidence: "La Instancia General vigente (PID 6269002703260065905043) devuelve authentication.autofirma=true tras autenticación controlada. Summary llama window.signFiles; /sta/reg/autofirma.js fija en Android SHA256withRSA, CAdES, headless=true, filter=encodedcert:<cert>;filter=nonexpired:, mode=implicit y MIME opcional, usando AutofirmaDownload/Upload same-origin."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I03B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["I03B", "EIVISSA-INSTANCIA-GENERAL-2026-08-18", "EIVISSA-REG-AUTOFIRMA-2026-08-18", "EIVISSA-CONTROLLED-AUTH-2026-08-18"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA limitado al origin/PID y al contrato Android CAdES SHA256 implícito demostrado; autenticación con certificado validada, pero no se realizó firma real, AutofirmaUpload, presentación, pago ni aceptación E2E."
+    reviewed_at: "2026-08-18"
+    next_gate: "Validar en dispositivo físico una firma segura sin presentación y comprobar aceptación del resultado antes de cualquier promoción E2E."
 
   - inventory_id: "ES-PUB-0123"
     surface_key: "formentera-portal-institucional"
@@ -6583,3 +6583,7 @@ availability, certificado, firma ni contrato técnico.
 [TRANSPORTES-QYS-2026-08-17]: https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible
 [INTERIOR-REG-2026-08-17]: https://sede.interior.gob.es/portal/sede/tramites?codAgrupacion=GENERAL
 [MIVAU-REG-2026-08-17]: https://mivau.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
+
+[EIVISSA-INSTANCIA-GENERAL-2026-08-18]: https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043
+[EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
+[EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043

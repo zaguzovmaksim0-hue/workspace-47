@@ -139,6 +139,7 @@ class JuntaOriginPolicyTest {
             "tramits.diba.cat",
             "diputacionavila.sedelectronica.es",
             "pasarela-ident-sistemas.clave.gob.es",
+            "seu.conselldeivissa.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)

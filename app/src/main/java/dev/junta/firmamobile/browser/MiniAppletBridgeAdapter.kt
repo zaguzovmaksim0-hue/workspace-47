@@ -24,6 +24,7 @@ import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionBadajozCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
+import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
@@ -42,6 +43,7 @@ import dev.junta.firmamobile.signing.ProtocolInputAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.XuntaPadesTriPhaseAdapter
 import java.io.StringReader
+import java.net.URI
 import java.time.Clock
 import java.util.Base64
 import java.util.UUID
@@ -217,6 +219,12 @@ internal class ProfileMiniAppletBridgeAdapter(
             currentPageUrl = currentPageUrl,
         )
         if (profile.profileId.value == MitesCertificateLoginCadesAdapter.PROFILE_ID && !isMitesContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
+        val isEivissaContract = isExactEivissaContract(
+            profile, resolved.origin, operation, binding.signingProtocolId.value, currentPageUrl,
+        )
+        if (profile.profileId.value == EivissaCadesDetachedAdapter.PROFILE_ID && !isEivissaContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
         val isGranCanariaContract = isExactGranCanariaContract(
@@ -443,6 +451,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 )
             }
             ""
+        } else if (isEivissaContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it.length <= EivissaCadesDetachedAdapter.MAX_EXTRA_PROPERTIES_CHARS &&
+                    it.matchesEivissaExtraProperties() }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId, SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (isMitesContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == MitesCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES }
@@ -649,7 +664,9 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val extraProperties = if (isCantabriaContract) {
+        val extraProperties = if (isEivissaContract) {
+            rawExtraProperties
+        } else if (isCantabriaContract) {
             CANTABRIA_EXTRA_PROPERTIES
         } else if (isTransportesContract) {
             TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES
@@ -786,6 +803,46 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == JccmCertificateLoginProbeCadesAdapter.ID.value
 
+
+    private fun isExactEivissaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean {
+        val page = currentPageUrl?.let { runCatching { URI(it) }.getOrNull() } ?: return false
+        val path = page.rawPath ?: return false
+        val signingPage = page.scheme == "https" && page.host == "seu.conselldeivissa.es" &&
+            page.userInfo == null && (page.port == -1 || page.port == 443) &&
+            page.rawQuery == null && page.rawFragment == null && EIVISSA_SUMMARY_PATH.matches(path)
+        return signingPage &&
+            profile.profileId.value == EivissaCadesDetachedAdapter.PROFILE_ID &&
+            profile.profileVersion == EivissaCadesDetachedAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == EivissaCadesDetachedAdapter.START_URL &&
+            origin.serialized == EivissaCadesDetachedAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage && profile.operationPolicies.size == 1 &&
+            operation.safeDescription == EivissaCadesDetachedAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) && operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.IMPLICIT &&
+            operation.fixedExtraProperties == linkedMapOf("headless" to "true", "mode" to "implicit") &&
+            operation.allowedExtraProperties == setOf("filter", "mimeType") &&
+            signingProtocolId == EivissaCadesDetachedAdapter.ID.value
+    }
+
+    private fun String.matchesEivissaExtraProperties(): Boolean =
+        EIVISSA_EXTRA_PROPERTIES.matches(this)
 
     private fun isExactMitesContract(
         profile: SiteProfile,
@@ -1471,6 +1528,14 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val TYPE_MINIAPPLET_SIGN = "MINIAPPLET_SIGN"
         private const val TYPE_MINIAPPLET_CANCEL = "MINIAPPLET_CANCEL"
         private const val ALGORITHM_SHA1_RSA = "SHA1withRSA"
+        private val EIVISSA_SUMMARY_PATH = Regex(
+            "^/sta/reg/(?:tramite|tramit)/" + EivissaCadesDetachedAdapter.PROCEDURE_ID +
+                "/(?:formulario|formulari)/summary/referencia/[0-9a-fA-F-]{36}$",
+        )
+        private val EIVISSA_EXTRA_PROPERTIES = Regex(
+            "headless=true\\nfilter=encodedcert:[A-Za-z0-9+/]+={0,2};filter=nonexpired:\\n" +
+                "mode=implicit\\n(?:mimeType=[^\\r\\n]{1,128}\\n)?",
+        )
         private const val ALGORITHM_SHA256_RSA = "SHA256withRSA"
         private const val ALGORITHM_SHA512_RSA = "SHA512withRSA"
         private const val FORMAT_CADES = "CAdES"
