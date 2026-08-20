@@ -101,6 +101,7 @@ class PortalCatalogRepositoryTest {
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
+                "diputacion-pontevedra-instancia-xenerica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
