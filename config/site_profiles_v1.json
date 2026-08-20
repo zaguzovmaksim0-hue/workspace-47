@@ -1147,6 +1147,27 @@
       ]
     },
     {
+      "profileId": "diputacion-alicante-solicitud-general",
+      "profileVersion": 1,
+      "displayName": "Diputación de Alicante — Solicitud General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb",
+      "initiatorOrigins": ["https://diputacionalicante.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.diputacionalicante.es/","reviewedOn":"2026-08-18"},
+        {"url":"https://diputacionalicante.sedelectronica.es/catalog/t/66192629-8b04-4cf8-a121-e2cb86cd45cb","reviewedOn":"2026-08-18"},
+        {"url":"https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "diputacion-lleida-sede",
       "profileVersion": 1,
       "displayName": "Diputació de Lleida — Sede electrónica",

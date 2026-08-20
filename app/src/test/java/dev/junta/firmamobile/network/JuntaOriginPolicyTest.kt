@@ -100,6 +100,7 @@ class JuntaOriginPolicyTest {
             "administracionelectronica.navarra.es",
             "ateka.navarra.es",
             "www.sede.diputaciondevalladolid.es",
+            "diputacionalicante.sedelectronica.es",
             "registro.diputaciondeburgos.es",
             "sedeelectronica.cabildodelapalma.es",
             "ovc24.dphuesca.es",
