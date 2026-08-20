@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 263 |
-| Fuentes oficiales totales registradas | 275 |
+| Fuentes oficiales portal-specific registradas | 266 |
+| Fuentes oficiales totales registradas | 278 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 129 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 133 |
-| Entradas restantes fuera de ambos estados | 50 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 130 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 134 |
+| Entradas restantes fuera de ambos estados | 49 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 129 |
+| `IMPLEMENTED_NOT_E2E` | 130 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 43 |
+| `BROWSE_ONLY` | 42 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5674,29 +5674,29 @@ records:
     autonomous_community: "Castilla y León"
     province_or_municipality: "Salamanca (provincia)"
     institution_name: "Diputación de Salamanca"
-    surface_name: "Sede electrónica de Diputación de Salamanca"
+    surface_name: "Diputación de Salamanca — Instancia General"
     surface_type: "SEDE"
     origin: "https://sede.diputaciondesalamanca.gob.es"
     official_site: "https://sede.diputaciondesalamanca.gob.es"
     e_sede: "https://sede.diputaciondesalamanca.gob.es"
-    entry_url: "https://sede.diputaciondesalamanca.gob.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    entry_url: "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"
+    procedure_page: "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript 1.8.0 / clientSigner"
+    protocol_family: "AUTOSCRIPT_JSON_BATCH_TRIFASICO_PREHASH"
+    signature_format: "CAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "Public auth code: /opencms/clientsigner/{JSONBatchPresigner,JSONBatchPostsigner}; RetrieveService/StorageService"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia General exacta (id 12183) con navegación QA hasta la pantalla de identificación; el acceso con certificado publica AutoScript 1.8.0 CAdES/SHA256withRSA sobre hash SHA-256, pero el perfil no expone firma nativa."
+    protocol_evidence: "La Sede resuelve el acceso destacado IGN_01 a la Instancia General id 12183. Su página estable exige Certificado Digital/DNIe y AutoFirma; iniciar la solicitud conduce a autenticacion.jsp. Esa página invoca authenticate con modo explicit, CAdES, SHA256withRSA y hashToSign; clientSigner.js 1.8.0 transforma el acceso en signBatchProcess con JSONBatchPresigner/JSONBatchPostsigner y precalculatedHashAlgorithm=SHA-256. No se ejecutó la operación criptográfica ni se reutilizó el adaptador XML específico de Lugo."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP30A", "DP30B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP30A", "DP30B", "SALAMANCA-IGN-2026-08-21", "SALAMANCA-AUTH-2026-08-21", "SALAMANCA-CLIENTSIGNER-2026-08-21"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta para Instancia General id 12183 hasta el boundary de autenticación. El contrato público de firma de acceso está observado, pero SIGN/SELECT_CERTIFICATE/CLIENT_TLS_AUTH permanecen deshabilitados porque el runtime actual no implementa este JSON-batch específico y no se realizó firma privada."
+    reviewed_at: "2026-08-21"
+    next_gate: "Implementar y probar un bridge JSON-batch específico o generalizado para este clientSigner antes de habilitar SIGN; cualquier E2E debe detenerse antes de la firma criptográfica real y del asiento registral final."
 
   - inventory_id: "ES-PUB-0169"
     surface_key: "diputacion-segovia-sede"
@@ -6611,6 +6611,9 @@ availability, certificado, firma ni contrato técnico.
 [DP29B]: https://sede.depo.gal/web/public/dynamic/description/esignature/
 [DP30A]: https://sede.diputaciondesalamanca.gob.es
 [DP30B]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/contenido/requisitos.jsp
+[SALAMANCA-IGN-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE
+[SALAMANCA-AUTH-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp
+[SALAMANCA-CLIENTSIGNER-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/opencms/common-js/clientSigner.js
 [DP31A]: https://sede.dipsegovia.es
 [DP32A]: https://sedeelectronicadipusevilla.es
 [DP33A]: https://sede.dipsoria.es

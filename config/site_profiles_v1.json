@@ -1790,6 +1790,27 @@
       ]
     },
     {
+      "profileId": "diputacion-salamanca-instancia-general",
+      "profileVersion": 1,
+      "displayName": "Diputación de Salamanca — Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
+      "initiatorOrigins": ["https://sede.diputaciondesalamanca.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diputaciondesalamanca.gob.es/opencms/common-js/clientSigner.js","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "fega-solicitud-general-ofvsg02",
       "profileVersion": 1,
       "displayName": "FEGA — Solicitud al FEGA",

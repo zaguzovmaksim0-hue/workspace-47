@@ -136,6 +136,7 @@ class PortalCatalogRepositoryTest {
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "eivissa-sede-electronica",
+                "diputacion-salamanca-instancia-general",
                 "catalunya-peticio-generica-client-auth",
                 "murcia-carm-pase",
                 "enaire-sede-public",

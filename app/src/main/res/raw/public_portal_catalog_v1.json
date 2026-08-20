@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9f67a24538e6e5f1a445fe3186c65ca24fe39f9d42114d059a8570fd60d12538",
+  "sourceRevision": "bd822c804551c0326a4ea4fa321a47e996a83a7db1321d5733061b1cd6829df1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4570,29 +4570,35 @@
     {
       "portalId": "diputacion-salamanca-sede",
       "inventoryId": "ES-PUB-0168",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputación de Salamanca",
+      "profileId": "diputacion-salamanca-instancia-general",
+      "displayName": "Diputación de Salamanca — Instancia General",
       "organization": "Diputación de Salamanca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.diputaciondesalamanca.gob.es",
+      "purpose": "Instancia General exacta (id 12183) con navegación QA hasta la pantalla de identificación; el acceso con certificado publica AutoScript 1.8.0 CAdES/SHA256withRSA sobre hash SHA-256, pero el perfil no expone firma nativa.",
+      "entryUrl": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_JSON_BATCH_TRIFASICO_PREHASH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP30A",
-        "DP30B"
+        "DP30B",
+        "SALAMANCA-IGN-2026-08-21",
+        "SALAMANCA-AUTH-2026-08-21",
+        "SALAMANCA-CLIENTSIGNER-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta para Instancia General id 12183 hasta el boundary de autenticación. El contrato público de firma de acceso está observado, pero SIGN/SELECT_CERTIFICATE/CLIENT_TLS_AUTH permanecen deshabilitados porque el runtime actual no implementa este JSON-batch específico y no se realizó firma privada."
     },
     {
       "portalId": "diputacion-segovia-sede",

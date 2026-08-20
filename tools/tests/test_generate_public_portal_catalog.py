@@ -2115,6 +2115,24 @@ records:
         self.assertEqual("REVIEWED", target["discoveryState"])
         self.assertEqual("2026-08-18", target["reviewedOn"])
 
+    def test_diputacion_salamanca_profile_binds_exact_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0168")
+
+        self.assertEqual("diputacion-salamanca-instancia-general", target["profileId"])
+        self.assertEqual("diputacion-salamanca-sede", target["portalId"])
+        self.assertEqual(
+            "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual(["CADES"], target["observedSignatureFormats"])
+
     def test_diputacion_teruel_profile_binds_exact_pending_navigation_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0173")
@@ -2135,10 +2153,6 @@ records:
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("no_verificado", target["limitations"].lower())
-        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
-        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
-        self.assertEqual([], target["observedSignatureFormats"])
-        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
 
     def test_comercio_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

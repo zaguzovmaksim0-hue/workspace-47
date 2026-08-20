@@ -76,6 +76,7 @@ class JuntaOriginPolicyTest {
     private val bizkaia = ProfileId("diputacion-bizkaia-instancia-generica")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val salamanca = ProfileId("diputacion-salamanca-instancia-general")
     private val teruel = ProfileId("diputacion-teruel-instancia-general")
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
     private val catastro = ProfileId("catastro-solicitudes-genericas")
@@ -175,6 +176,7 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sede.diputaciondesalamanca.gob.es",
             "sedefondoscomunitarios.gob.es",
             "www.sededgsfp.gob.es",
             "sede2.mjusticia.gob.es",
@@ -470,6 +472,17 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(
+            setOf("sede.diputaciondesalamanca.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(salamanca),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(salamanca).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"),
+                salamanca,
             ),
         )
         assertEquals(setOf("dpteruel.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(teruel))
