@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 239 |
 | Fuentes oficiales totales registradas | 251 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 77 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 81 |
-| Entradas restantes fuera de ambos estados | 102 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 78 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 82 |
+| Entradas restantes fuera de ambos estados | 101 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 77 |
+| `IMPLEMENTED_NOT_E2E` | 78 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 95 |
+| `BROWSE_ONLY` | 94 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5571,24 +5571,24 @@ records:
     origin: "https://sede.depourense.es"
     official_site: "https://sede.depourense.es"
     e_sede: "https://sede.depourense.es"
-    entry_url: "https://sede.depourense.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES"
+    procedure_page: "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH_CLAVE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP27A", "DP27B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Solicitud de propósito general inicia autenticación Cl@ve; la rama DNIe/certificado usa client TLS en pasarela-ident.clave.gob.es. El perfil implementa solo esta entrada y autenticación acotada."
+    protocol_evidence: "El detalle vigente 6269000946476474507610 enlaza Tramitación Electrónica a /sta/reg/auth/es/6269000946476474507610; el runtime redirige a STAClaveManager, publica SAML hacia /Proxy2/ServiceProvider, ofrece AFIRMA y desde /Proxy2/ServiceRedirect pasa a pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen. TLS 1.2 emite CertificateRequest para RSA/ECDSA sin CA-name list. catserv.js?ver=2602.0.4 mantiene SHA-256 ffdf496a7486c190e4dc2b5e33ae785d99acb1a01daecb1aef2a3069360227e3. No se autenticó con certificado ni se observó el contrato de firma posterior."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP27A", "DP27B", "OURENSE-GENERAL-2026-08-20", "OURENSE-CLAVE-2026-08-20"]
+    reason: "Perfil QA-only limitado al procedimiento general exacto y al client TLS de Cl@ve observado; no afirma ABI de AutoFirma, formato, algoritmo, callback, endpoint de firma ni presentación E2E."
+    reviewed_at: "2026-08-20"
+    next_gate: "Validar en QA Android el acceso con certificado hasta la primera vista autenticada y detenerse antes de cualquier firma documental o presentación final; investigar después el contrato de firma separado."
 
   - inventory_id: "ES-PUB-0166"
     surface_key: "diputacion-palencia-sede"

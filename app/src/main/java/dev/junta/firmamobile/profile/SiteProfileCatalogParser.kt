@@ -1709,11 +1709,16 @@ object SiteProfileCatalogParser {
         origin: ExactOrigin,
         firstOwner: ProfileId,
         secondOwner: ProfileId,
-    ): Boolean =
-        (setOf(firstOwner.value, secondOwner.value) == setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID) &&
-            origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)) ||
-            (setOf(firstOwner.value, secondOwner.value) == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) &&
+    ): Boolean {
+        val owners = setOf(firstOwner.value, secondOwner.value)
+        return (
+            owners.size == 2 &&
+                owners.all(CLAVE_SHARED_PROFILE_IDS::contains) &&
+                origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+            ) ||
+            (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) &&
                 origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN)
+    }
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -2045,6 +2050,7 @@ object SiteProfileCatalogParser {
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
+    private const val OURENSE_PROFILE_ID = "diputacion-ourense-sede"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
     private const val AIREF_START_URL =
@@ -2052,6 +2058,11 @@ object SiteProfileCatalogParser {
     private const val AIREF_ORIGIN = "https://sede.airef.es"
     private const val AIREF_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
     private const val AIREF_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
+    private val CLAVE_SHARED_PROFILE_IDS = setOf(
+        MINECO_PROFILE_ID,
+        AIREF_PROFILE_ID,
+        OURENSE_PROFILE_ID,
+    )
     private const val AIREF_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
     private const val AIREF_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
     private const val AIREF_SAFE_DESCRIPTION = "Firma de la solicitud de Instancia General de la AIReF"

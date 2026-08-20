@@ -1452,6 +1452,32 @@ records:
         self.assertIn("e2e", funciona["limitations"].lower())
 
 
+    def test_ourense_general_request_binds_exact_clave_client_tls_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0165")
+
+        self.assertEqual("diputacion-ourense-sede", target["portalId"])
+        self.assertEqual("diputacion-ourense-sede", target["profileId"])
+        self.assertEqual(
+            "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&"
+            "PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CLIENT_TLS_AUTH_CLAVE", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-20", target["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("CLIENT_TLS_AUTH", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("firma", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
     def test_comercio_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(

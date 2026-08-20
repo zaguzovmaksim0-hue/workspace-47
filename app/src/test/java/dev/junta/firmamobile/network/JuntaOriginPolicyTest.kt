@@ -60,6 +60,7 @@ class JuntaOriginPolicyTest {
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
+    private val ourense = ProfileId("diputacion-ourense-sede")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -136,6 +137,7 @@ class JuntaOriginPolicyTest {
             "cert.valid.aoc.cat",
             "aplicacions.diba.cat",
             "tramits.diba.cat",
+            "sede.depourense.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -252,6 +254,26 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica"),
                 barcelona2057,
+            ),
+        )
+        assertEquals(
+            setOf("sede.depourense.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(ourense),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(ourense).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse(
+                    "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&" +
+                        "PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
+                ),
+                ourense,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+                ourense,
             ),
         )
         assertEquals(
