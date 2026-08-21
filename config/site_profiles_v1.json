@@ -1660,6 +1660,44 @@
           "reviewedOn": "2026-08-19"
         }
       ]
+    },
+    {
+      "profileId": "diputacion-almeria-solicitud-general",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Almería — Solicitud General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+      "initiatorOrigins": [
+        "https://ov.dipalme.org"
+      ],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": false
+      },
+      "evidence": [
+        {
+          "url": "https://www.dipalme.org/Servicios/cmsdipro/index.nsf/index.xsp?p=sededipalme",
+          "reviewedOn": "2026-08-21"
+        },
+        {
+          "url": "https://www.dipalme.org/Servicios/cmsdipro/index.nsf/servicios_view_entidad_rol_grupo_b.xsp?p=sededipalme&rol=rpc",
+          "reviewedOn": "2026-08-21"
+        },
+        {
+          "url": "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+          "reviewedOn": "2026-08-21"
+        }
+      ]
     }
   ]
 }

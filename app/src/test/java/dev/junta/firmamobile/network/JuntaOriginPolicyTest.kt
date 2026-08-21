@@ -65,6 +65,7 @@ class JuntaOriginPolicyTest {
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val almeria = ProfileId("diputacion-almeria-solicitud-general")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -153,6 +154,7 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "ov.dipalme.org",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
         )
@@ -314,6 +316,20 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(setOf("ov.dipalme.org"), JuntaOriginPolicy.browserAllowedHosts(almeria))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(almeria).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000"),
+                almeria,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://ov.dipalme.org.evil.example/"),
+                almeria,
             ),
         )
         assertEquals(

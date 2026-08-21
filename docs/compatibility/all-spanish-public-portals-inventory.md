@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 243 |
-| Fuentes oficiales totales registradas | 255 |
+| Fuentes oficiales portal-specific registradas | 245 |
+| Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 90 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 94 |
-| Entradas restantes fuera de ambos estados | 89 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 91 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 95 |
+| Entradas restantes fuera de ambos estados | 88 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 90 |
+| `IMPLEMENTED_NOT_E2E` | 91 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 82 |
+| `BROWSE_ONLY` | 81 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4881,29 +4881,29 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "Almería (provincia)"
     institution_name: "Diputación Provincial de Almería"
-    surface_name: "Portal oficial de Diputación Provincial de Almería"
+    surface_name: "Diputación Provincial de Almería — Registro Electrónico / Solicitud General"
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dipalme.org"
     official_site: "https://www.dipalme.org"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipalme.org"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    e_sede: "https://www.dipalme.org/Servicios/cmsdipro/index.nsf/index.xsp?p=sededipalme"
+    entry_url: "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000"
+    procedure_page: "https://www.dipalme.org/Servicios/cmsdipro/index.nsf/servicios_view_entidad_rol_grupo_b.xsp?p=sededipalme&rol=rpc"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DIPALME_OFICINA_VIRTUAL_SOLICITUD_GENERAL_QA_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only limitado al lanzamiento exacto del Registro Electrónico / Solicitud General de la Diputación Provincial de Almería. La página de acceso vigente ofrece identificación mediante Cl@ve y permite usar certificado como alternativa; formulario, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La Sede oficial publica actualmente el enlace exacto 'Acceso al Registro Electrónico' hacia ov.dipalme.org con idExpediente=800210_SolicitudGeneral e idEntidad=400000. Ese destino responde HTTP 200 sin redirección previa y declara que el acceso a trámites electrónicos se realiza mediante Cl@ve; disponer de certificado evita el alta previa en Cl@ve. No se observó ni se modela ClientCertRequest propio, ABI de firma, algoritmo, callback ni envío final."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP04A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP04A", "ALMERIA-REGISTRO-2026-08-21", "ALMERIA-OV-2026-08-21"]
+    reason: "Implementación QA_ONLY de navegación al trámite exacto. El certificado es una opción de identificación observada, no una prueba de CLIENT_TLS_AUTH; no se habilitan capacidades SIGN ni SELECT_CERTIFICATE y la firma documental permanece NO_VERIFICADO/E2E pendiente."
+    reviewed_at: "2026-08-21"
+    next_gate: "Si se amplía el contrato, continuar autenticado solo hasta el primer estado pre-firma observable y detenerse antes de firma criptográfica o presentación final."
 
   - inventory_id: "ES-PUB-0143"
     surface_key: "diputacion-avila-portal"
@@ -6487,6 +6487,8 @@ availability, certificado, firma ni contrato técnico.
 [ALBACETE-INSTANCIA-2026-08-18]: https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567
 [ALBACETE-SSL-IDENT-2026-08-18]: https://sede.dipualba.es/segex/identificacion_opciones.aspx
 [DP04A]: https://www.dipalme.org
+[ALMERIA-REGISTRO-2026-08-21]: https://www.dipalme.org/Servicios/cmsdipro/index.nsf/servicios_view_entidad_rol_grupo_b.xsp?p=sededipalme&rol=rpc
+[ALMERIA-OV-2026-08-21]: https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000
 [DP05A]: https://www.diputacionavila.es
 [DP05B]: https://diputacionavila.sedelectronica.es/
 [AVILA-INSTANCIA-2026-08-18]: https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
