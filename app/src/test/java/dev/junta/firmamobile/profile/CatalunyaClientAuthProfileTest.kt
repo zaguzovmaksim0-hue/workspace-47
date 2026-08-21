@@ -52,6 +52,17 @@ class CatalunyaClientAuthProfileTest {
             ),
             profile.redirectOrigins,
         )
+        val sharedAocOrigin = ExactOrigin.parse("https://valid.aoc.cat")
+        val sharedAocOwners = BuiltInSiteProfiles.catalog.profiles.filter { candidate ->
+            sharedAocOrigin in candidate.initiatorOrigins ||
+                sharedAocOrigin in candidate.redirectOrigins ||
+                sharedAocOrigin in candidate.trustedBrowseOrigins ||
+                sharedAocOrigin in (candidate.clientAuthPolicy?.requestOrigins ?: emptySet())
+        }.map { it.profileId }.toSet()
+        assertEquals(
+            setOf(ProfileId("diputacion-barcelona-solicitud-generica-2057"), profileId),
+            sharedAocOwners,
+        )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
@@ -97,6 +108,9 @@ class CatalunyaClientAuthProfileTest {
         assertEquals("2026-08-19", entry.reviewedOn.toString())
         assertTrue(entry.limitations.contains("GSIT", ignoreCase = true))
         assertTrue(entry.limitations.contains("firma", ignoreCase = true))
+        assertTrue(entry.limitations.contains("formato", ignoreCase = true))
+        assertTrue(entry.limitations.contains("algoritmo", ignoreCase = true))
+        assertTrue(entry.limitations.contains("callback", ignoreCase = true))
         assertTrue(entry.limitations.contains("E2E", ignoreCase = true))
 
         val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)

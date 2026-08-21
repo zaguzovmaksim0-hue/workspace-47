@@ -210,8 +210,13 @@ object SiteProfileCatalogParser {
         return EvidenceReference(strictHttpsUrl(o.string("url")), LocalDate.parse(o.string("reviewedOn")))
     }
 
+    private data class NavigationOriginOwner(
+        val profileId: ProfileId,
+        val isRedirectOrigin: Boolean,
+    )
+
     private fun validateCatalog(catalog: SiteProfileCatalog) {
-        val navigationOriginOwners = mutableMapOf<ExactOrigin, ProfileId>()
+        val navigationOriginOwners = mutableMapOf<ExactOrigin, NavigationOriginOwner>()
         val endpointUrlOwners = mutableMapOf<URI, ProfileId>()
         val endpointOwners = mutableMapOf<EndpointId, ProfileId>()
         catalog.profiles.forEach { p ->
@@ -625,10 +630,19 @@ object SiteProfileCatalogParser {
                 require(endpointUrlOwners.put(endpoint.url, p.profileId) == null)
             }
             p.allOrigins().forEach { origin ->
-                val previousOwner = navigationOriginOwners.putIfAbsent(origin, p.profileId)
+                val previousOwner = navigationOriginOwners.putIfAbsent(
+                    origin,
+                    NavigationOriginOwner(p.profileId, origin in p.redirectOrigins),
+                )
                 require(
                     previousOwner == null ||
-                        isReviewedSharedNavigationOrigin(origin, previousOwner, p.profileId),
+                        isReviewedSharedNavigationOrigin(
+                            origin,
+                            previousOwner.profileId,
+                            p.profileId,
+                            previousOwner.isRedirectOrigin,
+                            origin in p.redirectOrigins,
+                        ),
                 )
             }
         }
@@ -1995,6 +2009,8 @@ object SiteProfileCatalogParser {
         origin: ExactOrigin,
         firstOwner: ProfileId,
         secondOwner: ProfileId,
+        firstIsRedirectOrigin: Boolean,
+        secondIsRedirectOrigin: Boolean,
     ): Boolean =
         (setOf(firstOwner.value, secondOwner.value).let { owners ->
             owners.size == 2 &&
@@ -2010,7 +2026,8 @@ object SiteProfileCatalogParser {
                 } && origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
-                owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) &&
+                firstIsRedirectOrigin && secondIsRedirectOrigin &&
+                    owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) &&
                     origin.serialized == CATALUNYA_VALID_ORIGIN
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
