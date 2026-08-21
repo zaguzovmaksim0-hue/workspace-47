@@ -287,6 +287,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
             }
+            if (p.profileId.value == FUERTEVENTURA_PROFILE_ID) {
+                validateFuerteventuraProfile(p)
+            }
             if (p.profileId.value == TRANSPARENCIA_PROFILE_ID) {
                 validateTransparenciaProfile(p)
             }
@@ -451,6 +454,7 @@ object SiteProfileCatalogParser {
                             p.profileId.value == AIREF_PROFILE_ID ||
                             p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
                             p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
+                            p.profileId.value == FUERTEVENTURA_PROFILE_ID ||
                             p.profileId.value == MINECO_PROFILE_ID ||
                             p.profileId.value == CDTI_PROFILE_ID ||
                             p.profileId.value == TRANSPORTES_PROFILE_ID ||
@@ -542,14 +546,22 @@ object SiteProfileCatalogParser {
                             } else {
                                 require(
                                     p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
+                                        p.profileId.value == FUERTEVENTURA_PROFILE_ID ||
                                         p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
                                         p.profileId.value == MINECO_PROFILE_ID,
                                 )
                                 require(op.endpointId == null && op.mode == null)
-                                require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
+                                require(
+                                    op.algorithms == if (p.profileId.value == FUERTEVENTURA_PROFILE_ID) {
+                                        setOf(SignatureAlgorithm.SHA256_WITH_RSA)
+                                    } else {
+                                        setOf(SignatureAlgorithm.SHA512_WITH_RSA)
+                                    },
+                                )
                                 val expectedPadesProperties = when (p.profileId.value) {
                                     MINECO_PROFILE_ID -> MINECO_EXTRA_PROPERTIES
                                     TRANSPARENCIA_PROFILE_ID -> TRANSPARENCIA_EXTRA_PROPERTIES
+                                    FUERTEVENTURA_PROFILE_ID -> FUERTEVENTURA_EXTRA_PROPERTIES
                                     else -> GRAN_CANARIA_EXTRA_PROPERTIES
                                 }
                                 require(op.fixedExtraProperties == expectedPadesProperties)
@@ -864,6 +876,41 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TRANSPARENCIA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
+    private fun validateFuerteventuraProfile(profile: SiteProfile) {
+        require(profile.profileVersion == FUERTEVENTURA_PROFILE_VERSION)
+        require(profile.displayName == FUERTEVENTURA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == FUERTEVENTURA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(FUERTEVENTURA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(
+            profile.operationPolicies == mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = FUERTEVENTURA_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                    format = SignatureFormat.PADES,
+                    packaging = SignaturePackaging.ATTACHED,
+                    mode = null,
+                    fixedExtraProperties = FUERTEVENTURA_EXTRA_PROPERTIES,
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == FUERTEVENTURA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
@@ -2037,6 +2084,34 @@ object SiteProfileCatalogParser {
         "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/ac2-formularios.js",
         "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/ac2-autofirmaFunctions.js",
         "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/autoscript.js",
+    )
+    private const val FUERTEVENTURA_PROFILE_ID = "fuerteventura-sede-electronica"
+    private const val FUERTEVENTURA_PROFILE_VERSION = 1
+    private const val FUERTEVENTURA_DISPLAY_NAME =
+        "Cabildo Insular de Fuerteventura — Sede electrónica"
+    private const val FUERTEVENTURA_START_URL =
+        "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
+    private const val FUERTEVENTURA_ORIGIN = "https://sede.cabildofuer.es"
+    private const val FUERTEVENTURA_SAFE_DESCRIPTION =
+        "Firma PAdES de solicitud en la Sede electrónica del Cabildo Insular de Fuerteventura"
+    private val FUERTEVENTURA_EXTRA_PROPERTIES = linkedMapOf(
+        "signaturePositionOnPageLowerLeftX" to "50",
+        "signaturePositionOnPageLowerLeftY" to "15",
+        "signaturePositionOnPageUpperRightX" to "150",
+        "signaturePositionOnPageUpperRightY" to "50",
+        "signaturePages" to "all",
+        "layer2Text" to "Firmado por \$\$SUBJECTCN\$\$ el día \$\$SIGNDATE=dd/MM/yyyy\$\$ \$\$ORGANIZATION\$\$",
+        "layer2FontSize" to "6",
+        "layer2FontFamily" to "0",
+        "layer2FontStyle" to "0",
+        "signatureRotation" to "0",
+        "includeQuestionMark" to "false",
+        "obfuscateCertText" to "true",
+    )
+    private val FUERTEVENTURA_EVIDENCE_URLS = setOf(
+        FUERTEVENTURA_START_URL,
+        "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert",
+        "https://sede.cabildofuer.es/eAdmin/js/miniapplet.js",
     )
     private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
     private const val GRAN_CANARIA_PROFILE_VERSION = 1

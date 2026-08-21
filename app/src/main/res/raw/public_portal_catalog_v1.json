@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8b7eaedb7dd2b340171f75771729bc8fa53e28cdfc0d6fee61532545a4350397",
+  "sourceRevision": "b147da3e9d41ab832b37d3a29b819eda1c72628cac51562b3d9c1fbc074e06a8",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3491,24 +3491,34 @@
     {
       "portalId": "fuerteventura-sede-electronica",
       "inventoryId": "ES-PUB-0134",
-      "profileId": null,
+      "profileId": "fuerteventura-sede-electronica",
       "displayName": "Sede electrónica del Cabildo Insular de Fuerteventura",
       "organization": "Cabildo Insular de Fuerteventura",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
-      "entryUrl": "https://sede.cabildofuer.es/eAdmin/Sede.do",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "purpose": "Firma PAdES local del PDF de solicitud generado por la Sede, limitada al contrato exacto observado en pre-sign.",
+      "entryUrl": "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I09B"
+        "I09B",
+        "I09C",
+        "I09D",
+        "I09E"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato pre-sign exacto implementado solo en QA como PAdES local; no se ejecutaron la firma criptográfica real ni Registrar.do?action=registrar, por lo que E2E permanece pendiente."
     },
     {
       "portalId": "lanzarote-portal-institucional",

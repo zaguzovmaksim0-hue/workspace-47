@@ -589,6 +589,32 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun fuerteventuraCompatibilityIsProfileScopedToTheExactSha256PadesTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            fuerteventuraCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            fuerteventuraCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const fuerteventuraCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const fuerteventuraCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://sede.cabildofuer.es"))
+        assertTrue(enabled.contains("action=verYfirmar&modo=cert"))
+        assertTrue(enabled.contains("args[1] === \"SHA256withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdES\""))
+        assertTrue(enabled.contains("obfuscateCertText= true\\n"))
+        assertTrue(enabled.contains("isExactFuerteventuraCall"))
+    }
+
+    @Test
     fun minecoCompatibilityIsProfileScopedToTheExactSha512PadesFirmaAgeTuple() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val enabled = AfirmaJavascriptShim.load(

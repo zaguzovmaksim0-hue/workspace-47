@@ -76,6 +76,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
+                ProfileId("fuerteventura-sede-electronica"),
                 ProfileId("gran-canaria-sede-electronica"),
                 ProfileId("age-portal-de-la-transparencia"),
                 ProfileId("caib-portafib"),

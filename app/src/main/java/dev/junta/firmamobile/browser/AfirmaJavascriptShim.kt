@@ -27,6 +27,7 @@ object AfirmaJavascriptShim {
         cdtiCompatibilityEnabled: Boolean = false,
         policiaCompatibilityEnabled: Boolean = false,
         granCanariaCompatibilityEnabled: Boolean = false,
+        fuerteventuraCompatibilityEnabled: Boolean = false,
         canariasCompatibilityEnabled: Boolean = false,
         minecoCompatibilityEnabled: Boolean = false,
         melillaBatchCompatibilityEnabled: Boolean = false,
@@ -50,6 +51,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(CDTI_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(CANARIAS_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MINECO_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
@@ -108,6 +110,10 @@ object AfirmaJavascriptShim {
                 if (granCanariaCompatibilityEnabled) "true" else "false",
             )
             .replace(
+                FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER,
+                if (fuerteventuraCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
                 CANARIAS_COMPATIBILITY_PLACEHOLDER,
                 if (canariasCompatibilityEnabled) "true" else "false",
             )
@@ -163,6 +169,8 @@ object AfirmaJavascriptShim {
         "__JFM_POLICIA_COMPATIBILITY_ENABLED__"
     private const val GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__"
+    private const val FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_FUERTEVENTURA_COMPATIBILITY_ENABLED__"
     private const val CANARIAS_COMPATIBILITY_PLACEHOLDER =
         "__JFM_CANARIAS_COMPATIBILITY_ENABLED__"
     private const val MINECO_COMPATIBILITY_PLACEHOLDER =

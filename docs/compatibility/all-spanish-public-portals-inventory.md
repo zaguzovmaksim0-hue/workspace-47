@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 82 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 86 |
-| Entradas restantes fuera de ambos estados | 97 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 83 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 87 |
+| Entradas restantes fuera de ambos estados | 96 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 82 |
+| `IMPLEMENTED_NOT_E2E` | 83 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 90 |
+| `BROWSE_ONLY` | 89 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4624,24 +4624,26 @@ records:
     origin: "https://sede.cabildofuer.es"
     official_site: "https://sede.cabildofuer.es/eAdmin/Sede.do"
     e_sede: "https://sede.cabildofuer.es/eAdmin/Sede.do"
-    entry_url: "https://sede.cabildofuer.es/eAdmin/Sede.do"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    entry_url: "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
+    procedure_page: "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "MiniApplet / AutoFirma"
+    protocol_family: "MINIAPPLET_LOCAL_PADES"
+    signature_format: "PAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "LOCAL_AUTOFIRMA"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La fuente acredita la sede y sus servicios públicos, no un requisito exacto de certificado o firma ni un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    profile_id: "fuerteventura-sede-electronica"
+    operation_summary: "Firma PAdES local del PDF de solicitud generado por la Sede, limitada al contrato exacto observado en pre-sign."
+    protocol_evidence: "Controlled authenticated observation 2026-08-18: tras Cl@ve/AFIRMA, un bootstrap de contacto sin datos inventados dejó idTercero vacío pero avanzó al registro; action=firmar serializa la solicitud y verYfirmar&modo=cert expone un PDF Base64 y llama exactamente MiniApplet.sign(dataB64, SHA256withRSA, PAdES, parámetros visuales fijos, successCallback, errorCallback). El callback de éxito llenaría firmaElectronica/certificado y POSTearía Registrar.do?action=registrar; esa firma y ese POST final no se ejecutaron."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I09B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["I09B", "I09C", "I09D", "I09E"]
+    reason: "Contrato pre-sign exacto implementado solo en QA como PAdES local; no se ejecutaron la firma criptográfica real ni Registrar.do?action=registrar, por lo que E2E permanece pendiente."
+    reviewed_at: "2026-08-18"
+    next_gate: "E2E físico seguro limitado a comprobar aceptación de la firma PAdES; no efectuar presentación/registro final fuera de una autorización específica."
+    notes: "El bootstrap observado no persistió un idTercero; los datos de contacto no se inventaron. Los endpoints firmaMovil observados son Storage/Retrieve auxiliares y no se modelan como endpoint de firma."
 
   - inventory_id: "ES-PUB-0135"
     surface_key: "lanzarote-portal-institucional"
@@ -6456,6 +6458,9 @@ Orden de expansión recomendado:
 [I08B]: https://lagomera.sedelectronica.es/info.0
 [I09A]: https://www.cabildofuer.es/cabildo/
 [I09B]: https://sede.cabildofuer.es/eAdmin/Sede.do
+[I09C]: https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1
+[I09D]: https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert
+[I09E]: https://sede.cabildofuer.es/eAdmin/js/miniapplet.js
 [I10A]: https://www.cabildodelanzarote.com/
 [I10B]: https://cabildodelanzarote.sedelectronica.es/info.0
 [I11A]: https://cabildo.grancanaria.com/

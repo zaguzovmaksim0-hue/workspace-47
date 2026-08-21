@@ -60,6 +60,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
@@ -121,6 +122,7 @@ class JuntaOriginPolicyTest {
             "www.caib.es",
             "intranet.caib.es",
             "sede.grancanaria.com",
+            "sede.cabildofuer.es",
             "serviciosede.mineco.gob.es",
             "pasarela.clave.gob.es",
             "pasarela-ident.clave.gob.es",
@@ -243,6 +245,17 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
+        assertEquals(setOf("sede.cabildofuer.es"), JuntaOriginPolicy.browserAllowedHosts(fuerteventura))
+        assertEquals(
+            setOf("https://sede.cabildofuer.es"),
+            JuntaOriginPolicy.webMessageOriginRules(fuerteventura),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                fuerteventura,
+            ),
+        )
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
         assertEquals(setOf("egoitza.araba.eus"), JuntaOriginPolicy.browserAllowedHosts(alava))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(alava).isEmpty())
