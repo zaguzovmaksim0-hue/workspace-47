@@ -81,6 +81,14 @@ class ProtocolAdapterRegistryTest {
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), jccm?.inputAdapterId)
         assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), jccm?.callbackContractId)
 
+        val jccmRegistro = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId(LocalXadesDetachedAdapter.JCCM_REGISTRO_PROFILE_ID),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(LocalXadesDetachedAdapter.ID, jccmRegistro?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), jccmRegistro?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), jccmRegistro?.callbackContractId)
+
         val transportes = BuiltInProtocolAdapterRegistry.registry.resolve(
             ProfileId(TransportesXadesEnvelopedAdapter.PROFILE_ID),
             ProtocolOperation.SIGN,
@@ -135,6 +143,20 @@ class ProtocolAdapterRegistryTest {
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId(DiputacionLleidaCadesAdapter.PROFILE_ID),
+                ProtocolOperation.SELECT_CERTIFICATE,
+            ),
+        )
+
+        val badajoz = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId(DiputacionBadajozCadesAdapter.PROFILE_ID),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(DiputacionBadajozCadesAdapter.ID, badajoz?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), badajoz?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), badajoz?.callbackContractId)
+        assertNull(
+            BuiltInProtocolAdapterRegistry.registry.resolve(
+                ProfileId(DiputacionBadajozCadesAdapter.PROFILE_ID),
                 ProtocolOperation.SELECT_CERTIFICATE,
             ),
         )
