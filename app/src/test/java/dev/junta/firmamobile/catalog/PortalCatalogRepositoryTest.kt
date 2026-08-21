@@ -136,6 +136,7 @@ class PortalCatalogRepositoryTest {
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "la-gomera-instancia-general",
+                "lanzarote-instancia-general",
                 "diputacion-pontevedra-instancia-xenerica",
                 "diputacion-malaga-instancia-general",
                 "eivissa-sede-electronica",
