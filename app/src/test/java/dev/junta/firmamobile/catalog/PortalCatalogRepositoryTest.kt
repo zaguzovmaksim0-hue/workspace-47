@@ -107,6 +107,7 @@ class PortalCatalogRepositoryTest {
                 "menorca-carpeta-ciutadana",
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
+                "lanzarote-instancia-general",
                 "eivissa-sede-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
