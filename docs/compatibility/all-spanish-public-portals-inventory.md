@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 261 |
-| Fuentes oficiales totales registradas | 273 |
+| Fuentes oficiales portal-specific registradas | 263 |
+| Fuentes oficiales totales registradas | 275 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 128 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 132 |
-| Entradas restantes fuera de ambos estados | 51 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 129 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 133 |
+| Entradas restantes fuera de ambos estados | 50 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 128 |
+| `IMPLEMENTED_NOT_E2E` | 129 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 44 |
+| `BROWSE_ONLY` | 43 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5824,29 +5824,30 @@ records:
     autonomous_community: "Aragón"
     province_or_municipality: "Teruel (provincia)"
     institution_name: "Diputación Provincial de Teruel"
-    surface_name: "Sede electrónica de Diputación Provincial de Teruel"
+    surface_name: "Diputación Provincial de Teruel — Instancia General"
     surface_type: "SEDE"
     origin: "https://dpteruel.sedelectronica.es"
     official_site: "https://dpteruel.sedelectronica.es"
     e_sede: "https://dpteruel.sedelectronica.es"
-    entry_url: "https://dpteruel.sedelectronica.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://dpteruel.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "TERUEL_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio telemático exacto de la Instancia General vigente de la Sede electrónica de la Diputación Provincial de Teruel; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El catálogo oficial vigente expone Instancia General, código SIA 2094606, en /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5 y enlaza de forma exacta a /catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5. La apertura actual del launch conduce en el mismo origin a la pantalla Identificación electrónica, que exige identificación y ofrece acceso con sistema Cl@ve. No se autenticó, no se observó ni se infiere ABI de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP35A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP35A", "TERUEL-IGN-PROC-2026-08-21", "TERUEL-IGN-LAUNCH-2026-08-21"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA_ONLY limitado al launch exacto de Instancia General y al boundary público de identificación. No expone SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH; formato, algoritmo, endpoints y flujo posterior permanecen NO_VERIFICADO. Falta E2E físico."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Instancia General; ampliar autenticación o firma solo con un contrato específico independiente y detenerse antes de firma privada o registro final."
+    notes: "La revisión usó únicamente GET HTTPS con cookie de sesión transitoria eliminada al terminar; no hubo autenticación, POST administrativo, carga de documentos, firma, presentación ni pago."
 
   - inventory_id: "ES-PUB-0174"
     surface_key: "diputacion-toledo-sede"
@@ -6617,6 +6618,8 @@ availability, certificado, firma ni contrato técnico.
 [DP34A]: https://seuelectronica.dipta.cat
 [DP34B]: https://seuelectronica.dipta.cat/normativa
 [DP35A]: https://dpteruel.sedelectronica.es
+[TERUEL-IGN-PROC-2026-08-21]: https://dpteruel.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[TERUEL-IGN-LAUNCH-2026-08-21]: https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [DP36A]: https://diputacion.toledo.gob.es
 [DP36B]: https://diputacion.toledo.gob.es/sede/2
 [TOLEDO-PROCEDURES-2026-08-13]: https://diputacion.toledo.gob.es/procedimientos/1

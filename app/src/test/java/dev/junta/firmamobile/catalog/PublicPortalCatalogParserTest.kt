@@ -103,6 +103,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
                 ProfileId("fondos-europeos-sede-public-home"),
+                ProfileId("diputacion-teruel-instancia-general"),
                 ProfileId("sepes-transportes-public-complaints"),
                 ProfileId("dgsfp-sede-public-home"),
                 ProfileId("cnmv-sede-public-home"),

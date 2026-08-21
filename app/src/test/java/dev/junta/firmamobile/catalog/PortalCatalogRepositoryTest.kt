@@ -110,6 +110,7 @@ class PortalCatalogRepositoryTest {
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "fondos-europeos-sede-public-home",
+                "diputacion-teruel-instancia-general",
                 "sepes-transportes-public-complaints",
                 "dgsfp-sede-public-home",
                 "cnmv-sede-public-home",

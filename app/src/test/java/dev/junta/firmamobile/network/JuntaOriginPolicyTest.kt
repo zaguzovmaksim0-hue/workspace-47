@@ -76,6 +76,7 @@ class JuntaOriginPolicyTest {
     private val bizkaia = ProfileId("diputacion-bizkaia-instancia-generica")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val teruel = ProfileId("diputacion-teruel-instancia-general")
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
     private val catastro = ProfileId("catastro-solicitudes-genericas")
     private val fega = ProfileId("fega-solicitud-general-ofvsg02")
@@ -195,6 +196,7 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "dpteruel.sedelectronica.es",
             "sede.consejodetransparencia.gob.es",
             "www.sedecatastro.gob.es",
             "www3.sede.fega.gob.es",
@@ -468,6 +470,14 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(setOf("dpteruel.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(teruel))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(teruel).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
+                teruel,
             ),
         )
         assertEquals(setOf("sede.diphuelva.es"), JuntaOriginPolicy.browserAllowedHosts(huelva))
