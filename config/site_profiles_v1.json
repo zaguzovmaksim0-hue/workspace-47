@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 33,
+  "catalogVersion": 34,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -638,6 +638,27 @@
         {"url":"https://tramites.juntaex.es/sta/resources/js/sta-autofirma-lote.js","reviewedOn":"2026-08-13"},
         {"url":"https://tramites.juntaex.es/sta/resources/js/autoscript.js","reviewedOn":"2026-08-13"},
         {"url":"https://tramites.juntaex.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2","reviewedOn":"2026-08-13"}
+      ]
+    },
+    {
+      "profileId": "extremadura-pattex-client-auth",
+      "profileVersion": 1,
+      "displayName": "Junta de Extremadura — PATTEX acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo",
+      "initiatorOrigins": ["https://pattex.juntaex.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://pattex.juntaex.es"],"sourceUrls":["https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo"],"requestPath":"/PATTEX/accesoCertificadoSEDE.jsf","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos","reviewedOn":"2026-08-19"},
+        {"url":"https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo","reviewedOn":"2026-08-19"},
+        {"url":"https://pattex.juntaex.es/PATTEX/accesoCertificadoSEDE.jsf","reviewedOn":"2026-08-19"}
       ]
     },
     {

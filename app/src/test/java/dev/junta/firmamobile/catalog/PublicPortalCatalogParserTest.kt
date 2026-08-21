@@ -63,6 +63,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
                 ProfileId("extremadura-tramites"),
+                ProfileId("extremadura-pattex-client-auth"),
                 ProfileId("navarra-sede-registro-general"),
                 ProfileId("diputacion-valladolid-sede"),
                 ProfileId("diputacion-burgos-portal"),
