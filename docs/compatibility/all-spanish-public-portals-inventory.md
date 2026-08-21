@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 86 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 90 |
-| Entradas restantes fuera de ambos estados | 93 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 87 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 91 |
+| Entradas restantes fuera de ambos estados | 92 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 86 |
+| `IMPLEMENTED_NOT_E2E` | 87 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 86 |
+| `BROWSE_ONLY` | 85 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 145 |
+| `REVIEWED` | 146 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 33 |
+| `DISCOVERED` | 32 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2977,30 +2977,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Mutualidad General Judicial (MUGEJU)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Remisión de documentación / Mutualnet"
     surface_type: "SEDE"
     origin: "https://sedemugeju.gob.es"
     official_site: "https://sedemugeju.gob.es/"
     e_sede: "https://sedemugeju.gob.es/"
-    entry_url: "https://sedemugeju.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
+    entry_url: "https://sedemugeju.gob.es/remisiondocumentacion"
+    procedure_page: "https://sedemugeju.gob.es/remisiondocumentacion"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "MiniApplet AutoScript"
+    protocol_family: "CLIENT_TLS_AUTH"
+    signature_format: "CAdEStri"
+    signature_algorithm: "SHA512withRSA"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de la Presidencia, Justicia y Relaciones con las Cortes."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la remisión de documentación mediante Cl@ve eIdentifier; el runtime protegido observa firma AutoScript/MiniApplet CAdES trifásica, pero el perfil QA implementa únicamente la transición CLIENT_TLS_AUTH."
+    protocol_evidence: "Revalidación oficial 2026-08-19: /remisiondocumentacion redirige a /mutualnet3/servlet/AccesoServlet?operation=REM y /mutualnet3/clave/ControladorClaveCiudadanoServlet?operation=REM. Runtime autenticado controlado 2026-08-18: Cl@ve usa https://pasarela.clave.gob.es/Proxy2/ServiceProvider como fuente y https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen como petición TLS cliente; después alcanza /mutualnet3/faces/protected/tramites/tramite.xhtml. La página protegida carga AutoScript/MiniApplet y llama MiniApplet.sign(fileName, SHA512withRSA, CAdEStri, mode=implicit + expPolicy=FirmaAGE + serverUrl=signatureServiceUrl). El valor dinámico signatureServiceUrl no se observó por ausencia de expediente habilitado; por ello SIGN no se habilita ni se adivina endpoint."
+    client_tls_auth: "SI"
+    evidence_ids: ["D11", "MUGEJU-PUBLIC-2026-08-19", "MUGEJU-AUTH-2026-08-18", "MUGEJU-SIGNING-2026-08-18"]
+    reason: "Perfil QA_ONLY limitado al CLIENT_TLS_AUTH exacto MUGEJU → Cl@ve observado. La firma posterior está acreditada solo como metadata runtime, pero permanece fuera de capabilities hasta acotar signatureServiceUrl; E2E físico pendiente."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar en QA Android la transición MUGEJU → Cl@ve con certificado autorizado. Si aparece un expediente habilitado, capturar signatureServiceUrl en pre-sign y abortar antes de la firma privada; solo entonces evaluar una capability SIGN separada."
+    notes: "No se ejecutó firma criptográfica, registro, presentación, pago ni envío final. No se persisten identificadores personales, cookies, SAML, credenciales ni material de certificado."
 
   - inventory_id: "ES-PUB-0082"
     surface_key: "age-oficina-espanola-de-patentes-y-marcas"

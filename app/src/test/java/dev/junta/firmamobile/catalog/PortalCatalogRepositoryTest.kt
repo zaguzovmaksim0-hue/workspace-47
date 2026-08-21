@@ -67,6 +67,7 @@ class PortalCatalogRepositoryTest {
                 "transportes-qys-cert-login",
                 "sevilla-atse-certificate-login",
                 "airef-instancia-general",
+                "mugeju-remision-documentacion-client-auth",
                 "melilla-sede",
                 "ceuta-sede",
                 "extremadura-tramites",

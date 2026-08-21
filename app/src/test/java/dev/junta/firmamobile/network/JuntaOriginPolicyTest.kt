@@ -91,6 +91,7 @@ class JuntaOriginPolicyTest {
             "sede.mites.gob.es",
             "www.sevilla.org",
             "sede.airef.es",
+            "sedemugeju.gob.es",
             "pasarela.clave.gob.es",
             "pasarela-ident.clave.gob.es",
             "sede.cdti.gob.es",

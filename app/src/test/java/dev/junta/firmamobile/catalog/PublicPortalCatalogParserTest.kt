@@ -60,6 +60,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("transportes-qys-cert-login"),
                 ProfileId("sevilla-atse-certificate-login"),
                 ProfileId("airef-instancia-general"),
+                ProfileId("mugeju-remision-documentacion-client-auth"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
                 ProfileId("extremadura-tramites"),

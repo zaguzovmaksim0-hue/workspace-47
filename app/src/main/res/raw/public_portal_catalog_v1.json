@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "eaad98c1f640a17239fe702e11159e3b469a6b49084d57979d190171296e163d",
+  "sourceRevision": "7b9fe30376010e10e9e2c0120daede50d768600f898d97d41ee878a5006f1270",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2040,24 +2040,35 @@
     {
       "portalId": "age-mutualidad-general-judicial-mugeju",
       "inventoryId": "ES-PUB-0081",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "mugeju-remision-documentacion-client-auth",
+      "displayName": "Remisión de documentación / Mutualnet",
       "organization": "Mutualidad General Judicial (MUGEJU)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sedemugeju.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Acceso con certificado a la remisión de documentación mediante Cl@ve eIdentifier; el runtime protegido observa firma AutoScript/MiniApplet CAdES trifásica, pero el perfil QA implementa únicamente la transición CLIENT_TLS_AUTH.",
+      "entryUrl": "https://sedemugeju.gob.es/remisiondocumentacion",
+      "observedMechanisms": [
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "MUGEJU-PUBLIC-2026-08-19",
+        "MUGEJU-AUTH-2026-08-18",
+        "MUGEJU-SIGNING-2026-08-18"
+      ],
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil QA_ONLY limitado al CLIENT_TLS_AUTH exacto MUGEJU → Cl@ve observado. La firma posterior está acreditada solo como metadata runtime, pero permanece fuera de capabilities hasta acotar signatureServiceUrl; E2E físico pendiente."
     },
     {
       "portalId": "age-oficina-espanola-de-patentes-y-marcas",

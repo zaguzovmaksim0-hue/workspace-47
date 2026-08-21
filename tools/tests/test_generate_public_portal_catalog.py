@@ -952,6 +952,36 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", airef["limitations"].lower())
         self.assertIn("e2e", airef["limitations"].lower())
 
+    def test_mugeju_client_auth_profile_binds_only_the_bounded_qa_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mugeju = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0081"
+        )
+
+        self.assertEqual("age-mutualidad-general-judicial-mugeju", mugeju["portalId"])
+        self.assertEqual("mugeju-remision-documentacion-client-auth", mugeju["profileId"])
+        self.assertEqual("https://sedemugeju.gob.es/remisiondocumentacion", mugeju["entryUrl"])
+        self.assertNotIn("launchUrl", mugeju)
+        self.assertEqual("CLIENT_TLS_AUTH", mugeju["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mugeju["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", mugeju["catalogStatus"])
+        self.assertEqual("REVIEWED", mugeju["discoveryState"])
+        self.assertEqual("2026-08-19", mugeju["reviewedOn"])
+        self.assertEqual(["CADES"], mugeju["observedSignatureFormats"])
+        self.assertEqual(
+            [
+                "AUTOSCRIPT",
+                "CERTIFICATE_ACCESS",
+                "CLIENT_TLS_AUTH",
+                "ELECTRONIC_SIGNATURE",
+                "MINIAPPLET",
+            ],
+            mugeju["observedMechanisms"],
+        )
+        self.assertIn("qa_only", mugeju["limitations"].lower())
+        self.assertIn("signatureserviceurl", mugeju["limitations"].lower())
+
     def test_dsca_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         dsca = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-derechos-sociales-consumo-y-agenda-2030")
