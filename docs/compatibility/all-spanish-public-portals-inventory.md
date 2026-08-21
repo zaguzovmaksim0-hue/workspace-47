@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 86 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 90 |
-| Entradas restantes fuera de ambos estados | 93 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 87 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 91 |
+| Entradas restantes fuera de ambos estados | 92 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 86 |
+| `IMPLEMENTED_NOT_E2E` | 87 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 86 |
+| `BROWSE_ONLY` | 85 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4651,29 +4651,31 @@ records:
     autonomous_community: "Canarias"
     province_or_municipality: "Las Palmas"
     institution_name: "Cabildo Insular de Lanzarote"
-    surface_name: "Portal institucional del Cabildo Insular de Lanzarote"
+    surface_name: "Instancia General — Sede electrónica de Lanzarote y La Graciosa"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.cabildodelanzarote.com"
+    origin: "https://lanzaroteylagraciosa.sedelectronica.es"
     official_site: "https://www.cabildodelanzarote.com/"
-    e_sede: "https://cabildodelanzarote.sedelectronica.es/info.0"
-    entry_url: "https://www.cabildodelanzarote.com/"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://lanzaroteylagraciosa.sedelectronica.es/"
+    entry_url: "https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://lanzaroteylagraciosa.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "LANZAROTE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    profile_id: "lanzarote-instancia-general"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio exacto de la Instancia General vigente de la Sede electrónica de Lanzarote y La Graciosa; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La web institucional enlaza actualmente la Sede electrónica en cabildodelanzarote.sedelectronica.es; esa entrada redirige al host vigente lanzaroteylagraciosa.sedelectronica.es. Con una sesión Wicket conservada, /dossier abre el Catálogo de trámites y publica Instancia General, SIA 754234, en /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5; la acción Iniciar tramitación electrónica apunta exactamente a /catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5. Un GET de ese launch alcanzó la pantalla Identificación electrónica con Acceso con sistema Cl@ve; no se envió el formulario de identificación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I10A", "I10B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    evidence_ids: ["D12", "I10A", "I10B", "LANZAROTE-INSTANCIA-2026-08-21", "LANZAROTE-LAUNCH-2026-08-21"]
+    reason: "Perfil nuevo QA_ONLY limitado al launch público exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. No se infieren autenticación, signer ABI, formato, algoritmo ni endpoint de firma a partir del catálogo público; falta E2E físico."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Instancia General; ampliar autenticación o firma solo con un contrato específico observado de forma independiente."
+    notes: "El UUID 5161fa8d-970e-4b48-a506-b2ac34ceafe5 se observó directamente en el catálogo actual del tenant Lanzarote y La Graciosa. El launch llegó hasta la pantalla pública de identificación, pero no se accionó Cl@ve. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío. No se completó autenticación ni formulario, no se cargaron documentos, no se realizó firma criptográfica, presentación final ni pago."
 
   - inventory_id: "ES-PUB-0136"
     surface_key: "lanzarote-sede-electronica"
@@ -6465,6 +6467,8 @@ Orden de expansión recomendado:
 [I09E]: https://sede.cabildofuer.es/eAdmin/js/miniapplet.js
 [I10A]: https://www.cabildodelanzarote.com/
 [I10B]: https://cabildodelanzarote.sedelectronica.es/info.0
+[LANZAROTE-INSTANCIA-2026-08-21]: https://lanzaroteylagraciosa.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[LANZAROTE-LAUNCH-2026-08-21]: https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [I11A]: https://cabildo.grancanaria.com/
 [I11B]: https://sede.grancanaria.com/
 

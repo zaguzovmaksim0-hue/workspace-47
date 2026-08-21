@@ -124,6 +124,7 @@ class JuntaOriginPolicyTest {
             "intranet.caib.es",
             "sede.grancanaria.com",
             "sede.cabildofuer.es",
+            "lanzaroteylagraciosa.sedelectronica.es",
             "serviciosede.mineco.gob.es",
             "pasarela.clave.gob.es",
             "pasarela-ident.clave.gob.es",
