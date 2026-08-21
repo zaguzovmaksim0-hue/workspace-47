@@ -236,6 +236,8 @@ class JuntaOriginPolicyTest {
             "sede.csn.gob.es",
             "sede.csd.gob.es",
             "sede.diputaciondepalencia.es",
+            "sede.dipucadiz.es",
+            "sso.dipucadiz.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
