@@ -148,6 +148,7 @@ class JuntaOriginPolicyTest {
             "tramits.diba.cat",
             "diputacionavila.sedelectronica.es",
             "pasarela-ident-sistemas.clave.gob.es",
+            "lagomera.sedelectronica.es",
             "seu.conselldeivissa.es",
         )
 
