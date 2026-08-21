@@ -2143,7 +2143,8 @@ object SiteProfileCatalogParser {
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
-                    owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
+                    owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID) ||
+                    owners == setOf(LEON_PROFILE_ID, CUENCA_PROFILE_ID)) &&
                     origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
