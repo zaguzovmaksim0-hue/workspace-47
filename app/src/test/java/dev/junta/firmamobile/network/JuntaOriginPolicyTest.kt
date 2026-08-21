@@ -60,6 +60,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
 
@@ -135,6 +136,7 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "egoitza.araba.eus",
             "seuelectronica.diba.cat",
             "valid.aoc.cat",
             "cert.valid.aoc.cat",
@@ -242,6 +244,14 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
+        assertEquals(setOf("egoitza.araba.eus"), JuntaOriginPolicy.browserAllowedHosts(alava))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(alava).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://egoitza.araba.eus/izapidetu/at/01/es/0000301"),
+                alava,
+            ),
+        )
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(

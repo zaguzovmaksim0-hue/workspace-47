@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 32,
+  "catalogVersion": 33,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1165,6 +1165,26 @@
         {"url":"https://www.diputacionalicante.es/","reviewedOn":"2026-08-18"},
         {"url":"https://diputacionalicante.sedelectronica.es/catalog/t/66192629-8b04-4cf8-a121-e2cb86cd45cb","reviewedOn":"2026-08-18"},
         {"url":"https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "diputacion-alava-registro-comun",
+      "profileVersion": 1,
+      "displayName": "Diputación Foral de Álava — Registro Electrónico Común",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://egoitza.araba.eus/izapidetu/at/01/es/0000301",
+      "initiatorOrigins": ["https://egoitza.araba.eus"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://egoitza.araba.eus/es/inicio/tramites/fitxa/registro-electronico-comun","reviewedOn":"2026-08-18"},
+        {"url":"https://egoitza.araba.eus/izapidetu/at/01/es/0000301","reviewedOn":"2026-08-18"}
       ]
     },
     {

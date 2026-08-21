@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "ec1bb5e94dc8d2089b370ccbc644555336374deb361f697c6a587341f2b3f7af",
+  "sourceRevision": "8b7eaedb7dd2b340171f75771729bc8fa53e28cdfc0d6fee61532545a4350397",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3636,28 +3636,28 @@
     {
       "portalId": "diputacion-alava-portal",
       "inventoryId": "ES-PUB-0140",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Foral de Álava",
+      "profileId": "diputacion-alava-registro-comun",
+      "displayName": "Registro Electrónico Común — Diputación Foral de Álava",
       "organization": "Diputación Foral de Álava",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "País Vasco",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://web.araba.eus/es/home",
+      "purpose": "Navegación QA al asistente vigente del Registro Electrónico Común de la Diputación Foral de Álava. El acceso autenticado con certificado alcanza el flujo protegido; la firma documental y la presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://egoitza.araba.eus/izapidetu/at/01/es/0000301",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "ALAVA_EGOITZA_REGISTRO_COMUN_QA_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP02A"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Perfil QA_ONLY limitado al inicio exacto del Registro Electrónico Común. La autenticación por certificado fue observada, pero no se declara CLIENT_TLS_AUTH propio del perfil ni capacidad SIGN. El signer downstream es dinámico; formato, algoritmo, callback y firma física siguen NO_VERIFICADO/E2E pendiente."
     },
     {
       "portalId": "diputacion-albacete-portal",

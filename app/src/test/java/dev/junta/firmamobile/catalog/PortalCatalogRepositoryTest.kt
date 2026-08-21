@@ -94,6 +94,7 @@ class PortalCatalogRepositoryTest {
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "diputacion-badajoz-portal",
+                "diputacion-alava-registro-comun",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "diputacion-avila-instancia-general",

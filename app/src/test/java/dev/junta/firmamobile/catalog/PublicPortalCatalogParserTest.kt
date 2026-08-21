@@ -87,6 +87,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("diputacion-badajoz-portal"),
+                ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
                 ProfileId("diputacion-avila-instancia-general"),
@@ -1024,6 +1025,39 @@ class PublicPortalCatalogParserTest {
                 profileId = ProfileId("reg-age-redsara"),
                 entryUrl = URI("https://reg.redsara.es/es/"),
             ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Alava Registro Comun binds exact QA start without signer capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0140" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://egoitza.araba.eus/izapidetu/at/01/es/0000301")
+
+        assertEquals(ProfileId("diputacion-alava-registro-comun"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals(null, metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.ELECTRONIC_SIGNATURE),
+            metadata.observedMechanisms,
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("diputacion-alava-registro-comun"), start),
             repository.resolveLaunch(portal),
         )
     }
