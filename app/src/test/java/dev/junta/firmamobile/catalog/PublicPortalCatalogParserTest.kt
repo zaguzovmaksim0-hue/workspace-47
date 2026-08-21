@@ -145,6 +145,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("csd-sede-public"),
                 ProfileId("cmt-public-navigation"),
                 ProfileId("diputacion-palencia-solicitud-general"),
+                ProfileId("el-hierro-solicitud-general"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
