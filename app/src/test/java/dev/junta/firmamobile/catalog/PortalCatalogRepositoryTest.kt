@@ -123,6 +123,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-huelva-sede-public",
                 "diputacion-ciudad-real-registro-telematico",
                 "diputacion-cordoba-solicitud-generica",
+                "diputacion-caceres-instancia-general",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",

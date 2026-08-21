@@ -84,6 +84,7 @@ class JuntaOriginPolicyTest {
     private val ciudadReal = ProfileId("diputacion-ciudad-real-registro-telematico")
     private val cordoba = ProfileId("diputacion-cordoba-solicitud-generica")
     private val castellon = ProfileId("diputacion-castellon-instancia-general")
+    private val caceres = ProfileId("diputacion-caceres-instancia-general")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -196,6 +197,7 @@ class JuntaOriginPolicyTest {
             "sede.dipucr.es",
             "sede.dipucordoba.es",
             "dipcas.sedelectronica.es",
+            "sede.dip-caceres.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
             "sede.carm.es",
@@ -549,6 +551,14 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://dipcas.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 castellon,
+            ),
+        )
+        assertEquals(setOf("sede.dip-caceres.es", "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(caceres))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(caceres).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341"),
+                caceres,
             ),
         )
         assertEquals(

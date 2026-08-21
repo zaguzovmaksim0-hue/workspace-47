@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d59c402f633bff96a47ded0800c67cbfc8a760bedb3fd2ef7543ff4dd066ac98",
+  "sourceRevision": "6731ed982d06a1dae4264ac6a1bfd60178689a736601b988b06ee55cd663e871",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3976,25 +3976,31 @@
     {
       "portalId": "diputacion-caceres-portal",
       "inventoryId": "ES-PUB-0147",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Cáceres",
+      "profileId": "diputacion-caceres-instancia-general",
+      "displayName": "Diputación Provincial de Cáceres — Instancia General Normalizada",
       "organization": "Diputación Provincial de Cáceres",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Extremadura",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dip-caceres.es",
-      "observedMechanisms": [],
+      "purpose": "Instancia General Normalizada (idproc=341): perfil QA-only para la entrada pública exacta y la navegación observada hasta la primera frontera Cl@ve.",
+      "entryUrl": "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DIP_CACERES_CLAVE_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP09A"
+        "DP09A",
+        "CACERES-SEDE-2026-08-21",
+        "CACERES-INSTANCIA-341-2026-08-21",
+        "CACERES-LOGIN-341-2026-08-21",
+        "CACERES-CLAVE-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado a la entrada exacta de Instancia General Normalizada y a los orígenes de navegación observados sede.dip-caceres.es y pasarela.clave.gob.es. El certificado/DNIe es una alternativa de acceso junto a Cl@ve; no se expone SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
     },
     {
       "portalId": "diputacion-cadiz-portal",

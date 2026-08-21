@@ -2286,6 +2286,29 @@
         {"url":"https://sede.dipucordoba.es/diputacion/tramites","reviewedOn":"2026-08-21"},
         {"url":"https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica","reviewedOn":"2026-08-21"}
       ]
+    },
+    {
+      "profileId": "diputacion-caceres-instancia-general",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Cáceres — Instancia General Normalizada",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341",
+      "initiatorOrigins": ["https://sede.dip-caceres.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.dip-caceres.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dip-caceres.es/carpetaCiudadano/Init.do","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dip-caceres.es/carpetaCiudadano/LoginLDAPFrontAction.do?red=MzQxI2V4cGdlbiNJTlNUQU5DSUEgR0VORVJBTCBOT1JNQUxJWkFEQQ==","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-21"}
+      ]
     }
   ]
 }

@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 246 |
-| Fuentes oficiales totales registradas | 258 |
+| Fuentes oficiales portal-specific registradas | 257 |
+| Fuentes oficiales totales registradas | 269 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 121 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 125 |
-| Entradas restantes fuera de ambos estados | 58 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 123 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 127 |
+| Entradas restantes fuera de ambos estados | 56 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 121 |
+| `IMPLEMENTED_NOT_E2E` | 123 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 51 |
+| `BROWSE_ONLY` | 49 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5040,29 +5040,29 @@ records:
     autonomous_community: "Extremadura"
     province_or_municipality: "Cáceres (provincia)"
     institution_name: "Diputación Provincial de Cáceres"
-    surface_name: "Portal oficial de Diputación Provincial de Cáceres"
+    surface_name: "Diputación Provincial de Cáceres — Instancia General Normalizada"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.dip-caceres.es"
+    origin: "https://sede.dip-caceres.es"
     official_site: "https://www.dip-caceres.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dip-caceres.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    e_sede: "https://sede.dip-caceres.es/carpetaCiudadano/Init.do"
+    entry_url: "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341"
+    procedure_page: "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DIP_CACERES_CLAVE_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia General Normalizada (idproc=341): perfil QA-only para la entrada pública exacta y la navegación observada hasta la primera frontera Cl@ve."
+    protocol_evidence: "La Sede vigente publica la Instancia General Normalizada como procedimiento electrónico continuo. Su enlace Acceder conserva el selector público de procedimiento 341; la opción Acceso con Cl@ve devuelve una forma POST cuyo action exacto es https://pasarela.clave.gob.es/Proxy2/ServiceProvider y cuyos campos transitorios son SAMLRequest y RelayState. No se conservaron sus valores ni se ejecutó autenticación. El aviso general de AutoFirma de la sede no se atribuye como contrato de firma específico de este procedimiento."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP09A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP09A", "CACERES-SEDE-2026-08-21", "CACERES-INSTANCIA-341-2026-08-21", "CACERES-LOGIN-341-2026-08-21", "CACERES-CLAVE-2026-08-21"]
+    reason: "Perfil QA-only limitado a la entrada exacta de Instancia General Normalizada y a los orígenes de navegación observados sede.dip-caceres.es y pasarela.clave.gob.es. El certificado/DNIe es una alternativa de acceso junto a Cl@ve; no se expone SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Con una identidad autorizada, observar el estado autenticado previo a firma de la Instancia General; detenerse antes de cualquier operación criptográfica, registro final o pago."
 
   - inventory_id: "ES-PUB-0148"
     surface_key: "diputacion-cadiz-portal"
@@ -6544,6 +6544,10 @@ availability, certificado, firma ni contrato técnico.
 [DP08G]: https://registro.diputaciondeburgos.es/sta/resources/js/autoscript.js
 [DP08H]: https://registro.diputaciondeburgos.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.3
 [DP09A]: https://www.dip-caceres.es
+[CACERES-SEDE-2026-08-21]: https://sede.dip-caceres.es/carpetaCiudadano/Init.do
+[CACERES-INSTANCIA-341-2026-08-21]: https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341
+[CACERES-LOGIN-341-2026-08-21]: https://sede.dip-caceres.es/carpetaCiudadano/LoginLDAPFrontAction.do?red=MzQxI2V4cGdlbiNJTlNUQU5DSUEgR0VORVJBTCBOT1JNQUxJWkFEQQ==
+[CACERES-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP10A]: https://www.dipucadiz.es
 [DP10B]: https://sede.dipucadiz.es/web/sede/inicio
 [DP11A]: https://www.dipcas.es/es/

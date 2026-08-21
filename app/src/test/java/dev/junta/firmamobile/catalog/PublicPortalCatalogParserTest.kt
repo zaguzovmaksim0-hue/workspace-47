@@ -116,6 +116,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-huelva-sede-public"),
                 ProfileId("diputacion-ciudad-real-registro-telematico"),
                 ProfileId("diputacion-cordoba-solicitud-generica"),
+                ProfileId("diputacion-caceres-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),
