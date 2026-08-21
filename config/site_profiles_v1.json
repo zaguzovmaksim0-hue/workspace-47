@@ -1510,6 +1510,27 @@
       ]
     },
     {
+      "profileId": "la-gomera-instancia-general",
+      "profileVersion": 1,
+      "displayName": "Cabildo Insular de La Gomera — Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+      "initiatorOrigins": ["https://lagomera.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.lagomera.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"},
+        {"url":"https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "diputacion-avila-instancia-general",
       "profileVersion": 1,
       "displayName": "Diputación Provincial de Ávila — Instancia General",
