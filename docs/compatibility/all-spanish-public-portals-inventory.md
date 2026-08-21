@@ -5112,8 +5112,8 @@ records:
     protocol_evidence: "NO_VERIFICADO"
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D06", "DP11A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
+    reason: "Propietario, origin y página pública del portal institucional revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+    reviewed_at: "2026-08-21"
     next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
 
   - inventory_id: "ES-PUB-0150"

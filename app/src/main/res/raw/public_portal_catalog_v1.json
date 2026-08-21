@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "91ba1a90eff293c686180993eb55d4c583b44a9ef0954006aeb3425828b9a239",
+  "sourceRevision": "9a310bf8c319524cd7f63cfc2d8567a5cfad82e4570a1a89c8672695758cbeaa",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3939,8 +3939,8 @@
         "D06",
         "DP11A"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Propietario, origin y página pública del portal institucional revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
     },
     {
       "portalId": "diputacion-ciudad-real-portal",
