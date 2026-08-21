@@ -78,6 +78,7 @@ class JuntaOriginPolicyTest {
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val malaga = ProfileId("diputacion-malaga-instancia-general")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val girona = ProfileId("diputacion-girona-instancia-generica")
     private val segovia = ProfileId("diputacion-segovia-registro")
     private val salamanca = ProfileId("diputacion-salamanca-instancia-general")
     private val teruel = ProfileId("diputacion-teruel-instancia-general")
@@ -223,6 +224,8 @@ class JuntaOriginPolicyTest {
             "sede.depo.gal",
             "lagomera.sedelectronica.es",
             "seu.conselldeivissa.es",
+            "seu-e.cat",
+            "etram.seu-e.cat",
             "sede.carm.es",
             "sede.ordenacionjuego.gob.es",
             "validate.perfdrive.com",
@@ -686,6 +689,17 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.isAllowed(
                 Uri.parse("https://elhierro.sedelectronica.es.evil.example/"),
                 elHierro,
+            ),
+        )
+        assertEquals(
+            setOf("seu-e.cat", "etram.seu-e.cat"),
+            JuntaOriginPolicy.browserAllowedHosts(girona),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(girona).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://seu-e.cat/tramits/8001760009/instancia-generica"),
+                girona,
             ),
         )
         assertEquals(
