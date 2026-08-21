@@ -102,6 +102,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("canarias-sede"),
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 ProfileId("eivissa-sede-electronica"),
+                ProfileId("el-hierro-solicitud-general"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
