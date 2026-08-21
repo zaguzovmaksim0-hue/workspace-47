@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 31,
+  "catalogVersion": 37,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -342,6 +342,27 @@
       ]
     },
     {
+      "profileId": "castilla-leon-quju-public",
+      "profileVersion": 1,
+      "displayName": "Junta de Castilla y León — formulario público QUJU",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://presidencia.jcyl.es/QUJU?O=1",
+      "initiatorOrigins": ["https://presidencia.jcyl.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.tramitacastillayleon.jcyl.es/web/jcyl/AdministracionElectronica/es/Plantilla100Detalle/1251181050732/Tramite/1277466706825/Tramite","reviewedOn":"2026-08-19"},
+        {"url":"https://presidencia.jcyl.es/Comun/Home/Formulario/QUJU","reviewedOn":"2026-08-19"},
+        {"url":"https://presidencia.jcyl.es/QUJU?O=1","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "jccm-certificate-login-probe",
       "profileVersion": 1,
       "displayName": "Junta de Comunidades de Castilla-La Mancha — Probe de acceso con certificado",
@@ -396,6 +417,23 @@
           "reviewedOn": "2026-08-09"
         }
       ]
+    },
+    {
+      "profileId": "jccm-registro-generico",
+      "profileVersion": 1,
+      "displayName": "JCCM — Registro Electrónico / Solicitud Genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ",
+      "initiatorOrigins": ["https://registrounicociudadanos.jccm.es"],
+      "redirectOrigins": ["https://sso.jccm.es", "https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma del resumen XML de la Solicitud Genérica de JCCM","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"XADES","packaging":"DETACHED","mode":"IMPLICIT","fixedExtraProperties":{"format":"XAdES Detached","mode":"implicit"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://pasarela-ident.clave.gob.es"],"sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],"requestPath":"/IdP2/AuthenticateCitizen","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [{"url":"https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ","reviewedOn":"2026-08-19"},{"url":"https://registrounicociudadanos.jccm.es/registrounicociudadanos/accesoclvd.do","reviewedOn":"2026-08-19"},{"url":"https://registrounicociudadanos.jccm.es/registrounicociudadanos/cliente/autoscript.js","reviewedOn":"2026-08-19"}]
     },
     {
       "profileId": "sevilla-atse-certificate-login",
@@ -620,6 +658,27 @@
       ]
     },
     {
+      "profileId": "extremadura-pattex-client-auth",
+      "profileVersion": 1,
+      "displayName": "Junta de Extremadura — PATTEX acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo",
+      "initiatorOrigins": ["https://pattex.juntaex.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://pattex.juntaex.es"],"sourceUrls":["https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo"],"requestPath":"/PATTEX/accesoCertificadoSEDE.jsf","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos","reviewedOn":"2026-08-19"},
+        {"url":"https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo","reviewedOn":"2026-08-19"},
+        {"url":"https://pattex.juntaex.es/PATTEX/accesoCertificadoSEDE.jsf","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "la-palma-sede-electronica",
       "profileVersion": 1,
       "displayName": "Cabildo Insular de La Palma — Sede electrónica",
@@ -732,6 +791,27 @@
         {"url":"https://sede.gobiernodecanarias.org/sede/identificacion","reviewedOn":"2026-08-17"},
         {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js","reviewedOn":"2026-08-17"},
         {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js","reviewedOn":"2026-08-17"}
+      ]
+    },
+    {
+      "profileId": "fuerteventura-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Cabildo Insular de Fuerteventura — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+      "initiatorOrigins": ["https://sede.cabildofuer.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma PAdES de solicitud en la Sede electrónica del Cabildo Insular de Fuerteventura","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"PADES","packaging":"ATTACHED","mode":null,"fixedExtraProperties":{"signaturePositionOnPageLowerLeftX":"50","signaturePositionOnPageLowerLeftY":"15","signaturePositionOnPageUpperRightX":"150","signaturePositionOnPageUpperRightY":"50","signaturePages":"all","layer2Text":"Firmado por $$SUBJECTCN$$ el día $$SIGNDATE=dd/MM/yyyy$$ $$ORGANIZATION$$","layer2FontSize":"6","layer2FontFamily":"0","layer2FontStyle":"0","signatureRotation":"0","includeQuestionMark":"false","obfuscateCertText":"true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.cabildofuer.es/eAdmin/js/miniapplet.js","reviewedOn":"2026-08-18"}
       ]
     },
     {
@@ -860,11 +940,11 @@
     },
     {
       "profileId": "ceuta-sede",
-      "profileVersion": 1,
-      "displayName": "Ciudad Autónoma de Ceuta — Sede electrónica",
-      "compatibilityStatus": "BROWSE_ONLY",
-      "activation": "ENABLED",
-      "startUrl": "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
+      "profileVersion": 2,
+      "displayName": "Ciudad Autónoma de Ceuta — trámite ANI / frontera autenticada",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
       "initiatorOrigins": ["https://sede.ceuta.es"],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
@@ -872,10 +952,11 @@
       "operationPolicies": [],
       "capabilities": [],
       "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
-        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info","reviewedOn":"2026-07-16"},
-        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=requisitos&modulo=info","reviewedOn":"2026-07-16"}
+        {"url":"https://sede.ceuta.es/controlador/controlador?cmd=tramite&modulo=tramites&tramite=ANI","reviewedOn":"2026-08-19"},
+        {"url":"https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI","reviewedOn":"2026-08-19"},
+        {"url":"https://sede.ceuta.es/controlador/controlador","reviewedOn":"2026-08-19"}
       ]
     },
     {
@@ -948,6 +1029,75 @@
         {"url":"https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270","reviewedOn":"2026-08-16"},
         {"url":"https://sede.dipuleon.es/carpetaciudadana/login.aspx","reviewedOn":"2026-08-16"},
         {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "diputacion-albacete-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Albacete — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567",
+      "initiatorOrigins": ["https://sede.dipualba.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://identificacionssl.sedipualba.es"],
+        "sourceUrls": ["https://sede.dipualba.es/segex/identificacion_opciones.aspx"],
+        "sourceFixedQueryParameters": {"idioma":"es"},
+        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
+        "linkedEphemeralQueryParameters": ["idtoken"],
+        "requestPath": "/",
+        "fixedQueryParameters": {"idioma":"es","entidad":"02000"},
+        "requiredEphemeralQueryParameters": ["idtoken"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.dipualba.es/carpetaciudadana/login.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.dipualba.es/segex/identificacion_opciones.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "consell-mallorca-sede",
+      "profileVersion": 1,
+      "displayName": "Consell de Mallorca — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
+      "initiatorOrigins": ["https://cim.secimallorca.net"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://identificacionssl.sedipualba.es"],
+        "sourceUrls": ["https://cim.secimallorca.net/segex/identificacion_opciones.aspx"],
+        "sourceFixedQueryParameters": {"idioma":"ca"},
+        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
+        "linkedEphemeralQueryParameters": ["idtoken"],
+        "requestPath": "/",
+        "fixedQueryParameters": {"idioma":"ca","entidad":"07700"},
+        "requiredEphemeralQueryParameters": ["idtoken"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082","reviewedOn":"2026-08-18"},
+        {"url":"https://cim.secimallorca.net/carpetaciudadana/login.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-18"}
       ]
     },
     {
@@ -1078,6 +1228,47 @@
       ]
     },
     {
+      "profileId": "diputacion-alicante-solicitud-general",
+      "profileVersion": 1,
+      "displayName": "Diputación de Alicante — Solicitud General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb",
+      "initiatorOrigins": ["https://diputacionalicante.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.diputacionalicante.es/","reviewedOn":"2026-08-18"},
+        {"url":"https://diputacionalicante.sedelectronica.es/catalog/t/66192629-8b04-4cf8-a121-e2cb86cd45cb","reviewedOn":"2026-08-18"},
+        {"url":"https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "diputacion-alava-registro-comun",
+      "profileVersion": 1,
+      "displayName": "Diputación Foral de Álava — Registro Electrónico Común",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://egoitza.araba.eus/izapidetu/at/01/es/0000301",
+      "initiatorOrigins": ["https://egoitza.araba.eus"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://egoitza.araba.eus/es/inicio/tramites/fitxa/registro-electronico-comun","reviewedOn":"2026-08-18"},
+        {"url":"https://egoitza.araba.eus/izapidetu/at/01/es/0000301","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
       "profileId": "diputacion-lleida-sede",
       "profileVersion": 1,
       "displayName": "Diputació de Lleida — Sede electrónica",
@@ -1095,6 +1286,26 @@
       "evidence": [
         {"url":"https://seu.diputaciolleida.cat","reviewedOn":"2026-08-16"},
         {"url":"https://seu.diputaciolleida.cat/portal/contenedor.do?det_cod=49&ent_id=1&idioma=2","reviewedOn":"2026-08-16"}
+      ]
+    },
+{
+      "profileId": "diputacion-badajoz-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación de Badajoz — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dip-badajoz.es",
+      "initiatorOrigins": ["https://sede.dip-badajoz.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Acceso con certificado a la Diputación de Badajoz","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"EXPLICIT","fixedExtraProperties":{"policy":"FirmaAGE","headless":"true","filters":"nonexpired:true;authCert:true"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dip-badajoz.es","reviewedOn":"2026-08-18"},
+        {"url":"https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1","reviewedOn":"2026-08-18"}
       ]
     },
     {
@@ -1188,6 +1399,38 @@
         {"url":"https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/","reviewedOn":"2026-08-18"},
         {"url":"https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01","reviewedOn":"2026-08-18"},
         {"url":"https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "mugeju-remision-documentacion-client-auth",
+      "profileVersion": 1,
+      "displayName": "MUGEJU — Remisión de documentación con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedemugeju.gob.es/remisiondocumentacion",
+      "initiatorOrigins": ["https://sedemugeju.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sedemugeju.gob.es/remisiondocumentacion","reviewedOn":"2026-08-19"},
+        {"url":"https://sedemugeju.gob.es/mutualnet3/clave/ControladorClaveCiudadanoServlet?operation=REM","reviewedOn":"2026-08-19"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-18"},
+        {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-18"}
       ]
     },
     {
@@ -1290,6 +1533,152 @@
         {"url":"https://sede.xunta.gal/presenta/novo/PR004A_2025_1","reviewedOn":"2026-08-18"},
         {"url":"https://sede.xunta.gal/presenta/assets/js/miniapplet.js?nocache=1.7.0","reviewedOn":"2026-08-18"},
         {"url":"https://sede.xunta.gal/presenta/main.293423417603b2d37c80.js","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "menorca-carpeta-ciutadana",
+      "profileVersion": 1,
+      "displayName": "Consell Insular de Menorca — Sol·licitud genèrica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+      "initiatorOrigins": ["https://www.carpetaciutadana.org"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://www.carpetaciutadana.org"],"sourceUrls":["https://www.carpetaciutadana.org/cime/Login/Login.aspx"],"requestPath":"/cime/Login/LoginCert.aspx","fixedQueryParameters":{},"requiredEphemeralQueryParameters":["URL"],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443,"sourceFixedQueryParameters":{},"sourceRequiredEphemeralQueryParameters":["URL"],"linkedEphemeralQueryParameters":["URL"]},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262","reviewedOn":"2026-08-18"},
+        {"url":"https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1","reviewedOn":"2026-08-18"},
+        {"url":"https://www.carpetaciutadana.org/cime/Login/Login.aspx","reviewedOn":"2026-08-18"},
+        {"url":"https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "diputacion-barcelona-solicitud-generica-2057",
+      "profileVersion": 1,
+      "displayName": "Diputació de Barcelona — Solicitud genérica 2057",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica",
+      "initiatorOrigins": ["https://seuelectronica.diba.cat"],
+      "redirectOrigins": ["https://valid.aoc.cat", "https://cert.valid.aoc.cat", "https://aplicacions.diba.cat"],
+      "trustedBrowseOrigins": ["https://tramits.diba.cat"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://tramits.diba.cat/SS/","reviewedOn":"2026-08-18"},
+        {"url":"https://valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"},
+        {"url":"https://cert.valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "diputacion-avila-instancia-general",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Ávila — Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+      "initiatorOrigins": ["https://diputacionavila.sedelectronica.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es", "https://pasarela-ident-sistemas.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
+        {"url":"https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "eivissa-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Consell Insular d’Eivissa — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seu.conselldeivissa.es/",
+      "initiatorOrigins": ["https://seu.conselldeivissa.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de Instancia General en la Sede electrónica del Consell Insular d’Eivissa","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"IMPLICIT","fixedExtraProperties":{"headless":"true","mode":"implicit"},"allowedExtraProperties":["filter","mimeType"]}],
+      "capabilities": ["SIGN"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://seu.conselldeivissa.es/","reviewedOn":"2026-08-18"},
+        {"url":"https://seu.conselldeivissa.es/sta/reg/autofirma.js","reviewedOn":"2026-08-18"},
+        {"url":"https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "catalunya-peticio-generica-client-auth",
+      "profileVersion": 1,
+      "displayName": "Generalitat de Catalunya — Petició genèrica — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c",
+      "initiatorOrigins": [
+        "https://tramits.gencat.cat"
+      ],
+      "redirectOrigins": [
+        "https://ovt.gencat.cat",
+        "https://valid.aoc.cat",
+        "https://pasarela.clave.gob.es"
+      ],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": [
+          "https://pasarela-ident.clave.gob.es"
+        ],
+        "sourceUrls": [
+          "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        ],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c",
+          "reviewedOn": "2026-08-19"
+        },
+        {
+          "url": "https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c",
+          "reviewedOn": "2026-08-19"
+        },
+        {
+          "url": "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+          "reviewedOn": "2026-08-19"
+        },
+        {
+          "url": "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+          "reviewedOn": "2026-08-19"
+        }
       ]
     }
   ]
