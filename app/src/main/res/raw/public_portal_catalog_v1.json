@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7b9fe30376010e10e9e2c0120daede50d768600f898d97d41ee878a5006f1270",
+  "sourceRevision": "24d0fa0cfa5403e11c402104595ad0bc99b0c90595decd5a5dcf2fb0e00160b8",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3582,26 +3582,27 @@
     {
       "portalId": "gran-canaria-portal-institucional",
       "inventoryId": "ES-PUB-0137",
-      "profileId": null,
+      "profileId": "gran-canaria-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de Gran Canaria",
       "organization": "Cabildo Insular de Gran Canaria",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la administración electrónica en la Sede oficial; la Sede publica Instancia General y su botón «Iniciar trámite» abre exactamente el startUrl del perfil QA-only gran-canaria-sede-electronica ya implementado.",
       "entryUrl": "https://cabildo.grancanaria.com/",
+      "launchUrl": "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_GRAN_CANARIA_SEDE_INSTANCIA_GENERAL",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I11A",
         "I11B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente gran-canaria-sede-electronica mediante una cadena first-party actual portal institucional → Sede → ficha Instancia General → launch exacto; el origin institucional no hereda trust ni ABI de firma y falta E2E físico desde la entrada institucional."
     },
     {
       "portalId": "gran-canaria-sede-electronica",

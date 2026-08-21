@@ -587,6 +587,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("AUTOSCRIPT_MINIAPPLET_LOCAL_CADES", entry["protocolFamily"])
         self.assertIn("e2e", entry["limitations"].lower())
 
+    def test_gran_canaria_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0137"
+        )
+
+        self.assertEqual("gran-canaria-portal-institucional", target["portalId"])
+        self.assertEqual("gran-canaria-sede-electronica", target["profileId"])
+        self.assertEqual("https://cabildo.grancanaria.com/", target["entryUrl"])
+        self.assertEqual(
+            "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
+            target["launchUrl"],
+        )
+        self.assertEqual("DELEGACION_GRAN_CANARIA_SEDE_INSTANCIA_GENERAL", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
     def test_gran_canaria_pades_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entry = next(

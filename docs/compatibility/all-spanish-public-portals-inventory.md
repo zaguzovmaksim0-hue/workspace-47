@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 87 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 91 |
-| Entradas restantes fuera de ambos estados | 92 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 88 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 92 |
+| Entradas restantes fuera de ambos estados | 91 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 87 |
+| `IMPLEMENTED_NOT_E2E` | 88 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 85 |
+| `BROWSE_ONLY` | 84 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4718,23 +4718,24 @@ records:
     official_site: "https://cabildo.grancanaria.com/"
     e_sede: "https://sede.grancanaria.com/"
     entry_url: "https://cabildo.grancanaria.com/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://sede.grancanaria.com/sede-privado/instancia-general?inicio"
+    procedure_page: "https://sede.grancanaria.com/informacion-instancia"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_GRAN_CANARIA_SEDE_INSTANCIA_GENERAL"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El portal institucional delega la administración electrónica en la Sede oficial; la Sede publica Instancia General y su botón «Iniciar trámite» abre exactamente el startUrl del perfil QA-only gran-canaria-sede-electronica ya implementado."
+    protocol_evidence: "El 2026-08-21 la portada institucional respondió 200 y publicó «Sede Electrónica» hacia https://sede.grancanaria.com. La portada de esa Sede publicó «Instancia General» hacia https://sede.grancanaria.com/informacion-instancia, y esa ficha first-party publicó «Iniciar trámite» exactamente a https://sede.grancanaria.com/sede-privado/instancia-general?inicio, que coincide byte a byte con el startUrl del perfil gran-canaria-sede-electronica."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D12", "I11A", "I11B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    reason: "Alias QA-only al perfil existente gran-canaria-sede-electronica mediante una cadena first-party actual portal institucional → Sede → ficha Instancia General → launch exacto; el origin institucional no hereda trust ni ABI de firma y falta E2E físico desde la entrada institucional."
+    reviewed_at: "2026-08-21"
+    next_gate: "E2E físico seguro desde el portal institucional hasta Instancia General conservando los límites QA-only del perfil y deteniéndose antes de firma o presentación administrativa."
 
   - inventory_id: "ES-PUB-0138"
     surface_key: "gran-canaria-sede-electronica"
