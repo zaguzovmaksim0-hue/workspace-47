@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "060d430dc1a26fca8db83024c8323e9f54856173936e0aea04ec8ac9baabe7aa",
+  "sourceRevision": "c39a5da20473a1624ff0cbd590ea8c2ce6ad39b49f920737d874a99ef2c41eef",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2958,21 +2958,21 @@
     {
       "portalId": "murcia-sede",
       "inventoryId": "ES-PUB-0113",
-      "profileId": null,
+      "profileId": "murcia-carm-pase",
       "displayName": "Sede electrónica de la CARM",
       "organization": "Comunidad Autónoma de la Región de Murcia",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Región de Murcia",
-      "purpose": "Tramitación con certificado, Cl@ve y AutoFirma según el procedimiento.",
+      "purpose": "El procedimiento 385 expone una aportación de documentos protegida; soporte QA limitado a la navegación exacta Sede CARM → PASE → ConCl@ve, sin capacidades nativas de certificado o firma.",
       "entryUrl": "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CARM_PASE_CONCLAVE_BROWSE_AUTH_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
@@ -2980,8 +2980,8 @@
         "A16B",
         "A16C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "NEW_PROFILE QA_ONLY de navegación: sede.carm.es es TRUSTED_BROWSE y validate.perfdrive.com, pase.carm.es y conclave.carm.es quedan solo como redirects BROWSE_ONLY. capabilities=[], sin bridge, clientAuthPolicy, endpoint de firma ni aceptación E2E."
     },
     {
       "portalId": "navarra-sede-registro-general",
