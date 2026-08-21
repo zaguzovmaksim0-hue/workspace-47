@@ -277,6 +277,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == MALLORCA_PROFILE_ID) {
                 validateMallorcaProfile(p)
             }
+            if (p.profileId.value == CUENCA_PROFILE_ID) {
+                validateCuencaProfile(p)
+            }
             if (p.profileId.value == LA_RIOJA_PROFILE_ID) {
                 validateLaRiojaProfile(p)
             }
@@ -1692,6 +1695,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
+    private fun validateCuencaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CUENCA_PROFILE_VERSION)
+        require(profile.displayName == CUENCA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CUENCA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CUENCA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(CUENCA_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "16000"),
+                requiredEphemeralQueryParameters = setOf("idtoken"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
+                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
+                linkedEphemeralQueryParameters = setOf("idtoken"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CUENCA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-21") })
+    }
+
     private fun validateLaRiojaProfile(profile: SiteProfile) {
         require(profile.profileVersion == LA_RIOJA_PROFILE_VERSION)
         require(profile.displayName == LA_RIOJA_DISPLAY_NAME)
@@ -2704,6 +2740,20 @@ object SiteProfileCatalogParser {
     private val MALLORCA_EVIDENCE_URLS = setOf(
         MALLORCA_START_URL,
         "https://cim.secimallorca.net/carpetaciudadana/login.aspx",
+        "https://identificacionssl.sedipualba.es/",
+    )
+    private const val CUENCA_PROFILE_ID = "diputacion-cuenca-portal"
+    private const val CUENCA_PROFILE_VERSION = 1
+    private const val CUENCA_DISPLAY_NAME = "Diputación Provincial de Cuenca — acceso con certificado"
+    private const val CUENCA_START_URL =
+        "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+    private const val CUENCA_ORIGIN = "https://sede.dipucuenca.es"
+    private const val CUENCA_SOURCE_URL =
+        "https://sede.dipucuenca.es/segex/identificacion_opciones.aspx"
+    private val CUENCA_EVIDENCE_URLS = setOf(
+        CUENCA_START_URL,
+        "https://sede.dipucuenca.es/carpetaciudadana/login.aspx",
+        CUENCA_SOURCE_URL,
         "https://identificacionssl.sedipualba.es/",
     )
     private const val GVA_PROFILE_ID = "generalitat-valenciana-client-auth"

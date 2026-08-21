@@ -995,6 +995,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", entry["limitations"].lower())
         self.assertIn("firma", entry["limitations"].lower())
 
+    def test_cuenca_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(e for e in catalog["entries"] if e["portalId"] == "diputacion-cuenca-portal")
+        self.assertEqual("diputacion-cuenca-portal", entry["profileId"])
+        self.assertEqual("ES-PUB-0153", entry["inventoryId"])
+        self.assertEqual(
+            "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074",
+            entry["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("2026-08-21", entry["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", entry["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", entry["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", entry["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", entry["observedMechanisms"])
+        self.assertEqual([], entry["observedSignatureFormats"])
+        self.assertIn("qa", entry["limitations"].lower())
+        self.assertIn("e2e", entry["limitations"].lower())
+        self.assertIn("firma", entry["limitations"].lower())
+
     def test_diputacion_lleida_implemented_not_e2e_profile_binds_exact_catalog_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         lleida = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-lleida-sede")
