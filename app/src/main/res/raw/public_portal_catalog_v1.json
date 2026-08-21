@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "5f46ccf87e6e82322937761bcc224c8d81aa1854b37cf32cda9e096329542ec0",
+  "sourceRevision": "301c87938ee090f36f1ab5201988c75f445000b8dd1267c0d12b2f9a8cb80f5a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3823,25 +3823,29 @@
     {
       "portalId": "diputacion-almeria-portal",
       "inventoryId": "ES-PUB-0142",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Almería",
+      "profileId": "diputacion-almeria-solicitud-general",
+      "displayName": "Diputación Provincial de Almería — Registro Electrónico / Solicitud General",
       "organization": "Diputación Provincial de Almería",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dipalme.org",
-      "observedMechanisms": [],
+      "purpose": "Perfil QA-only limitado al lanzamiento exacto del Registro Electrónico / Solicitud General de la Diputación Provincial de Almería. La página de acceso vigente ofrece identificación mediante Cl@ve y permite usar certificado como alternativa; formulario, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DIPALME_OFICINA_VIRTUAL_SOLICITUD_GENERAL_QA_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP04A"
+        "DP04A",
+        "ALMERIA-REGISTRO-2026-08-21",
+        "ALMERIA-OV-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Implementación QA_ONLY de navegación al trámite exacto. El certificado es una opción de identificación observada, no una prueba de CLIENT_TLS_AUTH; no se habilitan capacidades SIGN ni SELECT_CERTIFICATE y la firma documental permanece NO_VERIFICADO/E2E pendiente."
     },
     {
       "portalId": "diputacion-avila-portal",
