@@ -55,6 +55,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("dgt-verificacion-equipo"),
                 ProfileId("ugr-certificado-login"),
                 ProfileId("cantabria-rec-cert-login"),
+                ProfileId("catalunya-peticio-generica-client-auth"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("jccm-registro-generico"),
                 ProfileId("mites-certificate-login"),

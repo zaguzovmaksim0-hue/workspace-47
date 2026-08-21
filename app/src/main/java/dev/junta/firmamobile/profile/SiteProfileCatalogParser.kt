@@ -210,8 +210,13 @@ object SiteProfileCatalogParser {
         return EvidenceReference(strictHttpsUrl(o.string("url")), LocalDate.parse(o.string("reviewedOn")))
     }
 
+    private data class NavigationOriginOwner(
+        val profileId: ProfileId,
+        val isRedirectOrigin: Boolean,
+    )
+
     private fun validateCatalog(catalog: SiteProfileCatalog) {
-        val navigationOriginOwners = mutableMapOf<ExactOrigin, ProfileId>()
+        val navigationOriginOwners = mutableMapOf<ExactOrigin, NavigationOriginOwner>()
         val endpointUrlOwners = mutableMapOf<URI, ProfileId>()
         val endpointOwners = mutableMapOf<EndpointId, ProfileId>()
         catalog.profiles.forEach { p ->
@@ -323,6 +328,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == AIREF_PROFILE_ID) {
                 validateAirefProfile(p)
             }
+            if (p.profileId.value == CATALUNYA_PROFILE_ID) {
+                validateCatalunyaProfile(p)
+            }
             if (p.profileId.value == MUGEJU_PROFILE_ID) {
                 validateMugejuProfile(p)
             }
@@ -405,7 +413,7 @@ object SiteProfileCatalogParser {
                 }
                 require(policy.sourceUrls.all { source ->
                     val allowedSourceOrigins = if (
-                        p.profileId.value in setOf(AIREF_PROFILE_ID, MUGEJU_PROFILE_ID, JCCM_REGISTRO_PROFILE_ID)
+                        p.profileId.value in setOf(AIREF_PROFILE_ID, CATALUNYA_PROFILE_ID, MUGEJU_PROFILE_ID, JCCM_REGISTRO_PROFILE_ID)
                     ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
@@ -622,10 +630,19 @@ object SiteProfileCatalogParser {
                 require(endpointUrlOwners.put(endpoint.url, p.profileId) == null)
             }
             p.allOrigins().forEach { origin ->
-                val previousOwner = navigationOriginOwners.putIfAbsent(origin, p.profileId)
+                val previousOwner = navigationOriginOwners.putIfAbsent(
+                    origin,
+                    NavigationOriginOwner(p.profileId, origin in p.redirectOrigins),
+                )
                 require(
                     previousOwner == null ||
-                        isReviewedSharedNavigationOrigin(origin, previousOwner, p.profileId),
+                        isReviewedSharedNavigationOrigin(
+                            origin,
+                            previousOwner.profileId,
+                            p.profileId,
+                            previousOwner.isRedirectOrigin,
+                            origin in p.redirectOrigins,
+                        ),
                 )
             }
         }
@@ -1302,6 +1319,42 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateCatalunyaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CATALUNYA_PROFILE_VERSION)
+        require(profile.displayName == CATALUNYA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CATALUNYA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CATALUNYA_PUBLIC_ORIGIN)))
+        require(
+            profile.redirectOrigins == setOf(
+                ExactOrigin.parse(CATALUNYA_OVT_ORIGIN),
+                ExactOrigin.parse(CATALUNYA_VALID_ORIGIN),
+                ExactOrigin.parse(CATALUNYA_CLAVE_ORIGIN),
+            ),
+        )
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(CATALUNYA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(CATALUNYA_CLIENT_AUTH_SOURCE_URL)),
+                requestPath = CATALUNYA_CLIENT_AUTH_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CATALUNYA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validatePoliciaProfile(profile: SiteProfile) {
         require(profile.profileVersion == POLICIA_PROFILE_VERSION)
         require(profile.displayName == POLICIA_DISPLAY_NAME)
@@ -1956,6 +2009,8 @@ object SiteProfileCatalogParser {
         origin: ExactOrigin,
         firstOwner: ProfileId,
         secondOwner: ProfileId,
+        firstIsRedirectOrigin: Boolean,
+        secondIsRedirectOrigin: Boolean,
     ): Boolean =
         (setOf(firstOwner.value, secondOwner.value).let { owners ->
             owners.size == 2 &&
@@ -1963,12 +2018,18 @@ object SiteProfileCatalogParser {
                     it in setOf(
                         MINECO_PROFILE_ID,
                         AIREF_PROFILE_ID,
+                        CATALUNYA_PROFILE_ID,
                         AVILA_PROFILE_ID,
                         MUGEJU_PROFILE_ID,
                         JCCM_REGISTRO_PROFILE_ID,
                     )
                 } && origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                firstIsRedirectOrigin && secondIsRedirectOrigin &&
+                    owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) &&
+                    origin.serialized == CATALUNYA_VALID_ORIGIN
+            }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
                     owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
@@ -2377,6 +2438,34 @@ object SiteProfileCatalogParser {
         "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/",
         AIREF_START_URL,
         "https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js",
+    )
+    private const val DIPUTACION_BARCELONA_2057_PROFILE_ID = "diputacion-barcelona-solicitud-generica-2057"
+    private const val CATALUNYA_PROFILE_ID = "catalunya-peticio-generica-client-auth"
+    private const val CATALUNYA_PROFILE_VERSION = 1
+    private const val CATALUNYA_DISPLAY_NAME =
+        "Generalitat de Catalunya — Petició genèrica — acceso con certificado"
+    private const val CATALUNYA_START_URL =
+        "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
+            "category=72461610-a82c-11e3-a972-000c29052e2c"
+    private const val CATALUNYA_PROTECTED_URL =
+        "https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?" +
+            "reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&" +
+            "urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2F" +
+            "Peticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c"
+    private const val CATALUNYA_PUBLIC_ORIGIN = "https://tramits.gencat.cat"
+    private const val CATALUNYA_OVT_ORIGIN = "https://ovt.gencat.cat"
+    private const val CATALUNYA_VALID_ORIGIN = "https://valid.aoc.cat"
+    private const val CATALUNYA_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
+    private const val CATALUNYA_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
+    private const val CATALUNYA_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val CATALUNYA_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
+    private val CATALUNYA_EVIDENCE_URLS = setOf(
+        "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
+            "category=72461610-a82c-11e3-a972-000c29052e2c",
+        CATALUNYA_START_URL,
+        CATALUNYA_PROTECTED_URL,
+        CATALUNYA_CLIENT_AUTH_SOURCE_URL,
+        "$CATALUNYA_CLIENT_AUTH_ORIGIN$CATALUNYA_CLIENT_AUTH_REQUEST_PATH",
     )
     private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
     private const val POLICIA_PROFILE_VERSION = 1

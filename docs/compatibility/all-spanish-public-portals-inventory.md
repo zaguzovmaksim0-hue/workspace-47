@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 88 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 92 |
-| Entradas restantes fuera de ambos estados | 91 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 89 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 93 |
+| Entradas restantes fuera de ambos estados | 90 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 88 |
+| `IMPLEMENTED_NOT_E2E` | 89 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 84 |
+| `BROWSE_ONLY` | 83 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3739,19 +3739,19 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Presentación de una petición genérica con identificación y firma cuando corresponda."
-    protocol_evidence: "La ficha y el catálogo de sistemas no revelan un ABI ni endpoint portal-specific."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A09B", "A09C", "A09D"]
-    reason: "La condición de firma no acredita cliente JS, formato, algoritmo ni callback exactos."
-    reviewed_at: "2026-07-16"
-    next_gate: "Recorrer el flujo seguro hasta antes de la identificación o envío."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Petició genèrica mediante la ruta Cl@ve/eIdentifier; la firma documental posterior no está implementada."
+    protocol_evidence: "El flujo protegido ING001HTM2 alcanza desde https://pasarela.clave.gob.es/Proxy2/ServiceProvider la petición TLS cliente exacta https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen. La autenticación con certificado fue aceptada por eIdentifier, pero el retorno federado termina después en HTTP 500 de GSIT; no se observó ABI de firma."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A09B", "A09C", "A09D", "CATALUNYA-PETICIO-CLIENTTLS-2026-08-19"]
+    reason: "Implementación QA-only limitada a CLIENT_TLS_AUTH. La revalidación controlada 2026-08-19 volvió a terminar en GSIT j_acegi_security_check HTTP 500 después de autenticar; firma, formato, algoritmo, callback y aceptación E2E permanecen no verificados."
+    reviewed_at: "2026-08-19"
+    next_gate: "Revalidar el retorno GSIT; solo si abre una sesión protegida, avanzar hasta pre-sign para observar el ABI sin ejecutar firma privada ni presentación final."
 
   - inventory_id: "ES-PUB-0106"
     surface_key: "ceuta-sede"
@@ -6598,3 +6598,4 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-INSTANCIA-GENERAL-2026-08-18]: https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
+[CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c

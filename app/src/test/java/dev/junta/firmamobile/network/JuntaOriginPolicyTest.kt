@@ -150,6 +150,8 @@ class JuntaOriginPolicyTest {
             "cert.valid.aoc.cat",
             "aplicacions.diba.cat",
             "tramits.diba.cat",
+            "tramits.gencat.cat",
+            "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",

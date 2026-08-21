@@ -1599,6 +1599,67 @@
         {"url":"https://seu.conselldeivissa.es/sta/reg/autofirma.js","reviewedOn":"2026-08-18"},
         {"url":"https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043","reviewedOn":"2026-08-18"}
       ]
+    },
+    {
+      "profileId": "catalunya-peticio-generica-client-auth",
+      "profileVersion": 1,
+      "displayName": "Generalitat de Catalunya — Petició genèrica — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c",
+      "initiatorOrigins": [
+        "https://tramits.gencat.cat"
+      ],
+      "redirectOrigins": [
+        "https://ovt.gencat.cat",
+        "https://valid.aoc.cat",
+        "https://pasarela.clave.gob.es"
+      ],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [
+        "CLIENT_TLS_AUTH"
+      ],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": [
+          "https://pasarela-ident.clave.gob.es"
+        ],
+        "sourceUrls": [
+          "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        ],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA"
+        ],
+        "requireDigitalSignatureKeyUsage": true
+      },
+      "evidence": [
+        {
+          "url": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c",
+          "reviewedOn": "2026-08-19"
+        },
+        {
+          "url": "https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c",
+          "reviewedOn": "2026-08-19"
+        },
+        {
+          "url": "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+          "reviewedOn": "2026-08-19"
+        },
+        {
+          "url": "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+          "reviewedOn": "2026-08-19"
+        }
+      ]
     }
   ]
 }

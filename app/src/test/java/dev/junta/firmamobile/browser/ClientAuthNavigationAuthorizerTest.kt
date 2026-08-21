@@ -472,6 +472,48 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactCatalunyaClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val catalunya = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = catalunya.observeTopLevelNavigation(
+            CATALUNYA_PROFILE, CATALUNYA_SOURCE, CATALUNYA_TARGET, 79, true,
+        )
+
+        assertEquals(CATALUNYA_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            catalunya.observeTopLevelNavigation(CATALUNYA_PROFILE, CATALUNYA_SOURCE, CATALUNYA_TARGET, 79, true),
+        )
+
+        listOf(
+            CATALUNYA_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            "$CATALUNYA_TARGET?extra=1",
+            CATALUNYA_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+            CATALUNYA_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
+        ).forEachIndexed { index, invalidTarget ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                invalidTarget,
+                fresh.observeTopLevelNavigation(
+                    CATALUNYA_PROFILE, CATALUNYA_SOURCE, invalidTarget, 90L + index, true,
+                ),
+            )
+        }
+
+        val wrongSource = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        assertNull(
+            wrongSource.observeTopLevelNavigation(
+                CATALUNYA_PROFILE,
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider?unexpected=1",
+                CATALUNYA_TARGET,
+                99,
+                true,
+            ),
+        )
+    }
+
+    @Test
     fun exactMugejuClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val mugeju = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
         val authorized = mugeju.observeTopLevelNavigation(
@@ -1064,6 +1106,9 @@ class ClientAuthNavigationAuthorizerTest {
         val AIREF_PROFILE = ProfileId("airef-instancia-general")
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val CATALUNYA_PROFILE = ProfileId("catalunya-peticio-generica-client-auth")
+        const val CATALUNYA_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val CATALUNYA_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val MUGEJU_PROFILE = ProfileId("mugeju-remision-documentacion-client-auth")
         const val MUGEJU_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val MUGEJU_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
