@@ -11,6 +11,7 @@ import dev.junta.firmamobile.signing.BatchProtocolResponse
 import dev.junta.firmamobile.signing.BatchSigningFormat
 import dev.junta.firmamobile.signing.BatchSigningReplySink
 import dev.junta.firmamobile.signing.BurgosBatchProtocolAdapter
+import dev.junta.firmamobile.signing.CaibBatchProtocolAdapter
 import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
 import dev.junta.firmamobile.signing.HuescaBatchProtocolAdapter
 import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
@@ -108,6 +109,65 @@ internal class HuescaBatchSigningAdapter(
     fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? =
         delegate.normalize(request)
     fun replySink(channel: MelillaBatchReplyChannel): BatchSigningReplySink = delegate.replySink(channel)
+}
+
+internal class CaibBatchSigningAdapter(
+    private val registry: SiteProfileRegistry,
+    private val clock: Clock = Clock.systemUTC(),
+) {
+    fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? = runCatching {
+        val resolved = registry.resolve(request.sourceOrigin)
+            ?.takeIf { it.trustMode == TrustMode.TRUSTED_SIGNING && it.profile.profileId == request.profileId }
+            ?: return null
+        val profile = registry.profile(request.profileId)?.takeIf { it == resolved.profile } ?: return null
+        val operation = profile.operationPolicies[ProtocolOperation.SIGN] ?: return null
+        if (profile.profileId.value != CaibBatchProtocolAdapter.PROFILE_ID || profile.profileVersion != 1 ||
+            profile.compatibilityStatus != CompatibilityStatus.VERIFIED_CONTRACT ||
+            profile.capabilities != setOf(Capability.SIGN) ||
+            operation.inputAdapterId.value != CaibBatchProtocolAdapter.ID.value ||
+            operation.algorithms != setOf(ProfileSignatureAlgorithm.SHA256_WITH_RSA) ||
+            operation.format != ProfileSignatureFormat.PADES || request.algorithm != "SHA256withRSA" ||
+            request.format != "PAdES" || request.suboperation != "sign" || request.stopOnError || request.documents.size != 1
+        ) return null
+        val document = request.documents.single()
+        if (document.format !in setOf(null, "PAdES") || document.suboperation !in setOf(null, "sign")) return null
+        NormalizedBatchSigningRequest(
+            requestId = request.requestId,
+            protocolId = CaibBatchProtocolAdapter.ID,
+            context = SigningContext(
+                profileId = profile.profileId.value,
+                profileVersion = profile.profileVersion,
+                origin = request.sourceOrigin,
+                navigationId = NavigationId(request.documentId.toString()),
+                navigationEpoch = request.navigationEpoch,
+                observedAt = clock.instant(),
+            ),
+            algorithm = SigningAlgorithm.SHA256_WITH_RSA,
+            format = BatchSigningFormat.PADES,
+            suboperation = "sign",
+            stopOnError = false,
+            operationId = request.operationId,
+            preSignerUrl = request.batchPreSignerUrl,
+            postSignerUrl = request.batchPostSignerUrl,
+            documents = listOf(
+                NormalizedBatchSigningDocument(
+                    id = document.id,
+                    dataReference = document.dataReference,
+                    format = BatchSigningFormat.PADES,
+                    suboperation = "sign",
+                ),
+            ),
+        )
+    }.getOrNull()
+
+    fun replySink(channel: MelillaBatchReplyChannel): BatchSigningReplySink = object : BatchSigningReplySink {
+        override val requestId = channel.requestId
+        override fun success(response: BatchProtocolResponse): Boolean = runCatching {
+            response.withBytes { bytes -> channel.success(java.util.Base64.getEncoder().encodeToString(bytes)) }
+        }.getOrElse { channel.abandon(); false }
+        override fun failure(code: SigningErrorCode): Boolean = channel.failure(code)
+        override fun abandon(): Boolean = channel.abandon()
+    }
 }
 
 internal class LugoBatchSigningAdapter(
