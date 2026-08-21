@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 83 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 87 |
-| Entradas restantes fuera de ambos estados | 96 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 84 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 88 |
+| Entradas restantes fuera de ambos estados | 95 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 83 |
+| `IMPLEMENTED_NOT_E2E` | 84 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 89 |
+| `BROWSE_ONLY` | 88 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5299,13 +5299,13 @@ records:
     autonomous_community: "Castilla-La Mancha"
     province_or_municipality: "Guadalajara (provincia)"
     institution_name: "Diputación Provincial de Guadalajara"
-    surface_name: "Sede electrónica de Diputación Provincial de Guadalajara"
+    surface_name: "Diputación Provincial de Guadalajara — Instancia General"
     surface_type: "SEDE"
     origin: "https://dguadalajara.sedelectronica.es"
     official_site: "https://dguadalajara.sedelectronica.es"
     e_sede: "https://dguadalajara.sedelectronica.es"
-    entry_url: "https://dguadalajara.sedelectronica.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://dguadalajara.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
@@ -5314,14 +5314,15 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La sede documenta identificación condicionada con certificado; no acredita firma obligatoria en un trámite concreto."
-    protocol_evidence: "La evidencia delimita identificación electrónica, no un contrato de firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia General (SIA 2092234): perfil QA_ONLY limitado al inicio telemático exacto y a la navegación hacia la pasarela Cl@ve observada; formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La ficha pública /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5 identifica Instancia General SIA 2092234; su inicio /catalog/tw/... abre Identificación electrónica y genera un POST SAML a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. La página pública de sistemas de firma describe niveles genéricos, pero no publica el ABI de firma de este trámite."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP18A", "DP18B"]
-    reason: "La identificación con certificado no permite inferir firma, formato, algoritmo, endpoint, cliente JS ni TLS cliente."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP18A", "DP18B", "GUADALAJARA-INSTANCIA-2026-08-21", "GUADALAJARA-INSTANCIA-START-2026-08-21", "GUADALAJARA-CLAVE-2026-08-21"]
+    reason: "Perfil QA_ONLY de navegación: no implementa SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. Sólo se conserva el origin Cl@ve observado; el POST público de prueba no autenticado terminó en HTTP 500 antes de elegir método, por lo que no se infieren pasarela-ident*, signer, formato, algoritmo, endpoint, callback ni presentación. Falta E2E físico."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA y ampliar autenticación o firma sólo si una sesión controlada revela un contrato exacto; detenerse antes de firma criptográfica y presentación final."
+    notes: "No se persistieron SAMLRequest, RelayState, cookies ni datos de sesión. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0157"
     surface_key: "diputacion-gipuzkoa-sede"
@@ -6515,6 +6516,9 @@ availability, certificado, firma ni contrato técnico.
 [DP17A]: https://www.dipgra.es
 [DP18A]: https://dguadalajara.sedelectronica.es
 [DP18B]: https://www.dguadalajara.es/web/guest/sede-electronica
+[GUADALAJARA-INSTANCIA-2026-08-21]: https://dguadalajara.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[GUADALAJARA-INSTANCIA-START-2026-08-21]: https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[GUADALAJARA-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP19A]: https://egoitza.gipuzkoa.eus/es/
 [DP19B]: https://egoitza.gipuzkoa.eus/es/identificacion-y-autenticacion/certificado-electronico-cualificado
 [DP20A]: https://www.diphuelva.es

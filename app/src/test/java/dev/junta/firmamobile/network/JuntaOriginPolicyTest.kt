@@ -145,6 +145,7 @@ class JuntaOriginPolicyTest {
             "aplicacions.diba.cat",
             "tramits.diba.cat",
             "diputacionavila.sedelectronica.es",
+            "dguadalajara.sedelectronica.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
         )
