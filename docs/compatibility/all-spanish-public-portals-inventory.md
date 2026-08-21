@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 243 |
-| Fuentes oficiales totales registradas | 255 |
+| Fuentes oficiales portal-specific registradas | 245 |
+| Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 88 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 92 |
-| Entradas restantes fuera de ambos estados | 91 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 89 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 93 |
+| Entradas restantes fuera de ambos estados | 90 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 88 |
+| `IMPLEMENTED_NOT_E2E` | 89 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 84 |
+| `BROWSE_ONLY` | 83 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5210,29 +5210,29 @@ records:
     autonomous_community: "Castilla-La Mancha"
     province_or_municipality: "Cuenca (provincia)"
     institution_name: "Diputación Provincial de Cuenca"
-    surface_name: "Portal oficial de Diputación Provincial de Cuenca"
-    surface_type: "PORTAL_SERVICIO"
+    surface_name: "Sede electrónica de Diputación Provincial de Cuenca"
+    surface_type: "SEDE"
     origin: "https://www.dipucuenca.es"
     official_site: "https://www.dipucuenca.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipucuenca.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    e_sede: "https://sede.dipucuenca.es/"
+    entry_url: "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+    procedure_page: "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://identificacionssl.sedipualba.es/"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP15A", "DP15B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al trámite Registro electrónico / Presentación de instancia general mediante el servidor SSL de identificación compartido de SEDIPUALBA; la firma documental posterior permanece fuera del contrato implementado."
+    protocol_evidence: "Revalidación oficial 2026-08-21: el catálogo público enlaza el trámite idtramite=12074; la página de identificación construye exactamente https://identificacionssl.sedipualba.es/?idtoken=TOKEN&idioma=es&entidad=16000, enlazando el mismo idtoken efímero de la fuente. La opción usa el servidor de la sede y el intento sin certificado vuelve a la pantalla oficial de ausencia de certificado; no se ejecutó firma ni presentación."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP15A", "DP15B", "CUENCA-INSTANCIA-2026-08-21", "CUENCA-SSL-IDENT-2026-08-21"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con source, host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior, ni se implementa la presentación final."
+    reviewed_at: "2026-08-21"
+    next_gate: "Verificación E2E separada del acceso con certificado y del paso de firma; mantener firma/presentación bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0154"
     surface_key: "diputacion-girona-portal"
@@ -6513,6 +6513,8 @@ availability, certificado, firma ni contrato técnico.
 [DP14B]: https://www.dacoruna.gal/servizos-tributarios/preguntas-frecuentes/recursos/
 [DP15A]: https://www.dipucuenca.es
 [DP15B]: https://sede.dipucuenca.es/aviso-legal.aspx?entidad=16000
+[CUENCA-INSTANCIA-2026-08-21]: https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074
+[CUENCA-SSL-IDENT-2026-08-21]: https://sede.dipucuenca.es/segex/identificacion_opciones.aspx
 [DP16A]: https://www.ddgi.cat/web/
 [DP16B]: https://seu.ddgi.cat/web/nivell/658/s-1/sistemes-de-signatura-electronica
 [DP17A]: https://www.dipgra.es

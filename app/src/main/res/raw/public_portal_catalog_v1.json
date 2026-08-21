@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "bdfd52bff03b42b3806ec21c96d8cdbe9f3ba634f1cea2a70833fc6894e49591",
+  "sourceRevision": "ce5473addf8e4eb6964efe4f07fc5bb7bc0ec5abf69dd6301bfc788df1cccb5a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4014,26 +4014,32 @@
     {
       "portalId": "diputacion-cuenca-portal",
       "inventoryId": "ES-PUB-0153",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Cuenca",
+      "profileId": "diputacion-cuenca-portal",
+      "displayName": "Sede electrónica de Diputación Provincial de Cuenca",
       "organization": "Diputación Provincial de Cuenca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla-La Mancha",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.dipucuenca.es",
-      "observedMechanisms": [],
+      "purpose": "Acceso con certificado al trámite Registro electrónico / Presentación de instancia general mediante el servidor SSL de identificación compartido de SEDIPUALBA; la firma documental posterior permanece fuera del contrato implementado.",
+      "entryUrl": "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP15A",
-        "DP15B"
+        "DP15B",
+        "CUENCA-INSTANCIA-2026-08-21",
+        "CUENCA-SSL-IDENT-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-21",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con source, host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior, ni se implementa la presentación final."
     },
     {
       "portalId": "diputacion-girona-portal",

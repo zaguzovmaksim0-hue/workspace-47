@@ -1101,6 +1101,41 @@
       ]
     },
     {
+      "profileId": "diputacion-cuenca-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Cuenca — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074",
+      "initiatorOrigins": ["https://sede.dipucuenca.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://identificacionssl.sedipualba.es"],
+        "sourceUrls": ["https://sede.dipucuenca.es/segex/identificacion_opciones.aspx"],
+        "sourceFixedQueryParameters": {"idioma":"es"},
+        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
+        "linkedEphemeralQueryParameters": ["idtoken"],
+        "requestPath": "/",
+        "fixedQueryParameters": {"idioma":"es","entidad":"16000"},
+        "requiredEphemeralQueryParameters": ["idtoken"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucuenca.es/carpetaciudadana/login.aspx","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucuenca.es/segex/identificacion_opciones.aspx","reviewedOn":"2026-08-21"},
+        {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "generalitat-valenciana-client-auth",
       "profileVersion": 1,
       "displayName": "Generalitat Valenciana — acceso con certificado",
