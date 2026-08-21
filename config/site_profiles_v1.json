@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 37,
+  "catalogVersion": 38,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1597,6 +1597,27 @@
         {"url":"https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
         {"url":"https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "diputacion-cordoba-solicitud-generica",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Córdoba — Solicitud Genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
+      "initiatorOrigins": ["https://sede.dipucordoba.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.dipucordoba.es/tramites","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucordoba.es/diputacion/tramites","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica","reviewedOn":"2026-08-21"}
       ]
     },
     {

@@ -104,6 +104,7 @@ class PortalCatalogRepositoryTest {
                 "portal-funciona-public-home",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
+                "diputacion-cordoba-solicitud-generica",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
