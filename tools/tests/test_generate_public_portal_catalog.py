@@ -1463,6 +1463,27 @@ records:
         self.assertIn("e2e", bne["limitations"].lower())
 
 
+    def test_eivissa_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        eivissa = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "eivissa-portal-institucional"
+        )
+
+        self.assertEqual("eivissa-sede-electronica", eivissa["profileId"])
+        self.assertEqual("ES-PUB-0121", eivissa["inventoryId"])
+        self.assertEqual("https://www.conselldeivissa.es/", eivissa["entryUrl"])
+        self.assertEqual("https://seu.conselldeivissa.es/", eivissa["launchUrl"])
+        self.assertEqual("E2E_PENDING", eivissa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", eivissa["inventoryStatus"])
+        self.assertEqual("2026-08-21", eivissa["reviewedOn"])
+        self.assertEqual("DELEGACION_EIVISSA_SEDE", eivissa["protocolFamily"])
+        self.assertEqual([], eivissa["observedMechanisms"])
+        self.assertEqual([], eivissa["observedSignatureFormats"])
+        self.assertIn("alias", eivissa["limitations"].lower())
+        self.assertIn("e2e", eivissa["limitations"].lower())
+
+
     def test_tenerife_institutional_alias_binds_exact_qa_sede_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tenerife = next(
