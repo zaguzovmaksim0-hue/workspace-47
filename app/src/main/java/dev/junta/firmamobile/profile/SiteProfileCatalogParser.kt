@@ -1898,7 +1898,12 @@ object SiteProfileCatalogParser {
     ): Boolean =
         (setOf(firstOwner.value, secondOwner.value).let { owners ->
             owners.size == 2 &&
-                owners.all { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID, MUGEJU_PROFILE_ID) } &&
+                owners.all {
+                    it in setOf(
+                        MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID, MUGEJU_PROFILE_ID,
+                        EL_HIERRO_PROFILE_ID,
+                    )
+                } &&
                 origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
@@ -2277,6 +2282,7 @@ object SiteProfileCatalogParser {
     private const val TENERIFE_SAFE_DESCRIPTION =
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private const val EL_HIERRO_PROFILE_ID = "el-hierro-solicitud-general"
     private const val MUGEJU_PROFILE_ID = "mugeju-remision-documentacion-client-auth"
     private const val MUGEJU_PROFILE_VERSION = 1
     private const val MUGEJU_DISPLAY_NAME = "MUGEJU — Remisión de documentación con certificado"

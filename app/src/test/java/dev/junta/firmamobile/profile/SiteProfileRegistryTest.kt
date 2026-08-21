@@ -15,6 +15,7 @@ class SiteProfileRegistryTest {
         val mugeju = ProfileId("mugeju-remision-documentacion-client-auth")
         val mineco = ProfileId("ministerio-economia-instancia-generica")
         val avila = ProfileId("diputacion-avila-instancia-general")
+        val elHierro = ProfileId("el-hierro-solicitud-general")
 
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
@@ -49,6 +50,10 @@ class SiteProfileRegistryTest {
         assertEquals(
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(elHierro, clave)?.trustMode,
         )
     }
 
