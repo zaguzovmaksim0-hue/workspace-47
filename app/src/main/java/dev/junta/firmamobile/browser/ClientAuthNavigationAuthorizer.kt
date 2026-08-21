@@ -136,7 +136,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         currentEpoch: Long,
         nowNanos: Long,
     ): AuthorizedClientAuthTarget? {
-        if (target in policy.sourceUrls && currentBelongsTo(profile, currentUrl)) {
+        if (target.matchesSource(policy) && currentBelongsTo(profile, currentUrl)) {
             pending = PendingSource(
                 profileId = profile.profileId,
                 source = target,
@@ -152,7 +152,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         if (source == null || source.profileId != profile.profileId) return null
         if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) return null
         if (source.isExpiredOrInvalid(nowNanos)) return null
-        if (source.source !in policy.sourceUrls || !target.matches(policy)) return null
+        if (!source.source.matchesSource(policy) || !target.matches(policy)) return null
 
         return authorized(
             profile = profile,

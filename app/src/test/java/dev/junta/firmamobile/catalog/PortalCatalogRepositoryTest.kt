@@ -66,9 +66,11 @@ class PortalCatalogRepositoryTest {
                 "mites-certificate-login",
                 "transportes-qys-cert-login",
                 "sevilla-atse-certificate-login",
+                "airef-instancia-general",
                 "melilla-sede",
                 "ceuta-sede",
                 "extremadura-tramites",
+                "extremadura-pattex-client-auth",
                 "navarra-sede-registro-general",
                 "diputacion-valladolid-sede",
                 "diputacion-burgos-portal",
@@ -76,21 +78,36 @@ class PortalCatalogRepositoryTest {
                 "diputacion-huesca-portal",
                 "diputacion-lugo-sede",
                 "diputacion-leon-sede",
+                "diputacion-albacete-portal",
+                "consell-mallorca-sede",
                 "generalitat-valenciana-client-auth",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
+                "fuerteventura-sede-electronica",
                 "gran-canaria-sede-electronica",
+                "age-portal-de-la-transparencia",
+                "caib-portafib",
                 "ministerio-economia-instancia-generica",
                 "diputacion-toledo-sede",
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
+                "diputacion-alicante-solicitud-general",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
+                "diputacion-badajoz-portal",
+                "diputacion-alava-registro-comun",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "castilla-leon-quju-public",
+                "diputacion-avila-instancia-general",
                 "cdti-certificate-validation",
+                "xunta-galicia-solicitude-xenerica",
+                "la-rioja-oficina-electronica",
+                "menorca-carpeta-ciutadana",
                 "canarias-sede",
+                "diputacion-barcelona-solicitud-generica-2057",
+                "eivissa-sede-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -1762,6 +1779,48 @@ class PortalCatalogRepositoryTest {
                             "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=OTRO",
                         ),
                     )
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Castilla Leon QUJU opens only exact public form in QA and remains fail closed`() {
+        val portalId = PortalId("castilla-leon-tramita")
+        val profileId = ProfileId("castilla-leon-quju-public")
+        val publicForm = java.net.URI("https://presidencia.jcyl.es/QUJU?O=1")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(publicForm, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, publicForm), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, publicForm), qaRepository.resolveLaunch(profileId, publicForm))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(entryUrl = java.net.URI("https://presidencia.jcyl.es/QUJU?O=2"))
                 } else {
                     entry
                 }
