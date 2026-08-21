@@ -91,6 +91,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
@@ -1096,6 +1097,35 @@ class PublicPortalCatalogParserTest {
             PortalLaunchTarget(ProfileId("oepm-protegeo-general"), portal.entryUrl),
             repository.resolveLaunch(item),
         )
+    }
+
+    @Test
+    fun `Castilla Leon QUJU resolves only the exact QA public form without signing capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.portalId == PortalId("castilla-leon-tramita") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val form = URI("https://presidencia.jcyl.es/QUJU?O=1")
+
+        assertEquals("ES-PUB-0102", metadata.inventoryId)
+        assertEquals(ProfileId("castilla-leon-quju-public"), metadata.profileId)
+        assertEquals(form, metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("JCYL_QUJU_PUBLIC_FORM_BOUNDARY", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(PortalLaunchTarget(ProfileId("castilla-leon-quju-public"), form), repository.resolveLaunch(portal))
     }
 
     @Test

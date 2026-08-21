@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 83 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 87 |
-| Entradas restantes fuera de ambos estados | 96 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 84 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 88 |
+| Entradas restantes fuera de ambos estados | 95 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 83 |
+| `IMPLEMENTED_NOT_E2E` | 84 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 89 |
+| `BROWSE_ONLY` | 88 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3638,29 +3638,29 @@ records:
     autonomous_community: "Castilla y León"
     province_or_municipality: "NO_APLICA"
     institution_name: "Junta de Castilla y León"
-    surface_name: "Tramitacastillayleon"
+    surface_name: "Sugerencias y quejas de la ciudadanía — QUJU"
     surface_type: "SEDE"
-    origin: "https://www.tramitacastillayleon.jcyl.es"
+    origin: "https://presidencia.jcyl.es"
     official_site: "https://www.tramitacastillayleon.jcyl.es/"
     e_sede: "https://www.tramitacastillayleon.jcyl.es/"
-    entry_url: "https://www.tramitacastillayleon.jcyl.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
+    entry_url: "https://presidencia.jcyl.es/QUJU?O=1"
+    procedure_page: "https://www.tramitacastillayleon.jcyl.es/web/jcyl/AdministracionElectronica/es/Plantilla100Detalle/1251181050732/Tramite/1277466706825/Tramite"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "JCYL_QUJU_PUBLIC_FORM_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso a trámites y firma electrónica cuando la actuación la exige."
-    protocol_evidence: "Los requisitos citan certificado y AutoFirma, pero no prueban el contrato runtime vigente."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada únicamente al formulario público QUJU exacto. El POST intermedio autorizado se aceptó en Chromium y terminó en /QUJU/Successfull sin cargar AutoScript/MiniApplet ni exponer un ABI de firma; no se implementa firma ni registro electrónico."
+    protocol_evidence: "La ficha oficial vigente «Sugerencias y quejas de la ciudadanía» (IAPA 50 / SIA 1812980) enlaza al launcher first-party /Comun/Home/Formulario/QUJU, que publica «Acceder a la solicitud» hacia https://presidencia.jcyl.es/QUJU?O=1. En un perfil Chromium aislado, el formulario válido transmitió el POST permitido y alcanzó /QUJU/Successfull; la página resultante no expuso AutoScript, MiniApplet, JCYLfirma, iframes ni scripts de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A07A", "A07B"]
-    reason: "La documentación de requisitos no acredita ABI, formato, callback ni endpoint concretos."
-    reviewed_at: "2026-07-16"
-    next_gate: "Localizar un trámite actual y su JavaScript servido por el portal."
+    evidence_ids: ["D03", "A07A", "A07B", "JCYL-QUJU-PROC-2026-08-19", "JCYL-QUJU-RUNTIME-2026-08-19"]
+    reason: "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado a la navegación pública exacta de QUJU, con capabilities vacío. El POST autorizado demuestra el límite operativo actual, pero no acredita ni implementa firma, selección de certificado, client TLS, algoritmo, formato, callback ni registro electrónico; esos campos permanecen NO_VERIFICADO y falta E2E físico."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar físicamente la navegación QA al formulario QUJU exacto. Cualquier soporte de firma/registro requiere una ruta first-party que exponga de forma independiente el ABI de firma antes de la operación criptográfica y del envío final."
 
   - inventory_id: "ES-PUB-0103"
     surface_key: "castilla-la-mancha-sede"
@@ -6388,6 +6388,8 @@ Orden de expansión recomendado:
 [CANTABRIA-REC-MINIAPPLET-2026-08-09]: https://clientefirma.cantabria.es/clientefirma/js/autofirma/miniapplet.js
 [A07A]: https://www.tramitacastillayleon.jcyl.es/
 [A07B]: https://www.tramitacastillayleon.jcyl.es/web/es/ayuda-sobre-administracion-electronica/requisitos-tecnicos.html
+[JCYL-QUJU-PROC-2026-08-19]: https://www.tramitacastillayleon.jcyl.es/web/jcyl/AdministracionElectronica/es/Plantilla100Detalle/1251181050732/Tramite/1277466706825/Tramite
+[JCYL-QUJU-RUNTIME-2026-08-19]: https://presidencia.jcyl.es/QUJU?O=1
 [A08A]: https://www.jccm.es/
 [A08B]: https://www.jccm.es/web/la-sede/sistemas-de-identificacion-y-firma
 [A08C]: https://www.jccm.es/tramites/1001243

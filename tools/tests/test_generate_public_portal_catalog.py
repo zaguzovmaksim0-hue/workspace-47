@@ -1490,6 +1490,27 @@ records:
         self.assertIn("e2e", oepm["limitations"].lower())
 
 
+    def test_castilla_leon_quju_binds_exact_public_form_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        quju = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "castilla-leon-tramita"
+        )
+        self.assertEqual("ES-PUB-0102", quju["inventoryId"])
+        self.assertEqual("castilla-leon-quju-public", quju["profileId"])
+        self.assertEqual("https://presidencia.jcyl.es/QUJU?O=1", quju["entryUrl"])
+        self.assertNotIn("launchUrl", quju)
+        self.assertEqual("JCYL_QUJU_PUBLIC_FORM_BOUNDARY", quju["protocolFamily"])
+        self.assertEqual("E2E_PENDING", quju["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", quju["inventoryStatus"])
+        self.assertEqual("REVIEWED", quju["discoveryState"])
+        self.assertEqual("2026-08-19", quju["reviewedOn"])
+        self.assertEqual([], quju["observedMechanisms"])
+        self.assertEqual([], quju["observedSignatureFormats"])
+        self.assertIn("qa_only", quju["limitations"].lower())
+        self.assertIn("no_verificado", quju["limitations"].lower())
+
+
     def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         funciona = next(

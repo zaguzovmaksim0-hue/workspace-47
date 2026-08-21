@@ -224,6 +224,24 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `Castilla Leon QUJU public form is browse-only trust in QA and near origins stay closed`() {
+        val profileId = ProfileId("castilla-leon-quju-public")
+        val start = URI("https://presidencia.jcyl.es/QUJU?O=1")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.tramitacastillayleon.jcyl.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es:444/")))
+    }
+
+    @Test
     fun `Portal Funciona public home is browse-only trust in QA and external auth origins stay closed`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
