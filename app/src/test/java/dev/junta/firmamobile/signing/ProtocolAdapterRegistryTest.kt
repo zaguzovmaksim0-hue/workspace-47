@@ -147,6 +147,20 @@ class ProtocolAdapterRegistryTest {
             ),
         )
 
+        val badajoz = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId(DiputacionBadajozCadesAdapter.PROFILE_ID),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(DiputacionBadajozCadesAdapter.ID, badajoz?.signingProtocolId)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), badajoz?.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), badajoz?.callbackContractId)
+        assertNull(
+            BuiltInProtocolAdapterRegistry.registry.resolve(
+                ProfileId(DiputacionBadajozCadesAdapter.PROFILE_ID),
+                ProtocolOperation.SELECT_CERTIFICATE,
+            ),
+        )
+
         assertNull(
             BuiltInProtocolAdapterRegistry.registry.resolve(
                 ProfileId("unknown-profile"),
