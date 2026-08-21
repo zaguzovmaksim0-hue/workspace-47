@@ -121,6 +121,7 @@ class PortalCatalogRepositoryTest {
                 "fega-solicitud-general-ofvsg02",
                 "diputacion-huelva-sede-public",
                 "diputacion-ciudad-real-registro-telematico",
+                "diputacion-cordoba-solicitud-generica",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
