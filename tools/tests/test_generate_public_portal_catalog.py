@@ -864,6 +864,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
 
+    def test_diputacion_teruel_profile_binds_exact_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0173")
+
+        self.assertEqual("diputacion-teruel-instancia-general", target["profileId"])
+        self.assertEqual("diputacion-teruel-sede", target["portalId"])
+        self.assertEqual(
+            "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("TERUEL_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("no_verificado", target["limitations"].lower())
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}

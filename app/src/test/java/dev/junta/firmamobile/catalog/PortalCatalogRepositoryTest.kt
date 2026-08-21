@@ -97,6 +97,7 @@ class PortalCatalogRepositoryTest {
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "diputacion-avila-instancia-general",
+                "diputacion-teruel-instancia-general",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
