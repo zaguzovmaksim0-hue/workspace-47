@@ -696,18 +696,21 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("xades", policia["limitations"].lower())
         self.assertIn("e2e", policia["limitations"].lower())
 
-    def test_ceuta_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+    def test_ceuta_ani_profile_binds_exact_authenticated_form_boundary_without_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ceuta = next(entry for entry in catalog["entries"] if entry["portalId"] == "ceuta-sede")
 
         self.assertEqual("ceuta-sede", ceuta["profileId"])
         self.assertEqual("ES-PUB-0106", ceuta["inventoryId"])
-        self.assertEqual("https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info", ceuta["entryUrl"])
+        self.assertEqual("https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI", ceuta["entryUrl"])
         self.assertNotIn("launchUrl", ceuta)
-        self.assertEqual("CATALOGED", ceuta["catalogStatus"])
-        self.assertEqual("BROWSE_ONLY", ceuta["inventoryStatus"])
-        self.assertEqual("2026-07-16", ceuta["reviewedOn"])
+        self.assertEqual("CEUTA_AUTHENTICATED_FORM_BOUNDARY", ceuta["protocolFamily"])
+        self.assertEqual("E2E_PENDING", ceuta["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", ceuta["inventoryStatus"])
+        self.assertEqual("2026-08-19", ceuta["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], ceuta["observedMechanisms"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
+        self.assertIn("no_verificado", ceuta["limitations"].lower())
 
     def test_pattex_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

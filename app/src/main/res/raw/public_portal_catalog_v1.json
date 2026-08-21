@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "dc871facd42fd2ed77b2c3cd38594c91df3c6efa443fdd665d4bcbce9ae33330",
+  "sourceRevision": "eaad98c1f640a17239fe702e11159e3b469a6b49084d57979d190171296e163d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2715,16 +2715,16 @@
       "organization": "Ciudad Autónoma de Ceuta",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Ciudad Autónoma de Ceuta",
-      "purpose": "Tramitación con certificado, Cl@ve o AutoFirma según el procedimiento.",
-      "entryUrl": "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info",
+      "purpose": "Navegación QA al trámite ANI exacto y frontera autenticada frmAlta; no se implementa firma ni presentación.",
+      "entryUrl": "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CEUTA_AUTHENTICATED_FORM_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
@@ -2732,8 +2732,8 @@
         "A10B",
         "A10C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La mención de certificado no prueba TLS cliente ni un contrato de firma."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Contrato limitado a navegación QA y frontera de formulario autenticado. Firma, signer ABI, endpoint de firma y presentación final permanecen NO_VERIFICADO."
     },
     {
       "portalId": "melilla-sede",

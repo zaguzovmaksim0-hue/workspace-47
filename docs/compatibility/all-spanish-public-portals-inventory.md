@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 85 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 89 |
-| Entradas restantes fuera de ambos estados | 94 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 86 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 90 |
+| Entradas restantes fuera de ambos estados | 93 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 85 |
+| `IMPLEMENTED_NOT_E2E` | 86 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 87 |
+| `BROWSE_ONLY` | 86 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3763,24 +3763,24 @@ records:
     origin: "https://sede.ceuta.es"
     official_site: "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info"
     e_sede: "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info"
-    entry_url: "https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info"
+    entry_url: "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI"
     procedure_page: "https://sede.ceuta.es/controlador/controlador?cmd=tramite&modulo=tramites&tramite=ANI"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CEUTA_AUTHENTICATED_FORM_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación con certificado, Cl@ve o AutoFirma según el procedimiento."
-    protocol_evidence: "Los requisitos citan certificado y AutoFirma sin publicar ABI, formato o endpoint."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA al trámite ANI exacto y frontera autenticada frmAlta; no se implementa firma ni presentación."
+    protocol_evidence: "Autenticación controlada devuelve a /controlador/controlador con #frmAlta POST, modulo=carpeta y cmd=entrada-prepara-add; el intento intermedio controlado terminó en Error 500 sin exponer AutoScript/MiniApplet/AutoFirma ni ABI de firma."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D03", "A10A", "A10B", "A10C"]
-    reason: "La mención de certificado no prueba TLS cliente ni un contrato de firma."
-    reviewed_at: "2026-07-16"
-    next_gate: "Inspeccionar un trámite firmado sin iniciar presentación."
+    reason: "Contrato limitado a navegación QA y frontera de formulario autenticado. Firma, signer ABI, endpoint de firma y presentación final permanecen NO_VERIFICADO."
+    reviewed_at: "2026-08-19"
+    next_gate: "Repetir entrada-prepara-add cuando el portal deje de devolver Error 500 y observar la siguiente frontera; detenerse antes de firma privada o presentación final."
 
   - inventory_id: "ES-PUB-0107"
     surface_key: "melilla-sede"
