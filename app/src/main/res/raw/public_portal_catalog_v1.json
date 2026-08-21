@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9b0ebb50da09d170bb4dfda5d2f04d78079a2f9f536549ceb441429da0a284bd",
+  "sourceRevision": "dc871facd42fd2ed77b2c3cd38594c91df3c6efa443fdd665d4bcbce9ae33330",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2085,24 +2085,32 @@
     {
       "portalId": "age-portal-de-la-transparencia",
       "inventoryId": "ES-PUB-0083",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "age-portal-de-la-transparencia",
+      "displayName": "Sede electrónica — Derecho de acceso a la información pública",
       "organization": "Portal de la Transparencia",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.transparencia.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "purpose": "Firma PAdES local con certificado en la solicitud de derecho de acceso; el perfil QA queda limitado al contrato AutoScript exacto observado tras autenticación controlada.",
+      "entryUrl": "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato first-party de firma completo probado antes de la firma mediante runtime autenticado controlado; implementación QA fail-closed, pendiente de E2E físico seguro."
     },
     {
       "portalId": "age-portal-funciona",
@@ -2443,29 +2451,32 @@
     {
       "portalId": "caib-seu-electronica",
       "inventoryId": "ES-PUB-0097",
-      "profileId": null,
+      "profileId": "caib-portafib",
       "displayName": "Seu Electrònica de les Illes Balears",
       "organization": "Gobierno de las Illes Balears",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Illes Balears",
-      "purpose": "Acceso y firma mediante los sistemas admitidos según el trámite.",
-      "entryUrl": "https://www.caib.es/seucaib/ca/",
+      "purpose": "La Instancia genérica protegida entrega a MiniApplet.signBatch un único lote PAdES SHA256withRSA mediante PortaFIB; soporte QA limitado al contrato exacto observado y sin envío final.",
+      "entryUrl": "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros=",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_XML_BATCH_TRIFASICO_PORTAFIB_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A04A",
         "A04B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "No se verificaron cliente JS, operación, formato, algoritmo, callback ni endpoint concretos."
+      "reviewedOn": "2026-08-18",
+      "limitations": "IMPLEMENTED_NOT_E2E: bridge y adaptador QA aceptan únicamente el origin intranet.caib.es, ruta requestPlugin exacta, un lote PAdES observado y parámetros exactos; autenticación completa dentro de la app, firma criptográfica y presentación administrativa siguen sin E2E y no se ejecutaron en este pass."
     },
     {
       "portalId": "caib-registre-electronic",
@@ -2589,29 +2600,28 @@
     {
       "portalId": "castilla-leon-tramita",
       "inventoryId": "ES-PUB-0102",
-      "profileId": null,
-      "displayName": "Tramitacastillayleon",
+      "profileId": "castilla-leon-quju-public",
+      "displayName": "Sugerencias y quejas de la ciudadanía — QUJU",
       "organization": "Junta de Castilla y León",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Castilla y León",
-      "purpose": "Acceso a trámites y firma electrónica cuando la actuación la exige.",
-      "entryUrl": "https://www.tramitacastillayleon.jcyl.es/",
-      "observedMechanisms": [
-        "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
-      ],
+      "purpose": "Navegación QA integrada únicamente al formulario público QUJU exacto. El POST intermedio autorizado se aceptó en Chromium y terminó en /QUJU/Successfull sin cargar AutoScript/MiniApplet ni exponer un ABI de firma; no se implementa firma ni registro electrónico.",
+      "entryUrl": "https://presidencia.jcyl.es/QUJU?O=1",
+      "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "JCYL_QUJU_PUBLIC_FORM_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A07A",
-        "A07B"
+        "A07B",
+        "JCYL-QUJU-PROC-2026-08-19",
+        "JCYL-QUJU-RUNTIME-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La documentación de requisitos no acredita ABI, formato, callback ni endpoint concretos."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado a la navegación pública exacta de QUJU, con capabilities vacío. El POST autorizado demuestra el límite operativo actual, pero no acredita ni implementa firma, selección de certificado, client TLS, algoritmo, formato, callback ni registro electrónico; esos campos permanecen NO_VERIFICADO y falta E2E físico."
     },
     {
       "portalId": "castilla-la-mancha-sede",
@@ -2890,30 +2900,38 @@
     {
       "portalId": "galicia-sede",
       "inventoryId": "ES-PUB-0112",
-      "profileId": null,
+      "profileId": "xunta-galicia-solicitude-xenerica",
       "displayName": "Sede electrónica de la Xunta de Galicia",
       "organization": "Xunta de Galicia",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Galicia",
-      "purpose": "Presentación de solicitud genérica mediante sistemas de identificación y firma admitidos.",
+      "purpose": "Solicitud genérica PR004A: autenticación TLS con certificado y firma PAdES tri-phase de la solicitud principal; el perfil QA implementa solo el contrato de firma principal y selección de certificado observado.",
       "entryUrl": "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica",
       "observedMechanisms": [
+        "AFIRMA",
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_TRIPHASE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A14A",
         "A14B",
-        "A14C"
+        "A14C",
+        "LIVE-XUNTA-PR004A-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato exacto de firma principal implementado fail-closed en QA; XAdES de anexos, parámetros visuales y E2E Android mTLS→firma quedan fuera hasta prueba segura específica. La presentación/registro no se ejecutó."
     },
     {
       "portalId": "murcia-sede",
@@ -3006,21 +3024,22 @@
     {
       "portalId": "la-rioja-oficina-electronica",
       "inventoryId": "ES-PUB-0116",
-      "profileId": null,
+      "profileId": "la-rioja-oficina-electronica",
       "displayName": "Oficina electrónica del Gobierno de La Rioja",
       "organization": "Gobierno de La Rioja",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "La Rioja",
-      "purpose": "Tramitación electrónica con certificado y AutoFirma cuando el trámite lo requiere.",
-      "entryUrl": "https://web.larioja.org/oficina-electronica/",
+      "purpose": "Acceso del trámite 24697 mediante CAS; la vía de certificado usa client TLS en /clientcertSSL/login. La firma documental posterior permanece sin contrato verificado.",
+      "entryUrl": "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
@@ -3028,32 +3047,39 @@
         "A19B",
         "A19C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato CLIENT_TLS_AUTH acotado implementado solo en QA, sin E2E; cliente JS, formato, algoritmo, callback y endpoint de firma documental siguen deliberadamente NO_VERIFICADO."
     },
     {
       "portalId": "menorca-portal-institucional",
       "inventoryId": "ES-PUB-0117",
-      "profileId": null,
-      "displayName": "Portal institucional del Consell Insular de Menorca",
+      "profileId": "menorca-carpeta-ciutadana",
+      "displayName": "Portal institucional del Consell Insular de Menorca — Sol·licitud genèrica",
       "organization": "Consell Insular de Menorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
-      "entryUrl": "https://www.cime.es/",
-      "observedMechanisms": [],
+      "purpose": "Acceso con certificado a la Sol·licitud genèrica del Consell Insular de Menorca mediante TLS cliente; la firma AutoFirma y el envío administrativo posteriores quedan fuera del contrato implementado.",
+      "entryUrl": "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I01A",
-        "I01B"
+        "I01B",
+        "MENORCA-GENERIC-2026-08-18",
+        "MENORCA-CLIENT-TLS-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-18",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para el origin, source, target y parámetro URL enlazado exactos; E2E Android pendiente. AutoFirma está documentado por el portal, pero formato, algoritmo, payload, callback y envío final no se infieren ni se implementan."
     },
     {
       "portalId": "menorca-sede-electronica",
@@ -3104,27 +3130,30 @@
     {
       "portalId": "mallorca-sede-electronica",
       "inventoryId": "ES-PUB-0120",
-      "profileId": null,
+      "profileId": "consell-mallorca-sede",
       "displayName": "Seu electrònica del Consell de Mallorca",
       "organization": "Consell de Mallorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
-      "entryUrl": "https://seu.conselldemallorca.net/",
+      "purpose": "Acceso con certificado al Registre Electrònic del Consell de Mallorca mediante el servidor SSL de identificación compartido de SEDIPUALB@; la firma documental posterior permanece fuera del contrato implementado.",
+      "entryUrl": "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I02B"
+        "I02B",
+        "MALLORCA-REGISTRE-2026-08-18",
+        "MALLORCA-SSL-IDENT-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior."
     },
     {
       "portalId": "eivissa-portal-institucional",
@@ -3153,27 +3182,34 @@
     {
       "portalId": "eivissa-sede-electronica",
       "inventoryId": "ES-PUB-0122",
-      "profileId": null,
+      "profileId": "eivissa-sede-electronica",
       "displayName": "Sede electrónica del Consell Insular d’Eivissa",
       "organization": "Consell Insular d’Eivissa",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "purpose": "Firma local CAdES de Instancia General tras autenticación con certificado, sin ejecutar presentación administrativa.",
       "entryUrl": "https://seu.conselldeivissa.es/",
       "observedMechanisms": [
+        "AUTOFIRMA",
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_LOCAL_CADES_IMPLICIT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I03B"
+        "I03B",
+        "EIVISSA-INSTANCIA-GENERAL-2026-08-18",
+        "EIVISSA-REG-AUTOFIRMA-2026-08-18",
+        "EIVISSA-CONTROLLED-AUTH-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA limitado al origin/PID y al contrato Android CAdES SHA256 implícito demostrado; autenticación con certificado validada, pero no se realizó firma real, AutofirmaUpload, presentación, pago ni aceptación E2E."
     },
     {
       "portalId": "formentera-portal-institucional",
@@ -3457,24 +3493,34 @@
     {
       "portalId": "fuerteventura-sede-electronica",
       "inventoryId": "ES-PUB-0134",
-      "profileId": null,
+      "profileId": "fuerteventura-sede-electronica",
       "displayName": "Sede electrónica del Cabildo Insular de Fuerteventura",
       "organization": "Cabildo Insular de Fuerteventura",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
-      "entryUrl": "https://sede.cabildofuer.es/eAdmin/Sede.do",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "purpose": "Firma PAdES local del PDF de solicitud generado por la Sede, limitada al contrato exacto observado en pre-sign.",
+      "entryUrl": "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "PADES"
+      ],
+      "protocolFamily": "MINIAPPLET_LOCAL_PADES",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I09B"
+        "I09B",
+        "I09C",
+        "I09D",
+        "I09E"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato pre-sign exacto implementado solo en QA como PAdES local; no se ejecutaron la firma criptográfica real ni Registrar.do?action=registrar, por lo que E2E permanece pendiente."
     },
     {
       "portalId": "lanzarote-portal-institucional",
@@ -3578,76 +3624,82 @@
     {
       "portalId": "diputacion-alicante-portal",
       "inventoryId": "ES-PUB-0139",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Alicante",
+      "profileId": "diputacion-alicante-solicitud-general",
+      "displayName": "Solicitud General — Sede electrónica de Diputación de Alicante",
       "organization": "Diputación Provincial de Alicante",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Comunidad Valenciana",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.diputacionalicante.es",
+      "purpose": "Navegación QA integrada exclusivamente al inicio exacto de la Solicitud General vigente de la Sede electrónica de la Diputación de Alicante; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "ALICANTE_SEDE_SOLICITUD_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP01A",
         "DP01B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch exacto de la Solicitud General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. La autenticación con certificado vía Cl@ve fue observada, pero no se modela como client-TLS propio de Alicante; el ABI de firma posterior permanece NO_VERIFICADO. Falta E2E físico."
     },
     {
       "portalId": "diputacion-alava-portal",
       "inventoryId": "ES-PUB-0140",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Foral de Álava",
+      "profileId": "diputacion-alava-registro-comun",
+      "displayName": "Registro Electrónico Común — Diputación Foral de Álava",
       "organization": "Diputación Foral de Álava",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "País Vasco",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://web.araba.eus/es/home",
+      "purpose": "Navegación QA al asistente vigente del Registro Electrónico Común de la Diputación Foral de Álava. El acceso autenticado con certificado alcanza el flujo protegido; la firma documental y la presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://egoitza.araba.eus/izapidetu/at/01/es/0000301",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "ALAVA_EGOITZA_REGISTRO_COMUN_QA_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP02A"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Perfil QA_ONLY limitado al inicio exacto del Registro Electrónico Común. La autenticación por certificado fue observada, pero no se declara CLIENT_TLS_AUTH propio del perfil ni capacidad SIGN. El signer downstream es dinámico; formato, algoritmo, callback y firma física siguen NO_VERIFICADO/E2E pendiente."
     },
     {
       "portalId": "diputacion-albacete-portal",
       "inventoryId": "ES-PUB-0141",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Albacete",
+      "profileId": "diputacion-albacete-portal",
+      "displayName": "Sede electrónica de Diputación Provincial de Albacete",
       "organization": "Diputación Provincial de Albacete",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla-La Mancha",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dipualba.es",
-      "observedMechanisms": [],
+      "purpose": "Acceso con certificado al trámite Registro Electrónico/Presentación Instancia General mediante el servidor SSL de identificación compartido de SEDIPUALBA; la firma documental posterior permanece fuera del contrato implementado.",
+      "entryUrl": "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP03A",
-        "DP03B"
+        "DP03B",
+        "ALBACETE-INSTANCIA-2026-08-18",
+        "ALBACETE-SSL-IDENT-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-18",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA con host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior."
     },
     {
       "portalId": "diputacion-almeria-portal",
@@ -3675,74 +3727,90 @@
     {
       "portalId": "diputacion-avila-portal",
       "inventoryId": "ES-PUB-0143",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Ávila",
+      "profileId": "diputacion-avila-instancia-general",
+      "displayName": "Diputación Provincial de Ávila — Instancia General",
       "organization": "Diputación Provincial de Ávila",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.diputacionavila.es",
-      "observedMechanisms": [],
+      "purpose": "Instancia General (SIA 1786719): perfil QA-only para la entrada telemática exacta y la navegación Cl@ve observada; el paso Firmar usa un submit Wicket probado hasta el límite pre-red.",
+      "entryUrl": "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP05A",
-        "DP05B"
+        "DP05B",
+        "AVILA-INSTANCIA-2026-08-18",
+        "AVILA-FIRMAR-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Implementación limitada a lanzamiento/navegación QA del trámite exacto. No implementa ni afirma firma criptográfica: el request Firmar solo se observó y abortó antes de red; formato, algoritmo, callback y resultado permanecen NO_VERIFICADO."
     },
     {
       "portalId": "diputacion-badajoz-portal",
       "inventoryId": "ES-PUB-0144",
-      "profileId": null,
+      "profileId": "diputacion-badajoz-portal",
       "displayName": "Portal oficial de Diputación Provincial de Badajoz",
       "organization": "Diputación Provincial de Badajoz",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Extremadura",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.dip-badajoz.es",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "purpose": "Acceso con certificado a la Instancia General de la Diputación de Badajoz mediante firma local CAdES-detached SHA256withRSA; la firma documental posterior queda fuera del contrato implementado.",
+      "entryUrl": "https://sede.dip-badajoz.es",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
+      ],
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "MINIAPPLET",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP06A",
-        "DP06B"
+        "DP06B",
+        "BADAJOZ-INSTANCIA-2026-08-18",
+        "BADAJOZ-LOGIN-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Contrato público de login con certificado implementado en QA y limitado a autenticación: CAdES-detached SHA256withRSA sobre shaLogin con parámetros exactos y callback a firmaLogin. No se atribuye este tuple a la firma documental posterior; sin E2E."
     },
     {
       "portalId": "diputacion-barcelona-portal",
       "inventoryId": "ES-PUB-0145",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputació de Barcelona",
+      "profileId": "diputacion-barcelona-solicitud-generica-2057",
+      "displayName": "Diputació de Barcelona — Solicitud genérica 2057",
       "organization": "Diputació de Barcelona",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Cataluña",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.diba.cat/es/",
-      "observedMechanisms": [],
+      "purpose": "Solicitud genérica 2057 con identificación VÀLid; el perfil implementa únicamente la entrada exacta y la navegación autenticada previa a firma.",
+      "entryUrl": "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP07A",
-        "DP07B"
+        "DIBA-2057-2026-08-18",
+        "DIBA-VALID-2026-08-18"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-18",
+      "limitations": "Perfil QA-only limitado a la entrada exacta de Solicitud genérica 2057 y sus orígenes de identificación observados; no afirma ABI, formato, algoritmo, endpoint ni aceptación E2E de firma/presentación."
     },
     {
       "portalId": "diputacion-burgos-portal",

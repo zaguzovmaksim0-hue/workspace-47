@@ -33,12 +33,15 @@ internal data class AfirmaShimCompatibilityFlags(
     val cdti: Boolean,
     val policia: Boolean,
     val granCanaria: Boolean,
+    val fuerteventura: Boolean,
     val canarias: Boolean,
     val mineco: Boolean,
     val melillaBatch: Boolean,
     val lugoBatch: Boolean,
+    val caibBatch: Boolean,
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
+    val xuntaGalicia: Boolean,
 )
 
 class WebMessageBridge(
@@ -65,6 +68,7 @@ class WebMessageBridge(
     ),
     isciiiCertificateSelectionAdapter: IsciiiCertificateSelectionBridgeAdapter? = null,
     valenciaCertificateSelectionAdapter: ValenciaCertificateSelectionBridgeAdapter? = null,
+    xuntaCertificateSelectionAdapter: XuntaCertificateSelectionBridgeAdapter? = null,
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
@@ -76,6 +80,7 @@ class WebMessageBridge(
     laPalmaBatchAdapter: LaPalmaBatchBridgeAdapter? = null,
     huescaBatchAdapter: HuescaBatchBridgeAdapter? = null,
     lugoBatchAdapter: LugoBatchBridgeAdapter? = null,
+    caibBatchAdapter: CaibBatchBridgeAdapter? = null,
     burgosBatchAdapter: BurgosBatchBridgeAdapter? = null,
 ) {
     private var batchDocumentId: UUID? = null
@@ -97,6 +102,13 @@ class WebMessageBridge(
         }
         ValenciaCertificateSelectionBridgeAdapter.PROFILE_ID -> {
             val adapter = valenciaCertificateSelectionAdapter ?: ValenciaCertificateSelectionBridgeAdapter(
+                activeProfileId = activeProfileId,
+                clock = clock,
+            )
+            adapter::route
+        }
+        XuntaCertificateSelectionBridgeAdapter.PROFILE_ID -> {
+            val adapter = xuntaCertificateSelectionAdapter ?: XuntaCertificateSelectionBridgeAdapter(
                 activeProfileId = activeProfileId,
                 clock = clock,
             )
@@ -159,6 +171,18 @@ class WebMessageBridge(
             trustedOrigin = TrustedOrigin("https", "sede.deputacionlugo.org", 443),
             adapter = StaBatchBridgeAdapterOps.from(
                 lugoBatchAdapter ?: LugoBatchBridgeAdapter(
+                    activeProfileId = activeProfileId,
+                    currentNavigationEpoch = currentNavigationEpoch,
+                    currentDocumentId = { batchCurrentDocumentId() },
+                    currentOrigin = currentOrigin,
+                ),
+            ),
+        )
+        CaibBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
+            sourceOrigin = CaibBatchBridgeAdapter.SOURCE_ORIGIN,
+            trustedOrigin = TrustedOrigin("https", "intranet.caib.es", 443),
+            adapter = StaBatchBridgeAdapterOps.from(
+                caibBatchAdapter ?: CaibBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
                     currentNavigationEpoch = currentNavigationEpoch,
                     currentDocumentId = { batchCurrentDocumentId() },
@@ -260,13 +284,16 @@ class WebMessageBridge(
                     cdtiCompatibilityEnabled = shimFlags.cdti,
                     policiaCompatibilityEnabled = shimFlags.policia,
                     granCanariaCompatibilityEnabled = shimFlags.granCanaria,
+                    fuerteventuraCompatibilityEnabled = shimFlags.fuerteventura,
                     canariasCompatibilityEnabled = shimFlags.canarias,
                     minecoCompatibilityEnabled = shimFlags.mineco,
                     melillaBatchCompatibilityEnabled = shimFlags.melillaBatch,
                     lugoBatchCompatibilityEnabled = shimFlags.lugoBatch,
+                    caibBatchCompatibilityEnabled = shimFlags.caibBatch,
                     staBatchOrigin = batchRuntime?.sourceOrigin ?: MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
+                    xuntaGaliciaCompatibilityEnabled = shimFlags.xuntaGalicia,
                 ),
                 originRules,
             )
@@ -663,6 +690,8 @@ class WebMessageBridge(
         private const val VALENCIA_PROFILE_ID = "diputacion-valencia-sede"
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
         private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
+        private const val FUERTEVENTURA_PROFILE_ID = "fuerteventura-sede-electronica"
+        private const val XUNTA_PROFILE_ID = "xunta-galicia-solicitude-xenerica"
         private const val CANARIAS_PROFILE_ID = "canarias-sede"
         private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
 
@@ -679,12 +708,15 @@ class WebMessageBridge(
             cdti = profileActive && profileId.value == CDTI_PROFILE_ID,
             policia = profileActive && profileId.value == POLICIA_PROFILE_ID,
             granCanaria = profileActive && profileId.value == GRAN_CANARIA_PROFILE_ID,
+            fuerteventura = profileActive && profileId.value == FUERTEVENTURA_PROFILE_ID,
             canarias = profileActive && profileId.value == CANARIAS_PROFILE_ID,
             mineco = profileActive && profileId.value == MINECO_PROFILE_ID,
-            melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID,
+            melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID && profileId.value != CaibBatchBridgeAdapter.PROFILE_ID,
             lugoBatch = melillaBatchEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID,
+            caibBatch = melillaBatchEnabled && profileId.value == CaibBatchBridgeAdapter.PROFILE_ID,
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
+            xuntaGalicia = profileActive && profileId.value == XUNTA_PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
@@ -748,6 +780,14 @@ private class StaBatchBridgeAdapterOps(
         )
 
         fun from(adapter: LugoBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
+            route = { raw, origin, mainFrame, epoch ->
+                adapter.route(raw, origin, mainFrame, epoch)
+            },
+            abandon = adapter::abandon,
+            invalidateDocument = adapter::invalidateDocument,
+            abandonAll = adapter::abandonAll,
+        )
+        fun from(adapter: CaibBatchBridgeAdapter) = StaBatchBridgeAdapterOps(
             route = { raw, origin, mainFrame, epoch ->
                 adapter.route(raw, origin, mainFrame, epoch)
             },
