@@ -1465,6 +1465,34 @@ records:
         self.assertIn("dinámic", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_bizkaia_instancia_generica_binds_exact_giltza_qa_navigation_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0176")
+        profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "diputacion-bizkaia-instancia-generica")
+
+        self.assertEqual("diputacion-bizkaia-sede", target["portalId"])
+        self.assertEqual("diputacion-bizkaia-instancia-generica", target["profileId"])
+        self.assertEqual(
+            "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("BIZKAIA_INSTANCIA_GENERICA_GILTZA_QA_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["https://appsec.ebizkaia.eus"], profile["initiatorOrigins"])
+        self.assertEqual(["https://eidasbiz.izenpe.com"], profile["redirectOrigins"])
+        self.assertEqual(["https://appstac.ebizkaia.eus"], profile["trustedBrowseOrigins"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
 
     def test_oepm_protegeo_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

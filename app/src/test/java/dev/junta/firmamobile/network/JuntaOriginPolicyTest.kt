@@ -61,6 +61,7 @@ class JuntaOriginPolicyTest {
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
     private val alava = ProfileId("diputacion-alava-registro-comun")
+    private val bizkaia = ProfileId("diputacion-bizkaia-instancia-generica")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
 
@@ -137,6 +138,9 @@ class JuntaOriginPolicyTest {
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
             "egoitza.araba.eus",
+            "appsec.ebizkaia.eus",
+            "appstac.ebizkaia.eus",
+            "eidasbiz.izenpe.com",
             "seuelectronica.diba.cat",
             "valid.aoc.cat",
             "cert.valid.aoc.cat",
@@ -252,6 +256,24 @@ class JuntaOriginPolicyTest {
                 alava,
             ),
         )
+        assertEquals(
+            setOf("appsec.ebizkaia.eus", "appstac.ebizkaia.eus", "eidasbiz.izenpe.com"),
+            JuntaOriginPolicy.browserAllowedHosts(bizkaia),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(bizkaia).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S"),
+                bizkaia,
+            ),
+        )
+        assertTrue(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml"),
+                bizkaia,
+            ),
+        )
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://izenpe.com/"), bizkaia))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(

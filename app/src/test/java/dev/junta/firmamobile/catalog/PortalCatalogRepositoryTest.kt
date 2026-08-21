@@ -95,6 +95,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-lleida-sede",
                 "diputacion-badajoz-portal",
                 "diputacion-alava-registro-comun",
+                "diputacion-bizkaia-instancia-generica",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
                 "diputacion-avila-instancia-general",
