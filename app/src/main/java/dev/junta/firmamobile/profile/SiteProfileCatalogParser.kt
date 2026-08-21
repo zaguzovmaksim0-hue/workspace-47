@@ -402,6 +402,7 @@ object SiteProfileCatalogParser {
                             p.profileId.value == TEA_PROFILE_ID ||
                             p.profileId.value == LEON_PROFILE_ID ||
                             p.profileId.value == ALBACETE_PROFILE_ID ||
+                            p.profileId.value == CUENCA_PROFILE_ID ||
                             p.profileId.value == MALLORCA_PROFILE_ID ||
                             p.profileId.value == GVA_PROFILE_ID
                     )
