@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 271 |
 | Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 138 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 142 |
-| Entradas restantes fuera de ambos estados | 41 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 142 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 146 |
+| Entradas restantes fuera de ambos estados | 37 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 138 |
+| `IMPLEMENTED_NOT_E2E` | 142 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 34 |
+| `BROWSE_ONLY` | 30 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4360,13 +4360,13 @@ records:
     autonomous_community: "Canarias"
     province_or_municipality: "Santa Cruz de Tenerife"
     institution_name: "Cabildo Insular de El Hierro"
-    surface_name: "Portal institucional del Cabildo Insular de El Hierro"
+    surface_name: "Cabildo Insular de El Hierro — Solicitud general"
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.elhierro.es"
     official_site: "https://www.elhierro.es/es"
-    e_sede: "https://elhierro.sedelectronica.es/info.0"
-    entry_url: "https://www.elhierro.es/es"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://elhierro.sedelectronica.es/"
+    entry_url: "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71"
+    procedure_page: "https://elhierro.sedelectronica.es/catalog/t/7944e884-3b98-48fc-abcd-d6db6ef8bd71"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
@@ -4375,14 +4375,14 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud general: perfil QA-only limitado al lanzamiento exacto del trámite y a la navegación observada hasta la identificación electrónica Cl@ve."
+    protocol_evidence: "La portada institucional enlaza actualmente https://elhierro.sedelectronica.es; el catálogo público de la sede publica Solicitud general con UUID 7944e884-3b98-48fc-abcd-d6db6ef8bd71 y su CTA Iniciar tramitación electrónica abre exactamente /catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71. Ese launch alcanza la pantalla Identificación electrónica y expone un POST a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. No se autenticó ni se observó ABI de firma, callback o presentación final."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D12", "I05A", "I05B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    reason: "Implementación QA-only de lanzamiento/navegación exacta. Certificado, firma criptográfica, formato, algoritmo, callback y presentación final permanecen NO_VERIFICADO; no se realizó E2E físico."
+    reviewed_at: "2026-08-21"
+    next_gate: "Si se requiere ampliar el contrato, continuar una sesión autenticada solo hasta un límite pre-firma observable y detenerse antes de firma criptográfica o presentación final."
 
   - inventory_id: "ES-PUB-0126"
     surface_key: "el-hierro-sede-electronica"
