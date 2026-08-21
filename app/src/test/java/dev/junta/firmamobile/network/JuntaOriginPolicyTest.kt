@@ -153,6 +153,7 @@ class JuntaOriginPolicyTest {
             "diputacionavila.sedelectronica.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
+            "sede.dipucuenca.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
