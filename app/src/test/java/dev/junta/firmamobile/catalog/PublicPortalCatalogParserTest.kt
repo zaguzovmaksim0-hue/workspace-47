@@ -73,6 +73,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-albacete-portal"),
                 ProfileId("consell-mallorca-sede"),
                 ProfileId("generalitat-valenciana-client-auth"),
+                ProfileId("tgss-importass-client-auth"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),

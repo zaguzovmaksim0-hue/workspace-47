@@ -194,13 +194,13 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 243 |
-| Fuentes oficiales totales registradas | 255 |
+| Fuentes oficiales portal-specific registradas | 245 |
+| Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 83 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 87 |
-| Entradas restantes fuera de ambos estados | 96 |
-| Evidencia exacta de `ClientCertRequest` | 2 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 84 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 88 |
+| Entradas restantes fuera de ambos estados | 95 |
+| Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 83 |
+| `IMPLEMENTED_NOT_E2E` | 84 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 89 |
+| `BROWSE_ONLY` | 88 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -638,24 +638,24 @@ records:
     origin: "https://portal.seg-social.gob.es"
     official_site: "https://portal.seg-social.gob.es/"
     e_sede: "NO_VERIFICADO"
-    entry_url: "https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/"
+    procedure_page: "https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda"
     certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://ipce.seg-social.es/IPCE/Login"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso mediante SMS, Cl@ve, certificado electrónico o DNIe."
-    protocol_evidence: "La ayuda no publica ABI de firma ni handshake TLS cliente exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P03A"]
-    reason: "Firma, transporte de certificado, formato y endpoint no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Identificar la entrada exacta de certificado y su handshake público."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso al Área personal mediante DNIe o certificado: Import@ss inicia SAML en idp.seg-social.es; la selección IPCE redirige por POST al endpoint TLS cliente exacto ipce.seg-social.es/IPCE/Login."
+    protocol_evidence: "El Área personal actual genera SAML hacia https://idp.seg-social.es/PGIS/Login. La opción exacta DNIe o certificado usa POST ?seleccion=IPCE y auto-POST a https://ipce.seg-social.es/IPCE/Login. Un handshake TLS 1.2 sin certificado recibió CertificateRequest con tipos RSA sign, DSA sign y ECDSA sign y lista de CA aceptables; TLS 1.3 forzado falló. Sin certificado, /IPCE/Login responde 403."
+    client_tls_auth: "SI"
+    evidence_ids: ["P03A", "IMPORTASS-IDP-IPCE-2026-08-21", "IMPORTASS-IPCE-TLS-2026-08-21"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para el source idp.seg-social.es/PGIS/Login?seleccion=IPCE y target ipce.seg-social.es/IPCE/Login exactos. No se afirma firma documental, algoritmo/formato de firma, presentación ni aceptación E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente el CLIENT_TLS_AUTH en Android sin avanzar a firma, presentación ni pago; mantener QA_ONLY hasta evidencia E2E sanitizada."
 
   - inventory_id: "ES-PUB-0007"
     surface_key: "sepe-sede"
@@ -6292,6 +6292,8 @@ Orden de expansión recomendado:
 [P02D]: https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso
 [P03]: https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es
 [P03A]: https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda
+[IMPORTASS-IDP-IPCE-2026-08-21]: https://idp.seg-social.es/PGIS/Login?seleccion=IPCE
+[IMPORTASS-IPCE-TLS-2026-08-21]: https://ipce.seg-social.es/IPCE/Login
 [P04]: https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma
 [P05]: https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/
 [DGT-JS-MAIN-2026-08-09]: https://sede.dgt.gob.es/export/system/modules/es.trafico.dgt.sedeV5/resources/js/padi/main.js

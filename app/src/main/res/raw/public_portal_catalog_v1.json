@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "b147da3e9d41ab832b37d3a29b819eda1c72628cac51562b3d9c1fbc074e06a8",
+  "sourceRevision": "e1ccd8bb2dbbbaa65916b29d43ec6111e27f90b043912e13837ccf813ad45409",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -154,26 +154,29 @@
     {
       "portalId": "tgss-importass",
       "inventoryId": "ES-PUB-0006",
-      "profileId": null,
+      "profileId": "tgss-importass-client-auth",
       "displayName": "Import@ss",
       "organization": "Tesorería General de la Seguridad Social",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Acceso mediante SMS, Cl@ve, certificado electrónico o DNIe.",
-      "entryUrl": "https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda",
+      "purpose": "Acceso al Área personal mediante DNIe o certificado: Import@ss inicia SAML en idp.seg-social.es; la selección IPCE redirige por POST al endpoint TLS cliente exacto ipce.seg-social.es/IPCE/Login.",
+      "entryUrl": "https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/",
       "observedMechanisms": [
-        "CERTIFICATE_ACCESS"
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "P03A"
+        "P03A",
+        "IMPORTASS-IDP-IPCE-2026-08-21",
+        "IMPORTASS-IPCE-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Firma, transporte de certificado, formato y endpoint no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para el source idp.seg-social.es/PGIS/Login?seleccion=IPCE y target ipce.seg-social.es/IPCE/Login exactos. No se afirma firma documental, algoritmo/formato de firma, presentación ni aceptación E2E."
     },
     {
       "portalId": "sepe-sede",

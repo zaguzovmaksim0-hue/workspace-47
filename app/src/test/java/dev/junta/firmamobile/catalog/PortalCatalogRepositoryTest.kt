@@ -80,6 +80,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-albacete-portal",
                 "consell-mallorca-sede",
                 "generalitat-valenciana-client-auth",
+                "tgss-importass-client-auth",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
