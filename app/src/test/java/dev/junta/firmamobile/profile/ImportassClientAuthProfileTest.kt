@@ -28,7 +28,7 @@ class ImportassClientAuthProfileTest {
     private val profileId = ProfileId("tgss-importass-client-auth")
     private val portalId = PortalId("tgss-importass")
     private val startUrl = URI("https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/")
-    private val sourceUrl = URI("https://idp.seg-social.es/PGIS/Login")
+    private val sourceUrl = URI("https://idp.seg-social.es/PGIS/Login?seleccion=IPCE")
 
     @Test
     fun qaProfilePinsOnlyTheObservedIpceClientTlsTransition() {
@@ -56,7 +56,7 @@ class ImportassClientAuthProfileTest {
         assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
         assertEquals(setOf(ExactOrigin.parse("https://ipce.seg-social.es")), policy.requestOrigins)
         assertEquals(setOf(sourceUrl), policy.sourceUrls)
-        assertEquals(mapOf("seleccion" to "IPCE"), policy.sourceFixedQueryParameters)
+        assertTrue(policy.sourceFixedQueryParameters.isEmpty())
         assertTrue(policy.sourceRequiredEphemeralQueryParameters.isEmpty())
         assertTrue(policy.linkedEphemeralQueryParameters.isEmpty())
         assertEquals("/IPCE/Login", policy.requestPath)
