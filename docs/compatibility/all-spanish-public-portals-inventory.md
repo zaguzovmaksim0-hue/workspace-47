@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 269 |
-| Fuentes oficiales totales registradas | 281 |
+| Fuentes oficiales portal-specific registradas | 271 |
+| Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 132 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 136 |
-| Entradas restantes fuera de ambos estados | 47 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 133 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 137 |
+| Entradas restantes fuera de ambos estados | 46 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 132 |
+| `IMPLEMENTED_NOT_E2E` | 133 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 40 |
+| `BROWSE_ONLY` | 39 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4542,29 +4542,30 @@ records:
     autonomous_community: "Canarias"
     province_or_municipality: "Santa Cruz de Tenerife"
     institution_name: "Cabildo Insular de La Gomera"
-    surface_name: "Portal institucional del Cabildo Insular de La Gomera"
-    surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.lagomera.es"
+    surface_name: "Instancia General — Sede electrónica del Cabildo Insular de La Gomera"
+    surface_type: "SEDE"
+    origin: "https://lagomera.sedelectronica.es"
     official_site: "https://www.lagomera.es/"
-    e_sede: "https://lagomera.sedelectronica.es/info.0"
-    entry_url: "https://www.lagomera.es/"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://lagomera.sedelectronica.es/"
+    entry_url: "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "LA_GOMERA_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio exacto de Instancia General de la Sede electrónica del Cabildo Insular de La Gomera; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El portal institucional enlaza actualmente la sede lagomera.sedelectronica.es. El catálogo vigente de esa sede publica Instancia General (SIA 2439862) en /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5 y su acción Iniciar tramitación electrónica abre exactamente /catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5. La entrada pública alcanza la pantalla Identificación electrónica; no se observó ni se infiere ABI de certificado o firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I08A", "I08B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    evidence_ids: ["I08A", "I08B", "I08C", "I08D"]
+    reason: "Perfil nuevo QA_ONLY limitado al launch exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. Certificado, firma, formato, algoritmo, endpoint y aceptación física E2E permanecen NO_VERIFICADO."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Instancia General; ampliar autenticación o firma solo con evidencia específica independiente y sin cruzar la firma privada ni la presentación final."
+    notes: "La sede requiere conservar la cookie de sesión durante la transición / -> /info -> /info.0; con sesión persistente la cadena concluye en HTTP 200. No se realizó autenticación, firma criptográfica, carga de documentos, presentación final ni pago."
 
   - inventory_id: "ES-PUB-0132"
     surface_key: "la-gomera-sede-electronica"
@@ -6502,6 +6503,8 @@ Orden de expansión recomendado:
 [I07F]: https://sedeelectronica.cabildodelapalma.es/sta/CarpetaPublic/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME
 [I08A]: https://www.lagomera.es/
 [I08B]: https://lagomera.sedelectronica.es/info.0
+[I08C]: https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[I08D]: https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [I09A]: https://www.cabildofuer.es/cabildo/
 [I09B]: https://sede.cabildofuer.es/eAdmin/Sede.do
 [I09C]: https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1

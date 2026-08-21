@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "07fdb61d5f00121096c8ae05e00e1ee7de2feb69436989927aef4bc05ebf2b96",
+  "sourceRevision": "a458b04e37def328f8447e96ba0eaa8e94b6af8f2c6a4e55461db7023f25e894",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3557,26 +3557,27 @@
     {
       "portalId": "la-gomera-portal-institucional",
       "inventoryId": "ES-PUB-0131",
-      "profileId": null,
-      "displayName": "Portal institucional del Cabildo Insular de La Gomera",
+      "profileId": "la-gomera-instancia-general",
+      "displayName": "Instancia General — Sede electrónica del Cabildo Insular de La Gomera",
       "organization": "Cabildo Insular de La Gomera",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
-      "entryUrl": "https://www.lagomera.es/",
+      "purpose": "Navegación QA integrada exclusivamente al inicio exacto de Instancia General de la Sede electrónica del Cabildo Insular de La Gomera; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "LA_GOMERA_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D12",
         "I08A",
-        "I08B"
+        "I08B",
+        "I08C",
+        "I08D"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. Certificado, firma, formato, algoritmo, endpoint y aceptación física E2E permanecen NO_VERIFICADO."
     },
     {
       "portalId": "la-gomera-sede-electronica",
