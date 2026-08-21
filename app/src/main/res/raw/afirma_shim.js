@@ -18,15 +18,19 @@
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
+  const airefCompatibilityEnabled = __JFM_AIREF_COMPATIBILITY_ENABLED__;
   const cdtiCompatibilityEnabled = __JFM_CDTI_COMPATIBILITY_ENABLED__;
   const policiaCompatibilityEnabled = __JFM_POLICIA_COMPATIBILITY_ENABLED__;
   const granCanariaCompatibilityEnabled = __JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__;
   const fuerteventuraCompatibilityEnabled = __JFM_FUERTEVENTURA_COMPATIBILITY_ENABLED__;
+  const canariasCompatibilityEnabled = __JFM_CANARIAS_COMPATIBILITY_ENABLED__;
   const minecoCompatibilityEnabled = __JFM_MINECO_COMPATIBILITY_ENABLED__;
   const melillaBatchCompatibilityEnabled = __JFM_MELILLA_BATCH_COMPATIBILITY_ENABLED__;
   const lugoBatchCompatibilityEnabled = __JFM_LUGO_BATCH_COMPATIBILITY_ENABLED__;
+  const caibBatchCompatibilityEnabled = __JFM_CAIB_BATCH_COMPATIBILITY_ENABLED__;
   const iSel = __JFM_ISCIII_CERTIFICATE_SELECTION_ENABLED__;
   const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
+  const xSel = __JFM_XUNTA_GALICIA_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -39,6 +43,9 @@
   const jccmPayloadBase64 = "QUJDREU=";
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
+  const airefOrigin = "https://sede.airef.es";
+  const airefSigningPath = "/invesiteRE/action/solicitud/view";
+  const airefSigningQueryPattern = /^\?id=[0-9]{1,20}$/;
   const cdtiOrigin = "https://sede.cdti.gob.es";
   const cdtiPage =
     "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx";
@@ -46,6 +53,15 @@
   const cdtiExtraProperties = "filters=nonexpired";
   const policiaOrigin = "https://sede.policia.gob.es";
   const granCanariaOrigin = "https://sede.grancanaria.com";
+  const canariasOrigin = "https://sede.gobiernodecanarias.org";
+  const canariasPage = "https://sede.gobiernodecanarias.org/sede/identificacion";
+  const canariasChallengePattern =
+    /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$/;
+  const canariasExtraProperties =
+    "format=CAdES Detached\n" +
+    "serverUrl=https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService\n" +
+    "referencesDigestMethod=http://www.w3.org/2001/04/xmlenc#sha512\n" +
+    "filters=nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))";
   const granCanariaExtraProperties = "headless=true\nfilters=nonexpired:";
   const fuerteventuraOrigin = "https://sede.cabildofuer.es";
   const fuerteventuraSigningPage =
@@ -75,10 +91,30 @@
   const lugoOrigin = "https://sede.deputacionlugo.org";
   const lugoClientBase = "https://sede.deputacionlugo.org/opencms";
   const lugoExtraProperties = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\n";
+  const caibOrigin = "https://intranet.caib.es";
+  const caibClientBase = "https://intranet.caib.es/portafibback";
+  const caibSignerPathPattern = /^\/portafibback\/public\/signmodule\/requestPlugin\/([A-Za-z0-9_-]{28})\/-1\/index$/;
+  const caibSignatureIdPattern = /^[A-Za-z0-9_-]{40}$/;
+  const caibBatchBase64Pattern = /^[A-Za-z0-9_-]+={0,2}$/;
   const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  const xuntaOrigin = "https://sede.xunta.gal";
+  const xuntaPage = "https://sede.xunta.gal/presenta/novo/PR004A_2025_1";
+  const xuntaSelectProps = "filters=nonexpired";
+  const xuntaFixedProperties = Object.freeze({
+    format: "PAdES",
+    signatureSubFilter: "ETSI.CAdES.detached",
+    serverUrl: "https://sede.xunta.gal/presenta/sinatura/SignatureService",
+    referencesDigestMethod: "http://www.w3.org/2000/09/xmldsig#sha1",
+    mimeType: "hash/sha256",
+    headless: "true"
+  });
+  const xuntaAllowedDynamicProperties = new Set([
+    "filters", "locale", "nif", "id", "codigoSeguridad",
+    "marcaFirmaCustom", "dataUser", "idBorrador"
+  ]);
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;
@@ -212,13 +248,81 @@
     }
   }
 
+  function isValidAirefPayload(value) {
+    if (typeof value !== "string" || value.length !== 44 || !base64Pattern.test(value)) {
+      return false;
+    }
+    try {
+      const decoded = atob(value);
+      return decoded.length === 32 && btoa(decoded) === value;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isExactAirefSigningPage() {
+    return window.location.origin === airefOrigin &&
+      window.location.pathname === airefSigningPath &&
+      airefSigningQueryPattern.test(window.location.search) &&
+      window.location.hash === "";
+  }
+
+  function isExactCanariasChallenge(value) {
+    if (typeof value !== "string" || !base64Pattern.test(value)) {
+      return false;
+    }
+    try {
+      const decoded = globalThis.atob(value);
+      return canariasChallengePattern.test(decoded) && globalThis.btoa(decoded) === value;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isExactXuntaProperties(value) {
+    if (typeof value !== "string" || value.length === 0 || value.length > maxExtraPropertiesChars) {
+      return false;
+    }
+    const entries = new Map();
+    for (const rawLine of value.split("\n")) {
+      const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+      const separator = line.indexOf("=");
+      if (separator <= 0) return false;
+      const key = line.slice(0, separator);
+      const propertyValue = line.slice(separator + 1);
+      if (!/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(key) || propertyValue.length > 8192 ||
+          entries.has(key) || Array.from(propertyValue).some(ch => ch.charCodeAt(0) < 0x20 || ch.charCodeAt(0) === 0x7f)) {
+        return false;
+      }
+      entries.set(key, propertyValue);
+    }
+    for (const [key, expected] of Object.entries(xuntaFixedProperties)) {
+      if (entries.get(key) !== expected) return false;
+    }
+    if (!entries.has("filters") || !entries.has("locale") || entries.get("locale") === "") return false;
+    const filters = entries.get("filters");
+    if (filters !== "nonexpired" &&
+        !(filters.startsWith("nonexpired;encodedcert:") &&
+          base64Pattern.test(filters.slice("nonexpired;encodedcert:".length)))) {
+      return false;
+    }
+    for (const key of entries.keys()) {
+      if (!Object.prototype.hasOwnProperty.call(xuntaFixedProperties, key) &&
+          !xuntaAllowedDynamicProperties.has(key)) return false;
+    }
+    return true;
+  }
+
   function interceptCertificateSelection(a) {
-    if (!iSel && !vSel) return false;
+    if (!iSel && !vSel && !xSel) return false;
     let valid = false;
     if (iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&
         typeof a[1] === "function" && typeof a[2] === "function") {
       valid = true;
     } else if (vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&
+        typeof a[1] === "function" && typeof a[2] === "function") {
+      valid = true;
+    } else if (xSel && location.href === xuntaPage && a.length === 3 && a[0] === xuntaSelectProps &&
         typeof a[1] === "function" && typeof a[2] === "function") {
       valid = true;
     }
@@ -262,6 +366,35 @@
       typeof successCallback === "function" &&
       typeof errorCallback === "function";
     if (isSevillaAtseOrigin && !isExactSevillaAtseCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    const isAirefOrigin =
+      airefCompatibilityEnabled && window.location.origin === airefOrigin;
+    const isExactAirefCall =
+      isAirefOrigin && isExactAirefSigningPage() &&
+      args.length === 6 &&
+      isValidAirefPayload(args[0]) &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "XAdES" &&
+      args[3] === null &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isAirefOrigin && !isExactAirefCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    const isCanariasOrigin =
+      canariasCompatibilityEnabled && window.location.origin === canariasOrigin;
+    const isCanariasPage =
+      isCanariasOrigin && window.location.href === canariasPage &&
+      window.location.search === "" && window.location.hash === "";
+    const isExactCanariasCall =
+      isCanariasPage && args.length === 6 && isExactCanariasChallenge(args[0]) &&
+      args[1] === "SHA1withRSA" && args[2] === "CAdES" &&
+      args[3] === canariasExtraProperties &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isCanariasOrigin && !isExactCanariasCall) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -317,6 +450,18 @@
       args[3] === minecoExtraProperties &&
       typeof successCallback === "function" && typeof errorCallback === "function";
     if (isMinecoOrigin && !isExactMinecoCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    const isXuntaOrigin = xSel && window.location.origin === xuntaOrigin;
+    const isXuntaPage = isXuntaOrigin && window.location.href === xuntaPage &&
+      window.location.search === "" && window.location.hash === "";
+    const isExactXuntaCall =
+      isXuntaPage && args.length === 6 && args[0] === "doc" &&
+      args[1] === "SHA1withRSA" && args[2] === "PAdEStri" &&
+      isExactXuntaProperties(args[3]) &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isXuntaOrigin && !isExactXuntaCall) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -384,13 +529,15 @@
     const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
         globalThis.btoa(args[0]) :
+      isExactXuntaCall && typeof globalThis.btoa === "function" ?
+        globalThis.btoa(args[0]) :
       isExactCdtiCall ? args[0] + "=" : args[0];
     const hasValidUgrDataEncoding = base64Pattern.test(dataB64);
     const hasValidCantabriaDataEncoding = isExactCantabriaCall &&
       typeof globalThis.btoa === "function" &&
       base64Pattern.test(dataB64);
     const isJuntaCades =
-      !jccmCompatibilityEnabled &&
+      !jccmCompatibilityEnabled && !canariasCompatibilityEnabled &&
       (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
       args[2] === "CAdES" && typeof args[3] === "string" &&
       args[3].length <= maxExtraPropertiesChars;
@@ -401,15 +548,17 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !isExactSevillaAtseCall && !isExactGranCanariaCall && !isExactFuerteventuraCall &&
-          !isExactMinecoCall && !isExactCdtiCall &&
-          !base64Pattern.test(args[0])) ||
+          !isExactSevillaAtseCall && !isExactAirefCall && !isExactGranCanariaCall &&
+          !isExactFuerteventuraCall && !isExactCanariasCall && !isExactMinecoCall && !isExactCdtiCall &&
+          !isExactXuntaCall && !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
-          (isExactCantabriaCall && !hasValidCantabriaDataEncoding)) ||
+          (isExactCantabriaCall && !hasValidCantabriaDataEncoding) ||
+          (isExactXuntaCall && (typeof globalThis.btoa !== "function" || !base64Pattern.test(dataB64)))) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
           !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
-          !isExactCdtiCall && !isExactPoliciaCall && !isExactGranCanariaCall &&
-          !isExactFuerteventuraCall && !isExactMinecoCall)) {
+          !isExactAirefCall && !isExactCdtiCall && !isExactPoliciaCall &&
+          !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall && !isExactMinecoCall &&
+          !isExactXuntaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -661,6 +810,105 @@
     return true;
   }
 
+  function caibRequestToken() {
+    if (!caibBatchCompatibilityEnabled || window.location.origin !== caibOrigin) return null;
+    const match = window.location.pathname.match(caibSignerPathPattern);
+    return match ? match[1] : null;
+  }
+
+  function decodeCaibUrlBase64(value) {
+    if (typeof value !== "string" || !caibBatchBase64Pattern.test(value)) return null;
+    try {
+      const normalized = value.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - value.length % 4) % 4);
+      return atob(normalized);
+    } catch (_) { return null; }
+  }
+
+  function caibSignatureId(batchXml, token) {
+    if (typeof batchXml !== "string" || batchXml.length === 0 || batchXml.length > 8192) return null;
+    const xml = decodeCaibUrlBase64(batchXml);
+    if (xml === null || xml.length > 6144) return null;
+    const ids = Array.from(xml.matchAll(/<singlesign\s+Id="([A-Za-z0-9_-]{40})">/g));
+    if (ids.length !== 1 || !caibSignatureIdPattern.test(ids[0][1])) return null;
+    return decodeCaibUrlBase64(ids[0][1]) === `${token}|0` ? ids[0][1] : null;
+  }
+
+  function caibExtraProperties(signatureId) {
+    return "mode=implicit\n" +
+      "signatureSubFilter=ETSI.CAdES.detached\n" +
+      `SignatureId=${signatureId}\n` +
+      "signReason=FORM-1.pdf\n" +
+      "formatmobile=PAdEStri\n" +
+      "formatbatch=PAdES\n" +
+      "format=PAdES\n" +
+      "filters.1=nonexpired:\n" +
+      "allowSigningCertifiedPdfs=true\n" +
+      "algorithm=SHA256withRSA\n";
+  }
+
+  function caibEndpoint(token, name) {
+    return `${caibOrigin}/portafibback/public/signmodule/requestPlugin/${token}/-1/${name}`;
+  }
+
+  function interceptCaibSetupCall(call, args) {
+    const token = caibRequestToken();
+    if (!token) return false;
+    if (call === "CAIB_SET_FORCE_WS_MODE") return args.length === 1 && args[0] === true;
+    if (call === "CAIB_CARGAR_APP_AFIRMA") return args.length === 1 && args[0] === caibClientBase;
+    if (call === "CAIB_SET_SERVLETS") {
+      return args.length === 2 && args[0] === caibEndpoint(token, "StorageService") &&
+        args[1] === caibEndpoint(token, "RetrieveService");
+    }
+    return false;
+  }
+
+  function interceptCaibBatchSign(args) {
+    const token = caibRequestToken();
+    if (!token) return false;
+    const errorCallback = args[5];
+    const signatureId = caibSignatureId(args[0], token);
+    if (args.length !== 6 || signatureId === null ||
+        args[1] !== caibEndpoint(token, "BatchPresigner") ||
+        args[2] !== caibEndpoint(token, "BatchPostsigner") ||
+        args[3] !== caibExtraProperties(signatureId) || typeof args[4] !== "function" ||
+        typeof errorCallback !== "function") {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
+    if (!bridge || typeof bridge.postMessage !== "function" || !probeDocumentId ||
+        pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+      return true;
+    }
+    const batchRequestId = secureRequestId();
+    if (!batchRequestId) { rejectDirectCall(errorCallback, "PROTOCOL_FAILED"); return true; }
+    const timeoutId = setTimeout(() => {
+      const expired = clearPendingBatch(batchRequestId);
+      if (expired) {
+        notifyNativeCancel(batchRequestId, "CAIB_XML_BATCH_CANCEL");
+        rejectDirectCall(expired.errorCallback, "REQUEST_EXPIRED");
+      }
+    }, signTimeoutMillis);
+    pendingBatchCallbacks.set(batchRequestId, {
+      successCallback: args[4], errorCallback, timeoutId, caibXml: true
+    });
+    try {
+      bridge.postMessage(JSON.stringify({
+        type: "CAIB_XML_BATCH",
+        documentId: probeDocumentId,
+        requestId: batchRequestId,
+        batchXml: args[0],
+        batchPreSignerUrl: args[1],
+        batchPostSignerUrl: args[2],
+        extraProperties: args[3]
+      }));
+    } catch (_) {
+      clearPendingBatch(batchRequestId);
+      rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
+    }
+    return true;
+  }
+
   function interceptUgrSetupCall(call, args) {
     if (!ugrCompatibilityEnabled || window.location.origin !== ugrOrigin) {
       return false;
@@ -684,7 +932,7 @@
     }
     if (result.status === "success" && typeof result.validationResponse === "string" &&
         result.validationResponse.length <= maxBatchResultChars) {
-      if (pending.lugoXml === true) {
+      if (pending.lugoXml === true || pending.caibXml === true) {
         if (!base64Pattern.test(result.validationResponse)) {
           rejectDirectCall(pending.errorCallback, "PROTOCOL_FAILED");
           return;
@@ -785,7 +1033,8 @@
       clearTimeout(pending.timeoutId);
       notifyNativeCancel(
         pendingRequestId,
-        pending.lugoXml === true ? "LUGO_XML_BATCH_CANCEL" : "MINIAPPLET_BATCH_CANCEL"
+        pending.lugoXml === true ? "LUGO_XML_BATCH_CANCEL" :
+          (pending.caibXml === true ? "CAIB_XML_BATCH_CANCEL" : "MINIAPPLET_BATCH_CANCEL")
       );
     }
     pendingCallbacks.clear();
@@ -805,7 +1054,8 @@
       window.location.origin === staBatchOrigin;
     const isLugoBatchDocument = lugoBatchCompatibilityEnabled &&
       window.location.origin === lugoOrigin;
-    if (!functionalSigningEnabled || (!isStaBatchDocument && !isLugoBatchDocument) ||
+    const isCaibBatchDocument = caibRequestToken() !== null;
+    if (!functionalSigningEnabled || (!isStaBatchDocument && !isLugoBatchDocument && !isCaibBatchDocument) ||
         !bridge || typeof bridge.postMessage !== "function" ||
         !probeDocumentId) {
       return;
@@ -930,6 +1180,12 @@
         if (call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)) {
           return undefined;
         }
+        if (call === "CAIB_BATCH_SIGN" && interceptCaibBatchSign(args)) {
+          return undefined;
+        }
+        if (interceptCaibSetupCall(call, args)) {
+          return undefined;
+        }
         if (interceptLugoSetupCall(call, args)) {
           return undefined;
         }
@@ -945,6 +1201,8 @@
             (call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) ||
             (call === "BATCH_SIGN" && interceptMelillaBatchSign(args)) ||
             (call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)) ||
+            (call === "CAIB_BATCH_SIGN" && interceptCaibBatchSign(args)) ||
+            interceptCaibSetupCall(call, args) ||
             interceptLugoSetupCall(call, args) ||
             interceptUgrSetupCall(call, args)) {
           return undefined;
@@ -991,7 +1249,8 @@
     includeUgrSetup = false,
     includeMelillaBatch = false,
     includeIsciiiCertificateSelection = false,
-    includeLugoBatch = false
+    includeLugoBatch = false,
+    includeCaibBatch = false
   ) {
     if ((typeof value !== "object" || value === null) && typeof value !== "function") {
       return value;
@@ -1011,6 +1270,12 @@
         installMethodHook(value, "cargarAppAfirma", "LUGO_CARGAR_APP_AFIRMA");
         installMethodHook(value, "signBatch", "LUGO_BATCH_SIGN");
       }
+      if (includeCaibBatch) {
+        installMethodHook(value, "setForceWSMode", "CAIB_SET_FORCE_WS_MODE");
+        installMethodHook(value, "cargarAppAfirma", "CAIB_CARGAR_APP_AFIRMA");
+        installMethodHook(value, "setServlets", "CAIB_SET_SERVLETS");
+        installMethodHook(value, "signBatch", "CAIB_BATCH_SIGN");
+      }
       if (includeUgrSetup) {
         installMethodHook(value, "setForceWSMode", "UGR_SET_FORCE_WS_MODE");
         installMethodHook(value, "cargarAppAfirma", "UGR_CARGAR_APP_AFIRMA");
@@ -1024,7 +1289,7 @@
 
   const miniAppletDescriptor = Object.getOwnPropertyDescriptor(window, "MiniApplet");
   if (!miniAppletDescriptor || miniAppletDescriptor.configurable === true) {
-    let miniApplet = wrapMiniApplet(window.MiniApplet);
+    let miniApplet = wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
     Object.defineProperty(window, "MiniApplet", {
       enumerable: true,
       configurable: true,
@@ -1032,19 +1297,19 @@
         return miniApplet;
       },
       set(value) {
-        miniApplet = wrapMiniApplet(value);
+        miniApplet = wrapMiniApplet(value, false, false, xSel, false, caibBatchCompatibilityEnabled);
       }
     });
     window.addEventListener("DOMContentLoaded", () => {
-      miniApplet = wrapMiniApplet(miniApplet);
+      miniApplet = wrapMiniApplet(miniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
     }, { once: true });
   } else {
-    wrapMiniApplet(window.MiniApplet);
+    wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
   }
 
   const autoScriptDescriptor = Object.getOwnPropertyDescriptor(window, "AutoScript");
   if (!autoScriptDescriptor || autoScriptDescriptor.configurable === true) {
-    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled, iSel || vSel, lugoBatchCompatibilityEnabled);
+    let autoScript = wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled, iSel || vSel || xSel, lugoBatchCompatibilityEnabled);
     Object.defineProperty(window, "AutoScript", {
       enumerable: true,
       configurable: true,
@@ -1056,7 +1321,7 @@
           value,
           ugrCompatibilityEnabled,
           melillaBatchCompatibilityEnabled,
-          iSel || vSel,
+          iSel || vSel || xSel,
           lugoBatchCompatibilityEnabled,
         );
       }
@@ -1066,7 +1331,7 @@
         autoScript,
         ugrCompatibilityEnabled,
         melillaBatchCompatibilityEnabled,
-        iSel || vSel,
+        iSel || vSel || xSel,
         lugoBatchCompatibilityEnabled,
       );
     }, { once: true });
@@ -1075,7 +1340,7 @@
       window.AutoScript,
       ugrCompatibilityEnabled,
       melillaBatchCompatibilityEnabled,
-      iSel || vSel,
+      iSel || vSel || xSel,
       lugoBatchCompatibilityEnabled,
     );
   }

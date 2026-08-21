@@ -311,6 +311,32 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun rejectsAnyExpansionOfTheCanariasCertificateLoginProfileContract() {
+        val mutations = listOf(
+            "\"SHA1_WITH_RSA\"" to "\"SHA256_WITH_RSA\"",
+            "\"format\":\"CAdES Detached\"" to "\"format\":\"CAdES\"",
+            "referencesDigestMethod\":\"http://www.w3.org/2001/04/xmlenc#sha512" to
+                "referencesDigestMethod\":\"http://www.w3.org/2001/04/xmlenc#sha256",
+            "signingCert:true;issuer.rfc2254" to "signingCert:false;issuer.rfc2254",
+        )
+
+        mutations.forEach { (expected, replacement) ->
+            val canariasStart = BuiltInSiteProfiles.JSON.indexOf("\"profileId\": \"canarias-sede\"")
+            assertTrue(canariasStart >= 0)
+            val nextProfile = BuiltInSiteProfiles.JSON.indexOf("\"profileId\":", canariasStart + 1)
+            val end = if (nextProfile >= 0) nextProfile else BuiltInSiteProfiles.JSON.length
+            val block = BuiltInSiteProfiles.JSON.substring(canariasStart, end)
+            assertTrue("missing Canarias contract fragment: $expected", block.contains(expected))
+            val changedBlock = block.replaceFirst(expected, replacement)
+            val mutated = BuiltInSiteProfiles.JSON.substring(0, canariasStart) + changedBlock +
+                BuiltInSiteProfiles.JSON.substring(end)
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(mutated)
+            }
+        }
+    }
+
+    @Test
     fun preservesTheExactCantabriaRecQaOnlyCertificateContract() {
         val profileId = ProfileId("cantabria-rec-cert-login")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
@@ -533,6 +559,39 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun directClientAuthCannotUseRedirectOriginAsSourceOutsideTheReviewedNavarraProfile() {
+        val navarraId = "\"profileId\": \"navarra-sede-registro-general\""
+        val unreviewedId = "\"profileId\": \"navarra-unreviewed-direct-client-auth\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(navarraId))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(navarraId, unreviewedId))
+        }
+    }
+
+    @Test
+    fun navarraClientAuthMappingFailsClosedOnUnboundOrAmbiguousParameterNames() {
+        val mutations = listOf(
+            "\"linkedEphemeralQueryParameterMappings\": {\"ReturnUrl\":\"returnUrl\"}" to
+                "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"wrongTarget\"}",
+            "\"sourceRequiredEphemeralQueryParameters\": [\"ReturnUrl\"]" to
+                "\"sourceRequiredEphemeralQueryParameters\":[\"OtherSource\"]",
+            "\"requiredEphemeralQueryParameters\": [\"returnUrl\"]" to
+                "\"requiredEphemeralQueryParameters\":[\"OtherTarget\"]",
+            "\"linkedEphemeralQueryParameterMappings\": {\"ReturnUrl\":\"returnUrl\"}" to
+                "\"linkedEphemeralQueryParameters\":[\"ReturnUrl\"]," +
+                    "\"linkedEphemeralQueryParameterMappings\":{\"ReturnUrl\":\"returnUrl\"}",
+        )
+
+        mutations.forEach { (expected, replacement) ->
+            assertTrue("missing Navarra contract fragment: $expected", BuiltInSiteProfiles.JSON.contains(expected))
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(expected, replacement))
+            }
+        }
+    }
+
+    @Test
     fun preservesTheExactAeatClientTlsQaContract() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
@@ -581,6 +640,21 @@ class SiteProfileCatalogParserTest {
                 URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"),
             ),
         )
+    }
+
+    @Test
+    fun rejectsMenorcaClientTlsContractWithoutLinkedUrlParameter() {
+        val linkedUrl = "\"linkedEphemeralQueryParameters\":[\"URL\"]"
+
+        assertTrue(BuiltInSiteProfiles.JSON.contains(linkedUrl))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(
+                    linkedUrl,
+                    "\"linkedEphemeralQueryParameters\":[]",
+                ),
+            )
+        }
     }
 
     @Test
@@ -655,6 +729,7 @@ class SiteProfileCatalogParserTest {
         val education = ProfileId("educacion-convocatoria")
         val ceuta = ProfileId("ceuta-sede")
         val lleida = ProfileId("diputacion-lleida-sede")
+        val badajoz = ProfileId("diputacion-badajoz-portal")
         val aragon = ProfileId("aragon-siraw")
         val ofvirtual = ProfileId("junta-ofvirtual")
         val unizar = ProfileId("unizar-tramitador")
@@ -665,7 +740,9 @@ class SiteProfileCatalogParserTest {
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
             ProfileId("junta-andalucia-vea-peg"),
+            ProfileId("diputacion-alava-registro-comun"),
             lleida,
+            badajoz,
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
@@ -875,6 +952,34 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun `Alava Registro Comun profile exposes only exact QA navigation`() {
+        val profileId = ProfileId("diputacion-alava-registro-comun")
+        val start = URI("https://egoitza.araba.eus/izapidetu/at/01/es/0000301")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://egoitza.araba.eus")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(2, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.araba.eus.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.araba.eus:444/")))
+    }
+
+    @Test
     fun `Portal Funciona public home profile is QA only and exposes no sensitive capability`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
@@ -926,6 +1031,36 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
     }
+
+    @Test
+    fun `Diputacion Avila Instancia General is QA navigation only with observed Clave redirects`() {
+        val profileId = ProfileId("diputacion-avila-instancia-general")
+        val start = URI("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://diputacionavila.sedelectronica.es")), profile.initiatorOrigins)
+        assertEquals(
+            setOf(
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+                ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
+                ExactOrigin.parse("https://pasarela-ident-sistemas.clave.gob.es"),
+            ),
+            profile.redirectOrigins,
+        )
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+    }
+
 
 }
 

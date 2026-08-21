@@ -59,29 +59,46 @@ class PublicPortalCatalogParserTest {
                 ProfileId("mites-certificate-login"),
                 ProfileId("transportes-qys-cert-login"),
                 ProfileId("sevilla-atse-certificate-login"),
+                ProfileId("airef-instancia-general"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
                 ProfileId("extremadura-tramites"),
+                ProfileId("navarra-sede-registro-general"),
                 ProfileId("diputacion-valladolid-sede"),
                 ProfileId("diputacion-burgos-portal"),
                 ProfileId("la-palma-sede-electronica"),
                 ProfileId("diputacion-huesca-portal"),
                 ProfileId("diputacion-lugo-sede"),
                 ProfileId("diputacion-leon-sede"),
+                ProfileId("diputacion-albacete-portal"),
+                ProfileId("consell-mallorca-sede"),
+                ProfileId("generalitat-valenciana-client-auth"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
                 ProfileId("fuerteventura-sede-electronica"),
                 ProfileId("gran-canaria-sede-electronica"),
+                ProfileId("age-portal-de-la-transparencia"),
+                ProfileId("caib-portafib"),
                 ProfileId("ministerio-economia-instancia-generica"),
                 ProfileId("diputacion-toledo-sede"),
                 ProfileId("isciii-certificate-selection"),
                 ProfileId("diputacion-valencia-sede"),
+                ProfileId("diputacion-alicante-solicitud-general"),
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
+                ProfileId("diputacion-badajoz-portal"),
+                ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
+                ProfileId("xunta-galicia-solicitude-xenerica"),
+                ProfileId("la-rioja-oficina-electronica"),
+                ProfileId("menorca-carpeta-ciutadana"),
+                ProfileId("canarias-sede"),
+                ProfileId("diputacion-barcelona-solicitud-generica-2057"),
+                ProfileId("eivissa-sede-electronica"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -1009,6 +1026,39 @@ class PublicPortalCatalogParserTest {
                 profileId = ProfileId("reg-age-redsara"),
                 entryUrl = URI("https://reg.redsara.es/es/"),
             ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
+    fun `Alava Registro Comun binds exact QA start without signer capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0140" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://egoitza.araba.eus/izapidetu/at/01/es/0000301")
+
+        assertEquals(ProfileId("diputacion-alava-registro-comun"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals(null, metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.ELECTRONIC_SIGNATURE),
+            metadata.observedMechanisms,
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("diputacion-alava-registro-comun"), start),
             repository.resolveLaunch(portal),
         )
     }
