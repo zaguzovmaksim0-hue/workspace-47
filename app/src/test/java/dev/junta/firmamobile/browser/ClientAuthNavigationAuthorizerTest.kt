@@ -136,6 +136,66 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun mallorcaDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+        val mallorca = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = mallorca.observeTopLevelNavigation(
+            MALLORCA_PROFILE, MALLORCA_SOURCE, MALLORCA_TARGET, 80, true,
+        )
+
+        assertEquals(MALLORCA_PROFILE, authorized?.profileId)
+        assertEquals("identificacionssl.sedipualba.es", authorized?.target?.host)
+        assertEquals("/", authorized?.target?.rawPath)
+        assertEquals(
+            "idtoken=$MALLORCA_TOKEN&idioma=ca&entidad=07700",
+            authorized?.target?.rawQuery,
+        )
+        assertNull(
+            mallorca.observeTopLevelNavigation(
+                MALLORCA_PROFILE, MALLORCA_SOURCE, MALLORCA_TARGET, 80, true,
+            ),
+        )
+    }
+
+    @Test
+    fun mallorcaDynamicSourceRejectsTokenHostPathAndQueryExpansion() {
+        val attacks = listOf(
+            MALLORCA_SOURCE.replace(MALLORCA_TOKEN, MALLORCA_OTHER_TOKEN) to MALLORCA_TARGET,
+            MALLORCA_SOURCE.replace("idioma=ca", "idioma=es") to MALLORCA_TARGET,
+            "$MALLORCA_SOURCE&extra=1" to MALLORCA_TARGET,
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace(MALLORCA_TOKEN, MALLORCA_OTHER_TOKEN),
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace("idioma=ca", "idioma=es"),
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace("entidad=07700", "entidad=24000"),
+            MALLORCA_SOURCE to "$MALLORCA_TARGET&extra=1",
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace(
+                "identificacionssl.sedipualba.es",
+                "identificacionssl.sedipualba.es.evil.example",
+            ),
+            MALLORCA_SOURCE to MALLORCA_TARGET.replace(
+                "https://identificacionssl.sedipualba.es/",
+                "https://identificacionssl.sedipualba.es/other",
+            ),
+            MALLORCA_SOURCE to "$MALLORCA_TARGET#fragment",
+        )
+
+        attacks.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    MALLORCA_PROFILE, source, target, 81L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun navarraCaseMappedEphemeralParameterAuthorizesOnlyTheSameObservedSessionValue() {
         val navarra = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,
@@ -180,6 +240,111 @@ class ClientAuthNavigationAuthorizerTest {
                 "$source -> $target",
                 fresh.observeTopLevelNavigation(
                     NAVARRA_PROFILE, source, target, 76L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun menorcaSameOriginClientTlsAuthorizesOnlyMatchingLinkedUrlParameter() {
+        val menorca = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = menorca.observeTopLevelNavigation(
+            MENORCA_PROFILE, MENORCA_SOURCE, MENORCA_TARGET, 72, true,
+        )
+
+        assertEquals(MENORCA_PROFILE, authorized?.profileId)
+        assertEquals("www.carpetaciutadana.org", authorized?.target?.host)
+        assertEquals("/cime/Login/LoginCert.aspx", authorized?.target?.rawPath)
+        assertEquals("URL=$MENORCA_RETURN", authorized?.target?.rawQuery)
+        assertNull(
+            menorca.observeTopLevelNavigation(
+                MENORCA_PROFILE, MENORCA_SOURCE, MENORCA_TARGET, 72, true,
+            ),
+        )
+    }
+
+    @Test
+    fun menorcaSameOriginClientTlsRejectsUnlinkedOrExpandedTransition() {
+        val invalidCalls = listOf(
+            MENORCA_SOURCE.replace(MENORCA_RETURN, MENORCA_OTHER_RETURN) to MENORCA_TARGET,
+            MENORCA_SOURCE to MENORCA_TARGET.replace(MENORCA_RETURN, MENORCA_OTHER_RETURN),
+            "$MENORCA_SOURCE&extra=1" to MENORCA_TARGET,
+            MENORCA_SOURCE to "$MENORCA_TARGET&extra=1",
+            MENORCA_SOURCE.replace("/Login/Login.aspx", "/Login/Other.aspx") to MENORCA_TARGET,
+            MENORCA_SOURCE to MENORCA_TARGET.replace("/Login/LoginCert.aspx", "/Login/LoginCert.aspx/other"),
+            MENORCA_SOURCE to MENORCA_TARGET.replace(
+                "www.carpetaciutadana.org",
+                "www.carpetaciutadana.org.evil.example",
+            ),
+            MENORCA_SOURCE to MENORCA_TARGET.replace(
+                "www.carpetaciutadana.org",
+                "www.carpetaciutadana.org:8443",
+            ),
+        )
+
+        invalidCalls.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    MENORCA_PROFILE, source, target, 73L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun albaceteDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+        val albacete = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = albacete.observeTopLevelNavigation(
+            ALBACETE_PROFILE, ALBACETE_SOURCE, ALBACETE_TARGET, 80, true,
+        )
+
+        assertEquals(ALBACETE_PROFILE, authorized?.profileId)
+        assertEquals("identificacionssl.sedipualba.es", authorized?.target?.host)
+        assertEquals("/", authorized?.target?.rawPath)
+        assertEquals(
+            "idtoken=$ALBACETE_TOKEN&idioma=es&entidad=02000",
+            authorized?.target?.rawQuery,
+        )
+        assertNull(albacete.observeTopLevelNavigation(ALBACETE_PROFILE, ALBACETE_SOURCE, ALBACETE_TARGET, 80, true))
+    }
+
+    @Test
+    fun albaceteDynamicSourceRejectsTokenEntityHostPathAndQueryExpansion() {
+        val attacks = listOf(
+            ALBACETE_SOURCE.replace(ALBACETE_TOKEN, ALBACETE_OTHER_TOKEN) to ALBACETE_TARGET,
+            ALBACETE_SOURCE.replace("idioma=es", "idioma=en") to ALBACETE_TARGET,
+            "$ALBACETE_SOURCE&extra=1" to ALBACETE_TARGET,
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace(ALBACETE_TOKEN, ALBACETE_OTHER_TOKEN),
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("idioma=es", "idioma=en"),
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("entidad=02000", "entidad=24000"),
+            ALBACETE_SOURCE to "$ALBACETE_TARGET&extra=1",
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("identificacionssl.sedipualba.es", "identificacionssl.sedipualba.es.evil.example"),
+            ALBACETE_SOURCE to ALBACETE_TARGET.replace("https://identificacionssl.sedipualba.es/", "https://identificacionssl.sedipualba.es/other"),
+            ALBACETE_SOURCE to "$ALBACETE_TARGET#fragment",
+        )
+
+        attacks.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    ALBACETE_PROFILE, source, target, 81L + index, true,
                 ),
             )
         }
@@ -661,6 +826,124 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun laRiojaDynamicCasSourceAuthorizesOnlyExactClientCertificateEndpoint() {
+        val rioja = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        assertNull(
+            rioja.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, 900, true,
+            ),
+        )
+        rioja.onTopLevelPageStarted(LA_RIOJA_SOURCE, 901)
+
+        val authorized = rioja.observeTopLevelNavigation(
+            LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, LA_RIOJA_TARGET, 901, true,
+        )
+
+        assertEquals(LA_RIOJA_PROFILE, authorized?.profileId)
+        assertEquals("ias1.larioja.org", authorized?.target?.host)
+        assertEquals("/clientcertSSL/login", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            rioja.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, LA_RIOJA_TARGET, 901, true,
+            ),
+        )
+    }
+
+    @Test
+    fun laRiojaDynamicCasSourceRejectsEverySourceExpansion() {
+        val invalidSources = listOf(
+            LA_RIOJA_SOURCE.replace("inst=G", "inst=X"),
+            LA_RIOJA_SOURCE.replace("apli=OFIVIR", "apli=OTHER"),
+            LA_RIOJA_SOURCE.replace("nodo=CIUDANO", "nodo=OTHER"),
+            LA_RIOJA_SOURCE.replace("&param=synthetic-param", ""),
+            LA_RIOJA_SOURCE.replace("&TARGET=", "&missing="),
+            "$LA_RIOJA_SOURCE&extra=1",
+            "$LA_RIOJA_SOURCE&param=duplicate",
+            LA_RIOJA_SOURCE.replace("/casLR/login", "/casLR/other"),
+            LA_RIOJA_SOURCE.replace("ias1.larioja.org", "ias1.larioja.org.evil.example"),
+            LA_RIOJA_SOURCE.replace("ias1.larioja.org", "ias1.larioja.org:444"),
+            "$LA_RIOJA_SOURCE#fragment",
+        )
+
+        invalidSources.forEachIndexed { index, source ->
+            val rioja = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            val epoch = 920L + index * 2
+            assertNull(
+                source,
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, LA_RIOJA_INDEX, source, epoch, true,
+                ),
+            )
+            rioja.onTopLevelPageStarted(source, epoch + 1)
+            assertNull(
+                source,
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, source, LA_RIOJA_TARGET, epoch + 1, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun laRiojaDynamicCasSourceRejectsEveryTargetExpansionAndUntrustedContext() {
+        val invalidTargets = listOf(
+            LA_RIOJA_TARGET.replace("ias1.larioja.org", "ias1.larioja.org.evil.example"),
+            LA_RIOJA_TARGET.replace("/clientcertSSL/login", "/clientcertSSL/other"),
+            LA_RIOJA_TARGET.replace("ias1.larioja.org", "ias1.larioja.org:444"),
+            "$LA_RIOJA_TARGET?extra=1",
+            "$LA_RIOJA_TARGET#fragment",
+        )
+
+        invalidTargets.forEachIndexed { index, target ->
+            val rioja = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            val epoch = 960L + index * 2
+            assertNull(
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, epoch, true,
+                ),
+            )
+            rioja.onTopLevelPageStarted(LA_RIOJA_SOURCE, epoch + 1)
+            assertNull(
+                target,
+                rioja.observeTopLevelNavigation(
+                    LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, target, epoch + 1, true,
+                ),
+            )
+        }
+
+        val wrongProfile = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+        assertNull(
+            wrongProfile.observeTopLevelNavigation(
+                PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, 980, true,
+            ),
+        )
+        assertNull(
+            wrongProfile.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_INDEX, LA_RIOJA_SOURCE, 981, false,
+            ),
+        )
+        assertNull(
+            wrongProfile.observeTopLevelNavigation(
+                LA_RIOJA_PROFILE, LA_RIOJA_SOURCE, LA_RIOJA_TARGET, 981, true,
+            ),
+        )
+    }
+
+    @Test
     fun pendingClientAuthTtlUsesMonotonicTime() {
         val shortLived = shortTtlAuthorizer(ttlSeconds = 1)
         assertNull(
@@ -785,6 +1068,13 @@ class ClientAuthNavigationAuthorizerTest {
         const val MUGEJU_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val MUGEJU_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
+        val MALLORCA_PROFILE = ProfileId("consell-mallorca-sede")
+        const val MALLORCA_TOKEN = "12345678-w47SyntheticMallorcaToken0123456789"
+        const val MALLORCA_OTHER_TOKEN = "87654321-w47OtherMallorcaToken9876543210"
+        const val MALLORCA_SOURCE =
+            "https://cim.secimallorca.net/segex/identificacion_opciones.aspx?idtoken=$MALLORCA_TOKEN&idioma=ca"
+        const val MALLORCA_TARGET =
+            "https://identificacionssl.sedipualba.es/?idtoken=$MALLORCA_TOKEN&idioma=ca&entidad=07700"
         val NAVARRA_PROFILE = ProfileId("navarra-sede-registro-general")
         const val NAVARRA_TOKEN = "w47SyntheticNavarraSessionToken0123456789"
         const val NAVARRA_OTHER_TOKEN = "w47OtherNavarraSessionToken9876543210"
@@ -793,6 +1083,21 @@ class ClientAuthNavigationAuthorizerTest {
         const val NAVARRA_TARGET =
             "https://ateka.navarra.es/ateka/Certificate/login?returnUrl=$NAVARRA_TOKEN"
         val LEON_PROFILE = ProfileId("diputacion-leon-sede")
+        val LA_RIOJA_PROFILE = ProfileId("la-rioja-oficina-electronica")
+        const val LA_RIOJA_INDEX =
+            "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
+        const val LA_RIOJA_SOURCE =
+            "https://ias1.larioja.org/casLR/login?inst=G&apli=OFIVIR&nodo=CIUDANO&" +
+                "param=synthetic-param&TARGET=https%3A%2F%2Fias1.larioja.org%2Foficinavirtual%2F" +
+                "presentacion%3Fact_codi%3D24697%26flow%3Dsynthetic"
+        const val LA_RIOJA_TARGET = "https://ias1.larioja.org/clientcertSSL/login"
+        val ALBACETE_PROFILE = ProfileId("diputacion-albacete-portal")
+        const val ALBACETE_TOKEN = "12345678-w47SyntheticAlbaceteToken012345"
+        const val ALBACETE_OTHER_TOKEN = "87654321-w47OtherAlbaceteToken987654"
+        const val ALBACETE_SOURCE =
+            "https://sede.dipualba.es/segex/identificacion_opciones.aspx?idtoken=$ALBACETE_TOKEN&idioma=es"
+        const val ALBACETE_TARGET =
+            "https://identificacionssl.sedipualba.es/?idtoken=$ALBACETE_TOKEN&idioma=es&entidad=02000"
         const val LEON_TOKEN = "12345678-w47SyntheticLeonToken0123456789"
         const val LEON_OTHER_TOKEN = "87654321-w47OtherLeonToken9876543210"
         const val LEON_SOURCE =
@@ -800,6 +1105,16 @@ class ClientAuthNavigationAuthorizerTest {
         const val LEON_TARGET =
             "https://identificacionssl.sedipualba.es/?idtoken=$LEON_TOKEN&idioma=es&entidad=24000"
         val SANIDAD_PROFILE = ProfileId("ministerio-sanidad-certificado")
+        val MENORCA_PROFILE = ProfileId("menorca-carpeta-ciutadana")
+        const val MENORCA_RETURN =
+            "https%3A%2F%2Fwww.carpetaciutadana.org%2Fcime%2Fsolicituds%2F" +
+                "iniciartramit.aspx%3FTIPO%3DREGE%5EIDIOMA%3D1"
+        const val MENORCA_OTHER_RETURN =
+            "https%3A%2F%2Fwww.carpetaciutadana.org%2Fcime%2Fsolicituds%2Fother.aspx"
+        const val MENORCA_SOURCE =
+            "https://www.carpetaciutadana.org/cime/Login/Login.aspx?URL=$MENORCA_RETURN"
+        const val MENORCA_TARGET =
+            "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx?URL=$MENORCA_RETURN"
         val TOLEDO_PROFILE = ProfileId("diputacion-toledo-sede")
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"

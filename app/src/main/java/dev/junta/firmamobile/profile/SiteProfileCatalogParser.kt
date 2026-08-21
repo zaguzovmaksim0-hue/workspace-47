@@ -158,11 +158,11 @@ object SiteProfileCatalogParser {
         require((linkedEphemeral intersect linkedEphemeralMappings.values.toSet()).isEmpty())
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
+                require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 require(
-                    sourceFixed.isEmpty() && sourceEphemeral.isEmpty() &&
-                        linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty(),
+                    fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443 ||
+                        sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()
                 )
-                require(fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443)
             }
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
                 val boundSourceParameters = linkedEphemeral + linkedEphemeralMappings.keys
@@ -242,6 +242,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == EXTREMADURA_PROFILE_ID) {
                 validateExtremaduraProfile(p)
             }
+            if (p.profileId.value == PATTEX_PROFILE_ID) {
+                validatePattexProfile(p)
+            }
             if (p.profileId.value == LA_PALMA_PROFILE_ID) {
                 validateLaPalmaProfile(p)
             }
@@ -260,6 +263,15 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == LEON_PROFILE_ID) {
                 validateLeonProfile(p)
             }
+            if (p.profileId.value == ALBACETE_PROFILE_ID) {
+                validateAlbaceteProfile(p)
+            }
+            if (p.profileId.value == MALLORCA_PROFILE_ID) {
+                validateMallorcaProfile(p)
+            }
+            if (p.profileId.value == LA_RIOJA_PROFILE_ID) {
+                validateLaRiojaProfile(p)
+            }
             if (p.profileId.value == NAVARRA_PROFILE_ID) {
                 validateNavarraProfile(p)
             }
@@ -269,14 +281,23 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
+            if (p.profileId.value == MENORCA_PROFILE_ID) {
+                validateMenorcaProfile(p)
+            }
             if (p.profileId.value == TEA_PROFILE_ID) {
                 validateTeaProfile(p)
             }
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
             }
+            if (p.profileId.value == FUERTEVENTURA_PROFILE_ID) {
+                validateFuerteventuraProfile(p)
+            }
             if (p.profileId.value == TRANSPARENCIA_PROFILE_ID) {
                 validateTransparenciaProfile(p)
+            }
+            if (p.profileId.value == EIVISSA_PROFILE_ID) {
+                validateEivissaProfile(p)
             }
             if (p.profileId.value == GRAN_CANARIA_PROFILE_ID) {
                 validateGranCanariaProfile(p)
@@ -302,6 +323,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == MUGEJU_PROFILE_ID) {
                 validateMugejuProfile(p)
             }
+            if (p.profileId.value == XUNTA_PROFILE_ID) {
+                validateXuntaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -310,15 +334,29 @@ object SiteProfileCatalogParser {
             val clientAuthPolicy = p.clientAuthPolicy
             val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
             val sameOriginDirectClientAuth =
-                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID) &&
+                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID, MENORCA_PROFILE_ID, PATTEX_PROFILE_ID) &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     clientAuthPolicy.requestPort == 443 &&
                     clientAuthOrigins.size == 1 &&
                     clientAuthPolicy.sourceUrls.all { it.origin() in clientAuthOrigins } &&
                     (clientAuthPolicy.fixedQueryParameters.isNotEmpty() ||
-                        clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty())
+                        clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty() ||
+                        p.profileId.value == PATTEX_PROFILE_ID)
+            val sameOriginRedirectClientAuth =
+                p.profileId.value == LA_RIOJA_PROFILE_ID &&
+                    clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE &&
+                    clientAuthPolicy.requestPort == 443 &&
+                    clientAuthOrigins == p.initiatorOrigins &&
+                    clientAuthPolicy.sourceUrls == setOf(URI(LA_RIOJA_SOURCE_URL)) &&
+                    clientAuthPolicy.fixedQueryParameters.isEmpty() &&
+                    clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty() &&
+                    clientAuthPolicy.sourceFixedQueryParameters == LA_RIOJA_SOURCE_FIXED_QUERY &&
+                    clientAuthPolicy.sourceRequiredEphemeralQueryParameters == LA_RIOJA_SOURCE_EPHEMERAL_QUERY
             if (clientAuthPolicy?.requestPort == 443) {
-                require((clientAuthOrigins intersect p.initiatorOrigins).isEmpty() || sameOriginDirectClientAuth)
+                require(
+                    (clientAuthOrigins intersect p.initiatorOrigins).isEmpty() ||
+                        sameOriginDirectClientAuth || sameOriginRedirectClientAuth
+                )
                 require((clientAuthOrigins intersect p.redirectOrigins).isEmpty() || sameOriginDirectClientAuth)
                 require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
             }
@@ -353,6 +391,8 @@ object SiteProfileCatalogParser {
                         p.profileId.value == SANIDAD_PROFILE_ID ||
                             p.profileId.value == TEA_PROFILE_ID ||
                             p.profileId.value == LEON_PROFILE_ID ||
+                            p.profileId.value == ALBACETE_PROFILE_ID ||
+                            p.profileId.value == MALLORCA_PROFILE_ID ||
                             p.profileId.value == GVA_PROFILE_ID
                     )
                 }
@@ -396,16 +436,20 @@ object SiteProfileCatalogParser {
                     require(op.packaging != null && Capability.SIGN in op.capabilities)
                 }
                 if (op.inputAdapterId.value == ISCIII_INPUT_ADAPTER_ID) {
-                    require(p.profileId.value == ISCIII_PROFILE_ID || p.profileId.value == VALENCIA_PROFILE_ID)
+                    require(
+                        p.profileId.value == ISCIII_PROFILE_ID ||
+                            p.profileId.value == VALENCIA_PROFILE_ID ||
+                            p.profileId.value == XUNTA_PROFILE_ID
+                    )
                     require(op.operation == ProtocolOperation.SELECT_CERTIFICATE)
                     require(op.capabilities == setOf(Capability.SELECT_CERTIFICATE))
                     require(op.endpointId == null)
                     require(op.algorithms.isEmpty())
                     require(op.format == null && op.packaging == null && op.mode == null)
-                    if (p.profileId.value == ISCIII_PROFILE_ID) {
-                        require(op.fixedExtraProperties == ISCIII_FIXED_EXTRA_PROPERTIES)
-                    } else {
-                        require(op.fixedExtraProperties == VALENCIA_FIXED_EXTRA_PROPERTIES)
+                    when (p.profileId.value) {
+                        ISCIII_PROFILE_ID -> require(op.fixedExtraProperties == ISCIII_FIXED_EXTRA_PROPERTIES)
+                        VALENCIA_PROFILE_ID -> require(op.fixedExtraProperties == VALENCIA_FIXED_EXTRA_PROPERTIES)
+                        XUNTA_PROFILE_ID -> require(op.fixedExtraProperties == XUNTA_SELECT_FIXED_EXTRA_PROPERTIES)
                     }
                     require(op.allowedExtraProperties.isEmpty())
                 }
@@ -417,16 +461,22 @@ object SiteProfileCatalogParser {
                             p.profileId.value == AIREF_PROFILE_ID ||
                             p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
                             p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
+                            p.profileId.value == FUERTEVENTURA_PROFILE_ID ||
                             p.profileId.value == MINECO_PROFILE_ID ||
                             p.profileId.value == CDTI_PROFILE_ID ||
-                            p.profileId.value == TRANSPORTES_PROFILE_ID
+                            p.profileId.value == TRANSPORTES_PROFILE_ID ||
+                            p.profileId.value == XUNTA_PROFILE_ID
                         ) {
                             SignaturePackaging.ATTACHED
                         } else {
                             SignaturePackaging.DETACHED
                         },
                     )
-                    require(op.allowedExtraProperties.isEmpty())
+                    when (p.profileId.value) {
+                        XUNTA_PROFILE_ID -> require(op.allowedExtraProperties == XUNTA_ALLOWED_EXTRA_PROPERTIES)
+                        EIVISSA_PROFILE_ID -> require(op.allowedExtraProperties == setOf("filter", "mimeType"))
+                        else -> require(op.allowedExtraProperties.isEmpty())
+                    }
                     when (op.format) {
                         SignatureFormat.CADES -> {
                             if (op.endpointId == null) {
@@ -442,7 +492,12 @@ object SiteProfileCatalogParser {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
                                     require(op.fixedExtraProperties == TENERIFE_EXTRA_PROPERTIES)
-                                } else if (p.profileId.value == LLEIDA_PROFILE_ID) {
+                                } else if (p.profileId.value == EIVISSA_PROFILE_ID) {
+                                    require(op.mode == SignatureMode.IMPLICIT)
+                                    require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
+                                    require(op.fixedExtraProperties == EIVISSA_FIXED_EXTRA_PROPERTIES)
+                                    require(op.allowedExtraProperties == setOf("filter", "mimeType"))
+                                } else if (p.profileId.value == LLEIDA_PROFILE_ID || p.profileId.value == BADAJOZ_PROFILE_ID) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
                                     require(op.fixedExtraProperties == LLEIDA_EXTRA_PROPERTIES)
@@ -491,19 +546,33 @@ object SiteProfileCatalogParser {
                             }
                         }
                         SignatureFormat.PADES -> {
-                            require(
-                                p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
-                                    p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
-                                    p.profileId.value == MINECO_PROFILE_ID,
-                            )
-                            require(op.endpointId == null && op.mode == null)
-                            require(op.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA))
-                            val expectedPadesProperties = when (p.profileId.value) {
-                                MINECO_PROFILE_ID -> MINECO_EXTRA_PROPERTIES
-                                TRANSPARENCIA_PROFILE_ID -> TRANSPARENCIA_EXTRA_PROPERTIES
-                                else -> GRAN_CANARIA_EXTRA_PROPERTIES
+                            if (p.profileId.value == XUNTA_PROFILE_ID) {
+                                require(op.endpointId == EndpointId(XUNTA_ENDPOINT_ID) && op.mode == null)
+                                require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                require(op.fixedExtraProperties == XUNTA_FIXED_EXTRA_PROPERTIES)
+                            } else {
+                                require(
+                                    p.profileId.value == GRAN_CANARIA_PROFILE_ID ||
+                                        p.profileId.value == FUERTEVENTURA_PROFILE_ID ||
+                                        p.profileId.value == TRANSPARENCIA_PROFILE_ID ||
+                                        p.profileId.value == MINECO_PROFILE_ID,
+                                )
+                                require(op.endpointId == null && op.mode == null)
+                                require(
+                                    op.algorithms == if (p.profileId.value == FUERTEVENTURA_PROFILE_ID) {
+                                        setOf(SignatureAlgorithm.SHA256_WITH_RSA)
+                                    } else {
+                                        setOf(SignatureAlgorithm.SHA512_WITH_RSA)
+                                    },
+                                )
+                                val expectedPadesProperties = when (p.profileId.value) {
+                                    MINECO_PROFILE_ID -> MINECO_EXTRA_PROPERTIES
+                                    TRANSPARENCIA_PROFILE_ID -> TRANSPARENCIA_EXTRA_PROPERTIES
+                                    FUERTEVENTURA_PROFILE_ID -> FUERTEVENTURA_EXTRA_PROPERTIES
+                                    else -> GRAN_CANARIA_EXTRA_PROPERTIES
+                                }
+                                require(op.fixedExtraProperties == expectedPadesProperties)
                             }
-                            require(op.fixedExtraProperties == expectedPadesProperties)
                         }
                         SignatureFormat.XADES -> {
                             require(op.endpointId == null && op.mode == null)
@@ -685,6 +754,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
     }
 
+    private fun validateMenorcaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MENORCA_PROFILE_VERSION)
+        require(profile.displayName == MENORCA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MENORCA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MENORCA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(MENORCA_ORIGIN)),
+                sourceUrls = setOf(URI(MENORCA_SOURCE_URL)),
+                requestPath = MENORCA_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
+                linkedEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MENORCA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
     private fun validateTeaProfile(profile: SiteProfile) {
         require(profile.profileVersion == TEA_PROFILE_VERSION)
         require(profile.displayName == TEA_DISPLAY_NAME)
@@ -784,6 +886,41 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
+    private fun validateFuerteventuraProfile(profile: SiteProfile) {
+        require(profile.profileVersion == FUERTEVENTURA_PROFILE_VERSION)
+        require(profile.displayName == FUERTEVENTURA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == FUERTEVENTURA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(FUERTEVENTURA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(
+            profile.operationPolicies == mapOf(
+                ProtocolOperation.SIGN to OperationPolicy(
+                    operation = ProtocolOperation.SIGN,
+                    safeDescription = FUERTEVENTURA_SAFE_DESCRIPTION,
+                    inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                    callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                    capabilities = setOf(Capability.SIGN),
+                    endpointId = null,
+                    algorithms = setOf(SignatureAlgorithm.SHA256_WITH_RSA),
+                    format = SignatureFormat.PADES,
+                    packaging = SignaturePackaging.ATTACHED,
+                    mode = null,
+                    fixedExtraProperties = FUERTEVENTURA_EXTRA_PROPERTIES,
+                    allowedExtraProperties = emptySet(),
+                ),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == FUERTEVENTURA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
     private fun validateGranCanariaProfile(profile: SiteProfile) {
         require(profile.profileVersion == GRAN_CANARIA_PROFILE_VERSION)
         require(profile.displayName == GRAN_CANARIA_DISPLAY_NAME)
@@ -852,6 +989,94 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MINECO_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+    }
+
+    private fun validateXuntaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == XUNTA_PROFILE_VERSION)
+        require(profile.displayName == XUNTA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == XUNTA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(XUNTA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.SELECT_CERTIFICATE, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.endpoints.keys == setOf(EndpointId(XUNTA_ENDPOINT_ID)))
+        require(
+            profile.endpoints.getValue(EndpointId(XUNTA_ENDPOINT_ID)) == ProfileEndpoint(
+                endpointId = EndpointId(XUNTA_ENDPOINT_ID),
+                purpose = EndpointPurpose.TRIPHASE,
+                url = URI(XUNTA_ENDPOINT_URL),
+                method = HttpMethod.POST,
+                requestContentTypes = setOf("application/x-www-form-urlencoded; charset=UTF-8"),
+                responseContentTypes = setOf("text/plain"),
+                maxRequestBytes = 2_097_152,
+                maxResponseBytes = 2_097_152,
+                redirects = RedirectPolicy.DENY,
+            ),
+        )
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN, ProtocolOperation.SELECT_CERTIFICATE))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = XUNTA_SIGN_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = EndpointId(XUNTA_ENDPOINT_ID),
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.PADES,
+                packaging = SignaturePackaging.ATTACHED,
+                mode = null,
+                fixedExtraProperties = XUNTA_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = XUNTA_ALLOWED_EXTRA_PROPERTIES,
+            ),
+        )
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SELECT_CERTIFICATE) == OperationPolicy(
+                operation = ProtocolOperation.SELECT_CERTIFICATE,
+                safeDescription = XUNTA_SELECT_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId(ISCIII_INPUT_ADAPTER_ID),
+                callbackContractId = CallbackContractId(ISCIII_CALLBACK_CONTRACT_ID),
+                capabilities = setOf(Capability.SELECT_CERTIFICATE),
+                endpointId = null,
+                algorithms = emptySet(),
+                format = null,
+                packaging = null,
+                mode = null,
+                fixedExtraProperties = XUNTA_SELECT_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == XUNTA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
+    private fun validateEivissaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == EIVISSA_PROFILE_VERSION)
+        require(profile.displayName == EIVISSA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == EIVISSA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EIVISSA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        val op = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        require(op.safeDescription == EIVISSA_SAFE_DESCRIPTION)
+        require(op.inputAdapterId == ProtocolInputAdapterId("miniapplet-autoscript-v1"))
+        require(op.callbackContractId == CallbackContractId("autoscript-sign-callback-v1"))
+        require(op.capabilities == setOf(Capability.SIGN) && op.endpointId == null)
+        require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
+        require(op.format == SignatureFormat.CADES && op.packaging == SignaturePackaging.DETACHED)
+        require(op.mode == SignatureMode.IMPLICIT)
+        require(op.fixedExtraProperties == EIVISSA_FIXED_EXTRA_PROPERTIES)
+        require(op.allowedExtraProperties == setOf("filter", "mimeType"))
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EIVISSA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
     private fun validateTenerifeProfile(profile: SiteProfile) {
@@ -952,6 +1177,36 @@ object SiteProfileCatalogParser {
                 allowedExtraProperties = emptySet(),
             ),
         )
+    }
+
+    private fun validatePattexProfile(profile: SiteProfile) {
+        require(profile.profileVersion == PATTEX_PROFILE_VERSION)
+        require(profile.displayName == PATTEX_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == PATTEX_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(PATTEX_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(PATTEX_ORIGIN)),
+                sourceUrls = setOf(URI(PATTEX_START_URL)),
+                requestPath = PATTEX_CLIENT_AUTH_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == PATTEX_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
     }
 
     private fun validateMugejuProfile(profile: SiteProfile) {
@@ -1265,6 +1520,105 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-16") })
     }
 
+    private fun validateAlbaceteProfile(profile: SiteProfile) {
+        require(profile.profileVersion == ALBACETE_PROFILE_VERSION)
+        require(profile.displayName == ALBACETE_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == ALBACETE_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(ALBACETE_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(ALBACETE_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "02000"),
+                requiredEphemeralQueryParameters = setOf("idtoken"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
+                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
+                linkedEphemeralQueryParameters = setOf("idtoken"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == ALBACETE_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
+    private fun validateMallorcaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MALLORCA_PROFILE_VERSION)
+        require(profile.displayName == MALLORCA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MALLORCA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MALLORCA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(MALLORCA_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("idioma" to "ca", "entidad" to "07700"),
+                requiredEphemeralQueryParameters = setOf("idtoken"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = linkedMapOf("idioma" to "ca"),
+                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
+                linkedEphemeralQueryParameters = setOf("idtoken"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MALLORCA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
+    private fun validateLaRiojaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == LA_RIOJA_PROFILE_VERSION)
+        require(profile.displayName == LA_RIOJA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == LA_RIOJA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(LA_RIOJA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(LA_RIOJA_ORIGIN)),
+                sourceUrls = setOf(URI(LA_RIOJA_SOURCE_URL)),
+                requestPath = LA_RIOJA_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = LA_RIOJA_SOURCE_FIXED_QUERY,
+                sourceRequiredEphemeralQueryParameters = LA_RIOJA_SOURCE_EPHEMERAL_QUERY,
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == LA_RIOJA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
     private fun validateGvaProfile(profile: SiteProfile) {
         require(profile.profileVersion == GVA_PROFILE_VERSION)
         require(profile.displayName == GVA_DISPLAY_NAME)
@@ -1542,10 +1896,16 @@ object SiteProfileCatalogParser {
         firstOwner: ProfileId,
         secondOwner: ProfileId,
     ): Boolean =
-        firstOwner != secondOwner &&
-            firstOwner.value in REVIEWED_CLAVE_SHARED_PROFILE_IDS &&
-            secondOwner.value in REVIEWED_CLAVE_SHARED_PROFILE_IDS &&
-            origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+        (setOf(firstOwner.value, secondOwner.value).let { owners ->
+            owners.size == 2 &&
+                owners.all { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID, MUGEJU_PROFILE_ID) } &&
+                origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+        }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
+                    owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
+                    origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
+            })
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -1659,6 +2019,26 @@ object SiteProfileCatalogParser {
         "https://portafirmas.dival.es/signingpad/js/autoscript.js",
         "https://portafirmas.dival.es/signingpad/js/filtros.js",
     )
+    private const val LA_RIOJA_PROFILE_ID = "la-rioja-oficina-electronica"
+    private const val LA_RIOJA_PROFILE_VERSION = 1
+    private const val LA_RIOJA_DISPLAY_NAME = "Gobierno de La Rioja — Oficina electrónica"
+    private const val LA_RIOJA_START_URL =
+        "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
+    private const val LA_RIOJA_ORIGIN = "https://ias1.larioja.org"
+    private const val LA_RIOJA_SOURCE_URL = "https://ias1.larioja.org/casLR/login"
+    private const val LA_RIOJA_REQUEST_PATH = "/clientcertSSL/login"
+    private val LA_RIOJA_SOURCE_FIXED_QUERY = linkedMapOf(
+        "inst" to "G",
+        "apli" to "OFIVIR",
+        "nodo" to "CIUDANO",
+    )
+    private val LA_RIOJA_SOURCE_EPHEMERAL_QUERY = setOf("param", "TARGET")
+    private val LA_RIOJA_EVIDENCE_URLS = setOf(
+        "https://web.larioja.org/oficina-electronica/tramite?n=24697",
+        LA_RIOJA_START_URL,
+        LA_RIOJA_SOURCE_URL,
+        "https://ias1.larioja.org/clientcertSSL/login",
+    )
     private const val NAVARRA_PROFILE_ID = "navarra-sede-registro-general"
     private const val NAVARRA_PROFILE_VERSION = 1
     private const val NAVARRA_DISPLAY_NAME = "Gobierno de Navarra — Registro General con certificado"
@@ -1701,6 +2081,21 @@ object SiteProfileCatalogParser {
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
     )
+    private const val MENORCA_PROFILE_ID = "menorca-carpeta-ciutadana"
+    private const val MENORCA_PROFILE_VERSION = 1
+    private const val MENORCA_DISPLAY_NAME = "Consell Insular de Menorca — Sol·licitud genèrica"
+    private const val MENORCA_START_URL =
+        "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    private const val MENORCA_ORIGIN = "https://www.carpetaciutadana.org"
+    private const val MENORCA_SOURCE_URL = "https://www.carpetaciutadana.org/cime/Login/Login.aspx"
+    private const val MENORCA_REQUEST_PATH = "/cime/Login/LoginCert.aspx"
+    private const val MENORCA_URL_PARAMETER = "URL"
+    private val MENORCA_EVIDENCE_URLS = setOf(
+        MENORCA_START_URL,
+        "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1",
+        MENORCA_SOURCE_URL,
+        "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx",
+    )
     private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"
     private const val TEA_PROFILE_VERSION = 1
     private const val TEA_DISPLAY_NAME = "TEA — Alegaciones con certificado"
@@ -1713,6 +2108,7 @@ object SiteProfileCatalogParser {
         "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
     )
     private const val LLEIDA_PROFILE_ID = "diputacion-lleida-sede"
+    private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
     private val LLEIDA_EXTRA_PROPERTIES = linkedMapOf(
         "policy" to "FirmaAGE",
         "headless" to "true",
@@ -1757,6 +2153,34 @@ object SiteProfileCatalogParser {
         "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/ac2-formularios.js",
         "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/ac2-autofirmaFunctions.js",
         "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/autoscript.js",
+    )
+    private const val FUERTEVENTURA_PROFILE_ID = "fuerteventura-sede-electronica"
+    private const val FUERTEVENTURA_PROFILE_VERSION = 1
+    private const val FUERTEVENTURA_DISPLAY_NAME =
+        "Cabildo Insular de Fuerteventura — Sede electrónica"
+    private const val FUERTEVENTURA_START_URL =
+        "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
+    private const val FUERTEVENTURA_ORIGIN = "https://sede.cabildofuer.es"
+    private const val FUERTEVENTURA_SAFE_DESCRIPTION =
+        "Firma PAdES de solicitud en la Sede electrónica del Cabildo Insular de Fuerteventura"
+    private val FUERTEVENTURA_EXTRA_PROPERTIES = linkedMapOf(
+        "signaturePositionOnPageLowerLeftX" to "50",
+        "signaturePositionOnPageLowerLeftY" to "15",
+        "signaturePositionOnPageUpperRightX" to "150",
+        "signaturePositionOnPageUpperRightY" to "50",
+        "signaturePages" to "all",
+        "layer2Text" to "Firmado por \$\$SUBJECTCN\$\$ el día \$\$SIGNDATE=dd/MM/yyyy\$\$ \$\$ORGANIZATION\$\$",
+        "layer2FontSize" to "6",
+        "layer2FontFamily" to "0",
+        "layer2FontStyle" to "0",
+        "signatureRotation" to "0",
+        "includeQuestionMark" to "false",
+        "obfuscateCertText" to "true",
+    )
+    private val FUERTEVENTURA_EVIDENCE_URLS = setOf(
+        FUERTEVENTURA_START_URL,
+        "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert",
+        "https://sede.cabildofuer.es/eAdmin/js/miniapplet.js",
     )
     private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
     private const val GRAN_CANARIA_PROFILE_VERSION = 1
@@ -1803,6 +2227,48 @@ object SiteProfileCatalogParser {
         "https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js",
         "https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf",
     )
+    private const val XUNTA_PROFILE_ID = "xunta-galicia-solicitude-xenerica"
+    private const val XUNTA_PROFILE_VERSION = 1
+    private const val XUNTA_DISPLAY_NAME = "Xunta de Galicia — Solicitude xenérica"
+    private const val XUNTA_START_URL = "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
+    private const val XUNTA_ORIGIN = "https://sede.xunta.gal"
+    private const val XUNTA_ENDPOINT_ID = "xunta-galicia-triphase"
+    private const val XUNTA_ENDPOINT_URL = "https://sede.xunta.gal/presenta/sinatura/SignatureService"
+    private const val XUNTA_SIGN_SAFE_DESCRIPTION =
+        "Firma PAdES de solicitud genérica en la Sede de la Xunta de Galicia"
+    private const val XUNTA_SELECT_SAFE_DESCRIPTION =
+        "Seleccionar certificado para la solicitud genérica de la Xunta de Galicia"
+    private val XUNTA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+        "format" to "PAdES",
+        "signatureSubFilter" to "ETSI.CAdES.detached",
+        "serverUrl" to XUNTA_ENDPOINT_URL,
+        "referencesDigestMethod" to "http://www.w3.org/2000/09/xmldsig#sha1",
+        "mimeType" to "hash/sha256",
+        "headless" to "true",
+    )
+    private val XUNTA_ALLOWED_EXTRA_PROPERTIES = linkedSetOf(
+        "filters", "locale", "nif", "id", "codigoSeguridad", "marcaFirmaCustom", "dataUser", "idBorrador",
+    )
+    private val XUNTA_SELECT_FIXED_EXTRA_PROPERTIES = linkedMapOf("filters" to "nonexpired")
+    private val XUNTA_EVIDENCE_URLS = setOf(
+        XUNTA_START_URL,
+        "https://sede.xunta.gal/presenta/novo/PR004A_2025_1",
+        "https://sede.xunta.gal/presenta/assets/js/miniapplet.js?nocache=1.7.0",
+        "https://sede.xunta.gal/presenta/main.293423417603b2d37c80.js",
+    )
+    private const val EIVISSA_PROFILE_ID = "eivissa-sede-electronica"
+    private const val EIVISSA_PROFILE_VERSION = 1
+    private const val EIVISSA_DISPLAY_NAME = "Consell Insular d’Eivissa — Sede electrónica"
+    private const val EIVISSA_START_URL = "https://seu.conselldeivissa.es/"
+    private const val EIVISSA_ORIGIN = "https://seu.conselldeivissa.es"
+    private const val EIVISSA_SAFE_DESCRIPTION =
+        "Firma de Instancia General en la Sede electrónica del Consell Insular d’Eivissa"
+    private val EIVISSA_FIXED_EXTRA_PROPERTIES = linkedMapOf("headless" to "true", "mode" to "implicit")
+    private val EIVISSA_EVIDENCE_URLS = setOf(
+        EIVISSA_START_URL,
+        "https://seu.conselldeivissa.es/sta/reg/autofirma.js",
+        "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043",
+    )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
     private const val TENERIFE_PROFILE_VERSION = 1
     private const val TENERIFE_DISPLAY_NAME = "Cabildo Insular de Tenerife — Sede electrónica"
@@ -1812,8 +2278,6 @@ object SiteProfileCatalogParser {
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
     private const val MUGEJU_PROFILE_ID = "mugeju-remision-documentacion-client-auth"
-    private val REVIEWED_CLAVE_SHARED_PROFILE_IDS =
-        setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, MUGEJU_PROFILE_ID)
     private const val MUGEJU_PROFILE_VERSION = 1
     private const val MUGEJU_DISPLAY_NAME = "MUGEJU — Remisión de documentación con certificado"
     private const val MUGEJU_START_URL = "https://sedemugeju.gob.es/remisiondocumentacion"
@@ -1830,6 +2294,7 @@ object SiteProfileCatalogParser {
         "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen" to LocalDate.parse("2026-08-18"),
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
+    private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
     private const val AIREF_START_URL =
@@ -1876,6 +2341,19 @@ object SiteProfileCatalogParser {
     private const val EXTREMADURA_ORIGIN = "https://tramites.juntaex.es"
     private const val EXTREMADURA_SAFE_DESCRIPTION =
         "Firma por lotes en Trámites de la Junta de Extremadura"
+    private const val PATTEX_PROFILE_ID = "extremadura-pattex-client-auth"
+    private const val PATTEX_PROFILE_VERSION = 1
+    private const val PATTEX_DISPLAY_NAME = "Junta de Extremadura — PATTEX acceso con certificado"
+    private const val PATTEX_START_URL =
+        "https://pattex.juntaex.es/PATTEX/externos.jsf?" +
+            "info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo"
+    private const val PATTEX_ORIGIN = "https://pattex.juntaex.es"
+    private const val PATTEX_CLIENT_AUTH_PATH = "/PATTEX/accesoCertificadoSEDE.jsf"
+    private val PATTEX_EVIDENCE_URLS = setOf(
+        "https://portaltributario.juntaex.es/PortalTributario/web/guest/requisitos-tecnicos",
+        PATTEX_START_URL,
+        "https://pattex.juntaex.es/PATTEX/accesoCertificadoSEDE.jsf",
+    )
     private const val LA_PALMA_PROFILE_ID = "la-palma-sede-electronica"
     private const val LA_PALMA_PROFILE_VERSION = 1
     private const val LA_PALMA_DISPLAY_NAME = "Cabildo Insular de La Palma — Sede electrónica"
@@ -1930,6 +2408,34 @@ object SiteProfileCatalogParser {
     private val LEON_EVIDENCE_URLS = setOf(
         LEON_START_URL,
         "https://sede.dipuleon.es/carpetaciudadana/login.aspx",
+        "https://identificacionssl.sedipualba.es/",
+    )
+    private const val SEDIPUALBA_CLIENT_AUTH_ORIGIN = "https://identificacionssl.sedipualba.es"
+    private const val ALBACETE_PROFILE_ID = "diputacion-albacete-portal"
+    private const val ALBACETE_PROFILE_VERSION = 1
+    private const val ALBACETE_DISPLAY_NAME = "Diputación Provincial de Albacete — acceso con certificado"
+    private const val ALBACETE_START_URL =
+        "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+    private const val ALBACETE_ORIGIN = "https://sede.dipualba.es"
+    private const val ALBACETE_SOURCE_URL =
+        "https://sede.dipualba.es/segex/identificacion_opciones.aspx"
+    private val ALBACETE_EVIDENCE_URLS = setOf(
+        ALBACETE_START_URL,
+        "https://sede.dipualba.es/carpetaciudadana/login.aspx",
+        ALBACETE_SOURCE_URL,
+        "https://identificacionssl.sedipualba.es/",
+    )
+    private const val MALLORCA_PROFILE_ID = "consell-mallorca-sede"
+    private const val MALLORCA_PROFILE_VERSION = 1
+    private const val MALLORCA_DISPLAY_NAME = "Consell de Mallorca — acceso con certificado"
+    private const val MALLORCA_START_URL =
+        "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    private const val MALLORCA_ORIGIN = "https://cim.secimallorca.net"
+    private const val MALLORCA_SOURCE_URL =
+        "https://cim.secimallorca.net/segex/identificacion_opciones.aspx"
+    private val MALLORCA_EVIDENCE_URLS = setOf(
+        MALLORCA_START_URL,
+        "https://cim.secimallorca.net/carpetaciudadana/login.aspx",
         "https://identificacionssl.sedipualba.es/",
     )
     private const val GVA_PROFILE_ID = "generalitat-valenciana-client-auth"

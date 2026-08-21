@@ -14,6 +14,7 @@ class SiteProfileRegistryTest {
         val airef = ProfileId("airef-instancia-general")
         val mugeju = ProfileId("mugeju-remision-documentacion-client-auth")
         val mineco = ProfileId("ministerio-economia-instancia-generica")
+        val avila = ProfileId("diputacion-avila-instancia-general")
 
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
@@ -40,6 +41,14 @@ class SiteProfileRegistryTest {
         assertEquals(
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, claveIdent)?.trustMode,
         )
     }
 
@@ -221,6 +230,24 @@ class SiteProfileRegistryTest {
         assertEquals(emptySet<Capability>(), profile?.capabilities)
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.oepm.gob.es.evil.example/")))
+    }
+
+    @Test
+    fun `Castilla Leon QUJU public form is browse-only trust in QA and near origins stay closed`() {
+        val profileId = ProfileId("castilla-leon-quju-public")
+        val start = URI("https://presidencia.jcyl.es/QUJU?O=1")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.tramitacastillayleon.jcyl.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es:444/")))
     }
 
     @Test
