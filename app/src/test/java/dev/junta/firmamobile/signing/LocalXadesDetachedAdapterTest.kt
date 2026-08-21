@@ -64,6 +64,31 @@ class LocalXadesDetachedAdapterTest {
     }
 
     @Test
+    fun acceptsJccmRegistroExactImplicitPropertiesAndRejectsCrossProfileBroadening() = runTest {
+        val accepted = request(
+            profileId = LocalXadesDetachedAdapter.JCCM_REGISTRO_PROFILE_ID,
+            extraProperties = LocalXadesDetachedAdapter.JCCM_REGISTRO_EXTRA_PROPERTIES,
+        )
+        val prepared = adapter.prepare(accepted, identity.chain)
+        assertTrue(prepared is ProtocolPrepareResult.Success)
+        (prepared as ProtocolPrepareResult.Success).preSign.close()
+        accepted.close()
+
+        val jccmWithRegAgeProperties = request(
+            profileId = LocalXadesDetachedAdapter.JCCM_REGISTRO_PROFILE_ID,
+            extraProperties = "",
+        )
+        assertTrue(adapter.prepare(jccmWithRegAgeProperties, identity.chain) is ProtocolPrepareResult.Failure)
+        jccmWithRegAgeProperties.close()
+
+        val regAgeWithJccmProperties = request(
+            extraProperties = LocalXadesDetachedAdapter.JCCM_REGISTRO_EXTRA_PROPERTIES,
+        )
+        assertTrue(adapter.prepare(regAgeWithJccmProperties, identity.chain) is ProtocolPrepareResult.Failure)
+        regAgeWithJccmProperties.close()
+    }
+
+    @Test
     fun rejectsDoctypeBeforeSigning() = runTest {
         val request = request(
             data = """<!DOCTYPE resumen [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><resumen>&xxe;</resumen>"""
@@ -78,11 +103,12 @@ class LocalXadesDetachedAdapterTest {
         data: ByteArray = XML.copyOf(),
         extraProperties: String = "",
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA512_WITH_RSA,
+        profileId: String = LocalXadesDetachedAdapter.REG_AGE_PROFILE_ID,
     ) = NormalizedSignRequest(
         requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174000"),
         protocolId = LocalXadesDetachedAdapter.ID,
         context = SigningContext(
-            profileId = "reg-age-redsara",
+            profileId = profileId,
             profileVersion = 1,
             origin = TrustedOrigin("https", "reg.redsara.es", 443),
             navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),

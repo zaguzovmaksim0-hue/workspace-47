@@ -5,6 +5,7 @@ import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -253,6 +254,86 @@ class SiteProfileCatalogParserTest {
         )
     }
 
+
+    @Test
+    fun preservesTheExactJccmRegistroGenericoQaOnlyContractSeparatelyFromTheOldProbe() {
+        val profileId = ProfileId("jccm-registro-generico")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("JCCM — Registro Electrónico / Solicitud Genérica", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI("https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"),
+            profile.startUrl,
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://registrounicociudadanos.jccm.es")),
+            profile.initiatorOrigins,
+        )
+        assertEquals(
+            setOf(
+                ExactOrigin.parse("https://sso.jccm.es"),
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ),
+            profile.redirectOrigins,
+        )
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+
+        val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
+        assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), operation.inputAdapterId)
+        assertEquals(CallbackContractId("miniapplet-sign-callback-v1"), operation.callbackContractId)
+        assertEquals(setOf(SignatureAlgorithm.SHA512_WITH_RSA), operation.algorithms)
+        assertEquals(SignatureFormat.XADES, operation.format)
+        assertEquals(SignaturePackaging.DETACHED, operation.packaging)
+        assertEquals(SignatureMode.IMPLICIT, operation.mode)
+        assertEquals(
+            linkedMapOf("format" to "XAdES Detached", "mode" to "implicit"),
+            operation.fixedExtraProperties,
+        )
+        assertTrue(operation.allowedExtraProperties.isEmpty())
+
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, clientAuth.transitionMode)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+            clientAuth.requestOrigins,
+        )
+        assertEquals(
+            setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+            clientAuth.sourceUrls,
+        )
+        assertEquals("/IdP2/AuthenticateCitizen", clientAuth.requestPath)
+        assertTrue(clientAuth.fixedQueryParameters.isEmpty())
+        assertTrue(clientAuth.requiredEphemeralQueryParameters.isEmpty())
+        assertTrue(clientAuth.allowEmptyIssuerList)
+        assertEquals(15, clientAuth.grantTtlSeconds)
+        assertEquals(443, clientAuth.requestPort)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI("https://sso.jccm.es/cas-jccm-clave/login"),
+            )?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
+        assertNotEquals(
+            profile.profileId,
+            ProfileId("jccm-certificate-login-probe"),
+        )
+    }
 
     @Test
     fun preservesTheExactSevillaAtseQaOnlyCertificateLoginContract() {
@@ -643,6 +724,21 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun rejectsMenorcaClientTlsContractWithoutLinkedUrlParameter() {
+        val linkedUrl = "\"linkedEphemeralQueryParameters\":[\"URL\"]"
+
+        assertTrue(BuiltInSiteProfiles.JSON.contains(linkedUrl))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(
+                    linkedUrl,
+                    "\"linkedEphemeralQueryParameters\":[]",
+                ),
+            )
+        }
+    }
+
+    @Test
     fun preservesTheExactCarneJovenClientTlsContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("carne-joven-andalucia")
@@ -714,17 +810,21 @@ class SiteProfileCatalogParserTest {
         val education = ProfileId("educacion-convocatoria")
         val ceuta = ProfileId("ceuta-sede")
         val lleida = ProfileId("diputacion-lleida-sede")
+        val badajoz = ProfileId("diputacion-badajoz-portal")
         val aragon = ProfileId("aragon-siraw")
         val ofvirtual = ProfileId("junta-ofvirtual")
         val unizar = ProfileId("unizar-tramitador")
-        val releaseProfiles = setOf(carne, education, ceuta, aragon, ofvirtual, unizar)
+        val releaseProfiles = setOf(carne, education, aragon, ofvirtual, unizar)
         val qaOnly = setOf(
             junta,
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
             ProfileId("junta-andalucia-vea-peg"),
+            ProfileId("diputacion-alava-registro-comun"),
+            ceuta,
             lleida,
+            badajoz,
         )
 
         assertEquals(releaseProfiles, BuiltInSiteProfiles.catalog.profiles
@@ -746,12 +846,14 @@ class SiteProfileCatalogParserTest {
             CompatibilityStatus.EXPERIMENTAL,
             BuiltInSiteProfiles.qaRegistry.profile(junta)?.compatibilityStatus,
         )
-        setOf(education, ceuta).forEach { profileId ->
-            assertEquals(
-                CompatibilityStatus.BROWSE_ONLY,
-                BuiltInSiteProfiles.releaseRegistry.profile(profileId)?.compatibilityStatus,
-            )
-        }
+        assertEquals(
+            CompatibilityStatus.BROWSE_ONLY,
+            BuiltInSiteProfiles.releaseRegistry.profile(education)?.compatibilityStatus,
+        )
+        assertEquals(
+            CompatibilityStatus.VERIFIED_CONTRACT,
+            BuiltInSiteProfiles.qaRegistry.profile(ceuta)?.compatibilityStatus,
+        )
     }
 
     @Test
@@ -934,6 +1036,63 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun `Alava Registro Comun profile exposes only exact QA navigation`() {
+        val profileId = ProfileId("diputacion-alava-registro-comun")
+        val start = URI("https://egoitza.araba.eus/izapidetu/at/01/es/0000301")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://egoitza.araba.eus")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(2, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.araba.eus.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.araba.eus:444/")))
+    }
+
+    @Test
+    fun `Castilla Leon QUJU public form profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("castilla-leon-quju-public")
+        val start = URI("https://presidencia.jcyl.es/QUJU?O=1")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://presidencia.jcyl.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es:444/")))
+    }
+
+    @Test
     fun `Portal Funciona public home profile is QA only and exposes no sensitive capability`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
@@ -985,6 +1144,36 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
     }
+
+    @Test
+    fun `Diputacion Avila Instancia General is QA navigation only with observed Clave redirects`() {
+        val profileId = ProfileId("diputacion-avila-instancia-general")
+        val start = URI("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://diputacionavila.sedelectronica.es")), profile.initiatorOrigins)
+        assertEquals(
+            setOf(
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+                ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
+                ExactOrigin.parse("https://pasarela-ident-sistemas.clave.gob.es"),
+            ),
+            profile.redirectOrigins,
+        )
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+    }
+
 
 }
 

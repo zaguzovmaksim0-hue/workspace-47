@@ -287,6 +287,34 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun jccmRegistroCompatibilityIsIndependentAndExactToTheProtectedXadesTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            jccmRegistroCompatibilityEnabled = true,
+        )
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("jccm-registro-generico"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertTrue(flags.jccmRegistro)
+        assertFalse(flags.jccm)
+        assertTrue(enabled.contains("const jccmRegistroCompatibilityEnabled = true"))
+        assertTrue(enabled.contains("https://registrounicociudadanos.jccm.es"))
+        assertTrue(enabled.contains("/registrounicociudadanos/accesoclvd.do"))
+        assertFalse(enabled.contains("jccmRegistroStartPage"))
+        assertTrue(enabled.contains("args[1] === \"SHA512withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"XADES\""))
+        assertTrue(enabled.contains("args[3] === jccmRegistroExtraProperties"))
+        assertTrue(enabled.contains("format=XAdES Detached\\nmode=implicit"))
+        assertTrue(enabled.contains("if (isJccmRegistroOrigin && !isExactJccmRegistroCall)"))
+    }
+
+    @Test
     fun activeSevillaProfileEnablesTheRuntimeAtseShimFlag() {
         val flags = WebMessageBridge.shimCompatibilityFlags(
             profileId = dev.junta.firmamobile.profile.ProfileId("sevilla-atse-certificate-login"),
@@ -589,6 +617,32 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun fuerteventuraCompatibilityIsProfileScopedToTheExactSha256PadesTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            fuerteventuraCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            fuerteventuraCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const fuerteventuraCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const fuerteventuraCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://sede.cabildofuer.es"))
+        assertTrue(enabled.contains("action=verYfirmar&modo=cert"))
+        assertTrue(enabled.contains("args[1] === \"SHA256withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdES\""))
+        assertTrue(enabled.contains("obfuscateCertText= true\\n"))
+        assertTrue(enabled.contains("isExactFuerteventuraCall"))
+    }
+
+    @Test
     fun minecoCompatibilityIsProfileScopedToTheExactSha512PadesFirmaAgeTuple() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val enabled = AfirmaJavascriptShim.load(
@@ -648,4 +702,30 @@ class AfirmaJavascriptShimTest {
         assertTrue(fallback.isNotEmpty())
         assertTrue(fallback.contains("lugoBatchCompatibilityEnabled"))
     }
+    @Test
+    fun xuntaCompatibilityIsProfileScopedToExactPadesTriAndCertificateSelectionTuples() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            xuntaGaliciaCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = true,
+            xuntaGaliciaCompatibilityEnabled = false,
+        )
+        assertTrue(enabled.contains("const xSel = true"))
+        assertTrue(disabled.contains("const xSel = false"))
+        assertTrue(enabled.contains("https://sede.xunta.gal/presenta/novo/PR004A_2025_1"))
+        assertTrue(enabled.contains("args[0] === \"doc\""))
+        assertTrue(enabled.contains("args[1] === \"SHA1withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdEStri\""))
+        assertTrue(enabled.contains("filters=nonexpired"))
+        assertTrue(enabled.contains("isExactXuntaProperties"))
+        assertTrue(enabled.contains("if (isXuntaOrigin && !isExactXuntaCall)"))
+    }
+
 }
