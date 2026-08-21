@@ -135,6 +135,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("lanzarote-instancia-general"),
                 ProfileId("diputacion-pontevedra-instancia-xenerica"),
                 ProfileId("diputacion-malaga-instancia-general"),
+                ProfileId("diputacion-girona-instancia-generica"),
                 ProfileId("eivissa-sede-electronica"),
                 ProfileId("diputacion-salamanca-instancia-general"),
                 ProfileId("murcia-carm-pase"),

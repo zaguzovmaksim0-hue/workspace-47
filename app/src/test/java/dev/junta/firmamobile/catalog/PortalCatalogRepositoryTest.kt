@@ -142,6 +142,7 @@ class PortalCatalogRepositoryTest {
                 "lanzarote-instancia-general",
                 "diputacion-pontevedra-instancia-xenerica",
                 "diputacion-malaga-instancia-general",
+                "diputacion-girona-instancia-generica",
                 "eivissa-sede-electronica",
                 "diputacion-salamanca-instancia-general",
                 "catalunya-peticio-generica-client-auth",

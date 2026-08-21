@@ -1745,6 +1745,28 @@
       ]
     },
     {
+      "profileId": "diputacion-girona-instancia-generica",
+      "profileVersion": 1,
+      "displayName": "Diputació de Girona — Instància genèrica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seu-e.cat/tramits/8001760009/instancia-generica",
+      "initiatorOrigins": ["https://seu-e.cat"],
+      "redirectOrigins": ["https://etram.seu-e.cat"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.ddgi.cat/web/","reviewedOn":"2026-08-21"},
+        {"url":"https://seu.ddgi.cat/web/nivell/651/s-1/seu","reviewedOn":"2026-08-21"},
+        {"url":"https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301","reviewedOn":"2026-08-21"},
+        {"url":"https://seu-e.cat/tramits/8001760009/instancia-generica","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "diputacion-avila-instancia-general",
       "profileVersion": 1,
       "displayName": "Diputación Provincial de Ávila — Instancia General",

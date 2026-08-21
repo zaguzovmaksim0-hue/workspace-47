@@ -150,6 +150,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual([], puertos["observedMechanisms"])
         self.assertEqual([], puertos["observedSignatureFormats"])
 
+    def test_girona_profile_binds_the_current_public_etram_navigation(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        girona = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-girona-portal"
+        )
+        self.assertEqual("ES-PUB-0154", girona["inventoryId"])
+        self.assertEqual("diputacion-girona-instancia-generica", girona["profileId"])
+        self.assertEqual(
+            "https://seu-e.cat/tramits/8001760009/instancia-generica",
+            girona["entryUrl"],
+        )
+        self.assertEqual("AOC_ETRAM_PUBLIC_NAVIGATION", girona["protocolFamily"])
+        self.assertEqual(
+            ["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            girona["observedMechanisms"],
+        )
+        self.assertEqual([], girona["observedSignatureFormats"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", girona["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", girona["catalogStatus"])
+        self.assertEqual("2026-08-21", girona["reviewedOn"])
+
     def test_committed_resource_is_byte_for_byte_reproducible(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         generated = json.dumps(
