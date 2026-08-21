@@ -99,6 +99,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("diputacion-badajoz-portal"),
                 ProfileId("diputacion-alava-registro-comun"),
+                ProfileId("diputacion-bizkaia-instancia-generica"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
                 ProfileId("fondos-europeos-sede-public-home"),

@@ -1335,6 +1335,28 @@
       ]
     },
     {
+      "profileId": "diputacion-bizkaia-instancia-generica",
+      "profileVersion": 1,
+      "displayName": "Diputación Foral de Bizkaia — Instancia genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S",
+      "initiatorOrigins": ["https://appsec.ebizkaia.eus"],
+      "redirectOrigins": ["https://eidasbiz.izenpe.com"],
+      "trustedBrowseOrigins": ["https://appstac.ebizkaia.eus"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.ebizkaia.eus/es/medios-de-identificacion","reviewedOn":"2026-08-21"},
+        {"url":"https://appstac.ebizkaia.eus/es/ficha-procedimiento?procedimiento=1664","reviewedOn":"2026-08-21"},
+        {"url":"https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S","reviewedOn":"2026-08-21"},
+        {"url":"https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "diputacion-lleida-sede",
       "profileVersion": 1,
       "displayName": "Diputació de Lleida — Sede electrónica",

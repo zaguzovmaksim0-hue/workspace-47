@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 261 |
 | Fuentes oficiales totales registradas | 273 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 127 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 131 |
-| Entradas restantes fuera de ambos estados | 52 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 128 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 132 |
+| Entradas restantes fuera de ambos estados | 51 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 127 |
+| `IMPLEMENTED_NOT_E2E` | 128 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 45 |
+| `BROWSE_ONLY` | 44 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5915,30 +5915,29 @@ records:
     autonomous_community: "País Vasco"
     province_or_municipality: "Bizkaia (provincia)"
     institution_name: "Diputación Foral de Bizkaia"
-    surface_name: "Sede electrónica de Diputación Foral de Bizkaia"
+    surface_name: "Instancia genérica — Diputación Foral de Bizkaia"
     surface_type: "SEDE"
-    origin: "https://www.ebizkaia.eus"
+    origin: "https://appsec.ebizkaia.eus"
     official_site: "https://www.ebizkaia.eus"
     e_sede: "https://www.ebizkaia.eus"
-    entry_url: "https://www.ebizkaia.eus"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S"
+    procedure_page: "https://appstac.ebizkaia.eus/es/ficha-procedimiento?procedimiento=1664"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "BIZKAIA_INSTANCIA_GENERICA_GILTZA_QA_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la Instancia genérica vigente 1664/4912 de eBizkaia. El launch exacto alcanza el selector de identificación Giltza/Izenpe; no se declara capacidad de firma, client TLS ni presentación."
+    protocol_evidence: "El API público first-party identifica Instancia genérica (procedimiento 1664, trámite 4912), siempre abierta, con URL electrónica exacta JXSS001C. En un contexto de navegador aislado, ese launch redirigió a appstac.ebizkaia.eus/EWEC000W, recorrió la autenticación first-party de appsec.ebizkaia.eus y terminó en https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml, que ofrece DNI/NIE, SMS, certificado profesional en la nube y certificados digitales. No se seleccionó método de identificación ni se ejecutó firma/presentación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP39A", "DP39B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
-
+    evidence_ids: ["D06", "DP39A", "DP39B", "BIZKAIA-CATALOG-2026-08-21", "BIZKAIA-INSTANCIA-1664-2026-08-21", "BIZKAIA-LAUNCH-4912-2026-08-21", "BIZKAIA-GILTZA-2026-08-21"]
+    reason: "Perfil QA_ONLY limitado a navegación del procedimiento exacto hasta el selector Giltza. El selector ofrece certificados digitales, pero no se ha demostrado un contrato CLIENT_TLS_AUTH del WebView ni ABI/formato/algoritmo/endpoint de firma documental; esas capacidades permanecen cerradas."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente el launch QA y, sólo si aporta una capacidad adicional demostrable, continuar autenticación controlada hasta la pre-firma; detenerse antes de firma criptográfica y presentación final."
   - inventory_id: "ES-PUB-0177"
     surface_key: "diputacion-zamora-sede"
     administrative_level: "PROVINCIAL"
@@ -6630,6 +6629,10 @@ availability, certificado, firma ni contrato técnico.
 [DP38B]: https://www.sede.diputaciondevalladolid.es/web/guest/requisitos-tecnicos
 [DP39A]: https://www.ebizkaia.eus
 [DP39B]: https://www.ebizkaia.eus/es/medios-de-identificacion
+[BIZKAIA-CATALOG-2026-08-21]: https://appstac.ebizkaia.eus/es/buscador-tramites
+[BIZKAIA-INSTANCIA-1664-2026-08-21]: https://appstac.ebizkaia.eus/es/ficha-procedimiento?procedimiento=1664
+[BIZKAIA-LAUNCH-4912-2026-08-21]: https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S
+[BIZKAIA-GILTZA-2026-08-21]: https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
 [MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262

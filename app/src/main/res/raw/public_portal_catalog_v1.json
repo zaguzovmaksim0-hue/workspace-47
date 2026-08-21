@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a32d13f13080e422fd3fd17b07e2b43f96aa6f0df75e8a8bd3c47aadf4d180c2",
+  "sourceRevision": "6d53a36ac6c07f3fde8ec84f58bb1748c2202088b8ff64d6c8aef924baf9955e",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4789,29 +4789,33 @@
     {
       "portalId": "diputacion-bizkaia-sede",
       "inventoryId": "ES-PUB-0176",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputación Foral de Bizkaia",
+      "profileId": "diputacion-bizkaia-instancia-generica",
+      "displayName": "Instancia genérica — Diputación Foral de Bizkaia",
       "organization": "Diputación Foral de Bizkaia",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "País Vasco",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://www.ebizkaia.eus",
+      "purpose": "Navegación QA-only a la Instancia genérica vigente 1664/4912 de eBizkaia. El launch exacto alcanza el selector de identificación Giltza/Izenpe; no se declara capacidad de firma, client TLS ni presentación.",
+      "entryUrl": "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "BIZKAIA_INSTANCIA_GENERICA_GILTZA_QA_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP39A",
-        "DP39B"
+        "DP39B",
+        "BIZKAIA-CATALOG-2026-08-21",
+        "BIZKAIA-INSTANCIA-1664-2026-08-21",
+        "BIZKAIA-LAUNCH-4912-2026-08-21",
+        "BIZKAIA-GILTZA-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA_ONLY limitado a navegación del procedimiento exacto hasta el selector Giltza. El selector ofrece certificados digitales, pero no se ha demostrado un contrato CLIENT_TLS_AUTH del WebView ni ABI/formato/algoritmo/endpoint de firma documental; esas capacidades permanecen cerradas."
     },
     {
       "portalId": "diputacion-zamora-sede",
