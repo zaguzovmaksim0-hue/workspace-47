@@ -563,6 +563,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("solo en qa", menorca["limitations"].lower())
         self.assertIn("e2e", menorca["limitations"].lower())
 
+    def test_menorca_sede_alias_reuses_exact_generic_client_tls_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        menorca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "menorca-sede-electronica"
+        )
+
+        self.assertEqual("menorca-carpeta-ciutadana", menorca["profileId"])
+        self.assertEqual("ES-PUB-0118", menorca["inventoryId"])
+        self.assertEqual("https://seuelectronica.cime.es/", menorca["entryUrl"])
+        self.assertEqual(
+            "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+            menorca["launchUrl"],
+        )
+        self.assertEqual("E2E_PENDING", menorca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", menorca["inventoryStatus"])
+        self.assertEqual("2026-08-21", menorca["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", menorca["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", menorca["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", menorca["observedMechanisms"])
+        self.assertIn("AUTOFIRMA", menorca["observedMechanisms"])
+        self.assertEqual([], menorca["observedSignatureFormats"])
+        self.assertIn("alias exacto", menorca["limitations"].lower())
+        self.assertIn("e2e android pendiente", menorca["limitations"].lower())
+
     def test_canarias_certificate_login_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entry = next(
