@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 243 |
-| Fuentes oficiales totales registradas | 255 |
+| Fuentes oficiales portal-specific registradas | 247 |
+| Fuentes oficiales totales registradas | 259 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 88 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 92 |
-| Entradas restantes fuera de ambos estados | 91 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 89 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 93 |
+| Entradas restantes fuera de ambos estados | 90 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 88 |
+| `IMPLEMENTED_NOT_E2E` | 89 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 84 |
+| `BROWSE_ONLY` | 83 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5240,29 +5240,29 @@ records:
     autonomous_community: "Cataluña"
     province_or_municipality: "Girona (provincia)"
     institution_name: "Diputació de Girona"
-    surface_name: "Portal oficial de Diputació de Girona"
+    surface_name: "Portal oficial de Diputació de Girona — Instància genèrica"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.ddgi.cat"
+    origin: "https://seu-e.cat"
     official_site: "https://www.ddgi.cat/web/"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.ddgi.cat/web/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    e_sede: "https://seu.ddgi.cat/web/nivell/651/s-1/seu"
+    entry_url: "https://seu-e.cat/tramits/8001760009/instancia-generica"
+    procedure_page: "https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "AOC_ETRAM_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA únicamente a la Instància genèrica vigente de la Diputació de Girona; el perfil sigue sin autenticación, firma documental, carga ni presentación final."
+    protocol_evidence: "Revalidado el 2026-08-21: el portal oficial respondió HTTP 200 y enlazó la Seu https://seu.ddgi.cat; la Seu enlazó la ficha first-party de Instància genèrica en https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301. La ficha publica el inicio exacto https://seu-e.cat/tramits/8001760009/instancia-generica, que respondió HTTP 200 y redirigió al shell público actual https://etram.seu-e.cat/tramits/8001760009/instancia-generica. La ficha enumera idCAT Mòbil, certificado digital y Cl@ve como identificadores y exige completar y firmar el formulario para tramitar electrónicamente; no se observó un transporte de autenticación, cliente JS de firma, ABI, endpoint, callback ni aceptación de envío."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP16A", "DP16B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP16A", "DP16B", "GIRONA-PORTAL-2026-08-21", "GIRONA-SEDE-2026-08-21", "GIRONA-PROCEDURE-2026-08-21", "GIRONA-ETRAM-2026-08-21"]
+    reason: "Perfil QA-only de navegación limitado a la ficha y al inicio exactos de la Instància genèrica pública; los orígenes de e-Tram observados no reciben capacidades de autenticación o firma y el contrato posterior a la identificación sigue sin verificarse."
+    reviewed_at: "2026-08-21"
+    next_gate: "Con autorización separada, observar un estado pre-firma específico sin ejecutar firma privada, presentación, registro ni pago; no ampliar el perfil por analogía con otra sede catalana."
 
   - inventory_id: "ES-PUB-0155"
     surface_key: "diputacion-granada-portal"
@@ -6515,6 +6515,10 @@ availability, certificado, firma ni contrato técnico.
 [DP15B]: https://sede.dipucuenca.es/aviso-legal.aspx?entidad=16000
 [DP16A]: https://www.ddgi.cat/web/
 [DP16B]: https://seu.ddgi.cat/web/nivell/658/s-1/sistemes-de-signatura-electronica
+[GIRONA-PORTAL-2026-08-21]: https://www.ddgi.cat/web/
+[GIRONA-SEDE-2026-08-21]: https://seu.ddgi.cat/web/nivell/651/s-1/seu
+[GIRONA-PROCEDURE-2026-08-21]: https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301
+[GIRONA-ETRAM-2026-08-21]: https://seu-e.cat/tramits/8001760009/instancia-generica
 [DP17A]: https://www.dipgra.es
 [DP18A]: https://dguadalajara.sedelectronica.es
 [DP18B]: https://www.dguadalajara.es/web/guest/sede-electronica

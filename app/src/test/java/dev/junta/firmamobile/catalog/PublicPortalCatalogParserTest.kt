@@ -102,6 +102,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("menorca-carpeta-ciutadana"),
                 ProfileId("canarias-sede"),
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
+                ProfileId("diputacion-girona-instancia-generica"),
                 ProfileId("eivissa-sede-electronica"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),

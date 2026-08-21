@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "bdfd52bff03b42b3806ec21c96d8cdbe9f3ba634f1cea2a70833fc6894e49591",
+  "sourceRevision": "683f15b2c9f962539523aa0f47f35ba3509b73e1283d0c68b027a97a2cec3063",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4038,26 +4038,33 @@
     {
       "portalId": "diputacion-girona-portal",
       "inventoryId": "ES-PUB-0154",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputació de Girona",
+      "profileId": "diputacion-girona-instancia-generica",
+      "displayName": "Portal oficial de Diputació de Girona — Instància genèrica",
       "organization": "Diputació de Girona",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Cataluña",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.ddgi.cat/web/",
-      "observedMechanisms": [],
+      "purpose": "Navegación QA únicamente a la Instància genèrica vigente de la Diputació de Girona; el perfil sigue sin autenticación, firma documental, carga ni presentación final.",
+      "entryUrl": "https://seu-e.cat/tramits/8001760009/instancia-generica",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "AOC_ETRAM_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP16A",
-        "DP16B"
+        "DP16B",
+        "GIRONA-PORTAL-2026-08-21",
+        "GIRONA-SEDE-2026-08-21",
+        "GIRONA-PROCEDURE-2026-08-21",
+        "GIRONA-ETRAM-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only de navegación limitado a la ficha y al inicio exactos de la Instància genèrica pública; los orígenes de e-Tram observados no reciben capacidades de autenticación o firma y el contrato posterior a la identificación sigue sin verificarse."
     },
     {
       "portalId": "diputacion-granada-portal",
