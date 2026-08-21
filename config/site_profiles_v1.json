@@ -1405,6 +1405,47 @@
       ]
     },
     {
+      "profileId": "diputacion-tarragona-sede",
+      "profileVersion": 1,
+      "displayName": "Diputació de Tarragona — Sol·licitud genèrica amb certificat",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/procediments/DIP80_EGIST_00001/crearInstancia",
+      "initiatorOrigins": ["https://seuelectronica.dipta.cat"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": ["https://egovern.altanet.org", "https://valid.aoc.cat"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
+        "requestOrigins": ["https://cert.valid.aoc.cat"],
+        "sourceUrls": ["https://valid.aoc.cat/o/oauth2/auth"],
+        "sourceFixedQueryParameters": {
+          "response_type": "code",
+          "client_id": "valid.dipta.cat",
+          "redirect_uri": "https://egovern.altanet.org/valid/code",
+          "scope": "autenticacio_usuari",
+          "access_type": "online",
+          "approval_prompt": "auto"
+        },
+        "sourceRequiredEphemeralQueryParameters": ["state"],
+        "requestPath": "/o/oauth2/cert",
+        "requestMethod": "POST",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://seuelectronica.dipta.cat/instancia-generica","reviewedOn":"2026-08-21"},
+        {"url":"https://valid.aoc.cat/o/oauth2/js/login.js","reviewedOn":"2026-08-21"},
+        {"url":"https://cert.valid.aoc.cat/o/oauth2/cert","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "diputacion-barcelona-solicitud-generica-2057",
       "profileVersion": 1,
       "displayName": "Diputació de Barcelona — Solicitud genérica 2057",

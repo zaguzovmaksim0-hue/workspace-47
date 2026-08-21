@@ -18,6 +18,7 @@ import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.profile.ProfileId
+import java.util.concurrent.atomic.AtomicReference
 
 enum class BrowserErrorCode {
     NETWORK_ERROR,
@@ -56,7 +57,12 @@ class JuntaWebViewClient(
     private val activeProfileId: () -> ProfileId? = { null },
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val onClientAuthTarget: (AuthorizedClientAuthTarget) -> Unit = {},
+    private val onInPlaceClientAuthChallenge: (AuthorizedClientAuthTarget, ClientCertRequest) -> Unit = { _, request ->
+        request.ignore()
+    },
 ) : WebViewClient() {
+    private val observedTopLevelUrl = AtomicReference<String?>(null)
+    private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
@@ -181,6 +187,12 @@ class JuntaWebViewClient(
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         if (!isCurrentWebView(view)) return
+        observedTopLevelUrl.set(url)
+        pendingInPlaceClientAuth.get()?.let { pending ->
+            if (url != pending.authorized.target.toASCIIString()) {
+                pendingInPlaceClientAuth.compareAndSet(pending, null)
+            }
+        }
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.PAGE_STARTED,
             rawUrl = url,
@@ -193,11 +205,25 @@ class JuntaWebViewClient(
     }
 
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
-        request.ignore()
+        if (!isCurrentWebView(view)) {
+            request.ignore()
+            return
+        }
+        val pending = pendingInPlaceClientAuth.getAndSet(null)
+        if (pending == null || pending.navigationEpoch != currentNavigationEpoch() ||
+            pending.authorized.profileId != activeProfileId() || pending.authorized.isExpiredOrInvalid() ||
+            !request.host.equals(pending.authorized.target.host, ignoreCase = true) ||
+            request.port != pending.authorized.policy.requestPort
+        ) {
+            request.ignore()
+            return
+        }
+        onInPlaceClientAuthChallenge(pending.authorized, request)
     }
 
     override fun onPageFinished(view: WebView, url: String) {
         if (!isCurrentWebView(view)) return
+        observedTopLevelUrl.set(url)
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.PAGE_FINISHED,
             rawUrl = url,
@@ -220,6 +246,18 @@ class JuntaWebViewClient(
                 isMainFrame = true,
                 method = request.method,
             )
+            clientAuthAuthorizer?.observeTopLevelResourceRequest(
+                activeProfileId = activeProfileId(),
+                currentUrl = observedTopLevelUrl.get(),
+                targetUrl = request.url.toString(),
+                method = request.method,
+                currentEpoch = currentNavigationEpoch(),
+                isMainFrameRequest = true,
+            )?.let { authorized ->
+                pendingInPlaceClientAuth.set(
+                    PendingInPlaceClientAuth(authorized, currentNavigationEpoch()),
+                )
+            }
         }
         return null
     }
@@ -285,6 +323,11 @@ class JuntaWebViewClient(
     } catch (_: Exception) {
         false
     }
+
+    private data class PendingInPlaceClientAuth(
+        val authorized: AuthorizedClientAuthTarget,
+        val navigationEpoch: Long,
+    )
 
     private companion object {
         const val HTTP_ERROR_START = 400

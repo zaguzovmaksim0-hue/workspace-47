@@ -68,7 +68,7 @@ data class ExactOrigin private constructor(
 
 enum class CompatibilityStatus { VERIFIED_E2E, VERIFIED_CONTRACT, EXPERIMENTAL, BROWSE_ONLY, UNSUPPORTED }
 enum class ProfileActivation { DISABLED, QA_ONLY, ENABLED }
-enum class ClientAuthTransitionMode { REDIRECT_AFTER_SOURCE, DIRECT_FROM_SOURCE }
+enum class ClientAuthTransitionMode { REDIRECT_AFTER_SOURCE, DIRECT_FROM_SOURCE, IN_PLACE_FROM_SOURCE }
 enum class TrustMode { TRUSTED_SIGNING, TRUSTED_CLIENT_AUTH, TRUSTED_BROWSE, BROWSE_ONLY, EXTERNAL_ONLY, BLOCKED }
 enum class EndpointPurpose { TRIPHASE, STORAGE, RETRIEVE, PORTAL_RESULT }
 enum class HttpMethod { GET, POST }
@@ -117,6 +117,7 @@ data class ClientAuthPolicy(
     val allowEmptyIssuerList: Boolean,
     val grantTtlSeconds: Int,
     val requestPort: Int = 443,
+    val requestMethod: HttpMethod = HttpMethod.GET,
     val sourceFixedQueryParameters: Map<String, String> = emptyMap(),
     val sourceRequiredEphemeralQueryParameters: Set<String> = emptySet(),
     val linkedEphemeralQueryParameters: Set<String> = emptySet(),

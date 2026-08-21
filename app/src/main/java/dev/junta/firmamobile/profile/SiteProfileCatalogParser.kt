@@ -114,6 +114,7 @@ object SiteProfileCatalogParser {
         )
         val optionalKeys = listOf(
             "requestPort",
+            "requestMethod",
             "sourceFixedQueryParameters",
             "sourceRequiredEphemeralQueryParameters",
             "linkedEphemeralQueryParameters",
@@ -124,6 +125,11 @@ object SiteProfileCatalogParser {
             o.int("requestPort").also { require(it in 1..65_535) }
         } else {
             443
+        }
+        val requestMethod = if ("requestMethod" in o.values) {
+            enum<HttpMethod>(o.string("requestMethod"))
+        } else {
+            HttpMethod.GET
         }
         val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
         val fixed = stringMap(o.objValue("fixedQueryParameters"))
@@ -158,6 +164,7 @@ object SiteProfileCatalogParser {
         require((linkedEphemeral intersect linkedEphemeralMappings.values.toSet()).isEmpty())
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
+                require(requestMethod == HttpMethod.GET)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 require(
                     fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443 ||
@@ -165,6 +172,7 @@ object SiteProfileCatalogParser {
                 )
             }
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
+                require(requestMethod == HttpMethod.GET)
                 val boundSourceParameters = linkedEphemeral + linkedEphemeralMappings.keys
                 val boundTargetParameters = linkedEphemeral + linkedEphemeralMappings.values
                 require(sourceEphemeral == boundSourceParameters)
@@ -174,6 +182,13 @@ object SiteProfileCatalogParser {
                 } else {
                     require(ephemeral.isEmpty())
                 }
+            }
+            ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
+                require(requestMethod == HttpMethod.POST)
+                require(requestPort == 443)
+                require(fixed.isEmpty() && ephemeral.isEmpty())
+                require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
+                require(sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty())
             }
         }
         return ClientAuthPolicy(
@@ -189,6 +204,7 @@ object SiteProfileCatalogParser {
             allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
             grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
             requestPort = requestPort,
+            requestMethod = requestMethod,
             sourceFixedQueryParameters = sourceFixed,
             sourceRequiredEphemeralQueryParameters = sourceEphemeral,
             linkedEphemeralQueryParameters = linkedEphemeral,
@@ -283,6 +299,9 @@ object SiteProfileCatalogParser {
             }
             if (p.profileId.value == TEA_PROFILE_ID) {
                 validateTeaProfile(p)
+            }
+            if (p.profileId.value == TARRAGONA_PROFILE_ID) {
+                validateTarragonaProfile(p)
             }
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
@@ -387,10 +406,11 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
-                        p.initiatorOrigins + p.redirectOrigins
-                    } else {
-                        p.initiatorOrigins
+                    val allowedSourceOrigins = when {
+                        p.profileId.value == AIREF_PROFILE_ID -> p.initiatorOrigins + p.redirectOrigins
+                        policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ->
+                            p.trustedBrowseOrigins
+                        else -> p.initiatorOrigins
                     }
                     (source.origin() in allowedSourceOrigins ||
                         p.profileId.value == NAVARRA_PROFILE_ID &&
@@ -766,6 +786,44 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MENORCA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
+    private fun validateTarragonaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == TARRAGONA_PROFILE_VERSION)
+        require(profile.displayName == TARRAGONA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == TARRAGONA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TARRAGONA_INITIATOR_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(
+            profile.trustedBrowseOrigins == setOf(
+                ExactOrigin.parse(TARRAGONA_INTEGRATOR_ORIGIN),
+                ExactOrigin.parse(TARRAGONA_VALID_ORIGIN),
+            ),
+        )
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(TARRAGONA_CERT_ORIGIN)),
+                sourceUrls = setOf(URI(TARRAGONA_VALID_SOURCE)),
+                requestPath = TARRAGONA_CERT_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                requestMethod = HttpMethod.POST,
+                sourceFixedQueryParameters = TARRAGONA_SOURCE_FIXED_QUERY,
+                sourceRequiredEphemeralQueryParameters = setOf("state"),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TARRAGONA_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-21") })
     }
 
     private fun validateTeaProfile(profile: SiteProfile) {
@@ -1789,7 +1847,9 @@ object SiteProfileCatalogParser {
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
                     owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
                     origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
-            })
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value) == setOf(DIBA_PROFILE_ID, TARRAGONA_PROFILE_ID) &&
+                origin.serialized in setOf(TARRAGONA_VALID_ORIGIN, TARRAGONA_CERT_ORIGIN))
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -1979,6 +2039,33 @@ object SiteProfileCatalogParser {
         "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1",
         MENORCA_SOURCE_URL,
         "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx",
+    )
+    private const val DIBA_PROFILE_ID = "diputacion-barcelona-solicitud-generica-2057"
+    private const val TARRAGONA_PROFILE_ID = "diputacion-tarragona-sede"
+    private const val TARRAGONA_PROFILE_VERSION = 1
+    private const val TARRAGONA_DISPLAY_NAME =
+        "Diputació de Tarragona — Sol·licitud genèrica amb certificat"
+    private const val TARRAGONA_START_URL =
+        "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/" +
+            "procediments/DIP80_EGIST_00001/crearInstancia"
+    private const val TARRAGONA_INITIATOR_ORIGIN = "https://seuelectronica.dipta.cat"
+    private const val TARRAGONA_INTEGRATOR_ORIGIN = "https://egovern.altanet.org"
+    private const val TARRAGONA_VALID_ORIGIN = "https://valid.aoc.cat"
+    private const val TARRAGONA_VALID_SOURCE = "https://valid.aoc.cat/o/oauth2/auth"
+    private const val TARRAGONA_CERT_ORIGIN = "https://cert.valid.aoc.cat"
+    private const val TARRAGONA_CERT_PATH = "/o/oauth2/cert"
+    private val TARRAGONA_SOURCE_FIXED_QUERY = linkedMapOf(
+        "response_type" to "code",
+        "client_id" to "valid.dipta.cat",
+        "redirect_uri" to "https://egovern.altanet.org/valid/code",
+        "scope" to "autenticacio_usuari",
+        "access_type" to "online",
+        "approval_prompt" to "auto",
+    )
+    private val TARRAGONA_EVIDENCE_URLS = setOf(
+        "https://seuelectronica.dipta.cat/instancia-generica",
+        "https://valid.aoc.cat/o/oauth2/js/login.js",
+        "https://cert.valid.aoc.cat/o/oauth2/cert",
     )
     private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"
     private const val TEA_PROFILE_VERSION = 1
