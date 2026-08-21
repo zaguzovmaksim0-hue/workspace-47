@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "dc871facd42fd2ed77b2c3cd38594c91df3c6efa443fdd665d4bcbce9ae33330",
+  "sourceRevision": "308963ae00651263be834baa91a9dc4cff090dc5e2f68e811335c0526d02ad4d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3158,26 +3158,27 @@
     {
       "portalId": "eivissa-portal-institucional",
       "inventoryId": "ES-PUB-0121",
-      "profileId": null,
+      "profileId": "eivissa-sede-electronica",
       "displayName": "Portal institucional del Consell Insular d’Eivissa",
       "organization": "Consell Insular d’Eivissa",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la tramitación electrónica mediante su enlace público «Seu electrònica» a la Sede oficial del Consell Insular d’Eivissa, cuyo launch canónico ya dispone de perfil QA-only independiente.",
       "entryUrl": "https://www.conselldeivissa.es/",
+      "launchUrl": "https://seu.conselldeivissa.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_EIVISSA_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I03A",
         "I03B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente eivissa-sede-electronica por delegación oficial actual a la Sede; no se atribuye un ABI de firma propio al origin institucional y falta E2E físico de la transición desde www.conselldeivissa.es."
     },
     {
       "portalId": "eivissa-sede-electronica",
