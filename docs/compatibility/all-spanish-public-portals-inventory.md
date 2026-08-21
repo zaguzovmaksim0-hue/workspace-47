@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 90 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 94 |
-| Entradas restantes fuera de ambos estados | 89 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 91 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 95 |
+| Entradas restantes fuera de ambos estados | 88 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 90 |
+| `IMPLEMENTED_NOT_E2E` | 91 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 82 |
+| `BROWSE_ONLY` | 81 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -813,29 +813,29 @@ records:
     autonomous_community: "Comunidad de Madrid"
     province_or_municipality: "NO_APLICA"
     institution_name: "Comunidad de Madrid"
-    surface_name: "Sede electrónica de la Comunidad de Madrid"
+    surface_name: "Registro Electrónico General de la Comunidad de Madrid"
     surface_type: "SEDE"
-    origin: "https://sede.comunidad.madrid"
+    origin: "https://gestiona.comunidad.madrid"
     official_site: "https://sede.comunidad.madrid/"
     e_sede: "https://sede.comunidad.madrid/"
-    entry_url: "https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid"
+    entry_url: "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm"
     procedure_page: "https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid"
     certificate_required: "SI"
     signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "MADRID_EREG_MULTIPART_ROUTER"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidorProcesa.icm"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Descargar PDF, firmarlo localmente con AutoFirma y adjuntarlo al registro."
-    protocol_evidence: "La guía acredita el proceso documental, no el formato criptográfico ni el contrato de carga."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede oficial delega el Registro Electrónico General al selector público exacto de gestiona.comunidad.madrid; Workspace-47 habilita solo navegación QA a ese inicio, sin automatizar upload, autenticación ni firma."
+    protocol_evidence: "La página oficial vigente publica «Acceder» hacia https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm. Ese launch responde 200 y su first-party HTML expone un formulario multipart POST a InicioDistribuidorProcesa.icm con campo de fichero `files`, `ajax=1`, `nombrefichero` y respuesta interpretada mediante VP_ERROR/VP_FICHERO/VP_PROCEDIMIENTO/VP_URL_REDIRECCION/VP_MOTIVO_ERROR. El input no publica `accept`, y una sonda técnica inofensiva no permitió demostrar formato aceptado; por ello formato/algoritmo/ABI de firma permanecen NO_VERIFICADO y el perfil no expone capacidades sensibles."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["P08", "P08A"]
-    reason: "PAdES es solo candidato; formato aceptado, JS cliente y endpoint de upload no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Verificar el formato aceptado y el contrato de carga."
+    reason: "Perfil QA-only de navegación al selector público exacto del Registro Electrónico General. El router multipart está observado, pero no se automatiza ni se expone como endpoint de firma; el formato aceptado y el contrato criptográfico siguen sin verificar, y no se realizó presentación E2E."
+    reviewed_at: "2026-08-19"
+    next_gate: "Con un modelo oficial no personal y sin presentar el registro, verificar qué formatos de solicitud reconoce InicioDistribuidorProcesa.icm y capturar solo la transición pre-auth/pre-sign resultante; mantener SIGN y client-auth bloqueados hasta prueba independiente."
 
   - inventory_id: "ES-PUB-0013"
     surface_key: "comunidad-madrid-gestiona2"

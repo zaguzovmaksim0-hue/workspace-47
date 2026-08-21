@@ -52,6 +52,7 @@ class PortalCatalogRepositoryTest {
             setOf(
                 "junta-andalucia",
                 "junta-andalucia-vea-peg",
+                "comunidad-madrid-registro-general",
                 "reg-age-redsara",
                 "unizar-tramitador",
                 "carne-joven-andalucia",

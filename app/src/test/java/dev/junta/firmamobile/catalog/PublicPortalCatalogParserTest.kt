@@ -45,6 +45,7 @@ class PublicPortalCatalogParserTest {
             setOf(
                 ProfileId("junta-andalucia"),
                 ProfileId("junta-andalucia-vea-peg"),
+                ProfileId("comunidad-madrid-registro-general"),
                 ProfileId("reg-age-redsara"),
                 ProfileId("unizar-tramitador"),
                 ProfileId("carne-joven-andalucia"),

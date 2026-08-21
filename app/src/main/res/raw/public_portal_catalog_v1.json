@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "91ba1a90eff293c686180993eb55d4c583b44a9ef0954006aeb3425828b9a239",
+  "sourceRevision": "060d430dc1a26fca8db83024c8323e9f54856173936e0aea04ec8ac9baabe7aa",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -315,28 +315,28 @@
     {
       "portalId": "comunidad-madrid-sede",
       "inventoryId": "ES-PUB-0012",
-      "profileId": null,
-      "displayName": "Sede electrónica de la Comunidad de Madrid",
+      "profileId": "comunidad-madrid-registro-general",
+      "displayName": "Registro Electrónico General de la Comunidad de Madrid",
       "organization": "Comunidad de Madrid",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Comunidad de Madrid",
-      "purpose": "Descargar PDF, firmarlo localmente con AutoFirma y adjuntarlo al registro.",
-      "entryUrl": "https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid",
+      "purpose": "La Sede oficial delega el Registro Electrónico General al selector público exacto de gestiona.comunidad.madrid; Workspace-47 habilita solo navegación QA a ese inicio, sin automatizar upload, autenticación ni firma.",
+      "entryUrl": "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "MADRID_EREG_MULTIPART_ROUTER",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P08",
         "P08A"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "PAdES es solo candidato; formato aceptado, JS cliente y endpoint de upload no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil QA-only de navegación al selector público exacto del Registro Electrónico General. El router multipart está observado, pero no se automatiza ni se expone como endpoint de firma; el formato aceptado y el contrato criptográfico siguen sin verificar, y no se realizó presentación E2E."
     },
     {
       "portalId": "comunidad-madrid-gestiona2",
