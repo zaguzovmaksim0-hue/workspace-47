@@ -2010,6 +2010,10 @@ object SiteProfileCatalogParser {
                 } && origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) &&
+                    origin.serialized == CATALUNYA_VALID_ORIGIN
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
                     owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
                     origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
@@ -2418,6 +2422,7 @@ object SiteProfileCatalogParser {
         AIREF_START_URL,
         "https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js",
     )
+    private const val DIPUTACION_BARCELONA_2057_PROFILE_ID = "diputacion-barcelona-solicitud-generica-2057"
     private const val CATALUNYA_PROFILE_ID = "catalunya-peticio-generica-client-auth"
     private const val CATALUNYA_PROFILE_VERSION = 1
     private const val CATALUNYA_DISPLAY_NAME =
