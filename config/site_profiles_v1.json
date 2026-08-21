@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 36,
+  "catalogVersion": 37,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -417,6 +417,23 @@
           "reviewedOn": "2026-08-09"
         }
       ]
+    },
+    {
+      "profileId": "jccm-registro-generico",
+      "profileVersion": 1,
+      "displayName": "JCCM — Registro Electrónico / Solicitud Genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ",
+      "initiatorOrigins": ["https://registrounicociudadanos.jccm.es"],
+      "redirectOrigins": ["https://sso.jccm.es", "https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma del resumen XML de la Solicitud Genérica de JCCM","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"miniapplet-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"XADES","packaging":"DETACHED","mode":"IMPLICIT","fixedExtraProperties":{"format":"XAdES Detached","mode":"implicit"},"allowedExtraProperties":[]}],
+      "capabilities": ["SIGN", "CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://pasarela-ident.clave.gob.es"],"sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],"requestPath":"/IdP2/AuthenticateCitizen","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [{"url":"https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ","reviewedOn":"2026-08-19"},{"url":"https://registrounicociudadanos.jccm.es/registrounicociudadanos/accesoclvd.do","reviewedOn":"2026-08-19"},{"url":"https://registrounicociudadanos.jccm.es/registrounicociudadanos/cliente/autoscript.js","reviewedOn":"2026-08-19"}]
     },
     {
       "profileId": "sevilla-atse-certificate-login",

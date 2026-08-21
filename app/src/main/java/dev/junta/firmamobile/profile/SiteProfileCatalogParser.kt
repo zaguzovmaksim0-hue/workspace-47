@@ -224,6 +224,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == JCCM_PROFILE_ID) {
                 validateJccmProfile(p)
             }
+            if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                validateJccmRegistroProfile(p)
+            }
             if (p.profileId.value == MITES_PROFILE_ID) {
                 validateMitesProfile(p)
             }
@@ -380,6 +383,10 @@ object SiteProfileCatalogParser {
                         p.capabilities ==
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
+                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                    require(p.endpoints.isEmpty())
+                    require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+                    require(p.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
                 } else {
                     require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
                     require(p.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
@@ -397,7 +404,9 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value in setOf(AIREF_PROFILE_ID, MUGEJU_PROFILE_ID)) {
+                    val allowedSourceOrigins = if (
+                        p.profileId.value in setOf(AIREF_PROFILE_ID, MUGEJU_PROFILE_ID, JCCM_REGISTRO_PROFILE_ID)
+                    ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
@@ -575,7 +584,12 @@ object SiteProfileCatalogParser {
                             }
                         }
                         SignatureFormat.XADES -> {
-                            require(op.endpointId == null && op.mode == null)
+                            require(op.endpointId == null)
+                            if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                                require(op.mode == SignatureMode.IMPLICIT)
+                            } else {
+                                require(op.mode == null)
+                            }
                             require(
                                 op.algorithms == if (
                                     p.profileId.value == SEVILLA_ATSE_PROFILE_ID ||
@@ -592,6 +606,7 @@ object SiteProfileCatalogParser {
                                 POLICIA_PROFILE_ID -> POLICIA_FIXED_EXTRA_PROPERTIES
                                 CDTI_PROFILE_ID -> CDTI_FIXED_EXTRA_PROPERTIES
                                 TRANSPORTES_PROFILE_ID -> TRANSPORTES_FIXED_EXTRA_PROPERTIES
+                                JCCM_REGISTRO_PROFILE_ID -> JCCM_REGISTRO_FIXED_EXTRA_PROPERTIES
                                 else -> emptyMap()
                             }
                             require(op.fixedExtraProperties == expectedXadesProperties)
@@ -1757,6 +1772,52 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateJccmRegistroProfile(profile: SiteProfile) {
+        require(profile.profileVersion == JCCM_REGISTRO_PROFILE_VERSION)
+        require(profile.displayName == JCCM_REGISTRO_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == JCCM_REGISTRO_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(JCCM_REGISTRO_ORIGIN)))
+        require(profile.redirectOrigins == JCCM_REGISTRO_REDIRECT_ORIGINS)
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.evidence.isNotEmpty())
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        require(clientAuth.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE)
+        require(clientAuth.requestOrigins == setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)))
+        require(clientAuth.sourceUrls == setOf(URI(JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL)))
+        require(clientAuth.requestPath == JCCM_REGISTRO_CLIENT_AUTH_PATH)
+        require(clientAuth.fixedQueryParameters.isEmpty())
+        require(clientAuth.requiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.sourceFixedQueryParameters.isEmpty())
+        require(clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameterMappings.isEmpty())
+        require(clientAuth.allowEmptyIssuerList)
+        require(clientAuth.grantTtlSeconds == 15)
+        require(clientAuth.requestPort == 443)
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = JCCM_REGISTRO_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA512_WITH_RSA),
+                format = SignatureFormat.XADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = SignatureMode.IMPLICIT,
+                fixedExtraProperties = JCCM_REGISTRO_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
+
     private fun validateJccmProfile(profile: SiteProfile) {
         require(profile.profileVersion == JCCM_PROFILE_VERSION)
         require(profile.displayName == JCCM_DISPLAY_NAME)
@@ -1898,8 +1959,15 @@ object SiteProfileCatalogParser {
     ): Boolean =
         (setOf(firstOwner.value, secondOwner.value).let { owners ->
             owners.size == 2 &&
-                owners.all { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID, MUGEJU_PROFILE_ID) } &&
-                origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+                owners.all {
+                    it in setOf(
+                        MINECO_PROFILE_ID,
+                        AIREF_PROFILE_ID,
+                        AVILA_PROFILE_ID,
+                        MUGEJU_PROFILE_ID,
+                        JCCM_REGISTRO_PROFILE_ID,
+                    )
+                } && origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
@@ -2526,6 +2594,25 @@ object SiteProfileCatalogParser {
         "https://sede.mites.gob.es/chunk-MX4YJU4O.js",
     )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
+    private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
+    private const val JCCM_REGISTRO_PROFILE_VERSION = 1
+    private const val JCCM_REGISTRO_DISPLAY_NAME = "JCCM — Registro Electrónico / Solicitud Genérica"
+    private const val JCCM_REGISTRO_START_URL =
+        "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
+    private const val JCCM_REGISTRO_ORIGIN = "https://registrounicociudadanos.jccm.es"
+    private const val JCCM_REGISTRO_SAFE_DESCRIPTION =
+        "Firma del resumen XML de la Solicitud Genérica de JCCM"
+    private const val JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL =
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+    private const val JCCM_REGISTRO_CLIENT_AUTH_PATH = "/IdP2/AuthenticateCitizen"
+    private val JCCM_REGISTRO_REDIRECT_ORIGINS = setOf(
+        ExactOrigin.parse("https://sso.jccm.es"),
+        ExactOrigin.parse(AIREF_CLAVE_ORIGIN),
+    )
+    private val JCCM_REGISTRO_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+        "format" to "XAdES Detached",
+        "mode" to "implicit",
+    )
     private const val JCCM_PROFILE_ID = "jccm-certificate-login-probe"
     private const val JCCM_PROFILE_VERSION = 1
     private const val JCCM_DISPLAY_NAME =

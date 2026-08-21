@@ -197,10 +197,10 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 87 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 91 |
-| Entradas restantes fuera de ambos estados | 92 |
-| Evidencia exacta de `ClientCertRequest` | 2 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 88 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 92 |
+| Entradas restantes fuera de ambos estados | 91 |
+| Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 87 |
+| `IMPLEMENTED_NOT_E2E` | 88 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 85 |
+| `BROWSE_ONLY` | 84 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3668,29 +3668,30 @@ records:
     autonomous_community: "Castilla-La Mancha"
     province_or_municipality: "NO_APLICA"
     institution_name: "Junta de Comunidades de Castilla-La Mancha"
-    surface_name: "Sede electrónica de Castilla-La Mancha"
+    surface_name: "JCCM — Registro Electrónico / Solicitud Genérica"
     surface_type: "SEDE"
-    origin: "https://www.jccm.es"
+    origin: "https://registrounicociudadanos.jccm.es"
     official_site: "https://www.jccm.es/"
     e_sede: "https://www.jccm.es/"
-    entry_url: "https://www.jccm.es/"
-    procedure_page: "https://www.jccm.es/tramites/1001243"
+    entry_url: "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
+    procedure_page: "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    js_client: "AutoScript / MiniApplet"
+    protocol_family: "AUTOSCRIPT_MINIAPPLET_LOCAL_XADES_CLIENT_TLS_AUTH"
+    signature_format: "XAdES Detached / IMPLICIT en la rama con certificado; Cl@ve usa la rama sin firma criptográfica local"
+    signature_algorithm: "SHA512withRSA en la rama con certificado"
+    endpoint: "LOCAL_AUTOFIRMA; el POST final AltaRegGenericaAction.do?accion=Guardar no se ejecutó"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación con los sistemas de identificación y firma admitidos."
-    protocol_evidence: "La sede y su ayuda acreditan certificado y firma condicionales, no contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A08A", "A08B", "A08C"]
-    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Inspeccionar el flujo y los assets de un trámite que requiera firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso por certificado o Cl@ve y firma XAdES del XML de resumen de la Solicitud Genérica en la rama con certificado."
+    protocol_evidence: "Runtime controlado 2026-08-19: el SAML de Cl@ve volvió a JCCM y abrió accesoclvd.do con formulario AltaReg. La página protegida construye getXmlForm(), codifica el XML en Base64 y su rama con certificado invoca MiniApplet.sign(xmlBase64, SHA512withRSA, XADES, format=XAdES Detached + mode=implicit, firma_success, firma_error); firma_success copia firma/certificado y solo después prepara AltaRegGenericaAction.do?accion=Guardar. La rama Cl@ve llama firmarFormClave, copia el XML sin firma criptográfica y prepara el mismo Guardar. No se ejecutó MiniApplet.sign sobre la solicitud ni Guardar. El reto público ABCDEF con el mismo tuple sigue siendo únicamente autenticación y no es evidencia del payload final."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A08A", "A08B", "A08C", "JCCM-REG-GENERICA-AUTH-2026-08-19", "JCCM-REG-GENERICA-SIGNER-2026-08-19"]
+    reason: "Contrato exacto de acceso y firma implementado fail-closed solo en QA. Se verificó el retorno autenticado y el signer first-party protegido, pero se detuvo antes de firma privada de la solicitud y antes del POST Guardar/registro final; por tanto no hay E2E de presentación."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar en QA Android el callback de firma con credencial autorizada y detenerse antes de AltaRegGenericaAction.do?accion=Guardar; promover a release solo con evidencia E2E separada."
+    notes: "El perfil ES-PUB-0103 es independiente de ES-PUB-0183. No reutiliza el CAdES SHA1 probe antiguo ni REG-AGE; los parámetros XAdES SHA512 provienen del JavaScript first-party de la página protegida actual."
 
   - inventory_id: "ES-PUB-0104"
     surface_key: "catalunya-seu-electronica"

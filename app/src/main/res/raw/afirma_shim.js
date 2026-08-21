@@ -17,6 +17,7 @@
   const ugrCompatibilityEnabled = __JFM_UGR_COMPATIBILITY_ENABLED__;
   const cantabriaCompatibilityEnabled = __JFM_CANTABRIA_COMPATIBILITY_ENABLED__;
   const jccmCompatibilityEnabled = __JFM_JCCM_COMPATIBILITY_ENABLED__;
+  const jccmRegistroCompatibilityEnabled = __JFM_JCCM_REGISTRO_COMPATIBILITY_ENABLED__;
   const sevillaAtseCompatibilityEnabled = __JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__;
   const airefCompatibilityEnabled = __JFM_AIREF_COMPATIBILITY_ENABLED__;
   const cdtiCompatibilityEnabled = __JFM_CDTI_COMPATIBILITY_ENABLED__;
@@ -41,6 +42,10 @@
   const ugrRetrieveUrl = "https://sede.ugr.es/afirma-signature-retriever/RetrieveService";
   const jccmOrigin = "https://ventanillaelectronica.jccm.es";
   const jccmPayloadBase64 = "QUJDREU=";
+  const jccmRegistroOrigin = "https://registrounicociudadanos.jccm.es";
+  const jccmRegistroProtectedPage =
+    "https://registrounicociudadanos.jccm.es/registrounicociudadanos/accesoclvd.do";
+  const jccmRegistroExtraProperties = "format=XAdES Detached\nmode=implicit";
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
   const airefOrigin = "https://sede.airef.es";
@@ -503,6 +508,23 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isJccmRegistroOrigin =
+      jccmRegistroCompatibilityEnabled && window.location.origin === jccmRegistroOrigin;
+    const isJccmRegistroPage =
+      isJccmRegistroOrigin &&
+      window.location.href === jccmRegistroProtectedPage &&
+      window.location.hash === "";
+    const isExactJccmRegistroCall =
+      isJccmRegistroPage && args.length === 6 &&
+      typeof args[0] === "string" && args[0].length > 0 &&
+      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
+      args[1] === "SHA512withRSA" && args[2] === "XADES" &&
+      args[3] === jccmRegistroExtraProperties &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isJccmRegistroOrigin && !isExactJccmRegistroCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isExactUgrLiteralCall =
       ugrCompatibilityEnabled &&
       window.location.origin === ugrOrigin &&
@@ -548,14 +570,16 @@
         typeof errorCallback !== "function" || typeof args[0] !== "string" ||
         args[0].length === 0 || args[0].length > maxDirectDataChars ||
         ((!isExactUgrLiteralCall && !isExactCantabriaCall && !isExactJccmCall &&
-          !isExactSevillaAtseCall && !isExactAirefCall && !isExactGranCanariaCall &&
-          !isExactFuerteventuraCall && !isExactCanariasCall && !isExactMinecoCall && !isExactCdtiCall &&
-          !isExactXuntaCall && !base64Pattern.test(args[0])) ||
+          !isExactJccmRegistroCall && !isExactSevillaAtseCall && !isExactAirefCall &&
+          !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall &&
+          !isExactMinecoCall && !isExactCdtiCall && !isExactXuntaCall &&
+          !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding) ||
           (isExactXuntaCall && (typeof globalThis.btoa !== "function" || !base64Pattern.test(dataB64)))) ||
         (!isJuntaCades && !isRegXades && !isExactUgrLiteralCall &&
-          !isExactCantabriaCall && !isExactJccmCall && !isExactSevillaAtseCall &&
+          !isExactCantabriaCall && !isExactJccmCall && !isExactJccmRegistroCall &&
+          !isExactSevillaAtseCall &&
           !isExactAirefCall && !isExactCdtiCall && !isExactPoliciaCall &&
           !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall && !isExactMinecoCall &&
           !isExactXuntaCall)) {

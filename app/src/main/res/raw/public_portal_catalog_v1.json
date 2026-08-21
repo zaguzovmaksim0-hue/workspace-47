@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7b9fe30376010e10e9e2c0120daede50d768600f898d97d41ee878a5006f1270",
+  "sourceRevision": "bdfd52bff03b42b3806ec21c96d8cdbe9f3ba634f1cea2a70833fc6894e49591",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2637,30 +2637,37 @@
     {
       "portalId": "castilla-la-mancha-sede",
       "inventoryId": "ES-PUB-0103",
-      "profileId": null,
-      "displayName": "Sede electrónica de Castilla-La Mancha",
+      "profileId": "jccm-registro-generico",
+      "displayName": "JCCM — Registro Electrónico / Solicitud Genérica",
       "organization": "Junta de Comunidades de Castilla-La Mancha",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Castilla-La Mancha",
-      "purpose": "Tramitación con los sistemas de identificación y firma admitidos.",
-      "entryUrl": "https://www.jccm.es/",
+      "purpose": "Acceso por certificado o Cl@ve y firma XAdES del XML de resumen de la Solicitud Genérica en la rama con certificado.",
+      "entryUrl": "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "XADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_MINIAPPLET_LOCAL_XADES_CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
         "A08A",
         "A08B",
-        "A08C"
+        "A08C",
+        "JCCM-REG-GENERICA-AUTH-2026-08-19",
+        "JCCM-REG-GENERICA-SIGNER-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Contrato exacto de acceso y firma implementado fail-closed solo en QA. Se verificó el retorno autenticado y el signer first-party protegido, pero se detuvo antes de firma privada de la solicitud y antes del POST Guardar/registro final; por tanto no hay E2E de presentación."
     },
     {
       "portalId": "catalunya-seu-electronica",

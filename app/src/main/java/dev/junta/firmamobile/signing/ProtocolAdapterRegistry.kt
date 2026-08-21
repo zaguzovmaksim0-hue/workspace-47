@@ -46,6 +46,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = LocalXadesDetachedAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(LocalXadesDetachedAdapter.JCCM_REGISTRO_PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = LocalXadesDetachedAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("unizar-tramitador"),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),

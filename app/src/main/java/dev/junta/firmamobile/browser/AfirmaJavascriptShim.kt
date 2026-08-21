@@ -22,6 +22,7 @@ object AfirmaJavascriptShim {
         ugrCompatibilityEnabled: Boolean = false,
         cantabriaCompatibilityEnabled: Boolean = false,
         jccmCompatibilityEnabled: Boolean = false,
+        jccmRegistroCompatibilityEnabled: Boolean = false,
         sevillaAtseCompatibilityEnabled: Boolean = false,
         airefCompatibilityEnabled: Boolean = false,
         cdtiCompatibilityEnabled: Boolean = false,
@@ -46,6 +47,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(UGR_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(CANTABRIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(JCCM_COMPATIBILITY_PLACEHOLDER) == 1)
+        check(script.countOccurrences(JCCM_REGISTRO_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(AIREF_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(CDTI_COMPATIBILITY_PLACEHOLDER) == 1)
@@ -88,6 +90,10 @@ object AfirmaJavascriptShim {
             .replace(
                 JCCM_COMPATIBILITY_PLACEHOLDER,
                 if (jccmCompatibilityEnabled) "true" else "false",
+            )
+            .replace(
+                JCCM_REGISTRO_COMPATIBILITY_PLACEHOLDER,
+                if (jccmRegistroCompatibilityEnabled) "true" else "false",
             )
             .replace(
                 SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER,
@@ -159,6 +165,8 @@ object AfirmaJavascriptShim {
     private const val CANTABRIA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_CANTABRIA_COMPATIBILITY_ENABLED__"
     private const val JCCM_COMPATIBILITY_PLACEHOLDER = "__JFM_JCCM_COMPATIBILITY_ENABLED__"
+    private const val JCCM_REGISTRO_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_JCCM_REGISTRO_COMPATIBILITY_ENABLED__"
     private const val SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER =
         "__JFM_SEVILLA_ATSE_COMPATIBILITY_ENABLED__"
     private const val AIREF_COMPATIBILITY_PLACEHOLDER =
