@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 271 |
 | Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 142 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 146 |
-| Entradas restantes fuera de ambos estados | 37 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 143 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 147 |
+| Entradas restantes fuera de ambos estados | 36 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 142 |
+| `IMPLEMENTED_NOT_E2E` | 143 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 30 |
+| `BROWSE_ONLY` | 29 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5079,29 +5079,29 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "Cádiz (provincia)"
     institution_name: "Diputación Provincial de Cádiz"
-    surface_name: "Portal oficial de Diputación Provincial de Cádiz"
+    surface_name: "Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.dipucadiz.es"
+    origin: "https://sede.dipucadiz.es"
     official_site: "https://www.dipucadiz.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipucadiz.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    e_sede: "https://sede.dipucadiz.es/web/sede/inicio"
+    entry_url: "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761"
+    procedure_page: "https://sede.dipucadiz.es/tramites-disponibles"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DIPUCADIZ_CLAVE_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud, escrito o comunicación genérica (trámite 761): perfil QA-only para la entrada exacta y la navegación observada hasta la primera frontera Cl@ve."
+    protocol_evidence: "El Registro Electrónico oficial remite las solicitudes no normalizadas al formulario de propósito general; el trámite 761 exige certificado reconocido o DNIe para presentación telemática. La entrada protegida vigente redirige por el SSO institucional a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. No se observó ni se infiere contrato de firma, client TLS, formato, algoritmo o endpoint."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP10A", "DP10B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP10A", "DP10B", "CADIZ-REGISTRO-2026-08-21", "CADIZ-TRAMITES-2026-08-21", "CADIZ-TRAMITE-761-2026-08-21", "CADIZ-CLAVE-2026-08-21"]
+    reason: "Perfil QA-only limitado a la entrada exacta del trámite 761 y a los orígenes de navegación observados sede.dipucadiz.es, sso.dipucadiz.es y pasarela.clave.gob.es. No expone SIGN, CLIENT_TLS_AUTH, endpoint ni formato/algoritmo de firma; sin E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Con una credencial Cl@ve autorizada, observar el estado autenticado previo a cualquier firma o presentación final; detenerse antes de operación criptográfica, registro o pago."
 
   - inventory_id: "ES-PUB-0149"
     surface_key: "diputacion-castellon-portal"
@@ -6567,6 +6567,10 @@ availability, certificado, firma ni contrato técnico.
 [CACERES-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP10A]: https://www.dipucadiz.es
 [DP10B]: https://sede.dipucadiz.es/web/sede/inicio
+[CADIZ-REGISTRO-2026-08-21]: https://sede.dipucadiz.es/web/sede/registro-electronico-comun
+[CADIZ-TRAMITES-2026-08-21]: https://sede.dipucadiz.es/tramites-disponibles
+[CADIZ-TRAMITE-761-2026-08-21]: https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761
+[CADIZ-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP11A]: https://www.dipcas.es/es/
 [CASTELLON-SEDE-2026-08-23]: https://dipcas.sedelectronica.es/info.0
 [CASTELLON-DOSSIER-2026-08-23]: https://dipcas.sedelectronica.es/dossier.0

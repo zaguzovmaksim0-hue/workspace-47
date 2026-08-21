@@ -143,6 +143,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-pontevedra-instancia-xenerica",
                 "diputacion-malaga-instancia-general",
                 "diputacion-girona-instancia-generica",
+                "diputacion-cadiz-solicitud-generica",
                 "eivissa-sede-electronica",
                 "diputacion-salamanca-instancia-general",
                 "catalunya-peticio-generica-client-auth",

@@ -136,6 +136,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-pontevedra-instancia-xenerica"),
                 ProfileId("diputacion-malaga-instancia-general"),
                 ProfileId("diputacion-girona-instancia-generica"),
+                ProfileId("diputacion-cadiz-solicitud-generica"),
                 ProfileId("eivissa-sede-electronica"),
                 ProfileId("diputacion-salamanca-instancia-general"),
                 ProfileId("murcia-carm-pase"),

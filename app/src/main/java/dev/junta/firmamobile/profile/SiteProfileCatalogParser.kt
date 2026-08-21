@@ -2061,6 +2061,7 @@ object SiteProfileCatalogParser {
                             EDUCATION_PROFILE_ID,
                             CATALUNYA_PROFILE_ID,
                             AVILA_PROFILE_ID,
+                            CADIZ_PROFILE_ID,
                             GUADALAJARA_PROFILE_ID,
                             CTBG_PROFILE_ID,
                             CATASTRO_PROFILE_ID,
@@ -2525,6 +2526,7 @@ object SiteProfileCatalogParser {
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
+    private const val CADIZ_PROFILE_ID = "diputacion-cadiz-solicitud-generica"
     private const val GUADALAJARA_PROFILE_ID = "diputacion-guadalajara-instancia-general"
     private const val SEGOVIA_PROFILE_ID = "diputacion-segovia-registro"
     private const val PALENCIA_PROFILE_ID = "diputacion-palencia-solicitud-general"
