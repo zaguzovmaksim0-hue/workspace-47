@@ -39,6 +39,28 @@ class CaibPublicCatalogContractTest(unittest.TestCase):
         self.assertEqual({}, op["fixedExtraProperties"])
         self.assertEqual([], op["allowedExtraProperties"])
 
+    def test_caib_registre_alias_reuses_exact_generic_instance_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, PROFILES)
+        entry = next(item for item in catalog["entries"] if item["inventoryId"] == "ES-PUB-0098")
+        self.assertEqual("caib-portafib", entry["profileId"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual(
+            "https://apps.caib.es/sites/atenciociutadania/ca/registre_electranic/",
+            entry["entryUrl"],
+        )
+        self.assertEqual(
+            "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros=",
+            entry["launchUrl"],
+        )
+        self.assertEqual("DELEGACION_CAIB_INSTANCIA_GENERICA", entry["protocolFamily"])
+        self.assertEqual("2026-08-19", entry["reviewedOn"])
+        self.assertIn("Alias QA-only", entry["limitations"])
+
+        profile = next(p for p in json.loads(PROFILES.read_text())["profiles"] if p["profileId"] == "caib-portafib")
+        self.assertNotIn("https://apps.caib.es", profile["initiatorOrigins"])
+        self.assertEqual(["https://www.caib.es", "https://intranet.caib.es"], profile["initiatorOrigins"])
+
 
 if __name__ == "__main__":
     unittest.main()
