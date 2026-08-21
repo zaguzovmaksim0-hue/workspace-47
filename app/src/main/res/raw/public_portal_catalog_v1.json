@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8b7eaedb7dd2b340171f75771729bc8fa53e28cdfc0d6fee61532545a4350397",
+  "sourceRevision": "a1464e1e8163e78dff724c6b42f962c0f519eb394bbc0e588ec21d6a8e8250a1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3957,29 +3957,32 @@
     {
       "portalId": "diputacion-a-coruna-portal",
       "inventoryId": "ES-PUB-0152",
-      "profileId": null,
+      "profileId": "diputacion-a-coruna-solicitud-general",
       "displayName": "Portal oficial de Deputación da Coruña",
       "organization": "Deputación da Coruña",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Galicia",
-      "purpose": "Un recurso tributario oficial documenta certificado y firma en ese flujo limitado; no se generaliza al portal.",
+      "purpose": "La Solicitude Xeral X004 delega la identificación en Cl@ve; la rama de certificado cualificado alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior no se implementa.",
       "entryUrl": "https://www.dacoruna.gal/portada",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH_CLAVE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP14A",
-        "DP14B"
+        "DP14B",
+        "CORUNA-X004-CLAVE-2026-08-21",
+        "CORUNA-CLAVE-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado y firma son condicionales solo para el flujo citado; procedimiento general y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado al CLIENT_TLS_AUTH del trámite X004 observado; no afirma ABI, formato, algoritmo o callback de firma ni presentación/registro E2E."
     },
     {
       "portalId": "diputacion-cuenca-portal",

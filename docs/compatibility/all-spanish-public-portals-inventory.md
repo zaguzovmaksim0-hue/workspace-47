@@ -197,10 +197,10 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 82 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 86 |
-| Entradas restantes fuera de ambos estados | 97 |
-| Evidencia exacta de `ClientCertRequest` | 2 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 83 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 87 |
+| Entradas restantes fuera de ambos estados | 96 |
+| Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 82 |
+| `IMPLEMENTED_NOT_E2E` | 83 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 90 |
+| `BROWSE_ONLY` | 89 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5181,25 +5181,25 @@ records:
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dacoruna.gal"
     official_site: "https://www.dacoruna.gal/portada"
-    e_sede: "NO_VERIFICADO"
+    e_sede: "https://sede.dacoruna.gal"
     entry_url: "https://www.dacoruna.gal/portada"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sede.dacoruna.gal/sxc/gl/procedimientosytramites/tramites/SolicitudGeneral_N"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH_CLAVE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Un recurso tributario oficial documenta certificado y firma en ese flujo limitado; no se generaliza al portal."
-    protocol_evidence: "La evidencia se limita al recurso tributario documentado y no publica contrato técnico."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP14A", "DP14B"]
-    reason: "Certificado y firma son condicionales solo para el flujo citado; procedimiento general y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Solicitude Xeral X004 delega la identificación en Cl@ve; la rama de certificado cualificado alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior no se implementa."
+    protocol_evidence: "Chromium real confirmó X004 → /SP2/TiWorksRequest → Proxy2/ServiceProvider → AFIRMA en Proxy2/ServiceRedirect → IdP2/AuthenticateCitizen. TLS 1.2 en pasarela-ident.clave.gob.es emitió CertificateRequest con RSA/ECDSA y sin lista de CA de cliente."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP14A", "DP14B", "CORUNA-X004-CLAVE-2026-08-21", "CORUNA-CLAVE-TLS-2026-08-21"]
+    reason: "Perfil QA-only limitado al CLIENT_TLS_AUTH del trámite X004 observado; no afirma ABI, formato, algoritmo o callback de firma ni presentación/registro E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar autenticación controlada con certificado y observar el contrato pre-firma de X004 antes de ampliar a SIGN o VERIFIED_E2E."
 
   - inventory_id: "ES-PUB-0153"
     surface_key: "diputacion-cuenca-portal"

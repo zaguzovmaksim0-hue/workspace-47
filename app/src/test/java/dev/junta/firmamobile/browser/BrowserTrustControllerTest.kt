@@ -66,6 +66,17 @@ class BrowserTrustControllerTest {
 
         val freshAirefPolicy = BrowserUrlPolicy(registry, airefId)
         assertEquals(TrustMode.BROWSE_ONLY, freshAirefPolicy.resolve(claveUrl).trustMode)
+
+        val corunaId = ProfileId("diputacion-a-coruna-solicitud-general")
+        val coruna = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == corunaId }
+        val corunaController = BrowserTrustController(
+            BrowserUrlPolicy(registry, corunaId),
+            SensitiveFlowInvalidator {},
+        )
+        assertEquals(corunaId, corunaController.navigate(coruna.startUrl.toASCIIString()).activeProfileId)
+        val corunaClave = corunaController.navigate("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
+        assertEquals(TrustMode.TRUSTED_BROWSE, corunaClave.resolution.trustMode)
+        assertEquals(corunaId, corunaClave.activeProfileId)
     }
 
     @Test

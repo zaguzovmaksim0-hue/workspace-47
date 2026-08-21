@@ -63,6 +63,7 @@ class JuntaOriginPolicyTest {
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val coruna = ProfileId("diputacion-a-coruna-solicitud-general")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -145,6 +146,8 @@ class JuntaOriginPolicyTest {
             "diputacionavila.sedelectronica.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
+            "sede.dacoruna.gal",
+            "www.dacoruna.gal",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -285,6 +288,23 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(
+            setOf("www.dacoruna.gal", "sede.dacoruna.gal", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(coruna),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(coruna).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto"),
+                coruna,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+                coruna,
             ),
         )
         assertEquals(

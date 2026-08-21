@@ -387,7 +387,10 @@ object SiteProfileCatalogParser {
                     )
                 }
                 require(policy.sourceUrls.all { source ->
-                    val allowedSourceOrigins = if (p.profileId.value == AIREF_PROFILE_ID) {
+                    val allowedSourceOrigins = if (
+                        p.profileId.value == AIREF_PROFILE_ID ||
+                        p.profileId.value == CORUNA_PROFILE_ID
+                    ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
                         p.initiatorOrigins
@@ -1782,7 +1785,9 @@ object SiteProfileCatalogParser {
     ): Boolean =
         (setOf(firstOwner.value, secondOwner.value).let { owners ->
             owners.size == 2 &&
-                owners.all { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID) } &&
+                owners.all {
+                    it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID, CORUNA_PROFILE_ID)
+                } &&
                 origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
@@ -2135,6 +2140,7 @@ object SiteProfileCatalogParser {
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
+    private const val CORUNA_PROFILE_ID = "diputacion-a-coruna-solicitud-general"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
     private const val AIREF_START_URL =
