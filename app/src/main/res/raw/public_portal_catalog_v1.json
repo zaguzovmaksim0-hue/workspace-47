@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "bdfd52bff03b42b3806ec21c96d8cdbe9f3ba634f1cea2a70833fc6894e49591",
+  "sourceRevision": "5d5cb25b6dabc542cb4c860b70a3652d4d4fac0a44d45d681ef5bd5e05f76274",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4138,25 +4138,28 @@
     {
       "portalId": "diputacion-huelva-portal",
       "inventoryId": "ES-PUB-0158",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Huelva",
+      "profileId": "diputacion-huelva-sede-public",
+      "displayName": "Diputación Provincial de Huelva — Sede electrónica",
       "organization": "Diputación Provincial de Huelva",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "El portal oficial enlaza verificación de firma; no acredita que un trámite exija certificado o firma.",
-      "entryUrl": "https://www.diphuelva.es",
-      "observedMechanisms": [],
+      "purpose": "Perfil QA-only limitado al lanzamiento público exacto de la Sede de la Diputación de Huelva; la Sede publica Instancia Genérica / Registro Electrónico y permite continuar mediante certificado/DNIe o credenciales de la propia Sede.",
+      "entryUrl": "https://sede.diphuelva.es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "HUELVA_MOAD_PUBLIC_SEDE_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP20A"
+        "DP20A",
+        "HUELVA-SEDE-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "No se generaliza el enlace de verificación a certificado o firma obligatorios; seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Implementación QA_ONLY de navegación exacta a la Sede pública. El acceso por certificado es una opción observada, no se modela CLIENT_TLS_AUTH; firma documental, formato, algoritmo, callback y presentación final permanecen NO_VERIFICADO. E2E físico pendiente."
     },
     {
       "portalId": "diputacion-huesca-portal",

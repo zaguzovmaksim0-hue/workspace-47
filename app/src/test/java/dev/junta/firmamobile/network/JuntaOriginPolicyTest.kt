@@ -65,6 +65,7 @@ class JuntaOriginPolicyTest {
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val huelva = ProfileId("diputacion-huelva-sede-public")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -151,6 +152,7 @@ class JuntaOriginPolicyTest {
             "aplicacions.diba.cat",
             "tramits.diba.cat",
             "diputacionavila.sedelectronica.es",
+            "sede.diphuelva.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
         )
@@ -312,6 +314,20 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(setOf("sede.diphuelva.es"), JuntaOriginPolicy.browserAllowedHosts(huelva))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(huelva).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.diphuelva.es/"),
+                huelva,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://sede.diphuelva.es.evil.example/"),
+                huelva,
             ),
         )
         assertEquals(

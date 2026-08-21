@@ -103,6 +103,7 @@ class PortalCatalogRepositoryTest {
                 "portal-funciona-public-home",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
+                "diputacion-huelva-sede-public",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",

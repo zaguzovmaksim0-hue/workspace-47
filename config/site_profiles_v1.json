@@ -1599,6 +1599,26 @@
         {"url":"https://seu.conselldeivissa.es/sta/reg/autofirma.js","reviewedOn":"2026-08-18"},
         {"url":"https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043","reviewedOn":"2026-08-18"}
       ]
+    },
+    {
+      "profileId": "diputacion-huelva-sede-public",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Huelva — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.diphuelva.es/",
+      "initiatorOrigins": ["https://sede.diphuelva.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.diphuelva.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diphuelva.es/","reviewedOn":"2026-08-21"}
+      ]
     }
   ]
 }
