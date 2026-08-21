@@ -204,6 +204,7 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "dguadalajara.sedelectronica.es",
             "dpteruel.sedelectronica.es",
             "sede.consejodetransparencia.gob.es",
             "www.sedecatastro.gob.es",

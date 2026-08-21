@@ -2250,6 +2250,27 @@ records:
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("no_verificado", target["limitations"].lower())
 
+    def test_diputacion_guadalajara_instancia_general_binds_exact_bounded_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0156")
+        self.assertEqual("diputacion-guadalajara-sede", target["portalId"])
+        self.assertEqual("diputacion-guadalajara-instancia-general", target["profileId"])
+        self.assertEqual(
+            "https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("pasarela-ident", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
     def test_comercio_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(

@@ -120,6 +120,7 @@ class PortalCatalogRepositoryTest {
                 "adif-sede-public-home",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
+                "diputacion-guadalajara-instancia-general",
                 "ctbg-solicitud-informacion",
                 "catastro-solicitudes-genericas",
                 "fega-solicitud-general-ofvsg02",

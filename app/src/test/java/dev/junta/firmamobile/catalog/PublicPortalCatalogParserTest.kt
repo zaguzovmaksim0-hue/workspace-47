@@ -113,6 +113,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("adif-sede-public-home"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
+                ProfileId("diputacion-guadalajara-instancia-general"),
                 ProfileId("ctbg-solicitud-informacion"),
                 ProfileId("catastro-solicitudes-genericas"),
                 ProfileId("fega-solicitud-general-ofvsg02"),

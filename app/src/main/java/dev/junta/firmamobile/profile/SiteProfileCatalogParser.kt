@@ -2070,6 +2070,12 @@ object SiteProfileCatalogParser {
                 } && origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                owners.size == 2 &&
+                    GUADALAJARA_PROFILE_ID in owners &&
+                    owners.any { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID) } &&
+                    origin.serialized == AIREF_CLAVE_ORIGIN
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 firstIsRedirectOrigin && secondIsRedirectOrigin &&
                     owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) &&
                     origin.serialized == CATALUNYA_VALID_ORIGIN
@@ -2496,6 +2502,7 @@ object SiteProfileCatalogParser {
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
+    private const val GUADALAJARA_PROFILE_ID = "diputacion-guadalajara-instancia-general"
     private const val CTBG_PROFILE_ID = "ctbg-solicitud-informacion"
     private const val CATASTRO_PROFILE_ID = "catastro-solicitudes-genericas"
     private const val FEGA_PROFILE_ID = "fega-solicitud-general-ofvsg02"
