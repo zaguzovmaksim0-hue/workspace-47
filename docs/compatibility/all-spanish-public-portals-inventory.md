@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 86 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 90 |
-| Entradas restantes fuera de ambos estados | 93 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 87 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 91 |
+| Entradas restantes fuera de ambos estados | 92 |
 | Evidencia exacta de `ClientCertRequest` | 2 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 86 |
+| `IMPLEMENTED_NOT_E2E` | 87 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 86 |
+| `BROWSE_ONLY` | 85 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4595,23 +4595,24 @@ records:
     official_site: "https://www.cabildofuer.es/cabildo/"
     e_sede: "https://sede.cabildofuer.es/eAdmin/Sede.do"
     entry_url: "https://www.cabildofuer.es/cabildo/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
+    procedure_page: "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_FUERTEVENTURA_SEDE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El portal institucional delega las gestiones electrónicas en la Sede oficial; el catálogo actual de la Sede publica la Instancia General cuyo inicio exacto coincide con el startUrl del perfil QA-only fuerteventura-sede-electronica."
+    protocol_evidence: "Revalidado el 2026-08-21: https://www.cabildofuer.es/cabildo/ respondió HTTP 200 y enlazó «Sede electrónica» a https://sede.cabildofuer.es/eAdmin/index.html; su página oficial de Trámites indicó que las gestiones pueden hacerse a través de https://sede.cabildofuer.es/. El catálogo actual https://sede.cabildofuer.es/eAdmin/Registrar.do?action=inicioPortalTramites respondió HTTP 200 y publicó «Instancia General» con inicio exacto Registrar.do?action=comenzar&tipoReg=1, que coincide byte a byte con el startUrl canónico del perfil fuerteventura-sede-electronica. El alias conserva www.cabildofuer.es como entry URL y no amplía orígenes de confianza ni atribuye al portal institucional el ABI PAdES de la Sede."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I09A", "I09B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    evidence_ids: ["D12", "I09A", "I09B", "I09C"]
+    reason: "Alias QA-only al perfil existente fuerteventura-sede-electronica por delegación oficial actual portal → Sede → Instancia General exacta; no se atribuye un ABI criptográfico propio al origin institucional y falta E2E físico de la transición."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la transición portal institucional → Sede → Instancia General exacta y el límite pre-sign del perfil QA-only, sin ejecutar firma privada ni presentación final."
 
   - inventory_id: "ES-PUB-0134"
     surface_key: "fuerteventura-sede-electronica"

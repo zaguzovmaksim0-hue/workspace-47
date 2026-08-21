@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "eaad98c1f640a17239fe702e11159e3b469a6b49084d57979d190171296e163d",
+  "sourceRevision": "6c8e5061ed2d4e343622eb736594335e00bbc75bcbe7291e92d13db257e64f6c",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3469,26 +3469,28 @@
     {
       "portalId": "fuerteventura-portal-institucional",
       "inventoryId": "ES-PUB-0133",
-      "profileId": null,
+      "profileId": "fuerteventura-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de Fuerteventura",
       "organization": "Cabildo Insular de Fuerteventura",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega las gestiones electrónicas en la Sede oficial; el catálogo actual de la Sede publica la Instancia General cuyo inicio exacto coincide con el startUrl del perfil QA-only fuerteventura-sede-electronica.",
       "entryUrl": "https://www.cabildofuer.es/cabildo/",
+      "launchUrl": "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_FUERTEVENTURA_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I09A",
-        "I09B"
+        "I09B",
+        "I09C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente fuerteventura-sede-electronica por delegación oficial actual portal → Sede → Instancia General exacta; no se atribuye un ABI criptográfico propio al origin institucional y falta E2E físico de la transición."
     },
     {
       "portalId": "fuerteventura-sede-electronica",
