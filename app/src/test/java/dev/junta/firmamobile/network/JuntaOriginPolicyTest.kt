@@ -66,6 +66,7 @@ class JuntaOriginPolicyTest {
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val ciudadReal = ProfileId("diputacion-ciudad-real-registro-telematico")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -155,6 +156,7 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "sede.dipucr.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
         )
@@ -324,6 +326,26 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(setOf("sede.dipucr.es"), JuntaOriginPolicy.browserAllowedHosts(ciudadReal))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(ciudadReal).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.dipucr.es/iniciaTramite/20"),
+                ciudadReal,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://sede.dipucr.es:4443/SIGEM_AutenticacionWeb/seleccionEntidad.do"),
+                ciudadReal,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://sede.dipucr.es.evil.example/"),
+                ciudadReal,
             ),
         )
         assertEquals(

@@ -41,6 +41,23 @@ SPEC.loader.exec_module(GENERATOR)
 
 
 class PublicPortalCatalogGeneratorTest(unittest.TestCase):
+    def test_ciudad_real_registro_telematico_binds_exact_public_boundary(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0150")
+        self.assertEqual("diputacion-ciudad-real-portal", target["portalId"])
+        self.assertEqual("diputacion-ciudad-real-registro-telematico", target["profileId"])
+        self.assertEqual("https://sede.dipucr.es/iniciaTramite/20", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("SIGEM_CLAVE_NONSTANDARD_PORT_HANDOFF", target["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("4443", target["limitations"])
+        self.assertIn("qa", target["limitations"].lower())
+
     def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         puertos = next(

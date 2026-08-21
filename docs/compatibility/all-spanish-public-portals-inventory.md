@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 243 |
-| Fuentes oficiales totales registradas | 255 |
+| Fuentes oficiales portal-specific registradas | 245 |
+| Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 91 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 95 |
-| Entradas restantes fuera de ambos estados | 88 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 92 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 96 |
+| Entradas restantes fuera de ambos estados | 87 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 91 |
+| `IMPLEMENTED_NOT_E2E` | 92 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 81 |
+| `BROWSE_ONLY` | 80 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5122,29 +5122,29 @@ records:
     autonomous_community: "Castilla-La Mancha"
     province_or_municipality: "Ciudad Real (provincia)"
     institution_name: "Diputación Provincial de Ciudad Real"
-    surface_name: "Portal oficial de Diputación Provincial de Ciudad Real"
+    surface_name: "Diputación Provincial de Ciudad Real — Registro Telemático Común"
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dipucr.es"
     official_site: "https://www.dipucr.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipucr.es"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://sede.dipucr.es/"
+    entry_url: "https://sede.dipucr.es/iniciaTramite/20"
+    procedure_page: "https://sede.dipucr.es/iniciaTramite/20"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "SIGEM_CLAVE_NONSTANDARD_PORT_HANDOFF"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only limitado a la página pública exacta del Registro Telemático Común de la Diputación Provincial de Ciudad Real. El inicio autenticado posterior usa SIGEM en se1.dipucr.es:4443 y deriva públicamente a Cl@ve; autenticación, certificado, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El portal oficial enlaza la Sede https://sede.dipucr.es/. La Sede publica Registro Telemático Común en /iniciaTramite/20 y su acción 'Iniciar trámite' apunta de forma estable a https://se1.dipucr.es:4443/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=DPCR_SRS&SESION_ID=&ENTIDAD_ID=005. Esa frontera pública responde con una redirección Cl@ve mediante POST a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. El puerto 4443 no es representable por ExactOrigin/JuntaOriginPolicy y no se incorpora al trust del perfil; no se conserva ni modela payload SAML/session-bound."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP12A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP12A", "CIUDAD-REAL-SEDE-2026-08-21", "CIUDAD-REAL-REGISTRO-2026-08-21"]
+    reason: "Implementación QA_ONLY de navegación solo hasta la página pública estable en sede.dipucr.es:443. El handoff SIGEM posterior usa :4443, fuera del modelo ExactOrigin actual; no se habilitan CLIENT_TLS_AUTH, SIGN ni SELECT_CERTIFICATE y no se infiere ningún contrato de firma/presentación."
+    reviewed_at: "2026-08-21"
+    next_gate: "Si se amplía el modelo de origins para puertos HTTPS no estándar, revalidar de forma independiente el handoff :4443 y continuar autenticado solo hasta el primer estado pre-firma; detenerse antes de firma criptográfica o presentación final."
 
   - inventory_id: "ES-PUB-0151"
     surface_key: "diputacion-cordoba-portal"
@@ -6510,6 +6510,8 @@ availability, certificado, firma ni contrato técnico.
 [DP10B]: https://sede.dipucadiz.es/web/sede/inicio
 [DP11A]: https://www.dipcas.es/es/
 [DP12A]: https://www.dipucr.es
+[CIUDAD-REAL-SEDE-2026-08-21]: https://sede.dipucr.es/
+[CIUDAD-REAL-REGISTRO-2026-08-21]: https://sede.dipucr.es/iniciaTramite/20
 [DP13A]: https://www.dipucordoba.es
 [DP14A]: https://www.dacoruna.gal/portada
 [DP14B]: https://www.dacoruna.gal/servizos-tributarios/preguntas-frecuentes/recursos/
