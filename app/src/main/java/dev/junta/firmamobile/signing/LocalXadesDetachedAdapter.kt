@@ -25,7 +25,7 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 
-/** Local XAdES-BES detached adapter for the exact REG-AGE AutoScript contract. */
+/** Local XAdES-BES detached adapter for exact, profile-scoped AutoScript/MiniApplet contracts. */
 class LocalXadesDetachedAdapter internal constructor(
     private val clock: Clock = Clock.systemUTC(),
 ) : SigningProtocolAdapter {
@@ -43,7 +43,12 @@ class LocalXadesDetachedAdapter internal constructor(
         return try {
             val material = request.withPayload { payload ->
                 MiniAppletPayloadCodec.withDecoded(payload) { data, extraProperties ->
-                    require(extraProperties.isEmpty())
+                    val expectedExtraProperties = when (request.context.profileId) {
+                        REG_AGE_PROFILE_ID -> ""
+                        JCCM_REGISTRO_PROFILE_ID -> JCCM_REGISTRO_EXTRA_PROPERTIES
+                        else -> error("unsupported local XAdES profile")
+                    }
+                    require(extraProperties == expectedExtraProperties)
                     XadesDetachedCodec.createPreSign(data, certificateChain, clock)
                 }
             }
@@ -92,6 +97,9 @@ class LocalXadesDetachedAdapter internal constructor(
 
     companion object {
         val ID = SigningProtocolId("local-xades-detached-v1")
+        const val REG_AGE_PROFILE_ID = "reg-age-redsara"
+        const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
+        const val JCCM_REGISTRO_EXTRA_PROPERTIES = "format=XAdES Detached\nmode=implicit"
     }
 }
 

@@ -22,10 +22,14 @@ import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
+import dev.junta.firmamobile.signing.DiputacionBadajozCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
+import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
+import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
+import dev.junta.firmamobile.signing.FuerteventuraPadesAdapter
 import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
 import dev.junta.firmamobile.signing.MinecoPadesAdapter
 import dev.junta.firmamobile.signing.MiniAppletCallbackAdapter
@@ -41,6 +45,7 @@ import dev.junta.firmamobile.signing.ProtocolInputAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.XuntaPadesTriPhaseAdapter
 import java.io.StringReader
+import java.net.URI
 import java.time.Clock
 import java.util.Base64
 import java.util.UUID
@@ -208,6 +213,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isJccmRegistroContract = isExactJccmRegistroContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == JCCM_REGISTRO_PROFILE_ID && !isJccmRegistroContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isMitesContract = isExactMitesContract(
             profile = profile,
             origin = resolved.origin,
@@ -218,6 +233,12 @@ internal class ProfileMiniAppletBridgeAdapter(
         if (profile.profileId.value == MitesCertificateLoginCadesAdapter.PROFILE_ID && !isMitesContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isEivissaContract = isExactEivissaContract(
+            profile, resolved.origin, operation, binding.signingProtocolId.value, currentPageUrl,
+        )
+        if (profile.profileId.value == EivissaCadesDetachedAdapter.PROFILE_ID && !isEivissaContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isGranCanariaContract = isExactGranCanariaContract(
             profile = profile,
             origin = resolved.origin,
@@ -226,6 +247,16 @@ internal class ProfileMiniAppletBridgeAdapter(
             currentPageUrl = currentPageUrl,
         )
         if (profile.profileId.value == GranCanariaPadesAdapter.PROFILE_ID && !isGranCanariaContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
+        val isFuerteventuraContract = isExactFuerteventuraContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == FuerteventuraPadesAdapter.PROFILE_ID && !isFuerteventuraContract) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
         val isTransparenciaContract = isExactTransparenciaContract(
@@ -334,6 +365,18 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isDiputacionBadajozContract = isExactDiputacionBadajozContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == DiputacionBadajozCadesAdapter.PROFILE_ID &&
+            !isDiputacionBadajozContract
+        ) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -356,7 +399,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_PADES -> if (isGranCanariaContract || isMinecoContract || isTransparenciaContract) {
+            FORMAT_PADES -> if (isGranCanariaContract || isFuerteventuraContract || isMinecoContract || isTransparenciaContract) {
                 SigningFormat.PADES to SignatureFormat.PADES
             } else {
                 null
@@ -367,7 +410,7 @@ internal class ProfileMiniAppletBridgeAdapter(
                 null
             }
             FORMAT_XADES_DETACHED -> if (
-                isSevillaAtseContract || isPoliciaContract || isCdtiContract
+                isSevillaAtseContract || isPoliciaContract || isCdtiContract || isJccmRegistroContract
             ) {
                 null
             } else {
@@ -376,6 +419,11 @@ internal class ProfileMiniAppletBridgeAdapter(
             FORMAT_XADES -> if (
                 isSevillaAtseContract || isAirefContract || isPoliciaContract || isTransportesContract
             ) {
+                SigningFormat.XADES to SignatureFormat.XADES
+            } else {
+                null
+            }
+            FORMAT_XADES_JCCM -> if (isJccmRegistroContract) {
                 SigningFormat.XADES to SignatureFormat.XADES
             } else {
                 null
@@ -430,6 +478,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 )
             }
             ""
+        } else if (isEivissaContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it.length <= EivissaCadesDetachedAdapter.MAX_EXTRA_PROPERTIES_CHARS &&
+                    it.matchesEivissaExtraProperties() }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId, SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (isMitesContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == MitesCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES }
@@ -470,6 +525,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
                 )
+        } else if (isFuerteventuraContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == FuerteventuraPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (isMinecoContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
@@ -495,6 +557,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         } else if (isTransportesContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
+        } else if (isJccmRegistroContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it == JCCM_REGISTRO_EXTRA_PROPERTIES }
                 ?: return MiniAppletBridgeRouteResult.Rejected(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
@@ -629,7 +698,16 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val extraProperties = if (isCantabriaContract) {
+        if (isDiputacionBadajozContract && !decodedData.isExactDiputacionBadajozChallenge()) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
+        val extraProperties = if (isEivissaContract) {
+            rawExtraProperties
+        } else if (isCantabriaContract) {
             CANTABRIA_EXTRA_PROPERTIES
         } else if (isTransportesContract) {
             TransportesXadesEnvelopedAdapter.EXPECTED_EXTRA_PROPERTIES
@@ -637,6 +715,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             MitesCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isGranCanariaContract) {
             GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isFuerteventuraContract) {
+            FuerteventuraPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isXuntaContract) {
             canonicalXuntaExtraProperties(rawExtraProperties, operation)
                 ?: run {
@@ -649,6 +729,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             CanariasCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isMinecoContract) {
             MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES
+        } else if (isJccmRegistroContract) {
+            JCCM_REGISTRO_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
         } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
@@ -727,6 +809,64 @@ internal class ProfileMiniAppletBridgeAdapter(
     private fun String.hasSafeControls(): Boolean = all { character ->
         !character.isISOControl() || character == '\n' || character == '\r' || character == '\t'
     }
+    private fun isExactJccmRegistroContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean {
+        val clientAuth = profile.clientAuthPolicy
+        return isExactJccmRegistroPage(currentPageUrl) &&
+            profile.profileId.value == JCCM_REGISTRO_PROFILE_ID &&
+            profile.profileVersion == JCCM_REGISTRO_PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == JCCM_REGISTRO_START_URL &&
+            origin.serialized == JCCM_REGISTRO_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(JCCM_REGISTRO_ORIGIN)) &&
+            profile.redirectOrigins == JCCM_REGISTRO_REDIRECT_ORIGINS &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) &&
+            clientAuth != null &&
+            clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+            clientAuth.requestOrigins == setOf(ExactOrigin.parse(JCCM_REGISTRO_CLIENT_AUTH_ORIGIN)) &&
+            clientAuth.sourceUrls == setOf(java.net.URI(JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL)) &&
+            clientAuth.requestPath == JCCM_REGISTRO_CLIENT_AUTH_PATH &&
+            clientAuth.fixedQueryParameters.isEmpty() &&
+            clientAuth.requiredEphemeralQueryParameters.isEmpty() &&
+            clientAuth.sourceFixedQueryParameters.isEmpty() &&
+            clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty() &&
+            clientAuth.linkedEphemeralQueryParameters.isEmpty() &&
+            clientAuth.linkedEphemeralQueryParameterMappings.isEmpty() &&
+            clientAuth.allowEmptyIssuerList && clientAuth.grantTtlSeconds == 15 &&
+            clientAuth.requestPort == 443 &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == JCCM_REGISTRO_SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) && operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA512_WITH_RSA) &&
+            operation.format == SignatureFormat.XADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.IMPLICIT &&
+            operation.fixedExtraProperties == JCCM_REGISTRO_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == LocalXadesDetachedAdapter.ID.value
+    }
+
+    private fun isExactJccmRegistroPage(raw: String?): Boolean {
+        val uri = raw?.let { runCatching { java.net.URI(it) }.getOrNull() } ?: return false
+        if (uri.isOpaque || uri.scheme != "https" || uri.host != "registrounicociudadanos.jccm.es" ||
+            uri.userInfo != null || uri.port !in setOf(-1, 443) || uri.rawFragment != null
+        ) return false
+        return uri.rawPath == "/registrounicociudadanos/accesoclvd.do" && uri.rawQuery == null
+    }
+
     private fun isExactJccmContract(
         profile: SiteProfile,
         origin: ExactOrigin,
@@ -766,6 +906,46 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == JccmCertificateLoginProbeCadesAdapter.ID.value
 
+
+    private fun isExactEivissaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean {
+        val page = currentPageUrl?.let { runCatching { URI(it) }.getOrNull() } ?: return false
+        val path = page.rawPath ?: return false
+        val signingPage = page.scheme == "https" && page.host == "seu.conselldeivissa.es" &&
+            page.userInfo == null && (page.port == -1 || page.port == 443) &&
+            page.rawQuery == null && page.rawFragment == null && EIVISSA_SUMMARY_PATH.matches(path)
+        return signingPage &&
+            profile.profileId.value == EivissaCadesDetachedAdapter.PROFILE_ID &&
+            profile.profileVersion == EivissaCadesDetachedAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == EivissaCadesDetachedAdapter.START_URL &&
+            origin.serialized == EivissaCadesDetachedAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage && profile.operationPolicies.size == 1 &&
+            operation.safeDescription == EivissaCadesDetachedAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "autoscript-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) && operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.IMPLICIT &&
+            operation.fixedExtraProperties == linkedMapOf("headless" to "true", "mode" to "implicit") &&
+            operation.allowedExtraProperties == setOf("filter", "mimeType") &&
+            signingProtocolId == EivissaCadesDetachedAdapter.ID.value
+    }
+
+    private fun String.matchesEivissaExtraProperties(): Boolean =
+        EIVISSA_EXTRA_PROPERTIES.matches(this)
 
     private fun isExactMitesContract(
         profile: SiteProfile,
@@ -950,6 +1130,43 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.fixedExtraProperties == GRAN_CANARIA_FIXED_EXTRA_PROPERTIES &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == GranCanariaPadesAdapter.ID.value
+
+    private fun isExactFuerteventuraContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == FuerteventuraPadesAdapter.SIGNING_PAGE_URL &&
+            profile.profileId.value == FuerteventuraPadesAdapter.PROFILE_ID &&
+            profile.profileVersion == FuerteventuraPadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == FuerteventuraPadesAdapter.PUBLIC_START_URL &&
+            origin.serialized == FuerteventuraPadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(FuerteventuraPadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == FuerteventuraPadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.PADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.ATTACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == FUERTEVENTURA_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == FuerteventuraPadesAdapter.ID.value
 
     private fun isExactMinecoContract(
         profile: SiteProfile,
@@ -1374,6 +1591,49 @@ internal class ProfileMiniAppletBridgeAdapter(
             value in 0x20..0x7e
         }
 
+    private fun isExactDiputacionBadajozContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == BADAJOZ_LOGIN_PAGE_URL &&
+            profile.profileId.value == DiputacionBadajozCadesAdapter.PROFILE_ID &&
+            profile.profileVersion == DiputacionBadajozCadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == BADAJOZ_START_URL &&
+            origin.serialized == DiputacionBadajozCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(DiputacionBadajozCadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == DiputacionBadajozCadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.EXPLICIT &&
+            operation.fixedExtraProperties == BADAJOZ_FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == DiputacionBadajozCadesAdapter.ID.value
+
+    private fun ByteArray.isExactDiputacionBadajozChallenge(): Boolean =
+        isNotEmpty() && size <= MAX_BADAJOZ_CHALLENGE_BYTES && all { byte ->
+            val value = byte.toInt() and 0xff
+            value in 0x20..0x7e
+        }
+
     private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
         val observed = linkedMapOf<String, String>()
         val lines = raw.split('\n')
@@ -1408,6 +1668,14 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val TYPE_MINIAPPLET_SIGN = "MINIAPPLET_SIGN"
         private const val TYPE_MINIAPPLET_CANCEL = "MINIAPPLET_CANCEL"
         private const val ALGORITHM_SHA1_RSA = "SHA1withRSA"
+        private val EIVISSA_SUMMARY_PATH = Regex(
+            "^/sta/reg/(?:tramite|tramit)/" + EivissaCadesDetachedAdapter.PROCEDURE_ID +
+                "/(?:formulario|formulari)/summary/referencia/[0-9a-fA-F-]{36}$",
+        )
+        private val EIVISSA_EXTRA_PROPERTIES = Regex(
+            "headless=true\\nfilter=encodedcert:[A-Za-z0-9+/]+={0,2};filter=nonexpired:\\n" +
+                "mode=implicit\\n(?:mimeType=[^\\r\\n]{1,128}\\n)?",
+        )
         private const val ALGORITHM_SHA256_RSA = "SHA256withRSA"
         private const val ALGORITHM_SHA512_RSA = "SHA512withRSA"
         private const val FORMAT_CADES = "CAdES"
@@ -1415,6 +1683,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val FORMAT_PADES_TRI = "PAdEStri"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val FORMAT_XADES = "XAdES"
+        private const val FORMAT_XADES_JCCM = "XADES"
         private const val FORMAT_XADES_ENVELOPING = "XAdES Enveloping"
         private const val AIREF_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
         private val AIREF_SIGNING_QUERY = Regex("id=[0-9]{1,20}")
@@ -1444,9 +1713,31 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
         private const val LLEIDA_LOGIN_PAGE_URL =
             "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
+        private const val BADAJOZ_LOGIN_PAGE_URL =
+            "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
         private const val JCCM_START_URL =
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
                 "formularios/identificacion.phtml"
+        private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
+        private const val JCCM_REGISTRO_PROFILE_VERSION = 1
+        private const val JCCM_REGISTRO_START_URL =
+            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
+        private const val JCCM_REGISTRO_ORIGIN = "https://registrounicociudadanos.jccm.es"
+        private const val JCCM_REGISTRO_SAFE_DESCRIPTION =
+            "Firma del resumen XML de la Solicitud Genérica de JCCM"
+        private const val JCCM_REGISTRO_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
+        private const val JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        private const val JCCM_REGISTRO_CLIENT_AUTH_PATH = "/IdP2/AuthenticateCitizen"
+        private val JCCM_REGISTRO_REDIRECT_ORIGINS = setOf(
+            ExactOrigin.parse("https://sso.jccm.es"),
+            ExactOrigin.parse("https://pasarela.clave.gob.es"),
+        )
+        private const val JCCM_REGISTRO_EXTRA_PROPERTIES = "format=XAdES Detached\nmode=implicit"
+        private val JCCM_REGISTRO_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "format" to "XAdES Detached",
+            "mode" to "implicit",
+        )
         private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
         private val UGR_PAYLOAD = "Universidad de Granada".encodeToByteArray()
         private val TRANSPARENCIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
@@ -1456,6 +1747,20 @@ internal class ProfileMiniAppletBridgeAdapter(
         private val GRAN_CANARIA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "headless" to "true",
             "filters" to "nonexpired:",
+        )
+        private val FUERTEVENTURA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "signaturePositionOnPageLowerLeftX" to "50",
+            "signaturePositionOnPageLowerLeftY" to "15",
+            "signaturePositionOnPageUpperRightX" to "150",
+            "signaturePositionOnPageUpperRightY" to "50",
+            "signaturePages" to "all",
+            "layer2Text" to "Firmado por \$\$SUBJECTCN\$\$ el día \$\$SIGNDATE=dd/MM/yyyy\$\$ \$\$ORGANIZATION\$\$",
+            "layer2FontSize" to "6",
+            "layer2FontFamily" to "0",
+            "layer2FontStyle" to "0",
+            "signatureRotation" to "0",
+            "includeQuestionMark" to "false",
+            "obfuscateCertText" to "true",
         )
         private val MINECO_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "filters" to "signingCert:;nonexpired:",
@@ -1484,6 +1789,13 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val LLEIDA_START_URL = "https://seu.diputaciolleida.cat"
         private const val MAX_LLEIDA_CHALLENGE_BYTES = 512
         private val LLEIDA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
+            "policy" to "FirmaAGE",
+            "headless" to "true",
+            "filters" to "nonexpired:true;authCert:true",
+        )
+        private const val BADAJOZ_START_URL = "https://sede.dip-badajoz.es"
+        private const val MAX_BADAJOZ_CHALLENGE_BYTES = 512
+        private val BADAJOZ_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "policy" to "FirmaAGE",
             "headless" to "true",
             "filters" to "nonexpired:true;authCert:true",
