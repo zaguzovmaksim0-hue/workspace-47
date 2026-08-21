@@ -1959,14 +1959,16 @@ object SiteProfileCatalogParser {
     ): Boolean =
         (setOf(firstOwner.value, secondOwner.value).let { owners ->
             owners.size == 2 &&
-                owners.all { it in setOf(MINECO_PROFILE_ID, AIREF_PROFILE_ID, AVILA_PROFILE_ID, MUGEJU_PROFILE_ID) } &&
-                origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
+                owners.all {
+                    it in setOf(
+                        MINECO_PROFILE_ID,
+                        AIREF_PROFILE_ID,
+                        AVILA_PROFILE_ID,
+                        MUGEJU_PROFILE_ID,
+                        JCCM_REGISTRO_PROFILE_ID,
+                    )
+                } && origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
         }) ||
-            (setOf(firstOwner.value, secondOwner.value).let { owners ->
-                JCCM_REGISTRO_PROFILE_ID in owners &&
-                    owners.any { it == MINECO_PROFILE_ID || it == AIREF_PROFILE_ID } &&
-                    origin.serialized in setOf(AIREF_CLAVE_ORIGIN, AIREF_CLIENT_AUTH_ORIGIN)
-            }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
                     owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
