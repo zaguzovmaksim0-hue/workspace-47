@@ -15,7 +15,7 @@ bouncycastle = "1.84"
 datastore = "1.2.0"
 lifecycle = "2.10.0"
 okhttp = "5.4.0"
-xmlsec = "3.0.6"
+xmlsec = "4.0.4"
 pdfboxAndroid = "2.0.27.0"
 
 [libraries]
