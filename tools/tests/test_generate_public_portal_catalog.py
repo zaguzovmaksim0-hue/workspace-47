@@ -2850,6 +2850,29 @@ records:
         self.assertIsNone(profile["clientAuthPolicy"])
 
 
+    def test_importass_client_tls_profile_binds_exact_ipce_boundary(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0006")
+
+        self.assertEqual("tgss-importass", target["portalId"])
+        self.assertEqual("tgss-importass-client-auth", target["profileId"])
+        self.assertEqual(
+            "https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CLIENT_TLS_AUTH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("firma", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()
 
