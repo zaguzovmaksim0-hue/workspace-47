@@ -1589,6 +1589,26 @@ records:
         self.assertIn("e2e", funciona["limitations"].lower())
 
 
+    def test_el_hierro_solicitud_general_binds_exact_pending_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0125")
+        self.assertEqual("el-hierro-portal-institucional", target["portalId"])
+        self.assertEqual("el-hierro-solicitud-general", target["profileId"])
+        self.assertEqual(
+            "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+            target["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertEqual(["D12", "I05A", "I05B"], target["evidenceIds"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("no_verificado", target["limitations"].lower())
+
     def test_diputacion_avila_instancia_general_binds_exact_pending_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0143")

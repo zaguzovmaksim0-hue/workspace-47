@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7b9fe30376010e10e9e2c0120daede50d768600f898d97d41ee878a5006f1270",
+  "sourceRevision": "77659c1823b43bdb19747d90d7c72cc0984efc2be7ae108385ee69a8902ee495",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3274,26 +3274,26 @@
     {
       "portalId": "el-hierro-portal-institucional",
       "inventoryId": "ES-PUB-0125",
-      "profileId": null,
-      "displayName": "Portal institucional del Cabildo Insular de El Hierro",
+      "profileId": "el-hierro-solicitud-general",
+      "displayName": "Cabildo Insular de El Hierro — Solicitud general",
       "organization": "Cabildo Insular de El Hierro",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
-      "entryUrl": "https://www.elhierro.es/es",
+      "purpose": "Solicitud general: perfil QA-only limitado al lanzamiento exacto del trámite y a la navegación observada hasta la identificación electrónica Cl@ve.",
+      "entryUrl": "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I05A",
         "I05B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Implementación QA-only de lanzamiento/navegación exacta. Certificado, firma criptográfica, formato, algoritmo, callback y presentación final permanecen NO_VERIFICADO; no se realizó E2E físico."
     },
     {
       "portalId": "el-hierro-sede-electronica",

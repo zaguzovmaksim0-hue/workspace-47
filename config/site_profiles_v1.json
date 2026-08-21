@@ -1563,6 +1563,29 @@
       ]
     },
     {
+      "profileId": "el-hierro-solicitud-general",
+      "profileVersion": 1,
+      "displayName": "Cabildo Insular de El Hierro — Solicitud general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+      "initiatorOrigins": ["https://elhierro.sedelectronica.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.elhierro.es/es","reviewedOn":"2026-08-21"},
+        {"url":"https://elhierro.sedelectronica.es/dossier","reviewedOn":"2026-08-21"},
+        {"url":"https://elhierro.sedelectronica.es/catalog/t/7944e884-3b98-48fc-abcd-d6db6ef8bd71","reviewedOn":"2026-08-21"},
+        {"url":"https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "eivissa-sede-electronica",
       "profileVersion": 1,
       "displayName": "Consell Insular d’Eivissa — Sede electrónica",
