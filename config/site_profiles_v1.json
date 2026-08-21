@@ -1524,8 +1524,8 @@
       "clientAuthPolicy": {
         "transitionMode": "DIRECT_FROM_SOURCE",
         "requestOrigins": ["https://ipce.seg-social.es"],
-        "sourceUrls": ["https://idp.seg-social.es/PGIS/Login"],
-        "sourceFixedQueryParameters": {"seleccion":"IPCE"},
+        "sourceUrls": ["https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"],
+        "sourceFixedQueryParameters": {},
         "sourceRequiredEphemeralQueryParameters": [],
         "linkedEphemeralQueryParameters": [],
         "requestPath": "/IPCE/Login",
