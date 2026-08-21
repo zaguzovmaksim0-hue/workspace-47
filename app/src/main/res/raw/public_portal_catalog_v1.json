@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "bdfd52bff03b42b3806ec21c96d8cdbe9f3ba634f1cea2a70833fc6894e49591",
+  "sourceRevision": "3de3f2c011802a74ff2522b862cabd17af8abbb0d2a335e5dda8d1536b2729e2",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3894,26 +3894,32 @@
     {
       "portalId": "diputacion-cadiz-portal",
       "inventoryId": "ES-PUB-0148",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Cádiz",
+      "profileId": "diputacion-cadiz-solicitud-generica",
+      "displayName": "Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica",
       "organization": "Diputación Provincial de Cádiz",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida.",
-      "entryUrl": "https://www.dipucadiz.es",
-      "observedMechanisms": [],
+      "purpose": "Solicitud, escrito o comunicación genérica (trámite 761): perfil QA-only para la entrada exacta y la navegación observada hasta la primera frontera Cl@ve.",
+      "entryUrl": "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DIPUCADIZ_CLAVE_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP10A",
-        "DP10B"
+        "DP10B",
+        "CADIZ-REGISTRO-2026-08-21",
+        "CADIZ-TRAMITES-2026-08-21",
+        "CADIZ-TRAMITE-761-2026-08-21",
+        "CADIZ-CLAVE-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado a la entrada exacta del trámite 761 y a los orígenes de navegación observados sede.dipucadiz.es, sso.dipucadiz.es y pasarela.clave.gob.es. No expone SIGN, CLIENT_TLS_AUTH, endpoint ni formato/algoritmo de firma; sin E2E."
     },
     {
       "portalId": "diputacion-castellon-portal",

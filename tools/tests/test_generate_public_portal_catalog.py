@@ -1511,6 +1511,30 @@ records:
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
 
+    def test_cadiz_solicitud_generica_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0148"
+        )
+        self.assertEqual("diputacion-cadiz-portal", target["portalId"])
+        self.assertEqual("diputacion-cadiz-solicitud-generica", target["profileId"])
+        self.assertEqual(
+            "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DIPUCADIZ_CLAVE_PUBLIC_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+        self.assertIn("sin e2e", target["limitations"].lower())
+
     def test_diputacion_alava_binds_exact_registro_comun_qa_start_without_signer_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0140")

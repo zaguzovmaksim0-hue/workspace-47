@@ -1580,6 +1580,28 @@
       ]
     },
     {
+      "profileId": "diputacion-cadiz-solicitud-generica",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761",
+      "initiatorOrigins": ["https://sede.dipucadiz.es"],
+      "redirectOrigins": ["https://sso.dipucadiz.es", "https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.dipucadiz.es/web/sede/registro-electronico-comun","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucadiz.es/tramites-disponibles","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "eivissa-sede-electronica",
       "profileVersion": 1,
       "displayName": "Consell Insular d’Eivissa — Sede electrónica",

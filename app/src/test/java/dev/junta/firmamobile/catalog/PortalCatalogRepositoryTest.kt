@@ -110,6 +110,7 @@ class PortalCatalogRepositoryTest {
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "eivissa-sede-electronica",
+                "diputacion-cadiz-solicitud-generica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

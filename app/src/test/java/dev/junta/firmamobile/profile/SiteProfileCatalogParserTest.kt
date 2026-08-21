@@ -1174,6 +1174,47 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
     }
 
+    @Test
+    fun `Diputacion Cadiz solicitud generica is QA navigation only to the observed Clave boundary`() {
+        val profileId = ProfileId("diputacion-cadiz-solicitud-generica")
+        val start = URI("https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.dipucadiz.es")), profile.initiatorOrigins)
+        assertEquals(
+            setOf(
+                ExactOrigin.parse("https://sso.dipucadiz.es"),
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ),
+            profile.redirectOrigins,
+        )
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(4, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+            )?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dipucadiz.es.evil.example/")))
+    }
+
 
 }
 

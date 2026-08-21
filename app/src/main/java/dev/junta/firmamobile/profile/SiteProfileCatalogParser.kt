@@ -1964,6 +1964,7 @@ object SiteProfileCatalogParser {
                         MINECO_PROFILE_ID,
                         AIREF_PROFILE_ID,
                         AVILA_PROFILE_ID,
+                        CADIZ_PROFILE_ID,
                         MUGEJU_PROFILE_ID,
                         JCCM_REGISTRO_PROFILE_ID,
                     )
@@ -2363,6 +2364,7 @@ object SiteProfileCatalogParser {
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
+    private const val CADIZ_PROFILE_ID = "diputacion-cadiz-solicitud-generica"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
     private const val AIREF_START_URL =
