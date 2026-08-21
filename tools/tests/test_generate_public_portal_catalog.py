@@ -1484,6 +1484,30 @@ records:
         self.assertIn("e2e", eivissa["limitations"].lower())
 
 
+    def test_fuerteventura_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "fuerteventura-portal-institucional"
+        )
+
+        self.assertEqual("fuerteventura-sede-electronica", target["profileId"])
+        self.assertEqual("ES-PUB-0133", target["inventoryId"])
+        self.assertEqual("https://www.cabildofuer.es/cabildo/", target["entryUrl"])
+        self.assertEqual(
+            "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+            target["launchUrl"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual("DELEGACION_FUERTEVENTURA_SEDE", target["protocolFamily"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
     def test_tenerife_institutional_alias_binds_exact_qa_sede_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tenerife = next(
