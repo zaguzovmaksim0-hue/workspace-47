@@ -2142,6 +2142,26 @@
         {"url":"https://sede.cmt.gob.es/","reviewedOn":"2026-08-23"},
         {"url":"https://sede.cmt.gob.es/catalogoservicios.aspx","reviewedOn":"2026-08-23"}
       ]
+    },
+    {
+      "profileId": "diputacion-huelva-sede-public",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Huelva — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.diphuelva.es/",
+      "initiatorOrigins": ["https://sede.diphuelva.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.diphuelva.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diphuelva.es/","reviewedOn":"2026-08-21"}
+      ]
     }
   ]
 }

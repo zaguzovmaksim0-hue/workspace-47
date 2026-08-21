@@ -117,6 +117,7 @@ class PortalCatalogRepositoryTest {
                 "ctbg-solicitud-informacion",
                 "catastro-solicitudes-genericas",
                 "fega-solicitud-general-ofvsg02",
+                "diputacion-huelva-sede-public",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",

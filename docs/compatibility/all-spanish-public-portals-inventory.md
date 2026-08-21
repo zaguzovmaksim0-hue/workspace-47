@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 246 |
 | Fuentes oficiales totales registradas | 258 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 116 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 120 |
-| Entradas restantes fuera de ambos estados | 63 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 117 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 121 |
+| Entradas restantes fuera de ambos estados | 62 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 116 |
+| `IMPLEMENTED_NOT_E2E` | 117 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 56 |
+| `BROWSE_ONLY` | 55 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5370,29 +5370,29 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "Huelva (provincia)"
     institution_name: "Diputación Provincial de Huelva"
-    surface_name: "Portal oficial de Diputación Provincial de Huelva"
+    surface_name: "Diputación Provincial de Huelva — Sede electrónica"
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.diphuelva.es"
-    official_site: "https://www.diphuelva.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.diphuelva.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    official_site: "https://www.diphuelva.es/"
+    e_sede: "https://sede.diphuelva.es/"
+    entry_url: "https://sede.diphuelva.es/"
+    procedure_page: "https://sede.diphuelva.es/"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "HUELVA_MOAD_PUBLIC_SEDE_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "El portal oficial enlaza verificación de firma; no acredita que un trámite exija certificado o firma."
-    protocol_evidence: "La referencia a verificación de firma no prueba un requisito de operación ni un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only limitado al lanzamiento público exacto de la Sede de la Diputación de Huelva; la Sede publica Instancia Genérica / Registro Electrónico y permite continuar mediante certificado/DNIe o credenciales de la propia Sede."
+    protocol_evidence: "El portal oficial https://www.diphuelva.es/ enlaza actualmente de forma directa https://sede.diphuelva.es/. La portada de la Sede publica REG. ELECTRÓNICO / INSTANCIA GENÉRICA (IGE_03); su transición pública ticketizada muestra la ficha actual y declara que la presentación electrónica admite certificado digital, DNI electrónico o usuario y clave de la Sede. El deep-link altaSolicitud es dependiente del ticket/sesión y fuera de ese contexto devuelve error, por lo que no se fija como startUrl ni se infiere firma, AutoFirma, callback o presentación final."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP20A"]
-    reason: "No se generaliza el enlace de verificación a certificado o firma obligatorios; seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP20A", "HUELVA-SEDE-2026-08-21"]
+    reason: "Implementación QA_ONLY de navegación exacta a la Sede pública. El acceso por certificado es una opción observada, no se modela CLIENT_TLS_AUTH; firma documental, formato, algoritmo, callback y presentación final permanecen NO_VERIFICADO. E2E físico pendiente."
+    reviewed_at: "2026-08-21"
+    next_gate: "Si se amplía el contrato, continuar autenticado solo hasta el primer estado pre-firma observable y detenerse antes de firma criptográfica o presentación final."
 
   - inventory_id: "ES-PUB-0159"
     surface_key: "diputacion-huesca-portal"
@@ -6558,6 +6558,7 @@ availability, certificado, firma ni contrato técnico.
 [DP19A]: https://egoitza.gipuzkoa.eus/es/
 [DP19B]: https://egoitza.gipuzkoa.eus/es/identificacion-y-autenticacion/certificado-electronico-cualificado
 [DP20A]: https://www.diphuelva.es
+[HUELVA-SEDE-2026-08-21]: https://sede.diphuelva.es/
 [DP21A]: https://www.dphuesca.es
 [DP21B]: https://diputaciondehuesca.transparencialocal.gob.es/es_ES/media/49636
 [DP21C]: https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME

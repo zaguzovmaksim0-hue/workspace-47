@@ -110,6 +110,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ctbg-solicitud-informacion"),
                 ProfileId("catastro-solicitudes-genericas"),
                 ProfileId("fega-solicitud-general-ofvsg02"),
+                ProfileId("diputacion-huelva-sede-public"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),
