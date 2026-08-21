@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "54362a211654bc8e28a48da6eb7ade304573560387cc6016b054b5951b22d323",
+  "sourceRevision": "1c450dc7fc10919f2ebfb503c5fee65fe71ce1a3aa951be1469d44c9351eed2d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3103,26 +3103,29 @@
     {
       "portalId": "mallorca-portal-institucional",
       "inventoryId": "ES-PUB-0119",
-      "profileId": null,
+      "profileId": "consell-mallorca-sede",
       "displayName": "Portal institucional del Consell de Mallorca",
       "organization": "Consell de Mallorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la tramitación electrónica en la Seu separada; la Seu publica el Registre Electrònic del Consell y su URL exacta coincide con el startUrl del perfil QA-only consell-mallorca-sede.",
       "entryUrl": "https://www.conselldemallorca.es/",
+      "launchUrl": "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_MALLORCA_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I02A",
-        "I02B"
+        "I02B",
+        "MALLORCA-PORTAL-SEDE-2026-08-21",
+        "MALLORCA-PORTAL-REGISTRE-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente consell-mallorca-sede por delegación oficial actual portal → Seu Electrònica → Registre Electrònic y coincidencia exacta del launch URL; faltan E2E físico y cualquier atribución de ABI criptográfico propio al portal institucional."
     },
     {
       "portalId": "mallorca-sede-electronica",

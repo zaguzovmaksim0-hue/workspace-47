@@ -797,6 +797,56 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `Mallorca institutional alias keeps portal metadata and resolves only exact QA Registre launch`() {
+        val portalId = PortalId("mallorca-portal-institucional")
+        val profileId = ProfileId("consell-mallorca-sede")
+        val institutionalEntry = java.net.URI("https://www.conselldemallorca.es/")
+        val registreStart = java.net.URI(
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
+        )
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(institutionalEntry, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, registreStart), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(profileId, registreStart),
+            qaRepository.resolveLaunch(profileId, institutionalEntry),
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(
+                        launchUrl = java.net.URI(
+                            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12083",
+                        ),
+                    )
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
     fun `Tenerife institutional alias keeps portal metadata and inherits only exact QA Sede launch`() {
         val portalId = PortalId("tenerife-portal-institucional")
         val profileId = ProfileId("tenerife-sede-electronica")

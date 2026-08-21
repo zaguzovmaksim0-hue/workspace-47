@@ -1147,6 +1147,29 @@ records:
         self.assertIn("e2e", bne["limitations"].lower())
 
 
+    def test_mallorca_institutional_alias_binds_exact_existing_sede_operation(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mallorca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "mallorca-portal-institucional"
+        )
+
+        self.assertEqual("consell-mallorca-sede", mallorca["profileId"])
+        self.assertEqual("ES-PUB-0119", mallorca["inventoryId"])
+        self.assertEqual("https://www.conselldemallorca.es/", mallorca["entryUrl"])
+        self.assertEqual(
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
+            mallorca["launchUrl"],
+        )
+        self.assertEqual("E2E_PENDING", mallorca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mallorca["inventoryStatus"])
+        self.assertEqual("2026-08-21", mallorca["reviewedOn"])
+        self.assertEqual("DELEGACION_MALLORCA_SEDE", mallorca["protocolFamily"])
+        self.assertEqual([], mallorca["observedMechanisms"])
+        self.assertEqual([], mallorca["observedSignatureFormats"])
+        self.assertIn("alias", mallorca["limitations"].lower())
+        self.assertIn("e2e", mallorca["limitations"].lower())
+
     def test_tenerife_institutional_alias_binds_exact_qa_sede_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tenerife = next(

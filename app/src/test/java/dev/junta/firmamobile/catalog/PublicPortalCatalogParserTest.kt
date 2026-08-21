@@ -420,6 +420,27 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Mallorca institutional alias binds only the exact reviewed Registre launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val portal = catalog.entries.single {
+            it.portalId == PortalId("mallorca-portal-institucional")
+        }
+
+        assertEquals("ES-PUB-0119", portal.inventoryId)
+        assertEquals(ProfileId("consell-mallorca-sede"), portal.profileId)
+        assertEquals(URI("https://www.conselldemallorca.es/"), portal.entryUrl)
+        assertEquals(
+            URI("https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"),
+            portal.launchUrl,
+        )
+        assertEquals("DELEGACION_MALLORCA_SEDE", portal.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, portal.catalogStatus)
+        assertTrue(portal.observedMechanisms.isEmpty())
+        assertTrue(portal.observedSignatureFormats.isEmpty())
+    }
+
+    @Test
     fun `Tenerife institutional alias binds only the exact Sede launch`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val portal = catalog.entries.single {
