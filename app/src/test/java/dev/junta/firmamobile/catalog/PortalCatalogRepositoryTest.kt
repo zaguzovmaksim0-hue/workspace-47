@@ -86,6 +86,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-leon-sede",
                 "diputacion-albacete-portal",
                 "consell-mallorca-sede",
+                "diputacion-cuenca-portal",
                 "generalitat-valenciana-client-auth",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",

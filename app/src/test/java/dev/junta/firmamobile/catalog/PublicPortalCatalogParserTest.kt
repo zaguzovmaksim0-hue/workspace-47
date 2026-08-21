@@ -79,6 +79,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-leon-sede"),
                 ProfileId("diputacion-albacete-portal"),
                 ProfileId("consell-mallorca-sede"),
+                ProfileId("diputacion-cuenca-portal"),
                 ProfileId("generalitat-valenciana-client-auth"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
