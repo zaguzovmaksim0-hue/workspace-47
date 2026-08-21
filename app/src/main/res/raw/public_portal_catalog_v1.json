@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "301c87938ee090f36f1ab5201988c75f445000b8dd1267c0d12b2f9a8cb80f5a",
+  "sourceRevision": "2af7eff97752410011083b4d80e4f546ae647b4d7f41efc21daeaf36d8f3b381",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4046,25 +4046,27 @@
     {
       "portalId": "diputacion-ciudad-real-portal",
       "inventoryId": "ES-PUB-0150",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Ciudad Real",
+      "profileId": "diputacion-ciudad-real-registro-telematico",
+      "displayName": "Diputación Provincial de Ciudad Real — Registro Telemático Común",
       "organization": "Diputación Provincial de Ciudad Real",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla-La Mancha",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dipucr.es",
+      "purpose": "Perfil QA-only limitado a la página pública exacta del Registro Telemático Común de la Diputación Provincial de Ciudad Real. El inicio autenticado posterior usa SIGEM en se1.dipucr.es:4443 y deriva públicamente a Cl@ve; autenticación, certificado, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.dipucr.es/iniciaTramite/20",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "SIGEM_CLAVE_NONSTANDARD_PORT_HANDOFF",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP12A"
+        "DP12A",
+        "CIUDAD-REAL-SEDE-2026-08-21",
+        "CIUDAD-REAL-REGISTRO-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Implementación QA_ONLY de navegación solo hasta la página pública estable en sede.dipucr.es:443. El handoff SIGEM posterior usa :4443, fuera del modelo ExactOrigin actual; no se habilitan CLIENT_TLS_AUTH, SIGN ni SELECT_CERTIFICATE y no se infiere ningún contrato de firma/presentación."
     },
     {
       "portalId": "diputacion-cordoba-portal",

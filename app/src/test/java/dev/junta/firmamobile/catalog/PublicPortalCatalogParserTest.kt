@@ -112,6 +112,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("catastro-solicitudes-genericas"),
                 ProfileId("fega-solicitud-general-ofvsg02"),
                 ProfileId("diputacion-huelva-sede-public"),
+                ProfileId("diputacion-ciudad-real-registro-telematico"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),

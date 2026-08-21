@@ -2200,6 +2200,27 @@
           "reviewedOn": "2026-08-21"
         }
       ]
+    },
+    {
+      "profileId": "diputacion-ciudad-real-registro-telematico",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Ciudad Real — Registro Telemático Común",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipucr.es/iniciaTramite/20",
+      "initiatorOrigins": ["https://sede.dipucr.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.dipucr.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucr.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucr.es/iniciaTramite/20","reviewedOn":"2026-08-21"}
+      ]
     }
   ]
 }
