@@ -3220,24 +3220,33 @@
     {
       "portalId": "menorca-sede-electronica",
       "inventoryId": "ES-PUB-0118",
-      "profileId": null,
-      "displayName": "Seu electrònica del Consell Insular de Menorca",
+      "profileId": "menorca-carpeta-ciutadana",
+      "displayName": "Seu electrònica del Consell Insular de Menorca — Sol·licitud genèrica",
       "organization": "Consell Insular de Menorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "purpose": "La Seu electrònica delega los trámites en la Carpeta Ciutadana actual; la Sol·licitud genèrica del Consell reutiliza el contrato QA de autenticación TLS cliente ya implementado, sin ampliar la firma AutoFirma ni el envío final.",
       "entryUrl": "https://seuelectronica.cime.es/",
-      "observedMechanisms": [],
+      "launchUrl": "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I01B"
+        "I01B",
+        "MENORCA-SEDE-DELEGATION-2026-08-21",
+        "MENORCA-SEDE-GENERIC-2026-08-21",
+        "MENORCA-SEDE-CLIENT-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias exacto al perfil QA existente menorca-carpeta-ciutadana: la evidencia actual de la Seu y de la Carpeta enlaza el mismo procedimiento y la misma transición Login.aspx -> LoginCert.aspx con parámetro URL vinculado. E2E Android pendiente; formato, algoritmo, payload, callback y presentación final siguen sin inferirse."
     },
     {
       "portalId": "mallorca-portal-institucional",
