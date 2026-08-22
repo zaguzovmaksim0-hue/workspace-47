@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "060d430dc1a26fca8db83024c8323e9f54856173936e0aea04ec8ac9baabe7aa",
+  "sourceRevision": "600bd609e887d67a4cc9da028e0c7979ca4ea18ec28cd308d68787585b3ac7cc",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3968,25 +3968,30 @@
     {
       "portalId": "diputacion-cordoba-portal",
       "inventoryId": "ES-PUB-0151",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Córdoba",
+      "profileId": "diputacion-cordoba-solicitud-generica",
+      "displayName": "Diputación Provincial de Córdoba — Solicitud Genérica",
       "organization": "Diputación Provincial de Córdoba",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dipucordoba.es",
-      "observedMechanisms": [],
+      "purpose": "Solicitud Genérica (procedimiento 8876): perfil QA-only para la entrada pública exacta; el flujo vigente ofrece Cl@ve, certificado y una rama sin identificación que alcanza el formulario público de datos del solicitante.",
+      "entryUrl": "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DIPCORDOBA_EPRINSA_PUBLIC_FORM",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP13A"
+        "DP13A",
+        "CORDOBA-TRAMITES-2026-08-21",
+        "CORDOBA-SEDE-TRAMITES-2026-08-21",
+        "CORDOBA-SOLGEN-8876-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado a la entrada exacta de Solicitud Genérica 8876 en sede.dipucordoba.es. El certificado es una alternativa de acceso, no un requisito universal porque existe una rama pública sin identificación. No se expone SIGN, CLIENT_TLS_AUTH, endpoint ni formato/algoritmo de firma; sin E2E."
     },
     {
       "portalId": "diputacion-a-coruna-portal",

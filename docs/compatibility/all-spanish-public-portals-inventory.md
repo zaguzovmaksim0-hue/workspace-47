@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 91 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 95 |
-| Entradas restantes fuera de ambos estados | 88 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 92 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 96 |
+| Entradas restantes fuera de ambos estados | 87 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 91 |
+| `IMPLEMENTED_NOT_E2E` | 92 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 81 |
+| `BROWSE_ONLY` | 80 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5152,29 +5152,29 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "Córdoba (provincia)"
     institution_name: "Diputación Provincial de Córdoba"
-    surface_name: "Portal oficial de Diputación Provincial de Córdoba"
+    surface_name: "Diputación Provincial de Córdoba — Solicitud Genérica"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.dipucordoba.es"
+    origin: "https://sede.dipucordoba.es"
     official_site: "https://www.dipucordoba.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipucordoba.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    e_sede: "https://sede.dipucordoba.es/diputacion"
+    entry_url: "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica"
+    procedure_page: "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DIPCORDOBA_EPRINSA_PUBLIC_FORM"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud Genérica (procedimiento 8876): perfil QA-only para la entrada pública exacta; el flujo vigente ofrece Cl@ve, certificado y una rama sin identificación que alcanza el formulario público de datos del solicitante."
+    protocol_evidence: "El portal oficial /tramites delega en la Sede EPRINSA vigente. En Chromium público, la fila Solicitud Genérica abre exactamente /diputacion/tramites/procedimiento/8876/solicitud-generica. El componente declara procedure-id 8876; la opción sin identificación alcanza una ruta de solicitador con formulario Datos del Solicitante y carga el descriptor público mediante la sesión de aplicación. También se observa formClave POST a https://apis.dipucordoba.es/apiclave/api/sessions, pero no se ejecutó autenticación y no se conservó ningún token. No se atribuye a este procedimiento un contrato de firma, client TLS, endpoint, formato ni algoritmo."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP13A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP13A", "CORDOBA-TRAMITES-2026-08-21", "CORDOBA-SEDE-TRAMITES-2026-08-21", "CORDOBA-SOLGEN-8876-2026-08-21"]
+    reason: "Perfil QA-only limitado a la entrada exacta de Solicitud Genérica 8876 en sede.dipucordoba.es. El certificado es una alternativa de acceso, no un requisito universal porque existe una rama pública sin identificación. No se expone SIGN, CLIENT_TLS_AUTH, endpoint ni formato/algoritmo de firma; sin E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Para ampliar el contrato, continuar una sesión controlada solo hasta el estado previo a firma o presentación final con datos veraces; detenerse antes de firma criptográfica, registro final o pago."
 
   - inventory_id: "ES-PUB-0152"
     surface_key: "diputacion-a-coruna-portal"
@@ -6511,6 +6511,9 @@ availability, certificado, firma ni contrato técnico.
 [DP11A]: https://www.dipcas.es/es/
 [DP12A]: https://www.dipucr.es
 [DP13A]: https://www.dipucordoba.es
+[CORDOBA-TRAMITES-2026-08-21]: https://www.dipucordoba.es/tramites
+[CORDOBA-SEDE-TRAMITES-2026-08-21]: https://sede.dipucordoba.es/diputacion/tramites
+[CORDOBA-SOLGEN-8876-2026-08-21]: https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica
 [DP14A]: https://www.dacoruna.gal/portada
 [DP14B]: https://www.dacoruna.gal/servizos-tributarios/preguntas-frecuentes/recursos/
 [DP15A]: https://www.dipucuenca.es

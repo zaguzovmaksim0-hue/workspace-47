@@ -1511,6 +1511,27 @@ records:
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
 
+    def test_cordoba_solicitud_generica_binds_exact_public_form_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0151")
+        self.assertEqual("diputacion-cordoba-portal", target["portalId"])
+        self.assertEqual("diputacion-cordoba-solicitud-generica", target["profileId"])
+        self.assertEqual(
+            "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DIPCORDOBA_EPRINSA_PUBLIC_FORM", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+        self.assertIn("sin e2e", target["limitations"].lower())
+
     def test_diputacion_alava_binds_exact_registro_comun_qa_start_without_signer_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0140")
