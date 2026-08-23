@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "450e62184387b316233fb17ecb76fe5699fe642ae73a2070a98f368528c64b5d",
+  "sourceRevision": "70a037090fd0a9673627e13956529e10ae1597e3469b4af73a84eacd47eb79c0",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -914,24 +914,28 @@
     {
       "portalId": "age-consejo-de-seguridad-nuclear-csn",
       "inventoryId": "ES-PUB-0034",
-      "profileId": null,
+      "profileId": "csn-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Consejo de Seguridad Nuclear (CSN)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede CSN y selector de acceso por certificado digital/DNIe, Cl@ve o usuario/contraseña; no se atribuye contrato de firma.",
       "entryUrl": "https://sede.csn.gob.es/",
-      "observedMechanisms": [],
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CSN-SEDE-2026-08-23",
+        "CSN-IDENT-2026-08-23"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado a navegación pública de la Sede CSN. La evidencia acredita opciones de identificación, pero no CLIENT_TLS_AUTH ni un contrato de firma ejecutable; esas capacidades permanecen deshabilitadas."
     },
     {
       "portalId": "age-consejo-de-transparencia-y-buen-gobierno-ctbg",

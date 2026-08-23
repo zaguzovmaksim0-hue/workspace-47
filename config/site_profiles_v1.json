@@ -2060,6 +2060,26 @@
         {"url":"https://sede.cnmc.gob.es/","reviewedOn":"2026-08-23"},
         {"url":"https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones","reviewedOn":"2026-08-23"}
       ]
+    },
+    {
+      "profileId": "csn-sede-public",
+      "profileVersion": 1,
+      "displayName": "Consejo de Seguridad Nuclear — sede pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.csn.gob.es/",
+      "initiatorOrigins": ["https://sede.csn.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.csn.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }
