@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "411da24cfb0e463d14c9ea195f476db708a416b1547c7ff2da21fbb698f004d9",
+  "sourceRevision": "64edfab20829405e93a57fdac4c2dff8889db10059188c1d31966fcd11ddf0e4",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -580,13 +580,13 @@
       "organization": "Administrador de Infraestructuras Ferroviarias (ADIF)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Public navigation only; technical operation contracts unverified.",
+      "purpose": "NO_VERIFICADO",
       "entryUrl": "https://sede.adif.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "E2E_PENDING",
-      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "catalogStatus": "DISCOVERED",
+      "inventoryStatus": "BROWSE_ONLY",
       "discoveryState": "DISCOVERED",
       "evidenceIds": [
         "D11"
@@ -872,19 +872,22 @@
       "organization": "Comisión Nacional del Mercado de Valores (CNMV)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA delimitada a la Sede pública oficial; certificados y plataforma de firma constan como evidencia descriptiva, sin exponer autenticación, firma ni presentación final.",
       "entryUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CNMV_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CNMV-SEDE-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "La Sede first-party está revalidada y permite un contrato QA-only de navegación pública. Las referencias a certificado/AutoFirma son descriptivas; autenticación, selección de certificado, firma y presentación final permanecen fuera del contrato implementado."
     },
     {
       "portalId": "age-consejo-de-seguridad-nuclear-csn",

@@ -194,8 +194,8 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 243 |
-| Fuentes oficiales totales registradas | 255 |
+| Fuentes oficiales portal-specific registradas | 244 |
+| Fuentes oficiales totales registradas | 256 |
 | Entradas `VERIFIED_E2E` | 4 |
 | Entradas `IMPLEMENTED_NOT_E2E` | 95 |
 | Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1113,14 +1113,14 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "DISCOVERED"
-    inventory_status: "IMPLEMENTED_NOT_E2E"
-    operation_summary: "Public navigation only; technical operation contracts unverified."
+    inventory_status: "BROWSE_ONLY"
+    operation_summary: "NO_VERIFICADO"
     protocol_evidence: "NO_VERIFICADO"
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D11"]
     reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
     reviewed_at: "2026-07-16"
-    next_gate: "Controlled E2E authentication/signing validation not included."
+    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
     notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
 
   - inventory_id: "ES-PUB-0022"
@@ -1479,23 +1479,23 @@ records:
     e_sede: "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
     entry_url: "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
     procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CNMV_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA delimitada a la Sede pública oficial; certificados y plataforma de firma constan como evidencia descriptiva, sin exponer autenticación, firma ni presentación final."
+    protocol_evidence: "La landing first-party devuelve HTTP 200 y documenta certificados electrónicos válidos, presentación por Zona abierta con certificado y una plataforma de firma que remite a la aplicación oficial; no publica un ABI/algoritmo/formato/callback de firma suficiente para exponer SIGN."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "CNMV-SEDE-2026-08-23"]
+    reason: "La Sede first-party está revalidada y permite un contrato QA-only de navegación pública. Las referencias a certificado/AutoFirma son descriptivas; autenticación, selección de certificado, firma y presentación final permanecen fuera del contrato implementado."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA. Cualquier soporte de autenticación o firma requiere evidencia técnica exacta separada."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa. Investigación pública no autenticada; no se seleccionó certificado, no se firmó ni se presentó documentación."
 
   - inventory_id: "ES-PUB-0034"
     surface_key: "age-consejo-de-seguridad-nuclear-csn"
@@ -6605,3 +6605,4 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+[CNMV-SEDE-2026-08-23]: https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx

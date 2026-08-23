@@ -96,6 +96,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("cnmv-sede-public-home"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
