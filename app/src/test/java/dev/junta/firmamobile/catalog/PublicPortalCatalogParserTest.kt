@@ -96,6 +96,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("fondos-europeos-sede-public-home"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
@@ -1189,6 +1190,35 @@ class PublicPortalCatalogParserTest {
             PortalLaunchTarget(ProfileId("portal-funciona-public-home"), URI("https://sede.funciona.gob.es/es/home")),
             repository.resolveLaunch(portal),
         )
+    }
+
+    @Test
+    fun `Fondos Europeos keeps exact official Sede and resolves only QA public navigation`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.portalId == PortalId("age-direccion-general-de-fondos-europeos") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0039", metadata.inventoryId)
+        assertEquals(ProfileId("fondos-europeos-sede-public-home"), metadata.profileId)
+        assertEquals(URI("https://sedefondoscomunitarios.gob.es/"), metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("DGFE_PUBLIC_SEDE_NAVIGATION", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals("REVIEWED", metadata.discoveryState.name)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(PortalLaunchTarget(ProfileId("fondos-europeos-sede-public-home"), URI("https://sedefondoscomunitarios.gob.es/")), repository.resolveLaunch(portal))
     }
 
     @Test

@@ -279,6 +279,24 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `Fondos Europeos public Sede is browse-only trust in QA and external service origins stay closed`() {
+        val profileId = ProfileId("fondos-europeos-sede-public-home")
+        val start = URI("https://sedefondoscomunitarios.gob.es/")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://tramitesfondoseuropeos.hacienda.gob.es/dossier")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://reg.redsara.es/es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sedefondoscomunitarios.gob.es.evil.example/")))
+    }
+
+    @Test
     fun `Junta VEA PEG is QA-only browse and rejects auth API as profile origin`() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
