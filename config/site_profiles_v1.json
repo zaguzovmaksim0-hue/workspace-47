@@ -1701,6 +1701,30 @@
         {"url":"https://sede.carm.es/presentador/inicio/385/DI155","reviewedOn":"2026-08-19"},
         {"url":"https://conclave.carm.es/TokenServlet","reviewedOn":"2026-08-19"}
       ]
+    },
+    {
+      "profileId": "aemet-public-solicitud-navigation",
+      "profileVersion": 1,
+      "displayName": "AEMET — Solicitud certificados y datos",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home",
+      "initiatorOrigins": ["https://sede.aemet.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.aemet.es/es/sede_electronica","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/solicitudes","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/nuevaSolicitud","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }

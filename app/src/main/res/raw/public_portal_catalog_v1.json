@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "c39a5da20473a1624ff0cbd590ea8c2ce6ad39b49f920737d874a99ef2c41eef",
+  "sourceRevision": "d4be22b35c52a1b3bb367ec6c8dd1021362cfac6344ed7abda2f9b7a7b1d4601",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -644,24 +644,34 @@
     {
       "portalId": "age-agencia-estatal-de-meteorologia-aemet",
       "inventoryId": "ES-PUB-0024",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "aemet-public-solicitud-navigation",
+      "displayName": "AEMET — Solicitud certificados y datos / Sede electrónica",
       "organization": "Agencia Estatal de Meteorología (AEMET)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA integrada desde la entrada oficial estable de la Sede AEMET hacia el flujo público 'Solicitud certificados y datos'; el login por certificado/AutoFirma se registra como frontera observada, no como capacidad criptográfica implementada.",
       "entryUrl": "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "AEMET_SEDE_CERTIFICATE_LOGIN_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "AEMET-SEDE-2026-08-23",
+        "AEMET-PROCEDURE-2026-08-23",
+        "AEMET-NEW-SOLICITUD-2026-08-23",
+        "AEMET-L1-2026-08-23",
+        "AEMET-SSO-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil nuevo QA_ONLY limitado a navegación same-origin desde la entrada oficial estable. Los mecanismos CERTIFICATE_ACCESS/ELECTRONIC_SIGNATURE/AUTOFIRMA/MINIAPPLET reflejan únicamente la frontera pública observada; el perfil mantiene capabilities vacío y no implementa SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, carga documental ni presentación final. Falta E2E físico."
     },
     {
       "portalId": "age-agencia-estatal-de-seguridad-aerea-aesa",

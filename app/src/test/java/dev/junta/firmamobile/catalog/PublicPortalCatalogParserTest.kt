@@ -53,6 +53,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("educacion-convocatoria"),
                 ProfileId("aragon-siraw"),
                 ProfileId("aeat-mis-datos-censales"),
+                ProfileId("aemet-public-solicitud-navigation"),
                 ProfileId("dgt-verificacion-equipo"),
                 ProfileId("ugr-certificado-login"),
                 ProfileId("cantabria-rec-cert-login"),
