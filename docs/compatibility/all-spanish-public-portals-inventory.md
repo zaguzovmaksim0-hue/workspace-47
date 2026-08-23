@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 246 |
 | Fuentes oficiales totales registradas | 258 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 119 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 123 |
-| Entradas restantes fuera de ambos estados | 60 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 120 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 124 |
+| Entradas restantes fuera de ambos estados | 59 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 119 |
+| `IMPLEMENTED_NOT_E2E` | 120 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 53 |
+| `BROWSE_ONLY` | 52 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5280,29 +5280,29 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "Granada (provincia)"
     institution_name: "Diputación Provincial de Granada"
-    surface_name: "Portal oficial de Diputación Provincial de Granada"
+    surface_name: "Diputación Provincial de Granada — Sede electrónica"
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dipgra.es"
-    official_site: "https://www.dipgra.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipgra.es"
-    procedure_page: "NO_VERIFICADO"
+    official_site: "https://www.dipgra.es/"
+    e_sede: "https://sede.dipgra.es/"
+    entry_url: "https://sede.dipgra.es/"
+    procedure_page: "https://sede.dipgra.es/"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "GRANADA_SEDE_PUBLIC_QA_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only limitado al lanzamiento público estable de la Sede electrónica de la Diputación de Granada; la Sede publica Registro Electrónico y acceso identificado, pero no se implementan autenticación, certificado, firma ni presentación final."
+    protocol_evidence: "El portal oficial https://www.dipgra.es/ enlaza directamente https://sede.dipgra.es/. La Sede pública expone REGISTRO ELECTRÓNICO, un enlace estable de identificación y documentación sobre firmas electrónicas admitidas/AutoFirma. Los accesos de trámite usan un POST interno action=generaTicket y parámetros de ticket/procedure, por lo que no se fija un deep-link session-bound ni se infiere ABI de firma, CLIENT_TLS_AUTH, callback o presentación final."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP17A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP17A", "GRANADA-SEDE-2026-08-23"]
+    reason: "Implementación QA_ONLY de navegación exacta a la Sede pública estable. Las menciones a certificado y AutoFirma son evidencia documental, no un contrato técnico de autenticación/firma; SIGN, SELECT_CERTIFICATE y CLIENT_TLS_AUTH permanecen bloqueados."
+    reviewed_at: "2026-08-23"
+    next_gate: "Si se amplía el contrato, continuar desde un trámite estable hasta el primer estado pre-firma observable y detenerse antes de cualquier operación de clave privada o presentación final."
 
   - inventory_id: "ES-PUB-0156"
     surface_key: "diputacion-guadalajara-sede"
@@ -6557,6 +6557,7 @@ availability, certificado, firma ni contrato técnico.
 [DP16A]: https://www.ddgi.cat/web/
 [DP16B]: https://seu.ddgi.cat/web/nivell/658/s-1/sistemes-de-signatura-electronica
 [DP17A]: https://www.dipgra.es
+[GRANADA-SEDE-2026-08-23]: https://sede.dipgra.es/
 [DP18A]: https://dguadalajara.sedelectronica.es
 [DP18B]: https://www.dguadalajara.es/web/guest/sede-electronica
 [DP19A]: https://egoitza.gipuzkoa.eus/es/
