@@ -1737,6 +1737,26 @@
         {"url":"https://sede.carm.es/presentador/inicio/385/DI155","reviewedOn":"2026-08-19"},
         {"url":"https://conclave.carm.es/TokenServlet","reviewedOn":"2026-08-19"}
       ]
+    },
+    {
+      "profileId": "csn-sede-public",
+      "profileVersion": 1,
+      "displayName": "Consejo de Seguridad Nuclear — sede pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.csn.gob.es/",
+      "initiatorOrigins": ["https://sede.csn.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.csn.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }

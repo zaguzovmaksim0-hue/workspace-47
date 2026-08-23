@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 94 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 98 |
-| Entradas restantes fuera de ambos estados | 85 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 95 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
+| Entradas restantes fuera de ambos estados | 84 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 94 |
+| `IMPLEMENTED_NOT_E2E` | 95 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 78 |
+| `BROWSE_ONLY` | 77 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1509,23 +1509,23 @@ records:
     official_site: "https://sede.csn.gob.es/"
     e_sede: "https://sede.csn.gob.es/"
     entry_url: "https://sede.csn.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    procedure_page: "https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
     protocol_family: "NO_VERIFICADO"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede CSN y selector de acceso por certificado digital/DNIe, Cl@ve o usuario/contraseña; no se atribuye contrato de firma."
+    protocol_evidence: "La página oficial de identificación publica certificado digital/DNIe, Cl@ve y usuario/contraseña, y declara certificados de clave pública no revocados soportados por @firma; no publica un ABI de firma, algoritmo, formato ni endpoint de presentación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CSN-SEDE-2026-08-23", "CSN-IDENT-2026-08-23"]
+    reason: "Perfil QA-only limitado a navegación pública de la Sede CSN. La evidencia acredita opciones de identificación, pero no CLIENT_TLS_AUTH ni un contrato de firma ejecutable; esas capacidades permanecen deshabilitadas."
+    reviewed_at: "2026-08-23"
+    next_gate: "Runtime autenticado controlado para observar la transición exacta de certificado/Cl@ve y, si existe, detenerse antes de cualquier firma o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Industria y Turismo; Ministerio para la Transición Ecológica y el Reto Demográfico."
 
   - inventory_id: "ES-PUB-0035"
@@ -6605,3 +6605,7 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+
+[CSN-SEDE-2026-08-23]: https://sede.csn.gob.es/
+
+[CSN-IDENT-2026-08-23]: https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3
