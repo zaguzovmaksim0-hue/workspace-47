@@ -170,6 +170,7 @@ class JuntaOriginPolicyTest {
             "sede.seguridadaerea.gob.es",
             "www.boe.es",
             "sede.cnmc.gob.es",
+            "sede.adif.gob.es",
             "presidencia.jcyl.es",
             "egoitza.araba.eus",
             "seuelectronica.diba.cat",

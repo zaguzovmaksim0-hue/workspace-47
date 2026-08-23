@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 245 |
 | Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 112 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 116 |
-| Entradas restantes fuera de ambos estados | 67 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 113 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 117 |
+| Entradas restantes fuera de ambos estados | 66 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 112 |
+| `IMPLEMENTED_NOT_E2E` | 113 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 60 |
+| `BROWSE_ONLY` | 59 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 161 |
+| `REVIEWED` | 162 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 17 |
+| `DISCOVERED` | 16 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1100,30 +1100,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Administrador de Infraestructuras Ferroviarias (ADIF)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / Instancia General"
     surface_type: "SEDE"
     origin: "https://sede.adif.gob.es"
     official_site: "https://sede.adif.gob.es/"
     e_sede: "https://sede.adif.gob.es/"
     entry_url: "https://sede.adif.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    procedure_page: "https://sede.adif.gob.es/opencms/export/system/modules/sede/contents/doc/FICHA_ADIF_SPC.pdf"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "ADIF_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede electrónica de ADIF con acceso a procedimientos, incluida la Instancia General SIA 2240787; la implementación se limita al lanzamiento público QA."
+    protocol_evidence: "La Sede pública actual expone Procedimientos Disponibles e Identificarse; la ficha oficial de Instancia General SIA 2240787 documenta identificación mediante DNIe/certificado y usuario/clave. No se observó ni se implementó el contrato técnico posterior de autenticación o firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
+    evidence_ids: ["D11", "ADIF-SEDE-2026-08-23", "ADIF-INSTANCIA-2026-08-23"]
+    reason: "Perfil QA_ONLY limitado a https://sede.adif.gob.es/ sin capabilities sensibles. El certificado es un medio admitido, no una afirmación de CLIENT_TLS_AUTH; SIGN, algoritmo, formato, endpoints y presentación final permanecen NO_VERIFICADO hasta evidencia runtime específica."
+    reviewed_at: "2026-08-23"
+    next_gate: "Revalidar una transición de identificación/firma específica antes de añadir CLIENT_TLS_AUTH, SIGN, algoritmo, formato, endpoint o E2E."
+    notes: "El sitio oficial de ADIF remite expresamente a esta Sede para escritos administrativos y señala la existencia de un trámite genérico de solicitudes, escritos y comunicaciones (Instancia General)."
 
   - inventory_id: "ES-PUB-0022"
     surface_key: "age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid"

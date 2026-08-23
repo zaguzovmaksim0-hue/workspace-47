@@ -1230,6 +1230,27 @@
       ]
     },
     {
+      "profileId": "adif-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "ADIF — Sede electrónica / Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.adif.gob.es/",
+      "initiatorOrigins": ["https://sede.adif.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.adif.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.adif.gob.es/opencms/export/system/modules/sede/contents/doc/FICHA_ADIF_SPC.pdf","reviewedOn":"2026-08-23"},
+        {"url":"https://www.adif.es/sobre-adif/contacto","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
       "profileId": "oepm-protegeo-general",
       "profileVersion": 1,
       "displayName": "OEPM — Solicitud de propósito general (ProtegeO)",
