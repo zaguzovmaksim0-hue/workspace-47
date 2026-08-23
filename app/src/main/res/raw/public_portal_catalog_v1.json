@@ -771,24 +771,27 @@
     {
       "portalId": "age-centro-de-investigaciones-energeticas-medioambientales-y-tecnologicas-ciemat",
       "inventoryId": "ES-PUB-0029",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Registro Electrónico General para presentaciones telemáticas dirigidas a CIEMAT",
       "entryUrl": "https://sede.ciemat.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CIEMAT-REG-2026-08-23",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación del Registro Electrónico General; se conserva la entrada CIEMAT y no se atribuye ABI de firma propio al origin sede.ciemat.gob.es. La validación E2E física de transición queda pendiente.",
+      "launchUrl": "https://reg.redsara.es/es/"
     },
     {
       "portalId": "age-centro-para-el-desarrollo-tecnologico-industrial-cdti",
