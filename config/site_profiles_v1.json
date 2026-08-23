@@ -1701,6 +1701,25 @@
         {"url":"https://sede.carm.es/presentador/inicio/385/DI155","reviewedOn":"2026-08-19"},
         {"url":"https://conclave.carm.es/TokenServlet","reviewedOn":"2026-08-19"}
       ]
+    },
+    {
+      "profileId": "cmt-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Comisionado para el Mercado de Tabacos — navegación pública Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.cmt.gob.es/",
+      "initiatorOrigins": ["https://sede.cmt.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "evidence": [
+        {"url":"https://sede.cmt.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.cmt.gob.es/catalogoservicios.aspx","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }

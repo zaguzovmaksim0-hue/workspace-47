@@ -1554,6 +1554,41 @@ records:
         self.assertIn("e2e", oepm["limitations"].lower())
 
 
+    def test_cmt_public_navigation_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0031"
+        )
+        self.assertEqual("age-comisionado-para-el-mercado-de-tabacos-cmt", target["portalId"])
+        self.assertEqual("cmt-public-navigation", target["profileId"])
+        self.assertEqual("https://sede.cmt.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CMT_PUBLIC_NAVIGATION_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("no_verificado", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+        profiles = json.loads(SITE_PROFILES.read_text())["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "cmt-public-navigation")
+        self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", profile["activation"])
+        self.assertEqual("https://sede.cmt.gob.es/", profile["startUrl"])
+        self.assertEqual(["https://sede.cmt.gob.es"], profile["initiatorOrigins"])
+        self.assertEqual([], profile["redirectOrigins"])
+        self.assertEqual([], profile["trustedBrowseOrigins"])
+        self.assertEqual([], profile["endpoints"])
+        self.assertEqual([], profile["operationPolicies"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+
+
     def test_castilla_leon_quju_binds_exact_public_form_without_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         quju = next(
