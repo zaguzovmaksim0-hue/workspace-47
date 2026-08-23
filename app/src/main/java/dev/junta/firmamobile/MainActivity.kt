@@ -60,12 +60,15 @@ import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
+import dev.junta.firmamobile.signing.DiputacionBadajozCadesAdapter
 import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
 import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
+import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
+import dev.junta.firmamobile.signing.FuerteventuraPadesAdapter
 import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
 import dev.junta.firmamobile.signing.MinecoPadesAdapter
 import dev.junta.firmamobile.signing.TenerifeCadesDetachedAdapter
@@ -156,15 +159,18 @@ class MainActivity : ComponentActivity() {
         val aragonAdapter = LocalCadesDetachedAdapter()
         val dgtAdapter = DgtVerificationCadesAdapter()
         val lleidaAdapter = DiputacionLleidaCadesAdapter()
+        val badajozAdapter = DiputacionBadajozCadesAdapter()
         val canariasAdapter = CanariasCertificateLoginCadesAdapter()
         val ugrAdapter = UgrCadesDetachedAdapter()
         val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
         val mitesAdapter = MitesCertificateLoginCadesAdapter()
         val granCanariaAdapter = GranCanariaPadesAdapter()
+        val fuerteventuraAdapter = FuerteventuraPadesAdapter()
         val xuntaAdapter = XuntaPadesTriPhaseAdapter()
         val transparenciaAdapter = TransparenciaPadesAdapter()
         val minecoAdapter = MinecoPadesAdapter()
         val tenerifeAdapter = TenerifeCadesDetachedAdapter()
+        val eivissaAdapter = EivissaCadesDetachedAdapter()
         val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
         val airefAdapter = AirefXadesEnvelopingAdapter()
         val cdtiAdapter = CdtiXadesEnvelopingAdapter()
@@ -198,15 +204,18 @@ class MainActivity : ComponentActivity() {
                     aragonAdapter.id -> aragonAdapter
                     dgtAdapter.id -> dgtAdapter
                     lleidaAdapter.id -> lleidaAdapter
+                    badajozAdapter.id -> badajozAdapter
                     canariasAdapter.id -> canariasAdapter
                     ugrAdapter.id -> ugrAdapter
                     jccmAdapter.id -> jccmAdapter
                     mitesAdapter.id -> mitesAdapter
                     granCanariaAdapter.id -> granCanariaAdapter
+                    fuerteventuraAdapter.id -> fuerteventuraAdapter
                     xuntaAdapter.id -> xuntaAdapter
                     transparenciaAdapter.id -> transparenciaAdapter
                     minecoAdapter.id -> minecoAdapter
                     tenerifeAdapter.id -> tenerifeAdapter
+                    eivissaAdapter.id -> eivissaAdapter
                     sevillaAdapter.id -> sevillaAdapter
                     airefAdapter.id -> airefAdapter
                     cdtiAdapter.id -> cdtiAdapter

@@ -46,6 +46,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = LocalXadesDetachedAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(LocalXadesDetachedAdapter.JCCM_REGISTRO_PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = LocalXadesDetachedAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId("unizar-tramitador"),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
@@ -116,6 +123,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = SigningProtocolId("cantabria-rec-cert-login-cades-v1"),
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(FuerteventuraPadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = FuerteventuraPadesAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId(GranCanariaPadesAdapter.PROFILE_ID),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
@@ -135,6 +149,13 @@ object BuiltInProtocolAdapterRegistry {
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = MinecoPadesAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(EivissaCadesDetachedAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("autoscript-sign-callback-v1"),
+                signingProtocolId = EivissaCadesDetachedAdapter.ID,
             ),
             ProtocolAdapterBinding(
                 profileId = ProfileId(TenerifeCadesDetachedAdapter.PROFILE_ID),
@@ -233,6 +254,13 @@ object BuiltInProtocolAdapterRegistry {
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
                 signingProtocolId = DiputacionLleidaCadesAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
+                profileId = ProfileId(DiputacionBadajozCadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = DiputacionBadajozCadesAdapter.ID,
             ),
             ProtocolAdapterBinding(
                 profileId = ProfileId(CanariasCertificateLoginCadesAdapter.PROFILE_ID),
