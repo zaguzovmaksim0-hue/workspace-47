@@ -1915,6 +1915,27 @@
       ]
     },
     {
+      "profileId": "fondos-europeos-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "Dirección General de Fondos Europeos — Sede pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedefondoscomunitarios.gob.es/",
+      "initiatorOrigins": ["https://sedefondoscomunitarios.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sedefondoscomunitarios.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://sedefondoscomunitarios.gob.es/sitios/sedeincentivosregionales/es-ES/serviciosElectronicos/Paginas/serviciosElectronicos.aspx","reviewedOn":"2026-08-24"},
+        {"url":"https://sedefondoscomunitarios.gob.es/sitios/sedeincentivosregionales/es-ES/Paginas/FirmaElectronica.aspx","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
       "profileId": "asturias-sede-tramite-navigation",
       "profileVersion": 1,
       "displayName": "Principado de Asturias — trámite de Sede",

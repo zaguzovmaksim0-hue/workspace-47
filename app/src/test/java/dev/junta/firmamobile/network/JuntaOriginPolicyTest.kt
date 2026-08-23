@@ -64,6 +64,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val fondosEuropeos = ProfileId("fondos-europeos-sede-public-home")
     private val asturiasSede = ProfileId("asturias-sede-tramite-navigation")
     private val dgsfp = ProfileId("dgsfp-sede-public-home")
     private val mjusticia = ProfileId("mjusticia-fundaciones-idp75")
@@ -172,6 +173,7 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sedefondoscomunitarios.gob.es",
             "www.sededgsfp.gob.es",
             "sede2.mjusticia.gob.es",
             "sede.cnmv.gob.es",
@@ -343,6 +345,11 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
+        assertEquals(setOf("sedefondoscomunitarios.gob.es"), JuntaOriginPolicy.browserAllowedHosts(fondosEuropeos))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(fondosEuropeos).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sedefondoscomunitarios.gob.es/"), fondosEuropeos))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramitesfondoseuropeos.hacienda.gob.es/dossier"), fondosEuropeos))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://reg.redsara.es/es/"), fondosEuropeos))
         assertEquals(setOf("sede.ordenacionjuego.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgoj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(dgoj).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.ordenacionjuego.gob.es/"), dgoj))

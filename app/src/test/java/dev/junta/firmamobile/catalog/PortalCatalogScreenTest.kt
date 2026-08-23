@@ -469,6 +469,20 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Fondos Europeos public Sede is compatible but external service capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single { it.portalId == PortalId("age-direccion-general-de-fondos-europeos") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("fondos-europeos-sede-public-home"), target.profileId)
+        assertEquals(java.net.URI("https://sedefondoscomunitarios.gob.es/"), target.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.capabilities.isEmpty())
+        assertTrue(target.signatureFormats.isEmpty())
+        assertTrue(target.isEnabled)
+    }
+
+    @Test
     fun `DGSFP public Sede is compatible but sensitive capabilities remain absent`() {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }

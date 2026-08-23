@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "83ff57cef0616057616cd53735e003ca2900bb1bec4179d9b000932e169479d3",
+  "sourceRevision": "a32d13f13080e422fd3fd17b07e2b43f96aa6f0df75e8a8bd3c47aadf4d180c2",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1069,24 +1069,25 @@
     {
       "portalId": "age-direccion-general-de-fondos-europeos",
       "inventoryId": "ES-PUB-0039",
-      "profileId": null,
+      "profileId": "fondos-europeos-sede-public-home",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Dirección General de Fondos Europeos",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA delimitada a la Sede pública oficial y su catálogo first-party; los servicios externos de Hacienda/RED SARA quedan fuera del trust implementado.",
       "entryUrl": "https://sedefondoscomunitarios.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DGFE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DGFE-SEDE-2026-08-24"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "La landing y páginas first-party están revalidadas y permiten un contrato QA-only de navegación pública. Autenticación, certificado, firma, notificaciones, RED SARA y tramitación externa requieren contratos separados y permanecen fuera del perfil."
     },
     {
       "portalId": "age-direccion-general-de-la-guardia-civil",
