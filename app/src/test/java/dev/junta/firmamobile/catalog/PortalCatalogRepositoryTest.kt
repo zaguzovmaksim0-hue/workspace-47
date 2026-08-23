@@ -102,6 +102,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-alava-registro-comun",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "aesa-solicitud-general-public",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
                 "cdti-certificate-validation",

@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 92 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 96 |
-| Entradas restantes fuera de ambos estados | 87 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 93 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 97 |
+| Entradas restantes fuera de ambos estados | 86 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 92 |
+| `IMPLEMENTED_NOT_E2E` | 93 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 80 |
+| `BROWSE_ONLY` | 79 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1223,30 +1223,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Estatal de Seguridad Aérea (AESA)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / Solicitud general"
     surface_type: "SEDE"
     origin: "https://sede.seguridadaerea.gob.es"
-    official_site: "https://sede.seguridadaerea.gob.es/"
-    e_sede: "https://sede.seguridadaerea.gob.es/"
-    entry_url: "https://sede.seguridadaerea.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    official_site: "https://sede.seguridadaerea.gob.es/sede-aesa/"
+    e_sede: "https://sede.seguridadaerea.gob.es/sede-aesa/"
+    entry_url: "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general"
+    procedure_page: "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "AutoFirma"
+    protocol_family: "AESA_SOLICITUD_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Lanzamiento público QA de la Solicitud general de AESA (SIA 203553); la Sede documenta acceso autenticado y firma electrónica, pero la implementación no ejecuta autenticación ni firma."
+    protocol_evidence: "La ficha oficial de Solicitud general enlaza el inicio online y declara presentación telemática autenticada. La ayuda oficial de identificación/firma admite DNIe, certificados soportados por @firma y exige AutoFirma para DNIe/certificados. El inicio online confirma certificado digital/DNIe/Cl@ve, pero no publica un ABI exacto de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
+    evidence_ids: ["D11", "AESA-SEDE-2026-08-23", "AESA-SOLGEN-2026-08-23", "AESA-ID-FIRMA-2026-08-23"]
+    reason: "Perfil QA_ONLY limitado al lanzamiento público exacto de Solicitud general, sin capabilities sensibles. `CERTIFICATE_ACCESS`, `ELECTRONIC_SIGNATURE` y `AUTOFIRMA` son mecanismos documentados por AESA; no se infieren CLIENT_TLS_AUTH, formato, algoritmo, endpoint, callback ni presentación final."
+    reviewed_at: "2026-08-23"
+    next_gate: "Observar de forma controlada el contrato runtime exacto de autenticación/firma antes de añadir CLIENT_TLS_AUTH o SIGN; mantener QA_ONLY hasta E2E separado."
+    notes: "La Sede devuelve HTTP 200 en la landing, ficha de Solicitud general, ayuda de identificación/firma e inicio online revisados desde Pipupa Stable. El trámite online exacto es /oficina/tramites/altaSolicitud.do?codArea=SOLGEN&id=4."
 
   - inventory_id: "ES-PUB-0026"
     surface_key: "age-agencia-estatal-del-boletin-oficial-del-estado-boe"

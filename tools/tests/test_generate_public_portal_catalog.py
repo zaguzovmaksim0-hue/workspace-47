@@ -1575,6 +1575,31 @@ records:
         self.assertIn("no_verificado", quju["limitations"].lower())
 
 
+    def test_aesa_solicitud_general_binds_public_launch_without_unproven_signing_abi(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        aesa = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0025")
+        self.assertEqual("age-agencia-estatal-de-seguridad-aerea-aesa", aesa["portalId"])
+        self.assertEqual("aesa-solicitud-general-public", aesa["profileId"])
+        self.assertEqual(
+            "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+            aesa["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", aesa)
+        self.assertEqual("AESA_SOLICITUD_GENERAL_PUBLIC_LAUNCH", aesa["protocolFamily"])
+        self.assertEqual("E2E_PENDING", aesa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", aesa["inventoryStatus"])
+        self.assertEqual("REVIEWED", aesa["discoveryState"])
+        self.assertEqual("2026-08-23", aesa["reviewedOn"])
+        self.assertEqual(
+            ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            aesa["observedMechanisms"],
+        )
+        self.assertEqual([], aesa["observedSignatureFormats"])
+        self.assertIn("qa_only", aesa["limitations"].lower())
+        self.assertIn("client_tls_auth", aesa["limitations"].lower())
+        self.assertIn("formato", aesa["limitations"].lower())
+
+
     def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         funciona = next(
