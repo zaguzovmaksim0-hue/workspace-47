@@ -1023,6 +1023,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", inclusion["limitations"].lower())
 
 
+    def test_csic_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        csic = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-consejo-superior-de-investigaciones-cientificas-csic"
+        )
+        self.assertEqual("ES-PUB-0037", csic["inventoryId"])
+        self.assertEqual("reg-age-redsara", csic["profileId"])
+        self.assertEqual("https://sede.csic.gob.es/registro-electronico", csic["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", csic["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", csic["protocolFamily"])
+        self.assertEqual("E2E_PENDING", csic["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", csic["inventoryStatus"])
+        self.assertEqual("REVIEWED", csic["discoveryState"])
+        self.assertEqual("2026-08-23", csic["reviewedOn"])
+        self.assertEqual(
+            ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            csic["observedMechanisms"],
+        )
+        self.assertEqual([], csic["observedSignatureFormats"])
+        self.assertIn("reg-age", csic["limitations"].lower())
+        self.assertIn("qa", csic["limitations"].lower())
+        self.assertIn("e2e", csic["limitations"].lower())
+
+
     def test_cervantes_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         cervantes = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-cervantes")
