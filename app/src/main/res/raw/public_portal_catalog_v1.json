@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "060d430dc1a26fca8db83024c8323e9f54856173936e0aea04ec8ac9baabe7aa",
+  "sourceRevision": "0950124aa8ee8f3029019ab2b0e527f84bb9dea292d626d5cd67e46d5f2de2a4",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4066,25 +4066,26 @@
     {
       "portalId": "diputacion-granada-portal",
       "inventoryId": "ES-PUB-0155",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Granada",
+      "profileId": "diputacion-granada-sede-public",
+      "displayName": "Diputación Provincial de Granada — Sede electrónica",
       "organization": "Diputación Provincial de Granada",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dipgra.es",
+      "purpose": "Perfil QA-only limitado al lanzamiento público estable de la Sede electrónica de la Diputación de Granada; la Sede publica Registro Electrónico y acceso identificado, pero no se implementan autenticación, certificado, firma ni presentación final.",
+      "entryUrl": "https://sede.dipgra.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "GRANADA_SEDE_PUBLIC_QA_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP17A"
+        "DP17A",
+        "GRANADA-SEDE-2026-08-23"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Implementación QA_ONLY de navegación exacta a la Sede pública estable. Las menciones a certificado y AutoFirma son evidencia documental, no un contrato técnico de autenticación/firma; SIGN, SELECT_CERTIFICATE y CLIENT_TLS_AUTH permanecen bloqueados."
     },
     {
       "portalId": "diputacion-guadalajara-sede",

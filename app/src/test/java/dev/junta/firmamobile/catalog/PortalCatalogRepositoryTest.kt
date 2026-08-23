@@ -96,6 +96,7 @@ class PortalCatalogRepositoryTest {
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
                 "diputacion-alicante-solicitud-general",
+                "diputacion-granada-sede-public",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "diputacion-badajoz-portal",
