@@ -197,10 +197,10 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 92 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 96 |
-| Entradas restantes fuera de ambos estados | 87 |
-| Evidencia exacta de `ClientCertRequest` | 3 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 93 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 97 |
+| Entradas restantes fuera de ambos estados | 86 |
+| Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
 
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 92 |
+| `IMPLEMENTED_NOT_E2E` | 93 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 80 |
+| `BROWSE_ONLY` | 79 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -6112,8 +6112,9 @@ records:
 
 ### 7.9. Ministerio de Educación — convocatoria 46
 
-La entrada oficial se conserva como navegación inventariada. El profile no
-concede firma porque no existe evidencia suficiente del transporte downstream,
+La entrada oficial conserva navegación exacta y un contrato QA-only de
+`CLIENT_TLS_AUTH` para el salto Cl@ve/eIdentifier observado. El profile no
+concede firma porque no existe evidencia suficiente del ABI downstream,
 callback ni contrato de presentación.
 
 ```yaml
@@ -6134,19 +6135,19 @@ records:
     certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "CLAVE_GATEWAY_UNVERIFIED"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta de la convocatoria de homologación y convalidación"
-    protocol_evidence: "La entrada oficial fue revisada; no se observó un contrato downstream suficiente para exponer certificado o firma."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["LIVE-EDUCACION-ENTRY-2026-07-22"]
-    reason: "Transporte downstream de certificado y callback no verificados; firma bloqueada."
-    reviewed_at: "2026-07-22"
-    next_gate: "Obtener evidencia pública o autenticada controlada del transporte exacto sin realizar presentación jurídica."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado a la Convocatoria 46 mediante la pasarela Cl@ve/eIdentifier; la firma documental posterior no está implementada."
+    protocol_evidence: "La entrada oficial POSTea a claveEduPeticion.form; la pasarela genera ServiceProvider, el selector AFIRMA progresa por ServiceRedirect y entrega una forma POST exacta a pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen. El host TLS 1.2 emite CertificateRequest sin lista de CA; no se observó ABI de firma."
+    client_tls_auth: "SI"
+    evidence_ids: ["LIVE-EDUCACION-ENTRY-2026-07-22", "EDUCACION-CONV46-CLIENTTLS-2026-08-19"]
+    reason: "Implementación QA-only limitada a CLIENT_TLS_AUTH; firma, formato, algoritmo, callback y aceptación E2E permanecen no verificados."
+    reviewed_at: "2026-08-19"
+    next_gate: "Si se requiere ampliar SIGN, autenticar de forma controlada y avanzar hasta el primer pre-sign observable, deteniéndose antes de la firma privada y la presentación final."
   - inventory_id: "ES-PUB-0183"
     surface_key: "castilla-la-mancha-certificate-login-probe"
     administrative_level: "AUTONOMICO"
@@ -6366,6 +6367,7 @@ Orden de expansión recomendado:
 [LIVE-JUNTA-OFVIRTUAL-2026-07-22]: https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs
 [E2E-JUNTA-OFVIRTUAL-2026-07-29]: ../e2e/2026-07-29-junta-ofvirtual-auth-success.md
 [LIVE-EDUCACION-ENTRY-2026-07-22]: https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46
+[EDUCACION-CONV46-CLIENTTLS-2026-08-19]: https://www.educacion.gob.es/claveedu/claveEduPeticion.form
 
 ### Evidencia de comunidades y ciudades autónomas
 

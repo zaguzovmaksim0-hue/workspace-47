@@ -10,6 +10,7 @@ import dev.junta.firmamobile.profile.SiteProfileCatalog
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -136,12 +137,7 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
         qaPortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
-            val expectedStatus = if (portal.profileId in setOf(ProfileId("educacion-convocatoria"))) {
-                PortalSupportStatus.BROWSE_ONLY
-            } else {
-                PortalSupportStatus.IMPLEMENTED_NOT_E2E
-            }
-            assertEquals(expectedStatus, portal.supportStatus)
+            assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
             assertTrue(portal.isEnabled)
         }
 
@@ -152,10 +148,6 @@ class PortalCatalogRepositoryTest {
         }
         releasePortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
             when (portal.profileId) {
-                ProfileId("educacion-convocatoria") -> {
-                    assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
-                    assertTrue(portal.isEnabled)
-                }
                 ProfileId("junta-andalucia") -> {
                     assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                     assertFalse(portal.isEnabled)
@@ -709,17 +701,18 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `education browse-only launch accepts only the exact canonical seed URL`() {
+    fun `education client auth launch accepts only the exact canonical seed URL in qa`() {
         val id = ProfileId("educacion-convocatoria")
         val exact = java.net.URI(
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
         )
-        val item = releaseRepository.portals().single { it.profileId == id }
+        val item = qaRepository.portals().single { it.profileId == id }
 
-        assertEquals(PortalSupportStatus.BROWSE_ONLY, item.supportStatus)
-        assertTrue(item.capabilities.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, item.supportStatus)
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), item.capabilities)
         assertTrue(item.signatureFormats.isEmpty())
-        assertEquals(PortalLaunchTarget(id, exact), releaseRepository.resolveLaunch(id, exact))
+        assertEquals(PortalLaunchTarget(id, exact), qaRepository.resolveLaunch(id, exact))
+        assertNull(releaseRepository.resolveLaunch(id, exact))
 
         listOf(
             "http://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
@@ -731,11 +724,9 @@ class PortalCatalogRepositoryTest {
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46&idConvocatoria=46",
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46&extra=1",
         ).forEach { rejected ->
-            assertEquals(rejected, null, releaseRepository.resolveLaunch(id, java.net.URI(rejected)))
-            assertEquals(rejected, null, BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(rejected)))
+            assertEquals(rejected, null, qaRepository.resolveLaunch(id, java.net.URI(rejected)))
         }
 
-        assertEquals(null, BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI("https://www.educacion.gob.es/")))
     }
 
     @Test

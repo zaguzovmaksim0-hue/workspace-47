@@ -814,9 +814,10 @@ class SiteProfileCatalogParserTest {
         val aragon = ProfileId("aragon-siraw")
         val ofvirtual = ProfileId("junta-ofvirtual")
         val unizar = ProfileId("unizar-tramitador")
-        val releaseProfiles = setOf(carne, education, aragon, ofvirtual, unizar)
+        val releaseProfiles = setOf(carne, aragon, ofvirtual, unizar)
         val qaOnly = setOf(
             junta,
+            education,
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
@@ -847,8 +848,8 @@ class SiteProfileCatalogParserTest {
             BuiltInSiteProfiles.qaRegistry.profile(junta)?.compatibilityStatus,
         )
         assertEquals(
-            CompatibilityStatus.BROWSE_ONLY,
-            BuiltInSiteProfiles.releaseRegistry.profile(education)?.compatibilityStatus,
+            CompatibilityStatus.VERIFIED_CONTRACT,
+            BuiltInSiteProfiles.qaRegistry.profile(education)?.compatibilityStatus,
         )
         assertEquals(
             CompatibilityStatus.VERIFIED_CONTRACT,

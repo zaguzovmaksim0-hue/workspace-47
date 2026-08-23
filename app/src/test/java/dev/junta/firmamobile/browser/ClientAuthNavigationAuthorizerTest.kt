@@ -441,6 +441,51 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactEducationClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val education = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = education.observeTopLevelNavigation(
+            EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, 78, true,
+        )
+
+        assertEquals(EDUCATION_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            education.observeTopLevelNavigation(EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, 78, true),
+        )
+
+        listOf(
+            EDUCATION_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            "$EDUCATION_TARGET?extra=1",
+            EDUCATION_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+            EDUCATION_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
+        ).forEachIndexed { index, invalidTarget ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                invalidTarget,
+                fresh.observeTopLevelNavigation(
+                    EDUCATION_PROFILE, EDUCATION_SOURCE, invalidTarget, 180L + index, true,
+                ),
+            )
+        }
+
+        listOf(
+            "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+            "$EDUCATION_SOURCE?extra=1",
+            "https://pasarela.clave.gob.es.evil.example/Proxy2/ServiceRedirect",
+        ).forEachIndexed { index, invalidSource ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                invalidSource,
+                fresh.observeTopLevelNavigation(
+                    EDUCATION_PROFILE, invalidSource, EDUCATION_TARGET, 190L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactAirefClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val airef = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
         val authorized = airef.observeTopLevelNavigation(
@@ -1103,6 +1148,9 @@ class ClientAuthNavigationAuthorizerTest {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         val TEA_PROFILE = ProfileId("tea-alegaciones-certificado")
+        val EDUCATION_PROFILE = ProfileId("educacion-convocatoria")
+        const val EDUCATION_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val EDUCATION_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val AIREF_PROFILE = ProfileId("airef-instancia-general")
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
