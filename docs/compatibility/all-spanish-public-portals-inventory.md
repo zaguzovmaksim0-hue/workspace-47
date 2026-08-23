@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 92 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 96 |
-| Entradas restantes fuera de ambos estados | 87 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 93 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 97 |
+| Entradas restantes fuera de ambos estados | 86 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 92 |
+| `IMPLEMENTED_NOT_E2E` | 93 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 80 |
+| `BROWSE_ONLY` | 79 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
