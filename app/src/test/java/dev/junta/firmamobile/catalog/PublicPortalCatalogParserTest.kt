@@ -101,6 +101,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("sepes-transportes-public-complaints"),
                 ProfileId("dgsfp-sede-public-home"),
                 ProfileId("cnmv-sede-public-home"),
+                ProfileId("aesa-solicitud-general-public"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("ctbg-solicitud-informacion"),

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9296f622ea95772c82d5b5e9743a4579428046e001f8b8c68cec6315bed10bd9",
+  "sourceRevision": "35c708c6695fc8362153586ed041650f963d015bc945db065751949364af3f89",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -677,24 +677,31 @@
     {
       "portalId": "age-agencia-estatal-de-seguridad-aerea-aesa",
       "inventoryId": "ES-PUB-0025",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "aesa-solicitud-general-public",
+      "displayName": "Sede electrónica / Solicitud general",
       "organization": "Agencia Estatal de Seguridad Aérea (AESA)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.seguridadaerea.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Lanzamiento público QA de la Solicitud general de AESA (SIA 203553); la Sede documenta acceso autenticado y firma electrónica, pero la implementación no ejecuta autenticación ni firma.",
+      "entryUrl": "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "AESA_SOLICITUD_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "AESA-SEDE-2026-08-23",
+        "AESA-SOLGEN-2026-08-23",
+        "AESA-ID-FIRMA-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA_ONLY limitado al lanzamiento público exacto de Solicitud general, sin capabilities sensibles. `CERTIFICATE_ACCESS`, `ELECTRONIC_SIGNATURE` y `AUTOFIRMA` son mecanismos documentados por AESA; no se infieren CLIENT_TLS_AUTH, formato, algoritmo, endpoint, callback ni presentación final."
     },
     {
       "portalId": "age-agencia-estatal-del-boletin-oficial-del-estado-boe",

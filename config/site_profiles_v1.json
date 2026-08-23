@@ -1208,6 +1208,28 @@
       ]
     },
     {
+      "profileId": "aesa-solicitud-general-public",
+      "profileVersion": 1,
+      "displayName": "AESA — Solicitud general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+      "initiatorOrigins": ["https://sede.seguridadaerea.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.seguridadaerea.gob.es/sede-aesa/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.seguridadaerea.gob.es/sede-aesa/informacion-general/identificacion-y-firma","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.seguridadaerea.gob.es/oficina/tramites/altaSolicitud.do?codArea=SOLGEN&id=4","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
       "profileId": "oepm-protegeo-general",
       "profileVersion": 1,
       "displayName": "OEPM — Solicitud de propósito general (ProtegeO)",

@@ -165,6 +165,7 @@ class JuntaOriginPolicyTest {
             "www.sededgsfp.gob.es",
             "sede2.mjusticia.gob.es",
             "sede.cnmv.gob.es",
+            "sede.seguridadaerea.gob.es",
             "presidencia.jcyl.es",
             "egoitza.araba.eus",
             "seuelectronica.diba.cat",
