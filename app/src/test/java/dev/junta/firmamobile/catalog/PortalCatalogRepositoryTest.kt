@@ -130,6 +130,7 @@ class PortalCatalogRepositoryTest {
                 "enaire-sede-public",
                 "dgoj-public-navigation",
                 "guardia-civil-sede-public",
+                "csn-sede-public",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

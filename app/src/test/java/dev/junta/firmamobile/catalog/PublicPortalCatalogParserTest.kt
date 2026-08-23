@@ -122,6 +122,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("enaire-sede-public"),
                 ProfileId("dgoj-public-navigation"),
                 ProfileId("guardia-civil-sede-public"),
+                ProfileId("csn-sede-public"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

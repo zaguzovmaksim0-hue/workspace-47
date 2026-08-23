@@ -192,6 +192,7 @@ class JuntaOriginPolicyTest {
             "conclave.carm.es",
             "enaire.sede.gob.es",
             "sede.guardiacivil.gob.es",
+            "sede.csn.gob.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
