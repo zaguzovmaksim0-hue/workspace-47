@@ -1747,7 +1747,7 @@
       "startUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
       "initiatorOrigins": ["https://sede.cnmv.gob.es"],
       "redirectOrigins": [],
-      "trustedBrowseOrigins": ["https://sede.cnmv.gob.es"],
+      "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
       "capabilities": [],
