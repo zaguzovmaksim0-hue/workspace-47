@@ -117,6 +117,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("murcia-carm-pase"),
                 ProfileId("enaire-sede-public"),
                 ProfileId("dgoj-public-navigation"),
+                ProfileId("guardia-civil-sede-public"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

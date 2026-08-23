@@ -125,6 +125,7 @@ class PortalCatalogRepositoryTest {
                 "murcia-carm-pase",
                 "enaire-sede-public",
                 "dgoj-public-navigation",
+                "guardia-civil-sede-public",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

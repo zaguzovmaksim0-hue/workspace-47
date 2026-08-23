@@ -1953,6 +1953,27 @@
         {"url":"https://sede.ordenacionjuego.gob.es/aviso-navegador-chrome","reviewedOn":"2026-08-24"},
         {"url":"https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S","reviewedOn":"2026-08-24"}
       ]
+    },
+    {
+      "profileId": "guardia-civil-sede-public",
+      "profileVersion": 1,
+      "displayName": "Guardia Civil — Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.guardiacivil.gob.es/",
+      "initiatorOrigins": ["https://sede.guardiacivil.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.guardiacivil.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.guardiacivil.gob.es/fichero-publico/descargar/id/5205","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }
