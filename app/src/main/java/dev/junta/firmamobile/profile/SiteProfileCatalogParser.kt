@@ -416,7 +416,7 @@ object SiteProfileCatalogParser {
                 }
                 require(policy.sourceUrls.all { source ->
                     val allowedSourceOrigins = if (
-                        p.profileId.value in setOf(AIREF_PROFILE_ID, EDUCATION_PROFILE_ID, CATALUNYA_PROFILE_ID, MUGEJU_PROFILE_ID, JCCM_REGISTRO_PROFILE_ID)
+                        p.profileId.value in setOf(AIREF_PROFILE_ID, ASTURIAS_PROFILE_ID, EDUCATION_PROFILE_ID, CATALUNYA_PROFILE_ID, MUGEJU_PROFILE_ID, JCCM_REGISTRO_PROFILE_ID)
                     ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
@@ -2056,6 +2056,7 @@ object SiteProfileCatalogParser {
                     it in setOf(
                         MINECO_PROFILE_ID,
                         AIREF_PROFILE_ID,
+                        ASTURIAS_PROFILE_ID,
                         EDUCATION_PROFILE_ID,
                         CATALUNYA_PROFILE_ID,
                         AVILA_PROFILE_ID,
@@ -2445,6 +2446,7 @@ object SiteProfileCatalogParser {
     private const val TENERIFE_SAFE_DESCRIPTION =
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
+    private const val ASTURIAS_PROFILE_ID = "asturias-miprincipado"
     private const val MUGEJU_PROFILE_ID = "mugeju-remision-documentacion-client-auth"
     private const val MUGEJU_PROFILE_VERSION = 1
     private const val MUGEJU_DISPLAY_NAME = "MUGEJU — Remisión de documentación con certificado"

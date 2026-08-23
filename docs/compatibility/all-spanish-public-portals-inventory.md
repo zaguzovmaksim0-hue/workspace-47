@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 93 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 97 |
-| Entradas restantes fuera de ambos estados | 86 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 94 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 98 |
+| Entradas restantes fuera de ambos estados | 85 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 93 |
+| `IMPLEMENTED_NOT_E2E` | 94 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 79 |
+| `BROWSE_ONLY` | 78 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3427,29 +3427,29 @@ records:
     autonomous_community: "Principado de Asturias"
     province_or_municipality: "NO_APLICA"
     institution_name: "Principado de Asturias"
-    surface_name: "MiPrincipado"
+    surface_name: "MiPrincipado — Solicitud Genérica"
     surface_type: "SEDE"
     origin: "https://miprincipado.asturias.es"
     official_site: "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica"
     e_sede: "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica"
-    entry_url: "https://miprincipado.asturias.es/sobre-miprincipado/identificacion-sede-electronica"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites"
+    procedure_page: "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites"
     certificate_required: "CONDICIONAL"
-    signature_required: "NO_VERIFICADO"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Información de sede y acceso con sistemas de identificación admitidos."
-    protocol_evidence: "La fuente de sistemas acredita certificado como opción, no firma ni contrato portal-specific."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A03A", "A03C"]
-    reason: "Firma, transporte del certificado, ABI, formato y endpoint no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Delimitar una operación autenticada concreta sin seleccionar certificado."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud Genérica protegida de MiPrincipado: soporte QA limitado a la autenticación con certificado mediante la frontera mTLS exacta de Cl@ve; la firma documental y la presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El POST oficial sytInitForm hacia https://tramita.asturias.es/sta/Relec/STARhssoManager encadena RHSSO OIDC con client_id=sitemiprincipado y broker samlClaveV2 hasta https://pasarela.clave.gob.es/Proxy2/ServiceProvider. La opción DNIe / Certificado electrónico realiza POST exacto a https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen:443; un acceso controlado con el certificado autorizado completó mTLS y devolvió la Solicitud Genérica protegida. El handshake TLS 1.2 del endpoint envía CertificateRequest sin nombres de CA y anuncia RSA/ECDSA; el certificado usado con éxito es RSA con Digital Signature. La pantalla autenticada muestra 1. Rellenar formulario, 2. Firmar, 3. Descargar justificante y POST /sta/Relec/TramitaSign, pero el avance normal exige Órgano, Unidad Administrativa, Detalle de la solicitud y modo de notificación antes de alcanzar el signer."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A03A", "A03C", "ASTURIAS-CLAVE-AUTH-2026-08-19", "ASTURIAS-SOLICITUD-GENERICA-2026-08-19"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA fail-closed limitado a la cadena MiPrincipado/STA/RHSSO/Cl@ve observada y al salto exacto https://pasarela.clave.gob.es/Proxy2/ServiceProvider -> https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen:443. La firma sigue NO_VERIFICADO: no se inventaron Órgano, Unidad Administrativa, Detalle de la solicitud ni preferencia de notificación, no se ejecutó operación de clave privada y no hubo presentación/registro final."
+    reviewed_at: "2026-08-19"
+    next_gate: "Con datos administrativos reales del operador, avanzar por onSave hasta la página de firma e instrumentar el signer para capturar formato, algoritmo, payload y callback, abortando antes de cualquier operación de clave privada o presentación final."
 
   - inventory_id: "ES-PUB-0096"
     surface_key: "asturias-sede-tramite-autofirma"
