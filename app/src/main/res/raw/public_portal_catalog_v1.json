@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "26069218f9a08af53454058235a4c3ba7fb2aeb04ec5cb518791e084527dde20",
+  "sourceRevision": "651050a72e98a1826fd06f93c07af020dd9aeef3f317ad0fdf55cc6a167a3cdc",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -868,24 +868,27 @@
     {
       "portalId": "age-comision-nacional-del-mercado-de-valores-cnmv",
       "inventoryId": "ES-PUB-0033",
-      "profileId": null,
+      "profileId": "cnmv-sede-public-home",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Comisión Nacional del Mercado de Valores (CNMV)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA delimitada a la Sede pública oficial; certificados y plataforma de firma constan como evidencia descriptiva, sin exponer autenticación, firma ni presentación final.",
       "entryUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CNMV_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CNMV-SEDE-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "La Sede first-party está revalidada y permite un contrato QA-only de navegación pública. Las referencias a certificado/AutoFirma son descriptivas; autenticación, selección de certificado, firma y presentación final permanecen fuera del contrato implementado."
     },
     {
       "portalId": "age-consejo-de-seguridad-nuclear-csn",

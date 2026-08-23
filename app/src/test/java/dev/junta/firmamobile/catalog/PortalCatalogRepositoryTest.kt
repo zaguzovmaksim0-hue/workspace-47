@@ -106,6 +106,7 @@ class PortalCatalogRepositoryTest {
                 "portal-funciona-public-home",
                 "sepes-transportes-public-complaints",
                 "dgsfp-sede-public-home",
+                "cnmv-sede-public-home",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
                 "ctbg-solicitud-informacion",

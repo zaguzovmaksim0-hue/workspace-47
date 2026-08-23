@@ -1830,6 +1830,25 @@
       ]
     },
     {
+      "profileId": "cnmv-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "CNMV Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
+      "initiatorOrigins": ["https://sede.cnmv.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
       "profileId": "asturias-sede-tramite-navigation",
       "profileVersion": 1,
       "displayName": "Principado de Asturias — trámite de Sede",

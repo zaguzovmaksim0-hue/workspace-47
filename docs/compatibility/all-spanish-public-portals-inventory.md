@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 245 |
 | Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 104 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 108 |
-| Entradas restantes fuera de ambos estados | 75 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 105 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 109 |
+| Entradas restantes fuera de ambos estados | 74 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 104 |
+| `IMPLEMENTED_NOT_E2E` | 105 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 68 |
+| `BROWSE_ONLY` | 67 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -1481,23 +1481,23 @@ records:
     e_sede: "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
     entry_url: "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
     procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CNMV_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA delimitada a la Sede pública oficial; certificados y plataforma de firma constan como evidencia descriptiva, sin exponer autenticación, firma ni presentación final."
+    protocol_evidence: "La landing first-party devuelve HTTP 200 y documenta certificados electrónicos válidos, presentación por Zona abierta con certificado y una plataforma de firma que remite a la aplicación oficial; no publica un ABI/algoritmo/formato/callback de firma suficiente para exponer SIGN."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "CNMV-SEDE-2026-08-23"]
+    reason: "La Sede first-party está revalidada y permite un contrato QA-only de navegación pública. Las referencias a certificado/AutoFirma son descriptivas; autenticación, selección de certificado, firma y presentación final permanecen fuera del contrato implementado."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA. Cualquier soporte de autenticación o firma requiere evidencia técnica exacta separada."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa. Investigación pública no autenticada; no se seleccionó certificado, no se firmó ni se presentó documentación."
 
   - inventory_id: "ES-PUB-0034"
     surface_key: "age-consejo-de-seguridad-nuclear-csn"
@@ -6635,3 +6635,4 @@ availability, certificado, firma ni contrato técnico.
 [ENAIRE-REQ-2026-08-24]: https://enaire.sede.gob.es/Requisitos
 [ENAIRE-VALIDACION-2026-08-24]: https://enaire.sede.gob.es/servicio?id=Validacion-de-certificados-y-firma
 [DGSFP-SEDE-2026-08-24]: https://www.sededgsfp.gob.es/
+[CNMV-SEDE-2026-08-23]: https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx

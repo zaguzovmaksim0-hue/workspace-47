@@ -335,6 +335,23 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `CNMV public Sede is browse-only trust in QA and near origins stay closed`() {
+        val profileId = ProfileId("cnmv-sede-public-home")
+        val start = URI("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es:444/")))
+    }
+
+    @Test
     fun `Junta VEA PEG is QA-only browse and rejects auth API as profile origin`() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
