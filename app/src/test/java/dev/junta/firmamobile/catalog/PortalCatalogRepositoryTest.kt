@@ -101,6 +101,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-alicante-solicitud-general",
                 "diputacion-almeria-solicitud-general",
                 "diputacion-granada-sede-public",
+                "diputacion-castellon-instancia-general",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
                 "diputacion-badajoz-portal",

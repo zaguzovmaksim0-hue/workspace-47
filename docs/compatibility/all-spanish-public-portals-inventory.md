@@ -5100,29 +5100,30 @@ records:
     autonomous_community: "Comunidad Valenciana"
     province_or_municipality: "Castellón (provincia)"
     institution_name: "Diputació de Castelló"
-    surface_name: "Portal oficial de Diputació de Castelló"
-    surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.dipcas.es"
+    surface_name: "Diputació de Castelló — Instancia General"
+    surface_type: "SEDE"
+    origin: "https://dipcas.sedelectronica.es"
     official_site: "https://www.dipcas.es/es/"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipcas.es/es/"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://dipcas.sedelectronica.es/info.0"
+    entry_url: "https://dipcas.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://dipcas.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CASTELLON_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio exacto de la Instancia General SIA 1881117 de la Sede electrónica de la Diputació de Castelló; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El portal oficial enlaza la Sede https://dipcas.sedelectronica.es/info.0. Su catálogo público /dossier.0 publica Instancia General (SIA 1881117) en https://dipcas.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5; 'Iniciar tramitación electrónica' apunta exactamente a https://dipcas.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5. Una apertura pública del start llega a Identificación electrónica y expone un formulario POST hacia https://pasarela.clave.gob.es/Proxy2/ServiceProvider, pero no se ejecutó ese POST ni se modela Cl@ve, firma o TLS cliente como capability del perfil."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP11A"]
-    reason: "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP11A", "CASTELLON-SEDE-2026-08-23", "CASTELLON-DOSSIER-2026-08-23", "CASTELLON-INSTANCIA-2026-08-23", "CASTELLON-LAUNCH-2026-08-23"]
+    reason: "Perfil nuevo QA_ONLY limitado al launch exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. La página pre-auth publica acceso Cl@ve, pero la autenticación no se inició y el contrato posterior de formulario/firma permanece NO_VERIFICADO. Falta E2E físico."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Instancia General; ampliar autenticación o firma solo con evidencia Castellón-specific independiente."
+    notes: "No se enviaron credenciales ni SAMLRequest, no se cargaron documentos, no se inició firma, no se realizó presentación final ni pago. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0150"
     surface_key: "diputacion-ciudad-real-portal"
@@ -6546,6 +6547,10 @@ availability, certificado, firma ni contrato técnico.
 [DP10A]: https://www.dipucadiz.es
 [DP10B]: https://sede.dipucadiz.es/web/sede/inicio
 [DP11A]: https://www.dipcas.es/es/
+[CASTELLON-SEDE-2026-08-23]: https://dipcas.sedelectronica.es/info.0
+[CASTELLON-DOSSIER-2026-08-23]: https://dipcas.sedelectronica.es/dossier.0
+[CASTELLON-INSTANCIA-2026-08-23]: https://dipcas.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[CASTELLON-LAUNCH-2026-08-23]: https://dipcas.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [DP12A]: https://www.dipucr.es
 [CIUDAD-REAL-SEDE-2026-08-21]: https://sede.dipucr.es/
 [CIUDAD-REAL-REGISTRO-2026-08-21]: https://sede.dipucr.es/iniciaTramite/20

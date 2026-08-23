@@ -94,6 +94,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-alicante-solicitud-general"),
                 ProfileId("diputacion-almeria-solicitud-general"),
                 ProfileId("diputacion-granada-sede-public"),
+                ProfileId("diputacion-castellon-instancia-general"),
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
                 ProfileId("diputacion-badajoz-portal"),
