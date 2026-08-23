@@ -2074,6 +2074,11 @@ object SiteProfileCatalogParser {
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
                     owners == setOf(LEON_PROFILE_ID, ALBACETE_PROFILE_ID)) &&
                     origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                owners == setOf(ASTURIAS_PROFILE_ID, ASTURIAS_SEDE_NAVIGATION_PROFILE_ID) &&
+                    firstIsRedirectOrigin != secondIsRedirectOrigin &&
+                    origin.serialized == ASTURIAS_MIPRINCIPADO_ORIGIN
             })
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
@@ -2447,6 +2452,8 @@ object SiteProfileCatalogParser {
         "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"
     private val TENERIFE_EXTRA_PROPERTIES = linkedMapOf("mode" to "explicit")
     private const val ASTURIAS_PROFILE_ID = "asturias-miprincipado"
+    private const val ASTURIAS_SEDE_NAVIGATION_PROFILE_ID = "asturias-sede-tramite-navigation"
+    private const val ASTURIAS_MIPRINCIPADO_ORIGIN = "https://miprincipado.asturias.es"
     private const val MUGEJU_PROFILE_ID = "mugeju-remision-documentacion-client-auth"
     private const val MUGEJU_PROFILE_VERSION = 1
     private const val MUGEJU_DISPLAY_NAME = "MUGEJU — Remisión de documentación con certificado"
