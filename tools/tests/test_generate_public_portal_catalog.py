@@ -41,6 +41,23 @@ SPEC.loader.exec_module(GENERATOR)
 
 
 class PublicPortalCatalogGeneratorTest(unittest.TestCase):
+    def test_aecid_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        aecid = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0022")
+        self.assertEqual("age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid", aecid["portalId"])
+        self.assertEqual("reg-age-redsara", aecid["profileId"])
+        self.assertEqual("https://www.aecid.gob.es/registro-de-solicitud", aecid["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", aecid["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", aecid["protocolFamily"])
+        self.assertEqual("E2E_PENDING", aecid["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", aecid["inventoryStatus"])
+        self.assertEqual("REVIEWED", aecid["discoveryState"])
+        self.assertEqual("2026-08-23", aecid["reviewedOn"])
+        self.assertEqual([], aecid["observedMechanisms"])
+        self.assertEqual([], aecid["observedSignatureFormats"])
+        self.assertIn("reg-age", aecid["limitations"].lower())
+        self.assertIn("qa", aecid["limitations"].lower())
+
     def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         puertos = next(

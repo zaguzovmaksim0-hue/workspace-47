@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "060d430dc1a26fca8db83024c8323e9f54856173936e0aea04ec8ac9baabe7aa",
+  "sourceRevision": "0f741a200201e9ad6f5b9d29ffa938032480d730e19df13869c2643197852628",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -597,24 +597,27 @@
     {
       "portalId": "age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid",
       "inventoryId": "ES-PUB-0022",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Sede electrónica / acceso al Registro Electrónico General",
       "organization": "Agencia Española de Cooperación Internacional para el Desarrollo (AECID)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.aecid.gob.es/",
+      "purpose": "La Sede electrónica AECID publica para solicitudes sin procedimiento específico el Registro Electrónico General (REG) y delega directamente esa actuación a reg.redsara.es.",
+      "entryUrl": "https://www.aecid.gob.es/registro-de-solicitud",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "AECID-REG-2026-08-23",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: la Sede AECID delega explícitamente en REG y el catálogo lanza solo el startUrl canónico exacto ya cubierto; autenticación/firma propias de AECID y E2E de la transición no se infieren."
     },
     {
       "portalId": "age-agencia-espanola-de-medicamentos-y-productos-sanitarios-aemps",
