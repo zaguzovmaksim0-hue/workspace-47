@@ -435,6 +435,23 @@ class PortalCatalogScreenTest {
         assertTrue(sepes.capabilities.isEmpty())
         assertTrue(sepes.signatureFormats.isEmpty())
         assertTrue(sepes.isEnabled)
+
+    }
+
+    @Test
+    fun `BOE public Sede is compatible navigation with no sensitive capabilities`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val boe = compatible.items.single {
+            it.portalId == PortalId("age-agencia-estatal-del-boletin-oficial-del-estado-boe")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("boe-sede-public-home"), boe.profileId)
+        assertEquals(java.net.URI("https://www.boe.es/informacion/index.php"), boe.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, boe.supportStatus)
+        assertTrue(boe.capabilities.isEmpty())
+        assertTrue(boe.signatureFormats.isEmpty())
+        assertTrue(boe.isEnabled)
     }
 
     @Test

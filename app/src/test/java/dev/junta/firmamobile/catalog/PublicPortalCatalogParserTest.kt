@@ -102,6 +102,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("dgsfp-sede-public-home"),
                 ProfileId("cnmv-sede-public-home"),
                 ProfileId("aesa-solicitud-general-public"),
+                ProfileId("boe-sede-public-home"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("ctbg-solicitud-informacion"),
@@ -1197,6 +1198,39 @@ class PublicPortalCatalogParserTest {
         assertTrue(portal.signatureFormats.isEmpty())
         assertTrue(portal.isEnabled)
         assertEquals(PortalLaunchTarget(ProfileId("sepes-transportes-public-complaints"), start), repository.resolveLaunch(portal))
+    }
+
+    @Test
+    fun `BOE public Sede binds exact QA information page without sensitive capabilities`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single {
+            it.portalId == PortalId("age-agencia-estatal-del-boletin-oficial-del-estado-boe")
+        }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0026", metadata.inventoryId)
+        assertEquals(ProfileId("boe-sede-public-home"), metadata.profileId)
+        assertEquals(URI("https://www.boe.es/informacion/index.php"), metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("BOE_SEDE_PUBLIC_NAVIGATION", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("boe-sede-public-home"), URI("https://www.boe.es/informacion/index.php")),
+            repository.resolveLaunch(portal),
+        )
     }
 
     @Test

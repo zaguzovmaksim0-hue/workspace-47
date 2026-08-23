@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "35c708c6695fc8362153586ed041650f963d015bc945db065751949364af3f89",
+  "sourceRevision": "52b4e381639a4f703f683bfba3fd841d0d199484e17b1f0e2110490e7f365878",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -706,24 +706,25 @@
     {
       "portalId": "age-agencia-estatal-del-boletin-oficial-del-estado-boe",
       "inventoryId": "ES-PUB-0026",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "boe-sede-public-home",
+      "displayName": "Sede electrónica / información pública y trámites administrativos",
       "organization": "Agencia Estatal del Boletín Oficial del Estado (BOE)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.boe.es/",
+      "purpose": "Navegación QA integrada exclusivamente a la página pública estable «La Sede Electrónica» de BOE.es. Los trámites administrativos que saltan a extranet.boe.es, la autenticación y cualquier firma quedan fuera del contrato implementado.",
+      "entryUrl": "https://www.boe.es/informacion/index.php",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "BOE_SEDE_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "BOE-SEDE-2026-08-23"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al entry público exacto https://www.boe.es/informacion/index.php y sin capacidades sensibles. extranet.boe.es permanece fuera de trustedBrowseOrigins; firma, certificado operativo y presentación requieren un contrato separado."
     },
     {
       "portalId": "age-autoridad-independiente-de-responsabilidad-fiscal-airef",

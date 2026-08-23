@@ -53,6 +53,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("REVIEWED", target["discoveryState"])
         self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
+    def test_boe_public_sede_profile_binds_stable_qa_home_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        boe = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0026")
+        self.assertEqual("age-agencia-estatal-del-boletin-oficial-del-estado-boe", boe["portalId"])
+        self.assertEqual("boe-sede-public-home", boe["profileId"])
+        self.assertEqual("https://www.boe.es/informacion/index.php", boe["entryUrl"])
+        self.assertNotIn("launchUrl", boe)
+        self.assertEqual("BOE_SEDE_PUBLIC_NAVIGATION", boe["protocolFamily"])
+        self.assertEqual("E2E_PENDING", boe["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", boe["inventoryStatus"])
+        self.assertEqual("REVIEWED", boe["discoveryState"])
+        self.assertEqual("2026-08-23", boe["reviewedOn"])
+        self.assertEqual([], boe["observedMechanisms"])
+        self.assertEqual([], boe["observedSignatureFormats"])
+        self.assertIn("qa_only", boe["limitations"].lower())
+        self.assertIn("extranet.boe.es", boe["limitations"].lower())
 
     def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

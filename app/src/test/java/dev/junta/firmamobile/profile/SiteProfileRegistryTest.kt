@@ -278,6 +278,23 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `BOE public Sede is browse-only trust in QA and extranet stays closed`() {
+        val profileId = ProfileId("boe-sede-public-home")
+        val start = URI("https://www.boe.es/informacion/index.php")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://extranet.boe.es/quejas_el/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.boe.es.evil.example/")))
+    }
+
+    @Test
     fun `Portal Funciona public home is browse-only trust in QA and external auth origins stay closed`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")

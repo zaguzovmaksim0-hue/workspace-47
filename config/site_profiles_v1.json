@@ -2020,6 +2020,26 @@
         {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1","reviewedOn":"2026-08-23"},
         {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso","reviewedOn":"2026-08-23"}
       ]
+    },
+    {
+      "profileId": "boe-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "BOE — Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.boe.es/informacion/index.php",
+      "initiatorOrigins": ["https://www.boe.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.boe.es/informacion/index.php","reviewedOn":"2026-08-23"},
+        {"url":"https://www.boe.es/informacion/firma_electronica/sistemas_firma_electronica.php","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }

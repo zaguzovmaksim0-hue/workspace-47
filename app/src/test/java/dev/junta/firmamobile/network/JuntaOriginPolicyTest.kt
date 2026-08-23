@@ -68,6 +68,7 @@ class JuntaOriginPolicyTest {
     private val dgsfp = ProfileId("dgsfp-sede-public-home")
     private val mjusticia = ProfileId("mjusticia-fundaciones-idp75")
     private val cnmv = ProfileId("cnmv-sede-public-home")
+    private val boe = ProfileId("boe-sede-public-home")
     private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
@@ -166,6 +167,7 @@ class JuntaOriginPolicyTest {
             "sede2.mjusticia.gob.es",
             "sede.cnmv.gob.es",
             "sede.seguridadaerea.gob.es",
+            "www.boe.es",
             "presidencia.jcyl.es",
             "egoitza.araba.eus",
             "seuelectronica.diba.cat",
@@ -336,6 +338,10 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(cnmv).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"), cnmv))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://sede.cnmv.gob.es.evil.example/"), cnmv))
+        assertEquals(setOf("www.boe.es"), JuntaOriginPolicy.browserAllowedHosts(boe))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(boe).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://www.boe.es/informacion/index.php"), boe))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://extranet.boe.es/quejas_el/"), boe))
         assertEquals(setOf("sede.cabildofuer.es"), JuntaOriginPolicy.browserAllowedHosts(fuerteventura))
         assertEquals(
             setOf("https://sede.cabildofuer.es"),

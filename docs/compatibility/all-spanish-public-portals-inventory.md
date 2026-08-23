@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 245 |
 | Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 108 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 112 |
-| Entradas restantes fuera de ambos estados | 71 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 109 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 113 |
+| Entradas restantes fuera de ambos estados | 70 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 108 |
+| `IMPLEMENTED_NOT_E2E` | 109 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 64 |
+| `BROWSE_ONLY` | 63 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 157 |
+| `REVIEWED` | 158 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 21 |
+| `DISCOVERED` | 20 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1256,30 +1256,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Estatal del Boletín Oficial del Estado (BOE)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / información pública y trámites administrativos"
     surface_type: "SEDE"
     origin: "https://www.boe.es"
     official_site: "https://www.boe.es/"
-    e_sede: "https://www.boe.es/"
-    entry_url: "https://www.boe.es/"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://www.boe.es/informacion/index.php"
+    entry_url: "https://www.boe.es/informacion/index.php"
+    procedure_page: "https://www.boe.es/informacion/index.php"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "BOE_SEDE_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente a la página pública estable «La Sede Electrónica» de BOE.es. Los trámites administrativos que saltan a extranet.boe.es, la autenticación y cualquier firma quedan fuera del contrato implementado."
+    protocol_evidence: "La página first-party https://www.boe.es/informacion/index.php se identifica como «La Sede Electrónica», publica normativa de creación de la sede/registro y enumera Trámites Administrativos. Las acciones Anuncios, Quejas y sugerencias y ARDE/CSV delegan a https://extranet.boe.es, que constituye una frontera/origin distinta y no se añade al perfil. La página de sistemas de firma declara que la sede admite certificados electrónicos reconocidos o cualificados, pero no acredita para este entry un ABI, formato, algoritmo, packaging, callback ni endpoint de firma. El CSP permite afirma://*, lo que tampoco se promueve por sí solo a capacidad AutoFirma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de la Presidencia, Justicia y Relaciones con las Cortes."
+    evidence_ids: ["D11", "BOE-SEDE-2026-08-23"]
+    reason: "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al entry público exacto https://www.boe.es/informacion/index.php y sin capacidades sensibles. extranet.boe.es permanece fuera de trustedBrowseOrigins; firma, certificado operativo y presentación requieren un contrato separado."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA a la página pública de la Sede. Cualquier soporte de extranet.boe.es, autenticación o firma requiere inventario/contrato técnico separado con evidencia exacta."
+    notes: "Investigación pública no autenticada únicamente. Se observaron enlaces first-party de Sede, páginas de sistemas de firma y la separación de origen hacia extranet.boe.es. No se abrió sesión autenticada, no se seleccionó certificado, no se llamó firma, no se cargó documento ni se realizó presentación/pago."
 
   - inventory_id: "ES-PUB-0027"
     surface_key: "age-autoridad-independiente-de-responsabilidad-fiscal-airef"
@@ -6356,6 +6356,7 @@ Orden de expansión recomendado:
 [BNE-REG-2026-08-16]: https://sede.bne.gob.es/es/tramites/quejas-sugerencias
 [OEPM-PROTEGEO-2026-08-17]: https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/
 [FUNCIONA-PUBLIC-2026-08-17]: https://sede.funciona.gob.es/es/home
+[BOE-SEDE-2026-08-23]: https://www.boe.es/informacion/index.php
 [CERVANTES-REG-2026-08-17]: https://cervantes.sede.gob.es/servicio?id=Registro-Electrónico-General
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
 [DGOJ-PUBLIC-2026-08-24]: https://sede.ordenacionjuego.gob.es/es/firma
