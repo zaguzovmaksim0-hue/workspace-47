@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 260 |
-| Fuentes oficiales totales registradas | 272 |
+| Fuentes oficiales portal-specific registradas | 261 |
+| Fuentes oficiales totales registradas | 273 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 125 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 129 |
-| Entradas restantes fuera de ambos estados | 54 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 126 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 130 |
+| Entradas restantes fuera de ambos estados | 53 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 125 |
+| `IMPLEMENTED_NOT_E2E` | 126 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 47 |
+| `BROWSE_ONLY` | 46 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 167 |
+| `REVIEWED` | 168 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 11 |
+| `DISCOVERED` | 10 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1131,30 +1131,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Española de Cooperación Internacional para el Desarrollo (AECID)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / acceso al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://www.aecid.gob.es"
     official_site: "https://www.aecid.gob.es/"
     e_sede: "https://www.aecid.gob.es/"
-    entry_url: "https://www.aecid.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.aecid.gob.es/registro-de-solicitud"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.aecid.gob.es/registro-de-solicitud"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede electrónica AECID publica para solicitudes sin procedimiento específico el Registro Electrónico General (REG) y delega directamente esa actuación a reg.redsara.es."
+    protocol_evidence: "La página first-party https://www.aecid.gob.es/registro-de-solicitud identifica expresamente el Registro Electrónico General (REG), publica el enlace https://reg.redsara.es/ y documenta identificación mediante certificado digital reconocido o DNI electrónico. Workspace-47 reutiliza únicamente el startUrl canónico ya cubierto https://reg.redsara.es/es/ del perfil reg-age-redsara; no atribuye a www.aecid.gob.es un ABI de firma propio ni amplía sus orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Asuntos Exteriores, Unión Europea y Cooperación."
+    evidence_ids: ["D11", "AECID-REG-2026-08-23", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: la Sede AECID delega explícitamente en REG y el catálogo lanza solo el startUrl canónico exacto ya cubierto; autenticación/firma propias de AECID y E2E de la transición no se infieren."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la transición AECID → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La mención first-party a certificado digital/DNIe describe REG; no se promueve como CLIENT_TLS_AUTH o contrato de firma propio de AECID."
 
   - inventory_id: "ES-PUB-0023"
     surface_key: "age-agencia-espanola-de-medicamentos-y-productos-sanitarios-aemps"
@@ -6362,6 +6363,7 @@ Orden de expansión recomendado:
 [OEPM-PROTEGEO-2026-08-17]: https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/
 [FUNCIONA-PUBLIC-2026-08-17]: https://sede.funciona.gob.es/es/home
 [BOE-SEDE-2026-08-23]: https://www.boe.es/informacion/index.php
+[AECID-REG-2026-08-23]: https://www.aecid.gob.es/registro-de-solicitud
 [CERVANTES-REG-2026-08-17]: https://cervantes.sede.gob.es/servicio?id=Registro-Electrónico-General
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
 [DGOJ-PUBLIC-2026-08-24]: https://sede.ordenacionjuego.gob.es/es/firma
