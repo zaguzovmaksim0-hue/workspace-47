@@ -70,6 +70,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa_only", boe["limitations"].lower())
         self.assertIn("extranet.boe.es", boe["limitations"].lower())
 
+    def test_cnmc_general_submission_page_binds_qa_navigation_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0032")
+        self.assertEqual("age-comision-nacional-de-los-mercados-y-la-competencia-cnmc", target["portalId"])
+        self.assertEqual("cnmc-remision-solicitudes-public", target["profileId"])
+        self.assertEqual("https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CNMC_PUBLIC_PROCEDURE_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("tramites.cnmc.gob.es", target["limitations"].lower())
+
     def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         puertos = next(

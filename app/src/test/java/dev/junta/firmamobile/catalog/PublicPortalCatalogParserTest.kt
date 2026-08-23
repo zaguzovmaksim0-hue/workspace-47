@@ -103,6 +103,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cnmv-sede-public-home"),
                 ProfileId("aesa-solicitud-general-public"),
                 ProfileId("boe-sede-public-home"),
+                ProfileId("cnmc-remision-solicitudes-public"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("ctbg-solicitud-informacion"),

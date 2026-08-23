@@ -110,6 +110,7 @@ class PortalCatalogRepositoryTest {
                 "cnmv-sede-public-home",
                 "aesa-solicitud-general-public",
                 "boe-sede-public-home",
+                "cnmc-remision-solicitudes-public",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
                 "ctbg-solicitud-informacion",

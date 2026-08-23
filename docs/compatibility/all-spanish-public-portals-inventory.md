@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 245 |
 | Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 109 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 113 |
-| Entradas restantes fuera de ambos estados | 70 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 110 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 114 |
+| Entradas restantes fuera de ambos estados | 69 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 109 |
+| `IMPLEMENTED_NOT_E2E` | 110 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 63 |
+| `BROWSE_ONLY` | 62 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 158 |
+| `REVIEWED` | 159 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 20 |
+| `DISCOVERED` | 19 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1443,30 +1443,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Comisión Nacional de los Mercados y la Competencia (CNMC)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Remisión de solicitudes, escritos y comunicaciones — Sede electrónica CNMC"
     surface_type: "SEDE"
     origin: "https://sede.cnmc.gob.es"
     official_site: "https://sede.cnmc.gob.es/"
     e_sede: "https://sede.cnmc.gob.es/"
-    entry_url: "https://sede.cnmc.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones"
+    procedure_page: "https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CNMC_PUBLIC_PROCEDURE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada únicamente a la página pública vigente del trámite general «Remisión de solicitudes, escritos y comunicaciones». Los launches de autenticación/formulario en tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es, la firma y la presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La página first-party del trámite devuelve HTTP 200, figura Activo y «Trámites online con certificado digital», y publica dos accesos externos: https://tramitesclave.cnmc.gob.es/formulario/21 (Cl@ve) y https://tramites.cnmc.gob.es/formulario/21 (certificado electrónico). Las instrucciones indican que los datos del firmante se obtienen del certificado usado para firmar electrónicamente, pero la página pública no acredita para este entry un ABI, formato, algoritmo, packaging, callback ni endpoint de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "CNMC-GENERAL-2026-08-23"]
+    reason: "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al procedure page first-party exacto en sede.cnmc.gob.es y sin capacidades sensibles. tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es permanecen fuera del navigation trust; autenticación y firma requieren contratos separados."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA al procedure page público. Cualquier soporte de launch autenticado, certificado o firma requiere contrato técnico separado con evidencia exacta."
+    notes: "Investigación pública no autenticada únicamente. No se inició Cl@ve, no se proporcionó certificado, no se rellenó formulario, no se cargaron documentos, no se firmó ni se presentó solicitud."
 
   - inventory_id: "ES-PUB-0033"
     surface_key: "age-comision-nacional-del-mercado-de-valores-cnmv"
@@ -6645,3 +6645,4 @@ availability, certificado, firma ni contrato técnico.
 [GC-SEDE-2026-08-23]: https://sede.guardiacivil.gob.es/
 [GC-PROCEDURES-2026-08-23]: https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES
 [GC-INSTRUCCION-2026-05-11]: https://sede.guardiacivil.gob.es/fichero-publico/descargar/id/5205
+[CNMC-GENERAL-2026-08-23]: https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones
