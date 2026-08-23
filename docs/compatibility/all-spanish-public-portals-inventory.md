@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 259 |
-| Fuentes oficiales totales registradas | 271 |
+| Fuentes oficiales portal-specific registradas | 260 |
+| Fuentes oficiales totales registradas | 272 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 124 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 128 |
-| Entradas restantes fuera de ambos estados | 55 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 125 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 129 |
+| Entradas restantes fuera de ambos estados | 54 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 124 |
+| `IMPLEMENTED_NOT_E2E` | 125 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 48 |
+| `BROWSE_ONLY` | 47 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 166 |
+| `REVIEWED` | 167 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 12 |
+| `DISCOVERED` | 11 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1599,30 +1599,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Consejo Superior de Investigaciones Científicas (CSIC)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Registro electrónico / acceso al Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://sede.csic.gob.es"
     official_site: "https://sede.csic.gob.es/"
     e_sede: "https://sede.csic.gob.es/"
-    entry_url: "https://sede.csic.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    entry_url: "https://sede.csic.gob.es/registro-electronico"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.csic.gob.es/registro-electronico"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoFirma"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede del CSIC publica su Registro Electrónico y delega la presentación electrónica en el Registro Electrónico Común/REG-AGE ya cubierto."
+    protocol_evidence: "La página first-party https://sede.csic.gob.es/registro-electronico declara presentación telemática mediante firma electrónica reconocida, exige DNIe o certificado digital en vigor y AutoFirma, y publica el enlace «Registro Electrónico Común de la Administración» a https://rec.redsara.es/registro/action/are/acceso.do. Un GET público con negociación de idioma española siguió 301 a https://reg.redsara.es/, 302 a https://reg.redsara.es/es/ y 200 en el startUrl canónico ya cubierto por reg-age-redsara. No se atribuye a sede.csic.gob.es un ABI, formato, algoritmo, endpoint ni origin de confianza propio."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Ciencia, Innovación y Universidades."
+    evidence_ids: ["D11", "CSIC-REG-2026-08-23", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación first-party y resolución pública hasta el startUrl canónico exacto; falta E2E físico de la transición y no se amplía trust al origin CSIC."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la transición CSIC → REG-AGE sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "Investigación pública no autenticada y de solo lectura. No se inició login, selección de certificado, firma, carga, pago ni presentación."
 
   - inventory_id: "ES-PUB-0038"
     surface_key: "age-cuerpo-nacional-de-policia"
@@ -6365,6 +6366,7 @@ Orden de expansión recomendado:
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
 [DGOJ-PUBLIC-2026-08-24]: https://sede.ordenacionjuego.gob.es/es/firma
 [FOGASA-REG-2026-08-24]: https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml
+[CSIC-REG-2026-08-23]: https://sede.csic.gob.es/registro-electronico
 [P14]: https://reg.redsara.es/es/
 [P14A]: https://reg.redsara.es/preguntas-frecuentes
 [P14B]: https://reg.redsara.es/es/media/es/REG-ManualUsuario.pdf
