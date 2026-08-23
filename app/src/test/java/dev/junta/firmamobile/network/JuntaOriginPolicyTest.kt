@@ -62,6 +62,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val mjusticia = ProfileId("mjusticia-fundaciones-idp75")
     private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
@@ -150,6 +151,7 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sede2.mjusticia.gob.es",
             "presidencia.jcyl.es",
             "egoitza.araba.eus",
             "seuelectronica.diba.cat",
@@ -305,6 +307,15 @@ class JuntaOriginPolicyTest {
         )
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
+        assertEquals(setOf("sede2.mjusticia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mjusticia))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(mjusticia).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75"),
+                mjusticia,
+            ),
+        )
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://sede.mjusticia.gob.es/"), mjusticia))
         assertEquals(
             setOf(
                 "seuelectronica.diba.cat",

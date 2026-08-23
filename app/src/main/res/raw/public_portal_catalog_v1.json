@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9b711484197903a028e9de0091bf65798a9f4099b97bca08edbbd25e293f7b53",
+  "sourceRevision": "33fffb2249e57679f04858608e1c18d59de9cfd2f38161f9ffca16ef9f568f96",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -261,28 +261,29 @@
     {
       "portalId": "mjusticia-sede",
       "inventoryId": "ES-PUB-0010",
-      "profileId": null,
+      "profileId": "mjusticia-fundaciones-idp75",
       "displayName": "Sede electrónica del Ministerio de Justicia",
       "organization": "Ministerio de Justicia",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Firma local con AutoFirma en determinados trámites.",
-      "entryUrl": "https://sede.mjusticia.gob.es/tramites/organos-gobierno",
+      "purpose": "Navegación QA-only desde la Sede del Ministerio al inicio oficial de Modificaciones estatutarias de fundaciones; autenticación y firma no implementadas.",
+      "entryUrl": "https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75",
       "observedMechanisms": [
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "MJUSTICIA_SEDE2_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P06B",
         "P06C",
-        "D11"
+        "D11",
+        "MJUSTICIA-IDP75-LAUNCH-2026-08-19"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Requisito exacto de certificado, formato, algoritmo, endpoint y callback no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Implementación QA-only limitada al launch exacto observado; no se exponen certificado, client TLS, firma, formato, algoritmo, endpoint ni callback."
     },
     {
       "portalId": "junta-andalucia-ovorion",

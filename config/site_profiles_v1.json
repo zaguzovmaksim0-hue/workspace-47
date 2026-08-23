@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 40,
+  "catalogVersion": 41,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1736,6 +1736,27 @@
         {"url":"https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288","reviewedOn":"2026-08-19"},
         {"url":"https://sede.carm.es/presentador/inicio/385/DI155","reviewedOn":"2026-08-19"},
         {"url":"https://conclave.carm.es/TokenServlet","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
+      "profileId": "mjusticia-fundaciones-idp75",
+      "profileVersion": 1,
+      "displayName": "Ministerio de Justicia — Modificaciones estatutarias de fundaciones",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75",
+      "initiatorOrigins": ["https://sede2.mjusticia.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.mjusticia.gob.es/tramites/organos-gobierno","reviewedOn":"2026-08-19"},
+        {"url":"https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75","reviewedOn":"2026-08-19"},
+        {"url":"https://sede2.mjusticia.gob.es/login/index/idp/75","reviewedOn":"2026-08-19"}
       ]
     }
   ]
