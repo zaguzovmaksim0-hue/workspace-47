@@ -1716,6 +1716,7 @@
       "operationPolicies": [],
       "capabilities": [],
       "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://sede.cmt.gob.es/","reviewedOn":"2026-08-23"},
         {"url":"https://sede.cmt.gob.es/catalogoservicios.aspx","reviewedOn":"2026-08-23"}
