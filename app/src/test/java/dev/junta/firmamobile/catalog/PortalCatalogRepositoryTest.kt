@@ -133,6 +133,7 @@ class PortalCatalogRepositoryTest {
                 "guardia-civil-sede-public",
                 "csn-sede-public",
                 "csd-sede-public",
+                "cmt-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
