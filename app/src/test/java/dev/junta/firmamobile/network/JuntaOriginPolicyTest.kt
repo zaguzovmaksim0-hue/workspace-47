@@ -128,6 +128,7 @@ class JuntaOriginPolicyTest {
             "sede.tenerife.es",
             "transparencia.sede.gob.es",
             "www.caib.es",
+            "sede.cmt.gob.es",
             "intranet.caib.es",
             "sede.grancanaria.com",
             "sede.cabildofuer.es",
