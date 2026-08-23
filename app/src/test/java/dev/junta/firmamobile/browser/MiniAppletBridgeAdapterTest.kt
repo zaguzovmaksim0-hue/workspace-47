@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.SensitiveSignatureCopyObserver
@@ -9,6 +10,7 @@ import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningFormat
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
+import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.ProtocolAdapterBinding
 import dev.junta.firmamobile.signing.ProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.SigningProtocolId
@@ -368,6 +370,76 @@ class MiniAppletBridgeAdapterTest {
                     LLEIDA_ORIGIN,
                     true,
                     currentPageUrl = LLEIDA_LOGIN_PAGE_URL,
+                ) is MiniAppletBridgeRouteResult.Rejected,
+            )
+        }
+    }
+
+    @Test
+    fun exactDiputacionBadajozAutoScriptCallNormalizesTheLoginChallengeToSha256Cades() {
+        val result = adapterFor(BADAJOZ_PROFILE_ID).route(
+            rawMessage = badajozMessage(),
+            sourceOrigin = BADAJOZ_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 49,
+            currentPageUrl = BADAJOZ_LOGIN_PAGE_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(BADAJOZ_PROTOCOL_ID, request.protocolId.value)
+            assertEquals(BADAJOZ_PROFILE_ID, request.context.profileId)
+            assertEquals(1, request.context.profileVersion)
+            assertEquals("sede.dip-badajoz.es", request.context.origin.host)
+            assertEquals(49, request.context.navigationEpoch)
+            assertEquals(SigningAlgorithm.SHA256_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(BADAJOZ_CHALLENGE.encodeToByteArray(), data)
+                    assertEquals(BADAJOZ_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun diputacionBadajozRejectsWrongProfileOriginTupleAndPropertiesWithoutBroadening() {
+        assertTrue(
+            adapterFor(BADAJOZ_PROFILE_ID).route(
+                badajozMessage(),
+                Uri.parse("https://sede.dip-badajoz.es.evil.example"),
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor("junta-andalucia").route(
+                badajozMessage(),
+                BADAJOZ_ORIGIN,
+                true,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertTrue(
+            adapterFor(BADAJOZ_PROFILE_ID).route(
+                badajozMessage(),
+                BADAJOZ_ORIGIN,
+                true,
+                currentPageUrl = "https://sede.dip-badajoz.es/portal/inicio.do",
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        listOf(
+            badajozMessage(algorithm = "SHA1withRSA"),
+            badajozMessage(algorithm = "SHA512withRSA"),
+            badajozMessage(format = "XAdES Detached"),
+            badajozMessage(extraProperties = "mode=implicit"),
+            badajozMessage(extraProperties = JSONObject.NULL),
+            badajozMessage(dataB64 = Base64.getEncoder().encodeToString(byteArrayOf(0x00, 0x01))),
+        ).forEach { message ->
+            assertTrue(
+                adapterFor(BADAJOZ_PROFILE_ID).route(
+                    message,
+                    BADAJOZ_ORIGIN,
+                    true,
+                    currentPageUrl = BADAJOZ_LOGIN_PAGE_URL,
                 ) is MiniAppletBridgeRouteResult.Rejected,
             )
         }
@@ -904,6 +976,46 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
+    fun jccmRegistroAcceptsOnlyTheIndependentlyProvenProtectedXadesTuple() {
+        val result = adapterFor(JCCM_REGISTRO_PROFILE_ID).route(
+            rawMessage = jccmRegistroMessage(),
+            sourceOrigin = JCCM_REGISTRO_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 46,
+            currentPageUrl = JCCM_REGISTRO_PROTECTED_URL,
+        ) as MiniAppletBridgeRouteResult.Accepted
+
+        result.request.normalized.use { request ->
+            assertEquals(JCCM_REGISTRO_PROFILE_ID, request.context.profileId)
+            assertEquals(LocalXadesDetachedAdapter.ID, request.protocolId)
+            assertEquals(SigningAlgorithm.SHA512_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.XADES, request.format)
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                    assertArrayEquals(JCCM_REGISTRO_XML, data)
+                    assertEquals(JCCM_REGISTRO_EXTRA_PROPERTIES, properties)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun jccmRegistroRejectsWrongOriginPageTupleAndOldProbeProfile() {
+        assertJccmRegistroRejected("evil-origin", origin = Uri.parse("https://registrounicociudadanos.jccm.es.evil.example"))
+        assertJccmRegistroRejected("subframe", isMainFrame = false)
+        assertJccmRegistroRejected("old-profile", activeProfileId = JCCM_PROFILE_ID)
+        assertJccmRegistroRejected("public-login", currentPageUrl = JCCM_REGISTRO_PUBLIC_LOGIN_URL)
+        assertJccmRegistroRejected("wrong-page", currentPageUrl = "https://registrounicociudadanos.jccm.es/registrounicociudadanos/other.do")
+        assertJccmRegistroRejected("query-expansion", currentPageUrl = "$JCCM_REGISTRO_PROTECTED_URL?x=1")
+        assertJccmRegistroRejected("fragment-expansion", currentPageUrl = "$JCCM_REGISTRO_PROTECTED_URL#fragment")
+        assertJccmRegistroRejected("wrong-algorithm", rawMessage = jccmRegistroMessage(algorithm = "SHA256withRSA"))
+        assertJccmRegistroRejected("wrong-format-case", rawMessage = jccmRegistroMessage(format = "XAdES"))
+        assertJccmRegistroRejected("wrong-format-label", rawMessage = jccmRegistroMessage(format = "XAdES Detached"))
+        assertJccmRegistroRejected("property-order", rawMessage = jccmRegistroMessage(extraProperties = "mode=implicit\nformat=XAdES Detached"))
+        assertJccmRegistroRejected("missing-property", rawMessage = jccmRegistroMessage(extraProperties = "format=XAdES Detached"))
+    }
+
+    @Test
     fun juntaOfvirtualRejectsWrongActiveProfileAndStaleCallbackClearsFailClosed() {
         val wrongProfile = adapterFor("junta-andalucia").route(
             rawMessage = ofvirtualMessage(),
@@ -1189,6 +1301,39 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
+    @Test
+    fun eivissaBridgeAcceptsOnlyExactInstanciaGeneralSummaryCadesTuple() {
+        val cert = Base64.getEncoder().encodeToString(ByteArray(48) { (it + 1).toByte() })
+        val properties = "headless=true\nfilter=encodedcert:$cert;filter=nonexpired:\nmode=implicit\n"
+        val message = JSONObject()
+            .put("type", "MINIAPPLET_SIGN").put("documentId", DOCUMENT_ID).put("requestId", REQUEST_ID)
+            .put("dataB64", Base64.getEncoder().encodeToString("xsig".encodeToByteArray()))
+            .put("algorithm", "SHA256withRSA").put("format", "CAdES").put("extraProperties", properties).toString()
+        val page = "https://seu.conselldeivissa.es/sta/reg/tramite/6269002703260065905043/" +
+            "formulario/summary/referencia/123e4567-e89b-42d3-a456-426614174002"
+        val accepted = adapterFor("eivissa-sede-electronica").route(
+            message, Uri.parse("https://seu.conselldeivissa.es"), true, 61, page,
+        ) as MiniAppletBridgeRouteResult.Accepted
+        accepted.request.normalized.use { request ->
+            assertEquals(EivissaCadesDetachedAdapter.ID, request.protocolId)
+            assertEquals(SigningAlgorithm.SHA256_WITH_RSA, request.algorithm)
+            assertEquals(SigningFormat.CADES, request.format)
+        }
+        listOf(
+            page.replace("/summary/", "/datos/"),
+            page + "?x=1",
+            "https://seu.conselldeivissa.es/sta/reg/tramite/OTHER/formulario/summary/referencia/123e4567-e89b-42d3-a456-426614174002",
+        ).forEach { wrongPage ->
+            assertTrue(adapterFor("eivissa-sede-electronica").route(
+                message, Uri.parse("https://seu.conselldeivissa.es"), true, 61, wrongPage,
+            ) is MiniAppletBridgeRouteResult.Rejected)
+        }
+        val wrongProps = JSONObject(message).put("extraProperties", properties.replace("mode=implicit", "mode=explicit")).toString()
+        assertTrue(adapterFor("eivissa-sede-electronica").route(
+            wrongProps, Uri.parse("https://seu.conselldeivissa.es"), true, 61, page,
+        ) is MiniAppletBridgeRouteResult.Rejected)
+    }
+
     private fun sevillaAdapter(): ProfileMiniAppletBridgeAdapter {
         val profile = SiteProfile(
             profileId = ProfileId(SEVILLA_PROFILE_ID),
@@ -1405,6 +1550,25 @@ class MiniAppletBridgeAdapterTest {
         )
     }
 
+    private fun assertJccmRegistroRejected(
+        label: String,
+        rawMessage: String = jccmRegistroMessage(),
+        origin: Uri = JCCM_REGISTRO_ORIGIN,
+        isMainFrame: Boolean = true,
+        activeProfileId: String = JCCM_REGISTRO_PROFILE_ID,
+        currentPageUrl: String? = JCCM_REGISTRO_PROTECTED_URL,
+    ) {
+        assertTrue(
+            label,
+            adapterFor(activeProfileId).route(
+                rawMessage = rawMessage,
+                sourceOrigin = origin,
+                isMainFrame = isMainFrame,
+                currentPageUrl = currentPageUrl,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+    }
+
     private fun message(
         dataB64: String = Base64.getEncoder().encodeToString(DATA),
     ): String = JSONObject()
@@ -1507,6 +1671,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun jccmRegistroMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(JCCM_REGISTRO_XML),
+        algorithm: String = "SHA512withRSA",
+        format: String = "XADES",
+        extraProperties: Any = JCCM_REGISTRO_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private fun ofvirtualMessage(): String = JSONObject()
         .put("type", "MINIAPPLET_SIGN")
         .put("documentId", DOCUMENT_ID)
@@ -1587,6 +1766,21 @@ class MiniAppletBridgeAdapterTest {
         .put("extraProperties", extraProperties)
         .toString()
 
+    private fun badajozMessage(
+        dataB64: String = Base64.getEncoder().encodeToString(BADAJOZ_CHALLENGE.encodeToByteArray()),
+        algorithm: String = "SHA256withRSA",
+        format: String = "CAdES",
+        extraProperties: Any = BADAJOZ_EXTRA_PROPERTIES,
+    ): String = JSONObject()
+        .put("type", "MINIAPPLET_SIGN")
+        .put("documentId", DOCUMENT_ID)
+        .put("requestId", REQUEST_ID)
+        .put("dataB64", dataB64)
+        .put("algorithm", algorithm)
+        .put("format", format)
+        .put("extraProperties", extraProperties)
+        .toString()
+
     private companion object {
         const val REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000"
         const val DOCUMENT_ID = "123e4567-e89b-42d3-a456-426614174001"
@@ -1598,6 +1792,7 @@ class MiniAppletBridgeAdapterTest {
         val ARAGON_ORIGIN: Uri = Uri.parse("https://aplicaciones.aragon.es")
         val UGR_ORIGIN: Uri = Uri.parse("https://sede.ugr.es")
         val JCCM_ORIGIN: Uri = Uri.parse("https://ventanillaelectronica.jccm.es")
+        val JCCM_REGISTRO_ORIGIN: Uri = Uri.parse("https://registrounicociudadanos.jccm.es")
         val SEVILLA_ORIGIN: Uri = Uri.parse("https://www.sevilla.org")
         const val SEVILLA_PROFILE_ID = "sevilla-atse-certificate-login"
         const val SEVILLA_PROTOCOL_ID = "sevilla-atse-xades-enveloping-v1"
@@ -1627,6 +1822,12 @@ class MiniAppletBridgeAdapterTest {
             "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
                 "formularios/identificacion.phtml"
         const val JCCM_PROTOCOL_ID = "jccm-certificate-login-probe-local-cades-v1"
+        const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
+        const val JCCM_REGISTRO_PUBLIC_LOGIN_URL =
+            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
+        const val JCCM_REGISTRO_PROTECTED_URL =
+            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/accesoclvd.do"
+        const val JCCM_REGISTRO_EXTRA_PROPERTIES = "format=XAdES Detached\nmode=implicit"
         val MITES_ORIGIN: Uri = Uri.parse("https://sede.mites.gob.es")
         const val MITES_PROFILE_ID = "mites-certificate-login"
         const val MITES_PROTOCOL_ID = "mites-certificate-login-local-cades-v1"
@@ -1654,7 +1855,18 @@ class MiniAppletBridgeAdapterTest {
             "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true"
         const val LLEIDA_LOGIN_PAGE_URL =
             "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
+        val BADAJOZ_ORIGIN: Uri = Uri.parse("https://sede.dip-badajoz.es")
+        const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
+        const val BADAJOZ_PROTOCOL_ID = "diputacion-badajoz-login-cades-v1"
+        const val BADAJOZ_CHALLENGE = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        const val BADAJOZ_EXTRA_PROPERTIES =
+            "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true"
+        const val BADAJOZ_LOGIN_PAGE_URL =
+            "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
         val JCCM_DATA = "ABCDE".encodeToByteArray()
+        val JCCM_REGISTRO_XML =
+            """<?xml version="1.0" encoding="ISO-8859-1"?><registro><solicitud>fixture</solicitud></registro>"""
+                .encodeToByteArray()
         const val ARAGON_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         const val OFVIRTUAL_PROPERTIES =
             "filters=keyusage.digitalsignature:true;nonexpired:\n" +
