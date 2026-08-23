@@ -107,6 +107,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 ProfileId("eivissa-sede-electronica"),
                 ProfileId("murcia-carm-pase"),
+                ProfileId("guardia-civil-sede-public"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

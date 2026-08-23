@@ -1798,6 +1798,25 @@ records:
         self.assertEqual("2026-08-17", target["reviewedOn"])
 
 
+    def test_guardia_civil_public_sede_binds_exact_qa_boundary_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0040")
+
+        self.assertEqual("guardia-civil-sede-public", target["profileId"])
+        self.assertEqual("https://sede.guardiacivil.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("GUARDIA_CIVIL_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual(["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
+
+
 if __name__ == "__main__":
     unittest.main()
 

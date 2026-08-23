@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 94 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 98 |
-| Entradas restantes fuera de ambos estados | 85 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 95 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
+| Entradas restantes fuera de ambos estados | 84 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 94 |
+| `IMPLEMENTED_NOT_E2E` | 95 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 78 |
+| `BROWSE_ONLY` | 77 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1695,23 +1695,23 @@ records:
     official_site: "https://sede.guardiacivil.gob.es/"
     e_sede: "https://sede.guardiacivil.gob.es/"
     entry_url: "https://sede.guardiacivil.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AUTOFIRMA"
+    protocol_family: "GUARDIA_CIVIL_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede de la Guardia Civil y catálogo de procedimientos; identificación mediante Cl@ve con DNIe/certificado/Cl@ve móvil o permanente, y firma de solicitudes cuando el procedimiento lo exige."
+    protocol_evidence: "La instrucción oficial vigente de 11-05-2026 para inscripción exige autenticación mediante Cl@ve (DNIe, certificado electrónico, Cl@ve móvil o permanente) y envío del formulario firmado. La documentación oficial de requisitos de la Sede describe firma básica, firma con certificado y AutoFirma para certificado local; no acredita aquí ABI, algoritmo, formato ni endpoint exactos."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "GC-SEDE-2026-08-23", "GC-PROCEDURES-2026-08-23", "GC-INSTRUCCION-2026-05-11"]
+    reason: "Perfil QA-only limitado a navegación pública y metadata observada. La evidencia acredita Cl@ve/certificado y firma con AutoFirma en determinados flujos, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
+    reviewed_at: "2026-08-23"
+    next_gate: "Progresión autenticada controlada hasta pre-firma para observar la invocación AutoFirma, algoritmo, formato y callback exactos, deteniéndose antes de firma criptográfica o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio del Interior."
 
   - inventory_id: "ES-PUB-0041"
@@ -6605,3 +6605,9 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+
+[GC-SEDE-2026-08-23]: https://sede.guardiacivil.gob.es/
+
+[GC-PROCEDURES-2026-08-23]: https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES
+
+[GC-INSTRUCCION-2026-05-11]: https://sede.guardiacivil.gob.es/fichero-publico/descargar/id/5205

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9b711484197903a028e9de0091bf65798a9f4099b97bca08edbbd25e293f7b53",
+  "sourceRevision": "35e556b545b2b2ad9e2cc8502e8bd8f4eef3da7a48f6d1a4ce031f5918a82696",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1029,24 +1029,31 @@
     {
       "portalId": "age-direccion-general-de-la-guardia-civil",
       "inventoryId": "ES-PUB-0040",
-      "profileId": null,
+      "profileId": "guardia-civil-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Dirección General de la Guardia Civil",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede de la Guardia Civil y catálogo de procedimientos; identificación mediante Cl@ve con DNIe/certificado/Cl@ve móvil o permanente, y firma de solicitudes cuando el procedimiento lo exige.",
       "entryUrl": "https://sede.guardiacivil.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "GUARDIA_CIVIL_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "GC-SEDE-2026-08-23",
+        "GC-PROCEDURES-2026-08-23",
+        "GC-INSTRUCCION-2026-05-11"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado a navegación pública y metadata observada. La evidencia acredita Cl@ve/certificado y firma con AutoFirma en determinados flujos, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
     },
     {
       "portalId": "age-direccion-general-de-ordenacion-del-juego",
