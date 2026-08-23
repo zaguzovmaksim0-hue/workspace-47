@@ -1752,7 +1752,7 @@
       "operationPolicies": [],
       "capabilities": [],
       "clientAuthPolicy": null,
-      "certificateRules": {},
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [{"url":"https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx","reviewedOn":"2026-08-23"}]
     }
   ]
