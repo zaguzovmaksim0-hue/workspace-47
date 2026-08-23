@@ -62,6 +62,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val cnmc = ProfileId("cnmc-remision-solicitudes-public")
     private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
@@ -147,6 +148,7 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sede.cnmc.gob.es",
             "presidencia.jcyl.es",
             "egoitza.araba.eus",
             "seuelectronica.diba.cat",
@@ -280,6 +282,11 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
+        assertEquals(setOf("sede.cnmc.gob.es"), JuntaOriginPolicy.browserAllowedHosts(cnmc))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(cnmc).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones"), cnmc))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramites.cnmc.gob.es/formulario/21"), cnmc))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramitesclave.cnmc.gob.es/formulario/21"), cnmc))
         assertEquals(setOf("sede.cabildofuer.es"), JuntaOriginPolicy.browserAllowedHosts(fuerteventura))
         assertEquals(
             setOf("https://sede.cabildofuer.es"),

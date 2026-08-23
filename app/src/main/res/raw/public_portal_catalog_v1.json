@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d0a0fc1314269302a85b1574e25c0f0188c65ca48d8f3a9e82cf5c1e377370ae",
+  "sourceRevision": "0f5ddac6d3d32812b7adef6ba7d42f49ba9ecff5279b4d0c534bd55c0f0d99ec",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -845,24 +845,27 @@
     {
       "portalId": "age-comision-nacional-de-los-mercados-y-la-competencia-cnmc",
       "inventoryId": "ES-PUB-0032",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "cnmc-remision-solicitudes-public",
+      "displayName": "Remisión de solicitudes, escritos y comunicaciones — Sede electrónica CNMC",
       "organization": "Comisión Nacional de los Mercados y la Competencia (CNMC)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.cnmc.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Navegación QA integrada únicamente a la página pública vigente del trámite general «Remisión de solicitudes, escritos y comunicaciones». Los launches de autenticación/formulario en tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es, la firma y la presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CNMC_PUBLIC_PROCEDURE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CNMC-GENERAL-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al procedure page first-party exacto en sede.cnmc.gob.es y sin capacidades sensibles. tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es permanecen fuera del navigation trust; autenticación y firma requieren contratos separados."
     },
     {
       "portalId": "age-comision-nacional-del-mercado-de-valores-cnmv",
