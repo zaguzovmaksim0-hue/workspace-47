@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 91 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 95 |
-| Entradas restantes fuera de ambos estados | 88 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 92 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 96 |
+| Entradas restantes fuera de ambos estados | 87 |
 | Evidencia exacta de `ClientCertRequest` | 3 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 91 |
+| `IMPLEMENTED_NOT_E2E` | 92 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 81 |
+| `BROWSE_ONLY` | 80 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3984,19 +3984,21 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CARM_PASE_CONCLAVE_BROWSE_AUTH_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación con certificado, Cl@ve y AutoFirma según el procedimiento."
-    protocol_evidence: "La ayuda y la prueba de AutoFirma no publican el contrato runtime de la sede."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El procedimiento 385 expone una aportación de documentos protegida; soporte QA limitado a la navegación exacta Sede CARM → PASE → ConCl@ve, sin capacidades nativas de certificado o firma."
+    protocol_evidence: "Runtime Chromium first-party revalidado 2026-08-19: /presentador/inicio/385/DI155 cruzó el WAF Radware por el flujo normal del navegador y redirigió a https://pase.carm.es/pase/login con service de retorno a F.TRAMITE?tipdoc=DI155&proc=385. PASE ofreció APP Cl@ve, certificado electrónico cualificado, eIDAS y Cl@ve Permanente; el formulario de certificado hizo POST exacto a https://conclave.carm.es/TokenServlet y alcanzó una página Cl@ve. Los valores session-scoped no se guardaron. No se observó ni autorizó ABI de firma, selección nativa de certificado ni TLS cliente."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D03", "A16A", "A16B", "A16C"]
-    reason: "Cliente JS, formato, algoritmo, callback, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Inspeccionar un trámite actual y su JavaScript sin enviar formulario."
+    reason: "NEW_PROFILE QA_ONLY de navegación: sede.carm.es es TRUSTED_BROWSE y validate.perfdrive.com, pase.carm.es y conclave.carm.es quedan solo como redirects BROWSE_ONLY. capabilities=[], sin bridge, clientAuthPolicy, endpoint de firma ni aceptación E2E."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar en WebView QA la cadena exacta WAF → PASE → ConCl@ve; con identidad de prueba/autorizada, investigar después el post-auth hasta el límite pre-sign sin firmar ni registrar."
+    notes: "Alcance implementado: subflujo DI155 (aportación de documentos) del procedimiento 385. La Solicitud Genérica PAECARM F.SOLICITUD?proc=385 también se alcanzó en Chromium, pero no se rellenó ni se continuó por requerir datos administrativos."
+
 
   - inventory_id: "ES-PUB-0114"
     surface_key: "navarra-sede-registro-general"

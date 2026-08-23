@@ -105,6 +105,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("canarias-sede"),
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 ProfileId("eivissa-sede-electronica"),
+                ProfileId("murcia-carm-pase"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -1374,6 +1375,39 @@ class PublicPortalCatalogParserTest {
             ),
             repository.resolveLaunch(portal),
         )
+    }
+
+    @Test
+    fun `Murcia CARM binds protected procedure navigation without native certificate or signing capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0113" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI(
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+        )
+
+        assertEquals(PortalId("murcia-sede"), metadata.portalId)
+        assertEquals(ProfileId("murcia-carm-pase"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf("CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"),
+            metadata.observedMechanisms.map { it.name }.toSet(),
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("murcia-carm-pase"), start), repository.resolveLaunch(portal))
     }
 
 }
