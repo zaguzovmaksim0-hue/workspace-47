@@ -292,7 +292,7 @@ class SiteProfileRegistryTest {
         assertEquals(emptySet<Capability>(), profile?.capabilities)
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://tramitesfondoseuropeos.hacienda.gob.es/dossier")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://reg.redsara.es/es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://reg.redsara.es/es/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sedefondoscomunitarios.gob.es.evil.example/")))
     }
 
