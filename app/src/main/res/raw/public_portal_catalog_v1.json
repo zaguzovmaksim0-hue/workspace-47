@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a2ca99f05ad21cf61bf81490299b9116ccaeb2d8a071b7e5f8e1565d85bccb17",
+  "sourceRevision": "d45d737b98b6386f00250567fe054e53edb2d333c66f41771aa47ac80ca32f6d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -799,9 +799,13 @@
       "organization": "Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Registro Electrónico General para presentaciones telemáticas dirigidas a CIEMAT",
+      "purpose": "Presentación telemática dirigida a CIEMAT mediante el Registro Electrónico General cuando el trámite requiere canal electrónico.",
       "entryUrl": "https://sede.ciemat.gob.es/",
-      "observedMechanisms": [],
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
       "protocolFamily": "DELEGACION_REG_AGE",
       "catalogStatus": "E2E_PENDING",
@@ -813,8 +817,7 @@
         "P14"
       ],
       "reviewedOn": "2026-08-23",
-      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación del Registro Electrónico General; se conserva la entrada CIEMAT y no se atribuye ABI de firma propio al origin sede.ciemat.gob.es. La validación E2E física de transición queda pendiente.",
-      "launchUrl": "https://reg.redsara.es/es/"
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara; se conserva CIEMAT como entry surface y no se amplía trust al origin CIEMAT."
     },
     {
       "portalId": "age-centro-para-el-desarrollo-tecnologico-industrial-cdti",
