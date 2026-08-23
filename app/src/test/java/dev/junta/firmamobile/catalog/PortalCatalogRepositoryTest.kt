@@ -62,6 +62,7 @@ class PortalCatalogRepositoryTest {
                 "educacion-convocatoria",
                 "aragon-siraw",
                 "aeat-mis-datos-censales",
+                "aemet-public-solicitud-navigation",
                 "dgt-verificacion-equipo",
                 "ugr-certificado-login",
                 "cantabria-rec-cert-login",

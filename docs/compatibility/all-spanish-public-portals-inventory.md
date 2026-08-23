@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 245 |
 | Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 106 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 110 |
-| Entradas restantes fuera de ambos estados | 73 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 107 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 111 |
+| Entradas restantes fuera de ambos estados | 72 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 106 |
+| `IMPLEMENTED_NOT_E2E` | 107 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 66 |
+| `BROWSE_ONLY` | 65 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 155 |
+| `REVIEWED` | 156 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 23 |
+| `DISCOVERED` | 22 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1194,30 +1194,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Estatal de Meteorología (AEMET)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "AEMET — Solicitud certificados y datos / Sede electrónica"
     surface_type: "SEDE"
     origin: "https://sede.aemet.gob.es"
     official_site: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home"
     e_sede: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home"
     entry_url: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/solicitudes"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AutoFirma MiniApplet"
+    protocol_family: "AEMET_SEDE_CERTIFICATE_LOGIN_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transición Ecológica y el Reto Demográfico."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada desde la entrada oficial estable de la Sede AEMET hacia el flujo público 'Solicitud certificados y datos'; el login por certificado/AutoFirma se registra como frontera observada, no como capacidad criptográfica implementada."
+    protocol_evidence: "La entrada oficial AEMET publica 'Solicitud certificados y datos' y 'Nueva Solicitud'. En una sesión pública normal, 'Usuarios en general' abre https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1, que exige identificación previa y ofrece usuario/contraseña o DNI-e/certificado digital. La ruta pública https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso muestra 'Acceso con certificado digital', declara necesaria la aplicación AUTOFIRMA, carga miniapplet.js y firma.js y contiene un POST same-origin a /AEMET/es/GestionPeticiones/ssoLogin con campos ocultos signature/errorMessage. No se ejecutó el POST, no se invocó firma privada y no se verificaron payload, algoritmo, formato, callback ni endpoint de firma. Los deep links dependen de sesión; por ello el startUrl implementado permanece en la entrada oficial estable."
+    client_tls_auth: "NO_EN_CONTORNO_OBSERVADO"
+    evidence_ids: ["D11", "AEMET-SEDE-2026-08-23", "AEMET-PROCEDURE-2026-08-23", "AEMET-NEW-SOLICITUD-2026-08-23", "AEMET-L1-2026-08-23", "AEMET-SSO-2026-08-23"]
+    reason: "Perfil nuevo QA_ONLY limitado a navegación same-origin desde la entrada oficial estable. Los mecanismos CERTIFICATE_ACCESS/ELECTRONIC_SIGNATURE/AUTOFIRMA/MINIAPPLET reflejan únicamente la frontera pública observada; el perfil mantiene capabilities vacío y no implementa SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, carga documental ni presentación final. Falta E2E físico."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA desde la entrada oficial hasta la frontera de identificación; ampliar autenticación o firma solo con un contrato AEMET-specific exacto y una gate independiente."
+    notes: "No se enviaron usuario/contraseña, certificado, signature, documentos ni formularios; no se realizó firma, presentación final ni pago. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0025"
     surface_key: "age-agencia-estatal-de-seguridad-aerea-aesa"
@@ -6297,6 +6297,11 @@ Orden de expansión recomendado:
 [FEGA-OFVSG02-2026-08-24]: https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02
 [FEGA-REGPOST-2026-08-24]: https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/registroAsientos.action
 [FEGA-CLAVE-2026-08-24]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
+[AEMET-SEDE-2026-08-23]: https://www.aemet.es/es/sede_electronica
+[AEMET-PROCEDURE-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/solicitudes
+[AEMET-NEW-SOLICITUD-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/nuevaSolicitud
+[AEMET-L1-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1
+[AEMET-SSO-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso
 [COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
 [COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
 [DIGITAL-SEDE-REG-2026-08-17]: https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica

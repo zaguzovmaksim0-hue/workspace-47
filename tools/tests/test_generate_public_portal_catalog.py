@@ -1648,6 +1648,27 @@ records:
         self.assertIn("e2e", target["limitations"].lower())
 
 
+    def test_aemet_profile_binds_stable_public_home_and_keeps_sensitive_runtime_capabilities_unimplemented(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0024")
+        self.assertEqual("age-agencia-estatal-de-meteorologia-aemet", target["portalId"])
+        self.assertEqual("aemet-public-solicitud-navigation", target["profileId"])
+        self.assertEqual("https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("AEMET_SEDE_CERTIFICATE_LOGIN_PUBLIC_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual(
+            ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE", "MINIAPPLET"],
+            target["observedMechanisms"],
+        )
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("capabilities vacío", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
     def test_oepm_protegeo_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         oepm = next(

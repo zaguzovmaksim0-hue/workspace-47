@@ -1974,6 +1974,30 @@
         {"url":"https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES","reviewedOn":"2026-08-23"},
         {"url":"https://sede.guardiacivil.gob.es/fichero-publico/descargar/id/5205","reviewedOn":"2026-08-23"}
       ]
+    },
+    {
+      "profileId": "aemet-public-solicitud-navigation",
+      "profileVersion": 1,
+      "displayName": "AEMET — Solicitud certificados y datos",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home",
+      "initiatorOrigins": ["https://sede.aemet.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.aemet.es/es/sede_electronica","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/solicitudes","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/nuevaSolicitud","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }
