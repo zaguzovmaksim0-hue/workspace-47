@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 94 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 98 |
-| Entradas restantes fuera de ambos estados | 85 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 95 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
+| Entradas restantes fuera de ambos estados | 84 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 94 |
+| `IMPLEMENTED_NOT_E2E` | 95 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 78 |
+| `BROWSE_ONLY` | 77 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1534,29 +1534,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Consejo de Transparencia y Buen Gobierno (CTBG)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información"
     surface_type: "SEDE"
     origin: "https://sede.consejodetransparencia.gob.es"
     official_site: "https://sede.consejodetransparencia.gob.es/"
     e_sede: "https://sede.consejodetransparencia.gob.es/"
-    entry_url: "https://sede.consejodetransparencia.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6"
+    procedure_page: "https://sede.consejodetransparencia.gob.es/catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CTBG_ESPUBLICO_CLAVE_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud de Información: perfil QA-only para la entrada electrónica exacta y la navegación observada hasta la frontera de identificación Cl@ve/certificado."
+    protocol_evidence: "La Sede vigente publica el catálogo en /dossier y la Solicitud de Información en /catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6. El control Iniciar tramitación electrónica abre exactamente /catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6 y, en Chromium público, alcanza la página Identificación electrónica. Esa página ofrece Cl@ve/certificado y contiene un formulario POST a https://pasarela.clave.gob.es/Proxy2/ServiceProvider con campos SAMLRequest y RelayState. No se conservaron sus valores ni se envió el formulario. No se atribuye contrato de firma específico del procedimiento."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CTBG-DOSSIER-2026-08-23", "CTBG-SOLINFO-DETAIL-2026-08-23", "CTBG-SOLINFO-LAUNCH-2026-08-23", "CTBG-CLAVE-2026-08-23"]
+    reason: "Perfil QA-only limitado al launch exacto de Solicitud de Información y al primer origen Cl@ve observado. El certificado es una alternativa de identificación; no se expone SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
+    reviewed_at: "2026-08-23"
+    next_gate: "Con identidad autorizada, observar el estado autenticado de Solicitud de Información; detenerse antes de cualquier firma criptográfica, registro final o pago."
     notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
 
   - inventory_id: "ES-PUB-0036"
@@ -6273,6 +6273,10 @@ Orden de expansión recomendado:
 [D09]: https://www.igae.pap.hacienda.gob.es/sitios/igae/es-ES/BasesDatos/invente/paginas/inicio.aspx
 [D10]: https://www.ciencia.gob.es/Universidades/RUCT.html
 [D11]: https://sede.administracion.gob.es/sedes-electronicas
+[CTBG-DOSSIER-2026-08-23]: https://sede.consejodetransparencia.gob.es/dossier
+[CTBG-SOLINFO-DETAIL-2026-08-23]: https://sede.consejodetransparencia.gob.es/catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6
+[CTBG-SOLINFO-LAUNCH-2026-08-23]: https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6
+[CTBG-CLAVE-2026-08-23]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [D12]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/WP_CabildosConsejos.html
 
 ### Evidencia portal-specific
