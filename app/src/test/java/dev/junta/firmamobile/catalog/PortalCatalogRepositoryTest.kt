@@ -10,6 +10,7 @@ import dev.junta.firmamobile.profile.SiteProfileCatalog
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,6 +53,7 @@ class PortalCatalogRepositoryTest {
             setOf(
                 "junta-andalucia",
                 "junta-andalucia-vea-peg",
+                "comunidad-madrid-registro-general",
                 "reg-age-redsara",
                 "unizar-tramitador",
                 "carne-joven-andalucia",
@@ -63,13 +65,16 @@ class PortalCatalogRepositoryTest {
                 "ugr-certificado-login",
                 "cantabria-rec-cert-login",
                 "jccm-certificate-login-probe",
+                "jccm-registro-generico",
                 "mites-certificate-login",
                 "transportes-qys-cert-login",
                 "sevilla-atse-certificate-login",
                 "airef-instancia-general",
+                "mugeju-remision-documentacion-client-auth",
                 "melilla-sede",
                 "ceuta-sede",
                 "extremadura-tramites",
+                "extremadura-pattex-client-auth",
                 "navarra-sede-registro-general",
                 "diputacion-valladolid-sede",
                 "diputacion-burgos-portal",
@@ -77,10 +82,13 @@ class PortalCatalogRepositoryTest {
                 "diputacion-huesca-portal",
                 "diputacion-lugo-sede",
                 "diputacion-leon-sede",
+                "diputacion-albacete-portal",
+                "consell-mallorca-sede",
                 "generalitat-valenciana-client-auth",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
+                "fuerteventura-sede-electronica",
                 "gran-canaria-sede-electronica",
                 "age-portal-de-la-transparencia",
                 "caib-portafib",
@@ -88,14 +96,25 @@ class PortalCatalogRepositoryTest {
                 "diputacion-toledo-sede",
                 "isciii-certificate-selection",
                 "diputacion-valencia-sede",
+                "diputacion-alicante-solicitud-general",
                 "policia-solicitud-generica",
                 "diputacion-lleida-sede",
+                "diputacion-badajoz-portal",
+                "diputacion-alava-registro-comun",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "castilla-leon-quju-public",
+                "diputacion-avila-instancia-general",
                 "cdti-certificate-validation",
+                "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
                 "asturias-miprincipado",
+                "menorca-carpeta-ciutadana",
                 "canarias-sede",
+                "diputacion-barcelona-solicitud-generica-2057",
+                "eivissa-sede-electronica",
+                "catalunya-peticio-generica-client-auth",
+                "murcia-carm-pase",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -119,12 +138,7 @@ class PortalCatalogRepositoryTest {
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
         }
         qaPortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
-            val expectedStatus = if (portal.profileId in setOf(ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede"))) {
-                PortalSupportStatus.BROWSE_ONLY
-            } else {
-                PortalSupportStatus.IMPLEMENTED_NOT_E2E
-            }
-            assertEquals(expectedStatus, portal.supportStatus)
+            assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
             assertTrue(portal.isEnabled)
         }
 
@@ -135,10 +149,6 @@ class PortalCatalogRepositoryTest {
         }
         releasePortals.filter { it.profileId != null && it.profileId !in verifiedIds }.forEach { portal ->
             when (portal.profileId) {
-                ProfileId("educacion-convocatoria"), ProfileId("ceuta-sede") -> {
-                    assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
-                    assertTrue(portal.isEnabled)
-                }
                 ProfileId("junta-andalucia") -> {
                     assertEquals(PortalSupportStatus.BROWSE_ONLY, portal.supportStatus)
                     assertFalse(portal.isEnabled)
@@ -692,17 +702,18 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `education browse-only launch accepts only the exact canonical seed URL`() {
+    fun `education client auth launch accepts only the exact canonical seed URL in qa`() {
         val id = ProfileId("educacion-convocatoria")
         val exact = java.net.URI(
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
         )
-        val item = releaseRepository.portals().single { it.profileId == id }
+        val item = qaRepository.portals().single { it.profileId == id }
 
-        assertEquals(PortalSupportStatus.BROWSE_ONLY, item.supportStatus)
-        assertTrue(item.capabilities.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, item.supportStatus)
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), item.capabilities)
         assertTrue(item.signatureFormats.isEmpty())
-        assertEquals(PortalLaunchTarget(id, exact), releaseRepository.resolveLaunch(id, exact))
+        assertEquals(PortalLaunchTarget(id, exact), qaRepository.resolveLaunch(id, exact))
+        assertNull(releaseRepository.resolveLaunch(id, exact))
 
         listOf(
             "http://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
@@ -714,11 +725,9 @@ class PortalCatalogRepositoryTest {
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46&idConvocatoria=46",
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46&extra=1",
         ).forEach { rejected ->
-            assertEquals(rejected, null, releaseRepository.resolveLaunch(id, java.net.URI(rejected)))
-            assertEquals(rejected, null, BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI(rejected)))
+            assertEquals(rejected, null, qaRepository.resolveLaunch(id, java.net.URI(rejected)))
         }
 
-        assertEquals(null, BuiltInSiteProfiles.releaseRegistry.resolve(java.net.URI("https://www.educacion.gob.es/")))
     }
 
     @Test
@@ -1785,6 +1794,48 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `Castilla Leon QUJU opens only exact public form in QA and remains fail closed`() {
+        val portalId = PortalId("castilla-leon-tramita")
+        val profileId = ProfileId("castilla-leon-quju-public")
+        val publicForm = java.net.URI("https://presidencia.jcyl.es/QUJU?O=1")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(publicForm, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, publicForm), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, publicForm), qaRepository.resolveLaunch(profileId, publicForm))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(entryUrl = java.net.URI("https://presidencia.jcyl.es/QUJU?O=2"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
     fun `Portal Funciona opens only exact public home in QA while authentication remains fail closed`() {
         val portalId = PortalId("age-portal-funciona")
         val profileId = ProfileId("portal-funciona-public-home")
@@ -2083,6 +2134,48 @@ class PortalCatalogRepositoryTest {
         assertFalse(tamperedPortal.isEnabled)
         assertTrue(tamperedPortal.capabilities.isEmpty())
         assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Murcia CARM opens only exact QA procedure and stays fail closed in release`() {
+        val portalId = PortalId("murcia-sede")
+        val profileId = ProfileId("murcia-carm-pase")
+        val start = java.net.URI(
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+        )
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(start, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(entryUrl = java.net.URI("https://pase.carm.es/pase/login"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 

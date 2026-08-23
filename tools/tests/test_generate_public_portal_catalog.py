@@ -474,10 +474,19 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             if entry["portalId"] == "castilla-la-mancha-certificate-login-probe"
         )
 
-        self.assertIsNone(broad["profileId"])
-        self.assertEqual("https://www.jccm.es/", broad["entryUrl"])
-        self.assertEqual("CATALOGED", broad["catalogStatus"])
-        self.assertEqual("BROWSE_ONLY", broad["inventoryStatus"])
+        self.assertEqual("jccm-registro-generico", broad["profileId"])
+        self.assertEqual("ES-PUB-0103", broad["inventoryId"])
+        self.assertEqual(
+            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ",
+            broad["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", broad["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", broad["inventoryStatus"])
+        self.assertEqual("2026-08-19", broad["reviewedOn"])
+        self.assertIn("AUTOSCRIPT", broad["observedMechanisms"])
+        self.assertIn("MINIAPPLET", broad["observedMechanisms"])
+        self.assertIn("CLIENT_TLS_AUTH", broad["observedMechanisms"])
+        self.assertIn("XADES", broad["observedSignatureFormats"])
 
         self.assertEqual("jccm-certificate-login-probe", probe["profileId"])
         self.assertEqual("ES-PUB-0183", probe["inventoryId"])
@@ -537,6 +546,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual([], tea["observedSignatureFormats"])
         self.assertIn("tls 1.2", tea["limitations"].lower())
         self.assertIn("e2e", tea["limitations"].lower())
+
+    def test_menorca_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        menorca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "menorca-portal-institucional"
+        )
+
+        self.assertEqual("menorca-carpeta-ciutadana", menorca["profileId"])
+        self.assertEqual("ES-PUB-0117", menorca["inventoryId"])
+        self.assertEqual(
+            "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+            menorca["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", menorca)
+        self.assertEqual("E2E_PENDING", menorca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", menorca["inventoryStatus"])
+        self.assertEqual("2026-08-18", menorca["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", menorca["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", menorca["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", menorca["observedMechanisms"])
+        self.assertIn("AUTOFIRMA", menorca["observedMechanisms"])
+        self.assertEqual([], menorca["observedSignatureFormats"])
+        self.assertIn("solo en qa", menorca["limitations"].lower())
+        self.assertIn("e2e", menorca["limitations"].lower())
 
     def test_canarias_certificate_login_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -671,18 +705,43 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("xades", policia["limitations"].lower())
         self.assertIn("e2e", policia["limitations"].lower())
 
-    def test_ceuta_browse_only_profile_binds_exact_catalog_contract(self) -> None:
+    def test_ceuta_ani_profile_binds_exact_authenticated_form_boundary_without_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ceuta = next(entry for entry in catalog["entries"] if entry["portalId"] == "ceuta-sede")
 
         self.assertEqual("ceuta-sede", ceuta["profileId"])
         self.assertEqual("ES-PUB-0106", ceuta["inventoryId"])
-        self.assertEqual("https://sede.ceuta.es/controlador/controlador?cmd=info&modulo=info", ceuta["entryUrl"])
+        self.assertEqual("https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI", ceuta["entryUrl"])
         self.assertNotIn("launchUrl", ceuta)
-        self.assertEqual("CATALOGED", ceuta["catalogStatus"])
-        self.assertEqual("BROWSE_ONLY", ceuta["inventoryStatus"])
-        self.assertEqual("2026-07-16", ceuta["reviewedOn"])
+        self.assertEqual("CEUTA_AUTHENTICATED_FORM_BOUNDARY", ceuta["protocolFamily"])
+        self.assertEqual("E2E_PENDING", ceuta["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", ceuta["inventoryStatus"])
+        self.assertEqual("2026-08-19", ceuta["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], ceuta["observedMechanisms"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
+        self.assertIn("no_verificado", ceuta["limitations"].lower())
+
+    def test_pattex_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        pattex = next(entry for entry in catalog["entries"] if entry["portalId"] == "extremadura-portal-tributario")
+
+        self.assertEqual("extremadura-pattex-client-auth", pattex["profileId"])
+        self.assertEqual("ES-PUB-0111", pattex["inventoryId"])
+        self.assertEqual(
+            "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo",
+            pattex["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", pattex)
+        self.assertEqual("E2E_PENDING", pattex["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", pattex["inventoryStatus"])
+        self.assertEqual("CLIENT_TLS_AUTH", pattex["protocolFamily"])
+        self.assertEqual("2026-08-19", pattex["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", pattex["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", pattex["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", pattex["observedMechanisms"])
+        self.assertEqual([], pattex["observedSignatureFormats"])
+        self.assertIn("qa", pattex["limitations"].lower())
+        self.assertIn("firma", pattex["limitations"].lower())
 
     def test_navarra_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -758,6 +817,47 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", leon["limitations"].lower())
         self.assertIn("firma", leon["limitations"].lower())
 
+    def test_mallorca_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mallorca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "mallorca-sede-electronica"
+        )
+
+        self.assertEqual("consell-mallorca-sede", mallorca["profileId"])
+        self.assertEqual("ES-PUB-0120", mallorca["inventoryId"])
+        self.assertEqual(
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
+            mallorca["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", mallorca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mallorca["inventoryStatus"])
+        self.assertEqual("2026-08-18", mallorca["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", mallorca["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", mallorca["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", mallorca["observedMechanisms"])
+        self.assertEqual([], mallorca["observedSignatureFormats"])
+        self.assertIn("qa", mallorca["limitations"].lower())
+        self.assertIn("e2e", mallorca["limitations"].lower())
+        self.assertIn("firma", mallorca["limitations"].lower())
+
+    def test_albacete_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(e for e in catalog["entries"] if e["portalId"] == "diputacion-albacete-portal")
+        self.assertEqual("diputacion-albacete-portal", entry["profileId"])
+        self.assertEqual("ES-PUB-0141", entry["inventoryId"])
+        self.assertEqual("https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567", entry["entryUrl"])
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("2026-08-18", entry["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", entry["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", entry["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", entry["observedMechanisms"])
+        self.assertEqual([], entry["observedSignatureFormats"])
+        self.assertIn("qa", entry["limitations"].lower())
+        self.assertIn("e2e", entry["limitations"].lower())
+        self.assertIn("firma", entry["limitations"].lower())
+
     def test_diputacion_lleida_implemented_not_e2e_profile_binds_exact_catalog_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         lleida = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-lleida-sede")
@@ -770,6 +870,33 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("IMPLEMENTED_NOT_E2E", lleida["inventoryStatus"])
         self.assertEqual("2026-07-16", lleida["reviewedOn"])
         self.assertEqual(["CADES"], lleida["observedSignatureFormats"])
+
+    def test_diputacion_badajoz_implemented_not_e2e_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        badajoz = next(entry for entry in catalog["entries"] if entry["portalId"] == "diputacion-badajoz-portal")
+
+        self.assertEqual("diputacion-badajoz-portal", badajoz["profileId"])
+        self.assertEqual("ES-PUB-0144", badajoz["inventoryId"])
+        self.assertEqual("https://sede.dip-badajoz.es", badajoz["entryUrl"])
+        self.assertNotIn("launchUrl", badajoz)
+        self.assertEqual("E2E_PENDING", badajoz["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", badajoz["inventoryStatus"])
+        self.assertEqual("2026-08-18", badajoz["reviewedOn"])
+        self.assertEqual(["CADES"], badajoz["observedSignatureFormats"])
+
+    def test_diputacion_barcelona_2057_profile_binds_exact_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0145")
+
+        self.assertEqual("diputacion-barcelona-solicitud-generica-2057", target["profileId"])
+        self.assertEqual("diputacion-barcelona-portal", target["portalId"])
+        self.assertEqual("https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica", target["entryUrl"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-18", target["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
 
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -833,6 +960,36 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         )
         self.assertIn("qa", airef["limitations"].lower())
         self.assertIn("e2e", airef["limitations"].lower())
+
+    def test_mugeju_client_auth_profile_binds_only_the_bounded_qa_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mugeju = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0081"
+        )
+
+        self.assertEqual("age-mutualidad-general-judicial-mugeju", mugeju["portalId"])
+        self.assertEqual("mugeju-remision-documentacion-client-auth", mugeju["profileId"])
+        self.assertEqual("https://sedemugeju.gob.es/remisiondocumentacion", mugeju["entryUrl"])
+        self.assertNotIn("launchUrl", mugeju)
+        self.assertEqual("CLIENT_TLS_AUTH", mugeju["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mugeju["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", mugeju["catalogStatus"])
+        self.assertEqual("REVIEWED", mugeju["discoveryState"])
+        self.assertEqual("2026-08-19", mugeju["reviewedOn"])
+        self.assertEqual(["CADES"], mugeju["observedSignatureFormats"])
+        self.assertEqual(
+            [
+                "AUTOSCRIPT",
+                "CERTIFICATE_ACCESS",
+                "CLIENT_TLS_AUTH",
+                "ELECTRONIC_SIGNATURE",
+                "MINIAPPLET",
+            ],
+            mugeju["observedMechanisms"],
+        )
+        self.assertIn("qa_only", mugeju["limitations"].lower())
+        self.assertIn("signatureserviceurl", mugeju["limitations"].lower())
 
     def test_dsca_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -1329,6 +1486,50 @@ records:
         self.assertIn("e2e", target["limitations"].lower())
 
 
+    def test_alicante_solicitud_general_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0139"
+        )
+        self.assertEqual("diputacion-alicante-solicitud-general", target["profileId"])
+        self.assertEqual(
+            "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual(
+            "ALICANTE_SEDE_SOLICITUD_GENERAL_PUBLIC_LAUNCH",
+            target["protocolFamily"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-18", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
+    def test_diputacion_alava_binds_exact_registro_comun_qa_start_without_signer_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0140")
+        self.assertEqual("diputacion-alava-portal", target["portalId"])
+        self.assertEqual("diputacion-alava-registro-comun", target["profileId"])
+        self.assertEqual("https://egoitza.araba.eus/izapidetu/at/01/es/0000301", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("ALAVA_EGOITZA_REGISTRO_COMUN_QA_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-18", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("dinámic", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
     def test_oepm_protegeo_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         oepm = next(
@@ -1353,6 +1554,27 @@ records:
         self.assertIn("e2e", oepm["limitations"].lower())
 
 
+    def test_castilla_leon_quju_binds_exact_public_form_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        quju = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "castilla-leon-tramita"
+        )
+        self.assertEqual("ES-PUB-0102", quju["inventoryId"])
+        self.assertEqual("castilla-leon-quju-public", quju["profileId"])
+        self.assertEqual("https://presidencia.jcyl.es/QUJU?O=1", quju["entryUrl"])
+        self.assertNotIn("launchUrl", quju)
+        self.assertEqual("JCYL_QUJU_PUBLIC_FORM_BOUNDARY", quju["protocolFamily"])
+        self.assertEqual("E2E_PENDING", quju["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", quju["inventoryStatus"])
+        self.assertEqual("REVIEWED", quju["discoveryState"])
+        self.assertEqual("2026-08-19", quju["reviewedOn"])
+        self.assertEqual([], quju["observedMechanisms"])
+        self.assertEqual([], quju["observedSignatureFormats"])
+        self.assertIn("qa_only", quju["limitations"].lower())
+        self.assertIn("no_verificado", quju["limitations"].lower())
+
+
     def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         funciona = next(
@@ -1375,6 +1597,24 @@ records:
         self.assertIn("fnc", funciona["limitations"].lower())
         self.assertIn("e2e", funciona["limitations"].lower())
 
+
+    def test_diputacion_avila_instancia_general_binds_exact_pending_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0143")
+        self.assertEqual("diputacion-avila-portal", target["portalId"])
+        self.assertEqual("diputacion-avila-instancia-general", target["profileId"])
+        self.assertEqual(
+            "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            target["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-18", target["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
 
     def test_comercio_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -1470,6 +1710,29 @@ records:
         self.assertIn("e2e", target["limitations"].lower())
 
 
+    def test_comunidad_madrid_registro_general_binds_exact_qa_launch_only(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0012")
+
+        self.assertEqual("comunidad-madrid-sede", target["portalId"])
+        self.assertEqual("comunidad-madrid-registro-general", target["profileId"])
+        self.assertEqual(
+            "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("MADRID_EREG_MULTIPART_ROUTER", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-19", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("formato", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
     def test_junta_andalucia_vea_peg_profile_binds_exact_public_start(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0093")
@@ -1493,6 +1756,27 @@ records:
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa-only", target["limitations"].lower())
         self.assertIn("autenticado", target["limitations"].lower())
+
+
+    def test_fuerteventura_pades_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(item for item in catalog["entries"] if item["inventoryId"] == "ES-PUB-0134")
+
+        self.assertEqual("fuerteventura-sede-electronica", entry["portalId"])
+        self.assertEqual("fuerteventura-sede-electronica", entry["profileId"])
+        self.assertEqual(
+            "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+            entry["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", entry)
+        self.assertEqual("MINIAPPLET_LOCAL_PADES", entry["protocolFamily"])
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual(["PADES"], entry["observedSignatureFormats"])
+        self.assertIn("AUTOFIRMA", entry["observedMechanisms"])
+        self.assertIn("MINIAPPLET", entry["observedMechanisms"])
+        self.assertEqual("2026-08-18", entry["reviewedOn"])
+        self.assertIn("e2e", entry["limitations"].lower())
 
 
     def test_mineco_instancia_generica_binds_exact_qa_profile(self) -> None:
