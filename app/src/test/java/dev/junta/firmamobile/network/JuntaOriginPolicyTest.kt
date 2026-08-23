@@ -69,6 +69,7 @@ class JuntaOriginPolicyTest {
     private val alava = ProfileId("diputacion-alava-registro-comun")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val ctbg = ProfileId("ctbg-solicitud-informacion")
     private val murcia = ProfileId("murcia-carm-pase")
 
     @Test
@@ -165,6 +166,7 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "sede.consejodetransparencia.gob.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
             "sede.carm.es",
@@ -384,6 +386,17 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://conclave.carm.es/TokenServlet"), murcia))
         assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://validate.perfdrive.com/challenge"), murcia))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela.clave.gob.es/Clave2/"), murcia))
+        assertEquals(
+            setOf("sede.consejodetransparencia.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(ctbg),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(ctbg).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6"),
+                ctbg,
+            ),
+        )
         assertEquals(
             setOf("tramites.juntaex.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),

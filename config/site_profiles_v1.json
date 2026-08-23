@@ -1636,6 +1636,28 @@
       ]
     },
     {
+      "profileId": "ctbg-solicitud-informacion",
+      "profileVersion": 1,
+      "displayName": "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
+      "initiatorOrigins": ["https://sede.consejodetransparencia.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.consejodetransparencia.gob.es/dossier","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.consejodetransparencia.gob.es/catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6","reviewedOn":"2026-08-23"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
       "profileId": "eivissa-sede-electronica",
       "profileVersion": 1,
       "displayName": "Consell Insular d’Eivissa — Sede electrónica",

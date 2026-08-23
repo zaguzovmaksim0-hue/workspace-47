@@ -100,6 +100,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("sepes-transportes-public-complaints"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
+                ProfileId("ctbg-solicitud-informacion"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),

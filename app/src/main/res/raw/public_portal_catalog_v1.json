@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "6e9ae7467fe521c54c0e445bda8b480635f4de4da9c8bae827df0aac9c7addd9",
+  "sourceRevision": "d9ebe43dc05cc87bc63dff1823254564e74cd0b864de304f15218dce401dbf8f",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -912,24 +912,30 @@
     {
       "portalId": "age-consejo-de-transparencia-y-buen-gobierno-ctbg",
       "inventoryId": "ES-PUB-0035",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "ctbg-solicitud-informacion",
+      "displayName": "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información",
       "organization": "Consejo de Transparencia y Buen Gobierno (CTBG)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.consejodetransparencia.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Solicitud de Información: perfil QA-only para la entrada electrónica exacta y la navegación observada hasta la frontera de identificación Cl@ve/certificado.",
+      "entryUrl": "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CTBG_ESPUBLICO_CLAVE_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CTBG-DOSSIER-2026-08-23",
+        "CTBG-SOLINFO-DETAIL-2026-08-23",
+        "CTBG-SOLINFO-LAUNCH-2026-08-23",
+        "CTBG-CLAVE-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado al launch exacto de Solicitud de Información y al primer origen Cl@ve observado. El certificado es una alternativa de identificación; no se expone SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
     },
     {
       "portalId": "age-consejo-superior-de-deportes",
