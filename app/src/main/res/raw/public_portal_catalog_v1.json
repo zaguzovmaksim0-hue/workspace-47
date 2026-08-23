@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "70a037090fd0a9673627e13956529e10ae1597e3469b4af73a84eacd47eb79c0",
+  "sourceRevision": "a5655659254e40ef0a83eceafce560df36f6d339e0be272c674cc2f3e1a3d344",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -968,24 +968,31 @@
     {
       "portalId": "age-consejo-superior-de-deportes",
       "inventoryId": "ES-PUB-0036",
-      "profileId": null,
+      "profileId": "csd-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Consejo Superior de Deportes",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede/Oficina Virtual del CSD, catálogo y Mis trámites; identificación por certificado/DNIe/Cl@ve y AutoFirma requerido para la firma de presentaciones y documentación.",
       "entryUrl": "https://sede.csd.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CSD_AUTOFIRMA_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CSD-SEDE-2026-08-23",
+        "CSD-CATALOG-2026-08-23",
+        "CSD-MISTRAMITES-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita certificado/DNIe/Cl@ve y requisito de AutoFirma, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
     },
     {
       "portalId": "age-consejo-superior-de-investigaciones-cientificas-csic",

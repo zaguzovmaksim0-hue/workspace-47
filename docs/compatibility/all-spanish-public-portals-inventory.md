@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 245 |
 | Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 111 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 115 |
-| Entradas restantes fuera de ambos estados | 68 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 112 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 116 |
+| Entradas restantes fuera de ambos estados | 67 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 111 |
+| `IMPLEMENTED_NOT_E2E` | 112 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 61 |
+| `BROWSE_ONLY` | 60 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 160 |
+| `REVIEWED` | 161 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 18 |
+| `DISCOVERED` | 17 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1573,23 +1573,23 @@ records:
     official_site: "https://sede.csd.gob.es/"
     e_sede: "https://sede.csd.gob.es/"
     entry_url: "https://sede.csd.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AUTOFIRMA"
+    protocol_family: "CSD_AUTOFIRMA_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede/Oficina Virtual del CSD, catálogo y Mis trámites; identificación por certificado/DNIe/Cl@ve y AutoFirma requerido para la firma de presentaciones y documentación."
+    protocol_evidence: "La Sede CSD publica acceso por certificado y Plataforma Cl@ve; el catálogo indica certificado digital/DNIe y que AutoFirma es requerido para firmar la presentación de expedientes y documentación posterior. No se publica aquí un ABI, formato, algoritmo o endpoint exacto de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CSD-SEDE-2026-08-23", "CSD-CATALOG-2026-08-23", "CSD-MISTRAMITES-2026-08-23"]
+    reason: "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita certificado/DNIe/Cl@ve y requisito de AutoFirma, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
+    reviewed_at: "2026-08-23"
+    next_gate: "Progresión autenticada controlada hasta pre-firma para observar invocación AutoFirma/algoritmo/formato/callback exactos, deteniéndose antes de firma criptográfica o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Educación, Formación Profesional y Deportes."
 
   - inventory_id: "ES-PUB-0037"
@@ -6648,3 +6648,6 @@ availability, certificado, firma ni contrato técnico.
 [CNMC-GENERAL-2026-08-23]: https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones
 [CSN-SEDE-2026-08-23]: https://sede.csn.gob.es/
 [CSN-IDENT-2026-08-23]: https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3
+[CSD-SEDE-2026-08-23]: https://sede.csd.gob.es/
+[CSD-CATALOG-2026-08-23]: https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es
+[CSD-MISTRAMITES-2026-08-23]: https://sede.csd.gob.es/oficinavirtual/Default.aspx

@@ -123,6 +123,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("dgoj-public-navigation"),
                 ProfileId("guardia-civil-sede-public"),
                 ProfileId("csn-sede-public"),
+                ProfileId("csd-sede-public"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

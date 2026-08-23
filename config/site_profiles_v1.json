@@ -2080,6 +2080,27 @@
         {"url":"https://sede.csn.gob.es/","reviewedOn":"2026-08-23"},
         {"url":"https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3","reviewedOn":"2026-08-23"}
       ]
+    },
+    {
+      "profileId": "csd-sede-public",
+      "profileVersion": 1,
+      "displayName": "Consejo Superior de Deportes — Sede / Oficina Virtual pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.csd.gob.es/",
+      "initiatorOrigins": ["https://sede.csd.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.csd.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.csd.gob.es/oficinavirtual/Default.aspx","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }
