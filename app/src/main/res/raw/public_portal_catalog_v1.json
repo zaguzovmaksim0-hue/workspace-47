@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "4c88189aeb3e5f5c9a072e905aea07e1e247cf79f1e37c4b35a9d25a47d8b28e",
+  "sourceRevision": "db261c54f03ae09f614fec88c42147ebbb406659c7ed956ec0a41ff009538b4b",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -852,24 +852,24 @@
     {
       "portalId": "age-comisionado-para-el-mercado-de-tabacos-cmt",
       "inventoryId": "ES-PUB-0031",
-      "profileId": null,
+      "profileId": "cmt-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Comisionado para el Mercado de Tabacos (CMT)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación pública QA-only a la Sede electrónica del CMT y a su catálogo público de servicios.",
       "entryUrl": "https://sede.cmt.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "CMT_PUBLIC_NAVIGATION_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA_ONLY limitado al origen público exacto sede.cmt.gob.es; autenticación, client TLS, firma, formato, algoritmo, endpoints y presentación permanecen NO_VERIFICADO y el E2E sigue pendiente."
     },
     {
       "portalId": "age-comision-nacional-de-los-mercados-y-la-competencia-cnmc",
