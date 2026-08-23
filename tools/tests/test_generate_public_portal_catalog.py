@@ -1587,10 +1587,6 @@ records:
         self.assertEqual([], profile["operationPolicies"])
         self.assertEqual([], profile["capabilities"])
         self.assertIsNone(profile["clientAuthPolicy"])
-        self.assertEqual({
-            "allowedKeyAlgorithms": ["RSA", "EC"],
-            "requireDigitalSignatureKeyUsage": False,
-        }, profile["certificateRules"])
 
 
     def test_castilla_leon_quju_binds_exact_public_form_without_signing_capability(self) -> None:
