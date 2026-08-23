@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "060d430dc1a26fca8db83024c8323e9f54856173936e0aea04ec8ac9baabe7aa",
+  "sourceRevision": "1bfd9593fe1b21129b53db670327b84329fea7302a8984b988a38c83999630bd",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -575,24 +575,28 @@
     {
       "portalId": "age-administrador-de-infraestructuras-ferroviarias-adif",
       "inventoryId": "ES-PUB-0021",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "adif-sede-public-home",
+      "displayName": "Sede electrónica / Instancia General",
       "organization": "Administrador de Infraestructuras Ferroviarias (ADIF)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede electrónica de ADIF con acceso a procedimientos, incluida la Instancia General SIA 2240787; la implementación se limita al lanzamiento público QA.",
       "entryUrl": "https://sede.adif.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "ADIF_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "ADIF-SEDE-2026-08-23",
+        "ADIF-INSTANCIA-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA_ONLY limitado a https://sede.adif.gob.es/ sin capabilities sensibles. El certificado es un medio admitido, no una afirmación de CLIENT_TLS_AUTH; SIGN, algoritmo, formato, endpoints y presentación final permanecen NO_VERIFICADO hasta evidencia runtime específica."
     },
     {
       "portalId": "age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid",

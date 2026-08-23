@@ -1575,6 +1575,28 @@ records:
         self.assertIn("no_verificado", quju["limitations"].lower())
 
 
+    def test_adif_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        adif = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0021"
+        )
+        self.assertEqual("age-administrador-de-infraestructuras-ferroviarias-adif", adif["portalId"])
+        self.assertEqual("adif-sede-public-home", adif["profileId"])
+        self.assertEqual("https://sede.adif.gob.es/", adif["entryUrl"])
+        self.assertNotIn("launchUrl", adif)
+        self.assertEqual("ADIF_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH", adif["protocolFamily"])
+        self.assertEqual("E2E_PENDING", adif["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", adif["inventoryStatus"])
+        self.assertEqual("REVIEWED", adif["discoveryState"])
+        self.assertEqual("2026-08-23", adif["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], adif["observedMechanisms"])
+        self.assertEqual([], adif["observedSignatureFormats"])
+        self.assertIn("qa_only", adif["limitations"].lower())
+        self.assertIn("client_tls_auth", adif["limitations"].lower())
+        self.assertIn("sign", adif["limitations"].lower())
+
+
     def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         funciona = next(
