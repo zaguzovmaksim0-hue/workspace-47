@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9b711484197903a028e9de0091bf65798a9f4099b97bca08edbbd25e293f7b53",
+  "sourceRevision": "411da24cfb0e463d14c9ea195f476db708a416b1547c7ff2da21fbb698f004d9",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -580,13 +580,13 @@
       "organization": "Administrador de Infraestructuras Ferroviarias (ADIF)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Public navigation only; technical operation contracts unverified.",
       "entryUrl": "https://sede.adif.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "DISCOVERED",
       "evidenceIds": [
         "D11"
@@ -867,7 +867,7 @@
     {
       "portalId": "age-comision-nacional-del-mercado-de-valores-cnmv",
       "inventoryId": "ES-PUB-0033",
-      "profileId": null,
+      "profileId": "cnmv-sede-public-home",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Comisión Nacional del Mercado de Valores (CNMV)",
       "governmentLevel": "STATE",

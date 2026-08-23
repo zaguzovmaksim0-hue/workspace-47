@@ -1737,6 +1737,23 @@
         {"url":"https://sede.carm.es/presentador/inicio/385/DI155","reviewedOn":"2026-08-19"},
         {"url":"https://conclave.carm.es/TokenServlet","reviewedOn":"2026-08-19"}
       ]
+    },
+    {
+      "profileId": "cnmv-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "CNMV Sede electrónica pública",
+      "compatibilityStatus": "BROWSE_ONLY",
+      "activation": "ENABLED",
+      "startUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
+      "initiatorOrigins": ["https://sede.cnmv.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": ["https://sede.cnmv.gob.es"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {},
+      "evidence": [{"url":"https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx","reviewedOn":"2026-08-23"}]
     }
   ]
 }
