@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "6731ed982d06a1dae4264ac6a1bfd60178689a736601b988b06ee55cd663e871",
+  "sourceRevision": "07d4f4d5d3eb34fa7802be6d282c64acf3820a9c58a16e20df7c4b079f47602d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1297,24 +1297,28 @@
     {
       "portalId": "age-fabrica-nacional-de-moneda-y-timbre-real-casa-de-la-moneda-fnmt-rcm",
       "inventoryId": "ES-PUB-0048",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Formulario de propósito general FNMT-RCM — vía Registro Electrónico General",
       "organization": "Fábrica Nacional de Moneda y Timbre-Real Casa de la Moneda (FNMT-RCM)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.sede.fnmt.gob.es/",
+      "purpose": "La Sede FNMT-RCM indica que las solicitudes, escritos y comunicaciones de propósito general se presentan telemáticamente por el Registro Electrónico Común de la AGE, seleccionando FNMT-RCM como organismo destinatario.",
+      "entryUrl": "https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "FNMT-TRAMITES-2026-08-24",
+        "FNMT-REG-2026-08-24",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara por delegación first-party explícita y cadena de redirección pública exacta al startUrl canónico. Se conserva la página FNMT como entry URL, no se amplía trust del REG-AGE al origin FNMT y falta E2E físico de la transición."
     },
     {
       "portalId": "age-instituto-cervantes",
