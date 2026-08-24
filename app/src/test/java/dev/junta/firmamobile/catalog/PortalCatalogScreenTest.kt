@@ -452,6 +452,20 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `DGSFP public Sede is compatible but sensitive capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single { it.portalId == PortalId("age-direccion-general-de-seguros-y-fondos-de-pensiones") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("dgsfp-sede-public-home"), target.profileId)
+        assertEquals(java.net.URI("https://www.sededgsfp.gob.es/"), target.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.capabilities.isEmpty())
+        assertTrue(target.signatureFormats.isEmpty())
+        assertTrue(target.isEnabled)
+    }
+
+    @Test
     fun `Hacienda central REG alias is compatible but remains pending E2E`() {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }

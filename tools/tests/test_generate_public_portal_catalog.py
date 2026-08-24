@@ -1634,6 +1634,21 @@ records:
         self.assertIn("procedurekey=7601", target["limitations"].lower())
         self.assertIn("id=7002", target["limitations"].lower())
 
+    def test_dgsfp_public_sede_binds_exact_qa_navigation(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0042")
+        self.assertEqual("dgsfp-sede-public-home", target["profileId"])
+        self.assertEqual("https://www.sededgsfp.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DGSFP_PUBLIC_SEDE_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+
     def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         funciona = next(

@@ -296,6 +296,23 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `DGSFP public Sede is browse-only trust in QA and sensitive routes remain profile-scoped closed`() {
+        val profileId = ProfileId("dgsfp-sede-public-home")
+        val start = URI("https://www.sededgsfp.gob.es/")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es:444/")))
+    }
+
+    @Test
     fun `Junta VEA PEG is QA-only browse and rejects auth API as profile origin`() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")

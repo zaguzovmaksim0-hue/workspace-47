@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d9ebe43dc05cc87bc63dff1823254564e74cd0b864de304f15218dce401dbf8f",
+  "sourceRevision": "4d53c65a424bb4755b78e51066afd6aa59eb632ab3c50f6ee2f3efe30d975b87",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1080,24 +1080,25 @@
     {
       "portalId": "age-direccion-general-de-seguros-y-fondos-de-pensiones",
       "inventoryId": "ES-PUB-0042",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "dgsfp-sede-public-home",
+      "displayName": "Sede electrónica / inicio público oficial",
       "organization": "Dirección General de Seguros y Fondos de Pensiones",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA delimitada al inicio público first-party de la Sede DGSFP; autenticación, certificado, Cl@ve, AutoFirma y tramitación permanecen fuera del contrato implementado.",
       "entryUrl": "https://www.sededgsfp.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DGSFP_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DGSFP-SEDE-2026-08-24"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "La entrada pública first-party y su origin están revalidados y permiten solo un contrato QA-only de navegación. Las referencias de certificado/Cl@ve/AutoFirma en bundles no se promocionan a SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI sin contrato técnico exacto y E2E físico."
     },
     {
       "portalId": "age-direccion-general-del-catastro",
