@@ -2076,9 +2076,12 @@ object SiteProfileCatalogParser {
                     origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
-                owners == setOf(ASTURIAS_PROFILE_ID, ASTURIAS_SEDE_NAVIGATION_PROFILE_ID) &&
+                (owners == setOf(ASTURIAS_PROFILE_ID, ASTURIAS_SEDE_NAVIGATION_PROFILE_ID) &&
                     firstIsRedirectOrigin != secondIsRedirectOrigin &&
-                    origin.serialized == ASTURIAS_MIPRINCIPADO_ORIGIN
+                    origin.serialized == ASTURIAS_MIPRINCIPADO_ORIGIN) ||
+                    (!firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+                        owners == setOf(TRANSPORTES_PROFILE_ID, SEPES_TRANSPORTES_PROFILE_ID) &&
+                        origin.serialized == TRANSPORTES_SHARED_ORIGIN)
             })
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
@@ -2679,6 +2682,8 @@ object SiteProfileCatalogParser {
         "https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html",
     )
     private const val TRANSPORTES_PROFILE_ID = "transportes-qys-cert-login"
+    private const val SEPES_TRANSPORTES_PROFILE_ID = "sepes-transportes-public-complaints"
+    private const val TRANSPORTES_SHARED_ORIGIN = "https://sede.transportes.gob.es"
     private const val TRANSPORTES_PROFILE_VERSION = 1
     private const val TRANSPORTES_DISPLAY_NAME =
         "Ministerio de Transportes y Movilidad Sostenible — Quejas y Sugerencias"

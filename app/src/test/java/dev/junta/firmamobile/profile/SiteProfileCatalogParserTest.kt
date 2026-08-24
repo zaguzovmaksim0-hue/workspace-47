@@ -1125,6 +1125,20 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun `shared Transportes origin is reviewed only for the exact SEPES pair`() {
+        val parsed = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
+        assertTrue(parsed.profiles.any { it.profileId == ProfileId("transportes-qys-cert-login") })
+        assertTrue(parsed.profiles.any { it.profileId == ProfileId("sepes-transportes-public-complaints") })
+
+        val exactId = "\"profileId\": \"sepes-transportes-public-complaints\""
+        val unreviewedId = "\"profileId\": \"sepes-transportes-public-complaints-copy\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(exactId))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(exactId, unreviewedId))
+        }
+    }
+
+    @Test
     fun `Portal Funciona public home profile is QA only and exposes no sensitive capability`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
