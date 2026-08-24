@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 42,
+  "catalogVersion": 43,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1679,6 +1679,30 @@
         {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22","reviewedOn":"2026-08-24"},
         {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI","reviewedOn":"2026-08-24"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ResponseRedirect","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
+      "profileId": "fega-solicitud-general-ofvsg02",
+      "profileVersion": 1,
+      "displayName": "FEGA — Solicitud al FEGA",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02",
+      "initiatorOrigins": ["https://www3.sede.fega.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.sede.fega.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sede.fega.gob.es/procedimientos-y-servicios","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sede.fega.gob.es/content/solicitud-al-fega","reviewedOn":"2026-08-24"},
+        {"url":"https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02","reviewedOn":"2026-08-24"},
+        {"url":"https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/registroAsientos.action","reviewedOn":"2026-08-24"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-24"}
       ]
     },
     {

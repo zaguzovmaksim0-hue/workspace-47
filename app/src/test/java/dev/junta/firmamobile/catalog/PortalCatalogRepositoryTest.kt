@@ -110,6 +110,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-avila-instancia-general",
                 "ctbg-solicitud-informacion",
                 "catastro-solicitudes-genericas",
+                "fega-solicitud-general-ofvsg02",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",

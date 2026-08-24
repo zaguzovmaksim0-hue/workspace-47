@@ -103,6 +103,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("ctbg-solicitud-informacion"),
                 ProfileId("catastro-solicitudes-genericas"),
+                ProfileId("fega-solicitud-general-ofvsg02"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),

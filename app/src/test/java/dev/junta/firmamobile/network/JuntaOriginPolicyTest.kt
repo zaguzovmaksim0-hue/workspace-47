@@ -72,6 +72,7 @@ class JuntaOriginPolicyTest {
     private val avila = ProfileId("diputacion-avila-instancia-general")
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
     private val catastro = ProfileId("catastro-solicitudes-genericas")
+    private val fega = ProfileId("fega-solicitud-general-ofvsg02")
     private val murcia = ProfileId("murcia-carm-pase")
     private val dgoj = ProfileId("dgoj-public-navigation")
 
@@ -172,6 +173,7 @@ class JuntaOriginPolicyTest {
             "diputacionavila.sedelectronica.es",
             "sede.consejodetransparencia.gob.es",
             "www.sedecatastro.gob.es",
+            "www3.sede.fega.gob.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
             "sede.carm.es",
@@ -405,6 +407,19 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI"), catastro))
         assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela.clave.gob.es/Proxy2/ResponseRedirect"), catastro))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"), catastro))
+        assertEquals(
+            setOf("www3.sede.fega.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(fega),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(fega).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02"),
+                fega,
+            ),
+        )
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"), fega))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"), fega))
         assertEquals(
             setOf("sede.carm.es", "validate.perfdrive.com", "pase.carm.es", "conclave.carm.es"),
             JuntaOriginPolicy.browserAllowedHosts(murcia),

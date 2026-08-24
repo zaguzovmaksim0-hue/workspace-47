@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "c7b15e93bce23d5e733e279b6ca3230cc99b9429c0a73329803c02252951b558",
+  "sourceRevision": "26069218f9a08af53454058235a4c3ba7fb2aeb04ec5cb518791e084527dde20",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1212,24 +1212,32 @@
     {
       "portalId": "age-fondo-espanol-de-garantia-agraria-o-a-fega",
       "inventoryId": "ES-PUB-0047",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "fega-solicitud-general-ofvsg02",
+      "displayName": "FEGA — Solicitud al FEGA",
       "organization": "Fondo Español de Garantía Agraria O.A. (FEGA)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.sede.fega.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Perfil QA-only para Solicitud al FEGA, limitado al launch público OFVSG02 y a la frontera Cl@ve observada.",
+      "entryUrl": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "FEGA_CLAVE_PUBLIC_REGISTRY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "FEGA-HOME-2026-08-24",
+        "FEGA-PROCEDURES-2026-08-24",
+        "FEGA-SOLICITUD-2026-08-24",
+        "FEGA-OFVSG02-2026-08-24",
+        "FEGA-REGPOST-2026-08-24",
+        "FEGA-CLAVE-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only de navegación. El acceso admite certificado o Cl@ve, pero no se ha probado client TLS ni un contrato de firma del portal; autoscript.js por sí solo no se promueve a SIGN. Sin endpoint, formato, algoritmo ni E2E."
     },
     {
       "portalId": "age-fabrica-nacional-de-moneda-y-timbre-real-casa-de-la-moneda-fnmt-rcm",

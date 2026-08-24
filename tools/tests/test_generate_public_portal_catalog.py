@@ -1597,6 +1597,25 @@ records:
         self.assertIn("client_tls_auth", target["limitations"].lower())
         self.assertIn("sin e2e", target["limitations"].lower())
 
+    def test_fega_solicitud_general_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0047")
+        self.assertEqual("age-fondo-espanol-de-garantia-agraria-o-a-fega", target["portalId"])
+        self.assertEqual("fega-solicitud-general-ofvsg02", target["profileId"])
+        self.assertEqual("https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("FEGA_CLAVE_PUBLIC_REGISTRY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client tls", target["limitations"].lower())
+        self.assertIn("sin endpoint", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
     def test_diputacion_alava_binds_exact_registro_comun_qa_start_without_signer_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0140")

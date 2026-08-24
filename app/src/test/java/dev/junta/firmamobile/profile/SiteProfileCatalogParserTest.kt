@@ -1470,6 +1470,39 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
     }
 
+    @Test
+    fun `FEGA Solicitud al FEGA is QA navigation only to observed Clave boundary`() {
+        val profileId = ProfileId("fega-solicitud-general-ofvsg02")
+        val start = URI("https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("FEGA — Solicitud al FEGA", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://www3.sede.fega.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(6, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-24" })
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"))?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www3.sede.fega.gob.es.evil.example/")))
+    }
+
+
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")
