@@ -85,6 +85,22 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("tramites.cnmc.gob.es", target["limitations"].lower())
+    def test_ciudad_real_registro_telematico_binds_exact_public_boundary(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0150")
+        self.assertEqual("diputacion-ciudad-real-portal", target["portalId"])
+        self.assertEqual("diputacion-ciudad-real-registro-telematico", target["profileId"])
+        self.assertEqual("https://sede.dipucr.es/iniciaTramite/20", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("SIGEM_CLAVE_NONSTANDARD_PORT_HANDOFF", target["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("4443", target["limitations"])
+        self.assertIn("qa", target["limitations"].lower())
 
     def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -943,6 +959,24 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
 
+    def test_huelva_sede_public_profile_binds_exact_qa_launch_without_signing_claim(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0158")
+
+        self.assertEqual("diputacion-huelva-portal", target["portalId"])
+        self.assertEqual("diputacion-huelva-sede-public", target["profileId"])
+        self.assertEqual("https://sede.diphuelva.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("HUELVA_MOAD_PUBLIC_SEDE_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
@@ -1640,10 +1674,25 @@ records:
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-23", target["reviewedOn"])
         self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa-only", target["limitations"].lower())
+
+    def test_granada_public_sede_profile_binds_stable_qa_launch_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0155")
+        self.assertEqual("diputacion-granada-sede-public", target["profileId"])
+        self.assertEqual("https://sede.dipgra.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("GRANADA_SEDE_PUBLIC_QA_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
 
     def test_catastro_generic_submissions_binds_exact_qa_launch_without_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -1681,6 +1730,30 @@ records:
         self.assertIn("client tls", target["limitations"].lower())
         self.assertIn("sin endpoint", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
+    def test_almeria_solicitud_general_profile_binds_exact_qa_launch_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0142")
+
+        self.assertEqual("diputacion-almeria-portal", target["portalId"])
+        self.assertEqual("diputacion-almeria-solicitud-general", target["profileId"])
+        self.assertEqual(
+            "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual(
+            "DIPALME_OFICINA_VIRTUAL_SOLICITUD_GENERAL_QA_LAUNCH",
+            target["protocolFamily"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+        self.assertIn("firma", target["limitations"].lower())
 
     def test_diputacion_alava_binds_exact_registro_comun_qa_start_without_signer_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

@@ -2142,6 +2142,106 @@
         {"url":"https://sede.cmt.gob.es/","reviewedOn":"2026-08-23"},
         {"url":"https://sede.cmt.gob.es/catalogoservicios.aspx","reviewedOn":"2026-08-23"}
       ]
+    },
+    {
+      "profileId": "diputacion-huelva-sede-public",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Huelva — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.diphuelva.es/",
+      "initiatorOrigins": ["https://sede.diphuelva.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.diphuelva.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diphuelva.es/","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "diputacion-almeria-solicitud-general",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Almería — Solicitud General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+      "initiatorOrigins": [
+        "https://ov.dipalme.org"
+      ],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {
+        "allowedKeyAlgorithms": [
+          "RSA",
+          "EC"
+        ],
+        "requireDigitalSignatureKeyUsage": false
+      },
+      "evidence": [
+        {
+          "url": "https://www.dipalme.org/Servicios/cmsdipro/index.nsf/index.xsp?p=sededipalme",
+          "reviewedOn": "2026-08-21"
+        },
+        {
+          "url": "https://www.dipalme.org/Servicios/cmsdipro/index.nsf/servicios_view_entidad_rol_grupo_b.xsp?p=sededipalme&rol=rpc",
+          "reviewedOn": "2026-08-21"
+        },
+        {
+          "url": "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+          "reviewedOn": "2026-08-21"
+        }
+      ]
+    },
+    {
+      "profileId": "diputacion-ciudad-real-registro-telematico",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Ciudad Real — Registro Telemático Común",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipucr.es/iniciaTramite/20",
+      "initiatorOrigins": ["https://sede.dipucr.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.dipucr.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucr.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucr.es/iniciaTramite/20","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "diputacion-granada-sede-public",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Granada — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipgra.es/",
+      "initiatorOrigins": ["https://sede.dipgra.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.dipgra.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.dipgra.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.dipgra.es/opencms/opencms/system/modules/gsede/elements/contenedores/certificados.html","reviewedOn":"2026-08-23"}
+      ]
     }
   ]
 }

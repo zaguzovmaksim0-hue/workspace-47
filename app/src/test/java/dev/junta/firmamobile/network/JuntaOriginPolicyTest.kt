@@ -79,6 +79,9 @@ class JuntaOriginPolicyTest {
     private val fega = ProfileId("fega-solicitud-general-ofvsg02")
     private val murcia = ProfileId("murcia-carm-pase")
     private val dgoj = ProfileId("dgoj-public-navigation")
+    private val huelva = ProfileId("diputacion-huelva-sede-public")
+    private val almeria = ProfileId("diputacion-almeria-solicitud-general")
+    private val ciudadReal = ProfileId("diputacion-ciudad-real-registro-telematico")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -125,6 +128,7 @@ class JuntaOriginPolicyTest {
             "ateka.navarra.es",
             "www.sede.diputaciondevalladolid.es",
             "diputacionalicante.sedelectronica.es",
+            "sede.dipgra.es",
             "registro.diputaciondeburgos.es",
             "sedeelectronica.cabildodelapalma.es",
             "ovc24.dphuesca.es",
@@ -185,6 +189,9 @@ class JuntaOriginPolicyTest {
             "sede.consejodetransparencia.gob.es",
             "www.sedecatastro.gob.es",
             "www3.sede.fega.gob.es",
+            "sede.diphuelva.es",
+            "ov.dipalme.org",
+            "sede.dipucr.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
             "sede.carm.es",
@@ -426,6 +433,54 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(setOf("sede.diphuelva.es"), JuntaOriginPolicy.browserAllowedHosts(huelva))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(huelva).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.diphuelva.es/"),
+                huelva,
+            ),
+        )
+        assertEquals(setOf("ov.dipalme.org"), JuntaOriginPolicy.browserAllowedHosts(almeria))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(almeria).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000"),
+                almeria,
+            ),
+        )
+        assertEquals(setOf("sede.dipucr.es"), JuntaOriginPolicy.browserAllowedHosts(ciudadReal))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(ciudadReal).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.dipucr.es/iniciaTramite/20"),
+                ciudadReal,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://sede.diphuelva.es.evil.example/"),
+                huelva,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://sede.dipucr.es:4443/SIGEM_AutenticacionWeb/seleccionEntidad.do"),
+                ciudadReal,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://ov.dipalme.org.evil.example/"),
+                almeria,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://sede.dipucr.es.evil.example/"),
+                ciudadReal,
             ),
         )
         assertEquals(
