@@ -1840,6 +1840,26 @@ records:
         self.assertEqual("2026-08-17", target["reviewedOn"])
 
 
+    def test_fnmt_general_form_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0048")
+
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
+
 if __name__ == "__main__":
     unittest.main()
 

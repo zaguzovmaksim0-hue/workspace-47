@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 244 |
 | Fuentes oficiales totales registradas | 256 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 97 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 101 |
-| Entradas restantes fuera de ambos estados | 82 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 98 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 102 |
+| Entradas restantes fuera de ambos estados | 81 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 97 |
+| `IMPLEMENTED_NOT_E2E` | 98 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 75 |
+| `BROWSE_ONLY` | 74 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1939,30 +1939,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Fábrica Nacional de Moneda y Timbre-Real Casa de la Moneda (FNMT-RCM)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Formulario de propósito general FNMT-RCM — vía Registro Electrónico General"
     surface_type: "SEDE"
     origin: "https://www.sede.fnmt.gob.es"
     official_site: "https://www.sede.fnmt.gob.es/"
     e_sede: "https://www.sede.fnmt.gob.es/"
-    entry_url: "https://www.sede.fnmt.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede FNMT-RCM indica que las solicitudes, escritos y comunicaciones de propósito general se presentan telemáticamente por el Registro Electrónico Común de la AGE, seleccionando FNMT-RCM como organismo destinatario."
+    protocol_evidence: "La página first-party vigente Formulario de propósito general publica como acceso telemático https://rec.redsara.es/registro/action/are/acceso.do. Con TLS estricto, ese URL responde 301 a https://reg.redsara.es/ y, con Accept-Language español, el root REG redirige 302 a https://reg.redsara.es/es/, exactamente el startUrl canónico del perfil existente reg-age-redsara. Solo se reutiliza ese launch/profile; no se atribuye a www.sede.fnmt.gob.es un ABI de firma propio ni se amplían orígenes de confianza."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    evidence_ids: ["D11", "FNMT-TRAMITES-2026-08-24", "FNMT-REG-2026-08-24", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación first-party explícita y cadena de redirección pública exacta al startUrl canónico. Se conserva la página FNMT como entry URL, no se amplía trust del REG-AGE al origin FNMT y falta E2E físico de la transición."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar físicamente la transición FNMT-RCM → REC/REG-AGE sin completar ni presentar una actuación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda. La Sede FNMT también describe sistemas admitidos de identificación/firma, pero este alias no infiere certificado, formato, algoritmo, callback, endpoint ni client-TLS propios de FNMT; el contrato de firma pertenece únicamente al perfil REG-AGE ya cubierto."
 
   - inventory_id: "ES-PUB-0049"
     surface_key: "age-instituto-cervantes"
@@ -6611,3 +6612,7 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+
+[FNMT-TRAMITES-2026-08-24]: https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general
+
+[FNMT-REG-2026-08-24]: https://rec.redsara.es/registro/action/are/acceso.do
