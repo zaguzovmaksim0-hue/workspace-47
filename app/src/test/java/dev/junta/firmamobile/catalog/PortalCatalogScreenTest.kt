@@ -294,7 +294,7 @@ class PortalCatalogScreenTest {
         }
 
         rule.onNodeWithText("Buscar servicio u organismo")
-            .performTextInput("SEPE")
+            .performTextInput("Servicio Público de Empleo Estatal")
         rule.onNodeWithText(
             "Sede pública catalogada; la navegación integrada, el certificado y la firma " +
                 "están bloqueados hasta verificar un perfil técnico.",
