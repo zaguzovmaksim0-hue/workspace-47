@@ -156,24 +156,23 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.NAVIGATION_CHANGED,
             )
         }
-        val resolved = profileRegistry.resolve(sourceOrigin)
+        val activeProfile = activeProfileId()
+            ?: return MiniAppletBridgeRouteResult.Rejected(
+                requestId,
+                SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            )
+        val sourceUri = runCatching { URI(sourceOrigin.toString()) }.getOrNull()
+            ?: return MiniAppletBridgeRouteResult.Rejected(
+                requestId,
+                SigningErrorCode.ORIGIN_NOT_ALLOWED,
+            )
+        val resolved = profileRegistry.resolveForProfile(activeProfile, sourceUri)
             ?.takeIf { it.trustMode == TrustMode.TRUSTED_SIGNING }
             ?: return MiniAppletBridgeRouteResult.Rejected(
                 requestId,
                 SigningErrorCode.ORIGIN_NOT_ALLOWED,
             )
         val profile = resolved.profile
-        val activeProfile = activeProfileId()
-            ?: return MiniAppletBridgeRouteResult.Rejected(
-                requestId,
-                SigningErrorCode.ORIGIN_NOT_ALLOWED,
-            )
-        if (profile.profileId != activeProfile) {
-            return MiniAppletBridgeRouteResult.Rejected(
-                requestId,
-                SigningErrorCode.ORIGIN_NOT_ALLOWED,
-            )
-        }
         val operation = profile.operationPolicies[ProtocolOperation.SIGN]
             ?: return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         val binding = adapterRegistry.resolve(profile.profileId, ProtocolOperation.SIGN)

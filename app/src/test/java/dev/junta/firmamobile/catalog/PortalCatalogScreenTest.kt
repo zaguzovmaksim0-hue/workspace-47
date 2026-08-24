@@ -416,6 +416,25 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `SEPES Transportes public page is compatible but signer capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val sepes = compatible.items.single {
+            it.portalId == PortalId("age-entidad-publica-empresarial-de-suelo-sepes")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("sepes-transportes-public-complaints"), sepes.profileId)
+        assertEquals(
+            java.net.URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"),
+            sepes.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, sepes.supportStatus)
+        assertTrue(sepes.capabilities.isEmpty())
+        assertTrue(sepes.signatureFormats.isEmpty())
+        assertTrue(sepes.isEnabled)
+    }
+
+    @Test
     fun `Portal Funciona public home is compatible but sensitive auth capabilities remain absent`() {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }

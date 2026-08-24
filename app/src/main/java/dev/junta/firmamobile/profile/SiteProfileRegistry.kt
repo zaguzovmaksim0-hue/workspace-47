@@ -30,7 +30,15 @@ class SiteProfileRegistry(
 
     fun resolve(uri: URI): ResolvedSiteProfile? {
         val origin = exactOrigin(uri) ?: return null
-        val resolved = resolve(origin) ?: return null
+        val matches = resolutions(origin)
+        val exactStartMatches = matches.filter { resolution ->
+            resolution.profile.startUrl.toASCIIString() == uri.toASCIIString()
+        }
+        val resolved = when {
+            exactStartMatches.size == 1 -> exactStartMatches.single()
+            matches.size == 1 -> matches.single()
+            else -> null
+        } ?: return null
         return resolved.takeIf { acceptsBrowseOnlyUrl(it.profile, uri) }
     }
 
@@ -64,13 +72,12 @@ class SiteProfileRegistry(
         profile.compatibilityStatus != CompatibilityStatus.BROWSE_ONLY ||
             uri.toASCIIString() == profile.startUrl.toASCIIString()
 
-    private fun resolve(origin: ExactOrigin): ResolvedSiteProfile? {
-        val matches = profiles.asSequence()
-            .filter(::isActive)
-            .mapNotNull { profile -> profile.trustMode(origin)?.let { ResolvedSiteProfile(profile, origin, it) } }
-            .toList()
-        return matches.singleOrNull()
-    }
+    private fun resolve(origin: ExactOrigin): ResolvedSiteProfile? = resolutions(origin).singleOrNull()
+
+    private fun resolutions(origin: ExactOrigin): List<ResolvedSiteProfile> = profiles.asSequence()
+        .filter(::isActive)
+        .mapNotNull { profile -> profile.trustMode(origin)?.let { ResolvedSiteProfile(profile, origin, it) } }
+        .toList()
 
     private fun isActive(profile: SiteProfile): Boolean = when (profile.activation) {
         ProfileActivation.DISABLED -> false

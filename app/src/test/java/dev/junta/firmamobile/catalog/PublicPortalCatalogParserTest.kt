@@ -97,6 +97,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("sepes-transportes-public-complaints"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
@@ -1156,6 +1157,35 @@ class PublicPortalCatalogParserTest {
         assertTrue(portal.signatureFormats.isEmpty())
         assertTrue(portal.isEnabled)
         assertEquals(PortalLaunchTarget(ProfileId("castilla-leon-quju-public"), form), repository.resolveLaunch(portal))
+    }
+
+    @Test
+    fun `SEPES binds only the current Transportes public page and keeps signing unimplemented`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0045" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones")
+
+        assertEquals(ProfileId("sepes-transportes-public-complaints"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("SEPES_TRANSPORTES_PUBLIC_NAVIGATION", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals("REVIEWED", metadata.discoveryState.name)
+        assertEquals(setOf(PortalMechanism.ELECTRONIC_SIGNATURE), metadata.observedMechanisms)
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(PortalLaunchTarget(ProfileId("sepes-transportes-public-complaints"), start), repository.resolveLaunch(portal))
     }
 
     @Test

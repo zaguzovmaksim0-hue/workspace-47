@@ -63,6 +63,23 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `shared Transportes origin resolves exact starts but stays ambiguous for origin only URLs`() {
+        val signingId = ProfileId("transportes-qys-cert-login")
+        val sepesId = ProfileId("sepes-transportes-public-complaints")
+        val signingStart = URI("https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002")
+        val sepesStart = URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones")
+        val originOnly = URI("https://sede.transportes.gob.es/")
+
+        assertEquals(signingId, BuiltInSiteProfiles.qaRegistry.resolve(signingStart)?.profile?.profileId)
+        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolve(signingStart)?.trustMode)
+        assertEquals(sepesId, BuiltInSiteProfiles.qaRegistry.resolve(sepesStart)?.profile?.profileId)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(sepesStart)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(originOnly))
+        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolveForProfile(signingId, originOnly)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveForProfile(sepesId, originOnly)?.trustMode)
+    }
+
+    @Test
     fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")

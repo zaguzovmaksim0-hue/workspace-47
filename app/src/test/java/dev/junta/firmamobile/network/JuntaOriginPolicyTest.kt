@@ -38,6 +38,7 @@ class JuntaOriginPolicyTest {
     private val airef = ProfileId("airef-instancia-general")
     private val cdti = ProfileId("cdti-certificate-validation")
     private val transportes = ProfileId("transportes-qys-cert-login")
+    private val sepes = ProfileId("sepes-transportes-public-complaints")
     private val melilla = ProfileId("melilla-sede")
     private val ceuta = ProfileId("ceuta-sede")
     private val extremadura = ProfileId("extremadura-tramites")
@@ -271,6 +272,16 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("sede.transportes.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(transportes),
+        )
+        assertEquals(
+            setOf("sede.transportes.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(sepes),
+        )
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"),
+                sepes,
+            ),
         )
         assertEquals(setOf("sede.melilla.es"), JuntaOriginPolicy.browserAllowedHosts(melilla))
         assertEquals(setOf("sede.ceuta.es"), JuntaOriginPolicy.browserAllowedHosts(ceuta))

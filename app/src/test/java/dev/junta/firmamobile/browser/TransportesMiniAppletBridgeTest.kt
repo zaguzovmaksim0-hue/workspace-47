@@ -57,6 +57,22 @@ class TransportesMiniAppletBridgeTest {
     }
 
     @Test
+    fun sharedTransportesOriginStillRequiresTheActiveSigningProfile() {
+        val sepes = MiniAppletBridgeAdapter(
+            clock = Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+            activeProfileId = { ProfileId("sepes-transportes-public-complaints") },
+        )
+        assertTrue(
+            sepes.route(
+                rawMessage = message(),
+                sourceOrigin = ORIGIN,
+                isMainFrame = true,
+                currentPageUrl = TransportesXadesEnvelopedAdapter.AUTH_PAGE_URL,
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
+    }
+
+    @Test
     fun rejectsEveryBroadenedTransportesDimension() {
         assertRejected(currentPageUrl = TransportesXadesEnvelopedAdapter.START_URL)
         assertRejected(currentPageUrl = "${TransportesXadesEnvelopedAdapter.AUTH_PAGE_URL}?x=1")

@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 95 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
-| Entradas restantes fuera de ambos estados | 84 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 96 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 100 |
+| Entradas restantes fuera de ambos estados | 83 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 95 |
+| `IMPLEMENTED_NOT_E2E` | 96 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 77 |
+| `BROWSE_ONLY` | 76 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1844,30 +1844,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Entidad Pública Empresarial de Suelo (SEPES)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Quejas y reclamaciones — SEPES / Sede Transportes"
     surface_type: "SEDE"
-    origin: "https://www.sepes.es"
-    official_site: "https://www.sepes.es/es/sede-electronica"
-    e_sede: "https://www.sepes.es/es/sede-electronica"
-    entry_url: "https://www.sepes.es/es/sede-electronica"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://sede.transportes.gob.es"
+    official_site: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
+    e_sede: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
+    entry_url: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
+    procedure_page: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
     certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "SEPES_TRANSPORTES_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA exacta a la ficha pública vigente de Quejas y reclamaciones de SEPES dentro de la Sede del Ministerio de Transportes; autenticación, firma y presentación quedan fuera del contrato implementado."
+    protocol_evidence: "La Sede Transportes devuelve HTTP 200/TLS válido para la ficha first-party «Quejas y reclamaciones» identificada expresamente como Entidad Pública Empresarial de Suelo (SEPES), y publica Iniciar trámite hacia /Procedimiento/?procedureKey=7601. La normativa vigente de la misma Sede conserva el convenio de incorporación de SEPES a la Sede y Registro electrónicos del Ministerio. El launch 7601 redirige actualmente a /Procedimiento/Auth?procedureKey=7601 y termina HTTP 500; por ello no se promociona ningún contrato de autenticación o firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
+    evidence_ids: ["D11", "SEPES-TRANSPORTES-2026-08-24", "SEPES-TRANSPORTES-NORMATIVA-2026-08-24"]
+    reason: "Existe una ruta oficial first-party vigente y TLS-válida ligada directamente a SEPES, suficiente para navegación QA. El launch procedureKey=7601 termina actualmente HTTP 500, así que no se modela autenticación o firma. El perfil Transportes existente id=7002 corresponde a otro procedimiento y su contrato SHA1/XAdES no se reutiliza; el origin heredado www.sepes.es mantiene un certificado caducado y no se usa ni se sortea."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar físicamente la navegación QA a la ficha SEPES. Revalidar procedureKey=7601 cuando deje de devolver 500 antes de modelar autenticación, certificado, firma o presentación."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible. La compatibilidad añadida es únicamente de navegación pública. El soporte de dos perfiles QA sobre sede.transportes.gob.es se mantiene fail-closed: la resolución global solo desambigua por startUrl exacto y los flujos con perfil activo usan resolución profile-scoped. No se seleccionó certificado, no se firmó, no se cargó documentación y no se presentó trámite."
 
   - inventory_id: "ES-PUB-0046"
     surface_key: "age-fondo-de-garantia-salarial-fogasa"
@@ -6606,3 +6606,5 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+[SEPES-TRANSPORTES-2026-08-24]: https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones
+[SEPES-TRANSPORTES-NORMATIVA-2026-08-24]: https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede
