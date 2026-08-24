@@ -1126,6 +1126,35 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun `DGSFP public Sede profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("dgsfp-sede-public-home")
+        val start = URI("https://www.sededgsfp.gob.es/")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://www.sededgsfp.gob.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es:444/")))
+    }
+
+    @Test
     fun `Comunidad Madrid Registro General profile exposes only exact public QA navigation`() {
         val profileId = ProfileId("comunidad-madrid-registro-general")
         val start = URI("https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm")

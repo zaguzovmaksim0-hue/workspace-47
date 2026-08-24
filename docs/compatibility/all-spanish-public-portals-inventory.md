@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 95 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
-| Entradas restantes fuera de ambos estados | 84 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 96 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 100 |
+| Entradas restantes fuera de ambos estados | 83 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 95 |
+| `IMPLEMENTED_NOT_E2E` | 96 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 77 |
+| `BROWSE_ONLY` | 76 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1751,7 +1751,7 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Dirección General de Seguros y Fondos de Pensiones"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / inicio público oficial"
     surface_type: "SEDE"
     origin: "https://www.sededgsfp.gob.es"
     official_site: "https://www.sededgsfp.gob.es/"
@@ -1761,20 +1761,20 @@ records:
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DGSFP_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA delimitada al inicio público first-party de la Sede DGSFP; autenticación, certificado, Cl@ve, AutoFirma y tramitación permanecen fuera del contrato implementado."
+    protocol_evidence: "La raíz first-party redirige same-origin a /es/Paginas/inicio.aspx y responde HTTP 200. Los bundles públicos de la propia Sede contienen UI/servicios para certificado, Cl@ve, procedimientos, notificaciones y AutoFirma/TestFirma, pero no acreditan un signer ABI, formato, algoritmo, callback ni aceptación de presentación exactos."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "DGSFP-SEDE-2026-08-24"]
+    reason: "La entrada pública first-party y su origin están revalidados y permiten solo un contrato QA-only de navegación. Las referencias de certificado/Cl@ve/AutoFirma en bundles no se promocionan a SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI sin contrato técnico exacto y E2E físico."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar navegación QA al inicio público. Cualquier soporte de autenticación, certificado, Cl@ve, AutoFirma o presentación requiere una revisión separada del contrato técnico exacto y prueba física E2E."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa. Investigación pública no autenticada: no se seleccionó certificado, no se inició sesión, no se firmó, no se cargó documentación y no se realizó presentación administrativa. Cookies/request IDs SharePoint no se conservaron."
 
   - inventory_id: "ES-PUB-0043"
     surface_key: "age-direccion-general-del-catastro"
@@ -6606,3 +6606,4 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+[DGSFP-SEDE-2026-08-24]: https://www.sededgsfp.gob.es/

@@ -62,6 +62,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val dgsfp = ProfileId("dgsfp-sede-public-home")
     private val mjusticia = ProfileId("mjusticia-fundaciones-idp75")
     private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
     private val alava = ProfileId("diputacion-alava-registro-comun")
@@ -151,6 +152,7 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "www.sededgsfp.gob.es",
             "sede2.mjusticia.gob.es",
             "presidencia.jcyl.es",
             "egoitza.araba.eus",
@@ -285,6 +287,11 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
+        assertEquals(setOf("www.sededgsfp.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgsfp))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(dgsfp).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://www.sededgsfp.gob.es/"), dgsfp))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://www.sededgsfp.gob.es.evil.example/"), dgsfp))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://www.sededgsfp.gob.es:444/"), dgsfp))
         assertEquals(setOf("sede.cabildofuer.es"), JuntaOriginPolicy.browserAllowedHosts(fuerteventura))
         assertEquals(
             setOf("https://sede.cabildofuer.es"),
