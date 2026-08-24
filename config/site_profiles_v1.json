@@ -2477,6 +2477,27 @@
         {"url":"https://sede.dip-caceres.es/carpetaCiudadano/LoginLDAPFrontAction.do?red=MzQxI2V4cGdlbiNJTlNUQU5DSUEgR0VORVJBTCBOT1JNQUxJWkFEQQ==","reviewedOn":"2026-08-21"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-21"}
       ]
+    },
+    {
+      "profileId": "diputacion-gipuzkoa-registro-public",
+      "profileVersion": 1,
+      "displayName": "Diputación Foral de Gipuzkoa — Registro electrónico",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://egoitza.gipuzkoa.eus/WAS/CORP/WATTramiteakWEB/inicio.do?idioma=C&app=00001",
+      "initiatorOrigins": ["https://egoitza.gipuzkoa.eus"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://egoitza.gipuzkoa.eus/es/registro/como-registrar","reviewedOn":"2026-08-19"},
+        {"url":"https://egoitza.gipuzkoa.eus/WAS/CORP/WATTramiteakWEB/inicio.do?idioma=C&app=00001","reviewedOn":"2026-08-19"},
+        {"url":"https://eidas2.izenpe.com/cert-authn-external-validation/authenticate","reviewedOn":"2026-08-19"}
+      ]
     }
   ]
 }

@@ -538,4 +538,21 @@ class PortalCatalogScreenTest {
         assertTrue(asturias.capabilities.isEmpty())
     }
 
+    @Test
+    fun `Gipuzkoa Registro is compatible QA navigation while sensitive auth stays absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single { it.portalId == PortalId("diputacion-gipuzkoa-sede") }
+
+        assertEquals("diputacion-gipuzkoa-registro-public", target.profileId?.value)
+        assertEquals(
+            java.net.URI("https://egoitza.gipuzkoa.eus/WAS/CORP/WATTramiteakWEB/inicio.do?idioma=C&app=00001"),
+            target.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.isEnabled)
+        assertTrue(target.capabilities.isEmpty())
+        assertTrue(target.signatureFormats.isEmpty())
+    }
+
 }

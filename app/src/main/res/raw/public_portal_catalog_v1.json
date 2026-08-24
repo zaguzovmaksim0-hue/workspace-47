@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "41cdcbeec04449790220174fae6099987c33876d8770b3af2c07fd09dcc7eddb",
+  "sourceRevision": "2a580d74c828df37fb099c2d472b907b7735043a20c0fcef7600a4b8dc9df905",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4252,29 +4252,31 @@
     {
       "portalId": "diputacion-gipuzkoa-sede",
       "inventoryId": "ES-PUB-0157",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputación Foral de Gipuzkoa",
+      "profileId": "diputacion-gipuzkoa-registro-public",
+      "displayName": "Sede electrónica de Diputación Foral de Gipuzkoa — Registro electrónico",
       "organization": "Diputación Foral de Gipuzkoa",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "País Vasco",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://egoitza.gipuzkoa.eus/es/",
+      "purpose": "Workspace-47 integra en QA únicamente el inicio público exacto del Registro electrónico de Gipuzkoa. La opción de certificado observada delega por Giltza/OAuth en Izenpe; la autenticación client-TLS posterior, la firma documental y la presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://egoitza.gipuzkoa.eus/WAS/CORP/WATTramiteakWEB/inicio.do?idioma=C&app=00001",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
-        "ELECTRONIC_SIGNATURE"
+        "CLIENT_TLS_AUTH"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "GILTZA_OAUTH_DELEGATED_CLIENT_TLS",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP19A",
-        "DP19B"
+        "DP19B",
+        "GIPUZKOA-REGISTRO-2026-08-19",
+        "GIPUZKOA-GILTZA-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil VERIFIED_CONTRACT/QA_ONLY limitado al launch público exacto del Registro y sin SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH capabilities. Los origins eidas.izenpe.com y eidas2.izenpe.com permanecen fuera del trust del perfil: el mTLS real aparece tras un formulario POST con request opaco y no encaja de forma segura en el authorizer actual, orientado a contratos de navegación GET/top-level. Algoritmo, formato, packaging y callback de firma documental no se observaron. Falta E2E físico."
     },
     {
       "portalId": "diputacion-huelva-portal",

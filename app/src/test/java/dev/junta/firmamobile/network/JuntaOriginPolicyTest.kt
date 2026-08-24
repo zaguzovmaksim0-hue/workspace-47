@@ -64,6 +64,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val gipuzkoa = ProfileId("diputacion-gipuzkoa-registro-public")
     private val fondosEuropeos = ProfileId("fondos-europeos-sede-public-home")
     private val asturiasSede = ProfileId("asturias-sede-tramite-navigation")
     private val dgsfp = ProfileId("dgsfp-sede-public-home")
@@ -180,6 +181,7 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "egoitza.gipuzkoa.eus",
             "sede.diputaciondesalamanca.gob.es",
             "sedefondoscomunitarios.gob.es",
             "www.sededgsfp.gob.es",
@@ -438,6 +440,16 @@ class JuntaOriginPolicyTest {
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://izenpe.com/"), bizkaia))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
+        assertEquals(setOf("egoitza.gipuzkoa.eus"), JuntaOriginPolicy.browserAllowedHosts(gipuzkoa))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(gipuzkoa).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://egoitza.gipuzkoa.eus/WAS/CORP/WATTramiteakWEB/inicio.do?idioma=C&app=00001"),
+                gipuzkoa,
+            ),
+        )
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://eidas.izenpe.com/"), gipuzkoa))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://eidas2.izenpe.com/"), gipuzkoa))
         assertEquals(setOf("sede2.mjusticia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mjusticia))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(mjusticia).isEmpty())
         assertNull(
