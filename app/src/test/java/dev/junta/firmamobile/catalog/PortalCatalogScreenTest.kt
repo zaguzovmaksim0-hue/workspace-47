@@ -75,8 +75,8 @@ class PortalCatalogScreenTest {
             repository.portals().size - compatible.items.size - contractPending.items.size,
             fullCatalog.items.size,
         )
-        val education = fullCatalog.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
-        assertEquals(PortalSupportStatus.BROWSE_ONLY, education.supportStatus)
+        val education = compatible.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, education.supportStatus)
         assertTrue(education.isEnabled)
     }
 
@@ -392,6 +392,33 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `Castilla Leon QUJU public form is compatible while signing capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val quju = compatible.items.single { it.portalId == PortalId("castilla-leon-tramita") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("castilla-leon-quju-public"), quju.profileId)
+        assertEquals(java.net.URI("https://presidencia.jcyl.es/QUJU?O=1"), quju.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, quju.supportStatus)
+        assertTrue(quju.capabilities.isEmpty())
+        assertTrue(quju.signatureFormats.isEmpty())
+        assertTrue(quju.isEnabled)
+    }
+
+    @Test
+    fun `Ceuta ANI authenticated form boundary is compatible while signing remains absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val ceuta = compatible.items.single { it.portalId == PortalId("ceuta-sede") }
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("ceuta-sede"), ceuta.profileId)
+        assertEquals(java.net.URI("https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI"), ceuta.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, ceuta.supportStatus)
+        assertTrue(ceuta.capabilities.isEmpty())
+        assertTrue(ceuta.signatureFormats.isEmpty())
+        assertTrue(ceuta.isEnabled)
+    }
+
+    @Test
     fun `Portal Funciona public home is compatible but sensitive auth capabilities remain absent`() {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
@@ -433,6 +460,18 @@ class PortalCatalogScreenTest {
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
         assertTrue(target.isEnabled)
         assertTrue(target.capabilities.isEmpty())
+    }
+
+    @Test
+    fun `Asturias Sede navigation appears compatible but exposes no signing capability`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val asturias = compatible.items.single { it.portalId == PortalId("asturias-sede-tramite-autofirma") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("asturias-sede-tramite-navigation"), asturias.profileId)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, asturias.supportStatus)
+        assertTrue(asturias.isEnabled)
+        assertTrue(asturias.capabilities.isEmpty())
     }
 
 }

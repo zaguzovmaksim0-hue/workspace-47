@@ -45,6 +45,7 @@ class PublicPortalCatalogParserTest {
             setOf(
                 ProfileId("junta-andalucia"),
                 ProfileId("junta-andalucia-vea-peg"),
+                ProfileId("comunidad-madrid-registro-general"),
                 ProfileId("reg-age-redsara"),
                 ProfileId("unizar-tramitador"),
                 ProfileId("carne-joven-andalucia"),
@@ -53,16 +54,21 @@ class PublicPortalCatalogParserTest {
                 ProfileId("aragon-siraw"),
                 ProfileId("aeat-mis-datos-censales"),
                 ProfileId("dgt-verificacion-equipo"),
+                ProfileId("mjusticia-fundaciones-idp75"),
                 ProfileId("ugr-certificado-login"),
                 ProfileId("cantabria-rec-cert-login"),
+                ProfileId("catalunya-peticio-generica-client-auth"),
                 ProfileId("jccm-certificate-login-probe"),
+                ProfileId("jccm-registro-generico"),
                 ProfileId("mites-certificate-login"),
                 ProfileId("transportes-qys-cert-login"),
                 ProfileId("sevilla-atse-certificate-login"),
                 ProfileId("airef-instancia-general"),
+                ProfileId("mugeju-remision-documentacion-client-auth"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
                 ProfileId("extremadura-tramites"),
+                ProfileId("extremadura-pattex-client-auth"),
                 ProfileId("navarra-sede-registro-general"),
                 ProfileId("diputacion-valladolid-sede"),
                 ProfileId("diputacion-burgos-portal"),
@@ -70,11 +76,13 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-huesca-portal"),
                 ProfileId("diputacion-lugo-sede"),
                 ProfileId("diputacion-leon-sede"),
+                ProfileId("diputacion-albacete-portal"),
                 ProfileId("consell-mallorca-sede"),
                 ProfileId("generalitat-valenciana-client-auth"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),
+                ProfileId("fuerteventura-sede-electronica"),
                 ProfileId("gran-canaria-sede-electronica"),
                 ProfileId("age-portal-de-la-transparencia"),
                 ProfileId("caib-portafib"),
@@ -82,20 +90,52 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-toledo-sede"),
                 ProfileId("isciii-certificate-selection"),
                 ProfileId("diputacion-valencia-sede"),
+                ProfileId("diputacion-alicante-solicitud-general"),
                 ProfileId("policia-solicitud-generica"),
                 ProfileId("diputacion-lleida-sede"),
+                ProfileId("diputacion-badajoz-portal"),
+                ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("castilla-leon-quju-public"),
+                ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),
+                ProfileId("asturias-miprincipado"),
+                ProfileId("asturias-sede-tramite-navigation"),
                 ProfileId("menorca-carpeta-ciutadana"),
                 ProfileId("canarias-sede"),
+                ProfileId("diputacion-barcelona-solicitud-generica-2057"),
+                ProfileId("eivissa-sede-electronica"),
+                ProfileId("murcia-carm-pase"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
         assertTrue(catalog.entries.any { it.catalogStatus == PublicCatalogStatus.DISCOVERED })
         assertTrue(catalog.entries.any { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
+    }
+
+    @Test
+    fun `Ceuta ANI resolves only the exact QA authenticated form boundary without signing capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val profiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(SiteProfileRegistry(profiles, BuildTrustPolicy.QA), profiles, catalog)
+        val metadata = catalog.entries.single { it.portalId == PortalId("ceuta-sede") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI")
+        assertEquals("ES-PUB-0106", metadata.inventoryId)
+        assertEquals(ProfileId("ceuta-sede"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals("CEUTA_AUTHENTICATED_FORM_BOUNDARY", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(setOf("CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"), metadata.observedMechanisms.map { it.name }.toSet())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("ceuta-sede"), start), repository.resolveLaunch(portal))
     }
 
     @Test
@@ -1023,6 +1063,39 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Alava Registro Comun binds exact QA start without signer capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0140" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://egoitza.araba.eus/izapidetu/at/01/es/0000301")
+
+        assertEquals(ProfileId("diputacion-alava-registro-comun"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals(null, metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.ELECTRONIC_SIGNATURE),
+            metadata.observedMechanisms,
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("diputacion-alava-registro-comun"), start),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `OEPM ProtegeO entry binds the exact QA public launch without sensitive observations`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
@@ -1055,6 +1128,35 @@ class PublicPortalCatalogParserTest {
             PortalLaunchTarget(ProfileId("oepm-protegeo-general"), portal.entryUrl),
             repository.resolveLaunch(item),
         )
+    }
+
+    @Test
+    fun `Castilla Leon QUJU resolves only the exact QA public form without signing capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.portalId == PortalId("castilla-leon-tramita") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val form = URI("https://presidencia.jcyl.es/QUJU?O=1")
+
+        assertEquals("ES-PUB-0102", metadata.inventoryId)
+        assertEquals(ProfileId("castilla-leon-quju-public"), metadata.profileId)
+        assertEquals(form, metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("JCYL_QUJU_PUBLIC_FORM_BOUNDARY", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(PortalLaunchTarget(ProfileId("castilla-leon-quju-public"), form), repository.resolveLaunch(portal))
     }
 
     @Test
@@ -1276,6 +1378,64 @@ class PublicPortalCatalogParserTest {
             ),
             repository.resolveLaunch(portal),
         )
+    }
+
+    @Test
+    fun `Murcia CARM binds protected procedure navigation without native certificate or signing capability`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0113" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI(
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+        )
+
+        assertEquals(PortalId("murcia-sede"), metadata.portalId)
+        assertEquals(ProfileId("murcia-carm-pase"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(
+            setOf("CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"),
+            metadata.observedMechanisms.map { it.name }.toSet(),
+        )
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.isEnabled)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("murcia-carm-pase"), start), repository.resolveLaunch(portal))
+    }
+
+    @Test
+    fun `Asturias Sede entry binds the current redirect-only QA profile`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0096" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://sede.asturias.es/ast/-/dboid-6269000011903512107573")
+
+        assertEquals(PortalId("asturias-sede-tramite-autofirma"), metadata.portalId)
+        assertEquals(ProfileId("asturias-sede-tramite-navigation"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals(setOf("ELECTRONIC_SIGNATURE"), metadata.observedMechanisms.map { it.name }.toSet())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(PortalLaunchTarget(ProfileId("asturias-sede-tramite-navigation"), start), repository.resolveLaunch(portal))
     }
 
 }

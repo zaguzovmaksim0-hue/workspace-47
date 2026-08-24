@@ -4,6 +4,7 @@ import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SiteProfileRegistryTest {
@@ -12,7 +13,10 @@ class SiteProfileRegistryTest {
         val clave = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
         val claveIdent = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
         val airef = ProfileId("airef-instancia-general")
+        val mugeju = ProfileId("mugeju-remision-documentacion-client-auth")
         val mineco = ProfileId("ministerio-economia-instancia-generica")
+        val avila = ProfileId("diputacion-avila-instancia-general")
+        val jccmRegistro = ProfileId("jccm-registro-generico")
 
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
@@ -31,6 +35,30 @@ class SiteProfileRegistryTest {
         assertEquals(
             TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, claveIdent)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(jccmRegistro, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(jccmRegistro, claveIdent)?.trustMode,
         )
     }
 
@@ -215,6 +243,24 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `Castilla Leon QUJU public form is browse-only trust in QA and near origins stay closed`() {
+        val profileId = ProfileId("castilla-leon-quju-public")
+        val start = URI("https://presidencia.jcyl.es/QUJU?O=1")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.tramitacastillayleon.jcyl.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://presidencia.jcyl.es:444/")))
+    }
+
+    @Test
     fun `Portal Funciona public home is browse-only trust in QA and external auth origins stay closed`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
@@ -245,6 +291,60 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://api-veaja.cloud.juntadeandalucia.es/auth/login")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))
+    }
+
+    @Test
+    fun `Murcia CARM PASE navigation is QA-only and redirect origins stay browse only`() {
+        val profileId = ProfileId("murcia-carm-pase")
+        val start = URI(
+            "https://sede.carm.es/web/pagina?IDCONTENIDO=385&IDTIPO=240&RASTRO=c%24m40293%2C62654%2C40288",
+        )
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertTrue(profile?.endpoints?.isEmpty() == true)
+        assertTrue(profile?.operationPolicies?.isEmpty() == true)
+        assertNull(profile?.clientAuthPolicy)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+
+        listOf(
+            "https://validate.perfdrive.com/challenge",
+            "https://pase.carm.es/pase/login",
+            "https://conclave.carm.es/TokenServlet",
+        ).forEach { raw ->
+            val uri = URI(raw)
+            assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, uri)?.trustMode)
+            assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, uri)?.trustMode)
+        }
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.carm.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, URI("https://pasarela.clave.gob.es/Clave2/")))
+    }
+
+    @Test
+    fun `Asturias Sede navigation trusts only the observed miPrincipado redirect in QA`() {
+        val profileId = ProfileId("asturias-sede-tramite-navigation")
+        val start = URI("https://sede.asturias.es/ast/-/dboid-6269000011903512107573")
+        val redirected = URI("https://miprincipado.asturias.es/ast/-/dboid-6269000011903512107573")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(redirected))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, redirected)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://tramita.asturias.es/sta/Relec/STARhssoManager")))
+        val miPrincipadoStart = URI(
+            "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
+        )
+        val miPrincipado = BuiltInSiteProfiles.qaRegistry.resolve(miPrincipadoStart)
+        assertEquals(ProfileId("asturias-miprincipado"), miPrincipado?.profile?.profileId)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, miPrincipado?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://miprincipado.asturias.es/unscoped")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://miprincipado.asturias.es.evil.example/")))
     }
 
 }

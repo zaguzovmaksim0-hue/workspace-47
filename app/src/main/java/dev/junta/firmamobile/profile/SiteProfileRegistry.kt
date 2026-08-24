@@ -30,6 +30,15 @@ class SiteProfileRegistry(
 
     fun resolve(uri: URI): ResolvedSiteProfile? {
         val origin = exactOrigin(uri) ?: return null
+        val exactStart = profiles.asSequence()
+            .filter(::isActive)
+            .filter { it.startUrl.toASCIIString() == uri.toASCIIString() }
+            .mapNotNull { profile ->
+                profile.trustMode(origin)?.let { ResolvedSiteProfile(profile, origin, it) }
+            }
+            .toList()
+            .singleOrNull()
+        if (exactStart != null) return exactStart
         val resolved = resolve(origin) ?: return null
         return resolved.takeIf { acceptsBrowseOnlyUrl(it.profile, uri) }
     }
