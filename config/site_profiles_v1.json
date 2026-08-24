@@ -1758,6 +1758,28 @@
         {"url":"https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75","reviewedOn":"2026-08-19"},
         {"url":"https://sede2.mjusticia.gob.es/login/index/idp/75","reviewedOn":"2026-08-19"}
       ]
+    },
+    {
+      "profileId": "dgoj-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Dirección General de Ordenación del Juego — navegación pública Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.ordenacionjuego.gob.es/",
+      "initiatorOrigins": ["https://sede.ordenacionjuego.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.ordenacionjuego.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.ordenacionjuego.gob.es/es/firma","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.ordenacionjuego.gob.es/aviso-navegador-chrome","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S","reviewedOn":"2026-08-24"}
+      ]
     }
   ]
 }

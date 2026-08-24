@@ -116,6 +116,7 @@ class PortalCatalogRepositoryTest {
                 "eivissa-sede-electronica",
                 "catalunya-peticio-generica-client-auth",
                 "murcia-carm-pase",
+                "dgoj-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
