@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 245 |
 | Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 98 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 102 |
-| Entradas restantes fuera de ambos estados | 81 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 99 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 103 |
+| Entradas restantes fuera de ambos estados | 80 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 98 |
+| `IMPLEMENTED_NOT_E2E` | 99 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 74 |
+| `BROWSE_ONLY` | 73 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -1821,23 +1821,23 @@ records:
     official_site: "https://enaire.sede.gob.es/"
     e_sede: "https://enaire.sede.gob.es/"
     entry_url: "https://enaire.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://enaire.sede.gob.es/procedimientos"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AUTOFIRMA"
+    protocol_family: "ENAIRE_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede ENAIRE y catálogo de procedimientos; acceso a expedientes mediante Cl@ve y firma electrónica con certificado cuando el trámite la requiere."
+    protocol_evidence: "La Sede pública vigente expone catálogo de procedimientos y área privada mediante Cl@ve. La página oficial Requisitos indica expresamente que para firmar electrónicamente con certificado es necesario AutoFirma y que para iniciar/acceder a expedientes se usa Cl@ve (DNI-e, certificado electrónico, Cl@ve PIN o Permanente). No se publica aquí ABI, algoritmo, formato ni endpoint exactos de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "ENAIRE-SEDE-2026-08-24", "ENAIRE-PROCEDURES-2026-08-24", "ENAIRE-REQ-2026-08-24", "ENAIRE-VALIDACION-2026-08-24"]
+    reason: "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita Cl@ve/certificado y requisito de AutoFirma para firma electrónica con certificado, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
+    reviewed_at: "2026-08-24"
+    next_gate: "Progresión autenticada controlada hasta pre-firma para observar invocación AutoFirma, algoritmo, formato y callback exactos, deteniéndose antes de firma criptográfica o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
 
   - inventory_id: "ES-PUB-0045"
@@ -6613,3 +6613,7 @@ availability, certificado, firma ni contrato técnico.
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
 [SEPES-TRANSPORTES-2026-08-24]: https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones
 [SEPES-TRANSPORTES-NORMATIVA-2026-08-24]: https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede
+[ENAIRE-SEDE-2026-08-24]: https://enaire.sede.gob.es/
+[ENAIRE-PROCEDURES-2026-08-24]: https://enaire.sede.gob.es/procedimientos
+[ENAIRE-REQ-2026-08-24]: https://enaire.sede.gob.es/Requisitos
+[ENAIRE-VALIDACION-2026-08-24]: https://enaire.sede.gob.es/servicio?id=Validacion-de-certificados-y-firma

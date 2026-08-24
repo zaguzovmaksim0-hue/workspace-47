@@ -1799,6 +1799,28 @@
         {"url":"https://sede.transportes.gob.es/Procedimiento/?procedureKey=7601","reviewedOn":"2026-08-24"},
         {"url":"https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede","reviewedOn":"2026-08-24"}
       ]
+    },
+    {
+      "profileId": "enaire-sede-public",
+      "profileVersion": 1,
+      "displayName": "ENAIRE — Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://enaire.sede.gob.es/",
+      "initiatorOrigins": ["https://enaire.sede.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://enaire.sede.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://enaire.sede.gob.es/procedimientos","reviewedOn":"2026-08-24"},
+        {"url":"https://enaire.sede.gob.es/Requisitos","reviewedOn":"2026-08-24"},
+        {"url":"https://enaire.sede.gob.es/servicio?id=Validacion-de-certificados-y-firma","reviewedOn":"2026-08-24"}
+      ]
     }
   ]
 }
