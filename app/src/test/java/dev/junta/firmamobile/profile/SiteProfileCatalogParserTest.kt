@@ -1365,6 +1365,41 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
     }
 
+    @Test
+    fun `Diputacion Caceres Instancia General is QA navigation only to the observed Clave boundary`() {
+        val profileId = ProfileId("diputacion-caceres-instancia-general")
+        val start = URI("https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Diputación Provincial de Cáceres — Instancia General Normalizada", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.dip-caceres.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(5, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+            )?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dip-caceres.es.evil.example/")))
+    }
+
 
     @Test
     fun `MJusticia fundaciones launch is QA only and exposes no sensitive capability`() {
@@ -1562,6 +1597,33 @@ class SiteProfileCatalogParserTest {
     }
 
 
+    @Test
+    fun `Diputacion Cordoba Solicitud Generica is QA navigation only to the public form boundary`() {
+        val profileId = ProfileId("diputacion-cordoba-solicitud-generica")
+        val start = URI("https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Diputación Provincial de Córdoba — Solicitud Genérica", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.dipucordoba.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dipucordoba.es.evil.example/")))
+    }
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")

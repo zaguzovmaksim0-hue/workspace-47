@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9250d228fd66a0f904cf5f79dbd76ad3d546810c150e989f9cca96d1e9b36aa7",
+  "sourceRevision": "6731ed982d06a1dae4264ac6a1bfd60178689a736601b988b06ee55cd663e871",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3976,25 +3976,31 @@
     {
       "portalId": "diputacion-caceres-portal",
       "inventoryId": "ES-PUB-0147",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Cáceres",
+      "profileId": "diputacion-caceres-instancia-general",
+      "displayName": "Diputación Provincial de Cáceres — Instancia General Normalizada",
       "organization": "Diputación Provincial de Cáceres",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Extremadura",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dip-caceres.es",
-      "observedMechanisms": [],
+      "purpose": "Instancia General Normalizada (idproc=341): perfil QA-only para la entrada pública exacta y la navegación observada hasta la primera frontera Cl@ve.",
+      "entryUrl": "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DIP_CACERES_CLAVE_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP09A"
+        "DP09A",
+        "CACERES-SEDE-2026-08-21",
+        "CACERES-INSTANCIA-341-2026-08-21",
+        "CACERES-LOGIN-341-2026-08-21",
+        "CACERES-CLAVE-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado a la entrada exacta de Instancia General Normalizada y a los orígenes de navegación observados sede.dip-caceres.es y pasarela.clave.gob.es. El certificado/DNIe es una alternativa de acceso junto a Cl@ve; no se expone SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
     },
     {
       "portalId": "diputacion-cadiz-portal",
@@ -4023,25 +4029,29 @@
     {
       "portalId": "diputacion-castellon-portal",
       "inventoryId": "ES-PUB-0149",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputació de Castelló",
+      "profileId": "diputacion-castellon-instancia-general",
+      "displayName": "Diputació de Castelló — Instancia General",
       "organization": "Diputació de Castelló",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Comunidad Valenciana",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dipcas.es/es/",
+      "purpose": "Navegación QA integrada exclusivamente al inicio exacto de la Instancia General SIA 1881117 de la Sede electrónica de la Diputació de Castelló; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://dipcas.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CASTELLON_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP11A"
+        "DP11A",
+        "CASTELLON-SEDE-2026-08-23",
+        "CASTELLON-DOSSIER-2026-08-23",
+        "CASTELLON-INSTANCIA-2026-08-23",
+        "CASTELLON-LAUNCH-2026-08-23"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. La página pre-auth publica acceso Cl@ve, pero la autenticación no se inició y el contrato posterior de formulario/firma permanece NO_VERIFICADO. Falta E2E físico."
     },
     {
       "portalId": "diputacion-ciudad-real-portal",
@@ -4071,25 +4081,30 @@
     {
       "portalId": "diputacion-cordoba-portal",
       "inventoryId": "ES-PUB-0151",
-      "profileId": null,
-      "displayName": "Portal oficial de Diputación Provincial de Córdoba",
+      "profileId": "diputacion-cordoba-solicitud-generica",
+      "displayName": "Diputación Provincial de Córdoba — Solicitud Genérica",
       "organization": "Diputación Provincial de Córdoba",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.dipucordoba.es",
-      "observedMechanisms": [],
+      "purpose": "Solicitud Genérica (procedimiento 8876): perfil QA-only para la entrada pública exacta; el flujo vigente ofrece Cl@ve, certificado y una rama sin identificación que alcanza el formulario público de datos del solicitante.",
+      "entryUrl": "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DIPCORDOBA_EPRINSA_PUBLIC_FORM",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP13A"
+        "DP13A",
+        "CORDOBA-TRAMITES-2026-08-21",
+        "CORDOBA-SEDE-TRAMITES-2026-08-21",
+        "CORDOBA-SOLGEN-8876-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario y origin revisados; certificado, firma, procedimiento y los seis campos técnicos permanecen no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado a la entrada exacta de Solicitud Genérica 8876 en sede.dipucordoba.es. El certificado es una alternativa de acceso, no un requisito universal porque existe una rama pública sin identificación. No se expone SIGN, CLIENT_TLS_AUTH, endpoint ni formato/algoritmo de firma; sin E2E."
     },
     {
       "portalId": "diputacion-a-coruna-portal",
