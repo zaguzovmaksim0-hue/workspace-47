@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "db261c54f03ae09f614fec88c42147ebbb406659c7ed956ec0a41ff009538b4b",
+  "sourceRevision": "2cbe27b9a262a4a0f98af06391ef653a08ea54193370e0051f6aa943fad57690",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1242,24 +1242,27 @@
     {
       "portalId": "age-fondo-de-garantia-salarial-fogasa",
       "inventoryId": "ES-PUB-0046",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Subsede electrónica / otros trámites mediante Registro Electrónico General",
       "organization": "Fondo de Garantía Salarial (FOGASA)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.mites.gob.es/fogasa/default.html",
+      "purpose": "La Subsede de FOGASA deriva los otros trámites administrativos sin procedimiento electrónico específico al Registro Electrónico General de la Administración; Workspace-47 reutiliza el perfil REG-AGE existente.",
+      "entryUrl": "https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "FOGASA-REG-2026-08-24",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: una página first-party de FOGASA publica la salida al REG y la transición estrictamente validada alcanza el startUrl español exacto ya cubierto; falta E2E físico de una presentación y no se infiere contrato criptográfico FOGASA."
     },
     {
       "portalId": "age-fondo-espanol-de-garantia-agraria-o-a-fega",

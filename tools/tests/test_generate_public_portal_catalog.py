@@ -1097,6 +1097,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIsNone(profile["clientAuthPolicy"])
         self.assertEqual({"allowedKeyAlgorithms": ["RSA", "EC"], "requireDigitalSignatureKeyUsage": False}, profile["certificateRules"])
 
+    def test_fogasa_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        fogasa = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-fondo-de-garantia-salarial-fogasa")
+        self.assertEqual("ES-PUB-0046", fogasa["inventoryId"])
+        self.assertEqual("reg-age-redsara", fogasa["profileId"])
+        self.assertEqual(
+            "https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml",
+            fogasa["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", fogasa["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", fogasa["protocolFamily"])
+        self.assertEqual("E2E_PENDING", fogasa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", fogasa["inventoryStatus"])
+        self.assertEqual("REVIEWED", fogasa["discoveryState"])
+        self.assertEqual("2026-08-24", fogasa["reviewedOn"])
+        self.assertEqual([], fogasa["observedMechanisms"])
+        self.assertEqual([], fogasa["observedSignatureFormats"])
+        self.assertIn("reg-age", fogasa["limitations"].lower())
+        self.assertIn("qa", fogasa["limitations"].lower())
+        self.assertIn("e2e", fogasa["limitations"].lower())
+
 
     def test_cervantes_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

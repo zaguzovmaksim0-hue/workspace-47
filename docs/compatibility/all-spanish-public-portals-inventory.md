@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 245 |
-| Fuentes oficiales totales registradas | 257 |
+| Fuentes oficiales portal-specific registradas | 246 |
+| Fuentes oficiales totales registradas | 258 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 115 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 119 |
-| Entradas restantes fuera de ambos estados | 64 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 116 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 120 |
+| Entradas restantes fuera de ambos estados | 63 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 115 |
+| `IMPLEMENTED_NOT_E2E` | 116 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 57 |
+| `BROWSE_ONLY` | 56 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 164 |
+| `REVIEWED` | 165 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 14 |
+| `DISCOVERED` | 13 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1878,30 +1878,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Fondo de Garantía Salarial (FOGASA)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Subsede electrónica / otros trámites mediante Registro Electrónico General"
     surface_type: "SEDE"
-    origin: "https://www.mites.gob.es"
-    official_site: "https://www.mites.gob.es/fogasa/default.html"
-    e_sede: "https://www.mites.gob.es/fogasa/default.html"
-    entry_url: "https://www.mites.gob.es/fogasa/default.html"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://sede.fogasa.mites.gob.es"
+    official_site: "https://sede.fogasa.mites.gob.es/"
+    e_sede: "https://sede.fogasa.mites.gob.es/"
+    entry_url: "https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Subsede de FOGASA deriva los otros trámites administrativos sin procedimiento electrónico específico al Registro Electrónico General de la Administración; Workspace-47 reutiliza el perfil REG-AGE existente."
+    protocol_evidence: "Revalidación estricta 2026-08-24: Chromium headless sin ignore-certificate-errors abrió la página first-party de otros trámites y observó el href https://rec.redsara.es/registro/action/are/acceso.do sin error de certificado. El mismo enlace, con verificación TLS normal y negociación española, recorrió 301 https://reg.redsara.es/ -> 302 https://reg.redsara.es/es/ -> 200 con ssl_verify_result=0. Se reutiliza únicamente el startUrl canónico existente https://reg.redsara.es/es/ de reg-age-redsara; no se promueve ninguna observación obtenida solo con TLS deshabilitado ni se atribuye a FOGASA un ABI de firma propio."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Trabajo y Economía Social."
+    evidence_ids: ["D11", "FOGASA-REG-2026-08-24", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: una página first-party de FOGASA publica la salida al REG y la transición estrictamente validada alcanza el startUrl español exacto ya cubierto; falta E2E físico de una presentación y no se infiere contrato criptográfico FOGASA."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar físicamente la transición FOGASA → REG-AGE en QA sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "Evidencia de aceptación obtenida con TLS verificado: Chromium estricto para la página FOGASA y curl estricto para la cadena REG. Exploraciones previas hechas con TLS deshabilitado fueron descartadas como evidencia promotable. No hubo login, selección de certificado, firma, carga, pago ni presentación."
 
   - inventory_id: "ES-PUB-0047"
     surface_key: "age-fondo-espanol-de-garantia-agraria-o-a-fega"
@@ -6361,6 +6362,7 @@ Orden de expansión recomendado:
 [CERVANTES-REG-2026-08-17]: https://cervantes.sede.gob.es/servicio?id=Registro-Electrónico-General
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
 [DGOJ-PUBLIC-2026-08-24]: https://sede.ordenacionjuego.gob.es/es/firma
+[FOGASA-REG-2026-08-24]: https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml
 [P14]: https://reg.redsara.es/es/
 [P14A]: https://reg.redsara.es/preguntas-frecuentes
 [P14B]: https://reg.redsara.es/es/media/es/REG-ManualUsuario.pdf
