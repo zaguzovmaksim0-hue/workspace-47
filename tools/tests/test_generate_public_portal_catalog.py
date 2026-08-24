@@ -2302,7 +2302,7 @@ records:
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0048")
 
         self.assertEqual("reg-age-redsara", target["profileId"])
-        self.assertEqual("https://www.sede.fnmt.es/tramites/formulario-proposito-general", target["entryUrl"])
+        self.assertEqual("https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general", target["entryUrl"])
         self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
         self.assertEqual("DELEGACION_REG_AGE", target["protocolFamily"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
