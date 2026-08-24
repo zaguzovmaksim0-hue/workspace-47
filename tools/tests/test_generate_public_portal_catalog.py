@@ -1597,6 +1597,25 @@ records:
         self.assertIn("no_verificado", quju["limitations"].lower())
 
 
+    def test_sepes_binds_current_transportes_public_page_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0045")
+        self.assertEqual("sepes-transportes-public-complaints", target["profileId"])
+        self.assertEqual(
+            "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("SEPES_TRANSPORTES_PUBLIC_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual(["ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("procedurekey=7601", target["limitations"].lower())
+        self.assertIn("id=7002", target["limitations"].lower())
+
     def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         funciona = next(

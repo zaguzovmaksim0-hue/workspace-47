@@ -618,7 +618,7 @@ class MainActivity : ComponentActivity() {
         if (browser.profileId != profileId) return false
         val currentUrl = currentWebView?.url ?: return false
         val uri = runCatching { URI(currentUrl) }.getOrNull() ?: return false
-        return BuiltInSiteProfiles.runtimeRegistry.resolve(uri)?.profile?.profileId == profileId
+        return BuiltInSiteProfiles.runtimeRegistry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId
     }
 
     private fun smokeAdapterId(profileId: ProfileId): String? {

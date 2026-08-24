@@ -1778,6 +1778,27 @@
         {"url":"https://sede.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"},
         {"url":"https://miprincipado.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"}
       ]
+    },
+    {
+      "profileId": "sepes-transportes-public-complaints",
+      "profileVersion": 1,
+      "displayName": "SEPES — Quejas y reclamaciones / Sede Transportes",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+      "initiatorOrigins": ["https://sede.transportes.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.transportes.gob.es/Procedimiento/?procedureKey=7601","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede","reviewedOn":"2026-08-24"}
+      ]
     }
   ]
 }

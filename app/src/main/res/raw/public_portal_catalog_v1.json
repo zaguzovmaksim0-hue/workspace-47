@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d7fcd5a26fa56390947602cfd5afbd1a120fa3192fa3b8b3fabf710363698384",
+  "sourceRevision": "912fd280c93129c5353567779d5ac7620b133d030207aae129da5640e522e379",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1140,24 +1140,28 @@
     {
       "portalId": "age-entidad-publica-empresarial-de-suelo-sepes",
       "inventoryId": "ES-PUB-0045",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "sepes-transportes-public-complaints",
+      "displayName": "Quejas y reclamaciones — SEPES / Sede Transportes",
       "organization": "Entidad Pública Empresarial de Suelo (SEPES)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.sepes.es/es/sede-electronica",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Navegación QA exacta a la ficha pública vigente de Quejas y reclamaciones de SEPES dentro de la Sede del Ministerio de Transportes; autenticación, firma y presentación quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+      "observedMechanisms": [
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "SEPES_TRANSPORTES_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "SEPES-TRANSPORTES-2026-08-24",
+        "SEPES-TRANSPORTES-NORMATIVA-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Existe una ruta oficial first-party vigente y TLS-válida ligada directamente a SEPES, suficiente para navegación QA. El launch procedureKey=7601 termina actualmente HTTP 500, así que no se modela autenticación o firma. El perfil Transportes existente id=7002 corresponde a otro procedimiento y su contrato SHA1/XAdES no se reutiliza; el origin heredado www.sepes.es mantiene un certificado caducado y no se usa ni se sortea."
     },
     {
       "portalId": "age-fondo-de-garantia-salarial-fogasa",

@@ -63,6 +63,18 @@ class BrowserUrlSanitizerTest {
     }
 
     @Test
+    fun selectedProfileContourRemainsProfileScopedWhenTwoProfilesShareTransportesOrigin() {
+        val sepes = ProfileId("sepes-transportes-public-complaints")
+        val transportes = ProfileId("transportes-qys-cert-login")
+        val sepesPage = "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
+        val signingPage = "https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx"
+
+        assertTrue(urlBelongsToSelectedProfile(sepesPage, sepes))
+        assertTrue(urlBelongsToSelectedProfile(signingPage, transportes))
+        assertTrue(urlBelongsToSelectedProfile(signingPage, sepes))
+    }
+
+    @Test
     fun selectedProfileContourNeverAdoptsAnotherImplementedOrigin() {
         val junta = ProfileId("junta-andalucia")
 
