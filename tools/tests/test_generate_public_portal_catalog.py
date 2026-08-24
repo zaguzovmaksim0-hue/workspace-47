@@ -1779,6 +1779,26 @@ records:
         self.assertIn("e2e", entry["limitations"].lower())
 
 
+    def test_asturias_sede_redirect_navigation_profile_binds_exact_public_start(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0096")
+
+        self.assertEqual("asturias-sede-tramite-autofirma", target["portalId"])
+        self.assertEqual("asturias-sede-tramite-navigation", target["profileId"])
+        self.assertEqual(
+            "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("ASTURIAS_SEDE_MIPRINCIPADO_REDIRECT_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-19", target["reviewedOn"])
+        self.assertEqual(["ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("tramita.asturias.es", target["limitations"].lower())
+
     def test_mineco_instancia_generica_binds_exact_qa_profile(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0065")

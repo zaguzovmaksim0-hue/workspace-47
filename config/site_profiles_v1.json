@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 41,
+  "catalogVersion": 42,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1757,6 +1757,26 @@
         {"url":"https://sede.mjusticia.gob.es/tramites/organos-gobierno","reviewedOn":"2026-08-19"},
         {"url":"https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75","reviewedOn":"2026-08-19"},
         {"url":"https://sede2.mjusticia.gob.es/login/index/idp/75","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
+      "profileId": "asturias-sede-tramite-navigation",
+      "profileVersion": 1,
+      "displayName": "Principado de Asturias — trámite de Sede",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
+      "initiatorOrigins": ["https://sede.asturias.es"],
+      "redirectOrigins": ["https://miprincipado.asturias.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"},
+        {"url":"https://miprincipado.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"}
       ]
     }
   ]

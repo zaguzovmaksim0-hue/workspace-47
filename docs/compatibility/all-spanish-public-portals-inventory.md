@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 95 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
-| Entradas restantes fuera de ambos estados | 84 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 96 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 100 |
+| Entradas restantes fuera de ambos estados | 83 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 95 |
+| `IMPLEMENTED_NOT_E2E` | 96 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 77 |
+| `BROWSE_ONLY` | 76 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3467,19 +3467,21 @@ records:
     certificate_required: "NO_VERIFICADO"
     signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "ASTURIAS_SEDE_MIPRINCIPADO_REDIRECT_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación pública cuya ficha indica firma con AutoFirma."
-    protocol_evidence: "La ficha acredita el requisito de AutoFirma, pero no versión, ABI, callback ni endpoint."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La URL oficial de Sede redirige a la ficha vigente del mismo trámite en miPrincipado; Workspace-47 habilita solo esa navegación QA y mantiene fuera de confianza el POST posterior a tramita.asturias.es y cualquier firma."
+    protocol_evidence: "El 2026-08-19 el entry exacto https://sede.asturias.es/ast/-/dboid-6269000011903512107573 respondió 301 a https://miprincipado.asturias.es/ast/-/dboid-6269000011903512107573, que respondió 200 y publicó el mismo trámite CERT0046T01. La ficha contiene un POST público a https://tramita.asturias.es/sta/Relec/STARhssoManager y un requisito técnico de firma, pero no se ejecutó ese POST ni se atribuye al trámite el MiniApplet de la utilidad separada de comprobación de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A03B"]
-    reason: "AutoFirma como producto no basta para autorizar bridge ni inferir el transporte."
-    reviewed_at: "2026-07-16"
-    next_gate: "Inspeccionar el JavaScript vigente y la entrega exacta del resultado."
+    evidence_ids: ["D03", "A03B", "ASTURIAS-0096-REDIRECT-2026-08-19"]
+    reason: "Perfil QA-only de navegación: confía en sede.asturias.es como iniciador y únicamente en miprincipado.asturias.es como redirect observado. tramita.asturias.es, Cl@ve, selección de certificado, AutoFirma/MiniApplet, algoritmo, formato, callback y endpoint permanecen fuera del contrato; no hay E2E físico."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar físicamente la navegación Sede → miPrincipado; una reapertura autenticada puede observar el POST de STARhssoManager y el estado pre-firma, deteniéndose antes de firma criptográfica o presentación final."
+
+    notes: "El redirect conserva exactamente el dboid. El host tramita.asturias.es y el helper histórico www30.asturias.es/Esign2 no se añaden a los orígenes de confianza de este perfil."
 
   - inventory_id: "ES-PUB-0097"
     surface_key: "caib-seu-electronica"

@@ -62,6 +62,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val asturiasSede = ProfileId("asturias-sede-tramite-navigation")
     private val mjusticia = ProfileId("mjusticia-fundaciones-idp75")
     private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
     private val alava = ProfileId("diputacion-alava-registro-comun")
@@ -136,6 +137,7 @@ class JuntaOriginPolicyTest {
             "serviciosede.mineco.gob.es",
             "pasarela.clave.gob.es",
             "pasarela-ident.clave.gob.es",
+            "sede.asturias.es",
             "miprincipado.asturias.es",
             "tramita.asturias.es",
             "rhsso.asturias.es",
@@ -297,6 +299,17 @@ class JuntaOriginPolicyTest {
             ),
         )
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
+        assertEquals(
+            setOf("sede.asturias.es", "miprincipado.asturias.es"),
+            JuntaOriginPolicy.browserAllowedHosts(asturiasSede),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(asturiasSede).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.asturias.es/ast/-/dboid-6269000011903512107573"),
+                asturiasSede,
+            ),
+        )
         assertEquals(setOf("egoitza.araba.eus"), JuntaOriginPolicy.browserAllowedHosts(alava))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(alava).isEmpty())
         assertNull(

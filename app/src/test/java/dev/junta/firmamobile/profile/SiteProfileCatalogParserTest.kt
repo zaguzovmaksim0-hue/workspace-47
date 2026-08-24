@@ -1234,6 +1234,69 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede2.mjusticia.gob.es:444/")))
     }
 
+    @Test
+    fun `Asturias Sede may share only the reviewed miPrincipado redirect with the existing Asturias profile`() {
+        val existing = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("asturias-miprincipado")
+        }
+        val navigation = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("asturias-sede-tramite-navigation")
+        }
+        val shared = ExactOrigin.parse("https://miprincipado.asturias.es")
+
+        assertTrue(shared in existing.initiatorOrigins)
+        assertTrue(shared in navigation.redirectOrigins)
+        assertTrue(shared !in navigation.initiatorOrigins)
+        assertTrue(navigation.capabilities.isEmpty())
+        assertNull(navigation.clientAuthPolicy)
+    }
+
+    @Test
+    fun `Asturias Sede shared origin exception fails closed for another origin or owner`() {
+        val reviewedOrigins =
+            "\"initiatorOrigins\": [\"https://sede.asturias.es\"],\n" +
+                "      \"redirectOrigins\": [\"https://miprincipado.asturias.es\"]"
+        val unreviewedOrigins =
+            "\"initiatorOrigins\": [\"https://sede.asturias.es\"],\n" +
+                "      \"redirectOrigins\": [\"https://tramita.asturias.es\"]"
+        val reviewedOwner = "\"profileId\": \"asturias-sede-tramite-navigation\""
+        val unreviewedOwner = "\"profileId\": \"asturias-sede-unreviewed-navigation\""
+
+        assertTrue(BuiltInSiteProfiles.JSON.contains(reviewedOrigins))
+        assertTrue(BuiltInSiteProfiles.JSON.contains(reviewedOwner))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(reviewedOrigins, unreviewedOrigins),
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(reviewedOwner, unreviewedOwner),
+            )
+        }
+    }
+
+    @Test
+    fun `Asturias Sede profile exposes only current redirect navigation in QA`() {
+        val profileId = ProfileId("asturias-sede-tramite-navigation")
+        val start = URI("https://sede.asturias.es/ast/-/dboid-6269000011903512107573")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.asturias.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://miprincipado.asturias.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+    }
+
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")

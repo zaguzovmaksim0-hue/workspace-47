@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "33fffb2249e57679f04858608e1c18d59de9cfd2f38161f9ffca16ef9f568f96",
+  "sourceRevision": "b0d2eba2b1f9de94ef74a1795704ea785e149532520b679fe714ba8ab6b83ce1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2442,27 +2442,28 @@
     {
       "portalId": "asturias-sede-tramite-autofirma",
       "inventoryId": "ES-PUB-0096",
-      "profileId": null,
+      "profileId": "asturias-sede-tramite-navigation",
       "displayName": "Frontend de trámite de la Sede de Asturias",
       "organization": "Principado de Asturias",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Principado de Asturias",
-      "purpose": "Tramitación pública cuya ficha indica firma con AutoFirma.",
+      "purpose": "La URL oficial de Sede redirige a la ficha vigente del mismo trámite en miPrincipado; Workspace-47 habilita solo esa navegación QA y mantiene fuera de confianza el POST posterior a tramita.asturias.es y cualquier firma.",
       "entryUrl": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
       "observedMechanisms": [
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "ASTURIAS_SEDE_MIPRINCIPADO_REDIRECT_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D03",
-        "A03B"
+        "A03B",
+        "ASTURIAS-0096-REDIRECT-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "AutoFirma como producto no basta para autorizar bridge ni inferir el transporte."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil QA-only de navegación: confía en sede.asturias.es como iniciador y únicamente en miprincipado.asturias.es como redirect observado. tramita.asturias.es, Cl@ve, selección de certificado, AutoFirma/MiniApplet, algoritmo, formato, callback y endpoint permanecen fuera del contrato; no hay E2E físico."
     },
     {
       "portalId": "caib-seu-electronica",

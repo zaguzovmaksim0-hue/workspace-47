@@ -459,4 +459,16 @@ class PortalCatalogScreenTest {
         assertTrue(target.capabilities.isEmpty())
     }
 
+    @Test
+    fun `Asturias Sede navigation appears compatible but exposes no signing capability`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val asturias = compatible.items.single { it.portalId == PortalId("asturias-sede-tramite-autofirma") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("asturias-sede-tramite-navigation"), asturias.profileId)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, asturias.supportStatus)
+        assertTrue(asturias.isEnabled)
+        assertTrue(asturias.capabilities.isEmpty())
+    }
+
 }
