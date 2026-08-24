@@ -102,6 +102,23 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("4443", target["limitations"])
         self.assertIn("qa", target["limitations"].lower())
 
+    def test_aecid_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        aecid = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0022")
+        self.assertEqual("age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid", aecid["portalId"])
+        self.assertEqual("reg-age-redsara", aecid["profileId"])
+        self.assertEqual("https://www.aecid.gob.es/registro-de-solicitud", aecid["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", aecid["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", aecid["protocolFamily"])
+        self.assertEqual("E2E_PENDING", aecid["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", aecid["inventoryStatus"])
+        self.assertEqual("REVIEWED", aecid["discoveryState"])
+        self.assertEqual("2026-08-23", aecid["reviewedOn"])
+        self.assertEqual([], aecid["observedMechanisms"])
+        self.assertEqual([], aecid["observedSignatureFormats"])
+        self.assertIn("reg-age", aecid["limitations"].lower())
+        self.assertIn("qa", aecid["limitations"].lower())
+
     def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         puertos = next(
@@ -1151,6 +1168,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("reg-age", fogasa["limitations"].lower())
         self.assertIn("qa", fogasa["limitations"].lower())
         self.assertIn("e2e", fogasa["limitations"].lower())
+
+    def test_csic_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        csic = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-consejo-superior-de-investigaciones-cientificas-csic"
+        )
+        self.assertEqual("ES-PUB-0037", csic["inventoryId"])
+        self.assertEqual("reg-age-redsara", csic["profileId"])
+        self.assertEqual("https://sede.csic.gob.es/registro-electronico", csic["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", csic["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", csic["protocolFamily"])
+        self.assertEqual("E2E_PENDING", csic["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", csic["inventoryStatus"])
+        self.assertEqual("REVIEWED", csic["discoveryState"])
+        self.assertEqual("2026-08-23", csic["reviewedOn"])
+        self.assertEqual(
+            ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            csic["observedMechanisms"],
+        )
+        self.assertEqual([], csic["observedSignatureFormats"])
+        self.assertIn("reg-age", csic["limitations"].lower())
+        self.assertIn("qa", csic["limitations"].lower())
+        self.assertIn("e2e", csic["limitations"].lower())
 
 
     def test_cervantes_reg_age_alias_binds_exact_qa_launch(self) -> None:
@@ -2255,6 +2296,24 @@ records:
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa-only", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
+
+    def test_fnmt_general_form_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0048")
+
+        self.assertEqual("reg-age-redsara", target["profileId"])
+        self.assertEqual("https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general", target["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", target["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("reg-age", target["limitations"].lower())
+        self.assertIn("qa", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
 
     def test_guardia_civil_public_sede_binds_exact_qa_boundary_without_sensitive_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
