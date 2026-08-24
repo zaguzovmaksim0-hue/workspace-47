@@ -1078,6 +1078,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", inap["limitations"].lower())
 
 
+    def test_sepe_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        sepe = next(entry for entry in catalog["entries"] if entry["portalId"] == "sepe-sede")
+        self.assertEqual("ES-PUB-0007", sepe["inventoryId"])
+        self.assertEqual("reg-age-redsara", sepe["profileId"])
+        self.assertEqual(
+            "https://sede.sepe.gob.es/portalSede/registro-electronico.html",
+            sepe["entryUrl"],
+        )
+        self.assertEqual("https://reg.redsara.es/es/", sepe["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", sepe["protocolFamily"])
+        self.assertEqual("E2E_PENDING", sepe["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", sepe["inventoryStatus"])
+        self.assertEqual("REVIEWED", sepe["discoveryState"])
+        self.assertEqual("2026-08-19", sepe["reviewedOn"])
+        self.assertEqual([], sepe["observedMechanisms"])
+        self.assertEqual([], sepe["observedSignatureFormats"])
+        self.assertIn("reg-age", sepe["limitations"].lower())
+        self.assertIn("qa", sepe["limitations"].lower())
+        self.assertIn("e2e", sepe["limitations"].lower())
+
+
     def test_cultura_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         cultura = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-ministerio-de-cultura")

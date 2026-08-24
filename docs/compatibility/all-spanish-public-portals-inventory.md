@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 243 |
-| Fuentes oficiales totales registradas | 255 |
+| Fuentes oficiales portal-specific registradas | 244 |
+| Fuentes oficiales totales registradas | 256 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 96 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 100 |
-| Entradas restantes fuera de ambos estados | 83 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 97 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 101 |
+| Entradas restantes fuera de ambos estados | 82 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 96 |
+| `IMPLEMENTED_NOT_E2E` | 97 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 76 |
+| `BROWSE_ONLY` | 75 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -663,29 +663,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Servicio Público de Empleo Estatal"
-    surface_name: "Sede electrónica del SEPE"
+    surface_name: "SEPE — Registro electrónico común"
     surface_type: "SEDE"
     origin: "https://sede.sepe.gob.es"
     official_site: "https://sede.sepe.gob.es/"
     e_sede: "https://sede.sepe.gob.es/"
-    entry_url: "https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "SI"
-    signature_required: "SI"
+    entry_url: "https://sede.sepe.gob.es/portalSede/registro-electronico.html"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.sepe.gob.es/portalSede/registro-electronico.html"
+    certificate_required: "NO_VERIFICADO"
+    signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Firma con AutoFirma después de identificarse mediante certificado."
-    protocol_evidence: "La FAQ acredita AutoFirma, pero no versión, ABI, callback ni endpoint."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede electrónica del SEPE publica el Registro Electrónico Común de la Administración General del Estado como vía externa de registro electrónico."
+    protocol_evidence: "La página first-party https://sede.sepe.gob.es/portalSede/registro-electronico.html enlaza explícitamente «Registro electrónico común» a https://rec.redsara.es/; la raíz REC vigente redirige con locale español exactamente a https://reg.redsara.es/es/, startUrl canónico ya cubierto por el perfil reg-age-redsara. Workspace-47 reutiliza únicamente ese startUrl y no atribuye a sede.sepe.gob.es un ABI de firma, constantes AutoFirma ni confianza criptográfica REG-AGE."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P04", "D11"]
-    reason: "El requisito de AutoFirma no autoriza un bridge sin contrato técnico exacto."
-    reviewed_at: "2026-07-15"
-    next_gate: "Inspeccionar un procedimiento público y su JavaScript vigente."
+    evidence_ids: ["P04", "D11", "SEPE-REG-2026-08-19", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara por delegación oficial explícita del SEPE al Registro Electrónico Común y resolución pública actual al startUrl exacto; no se amplía trust al origin SEPE y falta E2E físico de la transición."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar físicamente la transición SEPE → REG-AGE sin completar ni presentar una solicitud administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "La capacidad implementada es solo la delegación exacta al REG-AGE. Los flujos propios del SEPE tras Cl@ve/certificado y su firma AutoFirma permanecen fuera de este contrato: no se infieren algoritmo, formato, payload, callback, endpoint ni client-TLS."
 
   - inventory_id: "ES-PUB-0008"
     surface_key: "dgt-sede"
@@ -6590,6 +6592,7 @@ availability, certificado, firma ni contrato técnico.
 [MAEC-REG-2026-08-16]: https://www.exteriores.gob.es/Consulados/monterrey/es/ServiciosConsulares/Paginas/index.aspx?scca=Inscripci%C3%B3n+Consular&scco=M%C3%A9xico&scd=198&scs=Baja+del+Registro+de+Matr%C3%ADcula
 [GVA-DGM15602-2026-08-18]: https://sede.gva.es/es/detall-tramit?id_proc=15602
 [GVA-CLIENTTLS-2026-08-18]: https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html
+[SEPE-REG-2026-08-19]: https://sede.sepe.gob.es/portalSede/registro-electronico.html
 [CULTURA-REG-2026-08-17]: https://cultura.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [JUVENTUD-REG-2026-08-17]: https://juventudeinfancia.sede.gob.es/servicio?id=Registro-Electr%C3%B3nico-General
 [IGUALDAD-REG-2026-08-17]: https://igualdad.sede.gob.es/servicio?id=Registro-Electrónico-General

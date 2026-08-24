@@ -283,22 +283,25 @@ class PortalCatalogScreenTest {
     }
 
     @Test
-    fun `metadata only browse record explains why integrated navigation is blocked`() {
-        rule.setContent {
-            JuntaFirmaTheme {
-                PortalCatalogScreen(
-                    repository = repository,
-                    onOpenPortal = {},
-                )
-            }
-        }
+    fun `SEPE REG alias is listed as compatible but remains pending E2E`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val sepe = compatible.items.single { it.portalId == PortalId("sepe-sede") }
 
-        rule.onNodeWithText("Buscar servicio u organismo")
-            .performTextInput("SEPE")
-        rule.onNodeWithText(
-            "Sede pública catalogada; la navegación integrada, el certificado y la firma " +
-                "están bloqueados hasta verificar un perfil técnico.",
-        ).performScrollTo().assertIsDisplayed()
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"), sepe.profileId)
+        assertEquals(
+            java.net.URI("https://sede.sepe.gob.es/portalSede/registro-electronico.html"),
+            sepe.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, sepe.supportStatus)
+        assertTrue(sepe.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                dev.junta.firmamobile.profile.ProfileId("reg-age-redsara"),
+                java.net.URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(sepe),
+        )
     }
 
     @Test
