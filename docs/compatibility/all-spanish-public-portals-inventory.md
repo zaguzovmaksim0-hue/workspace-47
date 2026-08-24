@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 147 |
+| `REVIEWED` | 155 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 31 |
+| `DISCOVERED` | 23 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
