@@ -104,6 +104,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("aesa-solicitud-general-public"),
                 ProfileId("boe-sede-public-home"),
                 ProfileId("cnmc-remision-solicitudes-public"),
+                ProfileId("adif-sede-public-home"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
                 ProfileId("ctbg-solicitud-informacion"),
@@ -124,6 +125,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("guardia-civil-sede-public"),
                 ProfileId("csn-sede-public"),
                 ProfileId("csd-sede-public"),
+                ProfileId("cmt-public-navigation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

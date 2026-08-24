@@ -111,6 +111,7 @@ class PortalCatalogRepositoryTest {
                 "aesa-solicitud-general-public",
                 "boe-sede-public-home",
                 "cnmc-remision-solicitudes-public",
+                "adif-sede-public-home",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
                 "ctbg-solicitud-informacion",
@@ -132,6 +133,7 @@ class PortalCatalogRepositoryTest {
                 "guardia-civil-sede-public",
                 "csn-sede-public",
                 "csd-sede-public",
+                "cmt-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

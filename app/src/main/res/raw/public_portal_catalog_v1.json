@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a5655659254e40ef0a83eceafce560df36f6d339e0be272c674cc2f3e1a3d344",
+  "sourceRevision": "2cbe27b9a262a4a0f98af06391ef653a08ea54193370e0051f6aa943fad57690",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -576,24 +576,28 @@
     {
       "portalId": "age-administrador-de-infraestructuras-ferroviarias-adif",
       "inventoryId": "ES-PUB-0021",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "adif-sede-public-home",
+      "displayName": "Sede electrónica / Instancia General",
       "organization": "Administrador de Infraestructuras Ferroviarias (ADIF)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede electrónica de ADIF con acceso a procedimientos, incluida la Instancia General SIA 2240787; la implementación se limita al lanzamiento público QA.",
       "entryUrl": "https://sede.adif.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "ADIF_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "ADIF-SEDE-2026-08-23",
+        "ADIF-INSTANCIA-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA_ONLY limitado a https://sede.adif.gob.es/ sin capabilities sensibles. El certificado es un medio admitido, no una afirmación de CLIENT_TLS_AUTH; SIGN, algoritmo, formato, endpoints y presentación final permanecen NO_VERIFICADO hasta evidencia runtime específica."
     },
     {
       "portalId": "age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid",
@@ -790,24 +794,30 @@
     {
       "portalId": "age-centro-de-investigaciones-energeticas-medioambientales-y-tecnologicas-ciemat",
       "inventoryId": "ES-PUB-0029",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Presentación telemática dirigida a CIEMAT mediante el Registro Electrónico General cuando el trámite requiere canal electrónico.",
       "entryUrl": "https://sede.ciemat.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "launchUrl": "https://reg.redsara.es/es/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CIEMAT-REG-2026-08-23",
+        "P14"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara; se conserva CIEMAT como entry surface y no se amplía trust al origin CIEMAT."
     },
     {
       "portalId": "age-centro-para-el-desarrollo-tecnologico-industrial-cdti",
@@ -842,24 +852,24 @@
     {
       "portalId": "age-comisionado-para-el-mercado-de-tabacos-cmt",
       "inventoryId": "ES-PUB-0031",
-      "profileId": null,
+      "profileId": "cmt-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Comisionado para el Mercado de Tabacos (CMT)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación pública QA-only a la Sede electrónica del CMT y a su catálogo público de servicios.",
       "entryUrl": "https://sede.cmt.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "CMT_PUBLIC_NAVIGATION_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA_ONLY limitado al origen público exacto sede.cmt.gob.es; autenticación, client TLS, firma, formato, algoritmo, endpoints y presentación permanecen NO_VERIFICADO y el E2E sigue pendiente."
     },
     {
       "portalId": "age-comision-nacional-de-los-mercados-y-la-competencia-cnmc",
@@ -1232,24 +1242,27 @@
     {
       "portalId": "age-fondo-de-garantia-salarial-fogasa",
       "inventoryId": "ES-PUB-0046",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "reg-age-redsara",
+      "displayName": "Subsede electrónica / otros trámites mediante Registro Electrónico General",
       "organization": "Fondo de Garantía Salarial (FOGASA)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.mites.gob.es/fogasa/default.html",
+      "purpose": "La Subsede de FOGASA deriva los otros trámites administrativos sin procedimiento electrónico específico al Registro Electrónico General de la Administración; Workspace-47 reutiliza el perfil REG-AGE existente.",
+      "entryUrl": "https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "FOGASA-REG-2026-08-24",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara: una página first-party de FOGASA publica la salida al REG y la transición estrictamente validada alcanza el startUrl español exacto ya cubierto; falta E2E físico de una presentación y no se infiere contrato criptográfico FOGASA."
     },
     {
       "portalId": "age-fondo-espanol-de-garantia-agraria-o-a-fega",

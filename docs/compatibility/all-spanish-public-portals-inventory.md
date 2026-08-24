@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 245 |
-| Fuentes oficiales totales registradas | 257 |
+| Fuentes oficiales portal-specific registradas | 246 |
+| Fuentes oficiales totales registradas | 258 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 112 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 116 |
-| Entradas restantes fuera de ambos estados | 67 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 116 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 120 |
+| Entradas restantes fuera de ambos estados | 63 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 112 |
+| `IMPLEMENTED_NOT_E2E` | 116 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 60 |
+| `BROWSE_ONLY` | 56 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 161 |
+| `REVIEWED` | 165 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 17 |
+| `DISCOVERED` | 13 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1100,30 +1100,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Administrador de Infraestructuras Ferroviarias (ADIF)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / Instancia General"
     surface_type: "SEDE"
     origin: "https://sede.adif.gob.es"
     official_site: "https://sede.adif.gob.es/"
     e_sede: "https://sede.adif.gob.es/"
     entry_url: "https://sede.adif.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    procedure_page: "https://sede.adif.gob.es/opencms/export/system/modules/sede/contents/doc/FICHA_ADIF_SPC.pdf"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "ADIF_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede electrónica de ADIF con acceso a procedimientos, incluida la Instancia General SIA 2240787; la implementación se limita al lanzamiento público QA."
+    protocol_evidence: "La Sede pública actual expone Procedimientos Disponibles e Identificarse; la ficha oficial de Instancia General SIA 2240787 documenta identificación mediante DNIe/certificado y usuario/clave. No se observó ni se implementó el contrato técnico posterior de autenticación o firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
+    evidence_ids: ["D11", "ADIF-SEDE-2026-08-23", "ADIF-INSTANCIA-2026-08-23"]
+    reason: "Perfil QA_ONLY limitado a https://sede.adif.gob.es/ sin capabilities sensibles. El certificado es un medio admitido, no una afirmación de CLIENT_TLS_AUTH; SIGN, algoritmo, formato, endpoints y presentación final permanecen NO_VERIFICADO hasta evidencia runtime específica."
+    reviewed_at: "2026-08-23"
+    next_gate: "Revalidar una transición de identificación/firma específica antes de añadir CLIENT_TLS_AUTH, SIGN, algoritmo, formato, endpoint o E2E."
+    notes: "El sitio oficial de ADIF remite expresamente a esta Sede para escritos administrativos y señala la existencia de un trámite genérico de solicitudes, escritos y comunicaciones (Instancia General)."
 
   - inventory_id: "ES-PUB-0022"
     surface_key: "age-agencia-espanola-de-cooperacion-internacional-para-el-desarrollo-aecid"
@@ -1356,23 +1356,24 @@ records:
     official_site: "https://sede.ciemat.gob.es/"
     e_sede: "https://sede.ciemat.gob.es/"
     entry_url: "https://sede.ciemat.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    procedure_page: "https://reg.redsara.es/es/"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Presentación telemática dirigida a CIEMAT mediante el Registro Electrónico General cuando el trámite requiere canal electrónico."
+    protocol_evidence: "La evidencia pública de CIEMAT se limita a la institución y su sede; la vía de Registro Electrónico General se modela reutilizando el perfil REG-AGE ya verificado, sin atribuir contrato técnico propio a sede.ciemat.gob.es."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CIEMAT-REG-2026-08-23", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara; se conserva CIEMAT como entry surface y no se amplía trust al origin CIEMAT."
+    reviewed_at: "2026-08-23"
+    launch_url: "https://reg.redsara.es/es/"
+    next_gate: "Validar físicamente la transición CIEMAT → REG-AGE sin realizar una presentación administrativa real."
     notes: "Ministerio(s) enumerador(es): Ministerio de Ciencia, Innovación y Universidades. La URL sessionizada de la fuente se descartó; solo se conserva el origin exacto."
 
   - inventory_id: "ES-PUB-0030"
@@ -1418,24 +1419,24 @@ records:
     official_site: "https://sede.cmt.gob.es/"
     e_sede: "https://sede.cmt.gob.es/"
     entry_url: "https://sede.cmt.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sede.cmt.gob.es/catalogoservicios.aspx"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CMT_PUBLIC_NAVIGATION_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación pública QA-only a la Sede electrónica del CMT y a su catálogo público de servicios."
+    protocol_evidence: "El 2026-08-23 la Sede oficial respondió 200 y enlazó su catálogo público en /catalogoservicios.aspx; la misma página publica un acceso separado de gestión ciudadana bajo serviciostelematicosext.hacienda.gob.es, que no se incorpora al trust set ni se usa para inferir autenticación o firma."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    reason: "Perfil QA_ONLY limitado al origen público exacto sede.cmt.gob.es; autenticación, client TLS, firma, formato, algoritmo, endpoints y presentación permanecen NO_VERIFICADO y el E2E sigue pendiente."
+    reviewed_at: "2026-08-23"
+    next_gate: "Si se necesita ampliar capacidad, realizar observación autenticada acotada de un trámite y detenerse antes de firma privada o presentación final."
+    notes: "El catálogo público es evidencia de navegación, no autorización para confiar en el origen separado de servicios telemáticos de Hacienda."
 
   - inventory_id: "ES-PUB-0032"
     surface_key: "age-comision-nacional-de-los-mercados-y-la-competencia-cnmc"
@@ -1877,30 +1878,31 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Fondo de Garantía Salarial (FOGASA)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Subsede electrónica / otros trámites mediante Registro Electrónico General"
     surface_type: "SEDE"
-    origin: "https://www.mites.gob.es"
-    official_site: "https://www.mites.gob.es/fogasa/default.html"
-    e_sede: "https://www.mites.gob.es/fogasa/default.html"
-    entry_url: "https://www.mites.gob.es/fogasa/default.html"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://sede.fogasa.mites.gob.es"
+    official_site: "https://sede.fogasa.mites.gob.es/"
+    e_sede: "https://sede.fogasa.mites.gob.es/"
+    entry_url: "https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml"
+    launch_url: "https://reg.redsara.es/es/"
+    procedure_page: "https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_REG_AGE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Subsede de FOGASA deriva los otros trámites administrativos sin procedimiento electrónico específico al Registro Electrónico General de la Administración; Workspace-47 reutiliza el perfil REG-AGE existente."
+    protocol_evidence: "Revalidación estricta 2026-08-24: Chromium headless sin ignore-certificate-errors abrió la página first-party de otros trámites y observó el href https://rec.redsara.es/registro/action/are/acceso.do sin error de certificado. El mismo enlace, con verificación TLS normal y negociación española, recorrió 301 https://reg.redsara.es/ -> 302 https://reg.redsara.es/es/ -> 200 con ssl_verify_result=0. Se reutiliza únicamente el startUrl canónico existente https://reg.redsara.es/es/ de reg-age-redsara; no se promueve ninguna observación obtenida solo con TLS deshabilitado ni se atribuye a FOGASA un ABI de firma propio."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Trabajo y Economía Social."
+    evidence_ids: ["D11", "FOGASA-REG-2026-08-24", "P14"]
+    reason: "Alias QA-only al perfil existente reg-age-redsara: una página first-party de FOGASA publica la salida al REG y la transición estrictamente validada alcanza el startUrl español exacto ya cubierto; falta E2E físico de una presentación y no se infiere contrato criptográfico FOGASA."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar físicamente la transición FOGASA → REG-AGE en QA sin realizar una presentación administrativa real; mantener QA_ONLY hasta entonces."
+    notes: "Evidencia de aceptación obtenida con TLS verificado: Chromium estricto para la página FOGASA y curl estricto para la cadena REG. Exploraciones previas hechas con TLS deshabilitado fueron descartadas como evidencia promotable. No hubo login, selección de certificado, firma, carga, pago ni presentación."
 
   - inventory_id: "ES-PUB-0047"
     surface_key: "age-fondo-espanol-de-garantia-agraria-o-a-fega"
@@ -6360,6 +6362,7 @@ Orden de expansión recomendado:
 [CERVANTES-REG-2026-08-17]: https://cervantes.sede.gob.es/servicio?id=Registro-Electrónico-General
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
 [DGOJ-PUBLIC-2026-08-24]: https://sede.ordenacionjuego.gob.es/es/firma
+[FOGASA-REG-2026-08-24]: https://sede.fogasa.mites.gob.es/SEDE/gestion/catalogoTramites/otrosTramites.xhtml
 [P14]: https://reg.redsara.es/es/
 [P14A]: https://reg.redsara.es/preguntas-frecuentes
 [P14B]: https://reg.redsara.es/es/media/es/REG-ManualUsuario.pdf
