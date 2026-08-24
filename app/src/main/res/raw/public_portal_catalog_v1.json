@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "33fffb2249e57679f04858608e1c18d59de9cfd2f38161f9ffca16ef9f568f96",
+  "sourceRevision": "99e235a57c903654b89ff794ae1084fbd7697328b7a59a3d5de6ca678048da08",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1118,24 +1118,32 @@
     {
       "portalId": "age-enaire-entidad-publica-empresarial",
       "inventoryId": "ES-PUB-0044",
-      "profileId": null,
+      "profileId": "enaire-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "ENAIRE, Entidad Pública Empresarial",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede ENAIRE y catálogo de procedimientos; acceso a expedientes mediante Cl@ve y firma electrónica con certificado cuando el trámite la requiere.",
       "entryUrl": "https://enaire.sede.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "ENAIRE_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "ENAIRE-SEDE-2026-08-24",
+        "ENAIRE-PROCEDURES-2026-08-24",
+        "ENAIRE-REQ-2026-08-24",
+        "ENAIRE-VALIDACION-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita Cl@ve/certificado y requisito de AutoFirma para firma electrónica con certificado, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
     },
     {
       "portalId": "age-entidad-publica-empresarial-de-suelo-sepes",

@@ -168,6 +168,7 @@ class JuntaOriginPolicyTest {
             "validate.perfdrive.com",
             "pase.carm.es",
             "conclave.carm.es",
+            "enaire.sede.gob.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
