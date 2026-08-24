@@ -334,9 +334,16 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
-        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(redirected)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(redirected))
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, redirected)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://tramita.asturias.es/sta/Relec/STARhssoManager")))
+        val miPrincipadoStart = URI(
+            "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
+        )
+        val miPrincipado = BuiltInSiteProfiles.qaRegistry.resolve(miPrincipadoStart)
+        assertEquals(ProfileId("asturias-miprincipado"), miPrincipado?.profile?.profileId)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, miPrincipado?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://miprincipado.asturias.es/unscoped")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://miprincipado.asturias.es.evil.example/")))
     }
 
