@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 266 |
-| Fuentes oficiales totales registradas | 278 |
+| Fuentes oficiales portal-specific registradas | 271 |
+| Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 130 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 134 |
-| Entradas restantes fuera de ambos estados | 49 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 134 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 138 |
+| Entradas restantes fuera de ambos estados | 45 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 130 |
+| `IMPLEMENTED_NOT_E2E` | 134 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 42 |
+| `BROWSE_ONLY` | 38 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4542,29 +4542,30 @@ records:
     autonomous_community: "Canarias"
     province_or_municipality: "Santa Cruz de Tenerife"
     institution_name: "Cabildo Insular de La Gomera"
-    surface_name: "Portal institucional del Cabildo Insular de La Gomera"
-    surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.lagomera.es"
+    surface_name: "Instancia General — Sede electrónica del Cabildo Insular de La Gomera"
+    surface_type: "SEDE"
+    origin: "https://lagomera.sedelectronica.es"
     official_site: "https://www.lagomera.es/"
-    e_sede: "https://lagomera.sedelectronica.es/info.0"
-    entry_url: "https://www.lagomera.es/"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://lagomera.sedelectronica.es/"
+    entry_url: "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "LA_GOMERA_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio exacto de Instancia General de la Sede electrónica del Cabildo Insular de La Gomera; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El portal institucional enlaza actualmente la sede lagomera.sedelectronica.es. El catálogo vigente de esa sede publica Instancia General (SIA 2439862) en /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5 y su acción Iniciar tramitación electrónica abre exactamente /catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5. La entrada pública alcanza la pantalla Identificación electrónica; no se observó ni se infiere ABI de certificado o firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I08A", "I08B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    evidence_ids: ["I08A", "I08B", "I08C", "I08D"]
+    reason: "Perfil nuevo QA_ONLY limitado al launch exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. Certificado, firma, formato, algoritmo, endpoint y aceptación física E2E permanecen NO_VERIFICADO."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Instancia General; ampliar autenticación o firma solo con evidencia específica independiente y sin cruzar la firma privada ni la presentación final."
+    notes: "La sede requiere conservar la cookie de sesión durante la transición / -> /info -> /info.0; con sesión persistente la cadena concluye en HTTP 200. No se realizó autenticación, firma criptográfica, carga de documentos, presentación final ni pago."
 
   - inventory_id: "ES-PUB-0132"
     surface_key: "la-gomera-sede-electronica"
@@ -4665,29 +4666,31 @@ records:
     autonomous_community: "Canarias"
     province_or_municipality: "Las Palmas"
     institution_name: "Cabildo Insular de Lanzarote"
-    surface_name: "Portal institucional del Cabildo Insular de Lanzarote"
+    surface_name: "Instancia General — Sede electrónica de Lanzarote y La Graciosa"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.cabildodelanzarote.com"
+    origin: "https://lanzaroteylagraciosa.sedelectronica.es"
     official_site: "https://www.cabildodelanzarote.com/"
-    e_sede: "https://cabildodelanzarote.sedelectronica.es/info.0"
-    entry_url: "https://www.cabildodelanzarote.com/"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://lanzaroteylagraciosa.sedelectronica.es/"
+    entry_url: "https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://lanzaroteylagraciosa.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "LANZAROTE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    profile_id: "lanzarote-instancia-general"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio exacto de la Instancia General vigente de la Sede electrónica de Lanzarote y La Graciosa; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La web institucional enlaza actualmente la Sede electrónica en cabildodelanzarote.sedelectronica.es; esa entrada redirige al host vigente lanzaroteylagraciosa.sedelectronica.es. Con una sesión Wicket conservada, /dossier abre el Catálogo de trámites y publica Instancia General, SIA 754234, en /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5; la acción Iniciar tramitación electrónica apunta exactamente a /catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5. Un GET de ese launch alcanzó la pantalla Identificación electrónica con Acceso con sistema Cl@ve; no se envió el formulario de identificación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I10A", "I10B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    evidence_ids: ["D12", "I10A", "I10B", "LANZAROTE-INSTANCIA-2026-08-21", "LANZAROTE-LAUNCH-2026-08-21"]
+    reason: "Perfil nuevo QA_ONLY limitado al launch público exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. No se infieren autenticación, signer ABI, formato, algoritmo ni endpoint de firma a partir del catálogo público; falta E2E físico."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Instancia General; ampliar autenticación o firma solo con un contrato específico observado de forma independiente."
+    notes: "El UUID 5161fa8d-970e-4b48-a506-b2ac34ceafe5 se observó directamente en el catálogo actual del tenant Lanzarote y La Graciosa. El launch llegó hasta la pantalla pública de identificación, pero no se accionó Cl@ve. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío. No se completó autenticación ni formulario, no se cargaron documentos, no se realizó firma criptográfica, presentación final ni pago."
 
   - inventory_id: "ES-PUB-0136"
     surface_key: "lanzarote-sede-electronica"
@@ -5559,24 +5562,24 @@ records:
     origin: "https://sede.malaga.es"
     official_site: "https://sede.malaga.es"
     e_sede: "https://sede.malaga.es"
-    entry_url: "https://sede.malaga.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
+    procedure_page: "https://sede.malaga.es/instancia-general/"
     certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLAVE_GATEWAY_UNVERIFIED"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia general exacta con navegación QA hasta el handoff local a Cl@ve; no se expone firma, selección de certificado ni client-auth."
+    protocol_evidence: "La ficha oficial de Instancia general enlaza Iniciar el Trámite a /instancia-general/nueva-instancia-general/. Ese launch público publica un POST a https://clave.malaga.es/clave.php; el POST vigente devuelve Conectando a cl@ve... y un formulario hacia pasarela.clave.gob.es/Proxy2/ServiceProvider. El perfil permite solo sede.malaga.es y el primer handoff local clave.malaga.es; la pasarela nacional queda fail-closed y el contrato de firma posterior sigue NO_VERIFICADO."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP26A", "DP26B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP26A", "DP26B", "MALAGA-INSTANCIA-2026-08-20", "MALAGA-INSTANCIA-LAUNCH-2026-08-20", "MALAGA-CLAVE-2026-08-20"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta hasta el primer handoff Cl@ve observado. No expone SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, ABI de firma, formato, algoritmo ni endpoint; la autenticación Cl@ve completa y el registro final no se ejecutaron."
+    reviewed_at: "2026-08-20"
+    next_gate: "Con credenciales de prueba autorizadas, continuar el flujo Cl@ve hasta un estado autenticado pre-firma y observar el contrato posterior; detenerse antes de firma criptográfica y asiento registral final."
 
   - inventory_id: "ES-PUB-0165"
     surface_key: "diputacion-ourense-sede"
@@ -5644,13 +5647,13 @@ records:
     autonomous_community: "Galicia"
     province_or_municipality: "Pontevedra (provincia)"
     institution_name: "Deputación de Pontevedra"
-    surface_name: "Sede electrónica de Deputación de Pontevedra"
+    surface_name: "Deputación de Pontevedra — Instancia xenérica"
     surface_type: "SEDE"
     origin: "https://sede.depo.gal"
     official_site: "https://sede.depo.gal"
     e_sede: "https://sede.depo.gal"
-    entry_url: "https://sede.depo.gal"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.depo.gal/web/public/catalog-detail/50709505"
+    procedure_page: "https://sede.depo.gal/web/public/catalog-detail/50709505"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
@@ -5659,14 +5662,14 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada QA-only a la Instancia xenérica 50709505 y navegación same-origin hasta el límite de identificación de la Sede."
+    protocol_evidence: "La ficha oficial vigente enlaza «En liña» a /web/private/registry/external-registryinput-new.xhtml?idbduacproceduretype=50709505&ispresential=0; sin sesión, esa ruta sirve el login oficial. El login carga ClienteFirma legacy y fija CMS + SHA1withRSA sobre un reto efímero de autenticación, pero ese ABI no se implementa ni se extrapola a la firma documental del trámite. Revalidado 2026-08-20; firma.js SHA-256 7aafcaa72a3d469bfe91412a71daa9654207ace4e2aee7601dabeb307230c226."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP29A", "DP29B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP29A", "DP29B", "PONTEVEDRA-INSTANCIA-2026-08-20", "PONTEVEDRA-LOGIN-2026-08-20", "PONTEVEDRA-FIRMAJS-2026-08-20"]
+    reason: "Perfil QA-only limitado a la ficha pública exacta y navegación same-origin hasta el login. No expone bridge ClienteFirma, no afirma autenticación completada, ABI de firma documental, formato/algoritmo de la presentación, aceptación E2E ni registro final."
+    reviewed_at: "2026-08-20"
+    next_gate: "Validar físicamente la navegación ficha → login y observar el siguiente estado autorizado; detenerse antes de cualquier firma criptográfica de documento/declaración y antes del registro final."
 
   - inventory_id: "ES-PUB-0168"
     surface_key: "diputacion-salamanca-sede"
@@ -6502,6 +6505,8 @@ Orden de expansión recomendado:
 [I07F]: https://sedeelectronica.cabildodelapalma.es/sta/CarpetaPublic/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME
 [I08A]: https://www.lagomera.es/
 [I08B]: https://lagomera.sedelectronica.es/info.0
+[I08C]: https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[I08D]: https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [I09A]: https://www.cabildofuer.es/cabildo/
 [I09B]: https://sede.cabildofuer.es/eAdmin/Sede.do
 [I09C]: https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1
@@ -6509,6 +6514,8 @@ Orden de expansión recomendado:
 [I09E]: https://sede.cabildofuer.es/eAdmin/js/miniapplet.js
 [I10A]: https://www.cabildodelanzarote.com/
 [I10B]: https://cabildodelanzarote.sedelectronica.es/info.0
+[LANZAROTE-INSTANCIA-2026-08-21]: https://lanzaroteylagraciosa.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[LANZAROTE-LAUNCH-2026-08-21]: https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [I11A]: https://cabildo.grancanaria.com/
 [I11B]: https://sede.grancanaria.com/
 
@@ -6603,12 +6610,18 @@ availability, certificado, firma ni contrato técnico.
 [DP25F]: https://sede.deputacionlugo.org/opencms/system/modules/sede/contents/faq/instalar_autofirma
 [DP26A]: https://sede.malaga.es
 [DP26B]: https://sede.malaga.es/politica-de-firma-electronica/
+[MALAGA-INSTANCIA-2026-08-20]: https://sede.malaga.es/instancia-general/
+[MALAGA-INSTANCIA-LAUNCH-2026-08-20]: https://sede.malaga.es/instancia-general/nueva-instancia-general/
+[MALAGA-CLAVE-2026-08-20]: https://clave.malaga.es/clave.php
 [DP27A]: https://sede.depourense.es
 [DP27B]: https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMASELEC
 [DP28A]: https://sede.diputaciondepalencia.es
 [DP28B]: https://sede.diputaciondepalencia.es/siac/Tramites/CertificadosElectronicosAdmitidos.aspx
 [DP29A]: https://sede.depo.gal
 [DP29B]: https://sede.depo.gal/web/public/dynamic/description/esignature/
+[PONTEVEDRA-INSTANCIA-2026-08-20]: https://sede.depo.gal/web/public/catalog-detail/50709505
+[PONTEVEDRA-LOGIN-2026-08-20]: https://sede.depo.gal/web/private/registry/external-registryinput-new.xhtml?idbduacproceduretype=50709505&ispresential=0
+[PONTEVEDRA-FIRMAJS-2026-08-20]: https://sede.depo.gal/web/javax.faces.resource/afirma/common-js/firma.js
 [DP30A]: https://sede.diputaciondesalamanca.gob.es
 [DP30B]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/contenido/requisitos.jsp
 [SALAMANCA-IGN-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE

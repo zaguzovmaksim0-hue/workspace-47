@@ -1007,6 +1007,52 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
 
+    def test_pontevedra_instancia_xenerica_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0167")
+        profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "diputacion-pontevedra-instancia-xenerica")
+
+        self.assertEqual("diputacion-pontevedra-sede", target["portalId"])
+        self.assertEqual("diputacion-pontevedra-instancia-xenerica", target["profileId"])
+        self.assertEqual(
+            "https://sede.depo.gal/web/public/catalog-detail/50709505",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-20", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", profile["activation"])
+        self.assertEqual([], profile["operationPolicies"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertIn("clienteFirma".lower(), target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+    def test_diputacion_malaga_profile_binds_exact_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0164")
+
+        self.assertEqual("diputacion-malaga-instancia-general", target["profileId"])
+        self.assertEqual("diputacion-malaga-sede", target["portalId"])
+        self.assertEqual(
+            "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-20", target["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
@@ -1691,6 +1737,56 @@ records:
         self.assertIn("qa", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+
+    def test_la_gomera_instancia_general_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0131"
+        )
+        self.assertEqual("la-gomera-instancia-general", target["profileId"])
+        self.assertEqual(
+            "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual(
+            "LA_GOMERA_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+            target["protocolFamily"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
+    def test_lanzarote_instancia_general_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0135"
+        )
+        self.assertEqual("lanzarote-instancia-general", target["profileId"])
+        self.assertEqual(
+            "https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual(
+            "LANZAROTE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+            target["protocolFamily"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
 
     def test_alicante_solicitud_general_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

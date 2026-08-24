@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "bd822c804551c0326a4ea4fa321a47e996a83a7db1321d5733061b1cd6829df1",
+  "sourceRevision": "41cdcbeec04449790220174fae6099987c33876d8770b3af2c07fd09dcc7eddb",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3557,26 +3557,27 @@
     {
       "portalId": "la-gomera-portal-institucional",
       "inventoryId": "ES-PUB-0131",
-      "profileId": null,
-      "displayName": "Portal institucional del Cabildo Insular de La Gomera",
+      "profileId": "la-gomera-instancia-general",
+      "displayName": "Instancia General — Sede electrónica del Cabildo Insular de La Gomera",
       "organization": "Cabildo Insular de La Gomera",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
-      "entryUrl": "https://www.lagomera.es/",
+      "purpose": "Navegación QA integrada exclusivamente al inicio exacto de Instancia General de la Sede electrónica del Cabildo Insular de La Gomera; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "LA_GOMERA_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D12",
         "I08A",
-        "I08B"
+        "I08B",
+        "I08C",
+        "I08D"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. Certificado, firma, formato, algoritmo, endpoint y aceptación física E2E permanecen NO_VERIFICADO."
     },
     {
       "portalId": "la-gomera-sede-electronica",
@@ -3659,26 +3660,28 @@
     {
       "portalId": "lanzarote-portal-institucional",
       "inventoryId": "ES-PUB-0135",
-      "profileId": null,
-      "displayName": "Portal institucional del Cabildo Insular de Lanzarote",
+      "profileId": "lanzarote-instancia-general",
+      "displayName": "Instancia General — Sede electrónica de Lanzarote y La Graciosa",
       "organization": "Cabildo Insular de Lanzarote",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
-      "entryUrl": "https://www.cabildodelanzarote.com/",
+      "purpose": "Navegación QA integrada exclusivamente al inicio exacto de la Instancia General vigente de la Sede electrónica de Lanzarote y La Graciosa; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "LANZAROTE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I10A",
-        "I10B"
+        "I10B",
+        "LANZAROTE-INSTANCIA-2026-08-21",
+        "LANZAROTE-LAUNCH-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil nuevo QA_ONLY limitado al launch público exacto de Instancia General y sin capacidades SIGN, SELECT_CERTIFICATE o CLIENT_TLS_AUTH. No se infieren autenticación, signer ABI, formato, algoritmo ni endpoint de firma a partir del catálogo público; falta E2E físico."
     },
     {
       "portalId": "lanzarote-sede-electronica",
@@ -4462,29 +4465,32 @@
     {
       "portalId": "diputacion-malaga-sede",
       "inventoryId": "ES-PUB-0164",
-      "profileId": null,
+      "profileId": "diputacion-malaga-instancia-general",
       "displayName": "Sede electrónica de Diputación Provincial de Málaga",
       "organization": "Diputación Provincial de Málaga",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.malaga.es",
+      "purpose": "Instancia general exacta con navegación QA hasta el handoff local a Cl@ve; no se expone firma, selección de certificado ni client-auth.",
+      "entryUrl": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLAVE_GATEWAY_UNVERIFIED",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP26A",
-        "DP26B"
+        "DP26B",
+        "MALAGA-INSTANCIA-2026-08-20",
+        "MALAGA-INSTANCIA-LAUNCH-2026-08-20",
+        "MALAGA-CLAVE-2026-08-20"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-20",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta hasta el primer handoff Cl@ve observado. No expone SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, ABI de firma, formato, algoritmo ni endpoint; la autenticación Cl@ve completa y el registro final no se ejecutaron."
     },
     {
       "portalId": "diputacion-ourense-sede",
@@ -4543,29 +4549,32 @@
     {
       "portalId": "diputacion-pontevedra-sede",
       "inventoryId": "ES-PUB-0167",
-      "profileId": null,
-      "displayName": "Sede electrónica de Deputación de Pontevedra",
+      "profileId": "diputacion-pontevedra-instancia-xenerica",
+      "displayName": "Deputación de Pontevedra — Instancia xenérica",
       "organization": "Deputación de Pontevedra",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Galicia",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.depo.gal",
+      "purpose": "Entrada QA-only a la Instancia xenérica 50709505 y navegación same-origin hasta el límite de identificación de la Sede.",
+      "entryUrl": "https://sede.depo.gal/web/public/catalog-detail/50709505",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP29A",
-        "DP29B"
+        "DP29B",
+        "PONTEVEDRA-INSTANCIA-2026-08-20",
+        "PONTEVEDRA-LOGIN-2026-08-20",
+        "PONTEVEDRA-FIRMAJS-2026-08-20"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-20",
+      "limitations": "Perfil QA-only limitado a la ficha pública exacta y navegación same-origin hasta el login. No expone bridge ClienteFirma, no afirma autenticación completada, ABI de firma documental, formato/algoritmo de la presentación, aceptación E2E ni registro final."
     },
     {
       "portalId": "diputacion-salamanca-sede",
