@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 96 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 100 |
-| Entradas restantes fuera de ambos estados | 83 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 97 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 101 |
+| Entradas restantes fuera de ambos estados | 82 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 96 |
+| `IMPLEMENTED_NOT_E2E` | 97 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 76 |
+| `BROWSE_ONLY` | 75 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1906,29 +1906,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Fondo Español de Garantía Agraria O.A. (FEGA)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "FEGA — Solicitud al FEGA"
     surface_type: "SEDE"
-    origin: "https://www.sede.fega.gob.es"
+    origin: "https://www3.sede.fega.gob.es"
     official_site: "https://www.sede.fega.gob.es/"
     e_sede: "https://www.sede.fega.gob.es/"
-    entry_url: "https://www.sede.fega.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02"
+    procedure_page: "https://www.sede.fega.gob.es/content/solicitud-al-fega"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "FEGA_CLAVE_PUBLIC_REGISTRY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only para Solicitud al FEGA, limitado al launch público OFVSG02 y a la frontera Cl@ve observada."
+    protocol_evidence: "La Sede FEGA vigente publica Solicitud al FEGA y su Acceso en línea en https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02. La landing del Registro Electrónico enumera identificación por DNIe/certificado, Cl@ve PIN y Cl@ve permanente, y carga autoscript.js, pero también exige disponer previamente de un PDF completado y firmado; por ello no se infiere un ABI de firma del portal. El control público Continuar realiza POST same-origin a https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/registroAsientos.action y en Chromium alcanza https://pasarela.clave.gob.es/Proxy2/ServiceProvider. No se conservaron valores SAML/RelayState, cookies ni credenciales y no se envió autenticación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "FEGA-HOME-2026-08-24", "FEGA-PROCEDURES-2026-08-24", "FEGA-SOLICITUD-2026-08-24", "FEGA-OFVSG02-2026-08-24", "FEGA-REGPOST-2026-08-24", "FEGA-CLAVE-2026-08-24"]
+    reason: "Perfil QA-only de navegación. El acceso admite certificado o Cl@ve, pero no se ha probado client TLS ni un contrato de firma del portal; autoscript.js por sí solo no se promueve a SIGN. Sin endpoint, formato, algoritmo ni E2E."
+    reviewed_at: "2026-08-24"
+    next_gate: "Con identidad autorizada, observar el primer estado autenticado del Registro Electrónico OFVSG02; detenerse antes de cualquier firma con clave privada o presentación/registro final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Agricultura, Pesca y Alimentación."
 
   - inventory_id: "ES-PUB-0048"
@@ -6279,6 +6279,12 @@ Orden de expansión recomendado:
 
 ### Evidencia portal-specific
 
+[FEGA-HOME-2026-08-24]: https://www.sede.fega.gob.es/
+[FEGA-PROCEDURES-2026-08-24]: https://www.sede.fega.gob.es/procedimientos-y-servicios
+[FEGA-SOLICITUD-2026-08-24]: https://www.sede.fega.gob.es/content/solicitud-al-fega
+[FEGA-OFVSG02-2026-08-24]: https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02
+[FEGA-REGPOST-2026-08-24]: https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/registroAsientos.action
+[FEGA-CLAVE-2026-08-24]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
 [COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
 [DIGITAL-SEDE-REG-2026-08-17]: https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica

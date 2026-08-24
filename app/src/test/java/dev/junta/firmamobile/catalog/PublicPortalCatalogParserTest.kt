@@ -99,6 +99,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("portal-funciona-public-home"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
+                ProfileId("fega-solicitud-general-ofvsg02"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),
