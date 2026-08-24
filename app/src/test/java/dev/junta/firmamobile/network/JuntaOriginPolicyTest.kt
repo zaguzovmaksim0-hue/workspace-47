@@ -71,6 +71,7 @@ class JuntaOriginPolicyTest {
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
+    private val catastro = ProfileId("catastro-solicitudes-genericas")
     private val murcia = ProfileId("murcia-carm-pase")
     private val dgoj = ProfileId("dgoj-public-navigation")
 
@@ -170,6 +171,7 @@ class JuntaOriginPolicyTest {
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
             "sede.consejodetransparencia.gob.es",
+            "www.sedecatastro.gob.es",
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
             "sede.carm.es",
@@ -389,6 +391,20 @@ class JuntaOriginPolicyTest {
                 avila,
             ),
         )
+        assertEquals(
+            setOf("www.sedecatastro.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(catastro),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(catastro).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22"),
+                catastro,
+            ),
+        )
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI"), catastro))
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela.clave.gob.es/Proxy2/ResponseRedirect"), catastro))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"), catastro))
         assertEquals(
             setOf("sede.carm.es", "validate.perfdrive.com", "pase.carm.es", "conclave.carm.es"),
             JuntaOriginPolicy.browserAllowedHosts(murcia),

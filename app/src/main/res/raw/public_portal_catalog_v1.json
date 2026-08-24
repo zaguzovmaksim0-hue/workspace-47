@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "4be25eca3fa67a6953a95687b4aa18a0d4beb481f1d9ec89a5e2a51f2166a91e",
+  "sourceRevision": "c7b15e93bce23d5e733e279b6ca3230cc99b9429c0a73329803c02252951b558",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1104,24 +1104,32 @@
     {
       "portalId": "age-direccion-general-del-catastro",
       "inventoryId": "ES-PUB-0043",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "catastro-solicitudes-genericas",
+      "displayName": "Dirección General del Catastro — Otras solicitudes y escritos genéricos",
       "organization": "Dirección General del Catastro",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.sedecatastro.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Perfil QA-only para otras solicitudes, escritos por discrepancias y documentos genéricos, limitado al launch público exacto y a la frontera de identificación observada.",
+      "entryUrl": "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CATASTRO_CLAVE_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CATASTRO-HOME-2026-08-24",
+        "CATASTRO-TRAMITES-2026-08-24",
+        "CATASTRO-DEST22-2026-08-24",
+        "CATASTRO-DNI22-2026-08-24",
+        "CATASTRO-PIN22-2026-08-24",
+        "CATASTRO-CLAVE-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only de navegación. La alternativa de certificado acredita acceso posible, no client TLS ni firma. No se exponen SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
     },
     {
       "portalId": "age-enaire-entidad-publica-empresarial",

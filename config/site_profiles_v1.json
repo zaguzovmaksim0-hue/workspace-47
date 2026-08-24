@@ -1658,6 +1658,30 @@
       ]
     },
     {
+      "profileId": "catastro-solicitudes-genericas",
+      "profileVersion": 1,
+      "displayName": "Dirección General del Catastro — Otras solicitudes y escritos genéricos",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22",
+      "initiatorOrigins": ["https://www.sedecatastro.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.sedecatastro.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI","reviewedOn":"2026-08-24"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ResponseRedirect","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
       "profileId": "eivissa-sede-electronica",
       "profileVersion": 1,
       "displayName": "Consell Insular d’Eivissa — Sede electrónica",

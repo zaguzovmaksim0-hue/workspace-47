@@ -1578,6 +1578,22 @@ records:
         self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa-only", target["limitations"].lower())
+
+    def test_catastro_generic_submissions_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0043")
+        self.assertEqual("age-direccion-general-del-catastro", target["portalId"])
+        self.assertEqual("catastro-solicitudes-genericas", target["profileId"])
+        self.assertEqual("https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATASTRO_CLAVE_PUBLIC_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
         self.assertIn("sin e2e", target["limitations"].lower())
 

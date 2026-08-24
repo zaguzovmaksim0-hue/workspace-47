@@ -109,6 +109,7 @@ class PortalCatalogRepositoryTest {
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
                 "ctbg-solicitud-informacion",
+                "catastro-solicitudes-genericas",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
