@@ -1152,7 +1152,7 @@ internal fun urlBelongsToSelectedProfile(rawUrl: String, profileId: ProfileId): 
     runCatching {
         val uri = URI(rawUrl)
         val registry = BuiltInSiteProfiles.runtimeRegistry
-        registry.resolve(uri)?.profile?.profileId == profileId ||
+        registry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId ||
             registry.resolveRedirect(profileId, uri)?.profile?.profileId == profileId
     }.getOrDefault(false)
 

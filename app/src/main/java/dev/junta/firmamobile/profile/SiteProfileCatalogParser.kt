@@ -2060,6 +2060,9 @@ object SiteProfileCatalogParser {
                         EDUCATION_PROFILE_ID,
                         CATALUNYA_PROFILE_ID,
                         AVILA_PROFILE_ID,
+                        CTBG_PROFILE_ID,
+                        CATASTRO_PROFILE_ID,
+                        FEGA_PROFILE_ID,
                         MUGEJU_PROFILE_ID,
                         JCCM_REGISTRO_PROFILE_ID,
                     )
@@ -2076,9 +2079,12 @@ object SiteProfileCatalogParser {
                     origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
-                owners == setOf(ASTURIAS_PROFILE_ID, ASTURIAS_SEDE_NAVIGATION_PROFILE_ID) &&
+                (owners == setOf(ASTURIAS_PROFILE_ID, ASTURIAS_SEDE_NAVIGATION_PROFILE_ID) &&
                     firstIsRedirectOrigin != secondIsRedirectOrigin &&
-                    origin.serialized == ASTURIAS_MIPRINCIPADO_ORIGIN
+                    origin.serialized == ASTURIAS_MIPRINCIPADO_ORIGIN) ||
+                    (!firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+                        owners == setOf(TRANSPORTES_PROFILE_ID, SEPES_TRANSPORTES_PROFILE_ID) &&
+                        origin.serialized == TRANSPORTES_SHARED_ORIGIN)
             })
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
@@ -2489,6 +2495,9 @@ object SiteProfileCatalogParser {
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
+    private const val CTBG_PROFILE_ID = "ctbg-solicitud-informacion"
+    private const val CATASTRO_PROFILE_ID = "catastro-solicitudes-genericas"
+    private const val FEGA_PROFILE_ID = "fega-solicitud-general-ofvsg02"
     private const val AIREF_PROFILE_VERSION = 1
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
     private const val AIREF_START_URL =
@@ -2679,6 +2688,8 @@ object SiteProfileCatalogParser {
         "https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html",
     )
     private const val TRANSPORTES_PROFILE_ID = "transportes-qys-cert-login"
+    private const val SEPES_TRANSPORTES_PROFILE_ID = "sepes-transportes-public-complaints"
+    private const val TRANSPORTES_SHARED_ORIGIN = "https://sede.transportes.gob.es"
     private const val TRANSPORTES_PROFILE_VERSION = 1
     private const val TRANSPORTES_DISPLAY_NAME =
         "Ministerio de Transportes y Movilidad Sostenible — Quejas y Sugerencias"

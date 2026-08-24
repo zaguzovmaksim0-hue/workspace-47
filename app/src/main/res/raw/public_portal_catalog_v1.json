@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d7fcd5a26fa56390947602cfd5afbd1a120fa3192fa3b8b3fabf710363698384",
+  "sourceRevision": "a5655659254e40ef0a83eceafce560df36f6d339e0be272c674cc2f3e1a3d344",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -645,68 +645,86 @@
     {
       "portalId": "age-agencia-estatal-de-meteorologia-aemet",
       "inventoryId": "ES-PUB-0024",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "aemet-public-solicitud-navigation",
+      "displayName": "AEMET — Solicitud certificados y datos / Sede electrónica",
       "organization": "Agencia Estatal de Meteorología (AEMET)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA integrada desde la entrada oficial estable de la Sede AEMET hacia el flujo público 'Solicitud certificados y datos'; el login por certificado/AutoFirma se registra como frontera observada, no como capacidad criptográfica implementada.",
       "entryUrl": "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE",
+        "MINIAPPLET"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "AEMET_SEDE_CERTIFICATE_LOGIN_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "AEMET-SEDE-2026-08-23",
+        "AEMET-PROCEDURE-2026-08-23",
+        "AEMET-NEW-SOLICITUD-2026-08-23",
+        "AEMET-L1-2026-08-23",
+        "AEMET-SSO-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil nuevo QA_ONLY limitado a navegación same-origin desde la entrada oficial estable. Los mecanismos CERTIFICATE_ACCESS/ELECTRONIC_SIGNATURE/AUTOFIRMA/MINIAPPLET reflejan únicamente la frontera pública observada; el perfil mantiene capabilities vacío y no implementa SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, carga documental ni presentación final. Falta E2E físico."
     },
     {
       "portalId": "age-agencia-estatal-de-seguridad-aerea-aesa",
       "inventoryId": "ES-PUB-0025",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "aesa-solicitud-general-public",
+      "displayName": "Sede electrónica / Solicitud general",
       "organization": "Agencia Estatal de Seguridad Aérea (AESA)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.seguridadaerea.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Lanzamiento público QA de la Solicitud general de AESA (SIA 203553); la Sede documenta acceso autenticado y firma electrónica, pero la implementación no ejecuta autenticación ni firma.",
+      "entryUrl": "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "AESA_SOLICITUD_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "AESA-SEDE-2026-08-23",
+        "AESA-SOLGEN-2026-08-23",
+        "AESA-ID-FIRMA-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA_ONLY limitado al lanzamiento público exacto de Solicitud general, sin capabilities sensibles. `CERTIFICATE_ACCESS`, `ELECTRONIC_SIGNATURE` y `AUTOFIRMA` son mecanismos documentados por AESA; no se infieren CLIENT_TLS_AUTH, formato, algoritmo, endpoint, callback ni presentación final."
     },
     {
       "portalId": "age-agencia-estatal-del-boletin-oficial-del-estado-boe",
       "inventoryId": "ES-PUB-0026",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "boe-sede-public-home",
+      "displayName": "Sede electrónica / información pública y trámites administrativos",
       "organization": "Agencia Estatal del Boletín Oficial del Estado (BOE)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.boe.es/",
+      "purpose": "Navegación QA integrada exclusivamente a la página pública estable «La Sede Electrónica» de BOE.es. Los trámites administrativos que saltan a extranet.boe.es, la autenticación y cualquier firma quedan fuera del contrato implementado.",
+      "entryUrl": "https://www.boe.es/informacion/index.php",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "BOE_SEDE_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "BOE-SEDE-2026-08-23"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al entry público exacto https://www.boe.es/informacion/index.php y sin capacidades sensibles. extranet.boe.es permanece fuera de trustedBrowseOrigins; firma, certificado operativo y presentación requieren un contrato separado."
     },
     {
       "portalId": "age-autoridad-independiente-de-responsabilidad-fiscal-airef",
@@ -846,112 +864,135 @@
     {
       "portalId": "age-comision-nacional-de-los-mercados-y-la-competencia-cnmc",
       "inventoryId": "ES-PUB-0032",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "cnmc-remision-solicitudes-public",
+      "displayName": "Remisión de solicitudes, escritos y comunicaciones — Sede electrónica CNMC",
       "organization": "Comisión Nacional de los Mercados y la Competencia (CNMC)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.cnmc.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Navegación QA integrada únicamente a la página pública vigente del trámite general «Remisión de solicitudes, escritos y comunicaciones». Los launches de autenticación/formulario en tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es, la firma y la presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CNMC_PUBLIC_PROCEDURE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CNMC-GENERAL-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al procedure page first-party exacto en sede.cnmc.gob.es y sin capacidades sensibles. tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es permanecen fuera del navigation trust; autenticación y firma requieren contratos separados."
     },
     {
       "portalId": "age-comision-nacional-del-mercado-de-valores-cnmv",
       "inventoryId": "ES-PUB-0033",
-      "profileId": null,
+      "profileId": "cnmv-sede-public-home",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Comisión Nacional del Mercado de Valores (CNMV)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA delimitada a la Sede pública oficial; certificados y plataforma de firma constan como evidencia descriptiva, sin exponer autenticación, firma ni presentación final.",
       "entryUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CNMV_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CNMV-SEDE-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "La Sede first-party está revalidada y permite un contrato QA-only de navegación pública. Las referencias a certificado/AutoFirma son descriptivas; autenticación, selección de certificado, firma y presentación final permanecen fuera del contrato implementado."
     },
     {
       "portalId": "age-consejo-de-seguridad-nuclear-csn",
       "inventoryId": "ES-PUB-0034",
-      "profileId": null,
+      "profileId": "csn-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Consejo de Seguridad Nuclear (CSN)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede CSN y selector de acceso por certificado digital/DNIe, Cl@ve o usuario/contraseña; no se atribuye contrato de firma.",
       "entryUrl": "https://sede.csn.gob.es/",
-      "observedMechanisms": [],
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
+      ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CSN-SEDE-2026-08-23",
+        "CSN-IDENT-2026-08-23"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado a navegación pública de la Sede CSN. La evidencia acredita opciones de identificación, pero no CLIENT_TLS_AUTH ni un contrato de firma ejecutable; esas capacidades permanecen deshabilitadas."
     },
     {
       "portalId": "age-consejo-de-transparencia-y-buen-gobierno-ctbg",
       "inventoryId": "ES-PUB-0035",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "ctbg-solicitud-informacion",
+      "displayName": "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información",
       "organization": "Consejo de Transparencia y Buen Gobierno (CTBG)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.consejodetransparencia.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Solicitud de Información: perfil QA-only para la entrada electrónica exacta y la navegación observada hasta la frontera de identificación Cl@ve/certificado.",
+      "entryUrl": "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CTBG_ESPUBLICO_CLAVE_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CTBG-DOSSIER-2026-08-23",
+        "CTBG-SOLINFO-DETAIL-2026-08-23",
+        "CTBG-SOLINFO-LAUNCH-2026-08-23",
+        "CTBG-CLAVE-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado al launch exacto de Solicitud de Información y al primer origen Cl@ve observado. El certificado es una alternativa de identificación; no se expone SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
     },
     {
       "portalId": "age-consejo-superior-de-deportes",
       "inventoryId": "ES-PUB-0036",
-      "profileId": null,
+      "profileId": "csd-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Consejo Superior de Deportes",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede/Oficina Virtual del CSD, catálogo y Mis trámites; identificación por certificado/DNIe/Cl@ve y AutoFirma requerido para la firma de presentaciones y documentación.",
       "entryUrl": "https://sede.csd.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CSD_AUTOFIRMA_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CSD-SEDE-2026-08-23",
+        "CSD-CATALOG-2026-08-23",
+        "CSD-MISTRAMITES-2026-08-23"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita certificado/DNIe/Cl@ve y requisito de AutoFirma, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
     },
     {
       "portalId": "age-consejo-superior-de-investigaciones-cientificas-csic",
@@ -1030,134 +1071,163 @@
     {
       "portalId": "age-direccion-general-de-la-guardia-civil",
       "inventoryId": "ES-PUB-0040",
-      "profileId": null,
+      "profileId": "guardia-civil-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Dirección General de la Guardia Civil",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede de la Guardia Civil y catálogo de procedimientos; identificación mediante Cl@ve con DNIe/certificado/Cl@ve móvil o permanente, y firma de solicitudes cuando el procedimiento lo exige.",
       "entryUrl": "https://sede.guardiacivil.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "GUARDIA_CIVIL_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "GC-SEDE-2026-08-23",
+        "GC-PROCEDURES-2026-08-23",
+        "GC-INSTRUCCION-2026-05-11"
+      ],
+      "reviewedOn": "2026-08-23",
+      "limitations": "Perfil QA-only limitado a navegación pública y metadata observada. La evidencia acredita Cl@ve/certificado y firma con AutoFirma en determinados flujos, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
     },
     {
       "portalId": "age-direccion-general-de-ordenacion-del-juego",
       "inventoryId": "ES-PUB-0041",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "dgoj-public-navigation",
+      "displayName": "Sede electrónica / navegación pública de procedimientos",
       "organization": "Dirección General de Ordenación del Juego",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only por la Sede pública de la DGOJ y su índice público de procedimientos y servicios.",
       "entryUrl": "https://sede.ordenacionjuego.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DGOJ_PUBLIC_NAVIGATION_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DGOJ-PUBLIC-2026-08-24"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only de navegación pública limitado al origin exacto sede.ordenacionjuego.gob.es; no se infiere SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni contrato criptográfico a partir de documentación descriptiva."
     },
     {
       "portalId": "age-direccion-general-de-seguros-y-fondos-de-pensiones",
       "inventoryId": "ES-PUB-0042",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "dgsfp-sede-public-home",
+      "displayName": "Sede electrónica / inicio público oficial",
       "organization": "Dirección General de Seguros y Fondos de Pensiones",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA delimitada al inicio público first-party de la Sede DGSFP; autenticación, certificado, Cl@ve, AutoFirma y tramitación permanecen fuera del contrato implementado.",
       "entryUrl": "https://www.sededgsfp.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DGSFP_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DGSFP-SEDE-2026-08-24"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "La entrada pública first-party y su origin están revalidados y permiten solo un contrato QA-only de navegación. Las referencias de certificado/Cl@ve/AutoFirma en bundles no se promocionan a SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI sin contrato técnico exacto y E2E físico."
     },
     {
       "portalId": "age-direccion-general-del-catastro",
       "inventoryId": "ES-PUB-0043",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "catastro-solicitudes-genericas",
+      "displayName": "Dirección General del Catastro — Otras solicitudes y escritos genéricos",
       "organization": "Dirección General del Catastro",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.sedecatastro.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Perfil QA-only para otras solicitudes, escritos por discrepancias y documentos genéricos, limitado al launch público exacto y a la frontera de identificación observada.",
+      "entryUrl": "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "CATASTRO_CLAVE_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "CATASTRO-HOME-2026-08-24",
+        "CATASTRO-TRAMITES-2026-08-24",
+        "CATASTRO-DEST22-2026-08-24",
+        "CATASTRO-DNI22-2026-08-24",
+        "CATASTRO-PIN22-2026-08-24",
+        "CATASTRO-CLAVE-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only de navegación. La alternativa de certificado acredita acceso posible, no client TLS ni firma. No se exponen SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
     },
     {
       "portalId": "age-enaire-entidad-publica-empresarial",
       "inventoryId": "ES-PUB-0044",
-      "profileId": null,
+      "profileId": "enaire-sede-public",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "ENAIRE, Entidad Pública Empresarial",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Entrada pública de la Sede ENAIRE y catálogo de procedimientos; acceso a expedientes mediante Cl@ve y firma electrónica con certificado cuando el trámite la requiere.",
       "entryUrl": "https://enaire.sede.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "ENAIRE_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "ENAIRE-SEDE-2026-08-24",
+        "ENAIRE-PROCEDURES-2026-08-24",
+        "ENAIRE-REQ-2026-08-24",
+        "ENAIRE-VALIDACION-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita Cl@ve/certificado y requisito de AutoFirma para firma electrónica con certificado, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
     },
     {
       "portalId": "age-entidad-publica-empresarial-de-suelo-sepes",
       "inventoryId": "ES-PUB-0045",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "sepes-transportes-public-complaints",
+      "displayName": "Quejas y reclamaciones — SEPES / Sede Transportes",
       "organization": "Entidad Pública Empresarial de Suelo (SEPES)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.sepes.es/es/sede-electronica",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Navegación QA exacta a la ficha pública vigente de Quejas y reclamaciones de SEPES dentro de la Sede del Ministerio de Transportes; autenticación, firma y presentación quedan fuera del contrato implementado.",
+      "entryUrl": "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+      "observedMechanisms": [
+        "ELECTRONIC_SIGNATURE"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "SEPES_TRANSPORTES_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "SEPES-TRANSPORTES-2026-08-24",
+        "SEPES-TRANSPORTES-NORMATIVA-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Existe una ruta oficial first-party vigente y TLS-válida ligada directamente a SEPES, suficiente para navegación QA. El launch procedureKey=7601 termina actualmente HTTP 500, así que no se modela autenticación o firma. El perfil Transportes existente id=7002 corresponde a otro procedimiento y su contrato SHA1/XAdES no se reutiliza; el origin heredado www.sepes.es mantiene un certificado caducado y no se usa ni se sortea."
     },
     {
       "portalId": "age-fondo-de-garantia-salarial-fogasa",
@@ -1184,24 +1254,32 @@
     {
       "portalId": "age-fondo-espanol-de-garantia-agraria-o-a-fega",
       "inventoryId": "ES-PUB-0047",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "fega-solicitud-general-ofvsg02",
+      "displayName": "FEGA — Solicitud al FEGA",
       "organization": "Fondo Español de Garantía Agraria O.A. (FEGA)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://www.sede.fega.gob.es/",
-      "observedMechanisms": [],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
-      "evidenceIds": [
-        "D11"
+      "purpose": "Perfil QA-only para Solicitud al FEGA, limitado al launch público OFVSG02 y a la frontera Cl@ve observada.",
+      "entryUrl": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "observedSignatureFormats": [],
+      "protocolFamily": "FEGA_CLAVE_PUBLIC_REGISTRY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
+      "evidenceIds": [
+        "D11",
+        "FEGA-HOME-2026-08-24",
+        "FEGA-PROCEDURES-2026-08-24",
+        "FEGA-SOLICITUD-2026-08-24",
+        "FEGA-OFVSG02-2026-08-24",
+        "FEGA-REGPOST-2026-08-24",
+        "FEGA-CLAVE-2026-08-24"
+      ],
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only de navegación. El acceso admite certificado o Cl@ve, pero no se ha probado client TLS ni un contrato de firma del portal; autoscript.js por sí solo no se promueve a SIGN. Sin endpoint, formato, algoritmo ni E2E."
     },
     {
       "portalId": "age-fabrica-nacional-de-moneda-y-timbre-real-casa-de-la-moneda-fnmt-rcm",

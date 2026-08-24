@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 42,
+  "catalogVersion": 43,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1208,6 +1208,28 @@
       ]
     },
     {
+      "profileId": "aesa-solicitud-general-public",
+      "profileVersion": 1,
+      "displayName": "AESA — Solicitud general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+      "initiatorOrigins": ["https://sede.seguridadaerea.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.seguridadaerea.gob.es/sede-aesa/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.seguridadaerea.gob.es/sede-aesa/informacion-general/identificacion-y-firma","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.seguridadaerea.gob.es/oficina/tramites/altaSolicitud.do?codArea=SOLGEN&id=4","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
       "profileId": "oepm-protegeo-general",
       "profileVersion": 1,
       "displayName": "OEPM — Solicitud de propósito general (ProtegeO)",
@@ -1636,6 +1658,76 @@
       ]
     },
     {
+      "profileId": "ctbg-solicitud-informacion",
+      "profileVersion": 1,
+      "displayName": "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
+      "initiatorOrigins": ["https://sede.consejodetransparencia.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.consejodetransparencia.gob.es/dossier","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.consejodetransparencia.gob.es/catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6","reviewedOn":"2026-08-23"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
+      "profileId": "catastro-solicitudes-genericas",
+      "profileVersion": 1,
+      "displayName": "Dirección General del Catastro — Otras solicitudes y escritos genéricos",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22",
+      "initiatorOrigins": ["https://www.sedecatastro.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.sedecatastro.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI","reviewedOn":"2026-08-24"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ResponseRedirect","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
+      "profileId": "fega-solicitud-general-ofvsg02",
+      "profileVersion": 1,
+      "displayName": "FEGA — Solicitud al FEGA",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02",
+      "initiatorOrigins": ["https://www3.sede.fega.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.sede.fega.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sede.fega.gob.es/procedimientos-y-servicios","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sede.fega.gob.es/content/solicitud-al-fega","reviewedOn":"2026-08-24"},
+        {"url":"https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02","reviewedOn":"2026-08-24"},
+        {"url":"https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/registroAsientos.action","reviewedOn":"2026-08-24"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
       "profileId": "eivissa-sede-electronica",
       "profileVersion": 1,
       "displayName": "Consell Insular d’Eivissa — Sede electrónica",
@@ -1760,6 +1852,25 @@
       ]
     },
     {
+      "profileId": "cnmv-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "CNMV Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
+      "initiatorOrigins": ["https://sede.cnmv.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
       "profileId": "asturias-sede-tramite-navigation",
       "profileVersion": 1,
       "displayName": "Principado de Asturias — trámite de Sede",
@@ -1777,6 +1888,218 @@
       "evidence": [
         {"url":"https://sede.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"},
         {"url":"https://miprincipado.asturias.es/ast/-/dboid-6269000011903512107573","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
+      "profileId": "sepes-transportes-public-complaints",
+      "profileVersion": 1,
+      "displayName": "SEPES — Quejas y reclamaciones / Sede Transportes",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+      "initiatorOrigins": ["https://sede.transportes.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.transportes.gob.es/Procedimiento/?procedureKey=7601","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
+      "profileId": "enaire-sede-public",
+      "profileVersion": 1,
+      "displayName": "ENAIRE — Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://enaire.sede.gob.es/",
+      "initiatorOrigins": ["https://enaire.sede.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://enaire.sede.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://enaire.sede.gob.es/procedimientos","reviewedOn":"2026-08-24"},
+        {"url":"https://enaire.sede.gob.es/Requisitos","reviewedOn":"2026-08-24"},
+        {"url":"https://enaire.sede.gob.es/servicio?id=Validacion-de-certificados-y-firma","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
+      "profileId": "dgsfp-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "Dirección General de Seguros y Fondos de Pensiones — Sede pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.sededgsfp.gob.es/",
+      "initiatorOrigins": ["https://www.sededgsfp.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.sededgsfp.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sededgsfp.gob.es/Style%20Library/DGSFP.SedeElectronica/Scripts/cabecera-bundle.js","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sededgsfp.gob.es/Style%20Library/DGSFP.SedeElectronica/Scripts/home-bundle.js","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
+      "profileId": "dgoj-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Dirección General de Ordenación del Juego — navegación pública Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.ordenacionjuego.gob.es/",
+      "initiatorOrigins": ["https://sede.ordenacionjuego.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.ordenacionjuego.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.ordenacionjuego.gob.es/es/firma","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.ordenacionjuego.gob.es/aviso-navegador-chrome","reviewedOn":"2026-08-24"},
+        {"url":"https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S","reviewedOn":"2026-08-24"}
+      ]
+    },
+    {
+      "profileId": "guardia-civil-sede-public",
+      "profileVersion": 1,
+      "displayName": "Guardia Civil — Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.guardiacivil.gob.es/",
+      "initiatorOrigins": ["https://sede.guardiacivil.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.guardiacivil.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.guardiacivil.gob.es/fichero-publico/descargar/id/5205","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
+      "profileId": "aemet-public-solicitud-navigation",
+      "profileVersion": 1,
+      "displayName": "AEMET — Solicitud certificados y datos",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home",
+      "initiatorOrigins": ["https://sede.aemet.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.aemet.es/es/sede_electronica","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/solicitudes","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/nuevaSolicitud","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
+      "profileId": "boe-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "BOE — Sede electrónica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.boe.es/informacion/index.php",
+      "initiatorOrigins": ["https://www.boe.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.boe.es/informacion/index.php","reviewedOn":"2026-08-23"},
+        {"url":"https://www.boe.es/informacion/firma_electronica/sistemas_firma_electronica.php","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
+      "profileId": "cnmc-remision-solicitudes-public",
+      "profileVersion": 1,
+      "displayName": "CNMC — Remisión de solicitudes, escritos y comunicaciones",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones",
+      "initiatorOrigins": ["https://sede.cnmc.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.cnmc.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
+      "profileId": "csn-sede-public",
+      "profileVersion": 1,
+      "displayName": "Consejo de Seguridad Nuclear — sede pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.csn.gob.es/",
+      "initiatorOrigins": ["https://sede.csn.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.csn.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
+      "profileId": "csd-sede-public",
+      "profileVersion": 1,
+      "displayName": "Consejo Superior de Deportes — Sede / Oficina Virtual pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.csd.gob.es/",
+      "initiatorOrigins": ["https://sede.csd.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.csd.gob.es/","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es","reviewedOn":"2026-08-23"},
+        {"url":"https://sede.csd.gob.es/oficinavirtual/Default.aspx","reviewedOn":"2026-08-23"}
       ]
     }
   ]

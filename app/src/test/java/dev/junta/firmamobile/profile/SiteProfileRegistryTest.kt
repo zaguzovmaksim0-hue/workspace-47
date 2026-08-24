@@ -63,6 +63,23 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `shared Transportes origin resolves exact starts but stays ambiguous for origin only URLs`() {
+        val signingId = ProfileId("transportes-qys-cert-login")
+        val sepesId = ProfileId("sepes-transportes-public-complaints")
+        val signingStart = URI("https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002")
+        val sepesStart = URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones")
+        val originOnly = URI("https://sede.transportes.gob.es/")
+
+        assertEquals(signingId, BuiltInSiteProfiles.qaRegistry.resolve(signingStart)?.profile?.profileId)
+        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolve(signingStart)?.trustMode)
+        assertEquals(sepesId, BuiltInSiteProfiles.qaRegistry.resolve(sepesStart)?.profile?.profileId)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(sepesStart)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(originOnly))
+        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolveForProfile(signingId, originOnly)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveForProfile(sepesId, originOnly)?.trustMode)
+    }
+
+    @Test
     fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")
@@ -261,6 +278,23 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `BOE public Sede is browse-only trust in QA and extranet stays closed`() {
+        val profileId = ProfileId("boe-sede-public-home")
+        val start = URI("https://www.boe.es/informacion/index.php")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://extranet.boe.es/quejas_el/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.boe.es.evil.example/")))
+    }
+
+    @Test
     fun `Portal Funciona public home is browse-only trust in QA and external auth origins stay closed`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
@@ -276,6 +310,62 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://auth-api.redsara.es/auth/realms/sgad-appfactory/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://autentica.redsara.es/Autentica/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
+    }
+
+    @Test
+    fun `DGSFP public Sede is browse-only trust in QA and sensitive routes remain profile-scoped closed`() {
+        val profileId = ProfileId("dgsfp-sede-public-home")
+        val start = URI("https://www.sededgsfp.gob.es/")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es:444/")))
+    }
+
+    @Test
+    fun `DGOJ public navigation stays browse-only in QA and external signing systems stay closed`() {
+        val profileId = ProfileId("dgoj-public-navigation")
+        val start = URI("https://sede.ordenacionjuego.gob.es/")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es/tramite/"))?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://clave.gob.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://administracionelectronica.gob.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es.evil.example/")))
+    }
+
+    @Test
+    fun `CNMV public Sede is browse-only trust in QA and near origins stay closed`() {
+        val profileId = ProfileId("cnmv-sede-public-home")
+        val start = URI("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es:444/")))
     }
 
     @Test

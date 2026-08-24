@@ -62,6 +62,7 @@ class PortalCatalogRepositoryTest {
                 "educacion-convocatoria",
                 "aragon-siraw",
                 "aeat-mis-datos-censales",
+                "aemet-public-solicitud-navigation",
                 "dgt-verificacion-equipo",
                 "ugr-certificado-login",
                 "cantabria-rec-cert-login",
@@ -104,8 +105,17 @@ class PortalCatalogRepositoryTest {
                 "diputacion-alava-registro-comun",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "sepes-transportes-public-complaints",
+                "dgsfp-sede-public-home",
+                "cnmv-sede-public-home",
+                "aesa-solicitud-general-public",
+                "boe-sede-public-home",
+                "cnmc-remision-solicitudes-public",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
+                "ctbg-solicitud-informacion",
+                "catastro-solicitudes-genericas",
+                "fega-solicitud-general-ofvsg02",
                 "cdti-certificate-validation",
                 "xunta-galicia-solicitude-xenerica",
                 "la-rioja-oficina-electronica",
@@ -117,6 +127,11 @@ class PortalCatalogRepositoryTest {
                 "eivissa-sede-electronica",
                 "catalunya-peticio-generica-client-auth",
                 "murcia-carm-pase",
+                "enaire-sede-public",
+                "dgoj-public-navigation",
+                "guardia-civil-sede-public",
+                "csn-sede-public",
+                "csd-sede-public",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -1838,6 +1853,89 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `SEPES opens only its exact Transportes public page while the shared signer remains isolated`() {
+        val portalId = PortalId("age-entidad-publica-empresarial-de-suelo-sepes")
+        val profileId = ProfileId("sepes-transportes-public-complaints")
+        val publicPage = java.net.URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(publicPage, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, publicPage), qaRepository.resolveLaunch(qaPortal))
+
+        val signingStart = java.net.URI("https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002")
+        assertEquals(
+            ProfileId("transportes-qys-cert-login"),
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA).resolve(signingStart)?.profile?.profileId,
+        )
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertNull(releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) {
+                    entry.copy(entryUrl = java.net.URI("https://sede.transportes.gob.es/Procedimiento/?procedureKey=7601"))
+                } else {
+                    entry
+                }
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertNull(tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `BOE public Sede opens only exact information page in QA while extranet remains fail closed`() {
+        val portalId = PortalId("age-agencia-estatal-del-boletin-oficial-del-estado-boe")
+        val profileId = ProfileId("boe-sede-public-home")
+        val publicHome = java.net.URI("https://www.boe.es/informacion/index.php")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(publicHome, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(profileId, publicHome))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertNull(releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(
+            entries = publicCatalog.entries.map { entry ->
+                if (entry.portalId == portalId) entry.copy(entryUrl = java.net.URI("https://extranet.boe.es/quejas_el/")) else entry
+            },
+        )
+        val tampered = PortalCatalogRepository(
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA),
+            catalog,
+            tamperedCatalog,
+        )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertNull(tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
     fun `Portal Funciona opens only exact public home in QA while authentication remains fail closed`() {
         val portalId = PortalId("age-portal-funciona")
         val profileId = ProfileId("portal-funciona-public-home")
@@ -1872,6 +1970,38 @@ class PortalCatalogRepositoryTest {
             catalog,
             tamperedCatalog,
         )
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
+        assertTrue(tamperedPortal.capabilities.isEmpty())
+        assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `DGSFP opens only exact public Sede in QA while sensitive capabilities remain fail closed`() {
+        val portalId = PortalId("age-direccion-general-de-seguros-y-fondos-de-pensiones")
+        val profileId = ProfileId("dgsfp-sede-public-home")
+        val publicHome = java.net.URI("https://www.sededgsfp.gob.es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(publicHome, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(profileId, publicHome))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(entries = publicCatalog.entries.map { entry ->
+            if (entry.portalId == portalId) entry.copy(entryUrl = java.net.URI("https://www.sededgsfp.gob.es.evil.example/")) else entry
+        })
+        val tampered = PortalCatalogRepository(SiteProfileRegistry(catalog, BuildTrustPolicy.QA), catalog, tamperedCatalog)
         val tamperedPortal = tampered.portals().single { it.portalId == portalId }
         assertFalse(tamperedPortal.isEnabled)
         assertTrue(tamperedPortal.capabilities.isEmpty())

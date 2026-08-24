@@ -73,13 +73,12 @@ class SiteProfileRegistry(
         profile.compatibilityStatus != CompatibilityStatus.BROWSE_ONLY ||
             uri.toASCIIString() == profile.startUrl.toASCIIString()
 
-    private fun resolve(origin: ExactOrigin): ResolvedSiteProfile? {
-        val matches = profiles.asSequence()
-            .filter(::isActive)
-            .mapNotNull { profile -> profile.trustMode(origin)?.let { ResolvedSiteProfile(profile, origin, it) } }
-            .toList()
-        return matches.singleOrNull()
-    }
+    private fun resolve(origin: ExactOrigin): ResolvedSiteProfile? = resolutions(origin).singleOrNull()
+
+    private fun resolutions(origin: ExactOrigin): List<ResolvedSiteProfile> = profiles.asSequence()
+        .filter(::isActive)
+        .mapNotNull { profile -> profile.trustMode(origin)?.let { ResolvedSiteProfile(profile, origin, it) } }
+        .toList()
 
     private fun isActive(profile: SiteProfile): Boolean = when (profile.activation) {
         ProfileActivation.DISABLED -> false

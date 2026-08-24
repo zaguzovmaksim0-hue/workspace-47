@@ -1,0 +1,12 @@
+# ES-PUB-0045 — SEPES through the current Transportes electronic Sede
+
+Reviewed 2026-08-24. The legacy SEPES origin `https://www.sepes.es/` currently serves an expired TLS leaf certificate (notAfter 2026-06-09), so certificate verification was not bypassed and that origin is not used as implementation evidence.
+
+A current first-party Government route is available at `https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones`. Strict HTTPS verification succeeds and the page returns HTTP 200, names `Entidad Pública Empresarial de Suelo (SEPES)`, describes `Quejas y reclamaciones`, states that electronic presentation is signed, and links `Iniciar trámite` to `/Procedimiento/?procedureKey=7601`. The current Transportes `Normativa de la Sede` page also lists the SEPES incorporation agreement for the Ministry electronic Sede and Registro.
+
+The exact `procedureKey=7601` launch currently redirects to `/Procedimiento/Auth?procedureKey=7601` and terminates with HTTP 500. Therefore the candidate implements only QA public navigation to the healthy SEPES information page. It does not reuse the existing `transportes-qys-cert-login` signer, whose exact start is the distinct `MFOM.genericprocedure.web/?id=7002`, and it exposes no SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, AFIRMA_URI, endpoint, redirect or external browse capability.
+
+Because both profiles legitimately share `https://sede.transportes.gob.es`, registry resolution is tightened rather than broadened: global URL resolution may disambiguate a shared origin only when exactly one active profile has the exact requested `startUrl`; origin-only ambiguity remains fail-closed. Code paths that already know the selected profile use profile-scoped resolution. This preserves the existing Transportes signing contract while keeping the SEPES profile non-signing.
+## Shared-origin parser invariant
+
+The first exact-SHA Cloud gate exposed the catalog-level duplicate-origin invariant: the parser requires every intentionally shared navigation origin to be explicitly reviewed. The repair adds only the exact pair `transportes-qys-cert-login` + `sepes-transportes-public-complaints` on `https://sede.transportes.gob.es`, only when both own it as a non-redirect navigation origin. No generic shared-origin exception is introduced.

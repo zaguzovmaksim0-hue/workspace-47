@@ -41,6 +41,51 @@ SPEC.loader.exec_module(GENERATOR)
 
 
 class PublicPortalCatalogGeneratorTest(unittest.TestCase):
+    def test_cnmv_public_sede_binds_exact_qa_navigation_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0033")
+        self.assertEqual("cnmv-sede-public-home", target["profileId"])
+        self.assertEqual("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CNMV_PUBLIC_SEDE_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+    def test_boe_public_sede_profile_binds_stable_qa_home_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        boe = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0026")
+        self.assertEqual("age-agencia-estatal-del-boletin-oficial-del-estado-boe", boe["portalId"])
+        self.assertEqual("boe-sede-public-home", boe["profileId"])
+        self.assertEqual("https://www.boe.es/informacion/index.php", boe["entryUrl"])
+        self.assertNotIn("launchUrl", boe)
+        self.assertEqual("BOE_SEDE_PUBLIC_NAVIGATION", boe["protocolFamily"])
+        self.assertEqual("E2E_PENDING", boe["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", boe["inventoryStatus"])
+        self.assertEqual("REVIEWED", boe["discoveryState"])
+        self.assertEqual("2026-08-23", boe["reviewedOn"])
+        self.assertEqual([], boe["observedMechanisms"])
+        self.assertEqual([], boe["observedSignatureFormats"])
+        self.assertIn("qa_only", boe["limitations"].lower())
+        self.assertIn("extranet.boe.es", boe["limitations"].lower())
+
+    def test_cnmc_general_submission_page_binds_qa_navigation_without_sensitive_mechanisms(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0032")
+        self.assertEqual("age-comision-nacional-de-los-mercados-y-la-competencia-cnmc", target["portalId"])
+        self.assertEqual("cnmc-remision-solicitudes-public", target["profileId"])
+        self.assertEqual("https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CNMC_PUBLIC_PROCEDURE_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("tramites.cnmc.gob.es", target["limitations"].lower())
+
     def test_puertos_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         puertos = next(
@@ -1023,6 +1068,36 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", inclusion["limitations"].lower())
 
 
+    def test_dgoj_public_navigation_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0041")
+        self.assertEqual("age-direccion-general-de-ordenacion-del-juego", target["portalId"])
+        self.assertEqual("dgoj-public-navigation", target["profileId"])
+        self.assertEqual("https://sede.ordenacionjuego.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DGOJ_PUBLIC_NAVIGATION_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+
+        profiles = json.loads(SITE_PROFILES.read_text())["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "dgoj-public-navigation")
+        self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", profile["activation"])
+        self.assertEqual("https://sede.ordenacionjuego.gob.es/", profile["startUrl"])
+        self.assertEqual(["https://sede.ordenacionjuego.gob.es"], profile["initiatorOrigins"])
+        self.assertEqual([], profile["redirectOrigins"])
+        self.assertEqual([], profile["trustedBrowseOrigins"])
+        self.assertEqual([], profile["endpoints"])
+        self.assertEqual([], profile["operationPolicies"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertEqual({"allowedKeyAlgorithms": ["RSA", "EC"], "requireDigitalSignatureKeyUsage": False}, profile["certificateRules"])
+
+
     def test_cervantes_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         cervantes = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-cervantes")
@@ -1533,6 +1608,59 @@ records:
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
 
+    def test_ctbg_solicitud_informacion_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0035")
+        self.assertEqual("age-consejo-de-transparencia-y-buen-gobierno-ctbg", target["portalId"])
+        self.assertEqual("ctbg-solicitud-informacion", target["profileId"])
+        self.assertEqual("https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CTBG_ESPUBLICO_CLAVE_PUBLIC_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+
+    def test_catastro_generic_submissions_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0043")
+        self.assertEqual("age-direccion-general-del-catastro", target["portalId"])
+        self.assertEqual("catastro-solicitudes-genericas", target["profileId"])
+        self.assertEqual("https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CATASTRO_CLAVE_PUBLIC_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+        self.assertIn("sin e2e", target["limitations"].lower())
+
+    def test_fega_solicitud_general_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0047")
+        self.assertEqual("age-fondo-espanol-de-garantia-agraria-o-a-fega", target["portalId"])
+        self.assertEqual("fega-solicitud-general-ofvsg02", target["profileId"])
+        self.assertEqual("https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("FEGA_CLAVE_PUBLIC_REGISTRY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client tls", target["limitations"].lower())
+        self.assertIn("sin endpoint", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
     def test_diputacion_alava_binds_exact_registro_comun_qa_start_without_signer_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0140")
@@ -1551,6 +1679,27 @@ records:
         self.assertIn("dinámic", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+
+    def test_aemet_profile_binds_stable_public_home_and_keeps_sensitive_runtime_capabilities_unimplemented(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0024")
+        self.assertEqual("age-agencia-estatal-de-meteorologia-aemet", target["portalId"])
+        self.assertEqual("aemet-public-solicitud-navigation", target["profileId"])
+        self.assertEqual("https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("AEMET_SEDE_CERTIFICATE_LOGIN_PUBLIC_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual(
+            ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE", "MINIAPPLET"],
+            target["observedMechanisms"],
+        )
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("capabilities vacío", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
 
     def test_oepm_protegeo_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -1596,6 +1745,64 @@ records:
         self.assertIn("qa_only", quju["limitations"].lower())
         self.assertIn("no_verificado", quju["limitations"].lower())
 
+
+    def test_sepes_binds_current_transportes_public_page_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0045")
+        self.assertEqual("sepes-transportes-public-complaints", target["profileId"])
+        self.assertEqual(
+            "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("SEPES_TRANSPORTES_PUBLIC_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual(["ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("procedurekey=7601", target["limitations"].lower())
+        self.assertIn("id=7002", target["limitations"].lower())
+
+    def test_dgsfp_public_sede_binds_exact_qa_navigation(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0042")
+        self.assertEqual("dgsfp-sede-public-home", target["profileId"])
+        self.assertEqual("https://www.sededgsfp.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DGSFP_PUBLIC_SEDE_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+
+    def test_aesa_solicitud_general_binds_public_launch_without_unproven_signing_abi(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        aesa = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0025")
+        self.assertEqual("age-agencia-estatal-de-seguridad-aerea-aesa", aesa["portalId"])
+        self.assertEqual("aesa-solicitud-general-public", aesa["profileId"])
+        self.assertEqual(
+            "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+            aesa["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", aesa)
+        self.assertEqual("AESA_SOLICITUD_GENERAL_PUBLIC_LAUNCH", aesa["protocolFamily"])
+        self.assertEqual("E2E_PENDING", aesa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", aesa["inventoryStatus"])
+        self.assertEqual("REVIEWED", aesa["discoveryState"])
+        self.assertEqual("2026-08-23", aesa["reviewedOn"])
+        self.assertEqual(
+            ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            aesa["observedMechanisms"],
+        )
+        self.assertEqual([], aesa["observedSignatureFormats"])
+        self.assertIn("qa_only", aesa["limitations"].lower())
+        self.assertIn("client_tls_auth", aesa["limitations"].lower())
+        self.assertIn("formato", aesa["limitations"].lower())
 
     def test_portal_funciona_binds_exact_public_home_without_auth_or_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -1838,6 +2045,75 @@ records:
         self.assertIn("MINIAPPLET", target["observedMechanisms"])
         self.assertIn("CLIENT_TLS_AUTH", target["observedMechanisms"])
         self.assertEqual("2026-08-17", target["reviewedOn"])
+
+
+    def test_enaire_public_sede_binds_exact_qa_boundary_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0044")
+
+        self.assertEqual("enaire-sede-public", target["profileId"])
+        self.assertEqual("https://enaire.sede.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("ENAIRE_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual(["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
+    def test_guardia_civil_public_sede_binds_exact_qa_boundary_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0040")
+
+        self.assertEqual("guardia-civil-sede-public", target["profileId"])
+        self.assertEqual("https://sede.guardiacivil.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("GUARDIA_CIVIL_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual(["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
+    def test_csd_public_sede_binds_exact_qa_boundary_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0036")
+
+        self.assertEqual("csd-sede-public", target["profileId"])
+        self.assertEqual("https://sede.csd.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("CSD_AUTOFIRMA_PUBLIC_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual(["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
+    def test_csn_public_sede_profile_binds_exact_qa_launch_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0034")
+
+        self.assertEqual("csn-sede-public", target["profileId"])
+        self.assertEqual("https://sede.csn.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
 
 
 if __name__ == "__main__":

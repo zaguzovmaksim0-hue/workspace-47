@@ -53,6 +53,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("educacion-convocatoria"),
                 ProfileId("aragon-siraw"),
                 ProfileId("aeat-mis-datos-censales"),
+                ProfileId("aemet-public-solicitud-navigation"),
                 ProfileId("dgt-verificacion-equipo"),
                 ProfileId("mjusticia-fundaciones-idp75"),
                 ProfileId("ugr-certificado-login"),
@@ -97,8 +98,17 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-alava-registro-comun"),
                 ProfileId("oepm-protegeo-general"),
                 ProfileId("portal-funciona-public-home"),
+                ProfileId("sepes-transportes-public-complaints"),
+                ProfileId("dgsfp-sede-public-home"),
+                ProfileId("cnmv-sede-public-home"),
+                ProfileId("aesa-solicitud-general-public"),
+                ProfileId("boe-sede-public-home"),
+                ProfileId("cnmc-remision-solicitudes-public"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
+                ProfileId("ctbg-solicitud-informacion"),
+                ProfileId("catastro-solicitudes-genericas"),
+                ProfileId("fega-solicitud-general-ofvsg02"),
                 ProfileId("cdti-certificate-validation"),
                 ProfileId("xunta-galicia-solicitude-xenerica"),
                 ProfileId("la-rioja-oficina-electronica"),
@@ -109,6 +119,11 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 ProfileId("eivissa-sede-electronica"),
                 ProfileId("murcia-carm-pase"),
+                ProfileId("enaire-sede-public"),
+                ProfileId("dgoj-public-navigation"),
+                ProfileId("guardia-civil-sede-public"),
+                ProfileId("csn-sede-public"),
+                ProfileId("csd-sede-public"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
@@ -1160,6 +1175,68 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `SEPES binds only the current Transportes public page and keeps signing unimplemented`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.inventoryId == "ES-PUB-0045" }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+        val start = URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones")
+
+        assertEquals(ProfileId("sepes-transportes-public-complaints"), metadata.profileId)
+        assertEquals(start, metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("SEPES_TRANSPORTES_PUBLIC_NAVIGATION", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals("REVIEWED", metadata.discoveryState.name)
+        assertEquals(setOf(PortalMechanism.ELECTRONIC_SIGNATURE), metadata.observedMechanisms)
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(PortalLaunchTarget(ProfileId("sepes-transportes-public-complaints"), start), repository.resolveLaunch(portal))
+    }
+
+    @Test
+    fun `BOE public Sede binds exact QA information page without sensitive capabilities`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single {
+            it.portalId == PortalId("age-agencia-estatal-del-boletin-oficial-del-estado-boe")
+        }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0026", metadata.inventoryId)
+        assertEquals(ProfileId("boe-sede-public-home"), metadata.profileId)
+        assertEquals(URI("https://www.boe.es/informacion/index.php"), metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("BOE_SEDE_PUBLIC_NAVIGATION", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(ProfileId("boe-sede-public-home"), URI("https://www.boe.es/informacion/index.php")),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `Portal Funciona keeps official directory entry but resolves only the exact QA public home`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
@@ -1191,6 +1268,35 @@ class PublicPortalCatalogParserTest {
             PortalLaunchTarget(ProfileId("portal-funciona-public-home"), URI("https://sede.funciona.gob.es/es/home")),
             repository.resolveLaunch(portal),
         )
+    }
+
+    @Test
+    fun `DGSFP keeps exact official Sede and resolves only QA public navigation`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+        val metadata = catalog.entries.single { it.portalId == PortalId("age-direccion-general-de-seguros-y-fondos-de-pensiones") }
+        val portal = repository.portals().single { it.portalId == metadata.portalId }
+
+        assertEquals("ES-PUB-0042", metadata.inventoryId)
+        assertEquals(ProfileId("dgsfp-sede-public-home"), metadata.profileId)
+        assertEquals(URI("https://www.sededgsfp.gob.es/"), metadata.entryUrl)
+        assertNull(metadata.launchUrl)
+        assertEquals("DGSFP_PUBLIC_SEDE_NAVIGATION", metadata.protocolFamily)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
+        assertEquals("REVIEWED", metadata.discoveryState.name)
+        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertTrue(metadata.observedSignatureFormats.isEmpty())
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
+        assertTrue(portal.capabilities.isEmpty())
+        assertTrue(portal.signatureFormats.isEmpty())
+        assertTrue(portal.isEnabled)
+        assertEquals(PortalLaunchTarget(ProfileId("dgsfp-sede-public-home"), URI("https://www.sededgsfp.gob.es/")), repository.resolveLaunch(portal))
     }
 
     @Test

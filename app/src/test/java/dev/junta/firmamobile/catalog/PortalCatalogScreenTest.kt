@@ -419,6 +419,42 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `SEPES Transportes public page is compatible but signer capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val sepes = compatible.items.single {
+            it.portalId == PortalId("age-entidad-publica-empresarial-de-suelo-sepes")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("sepes-transportes-public-complaints"), sepes.profileId)
+        assertEquals(
+            java.net.URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"),
+            sepes.entryUrl,
+        )
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, sepes.supportStatus)
+        assertTrue(sepes.capabilities.isEmpty())
+        assertTrue(sepes.signatureFormats.isEmpty())
+        assertTrue(sepes.isEnabled)
+
+    }
+
+    @Test
+    fun `BOE public Sede is compatible navigation with no sensitive capabilities`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val boe = compatible.items.single {
+            it.portalId == PortalId("age-agencia-estatal-del-boletin-oficial-del-estado-boe")
+        }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("boe-sede-public-home"), boe.profileId)
+        assertEquals(java.net.URI("https://www.boe.es/informacion/index.php"), boe.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, boe.supportStatus)
+        assertTrue(boe.capabilities.isEmpty())
+        assertTrue(boe.signatureFormats.isEmpty())
+        assertTrue(boe.isEnabled)
+    }
+
+    @Test
     fun `Portal Funciona public home is compatible but sensitive auth capabilities remain absent`() {
         val sections = buildPortalCatalogSections(repository.portals())
         val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
@@ -430,6 +466,20 @@ class PortalCatalogScreenTest {
         assertTrue(funciona.capabilities.isEmpty())
         assertTrue(funciona.signatureFormats.isEmpty())
         assertTrue(funciona.isEnabled)
+    }
+
+    @Test
+    fun `DGSFP public Sede is compatible but sensitive capabilities remain absent`() {
+        val sections = buildPortalCatalogSections(repository.portals())
+        val compatible = sections.single { it.kind == PortalCatalogSectionKind.COMPATIBLE }
+        val target = compatible.items.single { it.portalId == PortalId("age-direccion-general-de-seguros-y-fondos-de-pensiones") }
+
+        assertEquals(dev.junta.firmamobile.profile.ProfileId("dgsfp-sede-public-home"), target.profileId)
+        assertEquals(java.net.URI("https://www.sededgsfp.gob.es/"), target.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, target.supportStatus)
+        assertTrue(target.capabilities.isEmpty())
+        assertTrue(target.signatureFormats.isEmpty())
+        assertTrue(target.isEnabled)
     }
 
     @Test

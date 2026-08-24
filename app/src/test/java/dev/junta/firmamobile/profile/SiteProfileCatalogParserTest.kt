@@ -823,6 +823,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("dgt-verificacion-equipo"),
             ProfileId("junta-andalucia-vea-peg"),
             ProfileId("mjusticia-fundaciones-idp75"),
+            ProfileId("dgoj-public-navigation"),
             ProfileId("diputacion-alava-registro-comun"),
             ceuta,
             lleida,
@@ -1095,6 +1096,80 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun `SEPES Transportes public profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("sepes-transportes-public-complaints")
+        val start = URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.transportes.gob.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(profileId, BuiltInSiteProfiles.qaRegistry.resolve(start)?.profile?.profileId)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://sede.transportes.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://sede.transportes.gob.es:444/")))
+    }
+
+    @Test
+    fun `shared Transportes origin is reviewed only for the exact SEPES pair`() {
+        val parsed = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
+        assertTrue(parsed.profiles.any { it.profileId == ProfileId("transportes-qys-cert-login") })
+        assertTrue(parsed.profiles.any { it.profileId == ProfileId("sepes-transportes-public-complaints") })
+
+        val exactId = "\"profileId\": \"sepes-transportes-public-complaints\""
+        val unreviewedId = "\"profileId\": \"sepes-transportes-public-complaints-copy\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(exactId))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(exactId, unreviewedId))
+        }
+    }
+
+    @Test
+    fun `BOE public Sede profile is QA only and keeps extranet outside trust`() {
+        val profileId = ProfileId("boe-sede-public-home")
+        val start = URI("https://www.boe.es/informacion/index.php")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://www.boe.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(2, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://extranet.boe.es/quejas_el/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.boe.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.boe.es:444/")))
+    }
+
+    @Test
     fun `Portal Funciona public home profile is QA only and exposes no sensitive capability`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
@@ -1123,6 +1198,93 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://autentica.redsara.es/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es:444/")))
+    }
+
+    @Test
+    fun `DGSFP public Sede profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("dgsfp-sede-public-home")
+        val start = URI("https://www.sededgsfp.gob.es/")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://www.sededgsfp.gob.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es:444/")))
+    }
+
+    @Test
+    fun `DGOJ public navigation profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("dgoj-public-navigation")
+        val start = URI("https://sede.ordenacionjuego.gob.es/")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.ordenacionjuego.gob.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(4, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es:444/")))
+    }
+
+    @Test
+    fun `CNMV public Sede profile is QA only and exposes no sensitive capability`() {
+        val profileId = ProfileId("cnmv-sede-public-home")
+        val start = URI("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.cnmv.gob.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(1, profile.evidence.size)
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es.evil.example/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es:444/")))
     }
 
     @Test
@@ -1235,6 +1397,76 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun `CTBG Solicitud de Informacion is QA navigation only to observed Clave boundary`() {
+        val profileId = ProfileId("ctbg-solicitud-informacion")
+        val start = URI("https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.consejodetransparencia.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(4, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-23" })
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+            )?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.consejodetransparencia.gob.es.evil.example/")))
+    }
+
+    @Test
+    fun `Catastro generic submissions is QA navigation only to observed Clave boundary`() {
+        val profileId = ProfileId("catastro-solicitudes-genericas")
+        val start = URI("https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("Dirección General del Catastro — Otras solicitudes y escritos genéricos", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://www.sedecatastro.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(6, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-24" })
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                profileId,
+                URI("https://pasarela.clave.gob.es/Proxy2/ResponseRedirect"),
+            )?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.sedecatastro.gob.es.evil.example/")))
+    }
+
+    @Test
     fun `Asturias Sede may share only the reviewed miPrincipado redirect with the existing Asturias profile`() {
         val existing = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId("asturias-miprincipado")
@@ -1296,6 +1528,39 @@ class SiteProfileCatalogParserTest {
         assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
     }
+
+    @Test
+    fun `FEGA Solicitud al FEGA is QA navigation only to observed Clave boundary`() {
+        val profileId = ProfileId("fega-solicitud-general-ofvsg02")
+        val start = URI("https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals("FEGA — Solicitud al FEGA", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://www3.sede.fega.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(6, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-24" })
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"))?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www3.sede.fega.gob.es.evil.example/")))
+    }
+
 
 }
 

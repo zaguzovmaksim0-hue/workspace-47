@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 244 |
-| Fuentes oficiales totales registradas | 256 |
+| Fuentes oficiales portal-specific registradas | 245 |
+| Fuentes oficiales totales registradas | 257 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 97 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 101 |
-| Entradas restantes fuera de ambos estados | 82 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 112 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 116 |
+| Entradas restantes fuera de ambos estados | 67 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 97 |
+| `IMPLEMENTED_NOT_E2E` | 112 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 75 |
+| `BROWSE_ONLY` | 60 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 161 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 17 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1194,30 +1194,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Estatal de Meteorología (AEMET)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "AEMET — Solicitud certificados y datos / Sede electrónica"
     surface_type: "SEDE"
     origin: "https://sede.aemet.gob.es"
     official_site: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home"
     e_sede: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home"
     entry_url: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/solicitudes"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AutoFirma MiniApplet"
+    protocol_family: "AEMET_SEDE_CERTIFICATE_LOGIN_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio para la Transición Ecológica y el Reto Demográfico."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada desde la entrada oficial estable de la Sede AEMET hacia el flujo público 'Solicitud certificados y datos'; el login por certificado/AutoFirma se registra como frontera observada, no como capacidad criptográfica implementada."
+    protocol_evidence: "La entrada oficial AEMET publica 'Solicitud certificados y datos' y 'Nueva Solicitud'. En una sesión pública normal, 'Usuarios en general' abre https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1, que exige identificación previa y ofrece usuario/contraseña o DNI-e/certificado digital. La ruta pública https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso muestra 'Acceso con certificado digital', declara necesaria la aplicación AUTOFIRMA, carga miniapplet.js y firma.js y contiene un POST same-origin a /AEMET/es/GestionPeticiones/ssoLogin con campos ocultos signature/errorMessage. No se ejecutó el POST, no se invocó firma privada y no se verificaron payload, algoritmo, formato, callback ni endpoint de firma. Los deep links dependen de sesión; por ello el startUrl implementado permanece en la entrada oficial estable."
+    client_tls_auth: "NO_EN_CONTORNO_OBSERVADO"
+    evidence_ids: ["D11", "AEMET-SEDE-2026-08-23", "AEMET-PROCEDURE-2026-08-23", "AEMET-NEW-SOLICITUD-2026-08-23", "AEMET-L1-2026-08-23", "AEMET-SSO-2026-08-23"]
+    reason: "Perfil nuevo QA_ONLY limitado a navegación same-origin desde la entrada oficial estable. Los mecanismos CERTIFICATE_ACCESS/ELECTRONIC_SIGNATURE/AUTOFIRMA/MINIAPPLET reflejan únicamente la frontera pública observada; el perfil mantiene capabilities vacío y no implementa SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, carga documental ni presentación final. Falta E2E físico."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA desde la entrada oficial hasta la frontera de identificación; ampliar autenticación o firma solo con un contrato AEMET-specific exacto y una gate independiente."
+    notes: "No se enviaron usuario/contraseña, certificado, signature, documentos ni formularios; no se realizó firma, presentación final ni pago. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0025"
     surface_key: "age-agencia-estatal-de-seguridad-aerea-aesa"
@@ -1225,30 +1225,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Estatal de Seguridad Aérea (AESA)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / Solicitud general"
     surface_type: "SEDE"
     origin: "https://sede.seguridadaerea.gob.es"
-    official_site: "https://sede.seguridadaerea.gob.es/"
-    e_sede: "https://sede.seguridadaerea.gob.es/"
-    entry_url: "https://sede.seguridadaerea.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    official_site: "https://sede.seguridadaerea.gob.es/sede-aesa/"
+    e_sede: "https://sede.seguridadaerea.gob.es/sede-aesa/"
+    entry_url: "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general"
+    procedure_page: "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "AutoFirma"
+    protocol_family: "AESA_SOLICITUD_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Lanzamiento público QA de la Solicitud general de AESA (SIA 203553); la Sede documenta acceso autenticado y firma electrónica, pero la implementación no ejecuta autenticación ni firma."
+    protocol_evidence: "La ficha oficial de Solicitud general enlaza el inicio online y declara presentación telemática autenticada. La ayuda oficial de identificación/firma admite DNIe, certificados soportados por @firma y exige AutoFirma para DNIe/certificados. El inicio online confirma certificado digital/DNIe/Cl@ve, pero no publica un ABI exacto de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
+    evidence_ids: ["D11", "AESA-SEDE-2026-08-23", "AESA-SOLGEN-2026-08-23", "AESA-ID-FIRMA-2026-08-23"]
+    reason: "Perfil QA_ONLY limitado al lanzamiento público exacto de Solicitud general, sin capabilities sensibles. `CERTIFICATE_ACCESS`, `ELECTRONIC_SIGNATURE` y `AUTOFIRMA` son mecanismos documentados por AESA; no se infieren CLIENT_TLS_AUTH, formato, algoritmo, endpoint, callback ni presentación final."
+    reviewed_at: "2026-08-23"
+    next_gate: "Observar de forma controlada el contrato runtime exacto de autenticación/firma antes de añadir CLIENT_TLS_AUTH o SIGN; mantener QA_ONLY hasta E2E separado."
+    notes: "La Sede devuelve HTTP 200 en la landing, ficha de Solicitud general, ayuda de identificación/firma e inicio online revisados desde Pipupa Stable. El trámite online exacto es /oficina/tramites/altaSolicitud.do?codArea=SOLGEN&id=4."
 
   - inventory_id: "ES-PUB-0026"
     surface_key: "age-agencia-estatal-del-boletin-oficial-del-estado-boe"
@@ -1256,30 +1256,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Agencia Estatal del Boletín Oficial del Estado (BOE)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / información pública y trámites administrativos"
     surface_type: "SEDE"
     origin: "https://www.boe.es"
     official_site: "https://www.boe.es/"
-    e_sede: "https://www.boe.es/"
-    entry_url: "https://www.boe.es/"
-    procedure_page: "NO_VERIFICADO"
+    e_sede: "https://www.boe.es/informacion/index.php"
+    entry_url: "https://www.boe.es/informacion/index.php"
+    procedure_page: "https://www.boe.es/informacion/index.php"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "BOE_SEDE_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente a la página pública estable «La Sede Electrónica» de BOE.es. Los trámites administrativos que saltan a extranet.boe.es, la autenticación y cualquier firma quedan fuera del contrato implementado."
+    protocol_evidence: "La página first-party https://www.boe.es/informacion/index.php se identifica como «La Sede Electrónica», publica normativa de creación de la sede/registro y enumera Trámites Administrativos. Las acciones Anuncios, Quejas y sugerencias y ARDE/CSV delegan a https://extranet.boe.es, que constituye una frontera/origin distinta y no se añade al perfil. La página de sistemas de firma declara que la sede admite certificados electrónicos reconocidos o cualificados, pero no acredita para este entry un ABI, formato, algoritmo, packaging, callback ni endpoint de firma. El CSP permite afirma://*, lo que tampoco se promueve por sí solo a capacidad AutoFirma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de la Presidencia, Justicia y Relaciones con las Cortes."
+    evidence_ids: ["D11", "BOE-SEDE-2026-08-23"]
+    reason: "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al entry público exacto https://www.boe.es/informacion/index.php y sin capacidades sensibles. extranet.boe.es permanece fuera de trustedBrowseOrigins; firma, certificado operativo y presentación requieren un contrato separado."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA a la página pública de la Sede. Cualquier soporte de extranet.boe.es, autenticación o firma requiere inventario/contrato técnico separado con evidencia exacta."
+    notes: "Investigación pública no autenticada únicamente. Se observaron enlaces first-party de Sede, páginas de sistemas de firma y la separación de origen hacia extranet.boe.es. No se abrió sesión autenticada, no se seleccionó certificado, no se llamó firma, no se cargó documento ni se realizó presentación/pago."
 
   - inventory_id: "ES-PUB-0027"
     surface_key: "age-autoridad-independiente-de-responsabilidad-fiscal-airef"
@@ -1443,30 +1443,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Comisión Nacional de los Mercados y la Competencia (CNMC)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Remisión de solicitudes, escritos y comunicaciones — Sede electrónica CNMC"
     surface_type: "SEDE"
     origin: "https://sede.cnmc.gob.es"
     official_site: "https://sede.cnmc.gob.es/"
     e_sede: "https://sede.cnmc.gob.es/"
-    entry_url: "https://sede.cnmc.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones"
+    procedure_page: "https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CNMC_PUBLIC_PROCEDURE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada únicamente a la página pública vigente del trámite general «Remisión de solicitudes, escritos y comunicaciones». Los launches de autenticación/formulario en tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es, la firma y la presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La página first-party del trámite devuelve HTTP 200, figura Activo y «Trámites online con certificado digital», y publica dos accesos externos: https://tramitesclave.cnmc.gob.es/formulario/21 (Cl@ve) y https://tramites.cnmc.gob.es/formulario/21 (certificado electrónico). Las instrucciones indican que los datos del firmante se obtienen del certificado usado para firmar electrónicamente, pero la página pública no acredita para este entry un ABI, formato, algoritmo, packaging, callback ni endpoint de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "CNMC-GENERAL-2026-08-23"]
+    reason: "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al procedure page first-party exacto en sede.cnmc.gob.es y sin capacidades sensibles. tramites.cnmc.gob.es y tramitesclave.cnmc.gob.es permanecen fuera del navigation trust; autenticación y firma requieren contratos separados."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA al procedure page público. Cualquier soporte de launch autenticado, certificado o firma requiere contrato técnico separado con evidencia exacta."
+    notes: "Investigación pública no autenticada únicamente. No se inició Cl@ve, no se proporcionó certificado, no se rellenó formulario, no se cargaron documentos, no se firmó ni se presentó solicitud."
 
   - inventory_id: "ES-PUB-0033"
     surface_key: "age-comision-nacional-del-mercado-de-valores-cnmv"
@@ -1481,23 +1481,23 @@ records:
     e_sede: "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
     entry_url: "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
     procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CNMV_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA delimitada a la Sede pública oficial; certificados y plataforma de firma constan como evidencia descriptiva, sin exponer autenticación, firma ni presentación final."
+    protocol_evidence: "La landing first-party devuelve HTTP 200 y documenta certificados electrónicos válidos, presentación por Zona abierta con certificado y una plataforma de firma que remite a la aplicación oficial; no publica un ABI/algoritmo/formato/callback de firma suficiente para exponer SIGN."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "CNMV-SEDE-2026-08-23"]
+    reason: "La Sede first-party está revalidada y permite un contrato QA-only de navegación pública. Las referencias a certificado/AutoFirma son descriptivas; autenticación, selección de certificado, firma y presentación final permanecen fuera del contrato implementado."
+    reviewed_at: "2026-08-23"
+    next_gate: "Validar físicamente la navegación QA. Cualquier soporte de autenticación o firma requiere evidencia técnica exacta separada."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa. Investigación pública no autenticada; no se seleccionó certificado, no se firmó ni se presentó documentación."
 
   - inventory_id: "ES-PUB-0034"
     surface_key: "age-consejo-de-seguridad-nuclear-csn"
@@ -1511,23 +1511,23 @@ records:
     official_site: "https://sede.csn.gob.es/"
     e_sede: "https://sede.csn.gob.es/"
     entry_url: "https://sede.csn.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    procedure_page: "https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
     protocol_family: "NO_VERIFICADO"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede CSN y selector de acceso por certificado digital/DNIe, Cl@ve o usuario/contraseña; no se atribuye contrato de firma."
+    protocol_evidence: "La página oficial de identificación publica certificado digital/DNIe, Cl@ve y usuario/contraseña, y declara certificados de clave pública no revocados soportados por @firma; no publica un ABI de firma, algoritmo, formato ni endpoint de presentación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CSN-SEDE-2026-08-23", "CSN-IDENT-2026-08-23"]
+    reason: "Perfil QA-only limitado a navegación pública de la Sede CSN. La evidencia acredita opciones de identificación, pero no CLIENT_TLS_AUTH ni un contrato de firma ejecutable; esas capacidades permanecen deshabilitadas."
+    reviewed_at: "2026-08-23"
+    next_gate: "Runtime autenticado controlado para observar la transición exacta de certificado/Cl@ve y, si existe, detenerse antes de cualquier firma o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Industria y Turismo; Ministerio para la Transición Ecológica y el Reto Demográfico."
 
   - inventory_id: "ES-PUB-0035"
@@ -1536,29 +1536,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Consejo de Transparencia y Buen Gobierno (CTBG)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información"
     surface_type: "SEDE"
     origin: "https://sede.consejodetransparencia.gob.es"
     official_site: "https://sede.consejodetransparencia.gob.es/"
     e_sede: "https://sede.consejodetransparencia.gob.es/"
-    entry_url: "https://sede.consejodetransparencia.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6"
+    procedure_page: "https://sede.consejodetransparencia.gob.es/catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CTBG_ESPUBLICO_CLAVE_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud de Información: perfil QA-only para la entrada electrónica exacta y la navegación observada hasta la frontera de identificación Cl@ve/certificado."
+    protocol_evidence: "La Sede vigente publica el catálogo en /dossier y la Solicitud de Información en /catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6. El control Iniciar tramitación electrónica abre exactamente /catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6 y, en Chromium público, alcanza la página Identificación electrónica. Esa página ofrece Cl@ve/certificado y contiene un formulario POST a https://pasarela.clave.gob.es/Proxy2/ServiceProvider con campos SAMLRequest y RelayState. No se conservaron sus valores ni se envió el formulario. No se atribuye contrato de firma específico del procedimiento."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CTBG-DOSSIER-2026-08-23", "CTBG-SOLINFO-DETAIL-2026-08-23", "CTBG-SOLINFO-LAUNCH-2026-08-23", "CTBG-CLAVE-2026-08-23"]
+    reason: "Perfil QA-only limitado al launch exacto de Solicitud de Información y al primer origen Cl@ve observado. El certificado es una alternativa de identificación; no se expone SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
+    reviewed_at: "2026-08-23"
+    next_gate: "Con identidad autorizada, observar el estado autenticado de Solicitud de Información; detenerse antes de cualquier firma criptográfica, registro final o pago."
     notes: "Ministerio(s) enumerador(es): Ministerio para la Transformación Digital y de la Función Pública."
 
   - inventory_id: "ES-PUB-0036"
@@ -1573,23 +1573,23 @@ records:
     official_site: "https://sede.csd.gob.es/"
     e_sede: "https://sede.csd.gob.es/"
     entry_url: "https://sede.csd.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AUTOFIRMA"
+    protocol_family: "CSD_AUTOFIRMA_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede/Oficina Virtual del CSD, catálogo y Mis trámites; identificación por certificado/DNIe/Cl@ve y AutoFirma requerido para la firma de presentaciones y documentación."
+    protocol_evidence: "La Sede CSD publica acceso por certificado y Plataforma Cl@ve; el catálogo indica certificado digital/DNIe y que AutoFirma es requerido para firmar la presentación de expedientes y documentación posterior. No se publica aquí un ABI, formato, algoritmo o endpoint exacto de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CSD-SEDE-2026-08-23", "CSD-CATALOG-2026-08-23", "CSD-MISTRAMITES-2026-08-23"]
+    reason: "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita certificado/DNIe/Cl@ve y requisito de AutoFirma, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
+    reviewed_at: "2026-08-23"
+    next_gate: "Progresión autenticada controlada hasta pre-firma para observar invocación AutoFirma/algoritmo/formato/callback exactos, deteniéndose antes de firma criptográfica o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Educación, Formación Profesional y Deportes."
 
   - inventory_id: "ES-PUB-0037"
@@ -1697,23 +1697,23 @@ records:
     official_site: "https://sede.guardiacivil.gob.es/"
     e_sede: "https://sede.guardiacivil.gob.es/"
     entry_url: "https://sede.guardiacivil.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AUTOFIRMA"
+    protocol_family: "GUARDIA_CIVIL_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede de la Guardia Civil y catálogo de procedimientos; identificación mediante Cl@ve con DNIe/certificado/Cl@ve móvil o permanente, y firma de solicitudes cuando el procedimiento lo exige."
+    protocol_evidence: "La instrucción oficial vigente de 11-05-2026 para inscripción exige autenticación mediante Cl@ve (DNIe, certificado electrónico, Cl@ve móvil o permanente) y envío del formulario firmado. La documentación oficial de requisitos de la Sede describe firma básica, firma con certificado y AutoFirma para certificado local; no acredita aquí ABI, algoritmo, formato ni endpoint exactos."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "GC-SEDE-2026-08-23", "GC-PROCEDURES-2026-08-23", "GC-INSTRUCCION-2026-05-11"]
+    reason: "Perfil QA-only limitado a navegación pública y metadata observada. La evidencia acredita Cl@ve/certificado y firma con AutoFirma en determinados flujos, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
+    reviewed_at: "2026-08-23"
+    next_gate: "Progresión autenticada controlada hasta pre-firma para observar la invocación AutoFirma, algoritmo, formato y callback exactos, deteniéndose antes de firma criptográfica o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio del Interior."
 
   - inventory_id: "ES-PUB-0041"
@@ -1722,30 +1722,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Dirección General de Ordenación del Juego"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / navegación pública de procedimientos"
     surface_type: "SEDE"
     origin: "https://sede.ordenacionjuego.gob.es"
     official_site: "https://sede.ordenacionjuego.gob.es/"
     e_sede: "https://sede.ordenacionjuego.gob.es/"
     entry_url: "https://sede.ordenacionjuego.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DGOJ_PUBLIC_NAVIGATION_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only por la Sede pública de la DGOJ y su índice público de procedimientos y servicios."
+    protocol_evidence: "La Sede first-party y el índice público de procedimientos responden sin autenticación. Las páginas oficiales de sistemas de firma documentan @firma, Cl@ve Firma, AutoFirma y DNIeRemote, pero no acreditan para una operación exacta un ABI, formato, algoritmo, endpoint o callback; por ello el runtime queda limitado a navegación pública del origin DGOJ sin capacidades sensibles."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Derechos Sociales, Consumo y Agenda 2030; Ministerio de Vivienda y Agenda Urbana."
+    evidence_ids: ["D11", "DGOJ-PUBLIC-2026-08-24"]
+    reason: "Perfil QA-only de navegación pública limitado al origin exacto sede.ordenacionjuego.gob.es; no se infiere SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni contrato criptográfico a partir de documentación descriptiva."
+    reviewed_at: "2026-08-24"
+    next_gate: "Seleccionar un procedimiento público concreto y verificar su contrato técnico exacto antes de exponer cualquier capacidad de firma o autenticación."
+    notes: "Investigación pública no autenticada y de solo lectura; no se ejecutaron login, selección de certificado, firma, pago, carga ni presentación."
 
   - inventory_id: "ES-PUB-0042"
     surface_key: "age-direccion-general-de-seguros-y-fondos-de-pensiones"
@@ -1753,7 +1753,7 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Dirección General de Seguros y Fondos de Pensiones"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Sede electrónica / inicio público oficial"
     surface_type: "SEDE"
     origin: "https://www.sededgsfp.gob.es"
     official_site: "https://www.sededgsfp.gob.es/"
@@ -1763,20 +1763,20 @@ records:
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DGSFP_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA delimitada al inicio público first-party de la Sede DGSFP; autenticación, certificado, Cl@ve, AutoFirma y tramitación permanecen fuera del contrato implementado."
+    protocol_evidence: "La raíz first-party redirige same-origin a /es/Paginas/inicio.aspx y responde HTTP 200. Los bundles públicos de la propia Sede contienen UI/servicios para certificado, Cl@ve, procedimientos, notificaciones y AutoFirma/TestFirma, pero no acreditan un signer ABI, formato, algoritmo, callback ni aceptación de presentación exactos."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
+    evidence_ids: ["D11", "DGSFP-SEDE-2026-08-24"]
+    reason: "La entrada pública first-party y su origin están revalidados y permiten solo un contrato QA-only de navegación. Las referencias de certificado/Cl@ve/AutoFirma en bundles no se promocionan a SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI sin contrato técnico exacto y E2E físico."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar navegación QA al inicio público. Cualquier soporte de autenticación, certificado, Cl@ve, AutoFirma o presentación requiere una revisión separada del contrato técnico exacto y prueba física E2E."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa. Investigación pública no autenticada: no se seleccionó certificado, no se inició sesión, no se firmó, no se cargó documentación y no se realizó presentación administrativa. Cookies/request IDs SharePoint no se conservaron."
 
   - inventory_id: "ES-PUB-0043"
     surface_key: "age-direccion-general-del-catastro"
@@ -1784,29 +1784,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Dirección General del Catastro"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Dirección General del Catastro — Otras solicitudes y escritos genéricos"
     surface_type: "SEDE"
     origin: "https://www.sedecatastro.gob.es"
     official_site: "https://www.sedecatastro.gob.es/"
     e_sede: "https://www.sedecatastro.gob.es/"
-    entry_url: "https://www.sedecatastro.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22"
+    procedure_page: "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CATASTRO_CLAVE_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only para otras solicitudes, escritos por discrepancias y documentos genéricos, limitado al launch público exacto y a la frontera de identificación observada."
+    protocol_evidence: "La Sede vigente publica la categoría de trámites en https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx. La entrada exacta Dest=22 muestra el trámite Presentar otras solicitudes, escritos por discrepancias con la descripción catastral y documentos genéricos. El control Ir al formulario realiza un POST same-origin y alcanza https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22, donde se ofrecen certificado digital o Cl@ve. La opción Cl@ve estable apunta a https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI; esa página publica el flujo Cl@ve y un POST boundary a https://pasarela.clave.gob.es/Proxy2/ResponseRedirect. No se conservaron valores de ASP.NET state, SAML ni cookies, y no se envió autenticación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CATASTRO-HOME-2026-08-24", "CATASTRO-TRAMITES-2026-08-24", "CATASTRO-DEST22-2026-08-24", "CATASTRO-DNI22-2026-08-24", "CATASTRO-PIN22-2026-08-24", "CATASTRO-CLAVE-2026-08-24"]
+    reason: "Perfil QA-only de navegación. La alternativa de certificado acredita acceso posible, no client TLS ni firma. No se exponen SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
+    reviewed_at: "2026-08-24"
+    next_gate: "Con identidad autorizada, observar el primer estado autenticado del formulario Dest=22; detenerse antes de cualquier firma, registro final, presentación administrativa o pago."
     notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
 
   - inventory_id: "ES-PUB-0044"
@@ -1821,23 +1821,23 @@ records:
     official_site: "https://enaire.sede.gob.es/"
     e_sede: "https://enaire.sede.gob.es/"
     entry_url: "https://enaire.sede.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    procedure_page: "https://enaire.sede.gob.es/procedimientos"
+    certificate_required: "CONDICIONAL"
+    signature_required: "CONDICIONAL"
+    js_client: "AUTOFIRMA"
+    protocol_family: "ENAIRE_CLAVE_AUTOFIRMA_PUBLIC_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada pública de la Sede ENAIRE y catálogo de procedimientos; acceso a expedientes mediante Cl@ve y firma electrónica con certificado cuando el trámite la requiere."
+    protocol_evidence: "La Sede pública vigente expone catálogo de procedimientos y área privada mediante Cl@ve. La página oficial Requisitos indica expresamente que para firmar electrónicamente con certificado es necesario AutoFirma y que para iniciar/acceder a expedientes se usa Cl@ve (DNI-e, certificado electrónico, Cl@ve PIN o Permanente). No se publica aquí ABI, algoritmo, formato ni endpoint exactos de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "ENAIRE-SEDE-2026-08-24", "ENAIRE-PROCEDURES-2026-08-24", "ENAIRE-REQ-2026-08-24", "ENAIRE-VALIDACION-2026-08-24"]
+    reason: "Perfil QA-only limitado a navegación pública y metadata observada. Se acredita Cl@ve/certificado y requisito de AutoFirma para firma electrónica con certificado, pero no se expone SIGN ni CLIENT_TLS_AUTH sin contrato runtime exacto."
+    reviewed_at: "2026-08-24"
+    next_gate: "Progresión autenticada controlada hasta pre-firma para observar invocación AutoFirma, algoritmo, formato y callback exactos, deteniéndose antes de firma criptográfica o presentación final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
 
   - inventory_id: "ES-PUB-0045"
@@ -1846,30 +1846,30 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Entidad Pública Empresarial de Suelo (SEPES)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Quejas y reclamaciones — SEPES / Sede Transportes"
     surface_type: "SEDE"
-    origin: "https://www.sepes.es"
-    official_site: "https://www.sepes.es/es/sede-electronica"
-    e_sede: "https://www.sepes.es/es/sede-electronica"
-    entry_url: "https://www.sepes.es/es/sede-electronica"
-    procedure_page: "NO_VERIFICADO"
+    origin: "https://sede.transportes.gob.es"
+    official_site: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
+    e_sede: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
+    entry_url: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
+    procedure_page: "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones"
     certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "SEPES_TRANSPORTES_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA exacta a la ficha pública vigente de Quejas y reclamaciones de SEPES dentro de la Sede del Ministerio de Transportes; autenticación, firma y presentación quedan fuera del contrato implementado."
+    protocol_evidence: "La Sede Transportes devuelve HTTP 200/TLS válido para la ficha first-party «Quejas y reclamaciones» identificada expresamente como Entidad Pública Empresarial de Suelo (SEPES), y publica Iniciar trámite hacia /Procedimiento/?procedureKey=7601. La normativa vigente de la misma Sede conserva el convenio de incorporación de SEPES a la Sede y Registro electrónicos del Ministerio. El launch 7601 redirige actualmente a /Procedimiento/Auth?procedureKey=7601 y termina HTTP 500; por ello no se promociona ningún contrato de autenticación o firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible."
+    evidence_ids: ["D11", "SEPES-TRANSPORTES-2026-08-24", "SEPES-TRANSPORTES-NORMATIVA-2026-08-24"]
+    reason: "Existe una ruta oficial first-party vigente y TLS-válida ligada directamente a SEPES, suficiente para navegación QA. El launch procedureKey=7601 termina actualmente HTTP 500, así que no se modela autenticación o firma. El perfil Transportes existente id=7002 corresponde a otro procedimiento y su contrato SHA1/XAdES no se reutiliza; el origin heredado www.sepes.es mantiene un certificado caducado y no se usa ni se sortea."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar físicamente la navegación QA a la ficha SEPES. Revalidar procedureKey=7601 cuando deje de devolver 500 antes de modelar autenticación, certificado, firma o presentación."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Transportes y Movilidad Sostenible. La compatibilidad añadida es únicamente de navegación pública. El soporte de dos perfiles QA sobre sede.transportes.gob.es se mantiene fail-closed: la resolución global solo desambigua por startUrl exacto y los flujos con perfil activo usan resolución profile-scoped. No se seleccionó certificado, no se firmó, no se cargó documentación y no se presentó trámite."
 
   - inventory_id: "ES-PUB-0046"
     surface_key: "age-fondo-de-garantia-salarial-fogasa"
@@ -1908,29 +1908,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Fondo Español de Garantía Agraria O.A. (FEGA)"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "FEGA — Solicitud al FEGA"
     surface_type: "SEDE"
-    origin: "https://www.sede.fega.gob.es"
+    origin: "https://www3.sede.fega.gob.es"
     official_site: "https://www.sede.fega.gob.es/"
     e_sede: "https://www.sede.fega.gob.es/"
-    entry_url: "https://www.sede.fega.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02"
+    procedure_page: "https://www.sede.fega.gob.es/content/solicitud-al-fega"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "FEGA_CLAVE_PUBLIC_REGISTRY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only para Solicitud al FEGA, limitado al launch público OFVSG02 y a la frontera Cl@ve observada."
+    protocol_evidence: "La Sede FEGA vigente publica Solicitud al FEGA y su Acceso en línea en https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02. La landing del Registro Electrónico enumera identificación por DNIe/certificado, Cl@ve PIN y Cl@ve permanente, y carga autoscript.js, pero también exige disponer previamente de un PDF completado y firmado; por ello no se infiere un ABI de firma del portal. El control público Continuar realiza POST same-origin a https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/registroAsientos.action y en Chromium alcanza https://pasarela.clave.gob.es/Proxy2/ServiceProvider. No se conservaron valores SAML/RelayState, cookies ni credenciales y no se envió autenticación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "FEGA-HOME-2026-08-24", "FEGA-PROCEDURES-2026-08-24", "FEGA-SOLICITUD-2026-08-24", "FEGA-OFVSG02-2026-08-24", "FEGA-REGPOST-2026-08-24", "FEGA-CLAVE-2026-08-24"]
+    reason: "Perfil QA-only de navegación. El acceso admite certificado o Cl@ve, pero no se ha probado client TLS ni un contrato de firma del portal; autoscript.js por sí solo no se promueve a SIGN. Sin endpoint, formato, algoritmo ni E2E."
+    reviewed_at: "2026-08-24"
+    next_gate: "Con identidad autorizada, observar el primer estado autenticado del Registro Electrónico OFVSG02; detenerse antes de cualquier firma con clave privada o presentación/registro final."
     notes: "Ministerio(s) enumerador(es): Ministerio de Agricultura, Pesca y Alimentación."
 
   - inventory_id: "ES-PUB-0048"
@@ -6277,10 +6277,31 @@ Orden de expansión recomendado:
 [D09]: https://www.igae.pap.hacienda.gob.es/sitios/igae/es-ES/BasesDatos/invente/paginas/inicio.aspx
 [D10]: https://www.ciencia.gob.es/Universidades/RUCT.html
 [D11]: https://sede.administracion.gob.es/sedes-electronicas
+[CTBG-DOSSIER-2026-08-23]: https://sede.consejodetransparencia.gob.es/dossier
+[CTBG-SOLINFO-DETAIL-2026-08-23]: https://sede.consejodetransparencia.gob.es/catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6
+[CTBG-SOLINFO-LAUNCH-2026-08-23]: https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6
+[CTBG-CLAVE-2026-08-23]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [D12]: https://administracion.gob.es/pag_Home/atencionCiudadana/SedesElectronicas-y-Webs-Publicas/websPublicas/WP_EELL/WP_CabildosConsejos.html
 
 ### Evidencia portal-specific
 
+[CATASTRO-HOME-2026-08-24]: https://www.sedecatastro.gob.es/
+[CATASTRO-TRAMITES-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx
+[CATASTRO-DEST22-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22
+[CATASTRO-DNI22-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22
+[CATASTRO-PIN22-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI
+[CATASTRO-CLAVE-2026-08-24]: https://pasarela.clave.gob.es/Proxy2/ResponseRedirect
+[FEGA-HOME-2026-08-24]: https://www.sede.fega.gob.es/
+[FEGA-PROCEDURES-2026-08-24]: https://www.sede.fega.gob.es/procedimientos-y-servicios
+[FEGA-SOLICITUD-2026-08-24]: https://www.sede.fega.gob.es/content/solicitud-al-fega
+[FEGA-OFVSG02-2026-08-24]: https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02
+[FEGA-REGPOST-2026-08-24]: https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/registroAsientos.action
+[FEGA-CLAVE-2026-08-24]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
+[AEMET-SEDE-2026-08-23]: https://www.aemet.es/es/sede_electronica
+[AEMET-PROCEDURE-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/solicitudes
+[AEMET-NEW-SOLICITUD-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/nuevaSolicitud
+[AEMET-L1-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/formularioSolicitud?tipoSolicitud=L1
+[AEMET-SSO-2026-08-23]: https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso
 [COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
 [COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
 [DIGITAL-SEDE-REG-2026-08-17]: https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica
@@ -6335,8 +6356,10 @@ Orden de expansión recomendado:
 [BNE-REG-2026-08-16]: https://sede.bne.gob.es/es/tramites/quejas-sugerencias
 [OEPM-PROTEGEO-2026-08-17]: https://sede.oepm.gob.es/eSede/es/tramites-comunes/solicitud-electronica-de-proposito-general-remitida-a-la-oepm-/
 [FUNCIONA-PUBLIC-2026-08-17]: https://sede.funciona.gob.es/es/home
+[BOE-SEDE-2026-08-23]: https://www.boe.es/informacion/index.php
 [CERVANTES-REG-2026-08-17]: https://cervantes.sede.gob.es/servicio?id=Registro-Electrónico-General
 [REINA-SOFIA-REG-2026-08-17]: https://museoreinasofia.sede.gob.es/servicio?id=Registro-Electrónico-General
+[DGOJ-PUBLIC-2026-08-24]: https://sede.ordenacionjuego.gob.es/es/firma
 [P14]: https://reg.redsara.es/es/
 [P14A]: https://reg.redsara.es/preguntas-frecuentes
 [P14B]: https://reg.redsara.es/es/media/es/REG-ManualUsuario.pdf
@@ -6611,3 +6634,20 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+[SEPES-TRANSPORTES-2026-08-24]: https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones
+[SEPES-TRANSPORTES-NORMATIVA-2026-08-24]: https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede
+[ENAIRE-SEDE-2026-08-24]: https://enaire.sede.gob.es/
+[ENAIRE-PROCEDURES-2026-08-24]: https://enaire.sede.gob.es/procedimientos
+[ENAIRE-REQ-2026-08-24]: https://enaire.sede.gob.es/Requisitos
+[ENAIRE-VALIDACION-2026-08-24]: https://enaire.sede.gob.es/servicio?id=Validacion-de-certificados-y-firma
+[DGSFP-SEDE-2026-08-24]: https://www.sededgsfp.gob.es/
+[CNMV-SEDE-2026-08-23]: https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx
+[GC-SEDE-2026-08-23]: https://sede.guardiacivil.gob.es/
+[GC-PROCEDURES-2026-08-23]: https://sede.guardiacivil.gob.es/procedimientos/index/language/es_ES
+[GC-INSTRUCCION-2026-05-11]: https://sede.guardiacivil.gob.es/fichero-publico/descargar/id/5205
+[CNMC-GENERAL-2026-08-23]: https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones
+[CSN-SEDE-2026-08-23]: https://sede.csn.gob.es/
+[CSN-IDENT-2026-08-23]: https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3
+[CSD-SEDE-2026-08-23]: https://sede.csd.gob.es/
+[CSD-CATALOG-2026-08-23]: https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es
+[CSD-MISTRAMITES-2026-08-23]: https://sede.csd.gob.es/oficinavirtual/Default.aspx
