@@ -72,6 +72,7 @@ class JuntaOriginPolicyTest {
     private val avila = ProfileId("diputacion-avila-instancia-general")
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
     private val murcia = ProfileId("murcia-carm-pase")
+    private val dgoj = ProfileId("dgoj-public-navigation")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -172,6 +173,7 @@ class JuntaOriginPolicyTest {
             "pasarela-ident-sistemas.clave.gob.es",
             "seu.conselldeivissa.es",
             "sede.carm.es",
+            "sede.ordenacionjuego.gob.es",
             "validate.perfdrive.com",
             "pase.carm.es",
             "conclave.carm.es",
@@ -302,6 +304,10 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
+        assertEquals(setOf("sede.ordenacionjuego.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgoj))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(dgoj).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.ordenacionjuego.gob.es/"), dgoj))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://clave.gob.es/"), dgoj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
         assertEquals(setOf("www.sededgsfp.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgsfp))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(dgsfp).isEmpty())

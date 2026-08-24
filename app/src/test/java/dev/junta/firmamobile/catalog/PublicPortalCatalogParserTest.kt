@@ -113,6 +113,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("eivissa-sede-electronica"),
                 ProfileId("murcia-carm-pase"),
                 ProfileId("enaire-sede-public"),
+                ProfileId("dgoj-public-navigation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

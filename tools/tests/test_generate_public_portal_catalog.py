@@ -1023,6 +1023,36 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", inclusion["limitations"].lower())
 
 
+    def test_dgoj_public_navigation_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0041")
+        self.assertEqual("age-direccion-general-de-ordenacion-del-juego", target["portalId"])
+        self.assertEqual("dgoj-public-navigation", target["profileId"])
+        self.assertEqual("https://sede.ordenacionjuego.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DGOJ_PUBLIC_NAVIGATION_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+
+        profiles = json.loads(SITE_PROFILES.read_text())["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "dgoj-public-navigation")
+        self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", profile["activation"])
+        self.assertEqual("https://sede.ordenacionjuego.gob.es/", profile["startUrl"])
+        self.assertEqual(["https://sede.ordenacionjuego.gob.es"], profile["initiatorOrigins"])
+        self.assertEqual([], profile["redirectOrigins"])
+        self.assertEqual([], profile["trustedBrowseOrigins"])
+        self.assertEqual([], profile["endpoints"])
+        self.assertEqual([], profile["operationPolicies"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertEqual({"allowedKeyAlgorithms": ["RSA", "EC"], "requireDigitalSignatureKeyUsage": False}, profile["certificateRules"])
+
+
     def test_cervantes_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         cervantes = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-instituto-cervantes")

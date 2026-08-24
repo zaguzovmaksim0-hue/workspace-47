@@ -121,6 +121,7 @@ class PortalCatalogRepositoryTest {
                 "catalunya-peticio-generica-client-auth",
                 "murcia-carm-pase",
                 "enaire-sede-public",
+                "dgoj-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

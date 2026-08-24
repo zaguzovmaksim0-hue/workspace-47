@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "4d53c65a424bb4755b78e51066afd6aa59eb632ab3c50f6ee2f3efe30d975b87",
+  "sourceRevision": "4be25eca3fa67a6953a95687b4aa18a0d4beb481f1d9ec89a5e2a51f2166a91e",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1058,24 +1058,25 @@
     {
       "portalId": "age-direccion-general-de-ordenacion-del-juego",
       "inventoryId": "ES-PUB-0041",
-      "profileId": null,
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "profileId": "dgoj-public-navigation",
+      "displayName": "Sede electrónica / navegación pública de procedimientos",
       "organization": "Dirección General de Ordenación del Juego",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only por la Sede pública de la DGOJ y su índice público de procedimientos y servicios.",
       "entryUrl": "https://sede.ordenacionjuego.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DGOJ_PUBLIC_NAVIGATION_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DGOJ-PUBLIC-2026-08-24"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "Perfil QA-only de navegación pública limitado al origin exacto sede.ordenacionjuego.gob.es; no se infiere SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni contrato criptográfico a partir de documentación descriptiva."
     },
     {
       "portalId": "age-direccion-general-de-seguros-y-fondos-de-pensiones",

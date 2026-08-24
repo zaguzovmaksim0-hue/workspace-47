@@ -313,6 +313,28 @@ class SiteProfileRegistryTest {
     }
 
     @Test
+    fun `DGOJ public navigation stays browse-only in QA and external signing systems stay closed`() {
+        val profileId = ProfileId("dgoj-public-navigation")
+        val start = URI("https://sede.ordenacionjuego.gob.es/")
+
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
+        val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
+        assertNotNull(profile)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(emptySet<Capability>(), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es/tramite/"))?.trustMode,
+        )
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://clave.gob.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://administracionelectronica.gob.es/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es.evil.example/")))
+    }
+
+    @Test
     fun `Junta VEA PEG is QA-only browse and rejects auth API as profile origin`() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
