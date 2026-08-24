@@ -1335,6 +1335,28 @@
       ]
     },
     {
+      "profileId": "diputacion-bizkaia-instancia-generica",
+      "profileVersion": 1,
+      "displayName": "Diputación Foral de Bizkaia — Instancia genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S",
+      "initiatorOrigins": ["https://appsec.ebizkaia.eus"],
+      "redirectOrigins": ["https://eidasbiz.izenpe.com"],
+      "trustedBrowseOrigins": ["https://appstac.ebizkaia.eus"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.ebizkaia.eus/es/medios-de-identificacion","reviewedOn":"2026-08-21"},
+        {"url":"https://appstac.ebizkaia.eus/es/ficha-procedimiento?procedimiento=1664","reviewedOn":"2026-08-21"},
+        {"url":"https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S","reviewedOn":"2026-08-21"},
+        {"url":"https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "diputacion-lleida-sede",
       "profileVersion": 1,
       "displayName": "Diputació de Lleida — Sede electrónica",
@@ -1748,6 +1770,47 @@
       ]
     },
     {
+      "profileId": "diputacion-teruel-instancia-general",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Teruel — Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+      "initiatorOrigins": ["https://dpteruel.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://dpteruel.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"},
+        {"url":"https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "diputacion-salamanca-instancia-general",
+      "profileVersion": 1,
+      "displayName": "Diputación de Salamanca — Instancia General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
+      "initiatorOrigins": ["https://sede.diputaciondesalamanca.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diputaciondesalamanca.gob.es/opencms/common-js/clientSigner.js","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "fega-solicitud-general-ofvsg02",
       "profileVersion": 1,
       "displayName": "FEGA — Solicitud al FEGA",
@@ -1912,6 +1975,27 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx","reviewedOn":"2026-08-23"}
+      ]
+    },
+    {
+      "profileId": "fondos-europeos-sede-public-home",
+      "profileVersion": 1,
+      "displayName": "Dirección General de Fondos Europeos — Sede pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedefondoscomunitarios.gob.es/",
+      "initiatorOrigins": ["https://sedefondoscomunitarios.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sedefondoscomunitarios.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://sedefondoscomunitarios.gob.es/sitios/sedeincentivosregionales/es-ES/serviciosElectronicos/Paginas/serviciosElectronicos.aspx","reviewedOn":"2026-08-24"},
+        {"url":"https://sedefondoscomunitarios.gob.es/sitios/sedeincentivosregionales/es-ES/Paginas/FirmaElectronica.aspx","reviewedOn":"2026-08-24"}
       ]
     },
     {

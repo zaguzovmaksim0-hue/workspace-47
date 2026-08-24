@@ -64,6 +64,7 @@ class JuntaOriginPolicyTest {
     private val canarias = ProfileId("canarias-sede")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
+    private val fondosEuropeos = ProfileId("fondos-europeos-sede-public-home")
     private val asturiasSede = ProfileId("asturias-sede-tramite-navigation")
     private val dgsfp = ProfileId("dgsfp-sede-public-home")
     private val mjusticia = ProfileId("mjusticia-fundaciones-idp75")
@@ -72,8 +73,11 @@ class JuntaOriginPolicyTest {
     private val cnmc = ProfileId("cnmc-remision-solicitudes-public")
     private val fuerteventura = ProfileId("fuerteventura-sede-electronica")
     private val alava = ProfileId("diputacion-alava-registro-comun")
+    private val bizkaia = ProfileId("diputacion-bizkaia-instancia-generica")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val salamanca = ProfileId("diputacion-salamanca-instancia-general")
+    private val teruel = ProfileId("diputacion-teruel-instancia-general")
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
     private val catastro = ProfileId("catastro-solicitudes-genericas")
     private val fega = ProfileId("fega-solicitud-general-ofvsg02")
@@ -172,6 +176,8 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "sede.diputaciondesalamanca.gob.es",
+            "sedefondoscomunitarios.gob.es",
             "www.sededgsfp.gob.es",
             "sede2.mjusticia.gob.es",
             "sede.cnmv.gob.es",
@@ -181,6 +187,9 @@ class JuntaOriginPolicyTest {
             "sede.adif.gob.es",
             "presidencia.jcyl.es",
             "egoitza.araba.eus",
+            "appsec.ebizkaia.eus",
+            "appstac.ebizkaia.eus",
+            "eidasbiz.izenpe.com",
             "seuelectronica.diba.cat",
             "valid.aoc.cat",
             "cert.valid.aoc.cat",
@@ -189,6 +198,7 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "dpteruel.sedelectronica.es",
             "sede.consejodetransparencia.gob.es",
             "www.sedecatastro.gob.es",
             "www3.sede.fega.gob.es",
@@ -343,6 +353,11 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
+        assertEquals(setOf("sedefondoscomunitarios.gob.es"), JuntaOriginPolicy.browserAllowedHosts(fondosEuropeos))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(fondosEuropeos).isEmpty())
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sedefondoscomunitarios.gob.es/"), fondosEuropeos))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramitesfondoseuropeos.hacienda.gob.es/dossier"), fondosEuropeos))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://reg.redsara.es/es/"), fondosEuropeos))
         assertEquals(setOf("sede.ordenacionjuego.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgoj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(dgoj).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.ordenacionjuego.gob.es/"), dgoj))
@@ -397,6 +412,24 @@ class JuntaOriginPolicyTest {
                 alava,
             ),
         )
+        assertEquals(
+            setOf("appsec.ebizkaia.eus", "appstac.ebizkaia.eus", "eidasbiz.izenpe.com"),
+            JuntaOriginPolicy.browserAllowedHosts(bizkaia),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(bizkaia).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S"),
+                bizkaia,
+            ),
+        )
+        assertTrue(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml"),
+                bizkaia,
+            ),
+        )
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://izenpe.com/"), bizkaia))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(setOf("sede2.mjusticia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mjusticia))
@@ -439,6 +472,25 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(
+            setOf("sede.diputaciondesalamanca.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(salamanca),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(salamanca).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"),
+                salamanca,
+            ),
+        )
+        assertEquals(setOf("dpteruel.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(teruel))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(teruel).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
+                teruel,
             ),
         )
         assertEquals(setOf("sede.diphuelva.es"), JuntaOriginPolicy.browserAllowedHosts(huelva))

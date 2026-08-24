@@ -41,6 +41,19 @@ SPEC.loader.exec_module(GENERATOR)
 
 
 class PublicPortalCatalogGeneratorTest(unittest.TestCase):
+    def test_fondos_europeos_public_sede_binds_exact_qa_navigation(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0039")
+        self.assertEqual("fondos-europeos-sede-public-home", target["profileId"])
+        self.assertEqual("https://sedefondoscomunitarios.gob.es/", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DGFE_PUBLIC_SEDE_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+
     def test_cnmv_public_sede_binds_exact_qa_navigation_without_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0033")
@@ -1852,6 +1865,34 @@ records:
         self.assertIn("dinámic", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+    def test_bizkaia_instancia_generica_binds_exact_giltza_qa_navigation_without_sensitive_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0176")
+        profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "diputacion-bizkaia-instancia-generica")
+
+        self.assertEqual("diputacion-bizkaia-sede", target["portalId"])
+        self.assertEqual("diputacion-bizkaia-instancia-generica", target["profileId"])
+        self.assertEqual(
+            "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("BIZKAIA_INSTANCIA_GENERICA_GILTZA_QA_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(["https://appsec.ebizkaia.eus"], profile["initiatorOrigins"])
+        self.assertEqual(["https://eidasbiz.izenpe.com"], profile["redirectOrigins"])
+        self.assertEqual(["https://appstac.ebizkaia.eus"], profile["trustedBrowseOrigins"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+
 
     def test_aemet_profile_binds_stable_public_home_and_keeps_sensitive_runtime_capabilities_unimplemented(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -2073,10 +2114,45 @@ records:
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
         self.assertEqual("2026-08-18", target["reviewedOn"])
+
+    def test_diputacion_salamanca_profile_binds_exact_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0168")
+
+        self.assertEqual("diputacion-salamanca-instancia-general", target["profileId"])
+        self.assertEqual("diputacion-salamanca-sede", target["portalId"])
+        self.assertEqual(
+            "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
         self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
         self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual(["CADES"], target["observedSignatureFormats"])
+
+    def test_diputacion_teruel_profile_binds_exact_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0173")
+
+        self.assertEqual("diputacion-teruel-instancia-general", target["profileId"])
+        self.assertEqual("diputacion-teruel-sede", target["portalId"])
+        self.assertEqual(
+            "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("TERUEL_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
-        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("no_verificado", target["limitations"].lower())
 
     def test_comercio_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

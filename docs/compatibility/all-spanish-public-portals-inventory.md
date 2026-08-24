@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 261 |
-| Fuentes oficiales totales registradas | 273 |
+| Fuentes oficiales portal-specific registradas | 266 |
+| Fuentes oficiales totales registradas | 278 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 126 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 130 |
-| Entradas restantes fuera de ambos estados | 53 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 130 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 134 |
+| Entradas restantes fuera de ambos estados | 49 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 126 |
+| `IMPLEMENTED_NOT_E2E` | 130 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 46 |
+| `BROWSE_ONLY` | 42 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 168 |
+| `REVIEWED` | 169 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 10 |
+| `DISCOVERED` | 9 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1669,24 +1669,24 @@ records:
     official_site: "https://sedefondoscomunitarios.gob.es/"
     e_sede: "https://sedefondoscomunitarios.gob.es/"
     entry_url: "https://sedefondoscomunitarios.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sedefondoscomunitarios.gob.es/sitios/sedeincentivosregionales/es-ES/serviciosElectronicos/Paginas/serviciosElectronicos.aspx"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DGFE_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA delimitada a la Sede pública oficial y su catálogo first-party; los servicios externos de Hacienda/RED SARA quedan fuera del trust implementado."
+    protocol_evidence: "La Sede first-party responde HTTP 200 tras redirección same-origin y publica catálogo de servicios, estado de tramitación, notificaciones, registro y política general de firma. Los launches operativos observados saltan a origins externos y no se incorporan como capacidades ni redirect trust."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
-    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
+    evidence_ids: ["D11", "DGFE-SEDE-2026-08-24"]
+    reason: "La landing y páginas first-party están revalidadas y permiten un contrato QA-only de navegación pública. Autenticación, certificado, firma, notificaciones, RED SARA y tramitación externa requieren contratos separados y permanecen fuera del perfil."
+    reviewed_at: "2026-08-24"
+    next_gate: "Validar navegación QA en dispositivo; cualquier soporte de autenticación/firma o de los launches externos requiere evidencia técnica exacta separada."
+    notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda. Investigación pública no autenticada; no se seleccionó certificado, no se firmó, no se abrió un expediente autenticado y no se presentó documentación."
 
   - inventory_id: "ES-PUB-0040"
     surface_key: "age-direccion-general-de-la-guardia-civil"
@@ -5674,29 +5674,29 @@ records:
     autonomous_community: "Castilla y León"
     province_or_municipality: "Salamanca (provincia)"
     institution_name: "Diputación de Salamanca"
-    surface_name: "Sede electrónica de Diputación de Salamanca"
+    surface_name: "Diputación de Salamanca — Instancia General"
     surface_type: "SEDE"
     origin: "https://sede.diputaciondesalamanca.gob.es"
     official_site: "https://sede.diputaciondesalamanca.gob.es"
     e_sede: "https://sede.diputaciondesalamanca.gob.es"
-    entry_url: "https://sede.diputaciondesalamanca.gob.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
-    signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
-    signature_format: "NO_VERIFICADO"
-    signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    entry_url: "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"
+    procedure_page: "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AutoScript 1.8.0 / clientSigner"
+    protocol_family: "AUTOSCRIPT_JSON_BATCH_TRIFASICO_PREHASH"
+    signature_format: "CAdES"
+    signature_algorithm: "SHA256withRSA"
+    endpoint: "Public auth code: /opencms/clientsigner/{JSONBatchPresigner,JSONBatchPostsigner}; RetrieveService/StorageService"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia General exacta (id 12183) con navegación QA hasta la pantalla de identificación; el acceso con certificado publica AutoScript 1.8.0 CAdES/SHA256withRSA sobre hash SHA-256, pero el perfil no expone firma nativa."
+    protocol_evidence: "La Sede resuelve el acceso destacado IGN_01 a la Instancia General id 12183. Su página estable exige Certificado Digital/DNIe y AutoFirma; iniciar la solicitud conduce a autenticacion.jsp. Esa página invoca authenticate con modo explicit, CAdES, SHA256withRSA y hashToSign; clientSigner.js 1.8.0 transforma el acceso en signBatchProcess con JSONBatchPresigner/JSONBatchPostsigner y precalculatedHashAlgorithm=SHA-256. No se ejecutó la operación criptográfica ni se reutilizó el adaptador XML específico de Lugo."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP30A", "DP30B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP30A", "DP30B", "SALAMANCA-IGN-2026-08-21", "SALAMANCA-AUTH-2026-08-21", "SALAMANCA-CLIENTSIGNER-2026-08-21"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta para Instancia General id 12183 hasta el boundary de autenticación. El contrato público de firma de acceso está observado, pero SIGN/SELECT_CERTIFICATE/CLIENT_TLS_AUTH permanecen deshabilitados porque el runtime actual no implementa este JSON-batch específico y no se realizó firma privada."
+    reviewed_at: "2026-08-21"
+    next_gate: "Implementar y probar un bridge JSON-batch específico o generalizado para este clientSigner antes de habilitar SIGN; cualquier E2E debe detenerse antes de la firma criptográfica real y del asiento registral final."
 
   - inventory_id: "ES-PUB-0169"
     surface_key: "diputacion-segovia-sede"
@@ -5824,29 +5824,30 @@ records:
     autonomous_community: "Aragón"
     province_or_municipality: "Teruel (provincia)"
     institution_name: "Diputación Provincial de Teruel"
-    surface_name: "Sede electrónica de Diputación Provincial de Teruel"
+    surface_name: "Diputación Provincial de Teruel — Instancia General"
     surface_type: "SEDE"
     origin: "https://dpteruel.sedelectronica.es"
     official_site: "https://dpteruel.sedelectronica.es"
     e_sede: "https://dpteruel.sedelectronica.es"
-    entry_url: "https://dpteruel.sedelectronica.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://dpteruel.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "TERUEL_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA integrada exclusivamente al inicio telemático exacto de la Instancia General vigente de la Sede electrónica de la Diputación Provincial de Teruel; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "El catálogo oficial vigente expone Instancia General, código SIA 2094606, en /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5 y enlaza de forma exacta a /catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5. La apertura actual del launch conduce en el mismo origin a la pantalla Identificación electrónica, que exige identificación y ofrece acceso con sistema Cl@ve. No se autenticó, no se observó ni se infiere ABI de firma."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP35A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP35A", "TERUEL-IGN-PROC-2026-08-21", "TERUEL-IGN-LAUNCH-2026-08-21"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA_ONLY limitado al launch exacto de Instancia General y al boundary público de identificación. No expone SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH; formato, algoritmo, endpoints y flujo posterior permanecen NO_VERIFICADO. Falta E2E físico."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA al inicio exacto de Instancia General; ampliar autenticación o firma solo con un contrato específico independiente y detenerse antes de firma privada o registro final."
+    notes: "La revisión usó únicamente GET HTTPS con cookie de sesión transitoria eliminada al terminar; no hubo autenticación, POST administrativo, carga de documentos, firma, presentación ni pago."
 
   - inventory_id: "ES-PUB-0174"
     surface_key: "diputacion-toledo-sede"
@@ -5915,30 +5916,29 @@ records:
     autonomous_community: "País Vasco"
     province_or_municipality: "Bizkaia (provincia)"
     institution_name: "Diputación Foral de Bizkaia"
-    surface_name: "Sede electrónica de Diputación Foral de Bizkaia"
+    surface_name: "Instancia genérica — Diputación Foral de Bizkaia"
     surface_type: "SEDE"
-    origin: "https://www.ebizkaia.eus"
+    origin: "https://appsec.ebizkaia.eus"
     official_site: "https://www.ebizkaia.eus"
     e_sede: "https://www.ebizkaia.eus"
-    entry_url: "https://www.ebizkaia.eus"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S"
+    procedure_page: "https://appstac.ebizkaia.eus/es/ficha-procedimiento?procedimiento=1664"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "BIZKAIA_INSTANCIA_GENERICA_GILTZA_QA_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la Instancia genérica vigente 1664/4912 de eBizkaia. El launch exacto alcanza el selector de identificación Giltza/Izenpe; no se declara capacidad de firma, client TLS ni presentación."
+    protocol_evidence: "El API público first-party identifica Instancia genérica (procedimiento 1664, trámite 4912), siempre abierta, con URL electrónica exacta JXSS001C. En un contexto de navegador aislado, ese launch redirigió a appstac.ebizkaia.eus/EWEC000W, recorrió la autenticación first-party de appsec.ebizkaia.eus y terminó en https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml, que ofrece DNI/NIE, SMS, certificado profesional en la nube y certificados digitales. No se seleccionó método de identificación ni se ejecutó firma/presentación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP39A", "DP39B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
-
+    evidence_ids: ["D06", "DP39A", "DP39B", "BIZKAIA-CATALOG-2026-08-21", "BIZKAIA-INSTANCIA-1664-2026-08-21", "BIZKAIA-LAUNCH-4912-2026-08-21", "BIZKAIA-GILTZA-2026-08-21"]
+    reason: "Perfil QA_ONLY limitado a navegación del procedimiento exacto hasta el selector Giltza. El selector ofrece certificados digitales, pero no se ha demostrado un contrato CLIENT_TLS_AUTH del WebView ni ABI/formato/algoritmo/endpoint de firma documental; esas capacidades permanecen cerradas."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente el launch QA y, sólo si aporta una capacidad adicional demostrable, continuar autenticación controlada hasta la pre-firma; detenerse antes de firma criptográfica y presentación final."
   - inventory_id: "ES-PUB-0177"
     surface_key: "diputacion-zamora-sede"
     administrative_level: "PROVINCIAL"
@@ -6611,6 +6611,9 @@ availability, certificado, firma ni contrato técnico.
 [DP29B]: https://sede.depo.gal/web/public/dynamic/description/esignature/
 [DP30A]: https://sede.diputaciondesalamanca.gob.es
 [DP30B]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/contenido/requisitos.jsp
+[SALAMANCA-IGN-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE
+[SALAMANCA-AUTH-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp
+[SALAMANCA-CLIENTSIGNER-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/opencms/common-js/clientSigner.js
 [DP31A]: https://sede.dipsegovia.es
 [DP32A]: https://sedeelectronicadipusevilla.es
 [DP33A]: https://sede.dipsoria.es
@@ -6618,6 +6621,8 @@ availability, certificado, firma ni contrato técnico.
 [DP34A]: https://seuelectronica.dipta.cat
 [DP34B]: https://seuelectronica.dipta.cat/normativa
 [DP35A]: https://dpteruel.sedelectronica.es
+[TERUEL-IGN-PROC-2026-08-21]: https://dpteruel.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[TERUEL-IGN-LAUNCH-2026-08-21]: https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
 [DP36A]: https://diputacion.toledo.gob.es
 [DP36B]: https://diputacion.toledo.gob.es/sede/2
 [TOLEDO-PROCEDURES-2026-08-13]: https://diputacion.toledo.gob.es/procedimientos/1
@@ -6630,6 +6635,10 @@ availability, certificado, firma ni contrato técnico.
 [DP38B]: https://www.sede.diputaciondevalladolid.es/web/guest/requisitos-tecnicos
 [DP39A]: https://www.ebizkaia.eus
 [DP39B]: https://www.ebizkaia.eus/es/medios-de-identificacion
+[BIZKAIA-CATALOG-2026-08-21]: https://appstac.ebizkaia.eus/es/buscador-tramites
+[BIZKAIA-INSTANCIA-1664-2026-08-21]: https://appstac.ebizkaia.eus/es/ficha-procedimiento?procedimiento=1664
+[BIZKAIA-LAUNCH-4912-2026-08-21]: https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S
+[BIZKAIA-GILTZA-2026-08-21]: https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [DP41A]: https://dpz.sedelectronica.es
 [MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
@@ -6660,6 +6669,7 @@ availability, certificado, firma ni contrato técnico.
 [EIVISSA-REG-AUTOFIRMA-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/autofirma.js
 [EIVISSA-CONTROLLED-AUTH-2026-08-18]: https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043
 [CATALUNYA-PETICIO-CLIENTTLS-2026-08-19]: https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2FPeticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c
+[DGFE-SEDE-2026-08-24]: https://sedefondoscomunitarios.gob.es/
 [SEPES-TRANSPORTES-2026-08-24]: https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones
 [SEPES-TRANSPORTES-NORMATIVA-2026-08-24]: https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede
 [ENAIRE-SEDE-2026-08-24]: https://enaire.sede.gob.es/

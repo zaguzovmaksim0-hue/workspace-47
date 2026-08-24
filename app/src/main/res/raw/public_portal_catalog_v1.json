@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "83ff57cef0616057616cd53735e003ca2900bb1bec4179d9b000932e169479d3",
+  "sourceRevision": "bd822c804551c0326a4ea4fa321a47e996a83a7db1321d5733061b1cd6829df1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1069,24 +1069,25 @@
     {
       "portalId": "age-direccion-general-de-fondos-europeos",
       "inventoryId": "ES-PUB-0039",
-      "profileId": null,
+      "profileId": "fondos-europeos-sede-public-home",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Dirección General de Fondos Europeos",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA delimitada a la Sede pública oficial y su catálogo first-party; los servicios externos de Hacienda/RED SARA quedan fuera del trust implementado.",
       "entryUrl": "https://sedefondoscomunitarios.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DGFE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "DGFE-SEDE-2026-08-24"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-24",
+      "limitations": "La landing y páginas first-party están revalidadas y permiten un contrato QA-only de navegación pública. Autenticación, certificado, firma, notificaciones, RED SARA y tramitación externa requieren contratos separados y permanecen fuera del perfil."
     },
     {
       "portalId": "age-direccion-general-de-la-guardia-civil",
@@ -4569,29 +4570,35 @@
     {
       "portalId": "diputacion-salamanca-sede",
       "inventoryId": "ES-PUB-0168",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputación de Salamanca",
+      "profileId": "diputacion-salamanca-instancia-general",
+      "displayName": "Diputación de Salamanca — Instancia General",
       "organization": "Diputación de Salamanca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.diputaciondesalamanca.gob.es",
+      "purpose": "Instancia General exacta (id 12183) con navegación QA hasta la pantalla de identificación; el acceso con certificado publica AutoScript 1.8.0 CAdES/SHA256withRSA sobre hash SHA-256, pero el perfil no expone firma nativa.",
+      "entryUrl": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
       "observedMechanisms": [
+        "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
-      "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "observedSignatureFormats": [
+        "CADES"
+      ],
+      "protocolFamily": "AUTOSCRIPT_JSON_BATCH_TRIFASICO_PREHASH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP30A",
-        "DP30B"
+        "DP30B",
+        "SALAMANCA-IGN-2026-08-21",
+        "SALAMANCA-AUTH-2026-08-21",
+        "SALAMANCA-CLIENTSIGNER-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta para Instancia General id 12183 hasta el boundary de autenticación. El contrato público de firma de acceso está observado, pero SIGN/SELECT_CERTIFICATE/CLIENT_TLS_AUTH permanecen deshabilitados porque el runtime actual no implementa este JSON-batch específico y no se realizó firma privada."
     },
     {
       "portalId": "diputacion-segovia-sede",
@@ -4702,28 +4709,30 @@
     {
       "portalId": "diputacion-teruel-sede",
       "inventoryId": "ES-PUB-0173",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputación Provincial de Teruel",
+      "profileId": "diputacion-teruel-instancia-general",
+      "displayName": "Diputación Provincial de Teruel — Instancia General",
       "organization": "Diputación Provincial de Teruel",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Aragón",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://dpteruel.sedelectronica.es",
+      "purpose": "Navegación QA integrada exclusivamente al inicio telemático exacto de la Instancia General vigente de la Sede electrónica de la Diputación Provincial de Teruel; autenticación, formulario, documentos, firma y presentación final quedan fuera del contrato implementado.",
+      "entryUrl": "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "TERUEL_SEDE_INSTANCIA_GENERAL_PUBLIC_LAUNCH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP35A"
+        "DP35A",
+        "TERUEL-IGN-PROC-2026-08-21",
+        "TERUEL-IGN-LAUNCH-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA_ONLY limitado al launch exacto de Instancia General y al boundary público de identificación. No expone SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH; formato, algoritmo, endpoints y flujo posterior permanecen NO_VERIFICADO. Falta E2E físico."
     },
     {
       "portalId": "diputacion-toledo-sede",
@@ -4788,29 +4797,33 @@
     {
       "portalId": "diputacion-bizkaia-sede",
       "inventoryId": "ES-PUB-0176",
-      "profileId": null,
-      "displayName": "Sede electrónica de Diputación Foral de Bizkaia",
+      "profileId": "diputacion-bizkaia-instancia-generica",
+      "displayName": "Instancia genérica — Diputación Foral de Bizkaia",
       "organization": "Diputación Foral de Bizkaia",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "País Vasco",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://www.ebizkaia.eus",
+      "purpose": "Navegación QA-only a la Instancia genérica vigente 1664/4912 de eBizkaia. El launch exacto alcanza el selector de identificación Giltza/Izenpe; no se declara capacidad de firma, client TLS ni presentación.",
+      "entryUrl": "https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "BIZKAIA_INSTANCIA_GENERICA_GILTZA_QA_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP39A",
-        "DP39B"
+        "DP39B",
+        "BIZKAIA-CATALOG-2026-08-21",
+        "BIZKAIA-INSTANCIA-1664-2026-08-21",
+        "BIZKAIA-LAUNCH-4912-2026-08-21",
+        "BIZKAIA-GILTZA-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA_ONLY limitado a navegación del procedimiento exacto hasta el selector Giltza. El selector ofrece certificados digitales, pero no se ha demostrado un contrato CLIENT_TLS_AUTH del WebView ni ABI/formato/algoritmo/endpoint de firma documental; esas capacidades permanecen cerradas."
     },
     {
       "portalId": "diputacion-zamora-sede",

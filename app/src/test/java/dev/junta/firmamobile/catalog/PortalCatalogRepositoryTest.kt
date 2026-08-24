@@ -106,8 +106,11 @@ class PortalCatalogRepositoryTest {
                 "diputacion-lleida-sede",
                 "diputacion-badajoz-portal",
                 "diputacion-alava-registro-comun",
+                "diputacion-bizkaia-instancia-generica",
                 "oepm-protegeo-general",
                 "portal-funciona-public-home",
+                "fondos-europeos-sede-public-home",
+                "diputacion-teruel-instancia-general",
                 "sepes-transportes-public-complaints",
                 "dgsfp-sede-public-home",
                 "cnmv-sede-public-home",
@@ -133,6 +136,7 @@ class PortalCatalogRepositoryTest {
                 "canarias-sede",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "eivissa-sede-electronica",
+                "diputacion-salamanca-instancia-general",
                 "catalunya-peticio-generica-client-auth",
                 "murcia-carm-pase",
                 "enaire-sede-public",
@@ -1983,6 +1987,35 @@ class PortalCatalogRepositoryTest {
         assertFalse(tamperedPortal.isEnabled)
         assertTrue(tamperedPortal.capabilities.isEmpty())
         assertTrue(tamperedPortal.signatureFormats.isEmpty())
+        assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `Fondos Europeos opens only exact public Sede in QA while external services remain fail closed`() {
+        val portalId = PortalId("age-direccion-general-de-fondos-europeos")
+        val profileId = ProfileId("fondos-europeos-sede-public-home")
+        val publicHome = java.net.URI("https://sedefondoscomunitarios.gob.es/")
+
+        val qaPortal = qaRepository.portals().single { it.portalId == portalId }
+        assertEquals(profileId, qaPortal.profileId)
+        assertEquals(publicHome, qaPortal.entryUrl)
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.capabilities.isEmpty())
+        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
+
+        val tamperedCatalog = publicCatalog.copy(entries = publicCatalog.entries.map { entry ->
+            if (entry.portalId == portalId) entry.copy(entryUrl = java.net.URI("https://tramitesfondoseuropeos.hacienda.gob.es/dossier")) else entry
+        })
+        val tampered = PortalCatalogRepository(SiteProfileRegistry(catalog, BuildTrustPolicy.QA), catalog, tamperedCatalog)
+        val tamperedPortal = tampered.portals().single { it.portalId == portalId }
+        assertFalse(tamperedPortal.isEnabled)
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
     }
 
