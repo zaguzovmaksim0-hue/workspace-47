@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 41,
+  "catalogVersion": 42,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1633,6 +1633,30 @@
         {"url":"https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
         {"url":"https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-18"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "catastro-solicitudes-genericas",
+      "profileVersion": 1,
+      "displayName": "Dirección General del Catastro — Otras solicitudes y escritos genéricos",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22",
+      "initiatorOrigins": ["https://www.sedecatastro.gob.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.sedecatastro.gob.es/","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22","reviewedOn":"2026-08-24"},
+        {"url":"https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI","reviewedOn":"2026-08-24"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ResponseRedirect","reviewedOn":"2026-08-24"}
       ]
     },
     {

@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 243 |
 | Fuentes oficiales totales registradas | 255 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 95 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 99 |
-| Entradas restantes fuera de ambos estados | 84 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 96 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 100 |
+| Entradas restantes fuera de ambos estados | 83 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 95 |
+| `IMPLEMENTED_NOT_E2E` | 96 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 77 |
+| `BROWSE_ONLY` | 76 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 146 |
+| `REVIEWED` | 147 |
 | `RECHECK_REQUIRED` | 5 |
-| `DISCOVERED` | 32 |
+| `DISCOVERED` | 31 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -1782,29 +1782,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Dirección General del Catastro"
-    surface_name: "Sede electrónica / entrada oficial del directorio AGE"
+    surface_name: "Dirección General del Catastro — Otras solicitudes y escritos genéricos"
     surface_type: "SEDE"
     origin: "https://www.sedecatastro.gob.es"
     official_site: "https://www.sedecatastro.gob.es/"
     e_sede: "https://www.sedecatastro.gob.es/"
-    entry_url: "https://www.sedecatastro.gob.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    entry_url: "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22"
+    procedure_page: "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22"
+    certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CATASTRO_CLAVE_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Perfil QA-only para otras solicitudes, escritos por discrepancias y documentos genéricos, limitado al launch público exacto y a la frontera de identificación observada."
+    protocol_evidence: "La Sede vigente publica la categoría de trámites en https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx. La entrada exacta Dest=22 muestra el trámite Presentar otras solicitudes, escritos por discrepancias con la descripción catastral y documentos genéricos. El control Ir al formulario realiza un POST same-origin y alcanza https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22, donde se ofrecen certificado digital o Cl@ve. La opción Cl@ve estable apunta a https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI; esa página publica el flujo Cl@ve y un POST boundary a https://pasarela.clave.gob.es/Proxy2/ResponseRedirect. No se conservaron valores de ASP.NET state, SAML ni cookies, y no se envió autenticación."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "CATASTRO-HOME-2026-08-24", "CATASTRO-TRAMITES-2026-08-24", "CATASTRO-DEST22-2026-08-24", "CATASTRO-DNI22-2026-08-24", "CATASTRO-PIN22-2026-08-24", "CATASTRO-CLAVE-2026-08-24"]
+    reason: "Perfil QA-only de navegación. La alternativa de certificado acredita acceso posible, no client TLS ni firma. No se exponen SIGN, CLIENT_TLS_AUTH, endpoint, formato ni algoritmo; sin E2E."
+    reviewed_at: "2026-08-24"
+    next_gate: "Con identidad autorizada, observar el primer estado autenticado del formulario Dest=22; detenerse antes de cualquier firma, registro final, presentación administrativa o pago."
     notes: "Ministerio(s) enumerador(es): Ministerio de Hacienda."
 
   - inventory_id: "ES-PUB-0044"
@@ -6277,6 +6277,12 @@ Orden de expansión recomendado:
 
 ### Evidencia portal-specific
 
+[CATASTRO-HOME-2026-08-24]: https://www.sedecatastro.gob.es/
+[CATASTRO-TRAMITES-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx
+[CATASTRO-DEST22-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22
+[CATASTRO-DNI22-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22
+[CATASTRO-PIN22-2026-08-24]: https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI
+[CATASTRO-CLAVE-2026-08-24]: https://pasarela.clave.gob.es/Proxy2/ResponseRedirect
 [COMERCIO-SURFACE-2026-08-17]: https://comercio.gob.es/
 [COMERCIO-REG-2026-08-17]: https://sede.mineco.gob.es/es/procedimientos-y-servicios-electronicos/areas-tematicas/comercio/detalle-procedimiento?val=3057517
 [DIGITAL-SEDE-REG-2026-08-17]: https://digital.sede.gob.es/servicio?id=Procedimientos-electr%C3%B3nicos-disponibles-en-la-Sede-Electr%C3%B3nica
