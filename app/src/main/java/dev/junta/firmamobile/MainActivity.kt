@@ -30,6 +30,7 @@ import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
 import dev.junta.firmamobile.browser.HuescaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.HuescaBatchSigningAdapter
+import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.LaPalmaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.LaPalmaBatchSigningAdapter
 import dev.junta.firmamobile.browser.LugoBatchBridgeAdapter

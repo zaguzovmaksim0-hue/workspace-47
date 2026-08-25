@@ -294,7 +294,9 @@ private class ProtocolProbeWebViewClient(
                 logger.recordAfirmaRequest(decision.request)
                 true
             }
-            is NavigationDecision.OpenExternal -> {
+            is NavigationDecision.OpenExternal,
+            is NavigationDecision.OpenOfficialAutoFirma,
+            -> {
                 logger.recordBrowserEvent(DiagnosticEventCode.NAVIGATION_BLOCKED)
                 true
             }
