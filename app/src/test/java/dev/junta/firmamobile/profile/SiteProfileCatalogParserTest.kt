@@ -920,6 +920,7 @@ class SiteProfileCatalogParserTest {
         val qaOnly = setOf(
             junta,
             education,
+            ProfileId("formentera-sede-electronica"),
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "88353fd4be9f5a33adbd6adfa87ba5d5b0fcf6dd073d6d5edb9a52d1d52319dc",
+  "sourceRevision": "eaaf0951f4da10681c4135d924ac9e0eac621f7f0f583e0d59761a25e6f1c5fc",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3399,27 +3399,28 @@
     {
       "portalId": "formentera-sede-electronica",
       "inventoryId": "ES-PUB-0124",
-      "profileId": null,
+      "profileId": "formentera-sede-electronica",
       "displayName": "Sede electrónica / OVAC del Consell Insular de Formentera",
       "organization": "Consell Insular de Formentera",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "purpose": "Navegación QA-only al catálogo público OVAC exacto, sin autenticación, firma ni presentación administrativa.",
       "entryUrl": "https://ovac.conselldeformentera.cat/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "ABSIS_OVAC_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I04B"
+        "I04B",
+        "FORMENTERA-OVAC-2026-08-16"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-16",
+      "limitations": "Perfil QA-only limitado a la navegación pública exacta de la raíz OVAC y su destino meta-refresh same-origin; la firma, autenticación, client TLS y presentación final permanecen fuera del contrato, por lo que E2E sigue pendiente."
     },
     {
       "portalId": "el-hierro-portal-institucional",

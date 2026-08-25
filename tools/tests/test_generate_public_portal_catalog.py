@@ -172,6 +172,25 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("E2E_PENDING", girona["catalogStatus"])
         self.assertEqual("2026-08-21", girona["reviewedOn"])
 
+    def test_formentera_profile_binds_exact_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        formentera = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "formentera-sede-electronica"
+        )
+
+        self.assertEqual("formentera-sede-electronica", formentera["profileId"])
+        self.assertEqual("ES-PUB-0124", formentera["inventoryId"])
+        self.assertEqual("https://ovac.conselldeformentera.cat/", formentera["entryUrl"])
+        self.assertNotIn("launchUrl", formentera)
+        self.assertEqual("ABSIS_OVAC_PUBLIC_NAVIGATION", formentera["protocolFamily"])
+        self.assertEqual("E2E_PENDING", formentera["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", formentera["inventoryStatus"])
+        self.assertEqual("2026-08-16", formentera["reviewedOn"])
+        self.assertIn("CERTIFICATE_ACCESS", formentera["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", formentera["observedMechanisms"])
+        self.assertEqual([], formentera["observedSignatureFormats"])
+
     def test_committed_resource_is_byte_for_byte_reproducible(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         generated = json.dumps(
