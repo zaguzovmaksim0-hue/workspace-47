@@ -1588,6 +1588,26 @@
       ]
     },
     {
+      "profileId": "comunidad-madrid-gestiona2-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Comunidad de Madrid — gestiona2 / navegación pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",
+      "initiatorOrigins": ["https://gestiona2.comunidad.madrid"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094","reviewedOn":"2026-08-25"},
+        {"url":"https://gestiona2.comunidad.madrid/gpse_solicitud/index_seleccion.jsf","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
       "profileId": "junta-andalucia-vea-peg",
       "profileVersion": 1,
       "displayName": "Junta de Andalucía — Presentación electrónica general",

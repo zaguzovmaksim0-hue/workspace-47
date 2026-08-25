@@ -141,9 +141,9 @@ histórica de la matriz ni constituye una escala automática:
 
 P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW), P20 (Oficina Virtual) y P17 (UniZAR) cuentan con verificación E2E delimitada a sus logins CAdES observados el 2026-07-28, 2026-07-29 y 2026-07-30, respectivamente. Tests locales, hashes de JS y
 revisión documental nunca producen por sí solos ese estado. La implementación Junta Ovorion se
-mapea a `IMPLEMENTED_NOT_E2E`; los dos flujos móviles que la matriz marcaba
-como no soportados se mapean a `UNSUPPORTED_PROTOCOL`, con razón específica en
-cada ficha. No se asigna `REQUIRES_AUTHENTICATED_RESEARCH` sin demostrar antes
+mapea a `IMPLEMENTED_NOT_E2E`; el flujo móvil que permanece no soportado se
+mantiene en `UNSUPPORTED_PROTOCOL`, con razón específica en su ficha. No se asigna
+`REQUIRES_AUTHENTICATED_RESEARCH` sin demostrar antes
 que la investigación pública segura se agotó.
 
 ### 3.3. Autenticación TLS cliente
@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 176 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 180 |
-| Entradas restantes fuera de ambos estados | 3 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 177 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 181 |
+| Entradas restantes fuera de ambos estados | 2 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,11 +220,11 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 176 |
+| `IMPLEMENTED_NOT_E2E` | 177 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 0 |
-| `UNSUPPORTED_PROTOCOL` | 2 |
+| `UNSUPPORTED_PROTOCOL` | 1 |
 | `INACCESSIBLE` | 1 |
 | `DEPRECATED` | 0 |
 | **Total** | **183** |
@@ -857,20 +857,20 @@ records:
     procedure_page: "https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094"
     certificate_required: "SI"
     signature_required: "SI"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "AutoFirma"
+    protocol_family: "MADRID_GESTIONA2_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "UNSUPPORTED_PROTOCOL"
-    operation_summary: "Acceso con certificado y firma AutoFirma del trámite observado."
-    protocol_evidence: "El frontend público presenta una exclusión explícita de móvil/tableta."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la página pública exacta del trámite; identificación, AutoFirma, firma, registro y justificante quedan fuera del contrato."
+    protocol_evidence: "El HTML first-party vigente publica la página pública exacta, sus accesos con certificado y la ayuda técnica de AutoFirma/certificado/Java. El mismo frontend contiene una función isMobileOrTablet que muestra «No se puede realizar la solicitud desde dispositivo móvil o tableta»; por ello el perfil implementa únicamente la navegación pública y no expone ninguna operación sensible."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P08B"]
-    reason: "El propio frontend declara que la solicitud no puede realizarse desde móvil o tableta."
-    reviewed_at: "2026-07-15"
-    next_gate: "Mantener bloqueado; revalidar solo ante cambio oficial."
+    evidence_ids: ["P08B", "MADRID-GESTIONA2-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado al launch exacto de la página pública; la solicitud móvil sigue bloqueada por la advertencia first-party y no se afirma compatibilidad de certificado, AutoFirma, firma, registro ni E2E."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar solo la navegación exacta en Android; mantener identificación, certificado, AutoFirma, firma y envío bloqueados hasta evidencia oficial de soporte móvil."
 
   - inventory_id: "ES-PUB-0014"
     surface_key: "aragon-siraw"
@@ -6366,6 +6366,7 @@ Orden de expansión recomendado:
 [P08]: https://sede.comunidad.madrid/guia-tramitacion/realizo-solicitud
 [P08A]: https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid
 [P08B]: https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094
+[MADRID-GESTIONA2-NAV-2026-08-25]: https://gestiona2.comunidad.madrid/gpse_solicitud/index_seleccion.jsf
 [P09]: https://www.sede.diputaciondevalladolid.es/requisitos-tecnicos
 [P09A]: https://www.sede.diputaciondevalladolid.es/preguntas-frecuentes
 [VALLADOLID-PROCEDURE-2026-08-13]: https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/
