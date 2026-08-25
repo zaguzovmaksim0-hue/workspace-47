@@ -46,7 +46,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val euskadiClientAuthPost: Boolean,
 )
 
-class WebMessageBridge(
+class WebMessageBridge internal constructor(
     private val profileId: ProfileId,
     private val logger: SanitizedLogger,
     private val onAfirmaRequest: (AfirmaRequest) -> Unit,
