@@ -324,6 +324,7 @@ class ClientAuthWebViewClientTest {
     private class RecordingCallbacks(private val onStart: () -> Unit) : BrowserNavigationCallbacks {
         val events = mutableListOf<String>()
         override fun openExternal(uri: Uri) = Unit
+        override fun openOfficialAutoFirma(uri: Uri) = Unit
         override fun onAfirmaRequest(request: AfirmaRequest) = Unit
         override fun onNavigationBlocked(reason: NavigationBlockReason) {
             events += "blocked:${reason.name}"

@@ -212,6 +212,19 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateSeguridadSocialAutoFirmaProfile(profile: SiteProfile) {
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl == URI(SEGURIDAD_SOCIAL_AUTOFIRMA_START_URL))
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(SEGURIDAD_SOCIAL_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities.isEmpty())
+        require(profile.clientAuthPolicy == null)
+    }
+
     private fun certificateRules(value: JValue): CertificateFilterRules {
         val o = value.obj("certificateRules")
         o.exact("allowedKeyAlgorithms", "requireDigitalSignatureKeyUsage")
@@ -376,6 +389,9 @@ object SiteProfileCatalogParser {
             }
             if (p.profileId.value == ACCEDA_PROFILE_ID) {
                 validateAccedaProfile(p)
+            }
+            if (p.profileId.value == SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID) {
+                validateSeguridadSocialAutoFirmaProfile(p)
             }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
@@ -2659,6 +2675,10 @@ object SiteProfileCatalogParser {
     private const val TARRAGONA_INITIATOR_ORIGIN = "https://seuelectronica.dipta.cat"
     private const val TARRAGONA_INTEGRATOR_ORIGIN = "https://egovern.altanet.org"
     private const val TARRAGONA_VALID_ORIGIN = "https://valid.aoc.cat"
+    private const val SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID = "seguridad-social-sede-autofirma"
+    private const val SEGURIDAD_SOCIAL_ORIGIN = "https://sede.seg-social.gob.es"
+    private const val SEGURIDAD_SOCIAL_AUTOFIRMA_START_URL =
+        "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es"
     private const val TARRAGONA_VALID_SOURCE = "https://valid.aoc.cat/o/oauth2/auth"
     private const val TARRAGONA_CERT_ORIGIN = "https://cert.valid.aoc.cat"
     private const val TARRAGONA_CERT_PATH = "/o/oauth2/cert"

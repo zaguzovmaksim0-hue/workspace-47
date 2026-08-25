@@ -63,6 +63,7 @@ class WebMessageRouter(
             )
             NavigationDecision.AllowInWebView,
             is NavigationDecision.OpenExternal,
+            is NavigationDecision.OpenOfficialAutoFirma,
             is NavigationDecision.UpgradeToHttps,
             -> WebMessageRouteResult.Rejected(
                 requestId = parsed.requestId,

@@ -94,6 +94,8 @@ class JuntaWebViewClientInstrumentedTest {
             externalOpened = true
         }
 
+        override fun openOfficialAutoFirma(uri: Uri) = Unit
+
         override fun onAfirmaRequest(request: AfirmaRequest) {
             afirmaObserved = true
         }

@@ -30,6 +30,7 @@ import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
 import dev.junta.firmamobile.browser.HuescaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.HuescaBatchSigningAdapter
+import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.LaPalmaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.LaPalmaBatchSigningAdapter
 import dev.junta.firmamobile.browser.LugoBatchBridgeAdapter
@@ -382,6 +383,19 @@ class MainActivity : ComponentActivity() {
                                 startActivity(Intent(Intent.ACTION_VIEW, uri))
                             } catch (_: ActivityNotFoundException) {
                                 // The validated URL stays closed if no browser can handle it.
+                            }
+                        },
+                        onOpenOfficialAutoFirma = { uri ->
+                            cancelSigning(SigningCancelReason.NAVIGATION)
+                            try {
+                                startActivity(
+                                    Intent(Intent.ACTION_VIEW, uri)
+                                        .setPackage(JuntaNavigationPolicy.AUTOFIRMA_PACKAGE),
+                                )
+                            } catch (_: ActivityNotFoundException) {
+                                // Keep the validated request closed if official AutoFirma is unavailable.
+                            } catch (_: SecurityException) {
+                                // Fail closed if Android refuses the explicit external package handoff.
                             }
                         },
                         onChangeCertificate = {

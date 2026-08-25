@@ -90,6 +90,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-cuenca-portal"),
                 ProfileId("generalitat-valenciana-client-auth"),
                 ProfileId("tgss-importass-client-auth"),
+                ProfileId("seguridad-social-sede-autofirma"),
                 ProfileId("ministerio-sanidad-certificado"),
                 ProfileId("tea-alegaciones-certificado"),
                 ProfileId("tenerife-sede-electronica"),

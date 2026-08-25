@@ -55,12 +55,13 @@ class CatalogSmokeControllerTest {
     @Test
     fun `metadata only entries stay catalog only even when certificate is unlocked`() {
         val opened = mutableListOf<PortalLaunchTarget>()
+        val metadataOnly = repository.portals().single { it.profileId == null }
         val outcome = controller(unlocked = true, opened = opened).execute(
-            CatalogSmokeRequest("run-2", "seguridad-social-sede", "OPEN"),
+            CatalogSmokeRequest("run-2", metadataOnly.portalId.value, "OPEN"),
         )
 
         assertEquals(CatalogSmokeResultCode.CATALOG_ONLY, outcome.result)
-        assertEquals(PortalId("seguridad-social-sede"), outcome.portalId)
+        assertEquals(metadataOnly.portalId, outcome.portalId)
         assertNull(outcome.profileId)
         assertTrue(opened.isEmpty())
     }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 60,
+  "catalogVersion": 61,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3350,6 +3350,28 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://sede.isfas.gob.es/","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "seguridad-social-sede-autofirma",
+      "profileVersion": 1,
+      "displayName": "Seguridad Social — Apoderamiento por trámites / AutoFirma",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es",
+      "initiatorOrigins": ["https://sede.seg-social.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es","reviewedOn":"2026-08-25"},
+        {"url":"https://sede.seg-social.gob.es/wps/portal/sede/Seguridad/PortalRedirectorN3A?A=&N3=&idApp=826&idContenido=a061f401-c3ed-426e-9428-82bd9198c223&idPagina=com.ss.sede.RegistroElectronicoDeApoderamiento","reviewedOn":"2026-08-25"},
+        {"url":"https://sede.seg-social.gob.es/binarios/es/1503Autofirma","reviewedOn":"2026-08-25"},
+        {"url":"https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es","reviewedOn":"2026-08-25"}
       ]
     },
     {

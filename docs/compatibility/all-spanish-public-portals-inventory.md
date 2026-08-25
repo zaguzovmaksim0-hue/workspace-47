@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 177 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 181 |
-| Entradas restantes fuera de ambos estados | 2 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 178 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 182 |
+| Entradas restantes fuera de ambos estados | 1 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,11 +220,11 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 177 |
+| `IMPLEMENTED_NOT_E2E` | 178 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 0 |
-| `UNSUPPORTED_PROTOCOL` | 1 |
+| `UNSUPPORTED_PROTOCOL` | 0 |
 | `INACCESSIBLE` | 1 |
 | `DEPRECATED` | 0 |
 | **Total** | **183** |
@@ -606,29 +606,29 @@ records:
     autonomous_community: "NO_APLICA"
     province_or_municipality: "NO_APLICA"
     institution_name: "Instituto Nacional de la Seguridad Social"
-    surface_name: "Sede Electrónica de la Seguridad Social"
+    surface_name: "Sede Electrónica de la Seguridad Social — Apoderamiento por trámites"
     surface_type: "SEDE"
     origin: "https://sede.seg-social.gob.es"
     official_site: "https://sede.seg-social.gob.es/"
     e_sede: "https://sede.seg-social.gob.es/"
-    entry_url: "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es"
+    procedure_page: "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es"
     certificate_required: "SI"
     signature_required: "SI"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "AUTOFIRMA"
+    protocol_family: "SEDESS_EXTERNAL_AUTOFIRMA_ANDROID_HANDOFF"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "UNSUPPORTED_PROTOCOL"
-    operation_summary: "Firma de trámites de la Sede mediante AutoFirma."
-    protocol_evidence: "La fuente oficial documenta AutoFirma de escritorio y declara que esa firma no funciona en móvil."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only al trámite oficial Apoderamiento por trámites y handoff fail-closed de la invocación afirma://sign generada por SEDESS al cliente Android oficial AutoFirma; Junta Firma Mobile no ejecuta la firma local ni suplanta el paquete de AutoFirma."
+    protocol_evidence: "El manual oficial AutoFirma de la Seguridad Social documenta que sus aplicaciones web invocan AutoFirma y muestra como ejemplo concreto Registro Electrónico de Apoderamientos → Apoderamiento por trámites. La ficha pública vigente expone Obtener Acceso mediante idApp=826; la navegación GET observada conserva en com.ibm.portal.SUA_WPReqURL el retorno HTTPS /wps/myportal/sede/ con idApp=826, idContenido=a061f401-c3ed-426e-9428-82bd9198c223 e idPagina=com.ss.sede.RegistroElectronicoDeApoderamiento. El cliente Android oficial AutoFirma declara un intent-filter browsable para scheme afirma y host sign; el runtime QA delega únicamente ese handoff saneado al paquete externo es.gob.afirma. No se observaron públicamente algorithm, format, payload, Storage/Retrieve ni callback exactos y no se infieren."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P03", "D11"]
-    reason: "El flujo AutoFirma documentado por la propia Sede no funciona en dispositivos móviles."
-    reviewed_at: "2026-07-15"
-    next_gate: "Mantener bloqueado hasta un cambio oficial y una investigación nueva."
+    evidence_ids: ["P03", "D11", "SEDESS-APODERAMIENTO-2026-08-25", "SEDESS-AUTOFIRMA-MANUAL-2026-08-25", "SEDESS-AUTOFIRMA-ANDROID-2026-08-25"]
+    reason: "Perfil QA_ONLY sin capability SIGN: implementa solo navegación pública y delegación externa exacta afirma://sign al AutoFirma oficial desde el retorno HTTPS acotado de idApp=826. applicationId de Junta Firma Mobile permanece dev.junta.firmamobile; es.gob.afirma se usa solo como package externo. Autenticación, selección de certificado, firma criptográfica, aceptación del callback y presentación administrativa no se ejecutaron; E2E queda pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Con autorización separada, validar en Android físico el retorno autenticado exacto de idApp=826 y confirmar que la invocación portal-generated AutoFirma coincide con el handoff permitido; detenerse antes de firmar o presentar salvo autorización explícita adicional."
 
   - inventory_id: "ES-PUB-0006"
     surface_key: "tgss-importass"
@@ -6771,3 +6771,6 @@ availability, certificado, firma ni contrato técnico.
 [FNMT-TRAMITES-2026-08-24]: https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general
 
 [FNMT-REG-2026-08-24]: https://rec.redsara.es/registro/action/are/acceso.do
+[SEDESS-APODERAMIENTO-2026-08-25]: https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es
+[SEDESS-AUTOFIRMA-MANUAL-2026-08-25]: https://sede.seg-social.gob.es/binarios/es/1503Autofirma
+[SEDESS-AUTOFIRMA-ANDROID-2026-08-25]: https://github.com/ctt-gob-es/firma-android/blob/master/afirma-ui-android/app/src/main/AndroidManifest.xml

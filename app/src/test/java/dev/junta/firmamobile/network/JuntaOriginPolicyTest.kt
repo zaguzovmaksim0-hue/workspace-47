@@ -183,6 +183,7 @@ class JuntaOriginPolicyTest {
             "ptt-clave.gva.es",
             "ptt-clave-clientcert.gva.es",
             "portal.seg-social.gob.es",
+            "sede.seg-social.gob.es",
             "idp.seg-social.es",
             "ipce.seg-social.es",
             "sede.mscbs.gob.es",
