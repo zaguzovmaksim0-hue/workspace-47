@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 153 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 157 |
-| Entradas restantes fuera de ambos estados | 26 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 156 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 160 |
+| Entradas restantes fuera de ambos estados | 23 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 153 |
+| `IMPLEMENTED_NOT_E2E` | 156 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 19 |
+| `BROWSE_ONLY` | 16 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
