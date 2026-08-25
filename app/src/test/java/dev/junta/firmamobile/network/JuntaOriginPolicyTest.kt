@@ -51,6 +51,7 @@ class JuntaOriginPolicyTest {
     private val lugo = ProfileId("diputacion-lugo-sede")
     private val leon = ProfileId("diputacion-leon-sede")
     private val albacete = ProfileId("diputacion-albacete-portal")
+    private val jaen = ProfileId("diputacion-jaen-sede")
     private val sanidad = ProfileId("ministerio-sanidad-certificado")
     private val tea = ProfileId("tea-alegaciones-certificado")
     private val tenerife = ProfileId("tenerife-sede-electronica")
@@ -62,6 +63,7 @@ class JuntaOriginPolicyTest {
     private val badajoz = ProfileId("diputacion-badajoz-portal")
     private val xunta = ProfileId("xunta-galicia-solicitude-xenerica")
     private val canarias = ProfileId("canarias-sede")
+    private val catalunyaSeu = ProfileId("catalunya-seu-registre-client-auth")
     private val oepm = ProfileId("oepm-protegeo-general")
     private val funciona = ProfileId("portal-funciona-public-home")
     private val madrid53f1 = ProfileId("comunidad-madrid-cuenta-digital-53f1")
@@ -150,6 +152,8 @@ class JuntaOriginPolicyTest {
             "sede.dipuleon.es",
             "sede.dipualba.es",
             "identificacionssl.sedipualba.es",
+            "sede.dipujaen.es",
+            "cert2.dipujaen.es",
             "cim.secimallorca.net",
             "www.tramita.gva.es",
             "ptt-clave.gva.es",
@@ -251,6 +255,7 @@ class JuntaOriginPolicyTest {
             "sede.dipucadiz.es",
             "sso.dipucadiz.es",
             "sede.dipucuenca.es",
+            "web.gencat.cat",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -789,6 +794,9 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(leon).isEmpty())
         assertEquals(setOf("sede.dipualba.es"), JuntaOriginPolicy.browserAllowedHosts(albacete))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(albacete).isEmpty())
+        assertEquals(setOf("sede.dipujaen.es"), JuntaOriginPolicy.browserAllowedHosts(jaen))
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(jaen).isEmpty())
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://cert2.dipujaen.es/"), jaen))
         assertEquals(setOf("sede.mscbs.gob.es"), JuntaOriginPolicy.browserAllowedHosts(sanidad))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(sanidad).isEmpty())
         assertEquals(setOf("sede.tea.hacienda.gob.es"), JuntaOriginPolicy.browserAllowedHosts(tea))
@@ -866,6 +874,18 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://sede.gobiernodecanarias.org"),
             JuntaOriginPolicy.webMessageOriginRules(canarias),
+        )
+        assertEquals(
+            setOf("web.gencat.cat", "tramits.gencat.cat", "ovt.gencat.cat", "valid.aoc.cat"),
+            JuntaOriginPolicy.browserAllowedHosts(catalunyaSeu),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(catalunyaSeu).isEmpty())
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://cert.valid.aoc.cat/o/oauth2/cert")))
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://cert.valid.aoc.cat/o/oauth2/cert"),
+                catalunyaSeu,
+            ),
         )
     }
 

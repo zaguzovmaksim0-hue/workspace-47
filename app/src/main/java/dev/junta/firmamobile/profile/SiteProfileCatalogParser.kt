@@ -289,6 +289,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == GVA_PROFILE_ID) {
                 validateGvaProfile(p)
             }
+            if (p.profileId.value == JAEN_PROFILE_ID) {
+                validateJaenProfile(p)
+            }
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
@@ -336,6 +339,9 @@ object SiteProfileCatalogParser {
             }
             if (p.profileId.value == CATALUNYA_PROFILE_ID) {
                 validateCatalunyaProfile(p)
+            }
+            if (p.profileId.value == CATALUNYA_SEU_PROFILE_ID) {
+                validateCatalunyaSeuProfile(p)
             }
             if (p.profileId.value == MUGEJU_PROFILE_ID) {
                 validateMugejuProfile(p)
@@ -420,7 +426,15 @@ object SiteProfileCatalogParser {
                 }
                 require(policy.sourceUrls.all { source ->
                     val allowedSourceOrigins = if (
-                        p.profileId.value in setOf(AIREF_PROFILE_ID, ASTURIAS_PROFILE_ID, EDUCATION_PROFILE_ID, CATALUNYA_PROFILE_ID, MUGEJU_PROFILE_ID, JCCM_REGISTRO_PROFILE_ID)
+                        p.profileId.value in setOf(
+                            AIREF_PROFILE_ID,
+                            ASTURIAS_PROFILE_ID,
+                            EDUCATION_PROFILE_ID,
+                            CATALUNYA_PROFILE_ID,
+                            CATALUNYA_SEU_PROFILE_ID,
+                            MUGEJU_PROFILE_ID,
+                            JCCM_REGISTRO_PROFILE_ID,
+                        )
                     ) {
                         p.initiatorOrigins + p.redirectOrigins
                     } else {
@@ -1362,6 +1376,42 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
     }
 
+    private fun validateCatalunyaSeuProfile(profile: SiteProfile) {
+        require(profile.profileVersion == CATALUNYA_SEU_PROFILE_VERSION)
+        require(profile.displayName == CATALUNYA_SEU_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CATALUNYA_SEU_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CATALUNYA_SEU_ORIGIN)))
+        require(
+            profile.redirectOrigins == setOf(
+                ExactOrigin.parse(CATALUNYA_TRAMITS_ORIGIN),
+                ExactOrigin.parse(CATALUNYA_OVT_ORIGIN),
+                ExactOrigin.parse(CATALUNYA_VALID_ORIGIN),
+            ),
+        )
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(CATALUNYA_CERT_ORIGIN)),
+                sourceUrls = setOf(URI(CATALUNYA_VALID_SOURCE_URL)),
+                requestPath = CATALUNYA_CERT_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CATALUNYA_SEU_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validateEducationProfile(profile: SiteProfile) {
         require(profile.profileVersion == EDUCATION_PROFILE_VERSION)
         require(profile.displayName == EDUCATION_DISPLAY_NAME)
@@ -1800,6 +1850,39 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
 
+    private fun validateJaenProfile(profile: SiteProfile) {
+        require(profile.profileVersion == JAEN_PROFILE_VERSION)
+        require(profile.displayName == JAEN_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == JAEN_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(JAEN_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(JAEN_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(JAEN_SOURCE_URL)),
+                requestPath = "/",
+                fixedQueryParameters = linkedMapOf("back" to JAEN_SOURCE_URL),
+                requiredEphemeralQueryParameters = setOf("key"),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == JAEN_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+    }
+
     private fun validateSevillaAtseProfile(profile: SiteProfile) {
         require(profile.profileVersion == SEVILLA_ATSE_PROFILE_VERSION)
         require(profile.displayName == SEVILLA_ATSE_DISPLAY_NAME)
@@ -2138,8 +2221,26 @@ object SiteProfileCatalogParser {
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 firstIsRedirectOrigin && secondIsRedirectOrigin &&
-                    owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) &&
+                    (owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) ||
+                        owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID)) &&
                     origin.serialized == CATALUNYA_VALID_ORIGIN
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                firstIsRedirectOrigin && secondIsRedirectOrigin &&
+                    owners == setOf(CATALUNYA_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID) &&
+                    origin.serialized == CATALUNYA_VALID_ORIGIN
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                owners == setOf(CATALUNYA_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID) &&
+                    ((firstIsRedirectOrigin != secondIsRedirectOrigin &&
+                        origin.serialized == CATALUNYA_PUBLIC_ORIGIN) ||
+                        (firstIsRedirectOrigin && secondIsRedirectOrigin &&
+                            origin.serialized == CATALUNYA_OVT_ORIGIN))
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+                    owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID) &&
+                    origin.serialized == CATALUNYA_CERT_ORIGIN
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
@@ -2622,6 +2723,36 @@ object SiteProfileCatalogParser {
         CATALUNYA_CLIENT_AUTH_SOURCE_URL,
         "$CATALUNYA_CLIENT_AUTH_ORIGIN$CATALUNYA_CLIENT_AUTH_REQUEST_PATH",
     )
+    private const val CATALUNYA_SEU_PROFILE_ID = "catalunya-seu-registre-client-auth"
+    private const val CATALUNYA_SEU_PROFILE_VERSION = 1
+    private const val CATALUNYA_SEU_DISPLAY_NAME =
+        "Generalitat de Catalunya — Registre electrònic — acceso con certificado"
+    private const val CATALUNYA_SEU_START_URL =
+        "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/"
+    private const val CATALUNYA_SEU_ORIGIN = "https://web.gencat.cat"
+    private const val CATALUNYA_TRAMITS_ORIGIN = "https://tramits.gencat.cat"
+    private const val CATALUNYA_CERT_ORIGIN = "https://cert.valid.aoc.cat"
+    private const val CATALUNYA_CERT_REQUEST_PATH = "/o/oauth2/cert"
+    private const val CATALUNYA_VALID_SOURCE_URL =
+        "https://valid.aoc.cat/o/oauth2/auth?lang=ca&scope=autenticacio_usuari&state=state&" +
+            "redirect_uri=https%3A%2F%2Fovt.gencat.cat%2Fgsitfc%2FAppJava%2Fredirectservlet&" +
+            "response_type=code&client_id=gsit.gencat.cat&approval_prompt=auto"
+    private const val CATALUNYA_PETICIO_URL =
+        "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
+            "category=72461610-a82c-11e3-a972-000c29052e2c"
+    private const val CATALUNYA_OVT_SIGNED_URL =
+        "https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?" +
+            "reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&" +
+            "urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2F" +
+            "Peticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c"
+    private val CATALUNYA_SEU_EVIDENCE_URLS = setOf(
+        CATALUNYA_SEU_START_URL,
+        CATALUNYA_PETICIO_URL,
+        CATALUNYA_OVT_SIGNED_URL,
+        "https://valid.aoc.cat/o/oauth2/auth",
+        "https://valid.aoc.cat/o/oauth2/js/login.js",
+        "$CATALUNYA_CERT_ORIGIN$CATALUNYA_CERT_REQUEST_PATH",
+    )
     private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
     private const val POLICIA_PROFILE_VERSION = 1
     private const val POLICIA_DISPLAY_NAME = "Policía Nacional — Solicitud genérica"
@@ -2781,6 +2912,19 @@ object SiteProfileCatalogParser {
         GVA_START_URL,
         GVA_SOURCE_URL,
         "https://ptt-clave-clientcert.gva.es/pttclave/retornoClientCert.html",
+    )
+    private const val JAEN_PROFILE_ID = "diputacion-jaen-sede"
+    private const val JAEN_PROFILE_VERSION = 1
+    private const val JAEN_DISPLAY_NAME = "Diputación Provincial de Jaén — acceso con certificado"
+    private const val JAEN_START_URL = "https://sede.dipujaen.es/SolicitudGenerica"
+    private const val JAEN_ORIGIN = "https://sede.dipujaen.es"
+    private const val JAEN_SOURCE_URL = "https://sede.dipujaen.es/IniciarSesion/Certificado"
+    private const val JAEN_CLIENT_AUTH_ORIGIN = "https://cert2.dipujaen.es"
+    private val JAEN_EVIDENCE_URLS = setOf(
+        JAEN_START_URL,
+        "https://sede.dipujaen.es/IniciarSesion",
+        JAEN_SOURCE_URL,
+        "$JAEN_CLIENT_AUTH_ORIGIN/",
     )
     private const val TRANSPORTES_PROFILE_ID = "transportes-qys-cert-login"
     private const val SEPES_TRANSPORTES_PROFILE_ID = "sepes-transportes-public-complaints"

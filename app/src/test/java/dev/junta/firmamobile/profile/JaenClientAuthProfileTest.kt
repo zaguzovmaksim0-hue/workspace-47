@@ -24,81 +24,60 @@ import org.robolectric.annotation.SQLiteMode
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
-class CatalunyaClientAuthProfileTest {
-    private val profileId = ProfileId("catalunya-peticio-generica-client-auth")
-    private val portalId = PortalId("catalunya-tramits-peticio-generica")
-    private val startUrl = URI(
-        "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
-            "category=72461610-a82c-11e3-a972-000c29052e2c",
-    )
-    private val sourceUrl = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
+class JaenClientAuthProfileTest {
+    private val profileId = ProfileId("diputacion-jaen-sede")
+    private val portalId = PortalId("diputacion-jaen-sede")
+    private val startUrl = URI("https://sede.dipujaen.es/SolicitudGenerica")
+    private val sourceUrl = URI("https://sede.dipujaen.es/IniciarSesion/Certificado")
 
     @Test
-    fun qaProfilePinsOnlyTheObservedClaveIdentifierClientTlsBoundary() {
+    fun qaProfilePinsObservedCert2RedirectClientTlsBoundaryAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
         assertEquals(1, profile.profileVersion)
-        assertEquals("Generalitat de Catalunya — Petició genèrica — acceso con certificado", profile.displayName)
+        assertEquals("Diputación Provincial de Jaén — acceso con certificado", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
-        assertEquals(setOf(ExactOrigin.parse("https://tramits.gencat.cat")), profile.initiatorOrigins)
-        assertEquals(
-            setOf(
-                ExactOrigin.parse("https://ovt.gencat.cat"),
-                ExactOrigin.parse("https://valid.aoc.cat"),
-                ExactOrigin.parse("https://pasarela.clave.gob.es"),
-            ),
-            profile.redirectOrigins,
-        )
-        val sharedAocOrigin = ExactOrigin.parse("https://valid.aoc.cat")
-        val sharedAocOwners = BuiltInSiteProfiles.catalog.profiles.filter { candidate ->
-            sharedAocOrigin in candidate.initiatorOrigins ||
-                sharedAocOrigin in candidate.redirectOrigins ||
-                sharedAocOrigin in candidate.trustedBrowseOrigins ||
-                sharedAocOrigin in (candidate.clientAuthPolicy?.requestOrigins ?: emptySet())
-        }.map { it.profileId }.toSet()
-        assertEquals(
-            setOf(
-                ProfileId("diputacion-barcelona-solicitud-generica-2057"),
-                profileId,
-                ProfileId("catalunya-seu-registre-client-auth"),
-            ),
-            sharedAocOwners,
-        )
+        assertEquals(setOf(ExactOrigin.parse("https://sede.dipujaen.es")), profile.initiatorOrigins)
+        assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
-        assertTrue(profile.endpoints.isEmpty())
-        assertTrue(profile.operationPolicies.isEmpty())
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
-        assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+
+        assertEquals(ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE, policy.transitionMode)
+        assertEquals(setOf(ExactOrigin.parse("https://cert2.dipujaen.es")), policy.requestOrigins)
         assertEquals(setOf(sourceUrl), policy.sourceUrls)
-        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
-        assertTrue(policy.fixedQueryParameters.isEmpty())
-        assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
         assertTrue(policy.sourceFixedQueryParameters.isEmpty())
         assertTrue(policy.sourceRequiredEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.linkedEphemeralQueryParameters.isEmpty())
+        assertEquals("/", policy.requestPath)
+        assertEquals(
+            mapOf("back" to "https://sede.dipujaen.es/IniciarSesion/Certificado"),
+            policy.fixedQueryParameters,
+        )
+        assertEquals(setOf("key"), policy.requiredEphemeralQueryParameters)
         assertEquals(443, policy.requestPort)
-        assertTrue(policy.allowEmptyIssuerList)
+        assertFalse(policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)
-        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertEquals(4, profile.evidence.size)
         assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-19" })
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(sourceUrl)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://tramits.gencat.cat.evil.example/")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://tramits.gencat.cat:444/")))
     }
 
     @Test
-    fun publicCatalogPromotesClientTlsOnlyAndKeepsSigningUnknown() {
+    fun publicCatalogBindsClientTlsWithoutPromotingAutofirmaSigningContract() {
         val publicCatalog = loadBundledPublicPortalCatalog()
-        val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0105" }
+        val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0160" }
 
         assertEquals(portalId, entry.portalId)
         assertEquals(profileId, entry.profileId)
@@ -110,17 +89,19 @@ class CatalunyaClientAuthProfileTest {
         assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in entry.observedMechanisms)
         assertTrue(entry.observedSignatureFormats.isEmpty())
         assertEquals("2026-08-19", entry.reviewedOn.toString())
-        assertTrue(entry.limitations.contains("GSIT", ignoreCase = true))
-        assertTrue(entry.limitations.contains("firma", ignoreCase = true))
-        assertTrue(entry.limitations.contains("formato", ignoreCase = true))
-        assertTrue(entry.limitations.contains("algoritmo", ignoreCase = true))
-        assertTrue(entry.limitations.contains("callback", ignoreCase = true))
+        assertTrue(entry.limitations.contains("QA", ignoreCase = true))
         assertTrue(entry.limitations.contains("E2E", ignoreCase = true))
+        assertTrue(entry.limitations.contains("firma", ignoreCase = true))
 
         val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
-        val release = PortalCatalogRepository(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
+        val release = PortalCatalogRepository(
+            BuiltInSiteProfiles.releaseRegistry,
+            BuiltInSiteProfiles.catalog,
+            publicCatalog,
+        )
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
+
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))

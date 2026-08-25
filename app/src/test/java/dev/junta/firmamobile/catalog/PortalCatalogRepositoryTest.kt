@@ -85,6 +85,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-lugo-sede",
                 "diputacion-leon-sede",
                 "diputacion-albacete-portal",
+                "diputacion-jaen-sede",
                 "consell-mallorca-sede",
                 "diputacion-cuenca-portal",
                 "generalitat-valenciana-client-auth",
@@ -161,6 +162,7 @@ class PortalCatalogRepositoryTest {
                 "cmt-public-navigation",
                 "diputacion-palencia-solicitud-general",
                 "el-hierro-solicitud-general",
+                "catalunya-seu-registre-client-auth",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

@@ -24,81 +24,77 @@ import org.robolectric.annotation.SQLiteMode
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
-class CatalunyaClientAuthProfileTest {
-    private val profileId = ProfileId("catalunya-peticio-generica-client-auth")
-    private val portalId = PortalId("catalunya-tramits-peticio-generica")
+class CatalunyaSeuClientAuthProfileTest {
+    private val profileId = ProfileId("catalunya-seu-registre-client-auth")
+    private val portalId = PortalId("catalunya-seu-electronica")
     private val startUrl = URI(
-        "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
-            "category=72461610-a82c-11e3-a972-000c29052e2c",
+        "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/",
     )
-    private val sourceUrl = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
+    private val validSource = URI(
+        "https://valid.aoc.cat/o/oauth2/auth?lang=ca&scope=autenticacio_usuari&state=state&" +
+            "redirect_uri=https%3A%2F%2Fovt.gencat.cat%2Fgsitfc%2FAppJava%2Fredirectservlet&" +
+            "response_type=code&client_id=gsit.gencat.cat&approval_prompt=auto",
+    )
 
     @Test
-    fun qaProfilePinsOnlyTheObservedClaveIdentifierClientTlsBoundary() {
+    fun qaProfilePinsTheObservedValidClientTlsTransitionAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
         assertEquals(1, profile.profileVersion)
-        assertEquals("Generalitat de Catalunya — Petició genèrica — acceso con certificado", profile.displayName)
+        assertEquals(
+            "Generalitat de Catalunya — Registre electrònic — acceso con certificado",
+            profile.displayName,
+        )
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
-        assertEquals(setOf(ExactOrigin.parse("https://tramits.gencat.cat")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://web.gencat.cat")), profile.initiatorOrigins)
         assertEquals(
             setOf(
+                ExactOrigin.parse("https://tramits.gencat.cat"),
                 ExactOrigin.parse("https://ovt.gencat.cat"),
                 ExactOrigin.parse("https://valid.aoc.cat"),
-                ExactOrigin.parse("https://pasarela.clave.gob.es"),
             ),
             profile.redirectOrigins,
         )
-        val sharedAocOrigin = ExactOrigin.parse("https://valid.aoc.cat")
-        val sharedAocOwners = BuiltInSiteProfiles.catalog.profiles.filter { candidate ->
-            sharedAocOrigin in candidate.initiatorOrigins ||
-                sharedAocOrigin in candidate.redirectOrigins ||
-                sharedAocOrigin in candidate.trustedBrowseOrigins ||
-                sharedAocOrigin in (candidate.clientAuthPolicy?.requestOrigins ?: emptySet())
-        }.map { it.profileId }.toSet()
-        assertEquals(
-            setOf(
-                ProfileId("diputacion-barcelona-solicitud-generica-2057"),
-                profileId,
-                ProfileId("catalunya-seu-registre-client-auth"),
-            ),
-            sharedAocOwners,
-        )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
-        assertTrue(profile.endpoints.isEmpty())
-        assertTrue(profile.operationPolicies.isEmpty())
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
         assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
-        assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
-        assertEquals(setOf(sourceUrl), policy.sourceUrls)
-        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
+        assertEquals(setOf(ExactOrigin.parse("https://cert.valid.aoc.cat")), policy.requestOrigins)
+        assertEquals(setOf(validSource), policy.sourceUrls)
+        assertEquals("/o/oauth2/cert", policy.requestPath)
         assertTrue(policy.fixedQueryParameters.isEmpty())
         assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
-        assertTrue(policy.sourceFixedQueryParameters.isEmpty())
-        assertTrue(policy.sourceRequiredEphemeralQueryParameters.isEmpty())
         assertEquals(443, policy.requestPort)
         assertTrue(policy.allowEmptyIssuerList)
-        assertEquals(15, policy.grantTtlSeconds)
-        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
-        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(4, profile.evidence.size)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-19" })
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveRedirect(
+                profileId,
+                URI("https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c"),
+            )?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, validSource)?.trustMode,
+        )
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://tramits.gencat.cat.evil.example/")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://tramits.gencat.cat:444/")))
     }
 
     @Test
-    fun publicCatalogPromotesClientTlsOnlyAndKeepsSigningUnknown() {
+    fun publicCatalogPromotesOnlyTheCertificateAuthenticationSeam() {
         val publicCatalog = loadBundledPublicPortalCatalog()
-        val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0105" }
+        val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0104" }
 
         assertEquals(portalId, entry.portalId)
         assertEquals(profileId, entry.profileId)
@@ -110,15 +106,20 @@ class CatalunyaClientAuthProfileTest {
         assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in entry.observedMechanisms)
         assertTrue(entry.observedSignatureFormats.isEmpty())
         assertEquals("2026-08-19", entry.reviewedOn.toString())
-        assertTrue(entry.limitations.contains("GSIT", ignoreCase = true))
-        assertTrue(entry.limitations.contains("firma", ignoreCase = true))
-        assertTrue(entry.limitations.contains("formato", ignoreCase = true))
-        assertTrue(entry.limitations.contains("algoritmo", ignoreCase = true))
-        assertTrue(entry.limitations.contains("callback", ignoreCase = true))
+        assertTrue(entry.limitations.contains("QA", ignoreCase = true))
         assertTrue(entry.limitations.contains("E2E", ignoreCase = true))
+        assertTrue(entry.limitations.contains("firma", ignoreCase = true))
 
-        val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
-        val release = PortalCatalogRepository(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
+        val qa = PortalCatalogRepository(
+            BuiltInSiteProfiles.qaRegistry,
+            BuiltInSiteProfiles.catalog,
+            publicCatalog,
+        )
+        val release = PortalCatalogRepository(
+            BuiltInSiteProfiles.releaseRegistry,
+            BuiltInSiteProfiles.catalog,
+            publicCatalog,
+        )
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
