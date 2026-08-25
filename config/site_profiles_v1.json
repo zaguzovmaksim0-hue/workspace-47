@@ -3314,6 +3314,25 @@
       ]
     },
     {
+      "profileId": "isfas-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública del Instituto Social de las Fuerzas Armadas",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.isfas.gob.es/",
+      "initiatorOrigins": ["https://sede.isfas.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.isfas.gob.es/","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
       "profileId": "seguridad-social-sede-autofirma",
       "profileVersion": 1,
       "displayName": "Seguridad Social — Apoderamiento por trámites / AutoFirma",

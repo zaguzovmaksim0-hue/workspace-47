@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 176 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 180 |
-| Entradas restantes fuera de ambos estados | 3 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 177 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 181 |
+| Entradas restantes fuera de ambos estados | 2 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 176 |
+| `IMPLEMENTED_NOT_E2E` | 177 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 1 |
+| `BROWSE_ONLY` | 0 |
 | `UNSUPPORTED_PROTOCOL` | 1 |
 | `INACCESSIBLE` | 1 |
 | `DEPRECATED` | 0 |
@@ -2265,23 +2265,23 @@ records:
     official_site: "https://sede.isfas.gob.es/"
     e_sede: "https://sede.isfas.gob.es/"
     entry_url: "https://sede.isfas.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sede.isfas.gob.es/ispre/index.html"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "AGE_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la raíz pública exacta de la Sede electrónica del ISFAS; identificación, certificado, trámites y presentación quedan fuera del contrato."
+    protocol_evidence: "La fuente oficial del ISFAS identifica https://sede.isfas.gob.es/ como la nueva Sede electrónica y expone navegación pública al catálogo; la propia sede advierte que algunos trámites requieren identificación y no se infiere ABI de firma, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "ISFAS-SEDE-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado a la raíz pública; no expone identificación, certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto de la raíz pública sin iniciar sesión, seleccionar certificado, firmar, cargar documentos ni presentar."
     notes: "Ministerio(s) enumerador(es): Ministerio de Defensa."
 
   - inventory_id: "ES-PUB-0059"
@@ -6705,6 +6705,7 @@ availability, certificado, firma ni contrato técnico.
 [ZARAGOZA-SEDE-NAV-2026-08-25]: https://dpz.sedelectronica.es/info.0
 [IMSERSO-SEDE-NAV-2026-08-25]: https://sede.imserso.gob.es/inicio
 [INE-SEDE-NAV-2026-08-25]: https://sede.ine.gob.es/es/index.htm
+[ISFAS-SEDE-NAV-2026-08-25]: https://sede.isfas.gob.es/
 [MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
 [MENORCA-CLIENT-TLS-2026-08-18]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx
 [MENORCA-SEDE-DELEGATION-2026-08-21]: https://seuelectronica.cime.es/

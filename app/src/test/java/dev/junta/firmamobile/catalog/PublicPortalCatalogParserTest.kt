@@ -176,11 +176,12 @@ class PublicPortalCatalogParserTest {
                 ProfileId("el-hierro-sede-public-navigation"),
                 ProfileId("imserso-sede-public-navigation"),
                 ProfileId("ine-sede-public-navigation"),
+                ProfileId("isfas-sede-public-navigation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
-        assertTrue(catalog.entries.any { it.catalogStatus == PublicCatalogStatus.DISCOVERED })
-        assertTrue(catalog.entries.any { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
+        assertTrue(catalog.entries.any { it.catalogStatus == PublicCatalogStatus.BLOCKED })
+        assertTrue(catalog.entries.none { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
     }
 
     @Test
