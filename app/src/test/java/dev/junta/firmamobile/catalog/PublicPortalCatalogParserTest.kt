@@ -113,6 +113,8 @@ class PublicPortalCatalogParserTest {
                 ProfileId("adif-sede-public-home"),
                 ProfileId("castilla-leon-quju-public"),
                 ProfileId("diputacion-avila-instancia-general"),
+                ProfileId("diputacion-guadalajara-instancia-general"),
+                ProfileId("diputacion-segovia-registro"),
                 ProfileId("ctbg-solicitud-informacion"),
                 ProfileId("catastro-solicitudes-genericas"),
                 ProfileId("fega-solicitud-general-ofvsg02"),
@@ -142,6 +144,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("csn-sede-public"),
                 ProfileId("csd-sede-public"),
                 ProfileId("cmt-public-navigation"),
+                ProfileId("diputacion-palencia-solicitud-general"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )

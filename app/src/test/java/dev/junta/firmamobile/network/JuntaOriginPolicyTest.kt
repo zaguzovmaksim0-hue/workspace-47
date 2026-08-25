@@ -78,6 +78,7 @@ class JuntaOriginPolicyTest {
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val malaga = ProfileId("diputacion-malaga-instancia-general")
     private val avila = ProfileId("diputacion-avila-instancia-general")
+    private val segovia = ProfileId("diputacion-segovia-registro")
     private val salamanca = ProfileId("diputacion-salamanca-instancia-general")
     private val teruel = ProfileId("diputacion-teruel-instancia-general")
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
@@ -204,6 +205,8 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "dguadalajara.sedelectronica.es",
+            "sede.dipsegovia.es",
             "dpteruel.sedelectronica.es",
             "sede.consejodetransparencia.gob.es",
             "www.sedecatastro.gob.es",
@@ -227,6 +230,7 @@ class JuntaOriginPolicyTest {
             "sede.guardiacivil.gob.es",
             "sede.csn.gob.es",
             "sede.csd.gob.es",
+            "sede.diputaciondepalencia.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -507,6 +511,23 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"),
                 avila,
+            ),
+        )
+        assertEquals(
+            setOf("sede.dipsegovia.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(segovia),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(segovia).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.dipsegovia.es/registro"),
+                segovia,
+            ),
+        )
+        assertTrue(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                segovia,
             ),
         )
         assertEquals(

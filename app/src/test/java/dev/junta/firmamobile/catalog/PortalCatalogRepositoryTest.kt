@@ -120,6 +120,8 @@ class PortalCatalogRepositoryTest {
                 "adif-sede-public-home",
                 "castilla-leon-quju-public",
                 "diputacion-avila-instancia-general",
+                "diputacion-guadalajara-instancia-general",
+                "diputacion-segovia-registro",
                 "ctbg-solicitud-informacion",
                 "catastro-solicitudes-genericas",
                 "fega-solicitud-general-ofvsg02",
@@ -150,6 +152,7 @@ class PortalCatalogRepositoryTest {
                 "csn-sede-public",
                 "csd-sede-public",
                 "cmt-public-navigation",
+                "diputacion-palencia-solicitud-general",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

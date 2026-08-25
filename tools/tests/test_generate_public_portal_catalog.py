@@ -2197,6 +2197,25 @@ records:
         self.assertIn("e2e", funciona["limitations"].lower())
 
 
+    def test_diputacion_palencia_solicitud_general_binds_exact_pending_preauth_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0166")
+        self.assertEqual("diputacion-palencia-sede", target["portalId"])
+        self.assertEqual("diputacion-palencia-solicitud-general", target["profileId"])
+        self.assertEqual(
+            "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5",
+            target["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-20", target["reviewedOn"])
+        self.assertEqual("CLAVE_PREAUTH_NAVIGATION", target["protocolFamily"])
+        self.assertIn("AUTOFIRMA", target["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+
     def test_diputacion_avila_instancia_general_binds_exact_pending_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0143")
@@ -2249,6 +2268,27 @@ records:
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("no_verificado", target["limitations"].lower())
+
+    def test_diputacion_guadalajara_instancia_general_binds_exact_bounded_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0156")
+        self.assertEqual("diputacion-guadalajara-sede", target["portalId"])
+        self.assertEqual("diputacion-guadalajara-instancia-general", target["profileId"])
+        self.assertEqual(
+            "https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertIn("qa_only", target["limitations"].lower())
+        self.assertIn("pasarela-ident", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
 
     def test_comercio_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -2581,6 +2621,28 @@ records:
         self.assertIn("eidas2.izenpe.com", target["limitations"].lower())
         self.assertIn("post", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
+
+    def test_segovia_registro_binds_exact_qa_navigation_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0169")
+        profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "diputacion-segovia-registro")
+
+        self.assertEqual("diputacion-segovia-sede", target["portalId"])
+        self.assertEqual("diputacion-segovia-registro", target["profileId"])
+        self.assertEqual("https://sede.dipsegovia.es/registro", target["entryUrl"])
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", profile["activation"])
+        self.assertEqual(["https://sede.dipsegovia.es"], profile["initiatorOrigins"])
+        self.assertEqual(["https://pasarela.clave.gob.es"], profile["redirectOrigins"])
+        self.assertEqual([], profile["trustedBrowseOrigins"])
+        self.assertEqual([], profile["capabilities"])
+        self.assertIsNone(profile["clientAuthPolicy"])
 
 
 if __name__ == "__main__":

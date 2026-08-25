@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 271 |
 | Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 135 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 139 |
-| Entradas restantes fuera de ambos estados | 44 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 138 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 142 |
+| Entradas restantes fuera de ambos estados | 41 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 135 |
+| `IMPLEMENTED_NOT_E2E` | 138 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 37 |
+| `BROWSE_ONLY` | 34 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5317,13 +5317,13 @@ records:
     autonomous_community: "Castilla-La Mancha"
     province_or_municipality: "Guadalajara (provincia)"
     institution_name: "Diputación Provincial de Guadalajara"
-    surface_name: "Sede electrónica de Diputación Provincial de Guadalajara"
+    surface_name: "Diputación Provincial de Guadalajara — Instancia General"
     surface_type: "SEDE"
     origin: "https://dguadalajara.sedelectronica.es"
     official_site: "https://dguadalajara.sedelectronica.es"
     e_sede: "https://dguadalajara.sedelectronica.es"
-    entry_url: "https://dguadalajara.sedelectronica.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
+    procedure_page: "https://dguadalajara.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5"
     certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
@@ -5332,14 +5332,15 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La sede documenta identificación condicionada con certificado; no acredita firma obligatoria en un trámite concreto."
-    protocol_evidence: "La evidencia delimita identificación electrónica, no un contrato de firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Instancia General (SIA 2092234): perfil QA_ONLY limitado al inicio telemático exacto y a la navegación hacia la pasarela Cl@ve observada; formulario, documentos, firma y presentación final quedan fuera del contrato implementado."
+    protocol_evidence: "La ficha pública /catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5 identifica Instancia General SIA 2092234; su inicio /catalog/tw/... abre Identificación electrónica y genera un POST SAML a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. La página pública de sistemas de firma describe niveles genéricos, pero no publica el ABI de firma de este trámite."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP18A", "DP18B"]
-    reason: "La identificación con certificado no permite inferir firma, formato, algoritmo, endpoint, cliente JS ni TLS cliente."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP18A", "DP18B", "GUADALAJARA-INSTANCIA-2026-08-21", "GUADALAJARA-INSTANCIA-START-2026-08-21", "GUADALAJARA-CLAVE-2026-08-21"]
+    reason: "Perfil QA_ONLY de navegación: no implementa SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. Sólo se conserva el origin Cl@ve observado; el POST público de prueba no autenticado terminó en HTTP 500 antes de elegir método, por lo que no se infieren pasarela-ident*, signer, formato, algoritmo, endpoint, callback ni presentación. Falta E2E físico."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la navegación QA y ampliar autenticación o firma sólo si una sesión controlada revela un contrato exacto; detenerse antes de firma criptográfica y presentación final."
+    notes: "No se persistieron SAMLRequest, RelayState, cookies ni datos de sesión. certificateRules del perfil son metadatos estructurales inertes porque capabilities está vacío."
 
   - inventory_id: "ES-PUB-0157"
     surface_key: "diputacion-gipuzkoa-sede"
@@ -5623,24 +5624,24 @@ records:
     origin: "https://sede.diputaciondepalencia.es"
     official_site: "https://sede.diputaciondepalencia.es"
     e_sede: "https://sede.diputaciondepalencia.es"
-    entry_url: "https://sede.diputaciondepalencia.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5"
+    procedure_page: "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitesinfo.action?tramitesInfoForm.id=5"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "AutoFirma"
+    protocol_family: "CLAVE_PREAUTH_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud carácter general (id=5): perfil QA-only limitado al lanzamiento exacto del trámite y a la navegación previa a autenticación Cl@ve; no implementa firma ni presentación."
+    protocol_evidence: "El catálogo vigente publica el trámite id=5 y su enlace Tramitar; el runtime redirige a /opensiac/certlogin/enter.action, cuyo formulario POST a /SPProxy2/IndexPage genera un auto-submit SAML hacia https://pasarela.clave.gob.es/Proxy2/ServiceProvider. La sede exige AutoFirma para firmar solicitudes, pero el contrato de firma posterior sigue NO_VERIFICADO."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP28A", "DP28B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP28A", "DP28B", "DP28C", "DP28D", "DP28E", "DP28F"]
+    reason: "Contrato QA-only ceñido al trámite general id=5 y a la transición pre-auth Cl@ve observada; no se confía en endpoints de firma, no se afirma formato/algoritmo/callback y no se realizó autenticación, firma ni registro final."
+    reviewed_at: "2026-08-20"
+    next_gate: "Con autenticación Cl@ve autorizada, continuar el trámite hasta el estado pre-firma y capturar únicamente el contrato de firma; detenerse antes de firma criptográfica y registro final."
 
   - inventory_id: "ES-PUB-0167"
     surface_key: "diputacion-pontevedra-sede"
@@ -5708,13 +5709,13 @@ records:
     autonomous_community: "Castilla y León"
     province_or_municipality: "Segovia (provincia)"
     institution_name: "Diputación de Segovia"
-    surface_name: "Sede electrónica de Diputación de Segovia"
+    surface_name: "Diputación de Segovia — Registro electrónico"
     surface_type: "SEDE"
     origin: "https://sede.dipsegovia.es"
     official_site: "https://sede.dipsegovia.es"
     e_sede: "https://sede.dipsegovia.es"
-    entry_url: "https://sede.dipsegovia.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.dipsegovia.es/registro"
+    procedure_page: "https://sede.dipsegovia.es/registro"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
@@ -5723,14 +5724,14 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Entrada QA-only al Registro electrónico; /registro alcanza la pantalla oficial de Identificación electrónica y ofrece acceso Cl@ve mediante POST a pasarela.clave.gob.es."
+    protocol_evidence: "Con persistencia normal de la cookie Wicket, / -> /info -> /info.0 termina en 200 y el menú publica /registro. GET /registro redirige una vez a una URL same-origin ligada a sesión y devuelve Identificación electrónica (200); esa pantalla contiene un formulario POST exacto a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. No se observó un login por certificado estable ni ABI/endpoint/formato/algoritmo de firma documental, por lo que no se implementan capacidades de firma ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP31A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP31A", "SEGOVIA-HOME-2026-08-21", "SEGOVIA-REGISTRO-2026-08-21", "SEGOVIA-ID-2026-08-21", "SEGOVIA-SIGN-INFO-2026-08-21", "SEGOVIA-CLAVE-2026-08-21"]
+    reason: "Se implementa sólo el límite de navegación demostrado hacia Registro/Identificación y el origin Cl@ve observado; firma documental y autenticación por certificado permanecen sin verificar."
+    reviewed_at: "2026-08-21"
+    next_gate: "Tras autenticación autorizada, trazar el flujo hasta pre-firma si fuese necesario para probar una capacidad adicional, sin firmar ni presentar."
 
   - inventory_id: "ES-PUB-0170"
     surface_key: "diputacion-sevilla-sede"
@@ -6585,6 +6586,9 @@ availability, certificado, firma ni contrato técnico.
 [GRANADA-SEDE-2026-08-23]: https://sede.dipgra.es/
 [DP18A]: https://dguadalajara.sedelectronica.es
 [DP18B]: https://www.dguadalajara.es/web/guest/sede-electronica
+[GUADALAJARA-INSTANCIA-2026-08-21]: https://dguadalajara.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[GUADALAJARA-INSTANCIA-START-2026-08-21]: https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5
+[GUADALAJARA-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP19A]: https://egoitza.gipuzkoa.eus/es/
 [DP19B]: https://egoitza.gipuzkoa.eus/es/identificacion-y-autenticacion/certificado-electronico-cualificado
 [DP20A]: https://www.diphuelva.es
@@ -6618,6 +6622,10 @@ availability, certificado, firma ni contrato técnico.
 [DP27B]: https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMASELEC
 [DP28A]: https://sede.diputaciondepalencia.es
 [DP28B]: https://sede.diputaciondepalencia.es/siac/Tramites/CertificadosElectronicosAdmitidos.aspx
+[DP28C]: https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitesinfo.action?tramitesInfoForm.id=5
+[DP28D]: https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action?tramitacionForm.id=5
+[DP28E]: https://sede.diputaciondepalencia.es/opensiac/personalizada?id=5
+[DP28F]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP29A]: https://sede.depo.gal
 [DP29B]: https://sede.depo.gal/web/public/dynamic/description/esignature/
 [PONTEVEDRA-INSTANCIA-2026-08-20]: https://sede.depo.gal/web/public/catalog-detail/50709505
@@ -6629,6 +6637,11 @@ availability, certificado, firma ni contrato técnico.
 [SALAMANCA-AUTH-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp
 [SALAMANCA-CLIENTSIGNER-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/opencms/common-js/clientSigner.js
 [DP31A]: https://sede.dipsegovia.es
+[SEGOVIA-HOME-2026-08-21]: https://sede.dipsegovia.es/
+[SEGOVIA-REGISTRO-2026-08-21]: https://sede.dipsegovia.es/registro
+[SEGOVIA-ID-2026-08-21]: https://sede.dipsegovia.es/id-systems
+[SEGOVIA-SIGN-INFO-2026-08-21]: https://sede.dipsegovia.es/signature-systems
+[SEGOVIA-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP32A]: https://sedeelectronicadipusevilla.es
 [DP33A]: https://sede.dipsoria.es
 [DP33B]: https://www.dipsoria.es/
