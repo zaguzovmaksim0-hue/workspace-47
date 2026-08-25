@@ -79,15 +79,18 @@ class JuntaWebViewClient(
     ): Boolean {
         if (!isCurrentWebView(view)) return true
         val currentUrl = currentPageUrl(view)
-        clientAuthAuthorizer?.observeTopLevelNavigation(
-            activeProfileId = activeProfileId(),
-            currentUrl = currentUrl,
-            targetUrl = targetUrl,
-            currentEpoch = currentNavigationEpoch(),
-            isModernMainFrameRequest = isModernMainFrame,
-        )?.let { authorized ->
-            onClientAuthTarget(authorized)
-            return true
+        val currentProfileId = activeProfileId()
+        if (currentProfileId?.value != EuskadiClientAuthPostBridgeAdapter.PROFILE_ID) {
+            clientAuthAuthorizer?.observeTopLevelNavigation(
+                activeProfileId = currentProfileId,
+                currentUrl = currentUrl,
+                targetUrl = targetUrl,
+                currentEpoch = currentNavigationEpoch(),
+                isModernMainFrameRequest = isModernMainFrame,
+            )?.let { authorized ->
+                onClientAuthTarget(authorized)
+                return true
+            }
         }
         return when (val decision = navigationPolicy.decide(targetUrl, currentUrl)) {
             NavigationDecision.AllowInWebView -> {

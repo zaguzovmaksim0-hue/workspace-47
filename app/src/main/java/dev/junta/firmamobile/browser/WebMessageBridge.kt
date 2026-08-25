@@ -44,9 +44,10 @@ internal data class AfirmaShimCompatibilityFlags(
     val isciiiCertificateSelection: Boolean,
     val valenciaCertificateSelection: Boolean,
     val xuntaGalicia: Boolean,
+    val euskadiClientAuthPost: Boolean,
 )
 
-class WebMessageBridge(
+class WebMessageBridge internal constructor(
     private val profileId: ProfileId,
     private val logger: SanitizedLogger,
     private val onAfirmaRequest: (AfirmaRequest) -> Unit,
@@ -56,6 +57,8 @@ class WebMessageBridge(
     private val onCertificateSelectionRequest:
         ((CertificateSelectionBridgeRequest, CertificateSelectionReplyChannel) -> Unit)? = null,
     private val onCertificateSelectionCancel: (UUID) -> Unit = {},
+    private val onEuskadiClientAuthPostRequest:
+        ((EuskadiClientAuthPostBridgeRequest) -> Unit)? = null,
     private val onMelillaBatchRequest:
         ((MelillaBatchRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     private val onMelillaBatchCancel: (UUID) -> Unit = {},
@@ -71,6 +74,7 @@ class WebMessageBridge(
     isciiiCertificateSelectionAdapter: IsciiiCertificateSelectionBridgeAdapter? = null,
     valenciaCertificateSelectionAdapter: ValenciaCertificateSelectionBridgeAdapter? = null,
     xuntaCertificateSelectionAdapter: XuntaCertificateSelectionBridgeAdapter? = null,
+    euskadiClientAuthPostBridgeAdapter: EuskadiClientAuthPostBridgeAdapter? = null,
     private val miniAppletMode: MiniAppletBridgeMode = MiniAppletBridgeMode.OBSERVATION,
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val currentOrigin: () -> TrustedOrigin? = { null },
@@ -87,6 +91,15 @@ class WebMessageBridge(
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
+
+    private val euskadiClientAuthPostBridgeAdapter = when (profileId.value) {
+        EuskadiClientAuthPostBridgeAdapter.PROFILE_ID ->
+            euskadiClientAuthPostBridgeAdapter ?: EuskadiClientAuthPostBridgeAdapter(
+                activeProfileId = activeProfileId,
+                monotonicNanos = monotonicNanos,
+            )
+        else -> null
+    }
 
     private val certificateSelectionAdapter: (
         rawMessage: String,
@@ -297,6 +310,7 @@ class WebMessageBridge(
                     isciiiCertificateSelectionEnabled = shimFlags.isciiiCertificateSelection,
                     valenciaCertificateSelectionEnabled = shimFlags.valenciaCertificateSelection,
                     xuntaGaliciaCompatibilityEnabled = shimFlags.xuntaGalicia,
+                    euskadiClientAuthPostEnabled = shimFlags.euskadiClientAuthPost,
                 ),
                 originRules,
             )
@@ -347,6 +361,37 @@ class WebMessageBridge(
                 return
             }
             PortalCallbackDiagnosticParseResult.NotApplicable -> Unit
+        }
+
+        euskadiClientAuthPostBridgeAdapter?.let { adapter ->
+            when (
+                val postResult = adapter.route(
+                    rawMessage = rawMessage,
+                    sourceOrigin = sourceOrigin,
+                    isMainFrame = isMainFrame,
+                    navigationEpoch = currentNavigationEpoch(),
+                    currentPageUrl = currentPageUrl(),
+                )
+            ) {
+                is EuskadiClientAuthPostBridgeRouteResult.Accepted -> {
+                    val handler = onEuskadiClientAuthPostRequest
+                    if (handler == null) {
+                        postResult.request.postBody.fill(0)
+                        logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    } else {
+                        runCatching { handler(postResult.request) }.onFailure {
+                            postResult.request.postBody.fill(0)
+                            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                        }
+                    }
+                    return
+                }
+                is EuskadiClientAuthPostBridgeRouteResult.Rejected -> {
+                    logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+                    return
+                }
+                EuskadiClientAuthPostBridgeRouteResult.NotApplicable -> Unit
+            }
         }
 
         when (
@@ -619,6 +664,7 @@ class WebMessageBridge(
     }
 
     private fun abandonAllMiniAppletRequests() {
+        euskadiClientAuthPostBridgeAdapter?.invalidate()
         certificateSelectionReplyRegistry.abandonAll().forEach { requestId ->
             runCatching { onCertificateSelectionCancel(requestId) }
         }
@@ -722,6 +768,8 @@ class WebMessageBridge(
             isciiiCertificateSelection = profileActive && profileId.value == ISCIII_PROFILE_ID,
             valenciaCertificateSelection = profileActive && profileId.value == VALENCIA_PROFILE_ID,
             xuntaGalicia = profileActive && profileId.value == XUNTA_PROFILE_ID,
+            euskadiClientAuthPost = profileActive &&
+                profileId.value == EuskadiClientAuthPostBridgeAdapter.PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"

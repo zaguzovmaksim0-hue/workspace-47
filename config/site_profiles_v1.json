@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 46,
+  "catalogVersion": 47,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -2834,6 +2834,41 @@
         {"url":"https://valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-19"},
         {"url":"https://valid.aoc.cat/o/oauth2/js/login.js","reviewedOn":"2026-08-19"},
         {"url":"https://cert.valid.aoc.cat/o/oauth2/cert","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
+      "profileId": "euskadi-sede-electronica",
+      "profileVersion": 1,
+      "displayName": "Gobierno Vasco — Registro Electrónico General",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.euskadi.eus/web01-sedeform/es/x43kToolkitWar/form/fdp?procedureId=1017701&tipoPresentacion=19&language=es",
+      "initiatorOrigins": ["https://www.euskadi.eus"],
+      "redirectOrigins": ["https://eidas.izenpe.com"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://eidas2.izenpe.com"],
+        "sourceUrls": ["https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication"],
+        "sourceFixedQueryParameters": {},
+        "sourceRequiredEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameters": [],
+        "requestPath": "/cert-authn-external-validation/authenticate",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.euskadi.eus/registro/registro-electronico-general/web01-tramite/es/","reviewedOn":"2026-08-19"},
+        {"url":"https://www.euskadi.eus/web01-sedeform/es/x43kToolkitWar/form/fdp?procedureId=1017701&tipoPresentacion=19&language=es","reviewedOn":"2026-08-19"},
+        {"url":"https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication","reviewedOn":"2026-08-19"},
+        {"url":"https://eidas2.izenpe.com/cert-authn-external-validation/authenticate","reviewedOn":"2026-08-19"}
       ]
     },
     {
