@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 171 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 175 |
-| Entradas restantes fuera de ambos estados | 8 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 172 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 176 |
+| Entradas restantes fuera de ambos estados | 7 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 171 |
+| `IMPLEMENTED_NOT_E2E` | 172 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 5 |
+| `BROWSE_ONLY` | 4 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 1 |
 | `DEPRECATED` | 0 |
@@ -5965,24 +5965,25 @@ records:
     origin: "https://diputaciondezamora.sedelectronica.es"
     official_site: "https://diputaciondezamora.sedelectronica.es"
     e_sede: "https://diputaciondezamora.sedelectronica.es"
-    entry_url: "https://diputaciondezamora.sedelectronica.es"
+    entry_url: "https://diputaciondezamora.sedelectronica.es/info.0"
     procedure_page: "NO_VERIFICADO"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "PROVINCIAL_SEDE_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la entrada pública exacta /info.0 de la Sede electrónica de Zamora; autenticación, firma y presentación quedan fuera del contrato."
+    protocol_evidence: "La entrada pública exacta https://diputaciondezamora.sedelectronica.es/info.0 respondió primero con un redirect same-origin que establece una cookie de sesión temporal; el siguiente GET HTTPS normal con esa sesión devolvió HTTP 200 en la misma URL. La documentación conserva la mención condicionada a certificado/firma, pero no se infiere ningún ABI, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP40A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP40A", "ZAMORA-SEDE-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado a la navegación pública exacta y su handshake same-origin de sesión; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto de /info.0 con la sesión pública temporal, sin iniciar sesión, firmar, cargar documentos ni presentar."
+    notes: "La propiedad y la mención documental condicionada proceden de D06/DP40A; la comprobación técnica de navegación y del handshake temporal same-origin consta en ZAMORA-SEDE-NAV-2026-08-25; no se realizó E2E."
 
   - inventory_id: "ES-PUB-0178"
     surface_key: "diputacion-zaragoza-sede"
@@ -6698,6 +6699,7 @@ availability, certificado, firma ni contrato técnico.
 [BIZKAIA-LAUNCH-4912-2026-08-21]: https://appsec.ebizkaia.eus/JXSS001C/?procedimiento=1664&formulario=4912&idioma=C&sede=S
 [BIZKAIA-GILTZA-2026-08-21]: https://eidasbiz.izenpe.com/trustedx-authserver/izenpe/flowSelector.xhtml
 [DP40A]: https://diputaciondezamora.sedelectronica.es
+[ZAMORA-SEDE-NAV-2026-08-25]: https://diputaciondezamora.sedelectronica.es/info.0
 [DP41A]: https://dpz.sedelectronica.es
 [MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
 [MENORCA-CLIENT-TLS-2026-08-18]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx

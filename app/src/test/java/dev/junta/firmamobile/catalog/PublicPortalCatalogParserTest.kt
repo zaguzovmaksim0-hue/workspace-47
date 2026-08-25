@@ -148,6 +148,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("la-gomera-sede-public-navigation"),
                 ProfileId("lanzarote-instancia-general"),
                 ProfileId("lanzarote-sede-public-navigation"),
+                ProfileId("zamora-sede-public-navigation"),
                 ProfileId("diputacion-pontevedra-instancia-xenerica"),
                 ProfileId("diputacion-malaga-instancia-general"),
                 ProfileId("diputacion-girona-instancia-generica"),

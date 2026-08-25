@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "ed25356bc2cc603d98030f703fa02967f90d30e8be9add653fd02173189c26bb",
+  "sourceRevision": "8419d06aeca5e8bfd3c71d5e41b3cec8158617ac840577e53e496d193bededd5",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4932,28 +4932,29 @@
     {
       "portalId": "diputacion-zamora-sede",
       "inventoryId": "ES-PUB-0177",
-      "profileId": null,
+      "profileId": "zamora-sede-public-navigation",
       "displayName": "Sede electrónica de Diputación Provincial de Zamora",
       "organization": "Diputación Provincial de Zamora",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://diputaciondezamora.sedelectronica.es",
+      "purpose": "Navegación QA-only a la entrada pública exacta /info.0 de la Sede electrónica de Zamora; autenticación, firma y presentación quedan fuera del contrato.",
+      "entryUrl": "https://diputaciondezamora.sedelectronica.es/info.0",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "PROVINCIAL_SEDE_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP40A"
+        "DP40A",
+        "ZAMORA-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado a la navegación pública exacta y su handshake same-origin de sesión; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "diputacion-zaragoza-sede",
