@@ -81,6 +81,8 @@ class JuntaOriginPolicyTest {
     private val bizkaia = ProfileId("diputacion-bizkaia-instancia-generica")
     private val barcelona2057 = ProfileId("diputacion-barcelona-solicitud-generica-2057")
     private val ourense = ProfileId("diputacion-ourense-sede")
+    private val sevillaDiputacion = ProfileId("diputacion-sevilla-sede")
+    private val coruna = ProfileId("diputacion-a-coruna-solicitud-general")
     private val malaga = ProfileId("diputacion-malaga-instancia-general")
     private val avila = ProfileId("diputacion-avila-instancia-general")
     private val girona = ProfileId("diputacion-girona-instancia-generica")
@@ -238,6 +240,9 @@ class JuntaOriginPolicyTest {
             "dipcas.sedelectronica.es",
             "sede.dip-caceres.es",
             "sede.depourense.es",
+            "sedeelectronicadipusevilla.es",
+            "sede.dacoruna.gal",
+            "www.dacoruna.gal",
             "pasarela-ident-sistemas.clave.gob.es",
             "sede.depo.gal",
             "lagomera.sedelectronica.es",
@@ -565,6 +570,40 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.isAllowed(
                 Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
                 ourense,
+            ),
+        )
+        assertEquals(
+            setOf("sedeelectronicadipusevilla.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(sevillaDiputacion),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(sevillaDiputacion).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sedeelectronicadipusevilla.es/opencms/opencms/sede"),
+                sevillaDiputacion,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+                sevillaDiputacion,
+            ),
+        )
+        assertEquals(
+            setOf("www.dacoruna.gal", "sede.dacoruna.gal", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(coruna),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(coruna).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto"),
+                coruna,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+                coruna,
             ),
         )
         assertEquals(

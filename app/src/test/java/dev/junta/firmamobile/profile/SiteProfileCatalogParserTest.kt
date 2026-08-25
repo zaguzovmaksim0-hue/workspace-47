@@ -847,6 +847,28 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun diputacionSevillaClaveOwnershipStaysClosedToTheReviewedProfileId() {
+        val reviewedId = "\"profileId\": \"diputacion-sevilla-sede\""
+        val unreviewedId = "\"profileId\": \"unreviewed-sevilla-clave-owner\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(reviewedId))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(reviewedId, unreviewedId))
+        }
+    }
+
+    @Test
+    fun diputacionACorunaClaveOwnershipStaysClosedToTheReviewedProfileId() {
+        val reviewedId = "\"profileId\": \"diputacion-a-coruna-solicitud-general\""
+        val unreviewedId = "\"profileId\": \"unreviewed-coruna-clave-owner\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(reviewedId))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(reviewedId, unreviewedId))
+        }
+    }
+
+    @Test
     fun releaseEnablesVerifiedProfilesWhileQaKeepsExperimentalPortalsAvailable() {
         val junta = ProfileId("junta-andalucia")
         val carne = ProfileId("carne-joven-andalucia")

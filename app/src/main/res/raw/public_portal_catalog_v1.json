@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "20248bbeb90715f015cfdffee8a576c8302c146bf34897d79965f4e4d5ce4de7",
+  "sourceRevision": "7e7053a6e0fe46f139209da217a78cccf8c82e4ebc574dc64eb645ed643adb98",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4156,29 +4156,32 @@
     {
       "portalId": "diputacion-a-coruna-portal",
       "inventoryId": "ES-PUB-0152",
-      "profileId": null,
+      "profileId": "diputacion-a-coruna-solicitud-general",
       "displayName": "Portal oficial de Deputación da Coruña",
       "organization": "Deputación da Coruña",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Galicia",
-      "purpose": "Un recurso tributario oficial documenta certificado y firma en ese flujo limitado; no se generaliza al portal.",
+      "purpose": "La Solicitude Xeral X004 delega la identificación en Cl@ve; la rama de certificado cualificado alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior no se implementa.",
       "entryUrl": "https://www.dacoruna.gal/portada",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH_CLAVE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP14A",
-        "DP14B"
+        "DP14B",
+        "CORUNA-X004-CLAVE-2026-08-21",
+        "CORUNA-CLAVE-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado y firma son condicionales solo para el flujo citado; procedimiento general y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado al CLIENT_TLS_AUTH del trámite X004 observado; no afirma ABI, formato, algoritmo o callback de firma ni presentación/registro E2E."
     },
     {
       "portalId": "diputacion-cuenca-portal",
@@ -4703,28 +4706,31 @@
     {
       "portalId": "diputacion-sevilla-sede",
       "inventoryId": "ES-PUB-0170",
-      "profileId": null,
+      "profileId": "diputacion-sevilla-sede",
       "displayName": "Sede electrónica de Diputación de Sevilla",
       "organization": "Diputación de Sevilla",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Andalucía",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
+      "purpose": "La Sede ofrece acceso mediante Cl@ve; la rama DNIe/certificado delega en Cl@ve y alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior queda fuera del perfil.",
       "entryUrl": "https://sedeelectronicadipusevilla.es",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH_CLAVE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP32A"
+        "DP32A",
+        "SEVILLA-SEDE-CLAVE-2026-08-21",
+        "SEVILLA-CLAVE-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Perfil QA-only limitado al CLIENT_TLS_AUTH de la rama Cl@ve certificado observada; no afirma ABI/formato/algoritmo/callback de AutoFirma, procedimiento de firma exacto ni presentación E2E."
     },
     {
       "portalId": "diputacion-soria-sede",

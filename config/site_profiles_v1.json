@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 44,
+  "catalogVersion": 46,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -2865,6 +2865,72 @@
         {"url":"https://sede.depourense.es/sta/pages/webapps/js/components/catserv.js?ver=2602.0.4","reviewedOn":"2026-08-20"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-08-20"},
         {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-20"}
+      ]
+    },
+    {
+      "profileId": "diputacion-sevilla-sede",
+      "profileVersion": 1,
+      "displayName": "Diputación de Sevilla — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedeelectronicadipusevilla.es",
+      "initiatorOrigins": ["https://sedeelectronicadipusevilla.es"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode":"DIRECT_FROM_SOURCE",
+        "requestOrigins":["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
+        "requestPath":"/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters":{},
+        "requiredEphemeralQueryParameters":[],
+        "allowEmptyIssuerList":true,
+        "grantTtlSeconds":15,
+        "requestPort":443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sedeelectronicadipusevilla.es","reviewedOn":"2026-08-21"},
+        {"url":"https://sedeelectronicadipusevilla.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp","reviewedOn":"2026-08-21"},
+        {"url":"https://sedeelectronicadipusevilla.es/opencms/common-js/clientSigner.js","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "diputacion-a-coruna-solicitud-general",
+      "profileVersion": 1,
+      "displayName": "Deputación da Coruña — Solicitude Xeral",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.dacoruna.gal/portada",
+      "initiatorOrigins": ["https://www.dacoruna.gal"],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": ["https://sede.dacoruna.gal"],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode":"DIRECT_FROM_SOURCE",
+        "requestOrigins":["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
+        "requestPath":"/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters":{},
+        "requiredEphemeralQueryParameters":[],
+        "allowEmptyIssuerList":true,
+        "grantTtlSeconds":15,
+        "requestPort":443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.dacoruna.gal/portada","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dacoruna.gal/sxc/gl/procedimientosytramites/tramites/SolicitudGeneral_N","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-21"}
       ]
     }
   ]

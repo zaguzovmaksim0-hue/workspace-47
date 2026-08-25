@@ -435,6 +435,8 @@ object SiteProfileCatalogParser {
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
+                            SEVILLA_DIPUTACION_PROFILE_ID,
+                            CORUNA_PROFILE_ID,
                         )
                     ) {
                         p.initiatorOrigins + p.redirectOrigins
@@ -2194,6 +2196,8 @@ object SiteProfileCatalogParser {
                             PALENCIA_PROFILE_ID,
                             EL_HIERRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
+                            SEVILLA_DIPUTACION_PROFILE_ID,
+                            CORUNA_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -2211,6 +2215,8 @@ object SiteProfileCatalogParser {
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
+                            SEVILLA_DIPUTACION_PROFILE_ID,
+                            CORUNA_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -2674,6 +2680,8 @@ object SiteProfileCatalogParser {
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val OURENSE_PROFILE_ID = "diputacion-ourense-sede"
+    private const val SEVILLA_DIPUTACION_PROFILE_ID = "diputacion-sevilla-sede"
+    private const val CORUNA_PROFILE_ID = "diputacion-a-coruna-solicitud-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
     private const val CADIZ_PROFILE_ID = "diputacion-cadiz-solicitud-generica"
     private const val GUADALAJARA_PROFILE_ID = "diputacion-guadalajara-instancia-general"

@@ -61,6 +61,8 @@ class PublicPortalCatalogParserTest {
                 ProfileId("catalunya-peticio-generica-client-auth"),
                 ProfileId("catalunya-seu-registre-client-auth"),
                 ProfileId("diputacion-ourense-sede"),
+                ProfileId("diputacion-sevilla-sede"),
+                ProfileId("diputacion-a-coruna-solicitud-general"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("jccm-registro-generico"),
                 ProfileId("mites-certificate-login"),
