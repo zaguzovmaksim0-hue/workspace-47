@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 169 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 173 |
-| Entradas restantes fuera de ambos estados | 10 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 170 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 174 |
+| Entradas restantes fuera de ambos estados | 9 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,12 +220,12 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 169 |
+| `IMPLEMENTED_NOT_E2E` | 170 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 5 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
-| `INACCESSIBLE` | 3 |
+| `INACCESSIBLE` | 2 |
 | `DEPRECATED` | 0 |
 | **Total** | **183** |
 
@@ -233,8 +233,8 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 177 |
-| `RECHECK_REQUIRED` | 3 |
+| `REVIEWED` | 178 |
+| `RECHECK_REQUIRED` | 2 |
 | `DISCOVERED` | 3 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
@@ -4591,20 +4591,20 @@ records:
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "INSULAR_SEDE_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "RECHECK_REQUIRED"
-    inventory_status: "INACCESSIBLE"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la entrada pública exacta de la Sede electrónica de La Gomera; autenticación, firma y presentación quedan fuera del contrato."
+    protocol_evidence: "La entrada oficial https://lagomera.sedelectronica.es/info.0 respondió primero con un redirect same-origin que establece una cookie de sesión temporal; el siguiente GET HTTPS normal con esa sesión devolvió HTTP 200 en la misma URL. No se infiere ABI de firma, autenticación, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I08B"]
-    reason: "El transporte de revisión informó 400 Redirect loop detected al abrir https://lagomera.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revalidar la misma entrada HTTPS con un presupuesto cerrado de redirecciones y confirmar una respuesta estable antes de revisar operaciones."
-    notes: "La existencia y titularidad proceden de la fuente oficial I08B; la indisponibilidad corresponde al transporte de revisión de este snapshot."
+    evidence_ids: ["I08B", "LAGOMERA-SEDE-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado a la navegación pública exacta y su handshake same-origin de sesión; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto de la entrada de La Gomera con la sesión pública temporal, sin iniciar sesión, firmar, cargar documentos ni presentar."
+    notes: "La existencia y titularidad proceden de la fuente oficial I08B; la comprobación técnica de navegación y del handshake temporal same-origin consta en LAGOMERA-SEDE-NAV-2026-08-25; no se realizó E2E."
 
   - inventory_id: "ES-PUB-0133"
     surface_key: "fuerteventura-portal-institucional"
@@ -6757,6 +6757,7 @@ availability, certificado, firma ni contrato técnico.
 [FORMENTERA-PORTAL-NAV-2026-08-25]: https://www.consellinsulardeformentera.cat/
 [ICO-SEDE-NAV-2026-08-25]: https://sedeico.gob.es/web/sedeico
 [ELHIERRO-SEDE-NAV-2026-08-25]: https://elhierro.sedelectronica.es/info.0
+[LAGOMERA-SEDE-NAV-2026-08-25]: https://lagomera.sedelectronica.es/info.0
 
 [FNMT-TRAMITES-2026-08-24]: https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general
 

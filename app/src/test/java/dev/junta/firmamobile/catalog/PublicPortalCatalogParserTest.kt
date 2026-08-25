@@ -145,6 +145,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-gipuzkoa-registro-public"),
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 ProfileId("la-gomera-instancia-general"),
+                ProfileId("la-gomera-sede-public-navigation"),
                 ProfileId("lanzarote-instancia-general"),
                 ProfileId("diputacion-pontevedra-instancia-xenerica"),
                 ProfileId("diputacion-malaga-instancia-general"),

@@ -67,6 +67,7 @@ class JuntaOriginPolicyTest {
     private val formenteraInstitutional = ProfileId("formentera-portal-institucional-navigation")
     private val ico = ProfileId("ico-sede-public-navigation")
     private val elHierroPublicNavigation = ProfileId("el-hierro-sede-public-navigation")
+    private val laGomeraPublicNavigation = ProfileId("la-gomera-sede-public-navigation")
     private val acceda = ProfileId("age-acceda")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
@@ -990,6 +991,11 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(elHierroPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(elHierroPublicNavigation).isEmpty())
+        assertEquals(
+            setOf("lagomera.sedelectronica.es"),
+            JuntaOriginPolicy.browserAllowedHosts(laGomeraPublicNavigation),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(laGomeraPublicNavigation).isEmpty())
         assertEquals(setOf("sede.administracionespublicas.gob.es"), JuntaOriginPolicy.browserAllowedHosts(acceda))
         assertEquals(
             setOf("https://sede.administracionespublicas.gob.es"),

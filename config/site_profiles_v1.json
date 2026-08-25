@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 56,
+  "catalogVersion": 57,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1917,6 +1917,25 @@
         {"url":"https://www.lagomera.es/","reviewedOn":"2026-08-21"},
         {"url":"https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"},
         {"url":"https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "la-gomera-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública del Cabildo Insular de La Gomera",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://lagomera.sedelectronica.es/info.0",
+      "initiatorOrigins": ["https://lagomera.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://lagomera.sedelectronica.es/info.0","reviewedOn":"2026-08-25"}
       ]
     },
     {

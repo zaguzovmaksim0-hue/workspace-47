@@ -147,6 +147,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-gipuzkoa-registro-public",
                 "diputacion-barcelona-solicitud-generica-2057",
                 "la-gomera-instancia-general",
+                "la-gomera-sede-public-navigation",
                 "lanzarote-instancia-general",
                 "diputacion-pontevedra-instancia-xenerica",
                 "diputacion-malaga-instancia-general",
