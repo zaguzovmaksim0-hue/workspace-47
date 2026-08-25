@@ -212,6 +212,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa-only", iac["limitations"].lower())
         self.assertIn("e2e", iac["limitations"].lower())
 
+    def test_icac_profile_binds_exact_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        icac = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-instituto-de-contabilidad-y-auditoria-de-cuentas-icac"
+        )
+
+        self.assertEqual("icac-sede-public-navigation", icac["profileId"])
+        self.assertEqual("ES-PUB-0051", icac["inventoryId"])
+        self.assertEqual("https://icac.sede.gob.es/", icac["entryUrl"])
+        self.assertNotIn("launchUrl", icac)
+        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", icac["protocolFamily"])
+        self.assertEqual("E2E_PENDING", icac["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", icac["inventoryStatus"])
+        self.assertEqual("REVIEWED", icac["discoveryState"])
+        self.assertEqual("2026-08-25", icac["reviewedOn"])
+        self.assertEqual([], icac["observedMechanisms"])
+        self.assertEqual([], icac["observedSignatureFormats"])
+        self.assertIn("qa-only", icac["limitations"].lower())
+        self.assertIn("e2e", icac["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
