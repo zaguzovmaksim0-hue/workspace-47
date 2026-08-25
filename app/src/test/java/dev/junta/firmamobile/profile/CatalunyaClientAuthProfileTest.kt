@@ -64,6 +64,7 @@ class CatalunyaClientAuthProfileTest {
                 ProfileId("diputacion-barcelona-solicitud-generica-2057"),
                 profileId,
                 ProfileId("catalunya-seu-registre-client-auth"),
+                ProfileId("diputacion-tarragona-sede"),
             ),
             sharedAocOwners,
         )
