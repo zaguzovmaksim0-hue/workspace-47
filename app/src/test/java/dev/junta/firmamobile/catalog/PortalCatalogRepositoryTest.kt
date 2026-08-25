@@ -174,6 +174,7 @@ class PortalCatalogRepositoryTest {
                 "iac-sede-public-navigation",
                 "icac-sede-public-navigation",
                 "itj-sede-public-navigation",
+                "red-es-sede-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

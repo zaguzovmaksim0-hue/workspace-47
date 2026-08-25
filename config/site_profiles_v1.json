@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 52,
+  "catalogVersion": 53,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3120,6 +3120,25 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://sede.transicionjusta.gob.es/","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "red-es-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública de Red.es",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.red.gob.es/",
+      "initiatorOrigins": ["https://sede.red.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.red.gob.es/","reviewedOn":"2026-08-25"}
       ]
     },
     {

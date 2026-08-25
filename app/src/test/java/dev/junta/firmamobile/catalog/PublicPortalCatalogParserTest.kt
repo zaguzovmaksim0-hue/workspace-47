@@ -166,6 +166,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("iac-sede-public-navigation"),
                 ProfileId("icac-sede-public-navigation"),
                 ProfileId("itj-sede-public-navigation"),
+                ProfileId("red-es-sede-public-navigation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
