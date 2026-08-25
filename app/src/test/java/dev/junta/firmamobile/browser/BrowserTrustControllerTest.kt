@@ -43,6 +43,7 @@ class BrowserTrustControllerTest {
         val claveUrl = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         val airefId = ProfileId("airef-instancia-general")
         val minecoId = ProfileId("ministerio-economia-instancia-generica")
+        val ourenseId = ProfileId("diputacion-ourense-sede")
 
         val airef = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == airefId }
         val airefController = BrowserTrustController(
@@ -64,8 +65,45 @@ class BrowserTrustControllerTest {
         assertEquals(TrustMode.TRUSTED_BROWSE, minecoClave.resolution.trustMode)
         assertEquals(minecoId, minecoClave.activeProfileId)
 
+        val ourense = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == ourenseId }
+        val ourenseController = BrowserTrustController(
+            BrowserUrlPolicy(registry, ourenseId),
+            SensitiveFlowInvalidator {},
+        )
+        assertEquals(ourenseId, ourenseController.navigate(ourense.startUrl.toASCIIString()).activeProfileId)
+        val ourenseClave = ourenseController.navigate("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
+        assertEquals(TrustMode.TRUSTED_BROWSE, ourenseClave.resolution.trustMode)
+        assertEquals(ourenseId, ourenseClave.activeProfileId)
+
         val freshAirefPolicy = BrowserUrlPolicy(registry, airefId)
         assertEquals(TrustMode.BROWSE_ONLY, freshAirefPolicy.resolve(claveUrl).trustMode)
+        val freshOurensePolicy = BrowserUrlPolicy(registry, ourenseId)
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            freshOurensePolicy.resolve("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect").trustMode,
+        )
+
+        val sevillaId = ProfileId("diputacion-sevilla-sede")
+        val sevilla = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == sevillaId }
+        val sevillaController = BrowserTrustController(
+            BrowserUrlPolicy(registry, sevillaId),
+            SensitiveFlowInvalidator {},
+        )
+        assertEquals(sevillaId, sevillaController.navigate(sevilla.startUrl.toASCIIString()).activeProfileId)
+        val sevillaClave = sevillaController.navigate("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
+        assertEquals(TrustMode.TRUSTED_BROWSE, sevillaClave.resolution.trustMode)
+        assertEquals(sevillaId, sevillaClave.activeProfileId)
+
+        val corunaId = ProfileId("diputacion-a-coruna-solicitud-general")
+        val coruna = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == corunaId }
+        val corunaController = BrowserTrustController(
+            BrowserUrlPolicy(registry, corunaId),
+            SensitiveFlowInvalidator {},
+        )
+        assertEquals(corunaId, corunaController.navigate(coruna.startUrl.toASCIIString()).activeProfileId)
+        val corunaClave = corunaController.navigate("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
+        assertEquals(TrustMode.TRUSTED_BROWSE, corunaClave.resolution.trustMode)
+        assertEquals(corunaId, corunaClave.activeProfileId)
     }
 
     @Test

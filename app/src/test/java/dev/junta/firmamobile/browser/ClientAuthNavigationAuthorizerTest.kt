@@ -559,6 +559,114 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactOurenseClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val ourense = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = ourense.observeTopLevelNavigation(
+            OURENSE_PROFILE, OURENSE_SOURCE, OURENSE_TARGET, 84, true,
+        )
+
+        assertEquals(OURENSE_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            ourense.observeTopLevelNavigation(OURENSE_PROFILE, OURENSE_SOURCE, OURENSE_TARGET, 84, true),
+        )
+
+        val invalidCalls = listOf(
+            "https://pasarela.clave.gob.es/Proxy2/ServiceProvider" to OURENSE_TARGET,
+            OURENSE_SOURCE to OURENSE_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            OURENSE_SOURCE to "$OURENSE_TARGET?extra=1",
+            OURENSE_SOURCE to OURENSE_TARGET.replace(
+                "pasarela-ident.clave.gob.es",
+                "pasarela-ident.clave.gob.es.evil.example",
+            ),
+            OURENSE_SOURCE to OURENSE_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
+        )
+        invalidCalls.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    OURENSE_PROFILE, source, target, 90L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun exactDiputacionSevillaClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val sevilla = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = sevilla.observeTopLevelNavigation(
+            SEVILLA_DIPUTACION_PROFILE, SEVILLA_DIPUTACION_SOURCE, SEVILLA_DIPUTACION_TARGET, 89, true,
+        )
+
+        assertEquals(SEVILLA_DIPUTACION_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            sevilla.observeTopLevelNavigation(
+                SEVILLA_DIPUTACION_PROFILE, SEVILLA_DIPUTACION_SOURCE, SEVILLA_DIPUTACION_TARGET, 89, true,
+            ),
+        )
+
+        listOf(
+            SEVILLA_DIPUTACION_SOURCE.replace("ServiceRedirect", "ServiceProvider") to SEVILLA_DIPUTACION_TARGET,
+            SEVILLA_DIPUTACION_SOURCE to SEVILLA_DIPUTACION_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            SEVILLA_DIPUTACION_SOURCE to "$SEVILLA_DIPUTACION_TARGET?extra=1",
+            SEVILLA_DIPUTACION_SOURCE to SEVILLA_DIPUTACION_TARGET.replace(
+                "pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example",
+            ),
+            SEVILLA_DIPUTACION_SOURCE to SEVILLA_DIPUTACION_TARGET.replace(
+                "pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443",
+            ),
+        ).forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    SEVILLA_DIPUTACION_PROFILE, source, target, 90L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun exactDiputacionACorunaClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val coruna = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = coruna.observeTopLevelNavigation(
+            CORUNA_PROFILE, CORUNA_SOURCE, CORUNA_TARGET, 89, true,
+        )
+
+        assertEquals(CORUNA_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            coruna.observeTopLevelNavigation(CORUNA_PROFILE, CORUNA_SOURCE, CORUNA_TARGET, 89, true),
+        )
+
+        listOf(
+            CORUNA_SOURCE.replace("ServiceRedirect", "ServiceProvider") to CORUNA_TARGET,
+            CORUNA_SOURCE to CORUNA_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            CORUNA_SOURCE to "$CORUNA_TARGET?extra=1",
+            CORUNA_SOURCE to CORUNA_TARGET.replace(
+                "pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example",
+            ),
+            CORUNA_SOURCE to CORUNA_TARGET.replace(
+                "pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443",
+            ),
+        ).forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(CORUNA_PROFILE, source, target, 90L + index, true),
+            )
+        }
+    }
+
+    @Test
     fun exactMugejuClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val mugeju = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
         val authorized = mugeju.observeTopLevelNavigation(
@@ -1295,6 +1403,15 @@ class ClientAuthNavigationAuthorizerTest {
         val AIREF_PROFILE = ProfileId("airef-instancia-general")
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val OURENSE_PROFILE = ProfileId("diputacion-ourense-sede")
+        const val OURENSE_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val OURENSE_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val SEVILLA_DIPUTACION_PROFILE = ProfileId("diputacion-sevilla-sede")
+        const val SEVILLA_DIPUTACION_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val SEVILLA_DIPUTACION_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val CORUNA_PROFILE = ProfileId("diputacion-a-coruna-solicitud-general")
+        const val CORUNA_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val CORUNA_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val CATALUNYA_PROFILE = ProfileId("catalunya-peticio-generica-client-auth")
         const val CATALUNYA_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val CATALUNYA_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"

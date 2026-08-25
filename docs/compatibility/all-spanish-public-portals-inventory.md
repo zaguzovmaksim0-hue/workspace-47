@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 154 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 158 |
-| Entradas restantes fuera de ambos estados | 25 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 157 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 161 |
+| Entradas restantes fuera de ambos estados | 22 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 154 |
+| `IMPLEMENTED_NOT_E2E` | 157 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 18 |
+| `BROWSE_ONLY` | 15 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5209,25 +5209,25 @@ records:
     surface_type: "PORTAL_SERVICIO"
     origin: "https://www.dacoruna.gal"
     official_site: "https://www.dacoruna.gal/portada"
-    e_sede: "NO_VERIFICADO"
+    e_sede: "https://sede.dacoruna.gal"
     entry_url: "https://www.dacoruna.gal/portada"
-    procedure_page: "NO_VERIFICADO"
+    procedure_page: "https://sede.dacoruna.gal/sxc/gl/procedimientosytramites/tramites/SolicitudGeneral_N"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH_CLAVE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Un recurso tributario oficial documenta certificado y firma en ese flujo limitado; no se generaliza al portal."
-    protocol_evidence: "La evidencia se limita al recurso tributario documentado y no publica contrato técnico."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP14A", "DP14B"]
-    reason: "Certificado y firma son condicionales solo para el flujo citado; procedimiento general y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Solicitude Xeral X004 delega la identificación en Cl@ve; la rama de certificado cualificado alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior no se implementa."
+    protocol_evidence: "Chromium real confirmó X004 → /SP2/TiWorksRequest → Proxy2/ServiceProvider → AFIRMA en Proxy2/ServiceRedirect → IdP2/AuthenticateCitizen. TLS 1.2 en pasarela-ident.clave.gob.es emitió CertificateRequest con RSA/ECDSA y sin lista de CA de cliente."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP14A", "DP14B", "CORUNA-X004-CLAVE-2026-08-21", "CORUNA-CLAVE-TLS-2026-08-21"]
+    reason: "Perfil QA-only limitado al CLIENT_TLS_AUTH del trámite X004 observado; no afirma ABI, formato, algoritmo o callback de firma ni presentación/registro E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar autenticación controlada con certificado y observar el contrato pre-firma de X004 antes de ampliar a SIGN o VERIFIED_E2E."
 
   - inventory_id: "ES-PUB-0153"
     surface_key: "diputacion-cuenca-portal"
@@ -5602,24 +5602,24 @@ records:
     origin: "https://sede.depourense.es"
     official_site: "https://sede.depourense.es"
     e_sede: "https://sede.depourense.es"
-    entry_url: "https://sede.depourense.es"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES"
+    procedure_page: "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH_CLAVE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP27A", "DP27B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Solicitud de propósito general inicia autenticación Cl@ve; la rama DNIe/certificado usa client TLS en pasarela-ident.clave.gob.es. El perfil implementa solo esta entrada y autenticación acotada."
+    protocol_evidence: "El detalle vigente 6269000946476474507610 enlaza Tramitación Electrónica a /sta/reg/auth/es/6269000946476474507610; el runtime redirige a STAClaveManager, publica SAML hacia /Proxy2/ServiceProvider, ofrece AFIRMA y desde /Proxy2/ServiceRedirect pasa a pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen. TLS 1.2 emite CertificateRequest para RSA/ECDSA sin CA-name list. catserv.js?ver=2602.0.4 mantiene SHA-256 ffdf496a7486c190e4dc2b5e33ae785d99acb1a01daecb1aef2a3069360227e3. No se autenticó con certificado ni se observó el contrato de firma posterior."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP27A", "DP27B", "OURENSE-GENERAL-2026-08-20", "OURENSE-CLAVE-2026-08-20"]
+    reason: "Perfil QA-only limitado al procedimiento general exacto y al client TLS de Cl@ve observado; no afirma ABI de AutoFirma, formato, algoritmo, callback, endpoint de firma ni presentación E2E."
+    reviewed_at: "2026-08-20"
+    next_gate: "Validar en QA Android el acceso con certificado hasta la primera vista autenticada y detenerse antes de cualquier firma documental o presentación final; investigar después el contrato de firma separado."
 
   - inventory_id: "ES-PUB-0166"
     surface_key: "diputacion-palencia-sede"
@@ -5757,19 +5757,19 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH_CLAVE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP32A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Sede ofrece acceso mediante Cl@ve; la rama DNIe/certificado delega en Cl@ve y alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior queda fuera del perfil."
+    protocol_evidence: "Chromium real y trazado HTTP público confirmaron formLogin → Proxy2/ServiceProvider → AFIRMA en Proxy2/ServiceRedirect → IdP2/AuthenticateCitizen. TLS 1.2 en pasarela-ident.clave.gob.es emitió CertificateRequest con tipos RSA/ECDSA y sin lista de CA de cliente."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP32A", "SEVILLA-SEDE-CLAVE-2026-08-21", "SEVILLA-CLAVE-TLS-2026-08-21"]
+    reason: "Perfil QA-only limitado al CLIENT_TLS_AUTH de la rama Cl@ve certificado observada; no afirma ABI/formato/algoritmo/callback de AutoFirma, procedimiento de firma exacto ni presentación E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar autenticación controlada con certificado y, por separado, observar el contrato de firma de un procedimiento exacto antes de cualquier ampliación o VERIFIED_E2E."
 
   - inventory_id: "ES-PUB-0171"
     surface_key: "diputacion-soria-sede"
