@@ -869,6 +869,42 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun preservesExactAragonSolicitudGeneralClientTlsContract() {
+        val profileId = ProfileId("aragon-solicitud-general-client-auth")
+        val start = URI("https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        val consume =
+            "https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/" +
+                "aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/" +
+                "SSLOGIN/consumeResponse"
+
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertEquals(ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE, policy.transitionMode)
+        assertEquals(setOf(ExactOrigin.parse("https://login1.loginssl.aragon.es")), policy.requestOrigins)
+        assertEquals(setOf(URI("https://login.loginssl.aragon.es/sife_login/SSLOGIN")), policy.sourceUrls)
+        assertEquals(mapOf("redirect.url" to consume), policy.sourceFixedQueryParameters)
+        assertEquals("/sife_login/SSLOGIN/idByCert", policy.requestPath)
+        assertEquals(mapOf("redirect.url" to consume), policy.fixedQueryParameters)
+        assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.allowEmptyIssuerList)
+        assertEquals(443, policy.requestPort)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(start))
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, start)?.trustMode,
+        )
+    }
+
+    @Test
     fun releaseEnablesVerifiedProfilesWhileQaKeepsExperimentalPortalsAvailable() {
         val junta = ProfileId("junta-andalucia")
         val carne = ProfileId("carne-joven-andalucia")
@@ -891,6 +927,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("dgoj-public-navigation"),
             ProfileId("diputacion-alava-registro-comun"),
             ceuta,
+            ProfileId("aragon-solicitud-general-client-auth"),
             lleida,
             badajoz,
         )

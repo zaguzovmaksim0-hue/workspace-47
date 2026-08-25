@@ -19,6 +19,7 @@ import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningContext
+import java.net.URI
 import java.time.Clock
 import java.time.Duration
 import java.util.UUID
@@ -919,8 +920,10 @@ internal class MiniAppletReplyRegistry(
             currentOrigin() != binding.origin ||
             (binding.pageUrl != null && currentPageUrl() != binding.pageUrl)
         ) return@runCatching false
-        BuiltInSiteProfiles.runtimeRegistry.resolve(binding.origin)
-            ?.profile?.profileId?.value == binding.profileId
+        BuiltInSiteProfiles.runtimeRegistry.resolveForProfile(
+            ProfileId(binding.profileId),
+            URI(binding.origin.serialized),
+        )?.profile?.profileId?.value == binding.profileId
     }.getOrDefault(false)
 
     private companion object {

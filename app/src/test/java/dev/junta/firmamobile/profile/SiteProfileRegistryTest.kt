@@ -171,17 +171,25 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `release and qa resolve verified aragon siraw login`() {
-        val profileId = ProfileId("aragon-siraw")
-        val startUri = URI("https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw")
+    fun `aragon shared origin stays fail closed globally and resolves inside selected profile`() {
+        val sirawProfileId = ProfileId("aragon-siraw")
+        val tramitesProfileId = ProfileId("aragon-solicitud-general-client-auth")
+        val sirawStart = URI("https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw")
+        val tramitesStart = URI("https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion")
 
-        listOf(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.qaRegistry).forEach { registry ->
-            val profile = registry.profile(profileId)
-            assertNotNull(profile)
-            assertEquals(CompatibilityStatus.VERIFIED_E2E, profile?.compatibilityStatus)
-            assertEquals(ProfileActivation.ENABLED, profile?.activation)
-            assertEquals(TrustMode.TRUSTED_SIGNING, registry.resolve(startUri)?.trustMode)
-        }
+        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.releaseRegistry.resolve(sirawStart)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(tramitesProfileId))
+
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(sirawStart))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(tramitesStart))
+        assertEquals(
+            TrustMode.TRUSTED_SIGNING,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(sirawProfileId, sirawStart)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(tramitesProfileId, tramitesStart)?.trustMode,
+        )
     }
 
     @Test

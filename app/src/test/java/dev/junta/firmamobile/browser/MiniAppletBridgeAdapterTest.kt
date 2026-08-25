@@ -188,6 +188,14 @@ class MiniAppletBridgeAdapterTest {
         ) as MiniAppletBridgeRouteResult.Rejected
         assertEquals(SigningErrorCode.ORIGIN_NOT_ALLOWED, wrongProfile.code)
 
+        val sameOriginClientAuthProfile = adapterFor("aragon-solicitud-general-client-auth").route(
+            rawMessage = rawMessage,
+            sourceOrigin = ARAGON_ORIGIN,
+            isMainFrame = true,
+            navigationEpoch = 31,
+        ) as MiniAppletBridgeRouteResult.Rejected
+        assertEquals(SigningErrorCode.ORIGIN_NOT_ALLOWED, sameOriginClientAuthProfile.code)
+
         val wrongProperties = adapterFor("aragon-siraw").route(
             rawMessage = rawMessage.replace("filter=nonexpired", "filter=qualified:123"),
             sourceOrigin = ARAGON_ORIGIN,
