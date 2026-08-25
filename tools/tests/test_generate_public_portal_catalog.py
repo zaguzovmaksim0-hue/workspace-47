@@ -275,6 +275,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa-only", red_es["limitations"].lower())
         self.assertIn("e2e", red_es["limitations"].lower())
 
+    def test_formentera_institutional_profile_binds_separate_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        institutional = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "formentera-portal-institucional"
+        )
+
+        self.assertEqual("formentera-portal-institucional-navigation", institutional["profileId"])
+        self.assertEqual("ES-PUB-0123", institutional["inventoryId"])
+        self.assertEqual(
+            "https://www.consellinsulardeformentera.cat/",
+            institutional["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", institutional)
+        self.assertEqual("FORMENTERA_PUBLIC_PORTAL_NAVIGATION", institutional["protocolFamily"])
+        self.assertEqual("E2E_PENDING", institutional["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", institutional["inventoryStatus"])
+        self.assertEqual("REVIEWED", institutional["discoveryState"])
+        self.assertEqual("2026-08-25", institutional["reviewedOn"])
+        self.assertEqual([], institutional["observedMechanisms"])
+        self.assertEqual([], institutional["observedSignatureFormats"])
+        self.assertIn("qa-only", institutional["limitations"].lower())
+        self.assertIn("e2e", institutional["limitations"].lower())
+        self.assertIn("ovac", institutional["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

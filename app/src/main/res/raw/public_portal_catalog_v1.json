@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7b132c7c0b96ffbecfd7c2277904e35d03578cbf46f4d70663404d8b89612300",
+  "sourceRevision": "fc8da771a7d307633624c54533341cf62b98d6c0829c87909e651bd8f98dd95d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3382,26 +3382,27 @@
     {
       "portalId": "formentera-portal-institucional",
       "inventoryId": "ES-PUB-0123",
-      "profileId": null,
+      "profileId": "formentera-portal-institucional-navigation",
       "displayName": "Portal institucional del Consell Insular de Formentera",
       "organization": "Consell Insular de Formentera",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "Navegación QA-only a la raíz pública exacta del portal institucional; la sede electrónica separada, autenticación, firma y presentación quedan fuera del contrato.",
       "entryUrl": "https://www.consellinsulardeformentera.cat/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "FORMENTERA_PUBLIC_PORTAL_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I04A",
-        "I04B"
+        "I04B",
+        "FORMENTERA-PORTAL-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado a la navegación pública exacta del portal institucional; no expone la sede OVAC ni certificado, firma, autenticación o envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "formentera-sede-electronica",

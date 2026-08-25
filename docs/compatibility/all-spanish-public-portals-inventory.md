@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 166 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 170 |
-| Entradas restantes fuera de ambos estados | 13 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 167 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 171 |
+| Entradas restantes fuera de ambos estados | 12 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 166 |
+| `IMPLEMENTED_NOT_E2E` | 167 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 7 |
+| `BROWSE_ONLY` | 6 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 175 |
+| `REVIEWED` | 176 |
 | `RECHECK_REQUIRED` | 4 |
-| `DISCOVERED` | 4 |
+| `DISCOVERED` | 3 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -4317,19 +4317,19 @@ records:
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "FORMENTERA_PUBLIC_PORTAL_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la raíz pública exacta del portal institucional; la sede electrónica separada, autenticación, firma y presentación quedan fuera del contrato."
+    protocol_evidence: "La raíz oficial https://www.consellinsulardeformentera.cat/ respondió HTTP 200 en un GET HTTPS público y estable; el registro conserva la sede OVAC separada y no infiere ABI de firma, autenticación, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I04A", "I04B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    evidence_ids: ["D12", "I04A", "I04B", "FORMENTERA-PORTAL-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado a la navegación pública exacta del portal institucional; no expone la sede OVAC ni certificado, firma, autenticación o envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto del portal institucional sin iniciar sesión, firmar, cargar documentos ni presentar; mantener la OVAC como superficie separada."
 
   - inventory_id: "ES-PUB-0124"
     surface_key: "formentera-sede-electronica"
@@ -6754,6 +6754,7 @@ availability, certificado, firma ni contrato técnico.
 [ICAC-SEDE-NAV-2026-08-25]: https://icac.sede.gob.es/
 [ITJ-SEDE-NAV-2026-08-25]: https://sede.transicionjusta.gob.es/
 [RED-ES-SEDE-NAV-2026-08-25]: https://sede.red.gob.es/
+[FORMENTERA-PORTAL-NAV-2026-08-25]: https://www.consellinsulardeformentera.cat/
 
 [FNMT-TRAMITES-2026-08-24]: https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general
 
