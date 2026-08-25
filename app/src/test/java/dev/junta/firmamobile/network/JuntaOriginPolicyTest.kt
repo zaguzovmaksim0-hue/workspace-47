@@ -84,6 +84,7 @@ class JuntaOriginPolicyTest {
     private val ctbg = ProfileId("ctbg-solicitud-informacion")
     private val catastro = ProfileId("catastro-solicitudes-genericas")
     private val fega = ProfileId("fega-solicitud-general-ofvsg02")
+    private val elHierro = ProfileId("el-hierro-solicitud-general")
     private val murcia = ProfileId("murcia-carm-pase")
     private val dgoj = ProfileId("dgoj-public-navigation")
     private val huelva = ProfileId("diputacion-huelva-sede-public")
@@ -205,6 +206,7 @@ class JuntaOriginPolicyTest {
             "tramits.gencat.cat",
             "ovt.gencat.cat",
             "diputacionavila.sedelectronica.es",
+            "elhierro.sedelectronica.es",
             "dguadalajara.sedelectronica.es",
             "sede.dipsegovia.es",
             "dpteruel.sedelectronica.es",
@@ -667,6 +669,23 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341"),
                 caceres,
+            ),
+        )
+        assertEquals(
+            setOf("elhierro.sedelectronica.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(elHierro),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(elHierro).isEmpty())
+        assertNull(
+            JuntaOriginPolicy.signingOriginFor(
+                Uri.parse("https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71"),
+                elHierro,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://elhierro.sedelectronica.es.evil.example/"),
+                elHierro,
             ),
         )
         assertEquals(

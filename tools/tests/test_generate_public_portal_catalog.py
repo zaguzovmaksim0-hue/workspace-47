@@ -687,6 +687,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("AUTOSCRIPT_MINIAPPLET_LOCAL_CADES", entry["protocolFamily"])
         self.assertIn("e2e", entry["limitations"].lower())
 
+    def test_gran_canaria_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0137"
+        )
+
+        self.assertEqual("gran-canaria-portal-institucional", target["portalId"])
+        self.assertEqual("gran-canaria-sede-electronica", target["profileId"])
+        self.assertEqual("https://cabildo.grancanaria.com/", target["entryUrl"])
+        self.assertEqual(
+            "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
+            target["launchUrl"],
+        )
+        self.assertEqual("DELEGACION_GRAN_CANARIA_SEDE_INSTANCIA_GENERAL", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
     def test_gran_canaria_pades_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entry = next(
@@ -1463,6 +1487,51 @@ records:
         self.assertIn("e2e", bne["limitations"].lower())
 
 
+    def test_eivissa_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        eivissa = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "eivissa-portal-institucional"
+        )
+
+        self.assertEqual("eivissa-sede-electronica", eivissa["profileId"])
+        self.assertEqual("ES-PUB-0121", eivissa["inventoryId"])
+        self.assertEqual("https://www.conselldeivissa.es/", eivissa["entryUrl"])
+        self.assertEqual("https://seu.conselldeivissa.es/", eivissa["launchUrl"])
+        self.assertEqual("E2E_PENDING", eivissa["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", eivissa["inventoryStatus"])
+        self.assertEqual("2026-08-21", eivissa["reviewedOn"])
+        self.assertEqual("DELEGACION_EIVISSA_SEDE", eivissa["protocolFamily"])
+        self.assertEqual([], eivissa["observedMechanisms"])
+        self.assertEqual([], eivissa["observedSignatureFormats"])
+        self.assertIn("alias", eivissa["limitations"].lower())
+        self.assertIn("e2e", eivissa["limitations"].lower())
+
+
+    def test_fuerteventura_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "fuerteventura-portal-institucional"
+        )
+
+        self.assertEqual("fuerteventura-sede-electronica", target["profileId"])
+        self.assertEqual("ES-PUB-0133", target["inventoryId"])
+        self.assertEqual("https://www.cabildofuer.es/cabildo/", target["entryUrl"])
+        self.assertEqual(
+            "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+            target["launchUrl"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual("DELEGACION_FUERTEVENTURA_SEDE", target["protocolFamily"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("alias", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
+
+
     def test_tenerife_institutional_alias_binds_exact_qa_sede_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tenerife = next(
@@ -2215,6 +2284,27 @@ records:
         self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
         self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
+
+    def test_el_hierro_solicitud_general_binds_exact_pending_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0125")
+        self.assertEqual("el-hierro-portal-institucional", target["portalId"])
+        self.assertEqual("el-hierro-solicitud-general", target["profileId"])
+        self.assertEqual(
+            "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+            target["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
+        self.assertEqual(["D12", "I05A", "I05B"], target["evidenceIds"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("no_verificado", target["limitations"].lower())
+
 
     def test_diputacion_avila_instancia_general_binds_exact_pending_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

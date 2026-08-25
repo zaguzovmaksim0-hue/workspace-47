@@ -153,6 +153,7 @@ class PortalCatalogRepositoryTest {
                 "csd-sede-public",
                 "cmt-public-navigation",
                 "diputacion-palencia-solicitud-general",
+                "el-hierro-solicitud-general",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
