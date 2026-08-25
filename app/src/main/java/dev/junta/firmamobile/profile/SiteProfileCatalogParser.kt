@@ -2061,6 +2061,7 @@ object SiteProfileCatalogParser {
                             EDUCATION_PROFILE_ID,
                             CATALUNYA_PROFILE_ID,
                             AVILA_PROFILE_ID,
+                            GUADALAJARA_PROFILE_ID,
                             CTBG_PROFILE_ID,
                             CATASTRO_PROFILE_ID,
                             FEGA_PROFILE_ID,
