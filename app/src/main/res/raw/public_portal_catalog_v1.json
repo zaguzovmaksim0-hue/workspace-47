@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "d26af37f1ccab24b9ab83b9165cfbbb3abebe0a528a89de9d7a4644625c5acbe",
+  "sourceRevision": "2ae25232c55f6098f4389ed9b6d610caa0dcb2f84c14473848fd068ea3875f93",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4764,29 +4764,33 @@
     {
       "portalId": "diputacion-soria-sede",
       "inventoryId": "ES-PUB-0171",
-      "profileId": null,
+      "profileId": "diputacion-soria-sede-client-auth",
       "displayName": "Sede electrónica de Diputación de Soria",
       "organization": "Diputación de Soria",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Castilla y León",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.dipsoria.es",
+      "purpose": "Acceso QA-only con certificado a la sede electrónica mediante TLS cliente en el endpoint exacto; la firma documental y la presentación final quedan fuera del contrato.",
+      "entryUrl": "https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "BLOCKED",
-      "inventoryStatus": "INACCESSIBLE",
-      "discoveryState": "RECHECK_REQUIRED",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP33A",
-        "DP33B"
+        "DP33B",
+        "SORIA-CERT-LOGIN-2026-08-25",
+        "SORIA-CERT-TLS-2026-08-25",
+        "SORIA-LEGAL-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La revalidación HTTPS directa falla por certificado TLS de validez normal expirado el 2026-06-21; la evidencia documental se conserva sin afirmar accesibilidad actual ni contrato técnico."
+      "reviewedOn": "2026-08-25",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA-only para el source, host, path, puerto y parámetros fijos exactos; no se realizó autenticación E2E con certificado en esta revisión. No se implementan ni infieren el formato, algoritmo, callback de firma ni presentación administrativa. El antiguo host sede.dipsoria.es queda solo como histórico."
     },
     {
       "portalId": "diputacion-tarragona-sede",

@@ -401,7 +401,13 @@ object SiteProfileCatalogParser {
             val clientAuthPolicy = p.clientAuthPolicy
             val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
             val sameOriginDirectClientAuth =
-                p.profileId.value in setOf(SANIDAD_PROFILE_ID, NAVARRA_PROFILE_ID, MENORCA_PROFILE_ID, PATTEX_PROFILE_ID) &&
+                p.profileId.value in setOf(
+                    SANIDAD_PROFILE_ID,
+                    NAVARRA_PROFILE_ID,
+                    MENORCA_PROFILE_ID,
+                    PATTEX_PROFILE_ID,
+                    "diputacion-soria-sede-client-auth",
+                ) &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     clientAuthPolicy.requestPort == 443 &&
                     clientAuthOrigins.size == 1 &&
@@ -465,7 +471,8 @@ object SiteProfileCatalogParser {
                             p.profileId.value == ALBACETE_PROFILE_ID ||
                             p.profileId.value == CUENCA_PROFILE_ID ||
                             p.profileId.value == MALLORCA_PROFILE_ID ||
-                            p.profileId.value == GVA_PROFILE_ID
+                            p.profileId.value == GVA_PROFILE_ID ||
+                            p.profileId.value == "diputacion-soria-sede-client-auth"
                     )
                 }
                 require(policy.sourceUrls.all { source ->

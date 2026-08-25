@@ -932,6 +932,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("ine-sede-public-navigation"),
             ProfileId("isfas-sede-public-navigation"),
             ProfileId("comunidad-madrid-gestiona2-public-navigation"),
+            ProfileId("diputacion-soria-sede-client-auth"),
             ProfileId("la-gomera-sede-public-navigation"),
             ProfileId("lanzarote-sede-public-navigation"),
             ProfileId("zamora-sede-public-navigation"),
