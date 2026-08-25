@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "8419d06aeca5e8bfd3c71d5e41b3cec8158617ac840577e53e496d193bededd5",
+  "sourceRevision": "7262bb060b9bd30675d0fd526a1bcceb0f52be2e16ca2280c64f4c983d364d96",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4959,28 +4959,29 @@
     {
       "portalId": "diputacion-zaragoza-sede",
       "inventoryId": "ES-PUB-0178",
-      "profileId": null,
+      "profileId": "zaragoza-sede-public-navigation",
       "displayName": "Sede electrónica de Diputación Provincial de Zaragoza",
       "organization": "Diputación Provincial de Zaragoza",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Aragón",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://dpz.sedelectronica.es",
+      "purpose": "Navegación QA-only a la entrada pública exacta /info.0 de la Sede electrónica de Zaragoza; autenticación, firma y presentación quedan fuera del contrato.",
+      "entryUrl": "https://dpz.sedelectronica.es/info.0",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "PROVINCIAL_SEDE_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
-        "DP41A"
+        "DP41A",
+        "ZARAGOZA-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado a la navegación pública exacta y su handshake same-origin de sesión; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "comunidad-madrid-cuenta-digital-carne-joven",

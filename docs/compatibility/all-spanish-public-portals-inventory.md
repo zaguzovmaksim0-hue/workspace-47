@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 172 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 176 |
-| Entradas restantes fuera de ambos estados | 7 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 173 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 177 |
+| Entradas restantes fuera de ambos estados | 6 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 172 |
+| `IMPLEMENTED_NOT_E2E` | 173 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 4 |
+| `BROWSE_ONLY` | 3 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 1 |
 | `DEPRECATED` | 0 |
@@ -5996,24 +5996,25 @@ records:
     origin: "https://dpz.sedelectronica.es"
     official_site: "https://dpz.sedelectronica.es"
     e_sede: "https://dpz.sedelectronica.es"
-    entry_url: "https://dpz.sedelectronica.es"
+    entry_url: "https://dpz.sedelectronica.es/info.0"
     procedure_page: "NO_VERIFICADO"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "PROVINCIAL_SEDE_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la entrada pública exacta /info.0 de la Sede electrónica de Zaragoza; autenticación, firma y presentación quedan fuera del contrato."
+    protocol_evidence: "La entrada pública exacta https://dpz.sedelectronica.es/info.0 respondió primero con un redirect same-origin que establece una cookie de sesión temporal; el siguiente GET HTTPS normal con esa sesión devolvió HTTP 200 en la misma URL. La documentación conserva la mención condicionada a certificado/firma, pero no se infiere ningún ABI, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP41A"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP41A", "ZARAGOZA-SEDE-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado a la navegación pública exacta y su handshake same-origin de sesión; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto de /info.0 con la sesión pública temporal, sin iniciar sesión, firmar, cargar documentos ni presentar."
+    notes: "La propiedad y la mención documental condicionada proceden de D06/DP41A; la comprobación técnica de navegación y del handshake temporal same-origin consta en ZARAGOZA-SEDE-NAV-2026-08-25; no se realizó E2E."
 ```
 
 ### 7.6. Superficie sectorial autonómica — Carné Joven Madrid
@@ -6701,6 +6702,7 @@ availability, certificado, firma ni contrato técnico.
 [DP40A]: https://diputaciondezamora.sedelectronica.es
 [ZAMORA-SEDE-NAV-2026-08-25]: https://diputaciondezamora.sedelectronica.es/info.0
 [DP41A]: https://dpz.sedelectronica.es
+[ZARAGOZA-SEDE-NAV-2026-08-25]: https://dpz.sedelectronica.es/info.0
 [MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
 [MENORCA-CLIENT-TLS-2026-08-18]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx
 [MENORCA-SEDE-DELEGATION-2026-08-21]: https://seuelectronica.cime.es/

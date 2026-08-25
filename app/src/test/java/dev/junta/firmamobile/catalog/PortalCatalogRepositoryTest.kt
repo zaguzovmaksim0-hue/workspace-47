@@ -151,6 +151,7 @@ class PortalCatalogRepositoryTest {
                 "lanzarote-instancia-general",
                 "lanzarote-sede-public-navigation",
                 "zamora-sede-public-navigation",
+                "zaragoza-sede-public-navigation",
                 "diputacion-pontevedra-instancia-xenerica",
                 "diputacion-malaga-instancia-general",
                 "diputacion-girona-instancia-generica",

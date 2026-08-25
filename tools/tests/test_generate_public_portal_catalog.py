@@ -418,6 +418,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("handshake", zamora["limitations"].lower())
         self.assertIn("e2e", zamora["limitations"].lower())
 
+    def test_zaragoza_profile_binds_exact_session_backed_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        zaragoza = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-zaragoza-sede"
+        )
+
+        self.assertEqual("zaragoza-sede-public-navigation", zaragoza["profileId"])
+        self.assertEqual("ES-PUB-0178", zaragoza["inventoryId"])
+        self.assertEqual("https://dpz.sedelectronica.es/info.0", zaragoza["entryUrl"])
+        self.assertNotIn("launchUrl", zaragoza)
+        self.assertEqual("PROVINCIAL_SEDE_PUBLIC_NAVIGATION", zaragoza["protocolFamily"])
+        self.assertEqual("E2E_PENDING", zaragoza["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", zaragoza["inventoryStatus"])
+        self.assertEqual("REVIEWED", zaragoza["discoveryState"])
+        self.assertEqual("2026-08-25", zaragoza["reviewedOn"])
+        self.assertEqual(
+            ["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            zaragoza["observedMechanisms"],
+        )
+        self.assertEqual([], zaragoza["observedSignatureFormats"])
+        self.assertIn("qa-only", zaragoza["limitations"].lower())
+        self.assertIn("handshake", zaragoza["limitations"].lower())
+        self.assertIn("e2e", zaragoza["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
