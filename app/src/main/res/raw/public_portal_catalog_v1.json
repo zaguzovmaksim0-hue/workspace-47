@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "fc8da771a7d307633624c54533341cf62b98d6c0829c87909e651bd8f98dd95d",
+  "sourceRevision": "51b970e431176bfcb2287c335a58884ad50534f60c4c4faa88a3a501bc7f2d63",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1410,24 +1410,25 @@
     {
       "portalId": "age-instituto-de-credito-oficial-ico",
       "inventoryId": "ES-PUB-0052",
-      "profileId": null,
+      "profileId": "ico-sede-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Instituto de Crédito Oficial (ICO)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only a la entrada pública exacta de la Sede electrónica del Instituto de Crédito Oficial; autenticación, firma y presentación quedan fuera del contrato.",
       "entryUrl": "https://sedeico.gob.es/web/sedeico",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "ICO-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado a la entrada pública exacta y su transición same-origin al root; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "age-instituto-de-mayores-y-servicios-sociales-imserso",

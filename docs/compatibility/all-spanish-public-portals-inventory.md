@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 167 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 171 |
-| Entradas restantes fuera de ambos estados | 12 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 168 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 172 |
+| Entradas restantes fuera de ambos estados | 11 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 167 |
+| `IMPLEMENTED_NOT_E2E` | 168 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 6 |
+| `BROWSE_ONLY` | 5 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -2082,19 +2082,19 @@ records:
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "AGE_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la entrada pública exacta de la Sede electrónica del Instituto de Crédito Oficial; autenticación, firma y presentación quedan fuera del contrato."
+    protocol_evidence: "La entrada oficial https://sedeico.gob.es/web/sedeico siguió una redirección same-origin y la comprobación HTTPS normal obtuvo HTTP 200 en https://sedeico.gob.es/; no se infiere ABI de firma, autenticación, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "ICO-SEDE-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado a la entrada pública exacta y su transición same-origin al root; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto de la entrada ICO sin iniciar sesión, firmar, cargar documentos ni presentar."
     notes: "Ministerio(s) enumerador(es): Ministerio de Economía, Comercio y Empresa."
 
   - inventory_id: "ES-PUB-0053"
@@ -6755,6 +6755,7 @@ availability, certificado, firma ni contrato técnico.
 [ITJ-SEDE-NAV-2026-08-25]: https://sede.transicionjusta.gob.es/
 [RED-ES-SEDE-NAV-2026-08-25]: https://sede.red.gob.es/
 [FORMENTERA-PORTAL-NAV-2026-08-25]: https://www.consellinsulardeformentera.cat/
+[ICO-SEDE-NAV-2026-08-25]: https://sedeico.gob.es/web/sedeico
 
 [FNMT-TRAMITES-2026-08-24]: https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general
 
