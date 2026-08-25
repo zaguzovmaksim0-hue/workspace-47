@@ -485,6 +485,30 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa-only", ine["limitations"].lower())
         self.assertIn("e2e", ine["limitations"].lower())
 
+    def test_seguridad_social_autofirma_profile_binds_external_android_handoff_without_local_sign_claim(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0005"
+        )
+
+        self.assertEqual("seguridad-social-sede", target["portalId"])
+        self.assertEqual("seguridad-social-sede-autofirma", target["profileId"])
+        self.assertEqual(
+            "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("SEDESS_EXTERNAL_AUTOFIRMA_ANDROID_HANDOFF", target["protocolFamily"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual(["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("dev.junta.firmamobile", target["limitations"])
+        self.assertIn("es.gob.afirma", target["limitations"])
+        self.assertIn("sin capability sign", target["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

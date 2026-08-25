@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "da332ccb87bc13670fe640ca30af7020a858a23d6867c315620bdbbcd9e3de0a",
+  "sourceRevision": "d8ee6c071ea98c71dab475e4638a57eb7a29d5ba96543e6ba8e93bb04503249e",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -128,28 +128,32 @@
     {
       "portalId": "seguridad-social-sede",
       "inventoryId": "ES-PUB-0005",
-      "profileId": null,
-      "displayName": "Sede Electrónica de la Seguridad Social",
+      "profileId": "seguridad-social-sede-autofirma",
+      "displayName": "Sede Electrónica de la Seguridad Social — Apoderamiento por trámites",
       "organization": "Instituto Nacional de la Seguridad Social",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Firma de trámites de la Sede mediante AutoFirma.",
-      "entryUrl": "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es",
+      "purpose": "Navegación QA-only al trámite oficial Apoderamiento por trámites y handoff fail-closed de la invocación afirma://sign generada por SEDESS al cliente Android oficial AutoFirma; Junta Firma Mobile no ejecuta la firma local ni suplanta el paquete de AutoFirma.",
+      "entryUrl": "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es",
       "observedMechanisms": [
+        "AUTOFIRMA",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "BLOCKED",
-      "inventoryStatus": "UNSUPPORTED_PROTOCOL",
+      "protocolFamily": "SEDESS_EXTERNAL_AUTOFIRMA_ANDROID_HANDOFF",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P03",
-        "D11"
+        "D11",
+        "SEDESS-APODERAMIENTO-2026-08-25",
+        "SEDESS-AUTOFIRMA-MANUAL-2026-08-25",
+        "SEDESS-AUTOFIRMA-ANDROID-2026-08-25"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "El flujo AutoFirma documentado por la propia Sede no funciona en dispositivos móviles."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA_ONLY sin capability SIGN: implementa solo navegación pública y delegación externa exacta afirma://sign al AutoFirma oficial desde el retorno HTTPS acotado de idApp=826. applicationId de Junta Firma Mobile permanece dev.junta.firmamobile; es.gob.afirma se usa solo como package externo. Autenticación, selección de certificado, firma criptográfica, aceptación del callback y presentación administrativa no se ejecutaron; E2E queda pendiente."
     },
     {
       "portalId": "tgss-importass",

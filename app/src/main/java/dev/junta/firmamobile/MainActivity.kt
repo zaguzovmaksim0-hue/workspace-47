@@ -384,6 +384,19 @@ class MainActivity : ComponentActivity() {
                                 // The validated URL stays closed if no browser can handle it.
                             }
                         },
+                        onOpenOfficialAutoFirma = { uri ->
+                            cancelSigning(SigningCancelReason.NAVIGATION)
+                            try {
+                                startActivity(
+                                    Intent(Intent.ACTION_VIEW, uri)
+                                        .setPackage(JuntaNavigationPolicy.AUTOFIRMA_PACKAGE),
+                                )
+                            } catch (_: ActivityNotFoundException) {
+                                // Keep the validated request closed if official AutoFirma is unavailable.
+                            } catch (_: SecurityException) {
+                                // Fail closed if Android refuses the explicit external package handoff.
+                            }
+                        },
                         onChangeCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
                             destination = AppDestination.Certificate

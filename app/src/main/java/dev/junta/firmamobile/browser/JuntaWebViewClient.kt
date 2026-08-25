@@ -32,6 +32,8 @@ enum class BrowserErrorCode {
 interface BrowserNavigationCallbacks {
     fun openExternal(uri: Uri)
 
+    fun openOfficialAutoFirma(uri: Uri)
+
     fun onAfirmaRequest(request: AfirmaRequest)
 
     fun onNavigationBlocked(reason: NavigationBlockReason)
@@ -109,6 +111,21 @@ class JuntaWebViewClient(
                     )
                 }
                 false
+            }
+            is NavigationDecision.OpenOfficialAutoFirma -> {
+                if (!isModernMainFrame || !method.equals(GET_METHOD, ignoreCase = true)) {
+                    logger.recordNavigationEvent(
+                        code = DiagnosticEventCode.NAVIGATION_BLOCKED,
+                        rawUrl = targetUrl,
+                        reason = NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT.name,
+                        isMainFrame = isModernMainFrame,
+                        method = method,
+                    )
+                } else {
+                    logger.recordBrowserEvent(DiagnosticEventCode.EXTERNAL_NAVIGATION, "AutoFirma")
+                    callbacks.openOfficialAutoFirma(decision.uri)
+                }
+                true
             }
             is NavigationDecision.UpgradeToHttps -> {
                 if (!isModernMainFrame || !method.equals(GET_METHOD, ignoreCase = true)) {

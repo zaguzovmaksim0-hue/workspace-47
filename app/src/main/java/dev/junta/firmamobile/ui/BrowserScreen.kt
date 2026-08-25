@@ -153,6 +153,7 @@ fun BrowserScreen(
     onDismissSigningState: () -> Unit,
     onExitBrowser: () -> Unit,
     onOpenExternal: (Uri) -> Unit,
+    onOpenOfficialAutoFirma: (Uri) -> Unit,
     onChangeCertificate: () -> Unit,
     onLockCertificate: () -> Unit,
     onClearSession: () -> Unit,
@@ -431,6 +432,16 @@ fun BrowserScreen(
                 advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
                 onOpenExternal(uri)
+            }
+
+            override fun openOfficialAutoFirma(uri: Uri) {
+                pendingClientAuthTarget = null
+                clientAuthGrant = null
+                pendingRequest = null
+                abandonClientAuth()
+                advanceNavigationEpoch()
+                onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                onOpenOfficialAutoFirma(uri)
             }
 
             override fun onAfirmaRequest(request: AfirmaRequest) {

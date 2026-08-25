@@ -351,6 +351,41 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun seguridadSocialOfficialAutoFirmaHandoffUsesDedicatedNativeCallback() {
+        val sedessCallbacks = RecordingBrowserCallbacks()
+        val sedessClient = JuntaWebViewClient(
+            callbacks = sedessCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("seguridad-social-sede-autofirma")),
+            currentPageUrl = { SEGURIDAD_SOCIAL_RETURN_PAGE },
+        )
+        val target =
+            "intent://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj" +
+                "#Intent;scheme=afirma;package=es.gob.afirma;end"
+
+        assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target)))
+
+        assertEquals(listOf("official-autofirma:sign"), sedessCallbacks.events)
+    }
+
+    @Test
+    fun seguridadSocialOfficialAutoFirmaHandoffRejectsSubframesAndPost() {
+        val sedessCallbacks = RecordingBrowserCallbacks()
+        val sedessClient = JuntaWebViewClient(
+            callbacks = sedessCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("seguridad-social-sede-autofirma")),
+            currentPageUrl = { SEGURIDAD_SOCIAL_RETURN_PAGE },
+        )
+        val target = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj"
+
+        assertTrue(sedessClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
+        assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+
+        assertEquals(emptyList<String>(), sedessCallbacks.events)
+    }
+
+    @Test
     fun externalAndAfirmaNavigationAreConsumedByNativeCallbacks() {
         assertTrue(
             client.shouldOverrideUrlLoading(webView, request("https://example.org/help")),
@@ -857,6 +892,10 @@ class JuntaWebViewClientTest {
             events += "external:${uri.host}"
         }
 
+        override fun openOfficialAutoFirma(uri: Uri) {
+            events += "official-autofirma:${uri.host}"
+        }
+
         override fun onAfirmaRequest(request: AfirmaRequest) {
             events += "afirma:${request.operation.wireName}"
         }
@@ -937,6 +976,11 @@ class JuntaWebViewClientTest {
             "https://valid.aoc.cat/o/oauth2/auth?response_type=code&client_id=valid.dipta.cat&" +
                 "redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode&" +
                 "scope=autenticacio_usuari&state=synthetic-state&access_type=online&approval_prompt=auto"
+        const val SEGURIDAD_SOCIAL_RETURN_PAGE =
+            "https://sede.seg-social.gob.es/wps/myportal/sede/!ut/p/z1/portal-state/" +
+                "?A=&N3=&idApp=826" +
+                "&idContenido=a061f401-c3ed-426e-9428-82bd9198c223" +
+                "&idPagina=com.ss.sede.RegistroElectronicoDeApoderamiento"
         const val TRUSTED_PAGE = "https://www.juntadeandalucia.es/portal"
         const val OFVIRTUAL_PAGE = "https://ws072.juntadeandalucia.es/ofvirtual/ovMisTramites/index"
     }
