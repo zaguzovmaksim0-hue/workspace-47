@@ -191,6 +191,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("ELECTRONIC_SIGNATURE", formentera["observedMechanisms"])
         self.assertEqual([], formentera["observedSignatureFormats"])
 
+    def test_iac_profile_binds_exact_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        iac = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-instituto-de-astrofisica-de-canarias-iac"
+        )
+
+        self.assertEqual("iac-sede-public-navigation", iac["profileId"])
+        self.assertEqual("ES-PUB-0050", iac["inventoryId"])
+        self.assertEqual("https://iac.sede.gob.es/", iac["entryUrl"])
+        self.assertNotIn("launchUrl", iac)
+        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", iac["protocolFamily"])
+        self.assertEqual("E2E_PENDING", iac["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", iac["inventoryStatus"])
+        self.assertEqual("REVIEWED", iac["discoveryState"])
+        self.assertEqual("2026-08-25", iac["reviewedOn"])
+        self.assertEqual([], iac["observedMechanisms"])
+        self.assertEqual([], iac["observedSignatureFormats"])
+        self.assertIn("qa-only", iac["limitations"].lower())
+        self.assertIn("e2e", iac["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "ef50a8e62160f8fdb669ac4d7aca1a88e02856e460944a6bf854af62511034cb",
+  "sourceRevision": "ba058543ec6d6934f0d8a58346e77470520d02ef737408574526f83be234674f",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1364,24 +1364,25 @@
     {
       "portalId": "age-instituto-de-astrofisica-de-canarias-iac",
       "inventoryId": "ES-PUB-0050",
-      "profileId": null,
+      "profileId": "iac-sede-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Instituto de Astrofísica de Canarias (IAC)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only a la raíz pública exacta de la Sede electrónica del Instituto de Astrofísica de Canarias; autenticación, firma y presentación quedan fuera del contrato.",
       "entryUrl": "https://iac.sede.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "IAC-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado al launch exacto de la raíz pública; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "age-instituto-de-contabilidad-y-auditoria-de-cuentas-icac",

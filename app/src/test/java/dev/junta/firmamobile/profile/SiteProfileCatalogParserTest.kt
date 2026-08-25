@@ -921,6 +921,7 @@ class SiteProfileCatalogParserTest {
             junta,
             education,
             ProfileId("formentera-sede-electronica"),
+            ProfileId("iac-sede-public-navigation"),
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
