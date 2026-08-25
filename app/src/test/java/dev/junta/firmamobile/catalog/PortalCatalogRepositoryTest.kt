@@ -183,6 +183,7 @@ class PortalCatalogRepositoryTest {
                 "ico-sede-public-navigation",
                 "el-hierro-sede-public-navigation",
                 "imserso-sede-public-navigation",
+                "ine-sede-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

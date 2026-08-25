@@ -464,6 +464,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa-only", imserso["limitations"].lower())
         self.assertIn("e2e", imserso["limitations"].lower())
 
+    def test_ine_profile_binds_exact_pending_public_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        ine = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-instituto-nacional-de-estadistica-ine"
+        )
+
+        self.assertEqual("ine-sede-public-navigation", ine["profileId"])
+        self.assertEqual("ES-PUB-0056", ine["inventoryId"])
+        self.assertEqual("https://sede.ine.gob.es/es/index.htm", ine["entryUrl"])
+        self.assertNotIn("launchUrl", ine)
+        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", ine["protocolFamily"])
+        self.assertEqual("E2E_PENDING", ine["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", ine["inventoryStatus"])
+        self.assertEqual("REVIEWED", ine["discoveryState"])
+        self.assertEqual("2026-08-25", ine["reviewedOn"])
+        self.assertEqual([], ine["observedMechanisms"])
+        self.assertEqual([], ine["observedSignatureFormats"])
+        self.assertIn("qa-only", ine["limitations"].lower())
+        self.assertIn("e2e", ine["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
