@@ -728,4 +728,46 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("if (isXuntaOrigin && !isExactXuntaCall)"))
     }
 
+    @Test
+    fun activeAccedaProfileEnablesTheRuntimeSigningShimFlag() {
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("age-acceda"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertFalse(flags.ugr)
+        assertFalse(flags.cantabria)
+        assertFalse(flags.jccm)
+        assertFalse(flags.sevillaAtse)
+        assertFalse(flags.melillaBatch)
+        assertFalse(flags.isciiiCertificateSelection)
+        assertFalse(flags.valenciaCertificateSelection)
+        assertTrue(flags.acceda)
+    }
+
+    @Test
+    fun accedaCompatibilityOwnsOnlyTheExactObservedPadesSigningCall() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            accedaCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            accedaCompatibilityEnabled = false,
+        )
+
+        assertTrue(enabled.contains("const accedaCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const accedaCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://sede.administracionespublicas.gob.es"))
+        assertTrue(enabled.contains("format=PAdES Detached\\nexpPolicy=FirmaAGE\\nnonexpired:true"))
+        assertTrue(enabled.contains("args[1] === \"SHA1withRSA\""))
+        assertTrue(enabled.contains("args[2] === \"PAdES\""))
+    }
+
 }

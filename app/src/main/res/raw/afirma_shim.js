@@ -33,6 +33,7 @@
   const vSel = __JFM_VALENCIA_CERTIFICATE_SELECTION_ENABLED__;
   const xSel = __JFM_XUNTA_GALICIA_COMPATIBILITY_ENABLED__;
   const euskadiClientAuthPostEnabled = __JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__;
+  const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -106,6 +107,8 @@
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  const accedaOrigin = "https://sede.administracionespublicas.gob.es";
+  const accedaExtraProperties = "format=PAdES Detached\nexpPolicy=FirmaAGE\nnonexpired:true";
   const euskadiProfileId = "euskadi-sede-electronica";
   const euskadiAuthPage =
     "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication";
@@ -479,6 +482,23 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isAccedaOrigin =
+      accedaCompatibilityEnabled && window.location.origin === accedaOrigin;
+    const isExactAccedaCall =
+      isAccedaOrigin &&
+      args.length === 6 &&
+      typeof args[0] === "string" &&
+      base64Pattern.test(args[0]) &&
+      args[1] === "SHA1withRSA" &&
+      args[2] === "PAdES" &&
+      typeof args[3] === "string" &&
+      args[3].trim() === accedaExtraProperties &&
+      typeof successCallback === "function" &&
+      typeof errorCallback === "function";
+    if (isAccedaOrigin && !isExactAccedaCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isAirefOrigin =
       airefCompatibilityEnabled && window.location.origin === airefOrigin;
     const isExactAirefCall =
@@ -678,6 +698,7 @@
           !isExactJccmRegistroCall && !isExactSevillaAtseCall && !isExactAirefCall &&
           !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall &&
           !isExactMinecoCall && !isExactCdtiCall && !isExactXuntaCall &&
+          !isExactAccedaCall &&
           !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding) ||
@@ -687,7 +708,7 @@
           !isExactSevillaAtseCall &&
           !isExactAirefCall && !isExactCdtiCall && !isExactPoliciaCall &&
           !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall && !isExactMinecoCall &&
-          !isExactXuntaCall)) {
+          !isExactXuntaCall && !isExactAccedaCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

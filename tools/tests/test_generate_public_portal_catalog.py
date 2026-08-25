@@ -901,6 +901,26 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual([], ceuta["observedSignatureFormats"])
         self.assertIn("no_verificado", ceuta["limitations"].lower())
 
+    def test_acceda_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        acceda = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-acceda")
+
+        self.assertEqual("age-acceda", acceda["profileId"])
+        self.assertEqual("ES-PUB-0003", acceda["inventoryId"])
+        self.assertEqual(
+            "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
+            acceda["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", acceda)
+        self.assertEqual("E2E_PENDING", acceda["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", acceda["inventoryStatus"])
+        self.assertEqual("2026-07-15", acceda["reviewedOn"])
+        self.assertEqual(["PADES", "XADES"], acceda["observedSignatureFormats"])
+        self.assertEqual(
+            ["AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            acceda["observedMechanisms"],
+        )
+
     def test_pattex_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         pattex = next(entry for entry in catalog["entries"] if entry["portalId"] == "extremadura-portal-tributario")
@@ -1209,6 +1229,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa", tarragona["limitations"].lower())
         self.assertIn("e2e", tarragona["limitations"].lower())
         self.assertIn("firma", tarragona["limitations"].lower())
+
+    def test_acceda_profile_binds_exact_catalog_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        acceda = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-acceda")
+
+        self.assertEqual("age-acceda", acceda["profileId"])
+        self.assertEqual("ES-PUB-0003", acceda["inventoryId"])
+        self.assertEqual(
+            "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
+            acceda["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", acceda)
+        self.assertEqual("E2E_PENDING", acceda["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", acceda["inventoryStatus"])
+        self.assertEqual("2026-07-15", acceda["reviewedOn"])
+        self.assertEqual(["PADES", "XADES"], acceda["observedSignatureFormats"])
+        self.assertEqual(
+            ["AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            acceda["observedMechanisms"],
+        )
+
 
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

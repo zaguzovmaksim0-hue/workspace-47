@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 47,
+  "catalogVersion": 48,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3043,6 +3043,40 @@
         {"url":"https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL","reviewedOn":"2026-08-21"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-08-21"},
         {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "age-acceda",
+      "profileVersion": 1,
+      "displayName": "Plataforma ACCEDA — Sede electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
+      "initiatorOrigins": ["https://sede.administracionespublicas.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [{
+        "operation": "SIGN",
+        "safeDescription": "Firma de solicitud en Plataforma ACCEDA",
+        "inputAdapterId": "miniapplet-autoscript-v1",
+        "callbackContractId": "miniapplet-sign-callback-v1",
+        "capabilities": ["SIGN", "LEGACY_SHA1"],
+        "endpointId": null,
+        "algorithms": ["SHA1_WITH_RSA"],
+        "format": "PADES",
+        "packaging": "DETACHED",
+        "mode": null,
+        "fixedExtraProperties": {"format":"PAdES Detached","expPolicy":"FirmaAGE","nonexpired":"true"},
+        "allowedExtraProperties": []
+      }],
+      "capabilities": ["SIGN", "LEGACY_SHA1"],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES","reviewedOn":"2026-07-15"},
+        {"url":"https://sede.administracionespublicas.gob.es/js/afirma/afirma_funciones.js","reviewedOn":"2026-08-10"},
+        {"url":"https://sede.administracionespublicas.gob.es/js/afirma/autoscript.js","reviewedOn":"2026-08-10"}
       ]
     }
   ]

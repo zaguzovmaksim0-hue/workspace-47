@@ -59,6 +59,7 @@ class JuntaOriginPolicyTest {
     private val transparencia = ProfileId("age-portal-de-la-transparencia")
     private val toledo = ProfileId("diputacion-toledo-sede")
     private val valencia = ProfileId("diputacion-valencia-sede")
+    private val acceda = ProfileId("age-acceda")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
     private val badajoz = ProfileId("diputacion-badajoz-portal")
@@ -191,6 +192,7 @@ class JuntaOriginPolicyTest {
             "diputacion.toledo.gob.es",
             "sede.isciii.gob.es",
             "portafirmas.dival.es",
+            "sede.administracionespublicas.gob.es",
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
             "sede.dip-badajoz.es",
@@ -949,6 +951,11 @@ class JuntaOriginPolicyTest {
         assertEquals(
             setOf("https://portafirmas.dival.es"),
             JuntaOriginPolicy.webMessageOriginRules(valencia),
+        )
+        assertEquals(setOf("sede.administracionespublicas.gob.es"), JuntaOriginPolicy.browserAllowedHosts(acceda))
+        assertEquals(
+            setOf("https://sede.administracionespublicas.gob.es"),
+            JuntaOriginPolicy.webMessageOriginRules(acceda),
         )
         assertEquals(setOf("sede.policia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(policia))
         assertEquals(setOf("sede.gobiernodecanarias.org"), JuntaOriginPolicy.browserAllowedHosts(canarias))

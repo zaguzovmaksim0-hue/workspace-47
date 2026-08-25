@@ -910,6 +910,7 @@ class SiteProfileCatalogParserTest {
         val carne = ProfileId("carne-joven-andalucia")
         val education = ProfileId("educacion-convocatoria")
         val ceuta = ProfileId("ceuta-sede")
+        val acceda = ProfileId("age-acceda")
         val lleida = ProfileId("diputacion-lleida-sede")
         val badajoz = ProfileId("diputacion-badajoz-portal")
         val aragon = ProfileId("aragon-siraw")
@@ -927,6 +928,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("dgoj-public-navigation"),
             ProfileId("diputacion-alava-registro-comun"),
             ceuta,
+            acceda,
             ProfileId("aragon-solicitud-general-client-auth"),
             lleida,
             badajoz,
@@ -958,6 +960,10 @@ class SiteProfileCatalogParserTest {
         assertEquals(
             CompatibilityStatus.VERIFIED_CONTRACT,
             BuiltInSiteProfiles.qaRegistry.profile(ceuta)?.compatibilityStatus,
+        )
+        assertEquals(
+            CompatibilityStatus.VERIFIED_CONTRACT,
+            BuiltInSiteProfiles.qaRegistry.profile(acceda)?.compatibilityStatus,
         )
     }
 

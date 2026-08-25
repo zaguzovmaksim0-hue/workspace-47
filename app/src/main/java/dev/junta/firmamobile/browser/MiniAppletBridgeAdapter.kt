@@ -42,6 +42,7 @@ import dev.junta.firmamobile.signing.SigningFormat
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.ProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.ProtocolInputAdapter
+import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
 import dev.junta.firmamobile.signing.XuntaPadesTriPhaseAdapter
 import java.io.StringReader
@@ -376,6 +377,16 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isAccedaContract = isExactAccedaContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == AccedaPadesAdapter.PROFILE_ID && !isAccedaContract) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val canonicalRequestId = requestId
             ?: return MiniAppletBridgeRouteResult.Rejected(null, SigningErrorCode.INVALID_REQUEST)
         val documentId = json.strictUuid(DOCUMENT_ID_FIELD)
@@ -398,7 +409,12 @@ internal class ProfileMiniAppletBridgeAdapter(
         }
         val format = when (json.strictString(FORMAT_FIELD)) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_PADES -> if (isGranCanariaContract || isFuerteventuraContract || isMinecoContract || isTransparenciaContract) {
+            FORMAT_PADES -> if (isAccedaContract || isGranCanariaContract || isFuerteventuraContract || isMinecoContract || isTransparenciaContract) {
+                SigningFormat.PADES to SignatureFormat.PADES
+            } else {
+                null
+            }
+            FORMAT_PADES_DETACHED -> if (isAccedaContract) {
                 SigningFormat.PADES to SignatureFormat.PADES
             } else {
                 null
@@ -567,6 +583,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
                 )
+        } else if (isAccedaContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)
+                ?.takeIf { it.trim() == AccedaPadesAdapter.EXPECTED_EXTRA_PROPERTIES }
+                ?: return MiniAppletBridgeRouteResult.Rejected(
+                    canonicalRequestId,
+                    SigningErrorCode.INVALID_REQUEST,
+                )
         } else if (isPoliciaContract) {
             val raw = json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?: return MiniAppletBridgeRouteResult.Rejected(
@@ -704,6 +727,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
+        if (isAccedaContract && !decodedData.isValidPdfPayload()) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(
+                canonicalRequestId,
+                SigningErrorCode.INVALID_REQUEST,
+            )
+        }
         val extraProperties = if (isEivissaContract) {
             rawExtraProperties
         } else if (isCantabriaContract) {
@@ -730,6 +760,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (isJccmRegistroContract) {
             JCCM_REGISTRO_EXTRA_PROPERTIES
+        } else if (isAccedaContract) {
+            AccedaPadesAdapter.EXPECTED_EXTRA_PROPERTIES
         } else if (operation.fixedExtraProperties.isEmpty()) {
             ""
         } else canonicalExtraProperties(rawExtraProperties, operation.fixedExtraProperties)
@@ -808,6 +840,53 @@ internal class ProfileMiniAppletBridgeAdapter(
     private fun String.hasSafeControls(): Boolean = all { character ->
         !character.isISOControl() || character == '\n' || character == '\r' || character == '\t'
     }
+
+    private fun isExactAccedaContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        currentPageUrl == AccedaPadesAdapter.START_URL &&
+            profile.profileId.value == AccedaPadesAdapter.PROFILE_ID &&
+            profile.profileVersion == AccedaPadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == AccedaPadesAdapter.START_URL &&
+            origin.serialized == AccedaPadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(ExactOrigin.parse(AccedaPadesAdapter.INITIATOR_ORIGIN)) &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1 &&
+            operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == AccedaPadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.PADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == null &&
+            operation.fixedExtraProperties == AccedaPadesAdapter.FIXED_EXTRA_PROPERTIES &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == AccedaPadesAdapter.ID.value
+
+    private fun ByteArray.isValidPdfPayload(): Boolean =
+        size in 32..AccedaPadesAdapter.MAX_PDF_BYTES &&
+            this[0] == 0x25.toByte() &&
+            this[1] == 0x50.toByte() &&
+            this[2] == 0x44.toByte() &&
+            this[3] == 0x46.toByte() &&
+            this[4] == 0x2D.toByte() &&
+            String(this, Charsets.US_ASCII).contains("%%EOF")
+
     private fun isExactJccmRegistroContract(
         profile: SiteProfile,
         origin: ExactOrigin,
@@ -1679,6 +1758,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val ALGORITHM_SHA512_RSA = "SHA512withRSA"
         private const val FORMAT_CADES = "CAdES"
         private const val FORMAT_PADES = "PAdES"
+        private const val FORMAT_PADES_DETACHED = "PAdES Detached"
         private const val FORMAT_PADES_TRI = "PAdEStri"
         private const val FORMAT_XADES_DETACHED = "XAdES Detached"
         private const val FORMAT_XADES = "XAdES"

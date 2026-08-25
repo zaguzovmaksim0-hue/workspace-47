@@ -74,6 +74,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("mugeju-remision-documentacion-client-auth"),
                 ProfileId("melilla-sede"),
                 ProfileId("ceuta-sede"),
+                ProfileId("age-acceda"),
                 ProfileId("extremadura-tramites"),
                 ProfileId("extremadura-pattex-client-auth"),
                 ProfileId("navarra-sede-registro-general"),

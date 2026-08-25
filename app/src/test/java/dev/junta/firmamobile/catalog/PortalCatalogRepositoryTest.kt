@@ -76,6 +76,7 @@ class PortalCatalogRepositoryTest {
                 "mugeju-remision-documentacion-client-auth",
                 "melilla-sede",
                 "ceuta-sede",
+                "age-acceda",
                 "extremadura-tramites",
                 "extremadura-pattex-client-auth",
                 "navarra-sede-registro-general",

@@ -39,6 +39,7 @@ object AfirmaJavascriptShim {
         valenciaCertificateSelectionEnabled: Boolean = false,
         xuntaGaliciaCompatibilityEnabled: Boolean = false,
         euskadiClientAuthPostEnabled: Boolean = false,
+        accedaCompatibilityEnabled: Boolean = false,
     ): String {
         val script = context.resources.openRawResource(R.raw.afirma_shim)
             .bufferedReader(Charsets.UTF_8)
@@ -72,6 +73,7 @@ object AfirmaJavascriptShim {
         check(script.countOccurrences(VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
         check(script.countOccurrences(XUNTA_GALICIA_COMPATIBILITY_PLACEHOLDER) == 1)
         check(script.countOccurrences(EUSKADI_CLIENT_AUTH_POST_PLACEHOLDER) == 1)
+        check(script.countOccurrences(ACCEDA_COMPATIBILITY_PLACEHOLDER) == 1)
         val configured = script
             .replace(
                 MODE_PLACEHOLDER,
@@ -158,6 +160,10 @@ object AfirmaJavascriptShim {
                 EUSKADI_CLIENT_AUTH_POST_PLACEHOLDER,
                 if (euskadiClientAuthPostEnabled) "true" else "false",
             )
+            .replace(
+                ACCEDA_COMPATIBILITY_PLACEHOLDER,
+                if (accedaCompatibilityEnabled) "true" else "false",
+            )
         check(configured.isNotBlank() && configured.length <= MAX_SCRIPT_CHARS)
         return configured
     }
@@ -204,6 +210,8 @@ object AfirmaJavascriptShim {
         "__JFM_XUNTA_GALICIA_COMPATIBILITY_ENABLED__"
     private const val EUSKADI_CLIENT_AUTH_POST_PLACEHOLDER =
         "__JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__"
+    private const val ACCEDA_COMPATIBILITY_PLACEHOLDER =
+        "__JFM_ACCEDA_COMPATIBILITY_ENABLED__"
 }
 
 enum class MiniAppletBridgeMode {
