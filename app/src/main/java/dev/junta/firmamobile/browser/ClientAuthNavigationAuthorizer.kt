@@ -42,6 +42,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
 ) {
     private var pending: PendingSource? = null
     private var consumedDirect: DirectConsumption? = null
+    private var consumedInPlace: DirectConsumption? = null
 
     @Synchronized
     fun observeTopLevelNavigation(
@@ -86,7 +87,44 @@ class ClientAuthNavigationAuthorizer internal constructor(
                 currentEpoch = currentEpoch,
                 nowNanos = nowNanos,
             )
+            ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> null
         }
+    }
+
+    @Synchronized
+    fun observeTopLevelResourceRequest(
+        activeProfileId: ProfileId?,
+        currentUrl: String?,
+        targetUrl: String,
+        method: String,
+        currentEpoch: Long,
+        isMainFrameRequest: Boolean,
+    ): AuthorizedClientAuthTarget? {
+        if (!isMainFrameRequest || activeProfileId == null || currentEpoch == Long.MAX_VALUE) return null
+        val profile = registry.profile(activeProfileId) ?: return null
+        val policy = profile.clientAuthPolicy ?: return null
+        if (policy.transitionMode != ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ||
+            !method.equals(policy.requestMethod.name, ignoreCase = true)
+        ) return null
+        val source = currentUrl?.let(::strictHttpsUri)?.takeIf { it.matchesSource(policy) } ?: return null
+        val target = strictHttpsUri(targetUrl)?.takeIf { it.matches(policy) } ?: return null
+        val nowNanos = monotonicNanos()
+        val previous = consumedInPlace
+        if (previous != null &&
+            previous.profileId == profile.profileId && previous.source == source &&
+            previous.target == target && previous.epoch == currentEpoch &&
+            !previous.isExpiredOrInvalid(nowNanos)
+        ) return null
+        val lifetimeNanos = grantLifetimeNanos(policy)
+        consumedInPlace = DirectConsumption(
+            profileId = profile.profileId,
+            source = source,
+            target = target,
+            epoch = currentEpoch,
+            observedAtMonotonicNanos = nowNanos,
+            lifetimeNanos = lifetimeNanos,
+        )
+        return authorized(profile, policy, target, nowNanos, lifetimeNanos)
     }
 
     private fun authorizeDirectTransition(
@@ -201,6 +239,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
     private fun clearState() {
         clearPending()
         consumedDirect = null
+        consumedInPlace = null
     }
 
     private fun currentBelongsTo(profile: SiteProfile, currentUrl: String?): Boolean {

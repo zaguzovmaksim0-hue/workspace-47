@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 158 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 162 |
-| Entradas restantes fuera de ambos estados | 21 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 159 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 163 |
+| Entradas restantes fuera de ambos estados | 20 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 158 |
+| `IMPLEMENTED_NOT_E2E` | 159 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 14 |
+| `BROWSE_ONLY` | 13 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5813,24 +5813,24 @@ records:
     origin: "https://seuelectronica.dipta.cat"
     official_site: "https://seuelectronica.dipta.cat"
     e_sede: "https://seuelectronica.dipta.cat"
-    entry_url: "https://seuelectronica.dipta.cat"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/procediments/DIP80_EGIST_00001/crearInstancia"
+    procedure_page: "https://seuelectronica.dipta.cat/instancia-generica"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://cert.valid.aoc.cat/o/oauth2/cert"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP34A", "DP34B"]
-    reason: "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Autenticación con certificado de la Sol·licitud genèrica mediante el endpoint mTLS exacto de AOC VALId; firma y presentación permanecen bloqueadas."
+    protocol_evidence: "La solicitud pública deriva a AOC VALId; el login.js vigente construye https://cert.valid.aoc.cat/o/oauth2/cert para Certificat digital mediante POST y el handshake TLS 1.2 de ese host emite CertificateRequest para RSA/ECDSA sin lista de CA."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP34A", "DP34B", "TARRAGONA-GENERIC-2026-08-21", "TARRAGONA-VALID-JS-2026-08-21", "TARRAGONA-CLIENT-TLS-2026-08-21"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA para la cadena exacta de Sol·licitud genèrica y el POST de certificado de VALId; sin E2E. No se implementa ni se infiere el ABI de firma documental o presentación administrativa."
+    reviewed_at: "2026-08-21"
+    next_gate: "Verificación E2E separada del acceso con certificado; mantener firma y presentación bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0173"
     surface_key: "diputacion-teruel-sede"

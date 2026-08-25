@@ -1184,6 +1184,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
         self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
+    def test_tarragona_valid_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        tarragona = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-tarragona-sede"
+        )
+
+        self.assertEqual("diputacion-tarragona-sede", tarragona["profileId"])
+        self.assertEqual("ES-PUB-0172", tarragona["inventoryId"])
+        self.assertEqual(
+            "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/"
+            "procediments/DIP80_EGIST_00001/crearInstancia",
+            tarragona["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", tarragona)
+        self.assertEqual("E2E_PENDING", tarragona["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", tarragona["inventoryStatus"])
+        self.assertEqual("2026-08-21", tarragona["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", tarragona["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", tarragona["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", tarragona["observedMechanisms"])
+        self.assertEqual([], tarragona["observedSignatureFormats"])
+        self.assertIn("qa", tarragona["limitations"].lower())
+        self.assertIn("e2e", tarragona["limitations"].lower())
+        self.assertIn("firma", tarragona["limitations"].lower())
 
     def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

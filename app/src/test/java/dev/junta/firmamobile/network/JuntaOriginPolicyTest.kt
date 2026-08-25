@@ -229,6 +229,8 @@ class JuntaOriginPolicyTest {
             "tramits.diba.cat",
             "tramits.gencat.cat",
             "ovt.gencat.cat",
+            "seuelectronica.dipta.cat",
+            "egovern.altanet.org",
             "diputacionavila.sedelectronica.es",
             "elhierro.sedelectronica.es",
             "dguadalajara.sedelectronica.es",

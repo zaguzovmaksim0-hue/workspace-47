@@ -25,6 +25,7 @@ import java.security.cert.X509Certificate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -536,6 +537,65 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun tarragonaExactTopLevelPostArmsOnlyTheMatchingInPlaceClientTlsChallenge() {
+        val profileId = ProfileId("diputacion-tarragona-sede")
+        val target = "https://cert.valid.aoc.cat/o/oauth2/cert"
+        var captured: AuthorizedClientAuthTarget? = null
+        var capturedRequest: ClientCertRequest? = null
+        val tarragonaClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 200L },
+            onInPlaceClientAuthChallenge = { authorized, request ->
+                captured = authorized
+                capturedRequest = request
+            },
+        )
+
+        tarragonaClient.onPageStarted(webView, TARRAGONA_VALID_SOURCE, null)
+        assertNull(tarragonaClient.shouldInterceptRequest(webView, request(target, method = "POST")))
+        val clientCert = RecordingClientCertRequest(requestHost = "cert.valid.aoc.cat")
+        tarragonaClient.onReceivedClientCertRequest(webView, clientCert)
+
+        assertEquals(profileId, captured?.profileId)
+        assertEquals(target, captured?.target?.toASCIIString())
+        assertSame(clientCert, capturedRequest)
+        assertEquals(0, clientCert.ignores)
+    }
+
+    @Test
+    fun tarragonaGetWrongTargetAndUnarmedClientCertificateChallengeFailClosed() {
+        val profileId = ProfileId("diputacion-tarragona-sede")
+        val scenarios = listOf(
+            "GET" to "https://cert.valid.aoc.cat/o/oauth2/cert",
+            "POST" to "https://cert.valid.aoc.cat/o/oauth2/other",
+            "POST" to "https://cert.valid.aoc.cat/o/oauth2/cert?extra=1",
+        )
+
+        scenarios.forEachIndexed { index, (method, target) ->
+            var callbackCount = 0
+            val tarragonaClient = JuntaWebViewClient(
+                callbacks = RecordingBrowserCallbacks(),
+                logger = logger,
+                navigationPolicy = JuntaNavigationPolicy(profileId),
+                clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+                activeProfileId = { profileId },
+                currentNavigationEpoch = { 210L + index },
+                onInPlaceClientAuthChallenge = { _, _ -> callbackCount++ },
+            )
+            tarragonaClient.onPageStarted(webView, TARRAGONA_VALID_SOURCE, null)
+            assertNull(tarragonaClient.shouldInterceptRequest(webView, request(target, method = method)))
+            val clientCert = RecordingClientCertRequest(requestHost = "cert.valid.aoc.cat")
+            tarragonaClient.onReceivedClientCertRequest(webView, clientCert)
+            assertEquals(0, callbackCount)
+            assertEquals(1, clientCert.ignores)
+        }
+    }
+
+    @Test
     fun normalWebViewAlwaysIgnoresClientCertificateRequests() {
         val request = RecordingClientCertRequest()
 
@@ -849,13 +909,17 @@ class JuntaWebViewClientTest {
         }
     }
 
-    private class RecordingClientCertRequest : ClientCertRequest() {
+    private class RecordingClientCertRequest(
+        private val requestHost: String = "ws235.juntadeandalucia.es",
+        private val requestPort: Int = 443,
+        private val requestKeyTypes: Array<String> = arrayOf("RSA"),
+    ) : ClientCertRequest() {
         var ignores = 0
         var proceeds = 0
         var cancels = 0
-        override fun getHost(): String = "ws235.juntadeandalucia.es"
-        override fun getPort(): Int = 443
-        override fun getKeyTypes(): Array<String> = arrayOf("RSA")
+        override fun getHost(): String = requestHost
+        override fun getPort(): Int = requestPort
+        override fun getKeyTypes(): Array<String> = requestKeyTypes
         override fun getPrincipals(): Array<Principal> = emptyArray()
         override fun proceed(privateKey: PrivateKey, chain: Array<X509Certificate>) {
             proceeds++
@@ -869,6 +933,10 @@ class JuntaWebViewClientTest {
     }
 
     private companion object {
+        const val TARRAGONA_VALID_SOURCE =
+            "https://valid.aoc.cat/o/oauth2/auth?response_type=code&client_id=valid.dipta.cat&" +
+                "redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode&" +
+                "scope=autenticacio_usuari&state=synthetic-state&access_type=online&approval_prompt=auto"
         const val TRUSTED_PAGE = "https://www.juntadeandalucia.es/portal"
         const val OFVIRTUAL_PAGE = "https://ws072.juntadeandalucia.es/ofvirtual/ovMisTramites/index"
     }
