@@ -374,6 +374,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == ARAGON_TRAMITES_PROFILE_ID) {
                 validateAragonTramitesProfile(p)
             }
+            if (p.profileId.value == ACCEDA_PROFILE_ID) {
+                validateAccedaProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -616,7 +619,12 @@ object SiteProfileCatalogParser {
                             }
                         }
                         SignatureFormat.PADES -> {
-                            if (p.profileId.value == XUNTA_PROFILE_ID) {
+                            if (p.profileId.value == ACCEDA_PROFILE_ID) {
+                                require(op.endpointId == null && op.mode == null)
+                                require(op.packaging == SignaturePackaging.DETACHED)
+                                require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
+                                require(op.fixedExtraProperties == ACCEDA_FIXED_EXTRA_PROPERTIES)
+                            } else if (p.profileId.value == XUNTA_PROFILE_ID) {
                                 require(op.endpointId == EndpointId(XUNTA_ENDPOINT_ID) && op.mode == null)
                                 require(op.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA))
                                 require(op.fixedExtraProperties == XUNTA_FIXED_EXTRA_PROPERTIES)
@@ -3260,6 +3268,51 @@ object SiteProfileCatalogParser {
     private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
     private const val UGR_ORIGIN = "https://sede.ugr.es"
     private const val UGR_SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
+    private const val ACCEDA_PROFILE_ID = "age-acceda"
+    private const val ACCEDA_PROFILE_VERSION = 1
+    private const val ACCEDA_DISPLAY_NAME = "Plataforma ACCEDA — Sede electrónica"
+    private const val ACCEDA_START_URL =
+        "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES"
+    private const val ACCEDA_ORIGIN = "https://sede.administracionespublicas.gob.es"
+    private const val ACCEDA_SAFE_DESCRIPTION = "Firma de solicitud en Plataforma ACCEDA"
+    private val ACCEDA_FIXED_EXTRA_PROPERTIES = mapOf(
+        "format" to "PAdES Detached",
+        "expPolicy" to "FirmaAGE",
+        "nonexpired" to "true",
+    )
+
+    private fun validateAccedaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == ACCEDA_PROFILE_VERSION)
+        require(profile.displayName == ACCEDA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == ACCEDA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(ACCEDA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
+        require(profile.clientAuthPolicy == null)
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.isNotEmpty())
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(
+            profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
+                operation = ProtocolOperation.SIGN,
+                safeDescription = ACCEDA_SAFE_DESCRIPTION,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
+                endpointId = null,
+                algorithms = setOf(SignatureAlgorithm.SHA1_WITH_RSA),
+                format = SignatureFormat.PADES,
+                packaging = SignaturePackaging.DETACHED,
+                mode = null,
+                fixedExtraProperties = ACCEDA_FIXED_EXTRA_PROPERTIES,
+                allowedExtraProperties = emptySet(),
+            ),
+        )
+    }
 }
 
 private sealed interface JValue {

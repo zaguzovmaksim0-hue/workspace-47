@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9d232644ab837c1a8a60d23db005bbd4e68a7ebf036e22d5cc6eaf2ca106675f",
+  "sourceRevision": "88353fd4be9f5a33adbd6adfa87ba5d5b0fcf6dd073d6d5edb9a52d1d52319dc",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -67,7 +67,7 @@
     {
       "portalId": "age-acceda",
       "inventoryId": "ES-PUB-0003",
-      "profileId": null,
+      "profileId": "age-acceda",
       "displayName": "Plataforma ACCEDA",
       "organization": "Administración General del Estado",
       "governmentLevel": "STATE",
@@ -84,8 +84,8 @@
         "XADES"
       ],
       "protocolFamily": "AUTOSCRIPT_LOCAL",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "VERIFIED_CONTRACT",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P15",
@@ -94,7 +94,7 @@
         "D11"
       ],
       "reviewedOn": "2026-07-15",
-      "limitations": "Contrato estático probado, pero faltan procedimiento exacto, endpoint servidor, implementación y aceptación E2E."
+      "limitations": "Implementación PAdES local verificada bajo contrato estático doSignSolicitud; falta prueba de aceptación E2E con formulario real."
     },
     {
       "portalId": "aeat-sede",
