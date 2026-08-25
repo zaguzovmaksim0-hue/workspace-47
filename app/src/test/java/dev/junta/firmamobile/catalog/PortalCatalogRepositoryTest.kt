@@ -166,6 +166,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-ourense-sede",
                 "diputacion-sevilla-sede",
                 "diputacion-a-coruna-solicitud-general",
+                "euskadi-sede-electronica",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
