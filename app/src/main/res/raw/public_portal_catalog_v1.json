@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "51b970e431176bfcb2287c335a58884ad50534f60c4c4faa88a3a501bc7f2d63",
+  "sourceRevision": "b98bbc8ce4f8035c6768130e1cd6cdfced4989425eb1784084d2b0356f5f315a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3458,24 +3458,25 @@
     {
       "portalId": "el-hierro-sede-electronica",
       "inventoryId": "ES-PUB-0126",
-      "profileId": null,
+      "profileId": "el-hierro-sede-public-navigation",
       "displayName": "Sede electrónica del Cabildo Insular de El Hierro",
       "organization": "Cabildo Insular de El Hierro",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only a la entrada pública exacta de la Sede electrónica de El Hierro; autenticación, firma y presentación quedan fuera del contrato.",
       "entryUrl": "https://elhierro.sedelectronica.es/info.0",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "BLOCKED",
-      "inventoryStatus": "INACCESSIBLE",
-      "discoveryState": "RECHECK_REQUIRED",
+      "protocolFamily": "INSULAR_SEDE_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I05B"
+        "I05B",
+        "ELHIERRO-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El transporte de revisión informó 400 Redirect loop detected al abrir https://elhierro.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado a la navegación pública exacta y su handshake same-origin de sesión; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "tenerife-portal-institucional",

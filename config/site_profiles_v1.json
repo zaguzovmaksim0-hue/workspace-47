@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 55,
+  "catalogVersion": 56,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3177,6 +3177,25 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://sedeico.gob.es/web/sedeico","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "el-hierro-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública del Cabildo Insular de El Hierro",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://elhierro.sedelectronica.es/info.0",
+      "initiatorOrigins": ["https://elhierro.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://elhierro.sedelectronica.es/info.0","reviewedOn":"2026-08-25"}
       ]
     },
     {

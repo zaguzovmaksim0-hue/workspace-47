@@ -2419,7 +2419,11 @@ object SiteProfileCatalogParser {
                 origin.serialized == TARRAGONA_VALID_ORIGIN) ||
             (setOf(firstOwner.value, secondOwner.value) ==
                 setOf(CATALUNYA_SEU_PROFILE_ID, TARRAGONA_PROFILE_ID) &&
-                origin.serialized in setOf(TARRAGONA_VALID_ORIGIN, TARRAGONA_CERT_ORIGIN))
+                origin.serialized in setOf(TARRAGONA_VALID_ORIGIN, TARRAGONA_CERT_ORIGIN)) ||
+            (setOf(firstOwner.value, secondOwner.value) ==
+                setOf(EL_HIERRO_PROFILE_ID, EL_HIERRO_PUBLIC_NAVIGATION_PROFILE_ID) &&
+                !firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+                origin.serialized == EL_HIERRO_PUBLIC_ORIGIN)
 
     private fun SiteProfile.allOrigins() = initiatorOrigins + redirectOrigins + trustedBrowseOrigins +
         (clientAuthPolicy?.requestOrigins ?: emptySet())
@@ -2893,6 +2897,8 @@ object SiteProfileCatalogParser {
     private const val SEGOVIA_PROFILE_ID = "diputacion-segovia-registro"
     private const val PALENCIA_PROFILE_ID = "diputacion-palencia-solicitud-general"
     private const val EL_HIERRO_PROFILE_ID = "el-hierro-solicitud-general"
+    private const val EL_HIERRO_PUBLIC_NAVIGATION_PROFILE_ID = "el-hierro-sede-public-navigation"
+    private const val EL_HIERRO_PUBLIC_ORIGIN = "https://elhierro.sedelectronica.es"
     private const val CTBG_PROFILE_ID = "ctbg-solicitud-informacion"
     private const val CATASTRO_PROFILE_ID = "catastro-solicitudes-genericas"
     private const val FEGA_PROFILE_ID = "fega-solicitud-general-ofvsg02"
