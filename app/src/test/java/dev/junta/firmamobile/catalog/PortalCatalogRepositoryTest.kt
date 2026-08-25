@@ -187,6 +187,7 @@ class PortalCatalogRepositoryTest {
                 "ine-sede-public-navigation",
                 "isfas-sede-public-navigation",
                 "comunidad-madrid-gestiona2-public-navigation",
+                "diputacion-soria-sede-client-auth",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -194,11 +195,7 @@ class PortalCatalogRepositoryTest {
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
-        assertEquals(
-            setOf(PortalInventoryStatus.INACCESSIBLE),
-            metadataOnly.map { it.inventoryStatus }.toSet(),
-        )
-        assertTrue(metadataOnly.all { it.supportStatus == PortalSupportStatus.INACCESSIBLE })
+        assertTrue(metadataOnly.isEmpty())
 
         val verifiedIds = setOf(
             ProfileId("carne-joven-andalucia"),

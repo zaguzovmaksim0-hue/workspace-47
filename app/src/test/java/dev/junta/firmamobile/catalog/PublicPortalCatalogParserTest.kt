@@ -179,10 +179,11 @@ class PublicPortalCatalogParserTest {
                 ProfileId("ine-sede-public-navigation"),
                 ProfileId("isfas-sede-public-navigation"),
                 ProfileId("comunidad-madrid-gestiona2-public-navigation"),
+                ProfileId("diputacion-soria-sede-client-auth"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
-        assertTrue(catalog.entries.any { it.catalogStatus == PublicCatalogStatus.BLOCKED })
+        assertTrue(catalog.entries.none { it.catalogStatus == PublicCatalogStatus.BLOCKED })
         assertTrue(catalog.entries.none { it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY })
     }
 

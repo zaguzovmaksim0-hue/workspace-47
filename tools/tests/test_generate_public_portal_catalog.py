@@ -557,6 +557,33 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("móvil", madrid["limitations"].lower())
         self.assertIn("qa-only", madrid["limitations"].lower())
 
+    def test_soria_profile_binds_exact_pending_public_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        soria = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0171"
+        )
+
+        self.assertEqual("diputacion-soria-sede-client-auth", soria["profileId"])
+        self.assertEqual("diputacion-soria-sede", soria["portalId"])
+        self.assertEqual(
+            "https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1",
+            soria["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", soria)
+        self.assertEqual("CLIENT_TLS_AUTH", soria["protocolFamily"])
+        self.assertEqual("E2E_PENDING", soria["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", soria["inventoryStatus"])
+        self.assertEqual("REVIEWED", soria["discoveryState"])
+        self.assertEqual("2026-08-25", soria["reviewedOn"])
+        self.assertEqual(
+            ["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH", "ELECTRONIC_SIGNATURE"],
+            soria["observedMechanisms"],
+        )
+        self.assertEqual([], soria["observedSignatureFormats"])
+        self.assertIn("qa-only", soria["limitations"].lower())
+        self.assertIn("e2e", soria["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

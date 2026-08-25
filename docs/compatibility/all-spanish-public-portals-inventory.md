@@ -141,8 +141,8 @@ histórica de la matriz ni constituye una escala automática:
 
 P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW), P20 (Oficina Virtual) y P17 (UniZAR) cuentan con verificación E2E delimitada a sus logins CAdES observados el 2026-07-28, 2026-07-29 y 2026-07-30, respectivamente. Tests locales, hashes de JS y
 revisión documental nunca producen por sí solos ese estado. La implementación Junta Ovorion se
-mapea a `IMPLEMENTED_NOT_E2E`; el flujo móvil que permanece no soportado se
-mantiene en `UNSUPPORTED_PROTOCOL`, con razón específica en su ficha. No se asigna
+mapea a `IMPLEMENTED_NOT_E2E`; los límites específicos de cada flujo se
+mantienen en su ficha. No se asigna
 `REQUIRES_AUTHENTICATED_RESEARCH` sin demostrar antes
 que la investigación pública segura se agotó.
 
@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 178 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 182 |
-| Entradas restantes fuera de ambos estados | 1 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 179 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 183 |
+| Entradas restantes fuera de ambos estados | 0 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -225,7 +225,7 @@ Por estado del inventario:
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 0 |
 | `UNSUPPORTED_PROTOCOL` | 0 |
-| `INACCESSIBLE` | 1 |
+| `INACCESSIBLE` | 0 |
 | `DEPRECATED` | 0 |
 | **Total** | **183** |
 
@@ -442,9 +442,9 @@ El resultado D06 queda fijado en el
 [snapshot JSONL](snapshots/pag-diputaciones-2026-07-16.jsonl). Sus 41 etiquetas
 se resolvieron mediante evidencia HTTPS oficial sin solicitar las referencias
 HTTP heredadas ni sintetizar cambios de esquema. Valladolid coincidió con el
-origin existente; 40 origins son nuevos. Soria se conserva como
-`INACCESSIBLE`/`RECHECK_REQUIRED` porque la revalidación normal encontró un
-certificado TLS expirado el 2026-06-21; no se usó `--insecure`. Formularios,
+origin existente; 40 origins son nuevos. Soria se revalidó contra la sede
+electrónica vigente `portaltramitador.dipsoria.es/web`; el antiguo host
+`sede.dipsoria.es` no se usa para el perfil actual. Formularios,
 autenticación, firma, cookies y rutas privadas quedaron fuera de alcance.
 
 El snapshot [D05](snapshots/pag-municipal-queues-2026-07-16.jsonl) también está
@@ -5781,27 +5781,27 @@ records:
     institution_name: "Diputación de Soria"
     surface_name: "Sede electrónica de Diputación de Soria"
     surface_type: "SEDE"
-    origin: "https://sede.dipsoria.es"
-    official_site: "https://sede.dipsoria.es"
-    e_sede: "https://sede.dipsoria.es"
-    entry_url: "https://sede.dipsoria.es"
+    origin: "https://portaltramitador.dipsoria.es"
+    official_site: "https://www.dipsoria.es/varios/aviso-legal"
+    e_sede: "https://portaltramitador.dipsoria.es/web"
+    entry_url: "https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1"
     procedure_page: "NO_VERIFICADO"
-    certificate_required: "CONDICIONAL"
+    certificate_required: "SI"
     signature_required: "CONDICIONAL"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
-    discovery_state: "RECHECK_REQUIRED"
-    inventory_status: "INACCESSIBLE"
-    operation_summary: "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites."
-    protocol_evidence: "La mención portal-specific es documental y delimitada; no publica contrato técnico exacto."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP33A", "DP33B"]
-    reason: "La revalidación HTTPS directa falla por certificado TLS de validez normal expirado el 2026-06-21; la evidencia documental se conserva sin afirmar accesibilidad actual ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revalidar la cadena TLS normal sin --insecure; después revisar un procedimiento vigente y su contrato exacto."
+    endpoint: "https://portaltramitador.dipsoria.es/web/inicioWebcCert.do"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso QA-only con certificado a la sede electrónica mediante TLS cliente en el endpoint exacto; la firma documental y la presentación final quedan fuera del contrato."
+    protocol_evidence: "La página de acceso oficial publica la rama «Usuarios con Certificado Digital o DNIe» y su JavaScript navega exactamente desde /web/inicioWebc.do?opcion=cargar&redirige=...&entidad=SORIA&idioma=1 a /web/inicioWebcCert.do?opcion=ssl&entidad=SORIA&redirige=...&idioma=1. La petición al target provoca renegociación TLS 1.2 y CertificateRequest; sin certificado termina en handshake failure. La lista de CA del CertificateRequest está vacía; no se observó ABI de firma ni presentación final."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP33A", "DP33B", "SORIA-CERT-LOGIN-2026-08-25", "SORIA-CERT-TLS-2026-08-25", "SORIA-LEGAL-2026-08-25"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA-only para el source, host, path, puerto y parámetros fijos exactos; no se realizó autenticación E2E con certificado en esta revisión. No se implementan ni infieren el formato, algoritmo, callback de firma ni presentación administrativa. El antiguo host sede.dipsoria.es queda solo como histórico."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar en QA Android el acceso TLS cliente con un certificado autorizado y detenerse antes de cualquier firma o presentación; investigar el contrato de firma solo por separado."
 
   - inventory_id: "ES-PUB-0172"
     surface_key: "diputacion-tarragona-sede"
@@ -6679,6 +6679,9 @@ availability, certificado, firma ni contrato técnico.
 [DP32A]: https://sedeelectronicadipusevilla.es
 [DP33A]: https://sede.dipsoria.es
 [DP33B]: https://www.dipsoria.es/
+[SORIA-CERT-LOGIN-2026-08-25]: https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1
+[SORIA-CERT-TLS-2026-08-25]: https://portaltramitador.dipsoria.es/web/inicioWebcCert.do?opcion=ssl&entidad=SORIA&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%253D&idioma=1
+[SORIA-LEGAL-2026-08-25]: https://www.dipsoria.es/varios/aviso-legal
 [DP34A]: https://seuelectronica.dipta.cat
 [DP34B]: https://seuelectronica.dipta.cat/normativa
 [DP35A]: https://dpteruel.sedelectronica.es

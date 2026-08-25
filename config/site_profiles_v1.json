@@ -1608,6 +1608,41 @@
       ]
     },
     {
+      "profileId": "diputacion-soria-sede-client-auth",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica de la Diputación de Soria — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1",
+      "initiatorOrigins": ["https://portaltramitador.dipsoria.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://portaltramitador.dipsoria.es"],
+        "sourceUrls": ["https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1"],
+        "requestPath": "/web/inicioWebcCert.do",
+        "fixedQueryParameters": {"opcion":"ssl","entidad":"SORIA","redirige":"L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D","idioma":"1"},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443,
+        "sourceFixedQueryParameters": {},
+        "sourceRequiredEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameterMappings": {}
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1","reviewedOn":"2026-08-25"},
+        {"url":"https://portaltramitador.dipsoria.es/web/inicioWebcCert.do?opcion=ssl&entidad=SORIA&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%253D&idioma=1","reviewedOn":"2026-08-25"},
+        {"url":"https://www.dipsoria.es/varios/aviso-legal","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
       "profileId": "junta-andalucia-vea-peg",
       "profileVersion": 1,
       "displayName": "Junta de Andalucía — Presentación electrónica general",

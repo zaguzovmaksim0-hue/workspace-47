@@ -71,6 +71,7 @@ class JuntaOriginPolicyTest {
     private val inePublicNavigation = ProfileId("ine-sede-public-navigation")
     private val isfasPublicNavigation = ProfileId("isfas-sede-public-navigation")
     private val madridGestiona2PublicNavigation = ProfileId("comunidad-madrid-gestiona2-public-navigation")
+    private val soriaClientAuth = ProfileId("diputacion-soria-sede-client-auth")
     private val laGomeraPublicNavigation = ProfileId("la-gomera-sede-public-navigation")
     private val lanzarotePublicNavigation = ProfileId("lanzarote-sede-public-navigation")
     private val zamoraPublicNavigation = ProfileId("zamora-sede-public-navigation")
@@ -306,6 +307,7 @@ class JuntaOriginPolicyTest {
             "www.euskadi.eus",
             "eidas.izenpe.com",
             "eidas2.izenpe.com",
+            "portaltramitador.dipsoria.es",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -1026,6 +1028,11 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(madridGestiona2PublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(madridGestiona2PublicNavigation).isEmpty())
+        assertEquals(
+            setOf("portaltramitador.dipsoria.es"),
+            JuntaOriginPolicy.browserAllowedHosts(soriaClientAuth),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(soriaClientAuth).isEmpty())
         assertEquals(
             setOf("lagomera.sedelectronica.es"),
             JuntaOriginPolicy.browserAllowedHosts(laGomeraPublicNavigation),
