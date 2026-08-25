@@ -506,6 +506,33 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa-only", isfas["limitations"].lower())
         self.assertIn("e2e", isfas["limitations"].lower())
 
+    def test_madrid_gestiona2_profile_binds_exact_pending_public_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        madrid = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0013"
+        )
+
+        self.assertEqual("comunidad-madrid-gestiona2-public-navigation", madrid["profileId"])
+        self.assertEqual("comunidad-madrid-gestiona2", madrid["portalId"])
+        self.assertEqual(
+            "https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",
+            madrid["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", madrid)
+        self.assertEqual("MADRID_GESTIONA2_PUBLIC_NAVIGATION", madrid["protocolFamily"])
+        self.assertEqual("E2E_PENDING", madrid["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", madrid["inventoryStatus"])
+        self.assertEqual("REVIEWED", madrid["discoveryState"])
+        self.assertEqual("2026-08-25", madrid["reviewedOn"])
+        self.assertEqual(
+            ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            madrid["observedMechanisms"],
+        )
+        self.assertEqual([], madrid["observedSignatureFormats"])
+        self.assertIn("móvil", madrid["limitations"].lower())
+        self.assertIn("qa-only", madrid["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
