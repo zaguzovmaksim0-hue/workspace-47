@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "84b50ff434142b064d23901a28938027ff8b0d3bdb11c6659d31f29986362437",
+  "sourceRevision": "97aaa523c0924549b5bfcd38fb7846dc7de0d5e7a8d378060741a13243585c0d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3292,26 +3292,27 @@
     {
       "portalId": "eivissa-portal-institucional",
       "inventoryId": "ES-PUB-0121",
-      "profileId": null,
+      "profileId": "eivissa-sede-electronica",
       "displayName": "Portal institucional del Consell Insular d’Eivissa",
       "organization": "Consell Insular d’Eivissa",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la tramitación electrónica mediante su enlace público «Seu electrònica» a la Sede oficial del Consell Insular d’Eivissa, cuyo launch canónico ya dispone de perfil QA-only independiente.",
       "entryUrl": "https://www.conselldeivissa.es/",
+      "launchUrl": "https://seu.conselldeivissa.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_EIVISSA_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I03A",
         "I03B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente eivissa-sede-electronica por delegación oficial actual a la Sede; no se atribuye un ABI de firma propio al origin institucional y falta E2E físico de la transición desde www.conselldeivissa.es."
     },
     {
       "portalId": "eivissa-sede-electronica",
@@ -3397,26 +3398,26 @@
     {
       "portalId": "el-hierro-portal-institucional",
       "inventoryId": "ES-PUB-0125",
-      "profileId": null,
-      "displayName": "Portal institucional del Cabildo Insular de El Hierro",
+      "profileId": "el-hierro-solicitud-general",
+      "displayName": "Cabildo Insular de El Hierro — Solicitud general",
       "organization": "Cabildo Insular de El Hierro",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
-      "entryUrl": "https://www.elhierro.es/es",
+      "purpose": "Solicitud general: perfil QA-only limitado al lanzamiento exacto del trámite y a la navegación observada hasta la identificación electrónica Cl@ve.",
+      "entryUrl": "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I05A",
         "I05B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Implementación QA-only de lanzamiento/navegación exacta. Certificado, firma criptográfica, formato, algoritmo, callback y presentación final permanecen NO_VERIFICADO; no se realizó E2E físico."
     },
     {
       "portalId": "el-hierro-sede-electronica",
@@ -3604,26 +3605,28 @@
     {
       "portalId": "fuerteventura-portal-institucional",
       "inventoryId": "ES-PUB-0133",
-      "profileId": null,
+      "profileId": "fuerteventura-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de Fuerteventura",
       "organization": "Cabildo Insular de Fuerteventura",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega las gestiones electrónicas en la Sede oficial; el catálogo actual de la Sede publica la Instancia General cuyo inicio exacto coincide con el startUrl del perfil QA-only fuerteventura-sede-electronica.",
       "entryUrl": "https://www.cabildofuer.es/cabildo/",
+      "launchUrl": "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_FUERTEVENTURA_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I09A",
-        "I09B"
+        "I09B",
+        "I09C"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente fuerteventura-sede-electronica por delegación oficial actual portal → Sede → Instancia General exacta; no se atribuye un ABI criptográfico propio al origin institucional y falta E2E físico de la transición."
     },
     {
       "portalId": "fuerteventura-sede-electronica",
@@ -3708,26 +3711,27 @@
     {
       "portalId": "gran-canaria-portal-institucional",
       "inventoryId": "ES-PUB-0137",
-      "profileId": null,
+      "profileId": "gran-canaria-sede-electronica",
       "displayName": "Portal institucional del Cabildo Insular de Gran Canaria",
       "organization": "Cabildo Insular de Gran Canaria",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la administración electrónica en la Sede oficial; la Sede publica Instancia General y su botón «Iniciar trámite» abre exactamente el startUrl del perfil QA-only gran-canaria-sede-electronica ya implementado.",
       "entryUrl": "https://cabildo.grancanaria.com/",
+      "launchUrl": "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_GRAN_CANARIA_SEDE_INSTANCIA_GENERAL",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I11A",
         "I11B"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente gran-canaria-sede-electronica mediante una cadena first-party actual portal institucional → Sede → ficha Instancia General → launch exacto; el origin institucional no hereda trust ni ABI de firma y falta E2E físico desde la entrada institucional."
     },
     {
       "portalId": "gran-canaria-sede-electronica",
