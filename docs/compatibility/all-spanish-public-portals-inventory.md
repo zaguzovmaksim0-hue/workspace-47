@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 156 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 160 |
-| Entradas restantes fuera de ambos estados | 23 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 157 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 161 |
+| Entradas restantes fuera de ambos estados | 22 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 156 |
+| `IMPLEMENTED_NOT_E2E` | 157 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 16 |
+| `BROWSE_ONLY` | 15 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -3412,24 +3412,25 @@ records:
     origin: "https://www.aragon.es"
     official_site: "https://www.aragon.es/tramites"
     e_sede: "https://www.aragon.es/tramites"
-    entry_url: "https://www.aragon.es/tramites"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion"
+    procedure_page: "https://www.aragon.es/tramites/registro-electronico-general"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CLIENT_TLS_AUTH_MFE_SSLOGIN"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Tramitación con medios de identificación y firma según el procedimiento."
-    protocol_evidence: "La ayuda oficial describe identificación y firma electrónica, pero no publica ABI ni transporte."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D03", "A02A", "A02B"]
-    reason: "La mención general de firma no acredita cliente JS, formato, callback, endpoint ni TLS cliente."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un trámite concreto y su JavaScript vigente sin enviar formulario."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Workspace-47 habilita en QA únicamente el acceso con certificado de la Solicitud de carácter general mediante MFE/SSLogin y TLS cliente; no implementa firma documental ni presentación final."
+    protocol_evidence: "El flujo público vigente de TTO (applicationId TTO) ofrece certificado electrónico y construye la rama SSLOGIN. MFE redirige al broker login.loginssl.aragon.es, que responde 303 hacia login1.loginssl.aragon.es/sife_login/SSLOGIN/idByCert con redirect.url fijado al callback de solicitud-general. El endpoint TLS solicita certificado cliente RSA/DSA/ECDSA; el perfil admite únicamente RSA/EC compatibles con la aplicación y no infiere ningún ABI de firma."
+    client_tls_auth: "SI"
+    evidence_ids: ["D03", "A02A", "A02B", "ARAGON-REG-2026-08-19", "ARAGON-TTO-MFE-2026-08-19", "ARAGON-SSLOGIN-TLS-2026-08-19"]
+    reason: "Perfil QA-only y fail-closed para la transición exacta TTO → MFE SSLOGIN → broker → TLS cliente. La firma y la presentación administrativa permanecen fuera del capability y requieren validación E2E separada."
+    reviewed_at: "2026-08-19"
+    next_gate: "Validar físicamente en QA la selección de certificado y el retorno a TTO con una identidad autorizada, deteniéndose antes de cualquier firma documental, registro/presentación final o pago."
+    notes: "aplicaciones.aragon.es también pertenece al perfil VERIFIED_E2E aragon-siraw; la navegación y los bridges sensibles deben resolverse por el profileId activo. La resolución global del origin compartido permanece deliberadamente ambigua/fail-closed en QA."
 
   - inventory_id: "ES-PUB-0095"
     surface_key: "asturias-miprincipado-sede"

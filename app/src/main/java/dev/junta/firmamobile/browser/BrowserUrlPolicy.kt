@@ -39,6 +39,16 @@ class BrowserUrlPolicy(
         if (runCatching { ExactOrigin.parse("https://${uri.host}") }.isFailure) return blocked()
 
         val activeSelectedProfile = activeProfileId?.takeIf { it == selectedProfileId }
+        if (activeProfileId == null) {
+            val selectedProfile = registry.profile(selectedProfileId)
+            if (selectedProfile != null &&
+                uri.toASCIIString() == selectedProfile.startUrl.toASCIIString()
+            ) {
+                registry.resolveForProfile(selectedProfileId, uri)?.let { selectedStart ->
+                    return BrowserUrlResolution(uri, selectedStart, selectedStart.trustMode)
+                }
+            }
+        }
         val transitioned = activeSelectedProfile?.let { registry.resolveRedirect(it, uri) }
         if (transitioned != null) {
             return BrowserUrlResolution(uri, transitioned, transitioned.trustMode)

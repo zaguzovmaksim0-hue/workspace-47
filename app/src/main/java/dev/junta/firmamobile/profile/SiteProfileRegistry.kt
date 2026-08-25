@@ -38,7 +38,14 @@ class SiteProfileRegistry(
             }
             .toList()
             .singleOrNull()
-        if (exactStart != null) return exactStart
+        val sharedSensitiveOrigin = profiles.count { profile ->
+            isActive(profile) && origin in profile.initiatorOrigins
+        } > 1 && profiles.any { profile ->
+            isActive(profile) &&
+                origin in profile.initiatorOrigins &&
+                Capability.CLIENT_TLS_AUTH in profile.capabilities
+        }
+        if (exactStart != null && !sharedSensitiveOrigin) return exactStart
         val resolved = resolve(origin) ?: return null
         return resolved.takeIf { acceptsBrowseOnlyUrl(it.profile, uri) }
     }

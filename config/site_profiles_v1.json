@@ -181,6 +181,42 @@
       ]
     },
     {
+      "profileId": "aragon-solicitud-general-client-auth",
+      "profileVersion": 1,
+      "displayName": "Gobierno de Aragón — Solicitud de carácter general",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion",
+      "initiatorOrigins": ["https://aplicaciones.aragon.es"],
+      "redirectOrigins": ["https://login.loginssl.aragon.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "REDIRECT_AFTER_SOURCE",
+        "requestOrigins": ["https://login1.loginssl.aragon.es"],
+        "sourceUrls": ["https://login.loginssl.aragon.es/sife_login/SSLOGIN"],
+        "sourceFixedQueryParameters": {"redirect.url":"https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/SSLOGIN/consumeResponse"},
+        "sourceRequiredEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameters": [],
+        "requestPath": "/sife_login/SSLOGIN/idByCert",
+        "fixedQueryParameters": {"redirect.url":"https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/SSLOGIN/consumeResponse"},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://www.aragon.es/tramites/registro-electronico-general","reviewedOn":"2026-08-19"},
+        {"url":"https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion","reviewedOn":"2026-08-19"},
+        {"url":"https://aplicaciones.aragon.es/mfe_core/rest/help/MFE_IDENTIFICACION_SSL_INICIO","reviewedOn":"2026-08-19"},
+        {"url":"https://login.loginssl.aragon.es/sife_login/SSLOGIN","reviewedOn":"2026-08-19"},
+        {"url":"https://login1.loginssl.aragon.es/sife_login/SSLOGIN/idByCert","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "dgt-verificacion-equipo",
       "profileVersion": 1,
       "displayName": "DGT — Verificación de mi equipo",

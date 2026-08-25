@@ -61,6 +61,7 @@ class PortalCatalogRepositoryTest {
                 "junta-ofvirtual",
                 "educacion-convocatoria",
                 "aragon-siraw",
+                "aragon-solicitud-general-client-auth",
                 "aeat-mis-datos-censales",
                 "aemet-public-solicitud-navigation",
                 "dgt-verificacion-equipo",
@@ -593,6 +594,27 @@ class PortalCatalogRepositoryTest {
         assertEquals(PortalSupportStatus.VERIFIED_E2E, releasePortal.supportStatus)
         assertTrue(releasePortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, expectedUrl), releaseRepository.resolveLaunch(releasePortal))
+    }
+
+    @Test
+    fun `aragon solicitud general exposes only qa certificate access capability`() {
+        val profileId = ProfileId("aragon-solicitud-general-client-auth")
+        val expectedUrl = java.net.URI(
+            "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion",
+        )
+        val qaPortal = qaRepository.portals().single { it.profileId == profileId }
+
+        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
+        assertTrue(qaPortal.isEnabled)
+        assertEquals(emptySet<SignatureFormat>(), qaPortal.signatureFormats)
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
+        assertTrue(PortalMechanism.CLIENT_TLS_AUTH in qaPortal.observedMechanisms)
+        assertEquals(PortalLaunchTarget(profileId, expectedUrl), qaRepository.resolveLaunch(qaPortal))
+
+        val releasePortal = releaseRepository.portals().single { it.profileId == profileId }
+        assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
+        assertFalse(releasePortal.isEnabled)
+        assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
     }
 
     @Test

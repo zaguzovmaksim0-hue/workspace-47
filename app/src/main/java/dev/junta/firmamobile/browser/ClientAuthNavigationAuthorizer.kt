@@ -361,7 +361,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         const val MAX_URL_CHARS = 8_192
         const val MAX_QUERY_CHARS = 4_096
         const val MAX_EPHEMERAL_CHARS = 1_024
-        val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+        val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_.]{0,63}")
         const val LEON_IDTOKEN_PARAMETER = "idtoken"
         val LEON_IDTOKEN = Regex("[0-9]{8}-[A-Za-z0-9_-]{20,64}")
     }

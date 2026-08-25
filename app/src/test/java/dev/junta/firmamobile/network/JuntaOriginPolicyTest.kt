@@ -27,6 +27,7 @@ class JuntaOriginPolicyTest {
     private val madridRegistro = ProfileId("comunidad-madrid-registro-general")
     private val education = ProfileId("educacion-convocatoria")
     private val aragon = ProfileId("aragon-siraw")
+    private val aragonTramites = ProfileId("aragon-solicitud-general-client-auth")
     private val aeat = ProfileId("aeat-mis-datos-censales")
     private val aemet = ProfileId("aemet-public-solicitud-navigation")
     private val dgt = ProfileId("dgt-verificacion-equipo")
@@ -121,6 +122,8 @@ class JuntaOriginPolicyTest {
             "sede.educacion.gob.es",
             "www.educacion.gob.es",
             "aplicaciones.aragon.es",
+            "login.loginssl.aragon.es",
+            "login1.loginssl.aragon.es",
             "sede.agenciatributaria.gob.es",
             "sede.aemet.gob.es",
             "www1.agenciatributaria.gob.es",
@@ -310,6 +313,11 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(education),
         )
         assertEquals(setOf("aplicaciones.aragon.es"), JuntaOriginPolicy.browserAllowedHosts(aragon))
+        assertEquals(
+            setOf("aplicaciones.aragon.es", "login.loginssl.aragon.es"),
+            JuntaOriginPolicy.browserAllowedHosts(aragonTramites),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(aragonTramites).isEmpty())
         assertEquals(setOf("sede.agenciatributaria.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aeat))
         assertEquals(setOf("sede.aemet.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aemet))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(aemet).isEmpty())
