@@ -60,7 +60,11 @@ class CatalunyaClientAuthProfileTest {
                 sharedAocOrigin in (candidate.clientAuthPolicy?.requestOrigins ?: emptySet())
         }.map { it.profileId }.toSet()
         assertEquals(
-            setOf(ProfileId("diputacion-barcelona-solicitud-generica-2057"), profileId),
+            setOf(
+                ProfileId("diputacion-barcelona-solicitud-generica-2057"),
+                profileId,
+                ProfileId("catalunya-seu-registre-client-auth"),
+            ),
             sharedAocOwners,
         )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())

@@ -2221,13 +2221,26 @@ object SiteProfileCatalogParser {
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 firstIsRedirectOrigin && secondIsRedirectOrigin &&
-                    owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) &&
+                    (owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_PROFILE_ID) ||
+                        owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID)) &&
                     origin.serialized == CATALUNYA_VALID_ORIGIN
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 firstIsRedirectOrigin && secondIsRedirectOrigin &&
                     owners == setOf(CATALUNYA_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID) &&
                     origin.serialized == CATALUNYA_VALID_ORIGIN
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                owners == setOf(CATALUNYA_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID) &&
+                    ((firstIsRedirectOrigin != secondIsRedirectOrigin &&
+                        origin.serialized == CATALUNYA_PUBLIC_ORIGIN) ||
+                        (firstIsRedirectOrigin && secondIsRedirectOrigin &&
+                            origin.serialized == CATALUNYA_OVT_ORIGIN))
+            }) ||
+            (setOf(firstOwner.value, secondOwner.value).let { owners ->
+                firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+                    owners == setOf(DIPUTACION_BARCELONA_2057_PROFILE_ID, CATALUNYA_SEU_PROFILE_ID) &&
+                    origin.serialized == CATALUNYA_CERT_ORIGIN
             }) ||
             (setOf(firstOwner.value, secondOwner.value).let { owners ->
                 (owners == setOf(LEON_PROFILE_ID, MALLORCA_PROFILE_ID) ||
