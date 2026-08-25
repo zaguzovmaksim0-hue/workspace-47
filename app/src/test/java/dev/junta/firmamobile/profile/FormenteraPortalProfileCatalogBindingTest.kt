@@ -5,7 +5,6 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
-import dev.junta.firmamobile.catalog.PortalMechanism
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
@@ -28,10 +27,10 @@ import org.robolectric.annotation.SQLiteMode
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
-class FormenteraProfileCatalogBindingTest {
-    private val profileId = ProfileId("formentera-sede-electronica")
-    private val portalId = PortalId("formentera-sede-electronica")
-    private val startUrl = URI("https://ovac.conselldeformentera.cat/")
+class FormenteraPortalProfileCatalogBindingTest {
+    private val profileId = ProfileId("formentera-portal-institucional-navigation")
+    private val portalId = PortalId("formentera-portal-institucional")
+    private val startUrl = URI("https://www.consellinsulardeformentera.cat/")
 
     @Test
     fun profileConfigPreservesExactFailClosedNavigationContract() {
@@ -39,14 +38,14 @@ class FormenteraProfileCatalogBindingTest {
 
         assertEquals(1, profile.profileVersion)
         assertEquals(
-            "Sede electrónica / OVAC del Consell Insular de Formentera",
+            "Portal institucional público del Consell Insular de Formentera",
             profile.displayName,
         )
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(
-            setOf(ExactOrigin.parse("https://ovac.conselldeformentera.cat")),
+            setOf(ExactOrigin.parse("https://www.consellinsulardeformentera.cat")),
             profile.initiatorOrigins,
         )
         assertTrue(profile.redirectOrigins.isEmpty())
@@ -57,21 +56,14 @@ class FormenteraProfileCatalogBindingTest {
         assertNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(!profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-16" })
         assertEquals(
-            listOf(
-                EvidenceReference(startUrl, LocalDate.parse("2026-08-16")),
-                EvidenceReference(
-                    URI("https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp"),
-                    LocalDate.parse("2026-08-16"),
-                ),
-            ),
+            listOf(EvidenceReference(startUrl, LocalDate.parse("2026-08-25"))),
             profile.evidence,
         )
     }
 
     @Test
-    fun registryResolvesSeedAndSameOriginBrowsePathsInQa() {
+    fun registryResolvesOnlySameOriginBrowsePathsInQa() {
         val releaseProfile = BuiltInSiteProfiles.releaseRegistry.profile(profileId)
         val qaProfile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
         assertNull(releaseProfile)
@@ -79,67 +71,72 @@ class FormenteraProfileCatalogBindingTest {
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, qaProfile?.compatibilityStatus)
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.consellinsulardeformentera.cat/servicios"))?.trustMode,
+        )
 
         listOf(
-            "http://ovac.conselldeformentera.cat/",
-            "https://ovac.conselldeformentera.cat:8443/",
-            "https://evil.ovac.conselldeformentera.cat/",
-            "https://conselldeformentera.cat/",
-            "https://user@ovac.conselldeformentera.cat/",
-        ).forEach { nonExactUrl ->
-            val uri = URI(nonExactUrl)
-            assertNull(nonExactUrl, BuiltInSiteProfiles.qaRegistry.resolve(uri))
+            "http://www.consellinsulardeformentera.cat/",
+            "https://www.consellinsulardeformentera.cat:8443/",
+            "https://evil.www.consellinsulardeformentera.cat/",
+            "https://consellinsulardeformentera.cat/",
+            "https://user@www.consellinsulardeformentera.cat/",
+        ).forEach { rejectedUrl ->
+            assertNull(rejectedUrl, BuiltInSiteProfiles.qaRegistry.resolve(URI(rejectedUrl)))
         }
-
-        listOf(
-            "https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp",
-            "https://ovac.conselldeformentera.cat/ovac/",
-        ).forEach { sameOriginBrowseUrl ->
-            assertEquals(
-                TrustMode.TRUSTED_BROWSE,
-                BuiltInSiteProfiles.qaRegistry.resolve(URI(sameOriginBrowseUrl))?.trustMode,
-            )
-        }
-
-        val observedMetaRefresh = URI("https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp")
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, observedMetaRefresh))
     }
 
     @Test
     fun securityAndProtocolIsolationEnforcesFailClosedNavigation() {
         assertNull(BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SIGN))
-        assertNull(BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SELECT_CERTIFICATE))
-
+        assertNull(
+            BuiltInProtocolAdapterRegistry.registry.resolve(
+                profileId,
+                ProtocolOperation.SELECT_CERTIFICATE,
+            ),
+        )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
-        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://ovac.conselldeformentera.cat/"), profileId))
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse(startUrl.toString()), profileId))
         assertEquals(
-            setOf(ExactOrigin.parse("https://ovac.conselldeformentera.cat")),
+            setOf(ExactOrigin.parse("https://www.consellinsulardeformentera.cat")),
             JuntaOriginPolicy.browserOrigins(profileId),
         )
         assertEquals(
-            setOf("ovac.conselldeformentera.cat"),
+            setOf("www.consellinsulardeformentera.cat"),
             JuntaOriginPolicy.browserAllowedHosts(profileId),
         )
     }
 
     @Test
-    fun catalogBindsFormenteraAsPendingNavigationAndResolvesLaunchOnlyForExactSeed() {
+    fun catalogBindsFormenteraInstitutionalAsPendingNavigationAndResolvesLaunchOnlyForExactSeed() {
         val publicCatalog = loadBundledPublicPortalCatalog()
-        val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0124" }
+        val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0123" }
+
         assertEquals(portalId, entry.portalId)
         assertEquals(profileId, entry.profileId)
+        assertEquals("https://www.consellinsulardeformentera.cat/", entry.entryUrl.toString())
+        assertEquals("FORMENTERA_PUBLIC_PORTAL_NAVIGATION", entry.protocolFamily)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
-        assertEquals(
-            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.ELECTRONIC_SIGNATURE),
-            entry.observedMechanisms,
-        )
+        assertTrue(entry.observedMechanisms.isEmpty())
         assertTrue(entry.observedSignatureFormats.isEmpty())
-        assertEquals("2026-08-16", entry.reviewedOn.toString())
+        assertEquals("2026-08-25", entry.reviewedOn.toString())
 
-        val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
-        val release = PortalCatalogRepository(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
+        val qa = PortalCatalogRepository(
+            BuiltInSiteProfiles.qaRegistry,
+            BuiltInSiteProfiles.catalog,
+            publicCatalog,
+        )
+        val release = PortalCatalogRepository(
+            BuiltInSiteProfiles.releaseRegistry,
+            BuiltInSiteProfiles.catalog,
+            publicCatalog,
+        )
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
 
@@ -152,19 +149,17 @@ class FormenteraProfileCatalogBindingTest {
 
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
         assertTrue(!releasePortal.isEnabled)
-        assertTrue(releasePortal.capabilities.isEmpty())
-        assertTrue(releasePortal.signatureFormats.isEmpty())
         assertNull(release.resolveLaunch(releasePortal))
         assertNull(release.resolveLaunch(profileId, startUrl))
 
         listOf(
-            "http://ovac.conselldeformentera.cat/",
-            "https://user@ovac.conselldeformentera.cat/",
-            "https://evil.ovac.conselldeformentera.cat/",
-            "https://ovac.conselldeformentera.cat/ovac/",
-            "https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp",
-        ).forEach { mutatedUrl ->
-            assertNull(mutatedUrl, qa.resolveLaunch(profileId, URI(mutatedUrl)))
+            "http://www.consellinsulardeformentera.cat/",
+            "https://user@www.consellinsulardeformentera.cat/",
+            "https://www.consellinsulardeformentera.cat:8443/",
+            "https://evil.www.consellinsulardeformentera.cat/",
+            "https://www.consellinsulardeformentera.cat/servicios",
+        ).forEach { rejectedUrl ->
+            assertNull(rejectedUrl, qa.resolveLaunch(profileId, URI(rejectedUrl)))
         }
     }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 53,
+  "catalogVersion": 54,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3139,6 +3139,25 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://sede.red.gob.es/","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "formentera-portal-institucional-navigation",
+      "profileVersion": 1,
+      "displayName": "Portal institucional público del Consell Insular de Formentera",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://www.consellinsulardeformentera.cat/",
+      "initiatorOrigins": ["https://www.consellinsulardeformentera.cat"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.consellinsulardeformentera.cat/","reviewedOn":"2026-08-25"}
       ]
     },
     {

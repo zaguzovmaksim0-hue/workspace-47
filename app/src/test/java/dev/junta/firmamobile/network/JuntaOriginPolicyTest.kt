@@ -64,6 +64,7 @@ class JuntaOriginPolicyTest {
     private val icac = ProfileId("icac-sede-public-navigation")
     private val itj = ProfileId("itj-sede-public-navigation")
     private val redEs = ProfileId("red-es-sede-public-navigation")
+    private val formenteraInstitutional = ProfileId("formentera-portal-institucional-navigation")
     private val acceda = ProfileId("age-acceda")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
@@ -202,6 +203,7 @@ class JuntaOriginPolicyTest {
             "icac.sede.gob.es",
             "sede.transicionjusta.gob.es",
             "sede.red.gob.es",
+            "www.consellinsulardeformentera.cat",
             "sede.administracionespublicas.gob.es",
             "sede.policia.gob.es",
             "seu.diputaciolleida.cat",
@@ -972,6 +974,11 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(itj).isEmpty())
         assertEquals(setOf("sede.red.gob.es"), JuntaOriginPolicy.browserAllowedHosts(redEs))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(redEs).isEmpty())
+        assertEquals(
+            setOf("www.consellinsulardeformentera.cat"),
+            JuntaOriginPolicy.browserAllowedHosts(formenteraInstitutional),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(formenteraInstitutional).isEmpty())
         assertEquals(setOf("sede.administracionespublicas.gob.es"), JuntaOriginPolicy.browserAllowedHosts(acceda))
         assertEquals(
             setOf("https://sede.administracionespublicas.gob.es"),
