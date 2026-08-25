@@ -928,6 +928,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("formentera-portal-institucional-navigation"),
             ProfileId("ico-sede-public-navigation"),
             ProfileId("el-hierro-sede-public-navigation"),
+            ProfileId("imserso-sede-public-navigation"),
             ProfileId("la-gomera-sede-public-navigation"),
             ProfileId("lanzarote-sede-public-navigation"),
             ProfileId("zamora-sede-public-navigation"),

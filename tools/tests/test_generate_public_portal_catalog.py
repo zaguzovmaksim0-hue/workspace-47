@@ -443,6 +443,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("handshake", zaragoza["limitations"].lower())
         self.assertIn("e2e", zaragoza["limitations"].lower())
 
+    def test_imserso_profile_binds_exact_pending_public_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        imserso = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-instituto-de-mayores-y-servicios-sociales-imserso"
+        )
+
+        self.assertEqual("imserso-sede-public-navigation", imserso["profileId"])
+        self.assertEqual("ES-PUB-0053", imserso["inventoryId"])
+        self.assertEqual("https://sede.imserso.gob.es/inicio", imserso["entryUrl"])
+        self.assertNotIn("launchUrl", imserso)
+        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", imserso["protocolFamily"])
+        self.assertEqual("E2E_PENDING", imserso["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", imserso["inventoryStatus"])
+        self.assertEqual("REVIEWED", imserso["discoveryState"])
+        self.assertEqual("2026-08-25", imserso["reviewedOn"])
+        self.assertEqual([], imserso["observedMechanisms"])
+        self.assertEqual([], imserso["observedSignatureFormats"])
+        self.assertIn("qa-only", imserso["limitations"].lower())
+        self.assertIn("e2e", imserso["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

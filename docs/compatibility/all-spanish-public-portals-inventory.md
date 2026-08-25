@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 173 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 177 |
-| Entradas restantes fuera de ambos estados | 6 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 174 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 178 |
+| Entradas restantes fuera de ambos estados | 5 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 173 |
+| `IMPLEMENTED_NOT_E2E` | 174 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 3 |
+| `BROWSE_ONLY` | 2 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 1 |
 | `DEPRECATED` | 0 |
@@ -2108,24 +2108,24 @@ records:
     origin: "https://sede.imserso.gob.es"
     official_site: "https://sede.imserso.gob.es/"
     e_sede: "https://sede.imserso.gob.es/"
-    entry_url: "https://sede.imserso.gob.es/"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sede.imserso.gob.es/inicio"
+    procedure_page: "https://sede.imserso.gob.es/es/procedimientos-servicios/centros"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "AGE_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la entrada pública exacta /inicio de la Sede electrónica del IMSERSO; autenticación, firma y presentación quedan fuera del contrato."
+    protocol_evidence: "La página oficial https://sede.imserso.gob.es/inicio expone públicamente los accesos a procedimientos y servicios, Mis solicitudes, Cl@ve y Registro electrónico; no se infiere ABI de firma, autenticación, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "IMSERSO-SEDE-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado al launch exacto de /inicio; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto de /inicio sin iniciar sesión, firmar, cargar documentos ni presentar."
     notes: "Ministerio(s) enumerador(es): Ministerio de Derechos Sociales, Consumo y Agenda 2030."
 
   - inventory_id: "ES-PUB-0054"
@@ -6703,6 +6703,7 @@ availability, certificado, firma ni contrato técnico.
 [ZAMORA-SEDE-NAV-2026-08-25]: https://diputaciondezamora.sedelectronica.es/info.0
 [DP41A]: https://dpz.sedelectronica.es
 [ZARAGOZA-SEDE-NAV-2026-08-25]: https://dpz.sedelectronica.es/info.0
+[IMSERSO-SEDE-NAV-2026-08-25]: https://sede.imserso.gob.es/inicio
 [MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
 [MENORCA-CLIENT-TLS-2026-08-18]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx
 [MENORCA-SEDE-DELEGATION-2026-08-21]: https://seuelectronica.cime.es/

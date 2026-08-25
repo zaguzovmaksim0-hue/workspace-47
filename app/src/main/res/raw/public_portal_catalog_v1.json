@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "7262bb060b9bd30675d0fd526a1bcceb0f52be2e16ca2280c64f4c983d364d96",
+  "sourceRevision": "597b373a53c3decb49e284fddf0ab7a4e7570a40c211eec58041c5de961c4dd9",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1433,24 +1433,25 @@
     {
       "portalId": "age-instituto-de-mayores-y-servicios-sociales-imserso",
       "inventoryId": "ES-PUB-0053",
-      "profileId": null,
+      "profileId": "imserso-sede-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Instituto de Mayores y Servicios Sociales (IMSERSO)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.imserso.gob.es/",
+      "purpose": "Navegación QA-only a la entrada pública exacta /inicio de la Sede electrónica del IMSERSO; autenticación, firma y presentación quedan fuera del contrato.",
+      "entryUrl": "https://sede.imserso.gob.es/inicio",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "IMSERSO-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado al launch exacto de /inicio; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "age-instituto-de-salud-carlos-iii",
