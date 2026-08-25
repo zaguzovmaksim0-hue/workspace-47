@@ -88,6 +88,7 @@ class PortalCatalogRepositoryTest {
                 "consell-mallorca-sede",
                 "diputacion-cuenca-portal",
                 "generalitat-valenciana-client-auth",
+                "tgss-importass-client-auth",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",

@@ -2730,6 +2730,41 @@
         {"url":"https://sede.diputaciondepalencia.es/SPProxy2/IndexPage","reviewedOn":"2026-08-20"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-20"}
       ]
+    },
+    {
+      "profileId": "tgss-importass-client-auth",
+      "profileVersion": 1,
+      "displayName": "TGSS Import@ss — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/",
+      "initiatorOrigins": ["https://portal.seg-social.gob.es", "https://idp.seg-social.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://ipce.seg-social.es"],
+        "sourceUrls": ["https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"],
+        "sourceFixedQueryParameters": {},
+        "sourceRequiredEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameters": [],
+        "requestPath": "/IPCE/Login",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda","reviewedOn":"2026-08-21"},
+        {"url":"https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/","reviewedOn":"2026-08-21"},
+        {"url":"https://idp.seg-social.es/PGIS/Login?seleccion=IPCE","reviewedOn":"2026-08-21"},
+        {"url":"https://ipce.seg-social.es/IPCE/Login","reviewedOn":"2026-08-21"}
+      ]
     }
   ]
 }
