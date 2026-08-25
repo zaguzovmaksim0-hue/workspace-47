@@ -195,17 +195,10 @@ class PortalCatalogRepositoryTest {
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
         assertEquals(
-            setOf(PortalInventoryStatus.UNSUPPORTED_PROTOCOL, PortalInventoryStatus.INACCESSIBLE),
+            setOf(PortalInventoryStatus.INACCESSIBLE),
             metadataOnly.map { it.inventoryStatus }.toSet(),
         )
-        assertTrue(
-            metadataOnly.all {
-                it.supportStatus in setOf(
-                    PortalSupportStatus.UNSUPPORTED_PROTOCOL,
-                    PortalSupportStatus.INACCESSIBLE,
-                )
-            },
-        )
+        assertTrue(metadataOnly.all { it.supportStatus == PortalSupportStatus.INACCESSIBLE })
 
         val verifiedIds = setOf(
             ProfileId("carne-joven-andalucia"),
