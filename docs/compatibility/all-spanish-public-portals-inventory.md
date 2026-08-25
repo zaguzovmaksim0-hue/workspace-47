@@ -194,12 +194,12 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes enumeradoras oficiales registradas | 12 |
 | Colas enumeradoras ingeridas de extremo a extremo | 4/12 |
 | Colas enumeradoras pendientes de ingestión | 8/12 |
-| Fuentes oficiales portal-specific registradas | 271 |
-| Fuentes oficiales totales registradas | 283 |
+| Fuentes oficiales portal-specific registradas | 274 |
+| Fuentes oficiales totales registradas | 286 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 148 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 152 |
-| Entradas restantes fuera de ambos estados | 31 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 150 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 154 |
+| Entradas restantes fuera de ambos estados | 29 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 148 |
+| `IMPLEMENTED_NOT_E2E` | 150 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 24 |
+| `BROWSE_ONLY` | 22 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -4152,29 +4152,30 @@ records:
     autonomous_community: "Illes Balears"
     province_or_municipality: "Illes Balears"
     institution_name: "Consell Insular de Menorca"
-    surface_name: "Seu electrònica del Consell Insular de Menorca"
+    surface_name: "Seu electrònica del Consell Insular de Menorca — Sol·licitud genèrica"
     surface_type: "SEDE"
     origin: "https://seuelectronica.cime.es"
     official_site: "https://seuelectronica.cime.es/"
     e_sede: "https://seuelectronica.cime.es/"
     entry_url: "https://seuelectronica.cime.es/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    launch_url: "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    procedure_page: "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+    certificate_required: "SI"
+    signature_required: "SI"
+    js_client: "AUTOFIRMA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica."
-    protocol_evidence: "La fuente acredita la sede y sus servicios públicos, no un requisito exacto de certificado o firma ni un contrato técnico."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I01B"]
-    reason: "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "La Seu electrònica delega los trámites en la Carpeta Ciutadana actual; la Sol·licitud genèrica del Consell reutiliza el contrato QA de autenticación TLS cliente ya implementado, sin ampliar la firma AutoFirma ni el envío final."
+    protocol_evidence: "La portada actual de la Seu enlaza 'Tràmits en línia - Carpeta Ciutadana'. El catálogo delegado identifica la Sol·licitud genèrica 990100262 dirigida al Consell Insular de Menorca; el portal CIME enlaza exactamente la URL de inicio del perfil existente. Tramitar alcanza Login.aspx con URL efímero y el botón de certificado navega a LoginCert.aspx conservando ese URL; sin certificado devuelve 403. AutoFirma y la exigencia de certificado para firmar/enviar constan en la propia ficha, pero no se observó ni se amplía ningún ABI de firma."
+    client_tls_auth: "SI"
+    evidence_ids: ["I01B", "MENORCA-SEDE-DELEGATION-2026-08-21", "MENORCA-SEDE-GENERIC-2026-08-21", "MENORCA-SEDE-CLIENT-TLS-2026-08-21"]
+    reason: "Alias exacto al perfil QA existente menorca-carpeta-ciutadana: la evidencia actual de la Seu y de la Carpeta enlaza el mismo procedimiento y la misma transición Login.aspx -> LoginCert.aspx con parámetro URL vinculado. E2E Android pendiente; formato, algoritmo, payload, callback y presentación final siguen sin inferirse."
+    reviewed_at: "2026-08-21"
+    next_gate: "Verificar E2E únicamente la autenticación TLS cliente en WebView físico; mantener la firma documental y la presentación final bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0119"
     surface_key: "mallorca-portal-institucional"
@@ -4188,23 +4189,24 @@ records:
     official_site: "https://www.conselldemallorca.es/"
     e_sede: "https://seu.conselldemallorca.net/"
     entry_url: "https://www.conselldemallorca.es/"
-    procedure_page: "NO_VERIFICADO"
+    launch_url: "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    procedure_page: "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DELEGACION_MALLORCA_SEDE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública de información institucional y acceso diferenciado a la sede electrónica."
-    protocol_evidence: "La fuente acredita la entrada institucional y su enlace separado a la sede, no un contrato técnico."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "El portal institucional delega la tramitación electrónica en la Seu separada; la Seu publica el Registre Electrònic del Consell y su URL exacta coincide con el startUrl del perfil QA-only consell-mallorca-sede."
+    protocol_evidence: "El 2026-08-21 https://www.conselldemallorca.es/ devolvió HTTP 200 y enlazó «Seu Electrònica» exactamente a https://seu.conselldemallorca.net/. La Seu devolvió HTTP 200 y publicó el Registre Electrònic del Consell con href exacto https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082. Ese trámite devolvió HTTP 200 y se identifica como «Registre Electrònic del Consell de Mallorca». El launch_url del alias coincide byte a byte con el startUrl canónico del perfil existente consell-mallorca-sede; no se amplían orígenes de confianza ni se atribuye al portal institucional el contrato CLIENT_TLS_AUTH o de firma de la sede."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D12", "I02A", "I02B"]
-    reason: "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
-    reviewed_at: "2026-07-16"
-    next_gate: "Seleccionar una operación administrativa en la sede separada y revisar su contrato específico."
+    evidence_ids: ["D12", "I02A", "I02B", "MALLORCA-PORTAL-SEDE-2026-08-21", "MALLORCA-PORTAL-REGISTRE-2026-08-21"]
+    reason: "Alias QA-only al perfil existente consell-mallorca-sede por delegación oficial actual portal → Seu Electrònica → Registre Electrònic y coincidencia exacta del launch URL; faltan E2E físico y cualquier atribución de ABI criptográfico propio al portal institucional."
+    reviewed_at: "2026-08-21"
+    next_gate: "Validar físicamente la transición portal institucional → Seu → Registre y, por separado, el acceso con certificado del perfil existente sin firmar ni presentar una actuación administrativa; mantener QA_ONLY hasta entonces."
 
   - inventory_id: "ES-PUB-0120"
     surface_key: "mallorca-sede-electronica"
@@ -6690,6 +6692,11 @@ availability, certificado, firma ni contrato técnico.
 [DP41A]: https://dpz.sedelectronica.es
 [MENORCA-GENERIC-2026-08-18]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
 [MENORCA-CLIENT-TLS-2026-08-18]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx
+[MENORCA-SEDE-DELEGATION-2026-08-21]: https://seuelectronica.cime.es/
+[MENORCA-SEDE-GENERIC-2026-08-21]: https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262
+[MENORCA-SEDE-CLIENT-TLS-2026-08-21]: https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx
+[MALLORCA-PORTAL-SEDE-2026-08-21]: https://seu.conselldemallorca.net/
+[MALLORCA-PORTAL-REGISTRE-2026-08-21]: https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082
 [EDU-REG-2026-08-17]: https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/general/20/203317/italia/laboral-liceo-cervantes-roma-2026.html
 [CDTI-CERT-2026-08-16]: https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx
 [MITECO-REG-2026-08-17]: https://www.miteco.gob.es/es/costas/participacion-publica/30-cnc12-07-30-0006.html

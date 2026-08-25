@@ -685,6 +685,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("solo en qa", menorca["limitations"].lower())
         self.assertIn("e2e", menorca["limitations"].lower())
 
+    def test_menorca_sede_alias_reuses_exact_generic_client_tls_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        menorca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "menorca-sede-electronica"
+        )
+
+        self.assertEqual("menorca-carpeta-ciutadana", menorca["profileId"])
+        self.assertEqual("ES-PUB-0118", menorca["inventoryId"])
+        self.assertEqual("https://seuelectronica.cime.es/", menorca["entryUrl"])
+        self.assertEqual(
+            "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+            menorca["launchUrl"],
+        )
+        self.assertEqual("E2E_PENDING", menorca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", menorca["inventoryStatus"])
+        self.assertEqual("2026-08-21", menorca["reviewedOn"])
+        self.assertIn("CLIENT_TLS_AUTH", menorca["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", menorca["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", menorca["observedMechanisms"])
+        self.assertIn("AUTOFIRMA", menorca["observedMechanisms"])
+        self.assertEqual([], menorca["observedSignatureFormats"])
+        self.assertIn("alias exacto", menorca["limitations"].lower())
+        self.assertIn("e2e android pendiente", menorca["limitations"].lower())
+
     def test_canarias_certificate_login_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entry = next(
@@ -1574,6 +1599,29 @@ records:
         self.assertIn("alias", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
+
+    def test_mallorca_institutional_alias_binds_exact_existing_sede_operation(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        mallorca = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "mallorca-portal-institucional"
+        )
+
+        self.assertEqual("consell-mallorca-sede", mallorca["profileId"])
+        self.assertEqual("ES-PUB-0119", mallorca["inventoryId"])
+        self.assertEqual("https://www.conselldemallorca.es/", mallorca["entryUrl"])
+        self.assertEqual(
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
+            mallorca["launchUrl"],
+        )
+        self.assertEqual("E2E_PENDING", mallorca["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", mallorca["inventoryStatus"])
+        self.assertEqual("2026-08-21", mallorca["reviewedOn"])
+        self.assertEqual("DELEGACION_MALLORCA_SEDE", mallorca["protocolFamily"])
+        self.assertEqual([], mallorca["observedMechanisms"])
+        self.assertEqual([], mallorca["observedSignatureFormats"])
+        self.assertIn("alias", mallorca["limitations"].lower())
+        self.assertIn("e2e", mallorca["limitations"].lower())
 
     def test_tenerife_institutional_alias_binds_exact_qa_sede_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

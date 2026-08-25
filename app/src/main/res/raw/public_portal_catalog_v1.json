@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "458fe53ecc6e6d96bd825294e8131987e8968d6490874e871a2a600e1a0469bd",
+  "sourceRevision": "625f2f11574ad8addd68d40b7383b30503168c7364ff3b3d3b3ccede8999ec6a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3220,48 +3220,60 @@
     {
       "portalId": "menorca-sede-electronica",
       "inventoryId": "ES-PUB-0118",
-      "profileId": null,
-      "displayName": "Seu electrònica del Consell Insular de Menorca",
+      "profileId": "menorca-carpeta-ciutadana",
+      "displayName": "Seu electrònica del Consell Insular de Menorca — Sol·licitud genèrica",
       "organization": "Consell Insular de Menorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Acceso público a trámites, carpeta o servicios administrativos de la sede electrónica.",
+      "purpose": "La Seu electrònica delega los trámites en la Carpeta Ciutadana actual; la Sol·licitud genèrica del Consell reutiliza el contrato QA de autenticación TLS cliente ya implementado, sin ampliar la firma AutoFirma ni el envío final.",
       "entryUrl": "https://seuelectronica.cime.es/",
-      "observedMechanisms": [],
+      "launchUrl": "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262",
+      "observedMechanisms": [
+        "AUTOFIRMA",
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
+        "ELECTRONIC_SIGNATURE"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I01B"
+        "I01B",
+        "MENORCA-SEDE-DELEGATION-2026-08-21",
+        "MENORCA-SEDE-GENERIC-2026-08-21",
+        "MENORCA-SEDE-CLIENT-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Cliente JS, familia de protocolo, formato, algoritmo, endpoint y TLS cliente no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias exacto al perfil QA existente menorca-carpeta-ciutadana: la evidencia actual de la Seu y de la Carpeta enlaza el mismo procedimiento y la misma transición Login.aspx -> LoginCert.aspx con parámetro URL vinculado. E2E Android pendiente; formato, algoritmo, payload, callback y presentación final siguen sin inferirse."
     },
     {
       "portalId": "mallorca-portal-institucional",
       "inventoryId": "ES-PUB-0119",
-      "profileId": null,
+      "profileId": "consell-mallorca-sede",
       "displayName": "Portal institucional del Consell de Mallorca",
       "organization": "Consell de Mallorca",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Illes Balears",
-      "purpose": "Consulta pública de información institucional y acceso diferenciado a la sede electrónica.",
+      "purpose": "El portal institucional delega la tramitación electrónica en la Seu separada; la Seu publica el Registre Electrònic del Consell y su URL exacta coincide con el startUrl del perfil QA-only consell-mallorca-sede.",
       "entryUrl": "https://www.conselldemallorca.es/",
+      "launchUrl": "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "DELEGACION_MALLORCA_SEDE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D12",
         "I02A",
-        "I02B"
+        "I02B",
+        "MALLORCA-PORTAL-SEDE-2026-08-21",
+        "MALLORCA-PORTAL-REGISTRE-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Certificado, firma, ABI, formato, algoritmo, endpoint y TLS cliente no verificados para el portal informativo."
+      "reviewedOn": "2026-08-21",
+      "limitations": "Alias QA-only al perfil existente consell-mallorca-sede por delegación oficial actual portal → Seu Electrònica → Registre Electrònic y coincidencia exacta del launch URL; faltan E2E físico y cualquier atribución de ABI criptográfico propio al portal institucional."
     },
     {
       "portalId": "mallorca-sede-electronica",
