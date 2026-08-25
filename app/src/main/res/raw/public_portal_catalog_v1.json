@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "eb8b2ad05a7aa7f66ca2065585b2183b388b7bc665b4f551a6f930562fc5a158",
+  "sourceRevision": "458fe53ecc6e6d96bd825294e8131987e8968d6490874e871a2a600e1a0469bd",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -235,28 +235,30 @@
     {
       "portalId": "justicia-sede-judicial",
       "inventoryId": "ES-PUB-0009",
-      "profileId": null,
+      "profileId": "justicia-sede-judicial-private-area",
       "displayName": "Sede Judicial Electrónica",
       "organization": "Administración de Justicia",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Acceso con Cl@ve/certificado y firma de escritos o documentos PDF con AutoFirma.",
-      "entryUrl": "https://sedejudicial.justicia.es/firma-y-certificados-electronicos-admitidos",
+      "purpose": "Acceso al área privada: la Sede Judicial redirige a su gateway de identidad y prepara la autenticación mediante Cl@ve.",
+      "entryUrl": "https://sedejudicial.justicia.es/group/guest/area-privada",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
       "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P06",
-        "P06A"
+        "JUSTICIA-TRAMITES-2026-08-19",
+        "JUSTICIA-PRIVATE-AREA-2026-08-19",
+        "JUSTICIA-AM-CLAVE-2026-08-19"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Procedimiento exacto, ABI, formato criptográfico, endpoint y callback no verificados."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Implementado en QA solo el lanzamiento exacto del área privada y la transición al gateway am.justicia.es. El origen compartido de Cl@ve, la autenticación por certificado, el ABI de firma, formato, endpoint y callback permanecen fuera del perfil hasta evidencia específica; sin aceptación E2E."
     },
     {
       "portalId": "mjusticia-sede",
@@ -463,26 +465,26 @@
     {
       "portalId": "madrid-sede",
       "inventoryId": "ES-PUB-0017",
-      "profileId": null,
+      "profileId": "madrid-sede-tarjeta-azul",
       "displayName": "Sede electrónica del Ayuntamiento de Madrid",
       "organization": "Ayuntamiento de Madrid",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Madrid (municipio)",
-      "purpose": "Identificación/tramitación con certificado cuando el procedimiento lo admite.",
+      "purpose": "Navegación QA acotada desde la Sede a la solicitud digital de Tarjeta Azul y al selector municipal OIDC/PKCE de Cl@ve, incluida la opción DNIe / Certificado.",
       "entryUrl": "https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "RECHECK_REQUIRED",
+      "protocolFamily": "OIDC_PKCE_CLAVE_CERTIFICATE_ROUTE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P11"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "Firma y contrato técnico no verificados; la lectura web existe, pero la comprobación CLI no es repetible."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Se implementa únicamente el contrato de navegación/autenticación municipal observado hasta la delegación externa a Cl@ve; no se infieren TLS client auth, firma, formato, algoritmo, endpoint de firma ni presentación final."
     },
     {
       "portalId": "ugr-sede",
@@ -4927,7 +4929,7 @@
     {
       "portalId": "comunidad-madrid-cuenta-digital-carne-joven",
       "inventoryId": "ES-PUB-0179",
-      "profileId": null,
+      "profileId": "comunidad-madrid-cuenta-digital-53f1",
       "displayName": "Cuenta Digital — Carné Joven 53F1",
       "organization": "Comunidad de Madrid",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
@@ -4936,12 +4938,13 @@
       "entryUrl": "https://digital.comunidad.madrid/ext/53F1",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CUENTA_DIGITAL_AUTH_CLIENT_TLS_BOUNDARY",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P18",
@@ -4950,10 +4953,11 @@
         "P18C",
         "P18D",
         "P18E",
-        "P18F"
+        "P18F",
+        "LIVE-CUENTA-DIGITAL-53F1-2026-08-19"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "La ficha acredita «Firmar y enviar» y certificado/DNIe solo como opción; el lookup autenticado de 53F1 no revela el endpoint de presentación, payload, callback, formato ni algoritmo. La cadena JS revisada solo acredita lookup/redirect."
+      "reviewedOn": "2026-08-19",
+      "limitations": "Perfil nuevo QA_ONLY limitado a la entrada exacta 53F1 y navegación first-party digital.comunidad.madrid -> gestiona.comunidad.madrid, sin SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. El certificado vigente usa un salto POST a gestiona2; el helper CLIENT_TLS_AUTH actual reabre targets como GET y por tanto no puede representarlo fielmente. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
     },
     {
       "portalId": "junta-andalucia-carne-joven",
