@@ -177,6 +177,7 @@ class PortalCatalogRepositoryTest {
                 "red-es-sede-public-navigation",
                 "formentera-portal-institucional-navigation",
                 "ico-sede-public-navigation",
+                "el-hierro-sede-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

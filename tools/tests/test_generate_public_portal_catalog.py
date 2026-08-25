@@ -321,6 +321,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("same-origin", ico["limitations"].lower())
         self.assertIn("e2e", ico["limitations"].lower())
 
+    def test_el_hierro_profile_binds_session_backed_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        el_hierro = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "el-hierro-sede-electronica"
+        )
+
+        self.assertEqual("el-hierro-sede-public-navigation", el_hierro["profileId"])
+        self.assertEqual("ES-PUB-0126", el_hierro["inventoryId"])
+        self.assertEqual("https://elhierro.sedelectronica.es/info.0", el_hierro["entryUrl"])
+        self.assertNotIn("launchUrl", el_hierro)
+        self.assertEqual("INSULAR_SEDE_PUBLIC_NAVIGATION", el_hierro["protocolFamily"])
+        self.assertEqual("E2E_PENDING", el_hierro["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", el_hierro["inventoryStatus"])
+        self.assertEqual("REVIEWED", el_hierro["discoveryState"])
+        self.assertEqual("2026-08-25", el_hierro["reviewedOn"])
+        self.assertEqual([], el_hierro["observedMechanisms"])
+        self.assertEqual([], el_hierro["observedSignatureFormats"])
+        self.assertIn("qa-only", el_hierro["limitations"].lower())
+        self.assertIn("handshake", el_hierro["limitations"].lower())
+        self.assertIn("e2e", el_hierro["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
