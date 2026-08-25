@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a76b8b10b741bfe42e51a987cdfa3a0048b11f8b2309bcd87ae005f56fbd0fca",
+  "sourceRevision": "9c0125996515544e17304d5c8c4cca917aa77a8c38a2b5b40bb394dadf66a258",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1527,24 +1527,25 @@
     {
       "portalId": "age-instituto-para-la-transicion-justa-itj",
       "inventoryId": "ES-PUB-0057",
-      "profileId": null,
+      "profileId": "itj-sede-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Instituto para la Transición Justa (ITJ)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only a la raíz pública exacta de la Sede electrónica del Instituto para la Transición Justa; autenticación, firma y presentación quedan fuera del contrato.",
       "entryUrl": "https://sede.transicionjusta.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "ITJ-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado al launch exacto de la raíz pública; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "age-instituto-social-de-las-fuerzas-armadas-isfas",

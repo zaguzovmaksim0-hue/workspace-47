@@ -233,6 +233,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa-only", icac["limitations"].lower())
         self.assertIn("e2e", icac["limitations"].lower())
 
+    def test_itj_profile_binds_exact_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        itj = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-instituto-para-la-transicion-justa-itj"
+        )
+
+        self.assertEqual("itj-sede-public-navigation", itj["profileId"])
+        self.assertEqual("ES-PUB-0057", itj["inventoryId"])
+        self.assertEqual("https://sede.transicionjusta.gob.es/", itj["entryUrl"])
+        self.assertNotIn("launchUrl", itj)
+        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", itj["protocolFamily"])
+        self.assertEqual("E2E_PENDING", itj["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", itj["inventoryStatus"])
+        self.assertEqual("REVIEWED", itj["discoveryState"])
+        self.assertEqual("2026-08-25", itj["reviewedOn"])
+        self.assertEqual([], itj["observedMechanisms"])
+        self.assertEqual([], itj["observedSignatureFormats"])
+        self.assertIn("qa-only", itj["limitations"].lower())
+        self.assertIn("e2e", itj["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
