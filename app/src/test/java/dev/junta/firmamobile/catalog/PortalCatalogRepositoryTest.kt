@@ -182,6 +182,7 @@ class PortalCatalogRepositoryTest {
                 "formentera-portal-institucional-navigation",
                 "ico-sede-public-navigation",
                 "el-hierro-sede-public-navigation",
+                "imserso-sede-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
