@@ -21,7 +21,7 @@ concurrency:
 
 env:
   JAVA_VERSION: "17"
-  GO_VERSION: "1.26.5"
+  GO_VERSION: "1.26.6"
   PYTHON_VERSION: "3.13"
 
 jobs:
@@ -39,6 +39,8 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
         with:
@@ -77,6 +79,8 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install Python test dependencies
+        run: python -m pip install --disable-pip-version-check --requirement tools/requirements.txt
       - name: Run Python tests
         run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
 

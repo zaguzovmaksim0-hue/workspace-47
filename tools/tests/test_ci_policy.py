@@ -11,6 +11,7 @@ CI = ROOT / ".github/workflows/ci.yml"
 SECURITY = ROOT / ".github/workflows/security.yml"
 DEPENDABOT = ROOT / ".github/dependabot.yml"
 GITLEAKS = ROOT / ".gitleaks.toml"
+GITLEAKS_IGNORE = ROOT / ".gitleaksignore"
 VERIFY_APKS = ROOT / "scripts/ci/verify-android-artifacts.sh"
 VERIFY_RELEASE = ROOT / "scripts/ci/verify-release-fail-closed.sh"
 UPDATE_ANDROID_RUNTIME_LOCK = ROOT / "scripts/ci/update-android-runtime-lock.sh"
@@ -38,6 +39,19 @@ APP_RUNTIME_CONFIGURATIONS = {
     "qaRuntimeClasspath",
     "releaseRuntimeClasspath",
 }
+EXPECTED_GITLEAKS_IGNORES = {
+    "f15a1d272cb088da8d900c238f7c745a9633b667:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1283",
+    "2c4b1b77d61c6d348db0a6114bf21c5dbb419d20:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1057",
+    "36ae2899b4039eb5da9d40c158ff2ebcd4a944a7:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:2999",
+    "954eb98394d1d0682f9b7d61de52afd9847f3d3f:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:3932",
+    "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/browser/CaibBatchSigningAdapterTest.kt:generic-api-key:64",
+    "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/browser/CaibBatchSigningAdapterTest.kt:generic-api-key:65",
+    "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/network/CaibBatchUrlPolicyTest.kt:generic-api-key:30",
+    "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/network/CaibBatchUrlPolicyTest.kt:generic-api-key:31",
+    "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:139",
+    "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:140",
+    "f3c8755356639b1e7842b9d20271186182dd754c:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:1307",
+}
 
 PINNED_ACTION = re.compile(r"^\s*-?\s*uses:\s*([\w.-]+/[\w./-]+)@([0-9a-f]{40})\s*(?:#.*)?$", re.M)
 ANY_ACTION = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)", re.M)
@@ -54,6 +68,7 @@ class CiPolicyTest(unittest.TestCase):
             SECURITY,
             DEPENDABOT,
             GITLEAKS,
+            GITLEAKS_IGNORE,
             VERIFY_APKS,
             VERIFY_RELEASE,
             UPDATE_ANDROID_RUNTIME_LOCK,
@@ -94,6 +109,7 @@ class CiPolicyTest(unittest.TestCase):
             "actions/setup-java",
             "actions/setup-go",
             "actions/setup-python",
+            "android-actions/setup-android",
             "gradle/actions/setup-gradle",
         }
         for path in (CI, SECURITY):
@@ -130,10 +146,12 @@ class CiPolicyTest(unittest.TestCase):
             "govulncheck ./...",
             "scripts/ci/verify-android-artifacts.sh",
             "scripts/ci/verify-release-fail-closed.sh",
+            "python -m pip install --disable-pip-version-check --requirement tools/requirements.txt",
         ):
             self.assertIn(required, source)
         self.assertIn("timeout-minutes:", source)
-        self.assertIn('GO_VERSION: "1.26.5"', source)
+        self.assertIn('GO_VERSION: "1.26.6"', source)
+        self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
         self.assertIn("concurrency:", source)
         self.assertNotIn("cache-dependency-path: ws024-relay/go.sum", source)
         self.assertIn("cache: false", source)
@@ -147,7 +165,8 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb", source)
         self.assertIn("gitleaks git --redact --no-banner", source)
         self.assertIn("github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8", source)
-        self.assertIn('go-version: "1.26.5"', source)
+        self.assertIn('go-version: "1.26.6"', source)
+        self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
         gradle_verify = "./gradlew :app:verifyRuntimeDependencyLocks --no-daemon"
         osv_install = "Install pinned OSV-Scanner"
         self.assertIn(gradle_verify, source)
@@ -223,7 +242,7 @@ class CiPolicyTest(unittest.TestCase):
             seen_configurations.update(configurations.split(","))
         self.assertEqual(APP_RUNTIME_CONFIGURATIONS, seen_configurations)
 
-    def test_go_module_requires_the_patched_toolchain(self) -> None:
+    def test_go_module_keeps_android_compatible_toolchain_floor(self) -> None:
         source = self.read(GO_MOD)
         self.assertRegex(source, r"(?m)^go 1\.26\.5$")
 
@@ -253,6 +272,15 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn('regexTarget = "line"', source)
         self.assertIn("all-spanish-public-portals-inventory", source)
         self.assertNotRegex(source, r"paths\s*=\s*\[\s*['\"]\.\*['\"]")
+
+    def test_gitleaks_ignore_contains_only_reviewed_historical_findings(self) -> None:
+        source = self.read(GITLEAKS_IGNORE)
+        entries = {
+            line.strip()
+            for line in source.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        }
+        self.assertEqual(EXPECTED_GITLEAKS_IGNORES, entries)
 
     def test_artifact_scripts_are_fail_closed(self) -> None:
         apk = self.read(VERIFY_APKS)

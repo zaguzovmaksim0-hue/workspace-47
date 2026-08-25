@@ -1,0 +1,12 @@
+# Historical synthetic fixtures and public identifiers reviewed as false positives.
+f15a1d272cb088da8d900c238f7c745a9633b667:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1283
+2c4b1b77d61c6d348db0a6114bf21c5dbb419d20:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1057
+36ae2899b4039eb5da9d40c158ff2ebcd4a944a7:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:2999
+954eb98394d1d0682f9b7d61de52afd9847f3d3f:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:3932
+c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/browser/CaibBatchSigningAdapterTest.kt:generic-api-key:64
+c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/browser/CaibBatchSigningAdapterTest.kt:generic-api-key:65
+c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/network/CaibBatchUrlPolicyTest.kt:generic-api-key:30
+c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/network/CaibBatchUrlPolicyTest.kt:generic-api-key:31
+c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:139
+c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:140
+f3c8755356639b1e7842b9d20271186182dd754c:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:1307
