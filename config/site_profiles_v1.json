@@ -3295,6 +3295,25 @@
       ]
     },
     {
+      "profileId": "ine-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública del Instituto Nacional de Estadística",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.ine.gob.es/es/index.htm",
+      "initiatorOrigins": ["https://sede.ine.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.ine.gob.es/es/index.htm","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
       "profileId": "age-acceda",
       "profileVersion": 1,
       "displayName": "Plataforma ACCEDA — Sede electrónica",

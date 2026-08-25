@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "597b373a53c3decb49e284fddf0ab7a4e7570a40c211eec58041c5de961c4dd9",
+  "sourceRevision": "da332ccb87bc13670fe640ca30af7020a858a23d6867c315620bdbbcd9e3de0a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1507,24 +1507,25 @@
     {
       "portalId": "age-instituto-nacional-de-estadistica-ine",
       "inventoryId": "ES-PUB-0056",
-      "profileId": null,
+      "profileId": "ine-sede-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Instituto Nacional de Estadística (INE)",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
-      "entryUrl": "https://sede.ine.gob.es/",
+      "purpose": "Navegación QA-only a la entrada pública exacta /es/index.htm de la Sede electrónica del INE; autenticación, firma y presentación quedan fuera del contrato.",
+      "entryUrl": "https://sede.ine.gob.es/es/index.htm",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "INE-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado al launch exacto de /es/index.htm; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "age-instituto-para-la-transicion-justa-itj",
