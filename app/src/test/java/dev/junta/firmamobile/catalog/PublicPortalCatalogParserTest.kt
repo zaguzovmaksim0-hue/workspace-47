@@ -149,6 +149,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("lanzarote-instancia-general"),
                 ProfileId("lanzarote-sede-public-navigation"),
                 ProfileId("zamora-sede-public-navigation"),
+                ProfileId("zaragoza-sede-public-navigation"),
                 ProfileId("diputacion-pontevedra-instancia-xenerica"),
                 ProfileId("diputacion-malaga-instancia-general"),
                 ProfileId("diputacion-girona-instancia-generica"),
@@ -521,7 +522,7 @@ class PublicPortalCatalogParserTest {
                 "\"profileId\": \"unizar-tramitador\"",
                 "\"profileId\": \"reg-age-redsara\"",
             ),
-            json.replaceFirst("\"catalogStatus\": \"CATALOGED\"", "\"catalogStatus\": \"IMPLEMENTED\""),
+            json.replaceFirst("\"catalogStatus\": \"E2E_PENDING\"", "\"catalogStatus\": \"INVALID\""),
         ).forEach { invalid ->
             assertThrows(IllegalArgumentException::class.java) {
                 PublicPortalCatalogParser.parse(invalid)

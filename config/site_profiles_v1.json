@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 59,
+  "catalogVersion": 60,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1464,6 +1464,25 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://diputaciondezamora.sedelectronica.es/info.0","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "zaragoza-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública de la Diputación Provincial de Zaragoza",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://dpz.sedelectronica.es/info.0",
+      "initiatorOrigins": ["https://dpz.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://dpz.sedelectronica.es/info.0","reviewedOn":"2026-08-25"}
       ]
     },
     {

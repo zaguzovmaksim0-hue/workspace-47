@@ -931,6 +931,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("la-gomera-sede-public-navigation"),
             ProfileId("lanzarote-sede-public-navigation"),
             ProfileId("zamora-sede-public-navigation"),
+            ProfileId("zaragoza-sede-public-navigation"),
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
