@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 271 |
 | Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 145 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 149 |
-| Entradas restantes fuera de ambos estados | 34 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 148 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 152 |
+| Entradas restantes fuera de ambos estados | 31 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 145 |
+| `IMPLEMENTED_NOT_E2E` | 148 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 27 |
+| `BROWSE_ONLY` | 24 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,8 +233,8 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 169 |
-| `RECHECK_REQUIRED` | 5 |
+| `REVIEWED` | 170 |
+| `RECHECK_REQUIRED` | 4 |
 | `DISCOVERED` | 9 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
@@ -356,12 +356,12 @@ requiera traducción manual.
 | `P03` | Seguridad Social / Import@ss | [P03][P03A] | Ayuda oficial; AutoFirma móvil rechazada en la Sede y métodos de acceso Import@ss. |
 | `P04` | SEPE | [P04] | FAQ oficial de AutoFirma de escritorio. |
 | `P05` | DGT | [P05][DGT-JS-MAIN-2026-08-09][DGT-JS-CONSTANTES-2026-08-09][DGT-JS-MINIAPPLET-2026-08-09] | Entrada y scripts oficiales con llamada MiniApplet CAdES exacta; sin endpoint de resultado. |
-| `P06` | Sede Judicial / Ministerio de Justicia | [P06][P06A][P06B][P06C] | Ayuda, guía PDF y trámite oficial; ABI no publicado. |
+| `P06` | Sede Judicial / Ministerio de Justicia | [P06][P06A][P06B][P06C][JUSTICIA-TRAMITES-2026-08-19][JUSTICIA-PRIVATE-AREA-2026-08-19][JUSTICIA-AM-CLAVE-2026-08-19] | Ayuda y guía histórica; Trámites, Área privada y bootstrap SAML actuales de Justicia hacia Cl@ve; ABI de firma no publicado. |
 | `P07` | Junta de Andalucía / Ovorion | [P07] | Entrada pública portal-specific; contrato detallado en la matriz y observaciones locales redactadas. |
 | `P08` | Comunidad de Madrid / gestiona2 | [P08][P08A][P08B] | Guía local-PDF y frontend que bloquea móvil. |
 | `P09` | Diputación de Valladolid | [P09][P09A] | Certificados admitidos y explicación conceptual de firma. |
 | `P10` | Ayuntamiento de Sevilla | [P10][P10A] | Requisito de certificado vigente y AutoFirma. |
-| `P11` | Ayuntamiento de Madrid | [P11] | Procedimiento oficial previamente inspeccionado; revalidación automatizada pendiente. |
+| `P11` | Ayuntamiento de Madrid | [P11] | Procedimiento oficial de Tarjeta Azul revalidado en Chromium; cadena pública observada `sede.madrid.es` → `servcla.madrid.es` → selector OIDC/PKCE en `cas.madrid.es`, con delegación `DNIe / Certificado` a Cl@ve. |
 | `P12` | Universidad de Granada | [P12][P12A] | Pantalla AutoFirma y requisitos; transporte exacto no probado. |
 | `P13` | Universidad de Sevilla | [P13][P13A] | Requisitos técnicos y ficha pública ISG_01 que delega exactamente a REG-AGE. |
 | `P14` | REG/RedSARA | [P14][P14A][P14B][P14C][P14D] | Entrada, manual y JS público con contrato estático. |
@@ -457,11 +457,14 @@ quedan para una ola posterior y no alteran el cierre primario 41/41.
 - D10 no pudo validar la cadena CA con el almacén local de `curl`, aunque una
   lectura HTTPS independiente recuperó la página oficial de RUCT; no se usó
   `--insecure` ni se debilitó TLS;
-- P11 respondió HTTP 403 al cliente CLI. Una lectura web independiente mostró
-  la página oficial, pero el registro permanece `RECHECK_REQUIRED` porque la
-  comprobación automatizada no es repetible sin cambiar de transporte.
+- P11 sigue respondiendo HTTP 403 al cliente CLI, pero el 2026-08-19 una sesión
+  Chromium pública normal cargó la misma entrada y permitió seguir la cadena
+  municipal hasta el selector OIDC/PKCE y la delegación externa de la opción
+  `DNIe / Certificado` a Cl@ve. El registro vuelve a `REVIEWED`; no se infieren
+  TLS client auth, firma ni presentación a partir de esta diferencia de transporte.
 
-No se siguió ninguna ruta autenticada ni se intentó eludir esas respuestas.
+No se introdujeron credenciales ni se realizó firma, presentación o pago durante
+esta revalidación.
 
 ## 7. Registros materializados
 
@@ -730,8 +733,8 @@ records:
     origin: "https://sedejudicial.justicia.es"
     official_site: "https://sedejudicial.justicia.es/"
     e_sede: "https://sedejudicial.justicia.es/"
-    entry_url: "https://sedejudicial.justicia.es/firma-y-certificados-electronicos-admitidos"
-    procedure_page: "NO_VERIFICADO"
+    entry_url: "https://sedejudicial.justicia.es/group/guest/area-privada"
+    procedure_page: "https://sedejudicial.justicia.es/group/guest/area-privada"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"
     js_client: "NO_VERIFICADO"
@@ -740,14 +743,14 @@ records:
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Acceso con Cl@ve/certificado y firma de escritos o documentos PDF con AutoFirma."
-    protocol_evidence: "PDF es el documento de la guía; no prueba el formato criptográfico de la firma."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso al área privada: la Sede Judicial redirige a su gateway de identidad y prepara la autenticación mediante Cl@ve."
+    protocol_evidence: "La página oficial de Trámites enlaza el área privada. El 2026-08-19 esa entrada redirigió dentro de sedejudicial.justicia.es a /idp/login y /selfservice-ext/login y después al gateway https://am.justicia.es, que generó un POST SAML hacia https://pasarela.clave.gob.es/Proxy2/ServiceProvider. El perfil local limita la navegación confiable al gateway de Justicia; no habilita el origen Cl@ve compartido ni afirma un contrato de firma documental."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P06", "P06A"]
-    reason: "Procedimiento exacto, ABI, formato criptográfico, endpoint y callback no verificados."
-    reviewed_at: "2026-07-15"
-    next_gate: "Separar autenticación, firma local y entrega al portal."
+    evidence_ids: ["P06", "JUSTICIA-TRAMITES-2026-08-19", "JUSTICIA-PRIVATE-AREA-2026-08-19", "JUSTICIA-AM-CLAVE-2026-08-19"]
+    reason: "Implementado en QA solo el lanzamiento exacto del área privada y la transición al gateway am.justicia.es. El origen compartido de Cl@ve, la autenticación por certificado, el ABI de firma, formato, endpoint y callback permanecen fuera del perfil hasta evidencia específica; sin aceptación E2E."
+    reviewed_at: "2026-08-19"
+    next_gate: "Capturar el contrato portal-specific posterior a Cl@ve sin habilitar el origen compartido por analogía y detenerse antes de cualquier firma o presentación final."
 
   - inventory_id: "ES-PUB-0010"
     surface_key: "mjusticia-sede"
@@ -977,19 +980,19 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "OIDC_PKCE_CLAVE_CERTIFICATE_ROUTE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "RECHECK_REQUIRED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Identificación/tramitación con certificado cuando el procedimiento lo admite."
-    protocol_evidence: "La entrada oficial fue inspeccionada previamente; el cliente CLI recibió 403 en la revalidación."
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA acotada desde la Sede a la solicitud digital de Tarjeta Azul y al selector municipal OIDC/PKCE de Cl@ve, incluida la opción DNIe / Certificado."
+    protocol_evidence: "Chromium público 2026-08-19 cargó la entrada oficial; Solicitud o renovación digital de Tarjeta Azul enlaza a servcla.madrid.es/TAZUL_FTWEBINTER/, que inicia OIDC authorization-code con PKCE S256 en cas.madrid.es. El selector ofrece Cl@ve Móvil, Cl@ve Permanente, DNIe / Certificado, Ciudadanos UE e IDentifica; DNIe / Certificado invoca CLAVE/IDPCLCTM y delega a pasarela.clave.gob.es."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["P11"]
-    reason: "Firma y contrato técnico no verificados; la lectura web existe, pero la comprobación CLI no es repetible."
-    reviewed_at: "2026-07-15"
-    next_gate: "Revalidar la entrada oficial sin sortear controles del portal."
+    reason: "Se implementa únicamente el contrato de navegación/autenticación municipal observado hasta la delegación externa a Cl@ve; no se infieren TLS client auth, firma, formato, algoritmo, endpoint de firma ni presentación final."
+    reviewed_at: "2026-08-19"
+    next_gate: "Completar autenticación controlada y observar el primer estado post-login útil; detenerse antes de firma criptográfica, presentación final o pago."
 
   - inventory_id: "ES-PUB-0018"
     surface_key: "ugr-sede"
@@ -6010,10 +6013,11 @@ records:
 
 ### 7.6. Superficie sectorial autonómica — Carné Joven Madrid
 
-Este registro delimita la entrada oficial 53F1 de Cuenta Digital. La ficha
-publica la acción «Firmar y enviar» y permite identificación sin certificado;
-la SPA pública solo acredita lookup y redirect autenticado. No se infieren
-cliente, protocolo, formato, algoritmo ni endpoint de presentación.
+Este registro delimita la entrada oficial 53F1 de Cuenta Digital. El runtime
+vigente confirma la entrada autenticada, el selector oficial de métodos y una
+frontera TLS cliente opcional para certificado. El perfil QA implementa solo la
+navegación exacta hasta el login first-party; no reproduce el POST mTLS ni
+infiere contrato de firma o presentación.
 
 ```yaml
 records:
@@ -6033,19 +6037,19 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "CUENTA_DIGITAL_AUTH_CLIENT_TLS_BOUNDARY"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Solicitud electrónica y obtención de la versión digital del Carné Joven de la Comunidad de Madrid mediante Cuenta Digital."
-    protocol_evidence: "P18C-P18F acreditan una SPA requireAuth, lookup tramites/{id} y redirect mediante data.url_tramitacion; no acreditan el contrato de firma o presentación de 53F1."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P18", "P18A", "P18B", "P18C", "P18D", "P18E", "P18F"]
-    reason: "La ficha acredita «Firmar y enviar» y certificado/DNIe solo como opción; el lookup autenticado de 53F1 no revela el endpoint de presentación, payload, callback, formato ni algoritmo. La cadena JS revisada solo acredita lookup/redirect."
-    reviewed_at: "2026-07-16"
-    next_gate: "Observar de forma controlada el flujo autenticado 53F1 y conservar evidencia sanitizada de endpoint, payload y callback exactos antes de evaluar cualquier promoción."
+    protocol_evidence: "El 2026-08-19 la entrada /ext/53F1 redirigió a /login; el selector vigente ofreció IDentifica, Cl@ve Móvil, Cl@ve Permanente, Certificado Digital y DNIe. La opción de certificado siguió auto_login/seleccion-idp.jsf -> POST gestiona2/auto_certificado/SelCertificado. Sin certificado terminó en respuestaError; con PKCS#12 autorizado y presentado transitoriamente por TLS avanzó a reqAuto.jsf -> RespuestaCertificado.jsf y volvió a Cuenta Digital. El POST mTLS no se modela porque el runtime Android actual solo puede reabrir un target TLS por URL/GET."
+    client_tls_auth: "SI"
+    evidence_ids: ["P18", "P18A", "P18B", "P18C", "P18D", "P18E", "P18F", "LIVE-CUENTA-DIGITAL-53F1-2026-08-19"]
+    reason: "Perfil nuevo QA_ONLY limitado a la entrada exacta 53F1 y navegación first-party digital.comunidad.madrid -> gestiona.comunidad.madrid, sin SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. El certificado vigente usa un salto POST a gestiona2; el helper CLIENT_TLS_AUTH actual reabre targets como GET y por tanto no puede representarlo fielmente. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
+    reviewed_at: "2026-08-19"
+    next_gate: "E2E QA del launch/navegación exactos y, por separado, soporte method-preserving para el POST mTLS o autenticación controlada por otro método antes de investigar el flujo 53F1 posterior al login."
 ```
 
 ### 7.7. Carné Joven Europeo de Andalucía — autenticación TLS
@@ -6347,6 +6351,9 @@ Orden de expansión recomendado:
 [P06B]: https://sede.mjusticia.gob.es/informacion-ayuda/preguntas-frecuentes
 [P06C]: https://sede.mjusticia.gob.es/tramites/organos-gobierno
 [MJUSTICIA-IDP75-LAUNCH-2026-08-19]: https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75
+[JUSTICIA-TRAMITES-2026-08-19]: https://sedejudicial.justicia.es/tramites
+[JUSTICIA-PRIVATE-AREA-2026-08-19]: https://sedejudicial.justicia.es/group/guest/area-privada
+[JUSTICIA-AM-CLAVE-2026-08-19]: https://am.justicia.es/selfservice-ext/saml2/sp/login/clave?issuer=https://am.justicia.es/selfservice-ext/saml2/sp/login/clavenoeidas&RelayState=https%3A%2F%2Fsedejudicial.justicia.es%2Fgroup%2Fguest%2Farea-privada
 [P07]: https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs
 [P08]: https://sede.comunidad.madrid/guia-tramitacion/realizo-solicitud
 [P08A]: https://sede.comunidad.madrid/registro-electronico-general-comunidad-madrid

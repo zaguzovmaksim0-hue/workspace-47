@@ -2151,6 +2151,9 @@ object SiteProfileCatalogParser {
                 (owners == setOf(ASTURIAS_PROFILE_ID, ASTURIAS_SEDE_NAVIGATION_PROFILE_ID) &&
                     firstIsRedirectOrigin != secondIsRedirectOrigin &&
                     origin.serialized == ASTURIAS_MIPRINCIPADO_ORIGIN) ||
+                    (owners == setOf(MADRID_REGISTRO_PROFILE_ID, MADRID_CUENTA_DIGITAL_PROFILE_ID) &&
+                        firstIsRedirectOrigin != secondIsRedirectOrigin &&
+                        origin.serialized == MADRID_GESTIONA_ORIGIN) ||
                     (!firstIsRedirectOrigin && !secondIsRedirectOrigin &&
                         owners == setOf(TRANSPORTES_PROFILE_ID, SEPES_TRANSPORTES_PROFILE_ID) &&
                         origin.serialized == TRANSPORTES_SHARED_ORIGIN)
@@ -2529,6 +2532,9 @@ object SiteProfileCatalogParser {
     private const val ASTURIAS_PROFILE_ID = "asturias-miprincipado"
     private const val ASTURIAS_SEDE_NAVIGATION_PROFILE_ID = "asturias-sede-tramite-navigation"
     private const val ASTURIAS_MIPRINCIPADO_ORIGIN = "https://miprincipado.asturias.es"
+    private const val MADRID_REGISTRO_PROFILE_ID = "comunidad-madrid-registro-general"
+    private const val MADRID_CUENTA_DIGITAL_PROFILE_ID = "comunidad-madrid-cuenta-digital-53f1"
+    private const val MADRID_GESTIONA_ORIGIN = "https://gestiona.comunidad.madrid"
     private const val MUGEJU_PROFILE_ID = "mugeju-remision-documentacion-client-auth"
     private const val MUGEJU_PROFILE_VERSION = 1
     private const val MUGEJU_DISPLAY_NAME = "MUGEJU — Remisión de documentación con certificado"

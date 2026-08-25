@@ -1782,6 +1782,29 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dipsegovia.es.evil.example/registro")))
     }
+
+    @Test
+    fun `Madrid Cuenta Digital 53F1 profile exposes only exact QA browse navigation`() {
+        val profileId = ProfileId("comunidad-madrid-cuenta-digital-53f1")
+        val start = URI("https://digital.comunidad.madrid/ext/53F1")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(1, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://digital.comunidad.madrid")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://gestiona.comunidad.madrid")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertTrue(profile.capabilities.isEmpty())
+        assertEquals(null, profile.clientAuthPolicy)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(3, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-19" })
+    }
 }
 
 private fun URI.originForTest() = ExactOrigin.parse("https://$host")

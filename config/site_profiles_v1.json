@@ -1223,6 +1223,27 @@
       ]
     },
     {
+      "profileId": "madrid-sede-tarjeta-azul",
+      "profileVersion": 1,
+      "displayName": "Ayuntamiento de Madrid — Tarjeta Azul / acceso OIDC",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD",
+      "initiatorOrigins": ["https://sede.madrid.es"],
+      "redirectOrigins": ["https://servcla.madrid.es", "https://cas.madrid.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD","reviewedOn":"2026-08-19"},
+        {"url":"https://servcla.madrid.es/TAZUL_FTWEBINTER/","reviewedOn":"2026-08-19"},
+        {"url":"https://cas.madrid.es/authenticationendpoint/login.do","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
       "profileId": "portal-funciona-public-home",
       "profileVersion": 1,
       "displayName": "Portal Funciona — inicio público",
@@ -1756,6 +1777,48 @@
         {"url":"https://tramits.diba.cat/SS/","reviewedOn":"2026-08-18"},
         {"url":"https://valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"},
         {"url":"https://cert.valid.aoc.cat/o/oauth2/auth","reviewedOn":"2026-08-18"}
+      ]
+    },
+    {
+      "profileId": "comunidad-madrid-cuenta-digital-53f1",
+      "profileVersion": 1,
+      "displayName": "Comunidad de Madrid — Cuenta Digital Carné Joven 53F1",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://digital.comunidad.madrid/ext/53F1",
+      "initiatorOrigins": ["https://digital.comunidad.madrid"],
+      "redirectOrigins": ["https://gestiona.comunidad.madrid"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://digital.comunidad.madrid/ext/53F1","reviewedOn":"2026-08-19"},
+        {"url":"https://gestiona.comunidad.madrid/auto_login/acceso.jsf","reviewedOn":"2026-08-19"},
+        {"url":"https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado","reviewedOn":"2026-08-19"}
+      ]
+    },
+    {
+      "profileId": "justicia-sede-judicial-private-area",
+      "profileVersion": 1,
+      "displayName": "Administración de Justicia — Sede Judicial Electrónica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedejudicial.justicia.es/group/guest/area-privada",
+      "initiatorOrigins": ["https://sedejudicial.justicia.es"],
+      "redirectOrigins": ["https://am.justicia.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sedejudicial.justicia.es/tramites","reviewedOn":"2026-08-19"},
+        {"url":"https://sedejudicial.justicia.es/group/guest/area-privada","reviewedOn":"2026-08-19"},
+        {"url":"https://am.justicia.es/selfservice-ext/saml2/sp/login/clave?issuer=https://am.justicia.es/selfservice-ext/saml2/sp/login/clavenoeidas&RelayState=https%3A%2F%2Fsedejudicial.justicia.es%2Fgroup%2Fguest%2Farea-privada","reviewedOn":"2026-08-19"}
       ]
     },
     {
