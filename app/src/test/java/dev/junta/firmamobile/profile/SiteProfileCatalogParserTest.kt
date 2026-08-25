@@ -923,6 +923,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("formentera-sede-electronica"),
             ProfileId("iac-sede-public-navigation"),
             ProfileId("icac-sede-public-navigation"),
+            ProfileId("itj-sede-public-navigation"),
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),

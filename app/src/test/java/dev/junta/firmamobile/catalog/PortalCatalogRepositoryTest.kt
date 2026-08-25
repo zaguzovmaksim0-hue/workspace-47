@@ -173,6 +173,7 @@ class PortalCatalogRepositoryTest {
                 "formentera-sede-electronica",
                 "iac-sede-public-navigation",
                 "icac-sede-public-navigation",
+                "itj-sede-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
