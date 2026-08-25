@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "bfca2eba35045bab5aa6af42e6a7fea1047c74422ff45df1dd9bd868cc4e7ad8",
+  "sourceRevision": "176e2517788defb50d4517f9f52209e4aa68e14222906af5bae67f4f8bbf42a8",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -351,27 +351,29 @@
     {
       "portalId": "comunidad-madrid-gestiona2",
       "inventoryId": "ES-PUB-0013",
-      "profileId": null,
+      "profileId": "comunidad-madrid-gestiona2-public-navigation",
       "displayName": "gestiona2",
       "organization": "Comunidad de Madrid",
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "territory": "Comunidad de Madrid",
-      "purpose": "Acceso con certificado y firma AutoFirma del trámite observado.",
+      "purpose": "Navegación QA-only a la página pública exacta del trámite; identificación, AutoFirma, firma, registro y justificante quedan fuera del contrato.",
       "entryUrl": "https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",
       "observedMechanisms": [
+        "AUTOFIRMA",
         "CERTIFICATE_ACCESS",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "BLOCKED",
-      "inventoryStatus": "UNSUPPORTED_PROTOCOL",
+      "protocolFamily": "MADRID_GESTIONA2_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "P08B"
+        "P08B",
+        "MADRID-GESTIONA2-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-15",
-      "limitations": "El propio frontend declara que la solicitud no puede realizarse desde móvil o tableta."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado al launch exacto de la página pública; la solicitud móvil sigue bloqueada por la advertencia first-party y no se afirma compatibilidad de certificado, AutoFirma, firma, registro ni E2E."
     },
     {
       "portalId": "aragon-siraw",

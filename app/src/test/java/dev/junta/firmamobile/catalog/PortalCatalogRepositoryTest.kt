@@ -186,6 +186,7 @@ class PortalCatalogRepositoryTest {
                 "imserso-sede-public-navigation",
                 "ine-sede-public-navigation",
                 "isfas-sede-public-navigation",
+                "comunidad-madrid-gestiona2-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
