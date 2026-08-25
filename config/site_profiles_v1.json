@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 49,
+  "catalogVersion": 50,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3063,6 +3063,25 @@
       "evidence": [
         {"url":"https://ovac.conselldeformentera.cat/","reviewedOn":"2026-08-16"},
         {"url":"https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp","reviewedOn":"2026-08-16"}
+      ]
+    },
+    {
+      "profileId": "iac-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública del Instituto de Astrofísica de Canarias",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://iac.sede.gob.es/",
+      "initiatorOrigins": ["https://iac.sede.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://iac.sede.gob.es/","reviewedOn":"2026-08-25"}
       ]
     },
     {

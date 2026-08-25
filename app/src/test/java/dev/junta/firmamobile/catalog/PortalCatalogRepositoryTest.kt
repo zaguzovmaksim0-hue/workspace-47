@@ -171,6 +171,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-a-coruna-solicitud-general",
                 "euskadi-sede-electronica",
                 "formentera-sede-electronica",
+                "iac-sede-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

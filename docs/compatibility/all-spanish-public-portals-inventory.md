@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 162 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 166 |
-| Entradas restantes fuera de ambos estados | 17 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 163 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 167 |
+| Entradas restantes fuera de ambos estados | 16 |
 | Evidencia exacta de `ClientCertRequest` | 7 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 162 |
+| `IMPLEMENTED_NOT_E2E` | 163 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 11 |
+| `BROWSE_ONLY` | 10 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 171 |
+| `REVIEWED` | 172 |
 | `RECHECK_REQUIRED` | 4 |
-| `DISCOVERED` | 8 |
+| `DISCOVERED` | 7 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 
@@ -2020,19 +2020,19 @@ records:
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "AGE_PUBLIC_SEDE_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
-    discovery_state: "DISCOVERED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "NO_VERIFICADO"
-    protocol_evidence: "NO_VERIFICADO"
+    discovery_state: "REVIEWED"
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA-only a la raíz pública exacta de la Sede electrónica del Instituto de Astrofísica de Canarias; autenticación, firma y presentación quedan fuera del contrato."
+    protocol_evidence: "La raíz oficial https://iac.sede.gob.es/ respondió HTTP 200 en un GET HTTPS público y estable; no se infiere ABI de firma, autenticación, endpoint criptográfico ni client TLS."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D11"]
-    reason: "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
-    reviewed_at: "2026-07-16"
-    next_gate: "Verificar landing pública, procedimiento y contrato técnico exactos."
+    evidence_ids: ["D11", "IAC-SEDE-NAV-2026-08-25"]
+    reason: "Perfil QA-only limitado al launch exacto de la raíz pública; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+    reviewed_at: "2026-08-25"
+    next_gate: "Validar físicamente el lanzamiento exacto de la raíz pública sin iniciar sesión, firmar, cargar documentos ni presentar."
     notes: "Ministerio(s) enumerador(es): Ministerio de Ciencia, Innovación y Universidades."
 
   - inventory_id: "ES-PUB-0051"
@@ -6750,6 +6750,7 @@ availability, certificado, firma ni contrato técnico.
 [CSD-SEDE-2026-08-23]: https://sede.csd.gob.es/
 [CSD-CATALOG-2026-08-23]: https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es
 [CSD-MISTRAMITES-2026-08-23]: https://sede.csd.gob.es/oficinavirtual/Default.aspx
+[IAC-SEDE-NAV-2026-08-25]: https://iac.sede.gob.es/
 
 [FNMT-TRAMITES-2026-08-24]: https://www.sede.fnmt.gob.es/tramites/formulario-proposito-general
 

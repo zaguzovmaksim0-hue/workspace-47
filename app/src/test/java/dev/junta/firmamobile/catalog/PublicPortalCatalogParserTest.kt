@@ -163,6 +163,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-palencia-solicitud-general"),
                 ProfileId("el-hierro-solicitud-general"),
                 ProfileId("formentera-sede-electronica"),
+                ProfileId("iac-sede-public-navigation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
