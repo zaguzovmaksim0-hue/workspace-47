@@ -434,6 +434,7 @@ object SiteProfileCatalogParser {
                             CATALUNYA_SEU_PROFILE_ID,
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
+                            OURENSE_PROFILE_ID,
                         )
                     ) {
                         p.initiatorOrigins + p.redirectOrigins
@@ -2192,6 +2193,7 @@ object SiteProfileCatalogParser {
                             SEGOVIA_PROFILE_ID,
                             PALENCIA_PROFILE_ID,
                             EL_HIERRO_PROFILE_ID,
+                            OURENSE_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -2208,6 +2210,7 @@ object SiteProfileCatalogParser {
                             CACERES_PROFILE_ID,
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
+                            OURENSE_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -2670,6 +2673,7 @@ object SiteProfileCatalogParser {
         "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
+    private const val OURENSE_PROFILE_ID = "diputacion-ourense-sede"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
     private const val CADIZ_PROFILE_ID = "diputacion-cadiz-solicitud-generica"
     private const val GUADALAJARA_PROFILE_ID = "diputacion-guadalajara-instancia-general"

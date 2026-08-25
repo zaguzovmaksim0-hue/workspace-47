@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "95c9724e98421f5d138fd329b4c72e31dfb6445f9183369d554e33d93367173d",
+  "sourceRevision": "20248bbeb90715f015cfdffee8a576c8302c146bf34897d79965f4e4d5ce4de7",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4547,29 +4547,32 @@
     {
       "portalId": "diputacion-ourense-sede",
       "inventoryId": "ES-PUB-0165",
-      "profileId": null,
+      "profileId": "diputacion-ourense-sede",
       "displayName": "Sede electrónica de Deputación de Ourense",
       "organization": "Deputación de Ourense",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Galicia",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://sede.depourense.es",
+      "purpose": "La Solicitud de propósito general inicia autenticación Cl@ve; la rama DNIe/certificado usa client TLS en pasarela-ident.clave.gob.es. El perfil implementa solo esta entrada y autenticación acotada.",
+      "entryUrl": "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH_CLAVE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP27A",
-        "DP27B"
+        "DP27B",
+        "OURENSE-GENERAL-2026-08-20",
+        "OURENSE-CLAVE-2026-08-20"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-20",
+      "limitations": "Perfil QA-only limitado al procedimiento general exacto y al client TLS de Cl@ve observado; no afirma ABI de AutoFirma, formato, algoritmo, callback, endpoint de firma ni presentación E2E."
     },
     {
       "portalId": "diputacion-palencia-sede",

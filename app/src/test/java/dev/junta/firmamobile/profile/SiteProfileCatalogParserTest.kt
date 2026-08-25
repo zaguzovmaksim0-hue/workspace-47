@@ -804,6 +804,49 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun ourenseClaveClientAuthProfilePinsReviewedSharedOriginsAndRejectsUnknownOwner() {
+        val profileId = ProfileId("diputacion-ourense-sede")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(
+            URI(
+                "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&" +
+                    "PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
+            ),
+            profile.startUrl,
+        )
+        assertEquals(setOf(ExactOrigin.parse("https://sede.depourense.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(
+            setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+            policy.sourceUrls,
+        )
+        assertEquals(
+            setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+            policy.requestOrigins,
+        )
+        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replace(
+                    "\"profileId\": \"diputacion-ourense-sede\"",
+                    "\"profileId\": \"unreviewed-clave-owner\"",
+                ),
+            )
+        }
+    }
+
+    @Test
     fun releaseEnablesVerifiedProfilesWhileQaKeepsExperimentalPortalsAvailable() {
         val junta = ProfileId("junta-andalucia")
         val carne = ProfileId("carne-joven-andalucia")

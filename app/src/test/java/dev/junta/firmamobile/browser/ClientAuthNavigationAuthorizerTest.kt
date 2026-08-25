@@ -559,6 +559,42 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun exactOurenseClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+        val ourense = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = ourense.observeTopLevelNavigation(
+            OURENSE_PROFILE, OURENSE_SOURCE, OURENSE_TARGET, 84, true,
+        )
+
+        assertEquals(OURENSE_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertNull(
+            ourense.observeTopLevelNavigation(OURENSE_PROFILE, OURENSE_SOURCE, OURENSE_TARGET, 84, true),
+        )
+
+        val invalidCalls = listOf(
+            "https://pasarela.clave.gob.es/Proxy2/ServiceProvider" to OURENSE_TARGET,
+            OURENSE_SOURCE to OURENSE_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
+            OURENSE_SOURCE to "$OURENSE_TARGET?extra=1",
+            OURENSE_SOURCE to OURENSE_TARGET.replace(
+                "pasarela-ident.clave.gob.es",
+                "pasarela-ident.clave.gob.es.evil.example",
+            ),
+            OURENSE_SOURCE to OURENSE_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
+        )
+        invalidCalls.forEachIndexed { index, (source, target) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelNavigation(
+                    OURENSE_PROFILE, source, target, 90L + index, true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun exactMugejuClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val mugeju = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
         val authorized = mugeju.observeTopLevelNavigation(
@@ -1295,6 +1331,9 @@ class ClientAuthNavigationAuthorizerTest {
         val AIREF_PROFILE = ProfileId("airef-instancia-general")
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val OURENSE_PROFILE = ProfileId("diputacion-ourense-sede")
+        const val OURENSE_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val OURENSE_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val CATALUNYA_PROFILE = ProfileId("catalunya-peticio-generica-client-auth")
         const val CATALUNYA_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val CATALUNYA_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"

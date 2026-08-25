@@ -163,6 +163,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-palencia-solicitud-general",
                 "el-hierro-solicitud-general",
                 "catalunya-seu-registre-client-auth",
+                "diputacion-ourense-sede",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )

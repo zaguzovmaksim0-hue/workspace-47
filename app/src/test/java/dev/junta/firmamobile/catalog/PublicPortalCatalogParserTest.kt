@@ -60,6 +60,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("cantabria-rec-cert-login"),
                 ProfileId("catalunya-peticio-generica-client-auth"),
                 ProfileId("catalunya-seu-registre-client-auth"),
+                ProfileId("diputacion-ourense-sede"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("jccm-registro-generico"),
                 ProfileId("mites-certificate-login"),
