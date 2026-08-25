@@ -56,6 +56,12 @@ object JuntaOriginPolicy {
                 capability == Capability.SELECT_CERTIFICATE ||
                 capability == Capability.AFIRMA_URI
         }
+        if (profile.profileId.value == EUSKADI_CLIENT_AUTH_PROFILE_ID &&
+            profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH) &&
+            profile.redirectOrigins == setOf(ExactOrigin.parse(EUSKADI_CLIENT_AUTH_SOURCE_ORIGIN))
+        ) {
+            return setOf(EUSKADI_CLIENT_AUTH_SOURCE_ORIGIN)
+        }
         if (!exposesNativeBridge) return emptySet()
         return profile.initiatorOrigins.mapTo(linkedSetOf()) { it.serialized }
     }
@@ -115,4 +121,6 @@ object JuntaOriginPolicy {
 
     private const val HTTPS_SCHEME = "https"
     private const val HTTPS_PORT = 443
+    private const val EUSKADI_CLIENT_AUTH_PROFILE_ID = "euskadi-sede-electronica"
+    private const val EUSKADI_CLIENT_AUTH_SOURCE_ORIGIN = "https://eidas.izenpe.com"
 }

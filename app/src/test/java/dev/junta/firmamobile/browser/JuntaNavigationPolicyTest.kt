@@ -166,6 +166,16 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
+    fun euskadiClientAuthTargetIsNeverNormalBrowserNavigation() {
+        val euskadiPolicy = JuntaNavigationPolicy(ProfileId("euskadi-sede-electronica"))
+        val source = "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication"
+        val target = "https://eidas2.izenpe.com/cert-authn-external-validation/authenticate"
+
+        val decision = euskadiPolicy.decide(target, source) as NavigationDecision.Block
+        assertEquals(NavigationBlockReason.CROSS_PROFILE_NAVIGATION, decision.reason)
+    }
+
+    @Test
     fun exactOriginMatcherRequiresHttpsSchemeCanonicalHostAndEffectivePort() {
         val carneJovenPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia"))
         val carneJovenPage = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"

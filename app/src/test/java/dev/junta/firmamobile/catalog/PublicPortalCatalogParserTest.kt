@@ -64,6 +64,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("diputacion-ourense-sede"),
                 ProfileId("diputacion-sevilla-sede"),
                 ProfileId("diputacion-a-coruna-solicitud-general"),
+                ProfileId("euskadi-sede-electronica"),
                 ProfileId("jccm-certificate-login-probe"),
                 ProfileId("jccm-registro-generico"),
                 ProfileId("mites-certificate-login"),
