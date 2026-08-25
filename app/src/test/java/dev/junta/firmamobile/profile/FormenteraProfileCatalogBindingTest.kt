@@ -71,7 +71,7 @@ class FormenteraProfileCatalogBindingTest {
     }
 
     @Test
-    fun registryResolvesOnlyExactSeedUrlInQa() {
+    fun registryResolvesSeedAndSameOriginBrowsePathsInQa() {
         val releaseProfile = BuiltInSiteProfiles.releaseRegistry.profile(profileId)
         val qaProfile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
         assertNull(releaseProfile)
@@ -83,16 +83,24 @@ class FormenteraProfileCatalogBindingTest {
 
         listOf(
             "http://ovac.conselldeformentera.cat/",
-            "https://user@ovac.conselldeformentera.cat/",
             "https://ovac.conselldeformentera.cat:8443/",
             "https://evil.ovac.conselldeformentera.cat/",
             "https://conselldeformentera.cat/",
             "https://www.consellinsulardeformentera.cat/",
-            "https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp",
-            "https://ovac.conselldeformentera.cat/ovac/",
+            "https://user@ovac.conselldeformentera.cat/",
         ).forEach { nonExactUrl ->
             val uri = URI(nonExactUrl)
             assertNull(nonExactUrl, BuiltInSiteProfiles.qaRegistry.resolve(uri))
+        }
+
+        listOf(
+            "https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp",
+            "https://ovac.conselldeformentera.cat/ovac/",
+        ).forEach { sameOriginBrowseUrl ->
+            assertEquals(
+                TrustMode.TRUSTED_BROWSE,
+                BuiltInSiteProfiles.qaRegistry.resolve(URI(sameOriginBrowseUrl))?.trustMode,
+            )
         }
 
         val observedMetaRefresh = URI("https://ovac.conselldeformentera.cat/ovac/catala/emiservicio/41E6BF9D755E4825AF8E6B49E85B5079.asp")
