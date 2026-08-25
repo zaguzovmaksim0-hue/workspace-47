@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "9c0125996515544e17304d5c8c4cca917aa77a8c38a2b5b40bb394dadf66a258",
+  "sourceRevision": "7b132c7c0b96ffbecfd7c2277904e35d03578cbf46f4d70663404d8b89612300",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2295,24 +2295,25 @@
     {
       "portalId": "age-red-es",
       "inventoryId": "ES-PUB-0086",
-      "profileId": null,
+      "profileId": "red-es-sede-public-navigation",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Red.es",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only a la raíz pública exacta de la Sede electrónica de Red.es; autenticación, firma y presentación quedan fuera del contrato.",
       "entryUrl": "https://sede.red.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "RED-ES-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado al launch exacto de la raíz pública; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "age-secretaria-de-estado-de-comercio",

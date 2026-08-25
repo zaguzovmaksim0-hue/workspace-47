@@ -254,6 +254,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("qa-only", itj["limitations"].lower())
         self.assertIn("e2e", itj["limitations"].lower())
 
+    def test_red_es_profile_binds_exact_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        red_es = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-red-es"
+        )
+
+        self.assertEqual("red-es-sede-public-navigation", red_es["profileId"])
+        self.assertEqual("ES-PUB-0086", red_es["inventoryId"])
+        self.assertEqual("https://sede.red.gob.es/", red_es["entryUrl"])
+        self.assertNotIn("launchUrl", red_es)
+        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", red_es["protocolFamily"])
+        self.assertEqual("E2E_PENDING", red_es["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", red_es["inventoryStatus"])
+        self.assertEqual("REVIEWED", red_es["discoveryState"])
+        self.assertEqual("2026-08-25", red_es["reviewedOn"])
+        self.assertEqual([], red_es["observedMechanisms"])
+        self.assertEqual([], red_es["observedSignatureFormats"])
+        self.assertIn("qa-only", red_es["limitations"].lower())
+        self.assertIn("e2e", red_es["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
