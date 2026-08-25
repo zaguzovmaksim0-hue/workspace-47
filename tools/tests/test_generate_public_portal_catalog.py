@@ -343,6 +343,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("handshake", el_hierro["limitations"].lower())
         self.assertIn("e2e", el_hierro["limitations"].lower())
 
+    def test_la_gomera_profile_binds_session_backed_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        la_gomera = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "la-gomera-sede-electronica"
+        )
+
+        self.assertEqual("la-gomera-sede-public-navigation", la_gomera["profileId"])
+        self.assertEqual("ES-PUB-0132", la_gomera["inventoryId"])
+        self.assertEqual("https://lagomera.sedelectronica.es/info.0", la_gomera["entryUrl"])
+        self.assertNotIn("launchUrl", la_gomera)
+        self.assertEqual("INSULAR_SEDE_PUBLIC_NAVIGATION", la_gomera["protocolFamily"])
+        self.assertEqual("E2E_PENDING", la_gomera["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", la_gomera["inventoryStatus"])
+        self.assertEqual("REVIEWED", la_gomera["discoveryState"])
+        self.assertEqual("2026-08-25", la_gomera["reviewedOn"])
+        self.assertEqual([], la_gomera["observedMechanisms"])
+        self.assertEqual([], la_gomera["observedSignatureFormats"])
+        self.assertIn("qa-only", la_gomera["limitations"].lower())
+        self.assertIn("handshake", la_gomera["limitations"].lower())
+        self.assertIn("e2e", la_gomera["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(
