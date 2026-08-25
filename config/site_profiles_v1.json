@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 50,
+  "catalogVersion": 51,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3082,6 +3082,25 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://iac.sede.gob.es/","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "icac-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública del Instituto de Contabilidad y Auditoría de Cuentas",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://icac.sede.gob.es/",
+      "initiatorOrigins": ["https://icac.sede.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://icac.sede.gob.es/","reviewedOn":"2026-08-25"}
       ]
     },
     {
