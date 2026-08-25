@@ -1266,6 +1266,60 @@ class ClientAuthNavigationAuthorizerTest {
         assertNull(authorize(TARGET, 701))
     }
 
+    @Test
+    fun tarragonaExactPostResourceRequestAuthorizesOnlyTheObservedValidCertificateTarget() {
+        val tarragona = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = tarragona.observeTopLevelResourceRequest(
+            activeProfileId = TARRAGONA_PROFILE,
+            currentUrl = TARRAGONA_VALID_SOURCE,
+            targetUrl = TARRAGONA_CERT_TARGET,
+            method = "POST",
+            currentEpoch = 120,
+            isMainFrameRequest = true,
+        )
+
+        assertEquals(TARRAGONA_PROFILE, authorized?.profileId)
+        assertEquals("cert.valid.aoc.cat", authorized?.target?.host)
+        assertEquals("/o/oauth2/cert", authorized?.target?.rawPath)
+        assertEquals(443, authorized?.policy?.requestPort)
+    }
+
+    @Test
+    fun tarragonaInPlaceClientTlsRejectsSourceTargetAndMethodExpansion() {
+        val invalidCalls = listOf(
+            Triple(TARRAGONA_VALID_SOURCE, TARRAGONA_CERT_TARGET, "GET"),
+            Triple(TARRAGONA_VALID_SOURCE, "$TARRAGONA_CERT_TARGET?extra=1", "POST"),
+            Triple(TARRAGONA_VALID_SOURCE, TARRAGONA_CERT_TARGET.replace("/cert", "/other"), "POST"),
+            Triple(TARRAGONA_VALID_SOURCE, TARRAGONA_CERT_TARGET.replace("cert.valid.aoc.cat", "cert.valid.aoc.cat.evil.example"), "POST"),
+            Triple(TARRAGONA_VALID_SOURCE.replace("client_id=valid.dipta.cat", "client_id=evil.example"), TARRAGONA_CERT_TARGET, "POST"),
+            Triple(TARRAGONA_VALID_SOURCE.replace("redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode", "redirect_uri=https%3A%2F%2Fevil.example%2Fcode"), TARRAGONA_CERT_TARGET, "POST"),
+            Triple(TARRAGONA_VALID_SOURCE.replace("&state=synthetic-state", ""), TARRAGONA_CERT_TARGET, "POST"),
+            Triple("$TARRAGONA_VALID_SOURCE&extra=1", TARRAGONA_CERT_TARGET, "POST"),
+        )
+
+        invalidCalls.forEachIndexed { index, (source, target, method) ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "$source -> $target [$method]",
+                fresh.observeTopLevelResourceRequest(
+                    activeProfileId = TARRAGONA_PROFILE,
+                    currentUrl = source,
+                    targetUrl = target,
+                    method = method,
+                    currentEpoch = 130L + index,
+                    isMainFrameRequest = true,
+                ),
+            )
+        }
+    }
+
     private fun shortTtlAuthorizer(ttlSeconds: Int): ClientAuthNavigationAuthorizer {
         val base = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == PROFILE }
         val profile = base.copy(
@@ -1591,6 +1645,12 @@ class ClientAuthNavigationAuthorizerTest {
             "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"
         const val VALLADOLID_TARGET =
             "https://www.sede.diputaciondevalladolid.es:21460/c/portal/cert-login"
+        val TARRAGONA_PROFILE = ProfileId("diputacion-tarragona-sede")
+        const val TARRAGONA_VALID_SOURCE =
+            "https://valid.aoc.cat/o/oauth2/auth?response_type=code&client_id=valid.dipta.cat&" +
+                "redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode&" +
+                "scope=autenticacio_usuari&state=synthetic-state&access_type=online&approval_prompt=auto"
+        const val TARRAGONA_CERT_TARGET = "https://cert.valid.aoc.cat/o/oauth2/cert"
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"

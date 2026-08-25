@@ -151,6 +151,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-malaga-instancia-general",
                 "diputacion-girona-instancia-generica",
                 "diputacion-cadiz-solicitud-generica",
+                "diputacion-tarragona-sede",
                 "eivissa-sede-electronica",
                 "diputacion-salamanca-instancia-general",
                 "catalunya-peticio-generica-client-auth",

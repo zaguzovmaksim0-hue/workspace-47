@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "521117cffe7bec488108025935392e0fdf1a8fa2427576cd0c4e5ca22c406acb",
+  "sourceRevision": "9d232644ab837c1a8a60d23db005bbd4e68a7ebf036e22d5cc6eaf2ca106675f",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4769,29 +4769,33 @@
     {
       "portalId": "diputacion-tarragona-sede",
       "inventoryId": "ES-PUB-0172",
-      "profileId": null,
+      "profileId": "diputacion-tarragona-sede",
       "displayName": "Sede electrónica de Diputació de Tarragona",
       "organization": "Diputació de Tarragona",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Cataluña",
-      "purpose": "La evidencia oficial documenta uso condicionado de certificado y firma electrónica; no se generaliza a todos los trámites.",
-      "entryUrl": "https://seuelectronica.dipta.cat",
+      "purpose": "Autenticación con certificado de la Sol·licitud genèrica mediante el endpoint mTLS exacto de AOC VALId; firma y presentación permanecen bloqueadas.",
+      "entryUrl": "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/procediments/DIP80_EGIST_00001/crearInstancia",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "CATALOGED",
-      "inventoryStatus": "BROWSE_ONLY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D06",
         "DP34A",
-        "DP34B"
+        "DP34B",
+        "TARRAGONA-GENERIC-2026-08-21",
+        "TARRAGONA-VALID-JS-2026-08-21",
+        "TARRAGONA-CLIENT-TLS-2026-08-21"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "Propietario, origin y mención condicionada a certificado/firma revisados; procedimiento exacto y seis campos técnicos no verificados."
+      "reviewedOn": "2026-08-21",
+      "limitations": "CLIENT_TLS_AUTH implementado solo en QA para la cadena exacta de Sol·licitud genèrica y el POST de certificado de VALId; sin E2E. No se implementa ni se infiere el ABI de firma documental o presentación administrativa."
     },
     {
       "portalId": "diputacion-teruel-sede",
