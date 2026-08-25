@@ -390,6 +390,34 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("handshake", lanzarote["limitations"].lower())
         self.assertIn("e2e", lanzarote["limitations"].lower())
 
+    def test_zamora_profile_binds_exact_session_backed_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        zamora = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-zamora-sede"
+        )
+
+        self.assertEqual("zamora-sede-public-navigation", zamora["profileId"])
+        self.assertEqual("ES-PUB-0177", zamora["inventoryId"])
+        self.assertEqual(
+            "https://diputaciondezamora.sedelectronica.es/info.0",
+            zamora["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", zamora)
+        self.assertEqual("PROVINCIAL_SEDE_PUBLIC_NAVIGATION", zamora["protocolFamily"])
+        self.assertEqual("E2E_PENDING", zamora["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", zamora["inventoryStatus"])
+        self.assertEqual("REVIEWED", zamora["discoveryState"])
+        self.assertEqual("2026-08-25", zamora["reviewedOn"])
+        self.assertEqual(
+            ["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            zamora["observedMechanisms"],
+        )
+        self.assertEqual([], zamora["observedSignatureFormats"])
+        self.assertIn("qa-only", zamora["limitations"].lower())
+        self.assertIn("handshake", zamora["limitations"].lower())
+        self.assertIn("e2e", zamora["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

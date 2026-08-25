@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 58,
+  "catalogVersion": 59,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -1445,6 +1445,25 @@
       "evidence": [
         {"url":"https://cabildodelanzarote.sedelectronica.es/info.0","reviewedOn":"2026-08-25"},
         {"url":"https://lanzaroteylagraciosa.sedelectronica.es/info.0","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "zamora-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública de la Diputación Provincial de Zamora",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://diputaciondezamora.sedelectronica.es/info.0",
+      "initiatorOrigins": ["https://diputaciondezamora.sedelectronica.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://diputaciondezamora.sedelectronica.es/info.0","reviewedOn":"2026-08-25"}
       ]
     },
     {
