@@ -98,6 +98,7 @@ class JuntaOriginPolicyTest {
     private val cordoba = ProfileId("diputacion-cordoba-solicitud-generica")
     private val castellon = ProfileId("diputacion-castellon-instancia-general")
     private val caceres = ProfileId("diputacion-caceres-instancia-general")
+    private val euskadi = ProfileId("euskadi-sede-electronica")
 
     @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
@@ -256,6 +257,9 @@ class JuntaOriginPolicyTest {
             "sso.dipucadiz.es",
             "sede.dipucuenca.es",
             "web.gencat.cat",
+            "www.euskadi.eus",
+            "eidas.izenpe.com",
+            "eidas2.izenpe.com",
         )
 
         assertEquals(expectedHosts, JuntaOriginPolicy.allowedHosts)
@@ -519,6 +523,16 @@ class JuntaOriginPolicyTest {
         )
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://eidas.izenpe.com/"), gipuzkoa))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://eidas2.izenpe.com/"), gipuzkoa))
+        assertEquals(
+            setOf("www.euskadi.eus", "eidas.izenpe.com"),
+            JuntaOriginPolicy.browserAllowedHosts(euskadi),
+        )
+        assertEquals(
+            setOf("https://eidas.izenpe.com"),
+            JuntaOriginPolicy.webMessageOriginRules(euskadi),
+        )
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://eidas2.izenpe.com/"), euskadi))
+        assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://eidas.izenpe.com/"), euskadi))
         assertEquals(setOf("sede2.mjusticia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mjusticia))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(mjusticia).isEmpty())
         assertNull(

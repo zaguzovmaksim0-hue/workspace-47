@@ -59,6 +59,7 @@ import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
 import dev.junta.firmamobile.browser.ClientAuthNavigationAuthorizer
 import dev.junta.firmamobile.browser.ClientAuthRequestHandler
 import dev.junta.firmamobile.browser.ClientAuthWebViewClient
+import dev.junta.firmamobile.browser.EuskadiClientAuthPostBridgeAdapter
 import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.JuntaWebViewClient
 import dev.junta.firmamobile.browser.MiniAppletBridgeMode
@@ -193,6 +194,7 @@ fun BrowserScreen(
     val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
     val dedicatedWebViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
     val pendingNormalUrl = remember { AtomicReference<String?>() }
+    val pendingClientAuthPostBody = remember { AtomicReference<ByteArray?>() }
     val navigationEpoch = remember { mutableLongStateOf(0L) }
     val navigationPolicy = remember(selectedServiceId) {
         JuntaNavigationPolicy(selectedServiceId)
@@ -283,6 +285,7 @@ fun BrowserScreen(
 
     fun abandonClientAuth() {
         cancelClientAuthClearCallback()
+        pendingClientAuthPostBody.getAndSet(null)?.fill(0)
         pendingClientAuthTarget = null
         clientAuthGrant = null
         val dedicatedClient = dedicatedClientRef.getAndSet(null)
@@ -297,6 +300,7 @@ fun BrowserScreen(
 
     fun recoverClientAuthPreparationFailure(requestAnotherClear: Boolean) {
         cancelClientAuthClearCallback()
+        pendingClientAuthPostBody.getAndSet(null)?.fill(0)
         pendingClientAuthTarget = null
         clientAuthGrant = null
         val dedicatedClient = dedicatedClientRef.getAndSet(null)
@@ -349,6 +353,7 @@ fun BrowserScreen(
 
     fun beginClientCertPreferenceRecovery() {
         cancelClientAuthClearCallback()
+        pendingClientAuthPostBody.getAndSet(null)?.fill(0)
         pendingClientAuthTarget = null
         clientAuthGrant = null
         pendingNormalUrl.set(validatedEntryUrl)
@@ -431,6 +436,7 @@ fun BrowserScreen(
                 pageProgress = 0
                 browserError = null
                 blockedReason = null
+                pendingClientAuthPostBody.getAndSet(null)?.fill(0)
                 pendingClientAuthTarget = null
                 val previousEffectiveProfileId = effectiveTopLevelProfileId
                 effectiveTopLevelProfileId = trustController.navigate(url).activeProfileId
@@ -458,6 +464,7 @@ fun BrowserScreen(
             onCancelSigning(SigningCancelReason.NAVIGATION, null)
             return
         }
+        pendingClientAuthPostBody.getAndSet(null)?.fill(0)
         advanceNavigationEpoch()
         onCancelSigning(SigningCancelReason.NAVIGATION, null)
         val webView = webViewRef.get()
@@ -556,6 +563,7 @@ fun BrowserScreen(
                 clientAuthGrant = null
                 abandonClientAuth()
             }
+            pendingClientAuthPostBody.getAndSet(null)?.fill(0)
             pendingClientAuthTarget = null
             advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.RELOAD, null)
@@ -722,6 +730,7 @@ fun BrowserScreen(
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
                                 onClientAuthTarget = { authorized ->
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
+                                        pendingClientAuthPostBody.getAndSet(null)?.fill(0)
                                         pendingClientAuthTarget = authorized
                                     } else {
                                         clientAuthAuthorizer.invalidate()
@@ -744,6 +753,19 @@ fun BrowserScreen(
                                     onCertificateSelectionCancel = { requestId ->
                                         if (pendingCertificateSelection?.request?.requestId == requestId) {
                                             pendingCertificateSelection = null
+                                        }
+                                    },
+                                    onEuskadiClientAuthPostRequest = { request ->
+                                        val canOwnRequest =
+                                            request.authorized.profileId == effectiveTopLevelProfileId &&
+                                                pendingClientAuthTarget == null &&
+                                                clientAuthGrant == null &&
+                                                !clientAuthPreparing
+                                        if (!canOwnRequest) {
+                                            request.postBody.fill(0)
+                                        } else {
+                                            pendingClientAuthPostBody.getAndSet(request.postBody)?.fill(0)
+                                            pendingClientAuthTarget = request.authorized
                                         }
                                     },
                                     onMelillaBatchRequest = {
@@ -802,7 +824,33 @@ fun BrowserScreen(
                             dedicatedClientRef.set(client)
                             dedicatedWebViewRef.set(webView)
                             webView.webViewClient = client
-                            webView.loadUrl(tlsGrant.authorized.target.toASCIIString())
+                            val targetUrl = tlsGrant.authorized.target.toASCIIString()
+                            val postBody = pendingClientAuthPostBody.getAndSet(null)
+                            val isEuskadiPostTarget =
+                                tlsGrant.authorized.profileId.value ==
+                                    EuskadiClientAuthPostBridgeAdapter.PROFILE_ID &&
+                                    targetUrl == EuskadiClientAuthPostBridgeAdapter.TARGET_URL
+                            if (postBody == null) {
+                                if (isEuskadiPostTarget) {
+                                    webView.post {
+                                        if (webViewRef.get() === webView) compatibilityError = true
+                                    }
+                                } else {
+                                    webView.loadUrl(targetUrl)
+                                }
+                            } else {
+                                try {
+                                    if (isEuskadiPostTarget) {
+                                        webView.postUrl(targetUrl, postBody)
+                                    } else {
+                                        webView.post {
+                                            if (webViewRef.get() === webView) compatibilityError = true
+                                        }
+                                    }
+                                } finally {
+                                    postBody.fill(0)
+                                }
+                            }
                         }
                         if (tlsGrant == null) {
                             val requestedUrl = pendingNormalUrl.getAndSet(null)
@@ -1158,11 +1206,18 @@ internal fun urlBelongsToSelectedProfile(rawUrl: String, profileId: ProfileId): 
 
 internal fun profileRequiresWebMessageBridge(
     profile: dev.junta.firmamobile.profile.SiteProfile?,
-): Boolean = profile?.capabilities?.any { capability ->
-    capability == dev.junta.firmamobile.profile.Capability.SIGN ||
-        capability == dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE ||
-        capability == dev.junta.firmamobile.profile.Capability.AFIRMA_URI
-} == true
+): Boolean {
+    if (profile?.profileId?.value == EuskadiClientAuthPostBridgeAdapter.PROFILE_ID &&
+        profile.capabilities == setOf(dev.junta.firmamobile.profile.Capability.CLIENT_TLS_AUTH)
+    ) {
+        return true
+    }
+    return profile?.capabilities?.any { capability ->
+        capability == dev.junta.firmamobile.profile.Capability.SIGN ||
+            capability == dev.junta.firmamobile.profile.Capability.SELECT_CERTIFICATE ||
+            capability == dev.junta.firmamobile.profile.Capability.AFIRMA_URI
+    } == true
+}
 
 @Composable
 private fun CertificateSelectionConfirmationDialog(

@@ -1747,8 +1747,8 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://eidas.izenpe.com/")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://eidas2.izenpe.com/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://eidas.izenpe.com/")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://eidas2.izenpe.com/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.gipuzkoa.eus.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://egoitza.gipuzkoa.eus:444/")))
     }

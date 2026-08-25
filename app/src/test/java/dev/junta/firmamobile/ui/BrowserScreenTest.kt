@@ -53,6 +53,7 @@ class BrowserScreenTest {
         assertTrue(profileRequiresWebMessageBridge(profile("unizar-tramitador")))
         assertTrue(profileRequiresWebMessageBridge(profile("diputacion-huesca-portal")))
         assertTrue(profileRequiresWebMessageBridge(profile("diputacion-burgos-portal")))
+        assertTrue(profileRequiresWebMessageBridge(profile("euskadi-sede-electronica")))
         assertTrue(!profileRequiresWebMessageBridge(profile("carne-joven-andalucia")))
     }
 

@@ -626,6 +626,38 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun euskadiClientAuthTargetCannotBypassPostBridgeAsNormalNavigation() {
+        listOf("GET", "POST").forEach { method ->
+            var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
+            val euskadiCallbacks = RecordingBrowserCallbacks()
+            val euskadiClient = JuntaWebViewClient(
+                callbacks = euskadiCallbacks,
+                logger = logger,
+                navigationPolicy = JuntaNavigationPolicy(
+                    ProfileId(EuskadiClientAuthPostBridgeAdapter.PROFILE_ID),
+                ),
+                currentPageUrl = { EuskadiClientAuthPostBridgeAdapter.SOURCE_PAGE },
+                clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+                activeProfileId = { ProfileId(EuskadiClientAuthPostBridgeAdapter.PROFILE_ID) },
+                currentNavigationEpoch = { 7L },
+                onClientAuthTarget = { capturedAuthorizedTarget = it },
+            )
+
+            val overridden = euskadiClient.shouldOverrideUrlLoading(
+                webView,
+                request(EuskadiClientAuthPostBridgeAdapter.TARGET_URL, method),
+            )
+
+            assertTrue(overridden)
+            assertEquals(null, capturedAuthorizedTarget)
+            assertEquals(
+                listOf("blocked:CROSS_PROFILE_NAVIGATION"),
+                euskadiCallbacks.events,
+            )
+        }
+    }
+
+    @Test
     fun carneJovenAuthorizedTransitionStaysInWebViewAndUnauthorizedWs235IsBlockedFailClosed() {
         var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
         val carneJovenCallbacks = RecordingBrowserCallbacks()
