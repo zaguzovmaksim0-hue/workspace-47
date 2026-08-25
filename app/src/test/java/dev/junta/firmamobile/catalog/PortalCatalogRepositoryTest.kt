@@ -184,6 +184,7 @@ class PortalCatalogRepositoryTest {
                 "el-hierro-sede-public-navigation",
                 "imserso-sede-public-navigation",
                 "ine-sede-public-navigation",
+                "isfas-sede-public-navigation",
             ),
             qaPortals.mapNotNull { it.profileId?.value }.toSet(),
         )
@@ -191,11 +192,18 @@ class PortalCatalogRepositoryTest {
         assertTrue(metadataOnly.all { !it.isEnabled })
         assertTrue(metadataOnly.all { it.capabilities.isEmpty() && it.signatureFormats.isEmpty() })
         assertTrue(metadataOnly.all { qaRepository.resolveLaunch(it) == null })
-        val metadataBrowseOnly = metadataOnly.filter {
-            it.inventoryStatus == PortalInventoryStatus.BROWSE_ONLY
-        }
-        assertTrue(metadataBrowseOnly.isNotEmpty())
-        assertTrue(metadataBrowseOnly.all { it.supportStatus in setOf(PortalSupportStatus.DISCOVERED, PortalSupportStatus.CATALOGED) })
+        assertEquals(
+            setOf(PortalInventoryStatus.UNSUPPORTED_PROTOCOL, PortalInventoryStatus.INACCESSIBLE),
+            metadataOnly.map { it.inventoryStatus }.toSet(),
+        )
+        assertTrue(
+            metadataOnly.all {
+                it.supportStatus in setOf(
+                    PortalSupportStatus.UNSUPPORTED_PROTOCOL,
+                    PortalSupportStatus.INACCESSIBLE,
+                )
+            },
+        )
 
         val verifiedIds = setOf(
             ProfileId("carne-joven-andalucia"),
