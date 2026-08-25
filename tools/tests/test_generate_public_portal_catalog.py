@@ -300,6 +300,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("e2e", institutional["limitations"].lower())
         self.assertIn("ovac", institutional["limitations"].lower())
 
+    def test_ico_profile_binds_exact_pending_qa_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        ico = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-instituto-de-credito-oficial-ico"
+        )
+
+        self.assertEqual("ico-sede-public-navigation", ico["profileId"])
+        self.assertEqual("ES-PUB-0052", ico["inventoryId"])
+        self.assertEqual("https://sedeico.gob.es/web/sedeico", ico["entryUrl"])
+        self.assertNotIn("launchUrl", ico)
+        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", ico["protocolFamily"])
+        self.assertEqual("E2E_PENDING", ico["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", ico["inventoryStatus"])
+        self.assertEqual("REVIEWED", ico["discoveryState"])
+        self.assertEqual("2026-08-25", ico["reviewedOn"])
+        self.assertEqual([], ico["observedMechanisms"])
+        self.assertEqual([], ico["observedSignatureFormats"])
+        self.assertIn("same-origin", ico["limitations"].lower())
+        self.assertIn("e2e", ico["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

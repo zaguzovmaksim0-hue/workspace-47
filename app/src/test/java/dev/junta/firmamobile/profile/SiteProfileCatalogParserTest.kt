@@ -926,6 +926,7 @@ class SiteProfileCatalogParserTest {
             ProfileId("itj-sede-public-navigation"),
             ProfileId("red-es-sede-public-navigation"),
             ProfileId("formentera-portal-institucional-navigation"),
+            ProfileId("ico-sede-public-navigation"),
             ProfileId("reg-age-redsara"),
             ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),

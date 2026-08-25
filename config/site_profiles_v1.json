@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 54,
+  "catalogVersion": 55,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -3158,6 +3158,25 @@
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
         {"url":"https://www.consellinsulardeformentera.cat/","reviewedOn":"2026-08-25"}
+      ]
+    },
+    {
+      "profileId": "ico-sede-public-navigation",
+      "profileVersion": 1,
+      "displayName": "Sede electrónica pública del Instituto de Crédito Oficial",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sedeico.gob.es/web/sedeico",
+      "initiatorOrigins": ["https://sedeico.gob.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sedeico.gob.es/web/sedeico","reviewedOn":"2026-08-25"}
       ]
     },
     {

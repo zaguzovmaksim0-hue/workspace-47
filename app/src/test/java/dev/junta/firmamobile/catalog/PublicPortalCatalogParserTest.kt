@@ -168,6 +168,7 @@ class PublicPortalCatalogParserTest {
                 ProfileId("itj-sede-public-navigation"),
                 ProfileId("red-es-sede-public-navigation"),
                 ProfileId("formentera-portal-institucional-navigation"),
+                ProfileId("ico-sede-public-navigation"),
             ),
             catalog.entries.mapNotNull { it.profileId }.toSet(),
         )
