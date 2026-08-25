@@ -365,6 +365,31 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("handshake", la_gomera["limitations"].lower())
         self.assertIn("e2e", la_gomera["limitations"].lower())
 
+    def test_lanzarote_profile_binds_redirect_and_session_backed_pending_navigation_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        lanzarote = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "lanzarote-sede-electronica"
+        )
+
+        self.assertEqual("lanzarote-sede-public-navigation", lanzarote["profileId"])
+        self.assertEqual("ES-PUB-0136", lanzarote["inventoryId"])
+        self.assertEqual(
+            "https://cabildodelanzarote.sedelectronica.es/info.0",
+            lanzarote["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", lanzarote)
+        self.assertEqual("INSULAR_SEDE_PUBLIC_NAVIGATION", lanzarote["protocolFamily"])
+        self.assertEqual("E2E_PENDING", lanzarote["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", lanzarote["inventoryStatus"])
+        self.assertEqual("REVIEWED", lanzarote["discoveryState"])
+        self.assertEqual("2026-08-25", lanzarote["reviewedOn"])
+        self.assertEqual([], lanzarote["observedMechanisms"])
+        self.assertEqual([], lanzarote["observedSignatureFormats"])
+        self.assertIn("qa-only", lanzarote["limitations"].lower())
+        self.assertIn("handshake", lanzarote["limitations"].lower())
+        self.assertIn("e2e", lanzarote["limitations"].lower())
+
     def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         ciencia = next(

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "017bfaf760df476072ef68198f8f2f56d189492507b22bd00af7468e13e2def8",
+  "sourceRevision": "ed25356bc2cc603d98030f703fa02967f90d30e8be9add653fd02173189c26bb",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3727,24 +3727,25 @@
     {
       "portalId": "lanzarote-sede-electronica",
       "inventoryId": "ES-PUB-0136",
-      "profileId": null,
+      "profileId": "lanzarote-sede-public-navigation",
       "displayName": "Sede electrónica del Cabildo Insular de Lanzarote",
       "organization": "Cabildo Insular de Lanzarote",
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "territory": "Canarias",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "Navegación QA-only a la entrada pública exacta de la Sede electrónica de Lanzarote y su redirect origin oficial; autenticación, firma y presentación quedan fuera del contrato.",
       "entryUrl": "https://cabildodelanzarote.sedelectronica.es/info.0",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "BLOCKED",
-      "inventoryStatus": "INACCESSIBLE",
-      "discoveryState": "RECHECK_REQUIRED",
+      "protocolFamily": "INSULAR_SEDE_PUBLIC_NAVIGATION",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "I10B"
+        "I10B",
+        "LANZAROTE-SEDE-NAV-2026-08-25"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El transporte de revisión informó 400 Redirect loop detected al abrir https://cabildodelanzarote.sedelectronica.es/info.0; no se siguió el ciclo ni se hicieron afirmaciones técnicas."
+      "reviewedOn": "2026-08-25",
+      "limitations": "Perfil QA-only limitado a la entrada pública exacta y al redirect origin oficial con handshake same-origin de sesión; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
     },
     {
       "portalId": "gran-canaria-portal-institucional",
