@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "eaaf0951f4da10681c4135d924ac9e0eac621f7f0f583e0d59761a25e6f1c5fc",
+  "sourceRevision": "ef50a8e62160f8fdb669ac4d7aca1a88e02856e460944a6bf854af62511034cb",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1622,24 +1622,27 @@
     {
       "portalId": "age-ministerio-de-ciencia-innovacion-y-universidades",
       "inventoryId": "ES-PUB-0061",
-      "profileId": null,
+      "profileId": "reg-age-redsara",
       "displayName": "Sede electrónica / entrada oficial del directorio AGE",
       "organization": "Ministerio de Ciencia, Innovación y Universidades",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "NO_VERIFICADO",
+      "purpose": "La Sede del Ministerio de Ciencia publica un servicio específico de acceso al Registro Electrónico General de la AGE (REG-AGE) y enlaza al servicio estatal.",
       "entryUrl": "https://ciencia.sede.gob.es/",
+      "launchUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
-      "protocolFamily": "NO_VERIFICADO",
-      "catalogStatus": "DISCOVERED",
-      "inventoryStatus": "BROWSE_ONLY",
-      "discoveryState": "DISCOVERED",
+      "protocolFamily": "DELEGACION_REG_AGE",
+      "catalogStatus": "E2E_PENDING",
+      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "CIENCIA-REG-2026-08-17",
+        "P14"
       ],
-      "reviewedOn": "2026-07-16",
-      "limitations": "El directorio oficial acredita institución y enlace, pero no procedimiento, certificado, firma, disponibilidad ni contrato técnico."
+      "reviewedOn": "2026-08-17",
+      "limitations": "Alias QA-only al perfil existente reg-age-redsara basado en el servicio REG-AGE publicado por la propia Sede; falta E2E físico de la transición y no se infiere contrato de firma específico del Ministerio."
     },
     {
       "portalId": "age-ministerio-de-cultura",

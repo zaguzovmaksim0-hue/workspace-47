@@ -191,6 +191,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("ELECTRONIC_SIGNATURE", formentera["observedMechanisms"])
         self.assertEqual([], formentera["observedSignatureFormats"])
 
+    def test_ciencia_reg_age_alias_binds_exact_qa_launch(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        ciencia = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "age-ministerio-de-ciencia-innovacion-y-universidades"
+        )
+
+        self.assertEqual("reg-age-redsara", ciencia["profileId"])
+        self.assertEqual("https://ciencia.sede.gob.es/", ciencia["entryUrl"])
+        self.assertEqual("https://reg.redsara.es/es/", ciencia["launchUrl"])
+        self.assertEqual("DELEGACION_REG_AGE", ciencia["protocolFamily"])
+        self.assertEqual("E2E_PENDING", ciencia["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", ciencia["inventoryStatus"])
+        self.assertEqual("REVIEWED", ciencia["discoveryState"])
+        self.assertEqual("2026-08-17", ciencia["reviewedOn"])
+        self.assertEqual([], ciencia["observedMechanisms"])
+        self.assertEqual([], ciencia["observedSignatureFormats"])
+        self.assertIn("reg-age", ciencia["limitations"].lower())
+        self.assertIn("qa", ciencia["limitations"].lower())
+        self.assertIn("e2e", ciencia["limitations"].lower())
+
     def test_committed_resource_is_byte_for_byte_reproducible(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         generated = json.dumps(

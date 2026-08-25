@@ -186,6 +186,37 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `Ciencia alias retains the Ministry Sede URL while resolving the exact REG-AGE launch URL`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val siteProfiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(
+            registry = SiteProfileRegistry(siteProfiles, BuildTrustPolicy.QA),
+            profileCatalog = siteProfiles,
+            publicCatalog = catalog,
+        )
+
+        val portal = repository.portals().single {
+            it.portalId == PortalId("age-ministerio-de-ciencia-innovacion-y-universidades")
+        }
+
+        assertEquals(ProfileId("reg-age-redsara"), portal.profileId)
+        assertEquals(URI("https://ciencia.sede.gob.es/"), portal.entryUrl)
+        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, portal.inventoryStatus)
+        assertEquals(
+            PublicCatalogStatus.E2E_PENDING,
+            catalog.entries.single { it.portalId == portal.portalId }.catalogStatus,
+        )
+        assertTrue(portal.isEnabled)
+        assertEquals(
+            PortalLaunchTarget(
+                profileId = ProfileId("reg-age-redsara"),
+                entryUrl = URI("https://reg.redsara.es/es/"),
+            ),
+            repository.resolveLaunch(portal),
+        )
+    }
+
+    @Test
     fun `Ceuta ANI resolves only the exact QA authenticated form boundary without signing capability`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val profiles = BuiltInSiteProfiles.catalog
