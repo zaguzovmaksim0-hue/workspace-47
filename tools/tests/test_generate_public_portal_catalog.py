@@ -150,6 +150,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual([], puertos["observedMechanisms"])
         self.assertEqual([], puertos["observedSignatureFormats"])
 
+    def test_girona_profile_binds_the_current_public_etram_navigation(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        girona = next(
+            entry for entry in catalog["entries"]
+            if entry["portalId"] == "diputacion-girona-portal"
+        )
+        self.assertEqual("ES-PUB-0154", girona["inventoryId"])
+        self.assertEqual("diputacion-girona-instancia-generica", girona["profileId"])
+        self.assertEqual(
+            "https://seu-e.cat/tramits/8001760009/instancia-generica",
+            girona["entryUrl"],
+        )
+        self.assertEqual("AOC_ETRAM_PUBLIC_NAVIGATION", girona["protocolFamily"])
+        self.assertEqual(
+            ["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            girona["observedMechanisms"],
+        )
+        self.assertEqual([], girona["observedSignatureFormats"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", girona["inventoryStatus"])
+        self.assertEqual("E2E_PENDING", girona["catalogStatus"])
+        self.assertEqual("2026-08-21", girona["reviewedOn"])
+
     def test_committed_resource_is_byte_for_byte_reproducible(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         generated = json.dumps(
@@ -968,6 +990,27 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("CLIENT_TLS_AUTH", entry["protocolFamily"])
         self.assertIn("CLIENT_TLS_AUTH", entry["observedMechanisms"])
         self.assertIn("CERTIFICATE_ACCESS", entry["observedMechanisms"])
+        self.assertEqual([], entry["observedSignatureFormats"])
+        self.assertIn("qa", entry["limitations"].lower())
+        self.assertIn("e2e", entry["limitations"].lower())
+        self.assertIn("firma", entry["limitations"].lower())
+
+    def test_cuenca_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        entry = next(e for e in catalog["entries"] if e["portalId"] == "diputacion-cuenca-portal")
+        self.assertEqual("diputacion-cuenca-portal", entry["profileId"])
+        self.assertEqual("ES-PUB-0153", entry["inventoryId"])
+        self.assertEqual(
+            "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074",
+            entry["entryUrl"],
+        )
+        self.assertEqual("E2E_PENDING", entry["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", entry["inventoryStatus"])
+        self.assertEqual("2026-08-21", entry["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH", entry["protocolFamily"])
+        self.assertIn("CLIENT_TLS_AUTH", entry["observedMechanisms"])
+        self.assertIn("CERTIFICATE_ACCESS", entry["observedMechanisms"])
+        self.assertIn("ELECTRONIC_SIGNATURE", entry["observedMechanisms"])
         self.assertEqual([], entry["observedSignatureFormats"])
         self.assertIn("qa", entry["limitations"].lower())
         self.assertIn("e2e", entry["limitations"].lower())
@@ -1990,6 +2033,30 @@ records:
         self.assertIn("qa_only", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
         self.assertIn("firma", target["limitations"].lower())
+
+    def test_cadiz_solicitud_generica_binds_exact_qa_launch_without_signing_capability(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(
+            entry for entry in catalog["entries"]
+            if entry["inventoryId"] == "ES-PUB-0148"
+        )
+        self.assertEqual("diputacion-cadiz-portal", target["portalId"])
+        self.assertEqual("diputacion-cadiz-solicitud-generica", target["profileId"])
+        self.assertEqual(
+            "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761",
+            target["entryUrl"],
+        )
+        self.assertNotIn("launchUrl", target)
+        self.assertEqual("DIPUCADIZ_CLAVE_PUBLIC_LAUNCH", target["protocolFamily"])
+        self.assertEqual("E2E_PENDING", target["catalogStatus"])
+        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("REVIEWED", target["discoveryState"])
+        self.assertEqual("2026-08-21", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS"], target["observedMechanisms"])
+        self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("qa-only", target["limitations"].lower())
+        self.assertIn("client_tls_auth", target["limitations"].lower())
+        self.assertIn("sin e2e", target["limitations"].lower())
 
     def test_caceres_instancia_general_binds_exact_qa_launch_without_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

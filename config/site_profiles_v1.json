@@ -1101,6 +1101,41 @@
       ]
     },
     {
+      "profileId": "diputacion-cuenca-portal",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Cuenca — acceso con certificado",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074",
+      "initiatorOrigins": ["https://sede.dipucuenca.es"],
+      "redirectOrigins": [],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://identificacionssl.sedipualba.es"],
+        "sourceUrls": ["https://sede.dipucuenca.es/segex/identificacion_opciones.aspx"],
+        "sourceFixedQueryParameters": {"idioma":"es"},
+        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
+        "linkedEphemeralQueryParameters": ["idtoken"],
+        "requestPath": "/",
+        "fixedQueryParameters": {"idioma":"es","entidad":"16000"},
+        "requiredEphemeralQueryParameters": ["idtoken"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
+      "evidence": [
+        {"url":"https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucuenca.es/carpetaciudadana/login.aspx","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucuenca.es/segex/identificacion_opciones.aspx","reviewedOn":"2026-08-21"},
+        {"url":"https://identificacionssl.sedipualba.es/","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
       "profileId": "generalitat-valenciana-client-auth",
       "profileVersion": 1,
       "displayName": "Generalitat Valenciana — acceso con certificado",
@@ -1742,6 +1777,50 @@
         {"url":"https://www.lagomera.es/","reviewedOn":"2026-08-21"},
         {"url":"https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"},
         {"url":"https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "diputacion-girona-instancia-generica",
+      "profileVersion": 1,
+      "displayName": "Diputació de Girona — Instància genèrica pública",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://seu-e.cat/tramits/8001760009/instancia-generica",
+      "initiatorOrigins": ["https://seu-e.cat"],
+      "redirectOrigins": ["https://etram.seu-e.cat"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://www.ddgi.cat/web/","reviewedOn":"2026-08-21"},
+        {"url":"https://seu.ddgi.cat/web/nivell/651/s-1/seu","reviewedOn":"2026-08-21"},
+        {"url":"https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301","reviewedOn":"2026-08-21"},
+        {"url":"https://seu-e.cat/tramits/8001760009/instancia-generica","reviewedOn":"2026-08-21"}
+      ]
+    },
+    {
+      "profileId": "diputacion-cadiz-solicitud-generica",
+      "profileVersion": 1,
+      "displayName": "Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica",
+      "compatibilityStatus": "VERIFIED_CONTRACT",
+      "activation": "QA_ONLY",
+      "startUrl": "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761",
+      "initiatorOrigins": ["https://sede.dipucadiz.es"],
+      "redirectOrigins": ["https://sso.dipucadiz.es", "https://pasarela.clave.gob.es"],
+      "trustedBrowseOrigins": [],
+      "endpoints": [],
+      "operationPolicies": [],
+      "capabilities": [],
+      "clientAuthPolicy": null,
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "evidence": [
+        {"url":"https://sede.dipucadiz.es/web/sede/registro-electronico-comun","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucadiz.es/tramites-disponibles","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761","reviewedOn":"2026-08-21"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-21"}
       ]
     },
     {

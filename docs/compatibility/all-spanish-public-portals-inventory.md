@@ -197,9 +197,9 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Fuentes oficiales portal-specific registradas | 271 |
 | Fuentes oficiales totales registradas | 283 |
 | Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 142 |
-| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 146 |
-| Entradas restantes fuera de ambos estados | 37 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 145 |
+| Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 149 |
+| Entradas restantes fuera de ambos estados | 34 |
 | Evidencia exacta de `ClientCertRequest` | 4 |
 
 Por nivel administrativo:
@@ -220,10 +220,10 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 142 |
+| `IMPLEMENTED_NOT_E2E` | 145 |
 | `VERIFIED_CONTRACT` | 1 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
-| `BROWSE_ONLY` | 30 |
+| `BROWSE_ONLY` | 27 |
 | `UNSUPPORTED_PROTOCOL` | 2 |
 | `INACCESSIBLE` | 4 |
 | `DEPRECATED` | 0 |
@@ -5079,29 +5079,29 @@ records:
     autonomous_community: "Andalucía"
     province_or_municipality: "Cádiz (provincia)"
     institution_name: "Diputación Provincial de Cádiz"
-    surface_name: "Portal oficial de Diputación Provincial de Cádiz"
+    surface_name: "Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.dipucadiz.es"
+    origin: "https://sede.dipucadiz.es"
     official_site: "https://www.dipucadiz.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipucadiz.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
+    e_sede: "https://sede.dipucadiz.es/web/sede/inicio"
+    entry_url: "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761"
+    procedure_page: "https://sede.dipucadiz.es/tramites-disponibles"
+    certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "DIPUCADIZ_CLAVE_PUBLIC_LAUNCH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Solicitud, escrito o comunicación genérica (trámite 761): perfil QA-only para la entrada exacta y la navegación observada hasta la primera frontera Cl@ve."
+    protocol_evidence: "El Registro Electrónico oficial remite las solicitudes no normalizadas al formulario de propósito general; el trámite 761 exige certificado reconocido o DNIe para presentación telemática. La entrada protegida vigente redirige por el SSO institucional a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. No se observó ni se infiere contrato de firma, client TLS, formato, algoritmo o endpoint."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP10A", "DP10B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP10A", "DP10B", "CADIZ-REGISTRO-2026-08-21", "CADIZ-TRAMITES-2026-08-21", "CADIZ-TRAMITE-761-2026-08-21", "CADIZ-CLAVE-2026-08-21"]
+    reason: "Perfil QA-only limitado a la entrada exacta del trámite 761 y a los orígenes de navegación observados sede.dipucadiz.es, sso.dipucadiz.es y pasarela.clave.gob.es. No expone SIGN, CLIENT_TLS_AUTH, endpoint ni formato/algoritmo de firma; sin E2E."
+    reviewed_at: "2026-08-21"
+    next_gate: "Con una credencial Cl@ve autorizada, observar el estado autenticado previo a cualquier firma o presentación final; detenerse antes de operación criptográfica, registro o pago."
 
   - inventory_id: "ES-PUB-0149"
     surface_key: "diputacion-castellon-portal"
@@ -5230,29 +5230,29 @@ records:
     autonomous_community: "Castilla-La Mancha"
     province_or_municipality: "Cuenca (provincia)"
     institution_name: "Diputación Provincial de Cuenca"
-    surface_name: "Portal oficial de Diputación Provincial de Cuenca"
-    surface_type: "PORTAL_SERVICIO"
+    surface_name: "Sede electrónica de Diputación Provincial de Cuenca"
+    surface_type: "SEDE"
     origin: "https://www.dipucuenca.es"
     official_site: "https://www.dipucuenca.es"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.dipucuenca.es"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
-    js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    e_sede: "https://sede.dipucuenca.es/"
+    entry_url: "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+    procedure_page: "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
+    js_client: "NO_APLICA"
+    protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "NO_VERIFICADO"
+    endpoint: "https://identificacionssl.sedipualba.es/"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP15A", "DP15B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Acceso con certificado al trámite Registro electrónico / Presentación de instancia general mediante el servidor SSL de identificación compartido de SEDIPUALBA; la firma documental posterior permanece fuera del contrato implementado."
+    protocol_evidence: "Revalidación oficial 2026-08-21: el catálogo público enlaza el trámite idtramite=12074; la página de identificación construye exactamente https://identificacionssl.sedipualba.es/?idtoken=TOKEN&idioma=es&entidad=16000, enlazando el mismo idtoken efímero de la fuente. La opción usa el servidor de la sede y el intento sin certificado vuelve a la pantalla oficial de ausencia de certificado; no se ejecutó firma ni presentación."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP15A", "DP15B", "CUENCA-INSTANCIA-2026-08-21", "CUENCA-SSL-IDENT-2026-08-21"]
+    reason: "CLIENT_TLS_AUTH implementado solo en QA con source, host, path, entidad, idioma e idtoken source-target enlazado de forma exacta; sin E2E. No se infiere el algoritmo ni el formato de la firma documental posterior, ni se implementa la presentación final."
+    reviewed_at: "2026-08-21"
+    next_gate: "Verificación E2E separada del acceso con certificado y del paso de firma; mantener firma/presentación bloqueadas hasta evidencia independiente."
 
   - inventory_id: "ES-PUB-0154"
     surface_key: "diputacion-girona-portal"
@@ -5260,29 +5260,29 @@ records:
     autonomous_community: "Cataluña"
     province_or_municipality: "Girona (provincia)"
     institution_name: "Diputació de Girona"
-    surface_name: "Portal oficial de Diputació de Girona"
+    surface_name: "Portal oficial de Diputació de Girona — Instància genèrica"
     surface_type: "PORTAL_SERVICIO"
-    origin: "https://www.ddgi.cat"
+    origin: "https://seu-e.cat"
     official_site: "https://www.ddgi.cat/web/"
-    e_sede: "NO_VERIFICADO"
-    entry_url: "https://www.ddgi.cat/web/"
-    procedure_page: "NO_VERIFICADO"
-    certificate_required: "NO_VERIFICADO"
-    signature_required: "NO_VERIFICADO"
+    e_sede: "https://seu.ddgi.cat/web/nivell/651/s-1/seu"
+    entry_url: "https://seu-e.cat/tramits/8001760009/instancia-generica"
+    procedure_page: "https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301"
+    certificate_required: "CONDICIONAL"
+    signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "NO_VERIFICADO"
+    protocol_family: "AOC_ETRAM_PUBLIC_NAVIGATION"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
-    inventory_status: "BROWSE_ONLY"
-    operation_summary: "Consulta pública del portal institucional; la evidencia de certificado/firma corresponde a una superficie secundaria diferida."
-    protocol_evidence: "La fuente secundaria acredita otra superficie oficial de la institución; no prueba requisitos ni contrato técnico para este origin."
+    inventory_status: "IMPLEMENTED_NOT_E2E"
+    operation_summary: "Navegación QA únicamente a la Instància genèrica vigente de la Diputació de Girona; el perfil sigue sin autenticación, firma documental, carga ni presentación final."
+    protocol_evidence: "Revalidado el 2026-08-21: el portal oficial respondió HTTP 200 y enlazó la Seu https://seu.ddgi.cat; la Seu enlazó la ficha first-party de Instància genèrica en https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301. La ficha publica el inicio exacto https://seu-e.cat/tramits/8001760009/instancia-generica, que respondió HTTP 200 y redirigió al shell público actual https://etram.seu-e.cat/tramits/8001760009/instancia-generica. La ficha enumera idCAT Mòbil, certificado digital y Cl@ve como identificadores y exige completar y firmar el formulario para tramitar electrónicamente; no se observó un transporte de autenticación, cliente JS de firma, ABI, endpoint, callback ni aceptación de envío."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP16A", "DP16B"]
-    reason: "Origin primario revisado; certificado, firma, procedimiento y seis campos técnicos no verificados para esta superficie."
-    reviewed_at: "2026-07-16"
-    next_gate: "Revisar un procedimiento vigente hasta antes de autenticación o envío y delimitar su contrato exacto."
+    evidence_ids: ["D06", "DP16A", "DP16B", "GIRONA-PORTAL-2026-08-21", "GIRONA-SEDE-2026-08-21", "GIRONA-PROCEDURE-2026-08-21", "GIRONA-ETRAM-2026-08-21"]
+    reason: "Perfil QA-only de navegación limitado a la ficha y al inicio exactos de la Instància genèrica pública; los orígenes de e-Tram observados no reciben capacidades de autenticación o firma y el contrato posterior a la identificación sigue sin verificarse."
+    reviewed_at: "2026-08-21"
+    next_gate: "Con autorización separada, observar un estado pre-firma específico sin ejecutar firma privada, presentación, registro ni pago; no ampliar el perfil por analogía con otra sede catalana."
 
   - inventory_id: "ES-PUB-0155"
     surface_key: "diputacion-granada-portal"
@@ -6567,6 +6567,10 @@ availability, certificado, firma ni contrato técnico.
 [CACERES-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP10A]: https://www.dipucadiz.es
 [DP10B]: https://sede.dipucadiz.es/web/sede/inicio
+[CADIZ-REGISTRO-2026-08-21]: https://sede.dipucadiz.es/web/sede/registro-electronico-comun
+[CADIZ-TRAMITES-2026-08-21]: https://sede.dipucadiz.es/tramites-disponibles
+[CADIZ-TRAMITE-761-2026-08-21]: https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761
+[CADIZ-CLAVE-2026-08-21]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP11A]: https://www.dipcas.es/es/
 [CASTELLON-SEDE-2026-08-23]: https://dipcas.sedelectronica.es/info.0
 [CASTELLON-DOSSIER-2026-08-23]: https://dipcas.sedelectronica.es/dossier.0
@@ -6583,8 +6587,14 @@ availability, certificado, firma ni contrato técnico.
 [DP14B]: https://www.dacoruna.gal/servizos-tributarios/preguntas-frecuentes/recursos/
 [DP15A]: https://www.dipucuenca.es
 [DP15B]: https://sede.dipucuenca.es/aviso-legal.aspx?entidad=16000
+[CUENCA-INSTANCIA-2026-08-21]: https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074
+[CUENCA-SSL-IDENT-2026-08-21]: https://sede.dipucuenca.es/segex/identificacion_opciones.aspx
 [DP16A]: https://www.ddgi.cat/web/
 [DP16B]: https://seu.ddgi.cat/web/nivell/658/s-1/sistemes-de-signatura-electronica
+[GIRONA-PORTAL-2026-08-21]: https://www.ddgi.cat/web/
+[GIRONA-SEDE-2026-08-21]: https://seu.ddgi.cat/web/nivell/651/s-1/seu
+[GIRONA-PROCEDURE-2026-08-21]: https://seu-e.cat/ca/web/ddgi/tramits-i-gestions/-/tramits/tramit/14139301
+[GIRONA-ETRAM-2026-08-21]: https://seu-e.cat/tramits/8001760009/instancia-generica
 [DP17A]: https://www.dipgra.es
 [GRANADA-SEDE-2026-08-23]: https://sede.dipgra.es/
 [DP18A]: https://dguadalajara.sedelectronica.es
