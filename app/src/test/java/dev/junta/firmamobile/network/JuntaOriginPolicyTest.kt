@@ -68,6 +68,7 @@ class JuntaOriginPolicyTest {
     private val ico = ProfileId("ico-sede-public-navigation")
     private val elHierroPublicNavigation = ProfileId("el-hierro-sede-public-navigation")
     private val laGomeraPublicNavigation = ProfileId("la-gomera-sede-public-navigation")
+    private val lanzarotePublicNavigation = ProfileId("lanzarote-sede-public-navigation")
     private val acceda = ProfileId("age-acceda")
     private val policia = ProfileId("policia-solicitud-generica")
     private val lleida = ProfileId("diputacion-lleida-sede")
@@ -190,6 +191,7 @@ class JuntaOriginPolicyTest {
             "intranet.caib.es",
             "sede.grancanaria.com",
             "sede.cabildofuer.es",
+            "cabildodelanzarote.sedelectronica.es",
             "lanzaroteylagraciosa.sedelectronica.es",
             "serviciosede.mineco.gob.es",
             "pasarela.clave.gob.es",
@@ -996,6 +998,14 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(laGomeraPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(laGomeraPublicNavigation).isEmpty())
+        assertEquals(
+            setOf(
+                "cabildodelanzarote.sedelectronica.es",
+                "lanzaroteylagraciosa.sedelectronica.es",
+            ),
+            JuntaOriginPolicy.browserAllowedHosts(lanzarotePublicNavigation),
+        )
+        assertTrue(JuntaOriginPolicy.webMessageOriginRules(lanzarotePublicNavigation).isEmpty())
         assertEquals(setOf("sede.administracionespublicas.gob.es"), JuntaOriginPolicy.browserAllowedHosts(acceda))
         assertEquals(
             setOf("https://sede.administracionespublicas.gob.es"),
