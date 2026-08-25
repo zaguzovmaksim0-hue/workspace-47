@@ -92,6 +92,7 @@ class PortalCatalogRepositoryTest {
                 "diputacion-cuenca-portal",
                 "generalitat-valenciana-client-auth",
                 "tgss-importass-client-auth",
+                "seguridad-social-sede-autofirma",
                 "ministerio-sanidad-certificado",
                 "tea-alegaciones-certificado",
                 "tenerife-sede-electronica",
