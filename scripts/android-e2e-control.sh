@@ -120,10 +120,23 @@ broadcast() {
     [[ "$secret_handle" =~ ^[a-f0-9]{32}$ ]] || fail "Invalid secret handle"
     cmd+=" --es secretHandle $secret_handle"
   fi
-  output="$(run_rish "$cmd")" || { echo "E2E control broadcast failed" >&2; return 70; }
-  result="$(extract_json "$output")" || { echo "E2E control returned no schema-v3 JSON" >&2; return 70; }
-  printf '%s\n' "$result"
-  jq -e '.success == true' >/dev/null <<<"$result"
+  local transport_rc=0
+  if output="$(run_rish "$cmd")"; then
+    transport_rc=0
+  else
+    transport_rc=$?
+  fi
+  if result="$(extract_json "$output")"; then
+    printf '%s\n' "$result"
+    jq -e '.success == true' >/dev/null <<<"$result"
+    return $?
+  fi
+  if ((transport_rc != 0)); then
+    echo "E2E control broadcast failed" >&2
+  else
+    echo "E2E control returned no schema-v3 JSON" >&2
+  fi
+  return 70
 }
 
 random_handle() { openssl rand -hex 16; }

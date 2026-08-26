@@ -12,7 +12,7 @@ Receiver регистрируется только пока `MainActivity` на�
 dev.junta.firmamobile.action.E2E_CONTROL
 ```
 
-Ответ — JSON schema v3 в ordered-broadcast result data. Он содержит только bounded state/result fields и sanitized portal diagnostics. Certificate/secret handles, URI сертификата, пароль, certificate bytes, private key, cookies и signing payload в JSON не экспортируются.
+Ответ — JSON schema v3 в ordered-broadcast result data. Для любого валидного schema-v3 ответа transport result code остаётся `RESULT_OK`; доменный успех/отказ определяется только полями `success` и `result`. `RESULT_CANCELED` зарезервирован для internal/protocol failure. Он содержит только bounded state/result fields и sanitized portal diagnostics. Certificate/secret handles, URI сертификата, пароль, certificate bytes, private key, cookies и signing payload в JSON не экспортируются.
 
 Операторский wrapper:
 
