@@ -12,7 +12,7 @@ class ApplicationIdentityContractTest {
         assertTrue(
             BuildConfig.APPLICATION_ID in setOf(
                 "dev.junta.firmamobile",
-                "dev.junta.firmamobile.intente2e",
+                "dev.junta.firmamobile.intente2e2",
             ),
         )
         assertNotEquals(JuntaNavigationPolicy.AUTOFIRMA_PACKAGE, BuildConfig.APPLICATION_ID)

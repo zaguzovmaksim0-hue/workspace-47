@@ -248,7 +248,7 @@ android {
             matchingFallbacks += listOf("debug")
             isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".intente2e"
+            applicationIdSuffix = ".intente2e2"
             versionNameSuffix = "-qa"
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
             buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")
