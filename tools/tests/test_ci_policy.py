@@ -109,6 +109,7 @@ class CiPolicyTest(unittest.TestCase):
             "actions/setup-java",
             "actions/setup-go",
             "actions/setup-python",
+            "actions/upload-artifact",
             "android-actions/setup-android",
             "gradle/actions/setup-gradle",
         }
@@ -157,6 +158,14 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("cache: false", source)
         self.assertIn("set +o pipefail", source)
         self.assertIn("set -o pipefail", source)
+        self.assertIn(
+            "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+            source,
+        )
+        self.assertIn("startsWith(github.ref, 'refs/heads/feature/e2e-')", source)
+        self.assertIn("retention-days: 1", source)
+        self.assertIn("compression-level: 0", source)
+        self.assertIn("path: app/build/outputs/apk/qa/app-qa.apk", source)
 
     def test_security_workflow_scans_history_and_dependencies_with_pinned_tools(self) -> None:
         source = self.read(SECURITY)
