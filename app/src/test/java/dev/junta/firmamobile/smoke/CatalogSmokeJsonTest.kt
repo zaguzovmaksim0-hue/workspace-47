@@ -52,7 +52,7 @@ class CatalogSmokeJsonTest {
                 ),
             ),
         )
-        val serialized = CatalogSmokeOutcome(
+        val outcome = CatalogSmokeOutcome(
             runId = "run-json",
             portalId = PortalId("age-reg-redsara"),
             profileId = ProfileId("reg-age-redsara"),
@@ -61,8 +61,10 @@ class CatalogSmokeJsonTest {
             supportStatus = "IMPLEMENTED_NOT_E2E",
             result = CatalogSmokeResultCode.WEBVIEW_ACTIVE,
             runtime = snapshot,
-        ).toJson()
+        )
+        val serialized = outcome.toJson()
 
+        assertEquals(serialized, outcome.toJsonObject().toString())
         assertTrue(serialized.contains("\"schemaVersion\":2"))
         assertTrue(serialized.contains("\"clientCertAcceptedObserved\":true"))
         assertTrue(serialized.contains("\"currentPathLength\":4"))

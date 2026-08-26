@@ -84,7 +84,6 @@ internal fun CatalogSmokeOutcome.toJsonObject(): JSONObject = JSONObject()
     .put("supportStatus", supportStatus ?: JSONObject.NULL)
     .put("result", result.name)
     .put("runtime", runtime?.toJsonObject() ?: JSONObject.NULL)
-    .toString()
 
 private fun CatalogSmokeRuntimeSnapshot.toJsonObject(): JSONObject = JSONObject()
     .put("browserSessionBound", browserSessionBound)
