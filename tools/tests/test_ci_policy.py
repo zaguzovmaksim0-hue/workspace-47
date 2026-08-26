@@ -167,6 +167,20 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("compression-level: 0", source)
         self.assertIn("path: app/build/outputs/apk/qa/app-qa.apk", source)
 
+    def test_e2e_intent_control_is_release_isolated_and_secret_safe(self) -> None:
+        release_gate = self.read(ROOT / "scripts/ci/verify-e2e-harness-release-surface.sh")
+        runner = self.read(ROOT / "scripts/android-e2e-control.sh")
+        self.assertIn("dev.junta.firmamobile.action.E2E_CONTROL", release_gate)
+        self.assertIn("E2eControlHook", release_gate)
+        self.assertIn("E2eSecretInbox", release_gate)
+        self.assertIn("--password-file", runner)
+        self.assertIn("--password-stdin", runner)
+        self.assertNotRegex(runner, r"--password(?:=|\s)")
+        self.assertIn("secretHandle", runner)
+        self.assertIn("content://com.android.externalstorage.documents", runner)
+        self.assertNotIn("uiautomator", runner)
+        self.assertNotIn("input tap", runner)
+
     def test_security_workflow_scans_history_and_dependencies_with_pinned_tools(self) -> None:
         source = self.read(SECURITY)
         self.assertIn("fetch-depth: 0", source)

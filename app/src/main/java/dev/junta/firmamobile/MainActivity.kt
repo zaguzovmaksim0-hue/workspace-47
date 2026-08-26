@@ -296,10 +296,16 @@ class MainActivity : ComponentActivity() {
         )
         runtimeDiagnosticsObserver = RuntimeDiagnosticsFactory.create(
             activity = this,
+            scope = lifecycleScope,
             repository = catalogRepository,
+            certificateState = certificateViewModel.state,
             certificateUnlocked = {
                 certificateViewModel.state.value is CertificateUiState.Unlocked
             },
+            selectCertificate = { uri -> selectCertificateForControl(uri) },
+            unlockCertificate = certificateViewModel::unlock,
+            lockCertificate = ::lockCertificateForControl,
+            forgetCertificate = ::forgetCertificateForControl,
             openProfile = { launch ->
                 cancelSigning(SigningCancelReason.NAVIGATION)
                 dismissSigningState()
@@ -310,8 +316,13 @@ class MainActivity : ComponentActivity() {
                     entryUrl = launch.entryUrl,
                 )
             },
+            closeProfile = ::closeProfileForControl,
             activeWebViewMatches = { profileId -> activeWebViewMatches(profileId) },
             adapterIdForProfile = { profileId -> smokeAdapterId(profileId) },
+            signingState = ::currentSigningState,
+            confirmCurrentSigning = ::confirmCurrentSigningForControl,
+            cancelCurrentSigning = ::cancelCurrentSigningForControl,
+            dismissCurrentSigning = ::dismissCurrentSigningForControl,
         )
         val paperSystemBar = getColor(R.color.jfm_paper)
         enableEdgeToEdge(
@@ -422,6 +433,7 @@ class MainActivity : ComponentActivity() {
                         onWebViewChanged = { currentWebView = it },
                         onNavigationEpochChanged = { currentNavigationEpoch = it },
                         onRuntimeDiagnostic = runtimeDiagnosticsObserver::observe,
+                        onInteractiveControlChanged = runtimeDiagnosticsObserver::updateInteractiveControl,
                         )
                     }
                 } else if (destination == AppDestination.Catalog && unlocked != null) {
@@ -615,6 +627,81 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun selectCertificateForControl(uri: Uri) {
+        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = AppDestination.Certificate
+        certificateViewModel.prepareForCertificateSelection()
+        certificateViewModel.onCertificateSelected(uri)
+    }
+
+    private fun lockCertificateForControl() {
+        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = AppDestination.Certificate
+        certificateViewModel.lock()
+    }
+
+    private fun forgetCertificateForControl() {
+        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = AppDestination.Certificate
+        certificateViewModel.forget()
+    }
+
+    private fun closeProfileForControl(profileId: ProfileId): Boolean {
+        val browser = destination as? AppDestination.Browser ?: return false
+        if (browser.profileId != profileId || !activeWebViewMatches(profileId)) return false
+        cancelSigning(SigningCancelReason.NAVIGATION)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = if (certificateViewModel.state.value is CertificateUiState.Unlocked) {
+            AppDestination.Catalog
+        } else {
+            AppDestination.Certificate
+        }
+        return true
+    }
+
+    private fun currentSigningState(): SigningUiState {
+        val owner = signingFlowOwnership.current() ?: return SigningUiState.Idle
+        return when (owner.kind) {
+            SigningFlowKind.ORDINARY -> signingCoordinator.state.value
+            SigningFlowKind.BATCH -> batchSigningCoordinator.state.value
+        }
+    }
+
+    private fun confirmCurrentSigningForControl(): Boolean {
+        val awaiting = currentSigningState() as? SigningUiState.AwaitingConfirmation ?: return false
+        confirmSigning(awaiting.requestId)
+        return true
+    }
+
+    private fun cancelCurrentSigningForControl(): Boolean {
+        val owner = signingFlowOwnership.current() ?: return false
+        if (currentSigningState() is SigningUiState.Idle) return false
+        cancelSigning(SigningCancelReason.USER, owner.requestId)
+        return true
+    }
+
+    private fun dismissCurrentSigningForControl(): Boolean {
+        when (currentSigningState()) {
+            is SigningUiState.Completed,
+            is SigningUiState.Failed,
+            -> Unit
+            else -> return false
+        }
+        dismissSigningState()
+        return true
+    }
+
     private fun currentSigningOrigin() =
         (destination as? AppDestination.Browser)?.profileId?.let { selectedProfileId ->
             currentWebView?.url?.let { url ->
@@ -639,7 +726,9 @@ class MainActivity : ComponentActivity() {
         if (browser.profileId != profileId) return false
         val currentUrl = currentWebView?.url ?: return false
         val uri = runCatching { URI(currentUrl) }.getOrNull() ?: return false
-        return BuiltInSiteProfiles.runtimeRegistry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId
+        val registry = BuiltInSiteProfiles.runtimeRegistry
+        return registry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId ||
+            registry.resolveRedirect(profileId, uri)?.profile?.profileId == profileId
     }
 
     private fun smokeAdapterId(profileId: ProfileId): String? {

@@ -6,7 +6,7 @@ import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.profile.ProfileId
 
-internal enum class CatalogSmokeOperation { OPEN, INSPECT }
+internal enum class CatalogSmokeOperation { OPEN, INSPECT, CLOSE }
 
 internal enum class CatalogSmokeResultCode {
     INVALID_REQUEST,
@@ -20,6 +20,7 @@ internal enum class CatalogSmokeResultCode {
     WEBVIEW_ACTIVE,
     WEBVIEW_NOT_ACTIVE,
     RUN_NOT_ACTIVE,
+    PORTAL_CLOSED,
 }
 
 internal data class CatalogSmokeRequest(
@@ -46,6 +47,7 @@ internal class CatalogSmokeController(
     private val openProfile: (PortalLaunchTarget) -> Unit,
     private val activeWebViewMatches: (ProfileId) -> Boolean,
     private val adapterIdForProfile: (ProfileId) -> String?,
+    private val closeProfile: (ProfileId) -> Boolean,
     private val runtime: CatalogSmokeRuntime,
 ) {
     fun execute(request: CatalogSmokeRequest): CatalogSmokeOutcome {
@@ -84,6 +86,21 @@ internal class CatalogSmokeController(
                 },
                 runtime = snapshot,
             )
+        }
+
+        if (operation == CatalogSmokeOperation.CLOSE) {
+            val snapshot = runtime.snapshot(runId, profileId)
+                ?: return base.copy(result = CatalogSmokeResultCode.RUN_NOT_ACTIVE)
+            val active = activeWebViewMatches(profileId) &&
+                snapshot.browserSessionBound && snapshot.webViewActive
+            if (!active || !closeProfile(profileId)) {
+                return base.copy(
+                    result = CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE,
+                    runtime = snapshot,
+                )
+            }
+            runtime.endRun(runId, profileId)
+            return base.copy(result = CatalogSmokeResultCode.PORTAL_CLOSED)
         }
 
         val target = repository.resolveLaunch(portal)

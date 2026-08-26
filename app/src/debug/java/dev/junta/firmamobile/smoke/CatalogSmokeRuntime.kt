@@ -91,6 +91,13 @@ internal class CatalogSmokeRuntime {
         active?.takeIf { it.runId == runId && it.profileId == profileId }?.snapshot()
 
     @Synchronized
+    fun endRun(runId: String, profileId: ProfileId) {
+        if (active?.runId == runId && active?.profileId == profileId) {
+            active = null
+        }
+    }
+
+    @Synchronized
     fun observe(event: RuntimeDiagnosticEvent) {
         if (event is RuntimeDiagnosticEvent.WebViewState && event.active) {
             lastObservedBrowserSessionId = event.browserSessionId

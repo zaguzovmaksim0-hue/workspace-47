@@ -24,6 +24,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -85,6 +86,7 @@ import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.SanitizedLogger
+import dev.junta.firmamobile.diagnostics.BrowserInteractiveControl
 import dev.junta.firmamobile.diagnostics.RuntimeDiagnosticEvent
 import dev.junta.firmamobile.diagnostics.SigningDiagnosticState
 import dev.junta.firmamobile.diagnostics.observeSafely
@@ -165,6 +167,7 @@ internal fun BrowserScreen(
     onWebViewChanged: (WebView?) -> Unit,
     onNavigationEpochChanged: (Long) -> Unit = {},
     onRuntimeDiagnostic: (RuntimeDiagnosticEvent) -> Unit = {},
+    onInteractiveControlChanged: (BrowserInteractiveControl?) -> Unit = {},
     onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     onMelillaBatchCancel: (UUID) -> Unit = {},
 ) {
@@ -1118,38 +1121,143 @@ internal fun BrowserScreen(
         )
     }
 
+    fun confirmPendingCertificateSelection(): Boolean {
+        val pending = pendingCertificateSelection ?: return false
+        val identity = clientCertificateIdentityProvider()
+        val currentFingerprint = identity?.let(::certificateSelectionFingerprint)
+        if (identity == null || currentFingerprint != pending.certificateFingerprint) {
+            pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED)
+        } else if (!certificateEligibleForSelection(
+                pending.request.context.profileId,
+                identity.certificate,
+            )
+        ) {
+            pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
+        } else {
+            val certificateDer = runCatching { identity.certificate.encoded }.getOrNull()
+            if (certificateDer == null) {
+                pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
+            } else {
+                pending.reply.success(certificateDer)
+            }
+        }
+        pendingCertificateSelection = null
+        return true
+    }
+
+    fun cancelPendingCertificateSelectionForUser(): Boolean {
+        val pending = pendingCertificateSelection ?: return false
+        pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.USER_CANCELLED)
+        pendingCertificateSelection = null
+        return true
+    }
+
+    fun confirmPendingClientAuth(): Boolean {
+        val inPlace = pendingInPlaceClientAuth
+        if (inPlace != null) {
+            if (inPlace.authorized.profileId != effectiveTopLevelProfileId ||
+                inPlace.navigationEpoch != navigationEpoch.longValue ||
+                inPlace.authorized.isExpiredOrInvalid()
+            ) {
+                inPlace.request.ignore()
+                pendingInPlaceClientAuth = null
+                clientAuthAuthorizer.invalidate()
+            } else {
+                pendingInPlaceClientAuth = null
+                val handler = ClientAuthRequestHandler(
+                    grant = ClientAuthGrant(
+                        authorized = inPlace.authorized,
+                        navigationEpoch = inPlace.navigationEpoch,
+                    ),
+                    identityProvider = clientCertificateIdentityProvider,
+                    currentNavigationEpoch = { navigationEpoch.longValue },
+                    clearClientCertPreferences = {
+                        mainHandler.post { clientCertPreferenceCoordinator.requestClear() }
+                    },
+                    onCertificateProvided = { host, port ->
+                        onRuntimeDiagnostic.observeSafely(
+                            RuntimeDiagnosticEvent.ClientCertRequestAccepted(
+                                profileId = selectedServiceId,
+                                browserSessionId = runtimeBrowserSessionId,
+                                navigationEpoch = navigationEpoch.longValue,
+                                host = host,
+                                port = port,
+                            ),
+                        )
+                    },
+                )
+                inPlaceClientAuthHandlerRef.getAndSet(handler)?.abandon()
+                handler.handle(inPlace.request)
+            }
+            return true
+        }
+
+        val authorized = pendingClientAuthTarget ?: return false
+        if (authorized.profileId != effectiveTopLevelProfileId) {
+            pendingClientAuthTarget = null
+            abandonClientAuth()
+        } else {
+            pendingClientAuthTarget = null
+            advanceNavigationEpoch()
+            onCancelSigning(SigningCancelReason.NAVIGATION, null)
+            bridgeAttachmentLease.close()
+            webViewRef.get()?.stopLoading()
+            beginClientAuthPreparation(
+                ClientAuthGrant(
+                    authorized = authorized,
+                    navigationEpoch = navigationEpoch.longValue,
+                ),
+            )
+        }
+        return true
+    }
+
+    fun cancelPendingClientAuthForUser(): Boolean {
+        val inPlace = pendingInPlaceClientAuth
+        if (inPlace != null) {
+            inPlace.request.ignore()
+            pendingInPlaceClientAuth = null
+            clientAuthAuthorizer.invalidate()
+            onCancelSigning(SigningCancelReason.USER, null)
+            return true
+        }
+        if (pendingClientAuthTarget == null) return false
+        pendingClientAuthTarget = null
+        clientAuthGrant = null
+        abandonClientAuth()
+        advanceNavigationEpoch()
+        onCancelSigning(SigningCancelReason.USER, null)
+        return true
+    }
+
+    SideEffect {
+        onInteractiveControlChanged(
+            BrowserInteractiveControl(
+                profileId = selectedServiceId,
+                confirmClientAuth = ::confirmPendingClientAuth,
+                cancelClientAuth = ::cancelPendingClientAuthForUser,
+                confirmCertificateSelection = ::confirmPendingCertificateSelection,
+                cancelCertificateSelection = ::cancelPendingCertificateSelectionForUser,
+            ),
+        )
+    }
+    DisposableEffect(selectedServiceId, onInteractiveControlChanged) {
+        onDispose { onInteractiveControlChanged(null) }
+    }
+
     pendingCertificateSelection?.let { pending ->
         CertificateSelectionConfirmationDialog(
             host = pending.request.context.origin.host,
             certificateOwner = pending.certificateOwner,
             safeDescription = pending.request.safeDescription,
             onContinue = {
-                val current = pendingCertificateSelection
-                if (current?.request?.requestId != pending.request.requestId) return@CertificateSelectionConfirmationDialog
-                val identity = clientCertificateIdentityProvider()
-                val currentFingerprint = identity?.let(::certificateSelectionFingerprint)
-                if (identity == null || currentFingerprint != pending.certificateFingerprint) {
-                    pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED)
-                } else if (!certificateEligibleForSelection(
-                        pending.request.context.profileId,
-                        identity.certificate,
-                    )
-                ) {
-                    pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
-                } else {
-                    val certificateDer = runCatching { identity.certificate.encoded }.getOrNull()
-                    if (certificateDer == null) {
-                        pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
-                    } else {
-                        pending.reply.success(certificateDer)
-                    }
+                if (pendingCertificateSelection?.request?.requestId == pending.request.requestId) {
+                    confirmPendingCertificateSelection()
                 }
-                pendingCertificateSelection = null
             },
             onCancel = {
                 if (pendingCertificateSelection?.request?.requestId == pending.request.requestId) {
-                    pending.reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.USER_CANCELLED)
-                    pendingCertificateSelection = null
+                    cancelPendingCertificateSelectionForUser()
                 }
             },
         )
@@ -1163,48 +1271,10 @@ internal fun BrowserScreen(
             host = pending.authorized.target.host,
             certificateOwner = certificateState.summary.ownerName,
             onContinue = {
-                if (pending.authorized.profileId != effectiveTopLevelProfileId ||
-                    pending.navigationEpoch != navigationEpoch.longValue ||
-                    pending.authorized.isExpiredOrInvalid()
-                ) {
-                    pending.request.ignore()
-                    pendingInPlaceClientAuth = null
-                    clientAuthAuthorizer.invalidate()
-                } else {
-                    pendingInPlaceClientAuth = null
-                    val handler = ClientAuthRequestHandler(
-                        grant = ClientAuthGrant(
-                            authorized = pending.authorized,
-                            navigationEpoch = pending.navigationEpoch,
-                        ),
-                        identityProvider = clientCertificateIdentityProvider,
-                        currentNavigationEpoch = { navigationEpoch.longValue },
-                        clearClientCertPreferences = {
-                            mainHandler.post { clientCertPreferenceCoordinator.requestClear() }
-                        },
-                        onCertificateProvided = { host, port ->
-                            onRuntimeDiagnostic.observeSafely(
-                                RuntimeDiagnosticEvent.ClientCertRequestAccepted(
-                                    profileId = selectedServiceId,
-                                    browserSessionId = runtimeBrowserSessionId,
-                                    navigationEpoch = navigationEpoch.longValue,
-                                    host = host,
-                                    port = port,
-                                ),
-                            )
-                        },
-                    )
-                    inPlaceClientAuthHandlerRef.getAndSet(handler)?.abandon()
-                    handler.handle(pending.request)
-                }
+                if (pendingInPlaceClientAuth === pending) confirmPendingClientAuth()
             },
             onCancel = {
-                if (pendingInPlaceClientAuth === pending) {
-                    pending.request.ignore()
-                    pendingInPlaceClientAuth = null
-                }
-                clientAuthAuthorizer.invalidate()
-                onCancelSigning(SigningCancelReason.USER, null)
+                if (pendingInPlaceClientAuth === pending) cancelPendingClientAuthForUser()
             },
         )
     }
@@ -1217,29 +1287,10 @@ internal fun BrowserScreen(
             host = authorized.target.host,
             certificateOwner = certificateState.summary.ownerName,
             onContinue = {
-                if (authorized.profileId != effectiveTopLevelProfileId) {
-                    pendingClientAuthTarget = null
-                    abandonClientAuth()
-                } else {
-                    pendingClientAuthTarget = null
-                    advanceNavigationEpoch()
-                    onCancelSigning(SigningCancelReason.NAVIGATION, null)
-                    bridgeAttachmentLease.close()
-                    webViewRef.get()?.stopLoading()
-                    beginClientAuthPreparation(
-                        ClientAuthGrant(
-                            authorized = authorized,
-                            navigationEpoch = navigationEpoch.longValue,
-                        ),
-                    )
-                }
+                if (pendingClientAuthTarget === authorized) confirmPendingClientAuth()
             },
             onCancel = {
-                pendingClientAuthTarget = null
-                clientAuthGrant = null
-                abandonClientAuth()
-                advanceNavigationEpoch()
-                onCancelSigning(SigningCancelReason.USER, null)
+                if (pendingClientAuthTarget === authorized) cancelPendingClientAuthForUser()
             },
         )
     }

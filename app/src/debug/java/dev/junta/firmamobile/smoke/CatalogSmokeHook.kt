@@ -72,7 +72,9 @@ internal class CatalogSmokeHook(
     }
 }
 
-internal fun CatalogSmokeOutcome.toJson(): String = JSONObject()
+internal fun CatalogSmokeOutcome.toJson(): String = toJsonObject().toString()
+
+internal fun CatalogSmokeOutcome.toJsonObject(): JSONObject = JSONObject()
     .put("schemaVersion", 2)
     .put("runId", runId ?: JSONObject.NULL)
     .put("portalId", portalId?.value ?: JSONObject.NULL)
@@ -137,5 +139,6 @@ internal fun CatalogSmokeResultCode.isOrderedBroadcastFailure(): Boolean = when 
     CatalogSmokeResultCode.PROFILE_RESOLVED,
     CatalogSmokeResultCode.OPEN_REQUESTED,
     CatalogSmokeResultCode.WEBVIEW_ACTIVE,
+    CatalogSmokeResultCode.PORTAL_CLOSED,
     -> false
 }

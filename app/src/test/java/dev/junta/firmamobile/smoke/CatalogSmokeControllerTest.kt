@@ -228,6 +228,35 @@ class CatalogSmokeControllerTest {
     }
 
     @Test
+    fun `close requires the exact active run and profile before leaving browser`() {
+        val active = ProfileId("junta-ofvirtual")
+        val runtime = CatalogSmokeRuntime()
+        runtime.beginRun("run-close", active)
+        val sessionId = UUID.randomUUID()
+        runtime.observe(RuntimeDiagnosticEvent.WebViewState(active, sessionId, 0L, active = true))
+        runtime.observe(
+            RuntimeDiagnosticEvent.NavigationChanged(
+                active,
+                sessionId,
+                1L,
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+            ),
+        )
+        val controller = controller(activeProfile = active, runtime = runtime)
+
+        val closed = controller.execute(
+            CatalogSmokeRequest("run-close", "junta-andalucia-ofvirtual", "CLOSE"),
+        )
+        assertEquals(CatalogSmokeResultCode.PORTAL_CLOSED, closed.result)
+        assertEquals(
+            CatalogSmokeResultCode.RUN_NOT_ACTIVE,
+            controller.execute(
+                CatalogSmokeRequest("run-close", "junta-andalucia-ofvirtual", "INSPECT"),
+            ).result,
+        )
+    }
+
+    @Test
     fun `ordered broadcast result fails closed for invalid disabled and inactive outcomes`() {
         assertEquals(
             setOf(
@@ -257,6 +286,7 @@ class CatalogSmokeControllerTest {
         openProfile = opened::add,
         activeWebViewMatches = { it == activeProfile },
         adapterIdForProfile = { "test-adapter" },
+        closeProfile = { it == activeProfile },
         runtime = runtime,
     )
 }

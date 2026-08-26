@@ -255,3 +255,9 @@ puede observar los callbacks posteriores sin screenshot/UIAutomator.
 Este mecanismo recopila evidencia; no promociona automáticamente
 `E2E_PENDING` a `E2E_VERIFIED`. Una firma, pago, presentación o modificación
 administrativa sigue requiriendo una autorización y decisión separadas.
+
+## Обновление 2026-08-26 — QA E2E Intent control plane
+
+Для device E2E введён typed Intent control plane, чтобы не использовать UI coordinate tapping как штатный механизм автоматизации. Контракт и secret-handling описаны в `docs/e2e-intent-control.md`; wrapper — `scripts/android-e2e-control.sh`.
+
+Control plane остаётся debug/QA-only, lifecycle-bound и `android.permission.DUMP`-protected. Сертификат передаётся granted `content://` data URI, password — только через одноразовый app-private `secretHandle`; raw password/certificate bytes не являются Intent extras и не попадают в machine-readable result. Portal/client-auth/certificate-selection/signing действия привязаны к exact catalog ID и `runId`; confirmation commands дополнительно требуют соответствующий runtime-required event из того же bound browser session.

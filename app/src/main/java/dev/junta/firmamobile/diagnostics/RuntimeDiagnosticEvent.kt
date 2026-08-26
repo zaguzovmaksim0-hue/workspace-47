@@ -129,6 +129,7 @@ internal interface RuntimeDiagnosticsObserver {
     fun start()
     fun stop()
     fun observe(event: RuntimeDiagnosticEvent)
+    fun updateInteractiveControl(control: BrowserInteractiveControl?)
 }
 
 internal fun ((RuntimeDiagnosticEvent) -> Unit).observeSafely(event: RuntimeDiagnosticEvent) {
