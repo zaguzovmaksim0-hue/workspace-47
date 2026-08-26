@@ -178,7 +178,10 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("--password-stdin", runner)
         self.assertNotRegex(runner, r"--password(?:=|\s)")
         self.assertIn("secretHandle", runner)
-        self.assertIn("content://com.android.externalstorage.documents", runner)
+        self.assertIn("certificateHandle", runner)
+        self.assertIn("no_backup/e2e-control/certificates", runner)
+        self.assertNotIn("content://com.android.externalstorage.documents", runner)
+        self.assertNotIn("--grant-read-uri-permission", runner)
         self.assertNotIn("uiautomator", runner)
         self.assertNotIn("input tap", runner)
 

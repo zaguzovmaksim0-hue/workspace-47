@@ -5,11 +5,8 @@ readonly PACKAGE_NAME="${PACKAGE_NAME:-dev.junta.firmamobile}"
 readonly MAIN_COMPONENT="$PACKAGE_NAME/dev.junta.firmamobile.MainActivity"
 readonly ACTION="dev.junta.firmamobile.action.E2E_CONTROL"
 readonly RISH_BIN="${RISH_BIN:-/data/data/com.termux/files/usr/bin/rish}"
-readonly STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/workspace-47/e2e-control/$PACKAGE_NAME"
-readonly CERT_STAGE_DIR="/storage/emulated/0/Download/.w47-e2e-control"
-readonly CERT_STAGE_RECORD="$STATE_DIR/certificate-stage"
+readonly CERT_RELATIVE_DIR="no_backup/e2e-control/certificates"
 readonly SECRET_RELATIVE_DIR="cache/e2e-control/secrets"
-readonly INTENT_FLAGS=0x41 # FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_PERSISTABLE_URI_PERMISSION
 readonly TIMEOUT_SECONDS="${E2E_CONTROL_TIMEOUT_SECONDS:-30}"
 
 usage() {
@@ -36,8 +33,8 @@ Usage:
 
 QA/debug only. Commands use a lifecycle-bound android.permission.DUMP receiver.
 The password is never accepted as a command-line argument or Intent extra. CERT_UNLOCK sends only an
-opaque one-shot handle after staging the secret through run-as into app-private cache. Raw certificate
-bytes are never placed in Intent extras; CERT_SELECT uses a granted content:// data URI.
+opaque one-shot handle after staging the secret through run-as into app-private cache. CERT_SELECT also
+stages through run-as into app-private no-backup storage and sends only an opaque certificate handle.
 
 SIGN_CONFIRM performs the application's real confirmation path. Use it only when current execution policy
 permits it and explicit authorization exists for the exact portal/action. It never authorizes final filing/payment.
@@ -105,7 +102,7 @@ extract_json() {
 }
 
 broadcast() {
-  local run_id="$1" command="$2" target_kind="${3:-}" target_id="${4:-}" data_uri="${5:-}" secret_handle="${6:-}"
+  local run_id="$1" command="$2" target_kind="${3:-}" target_id="${4:-}" certificate_handle="${5:-}" secret_handle="${6:-}"
   local cmd output result
   valid_run_id "$run_id" || fail "Invalid run ID"
   [[ "$command" =~ ^[A-Z_]+$ ]] || fail "Invalid command"
@@ -115,13 +112,13 @@ broadcast() {
     valid_target_id "$target_id" || fail "Invalid portal/profile ID"
     cmd+=" --es ${target_kind}Id $target_id"
   fi
+  if [[ -n "$certificate_handle" ]]; then
+    [[ "$certificate_handle" =~ ^[a-f0-9]{32}$ ]] || fail "Invalid certificate handle"
+    cmd+=" --es certificateHandle $certificate_handle"
+  fi
   if [[ -n "$secret_handle" ]]; then
     [[ "$secret_handle" =~ ^[a-f0-9]{32}$ ]] || fail "Invalid secret handle"
     cmd+=" --es secretHandle $secret_handle"
-  fi
-  if [[ -n "$data_uri" ]]; then
-    [[ "$data_uri" =~ ^content://com\.android\.externalstorage\.documents/document/[A-Za-z0-9%._-]+$ ]] || fail "Invalid certificate data URI"
-    cmd+=" -f $INTENT_FLAGS -d $data_uri"
   fi
   output="$(run_rish "$cmd")" || { echo "E2E control broadcast failed" >&2; return 70; }
   result="$(extract_json "$output")" || { echo "E2E control returned no schema-v3 JSON" >&2; return 70; }
@@ -131,40 +128,27 @@ broadcast() {
 
 random_handle() { openssl rand -hex 16; }
 
-certificate_stage_uri() {
-  local handle="$1"
-  printf 'content://com.android.externalstorage.documents/document/primary%%3ADownload%%2F.w47-e2e-control%%2F%s.p12' "$handle"
-}
-
 stage_certificate() {
-  local source_file="$1" handle="$2" stage_file uri old_stage=""
+  local source_file="$1" handle="$2" size staged_size result
   [[ -f "$source_file" && -r "$source_file" ]] || { echo "Certificate file is not readable" >&2; return 66; }
-  local size
   size="$(stat -c '%s' "$source_file" 2>/dev/null)" || { echo "Cannot inspect certificate file" >&2; return 66; }
   [[ "$size" =~ ^[0-9]+$ ]] && ((size > 0 && size <= 10 * 1024 * 1024)) || {
     echo "Certificate file size is outside the supported bound" >&2
     return 66
   }
-  mkdir -p "$STATE_DIR" "$CERT_STAGE_DIR"
-  chmod 700 "$STATE_DIR" 2>/dev/null || true
-  stage_file="$CERT_STAGE_DIR/$handle.p12"
-  cp "$source_file" "$stage_file" 2>/dev/null || { echo "Certificate staging failed" >&2; return 74; }
-  [[ "$(stat -c '%s' "$stage_file" 2>/dev/null)" == "$size" ]] || {
-    rm -f "$stage_file"
+  timeout "$TIMEOUT_SECONDS" "$RISH_BIN" -c \
+    "run-as $PACKAGE_NAME sh -c 'umask 077; mkdir -p $CERT_RELATIVE_DIR; cat > $CERT_RELATIVE_DIR/$handle.p12; chmod 600 $CERT_RELATIVE_DIR/$handle.p12'" \
+    <"$source_file" >/dev/null 2>&1 || { echo "Certificate staging failed" >&2; return 70; }
+  staged_size="$(run_rish "run-as $PACKAGE_NAME stat -c %s $CERT_RELATIVE_DIR/$handle.p12" 2>/dev/null || true)"
+  [[ "$staged_size" == "$size" ]] || {
+    run_rish "run-as $PACKAGE_NAME rm -f $CERT_RELATIVE_DIR/$handle.p12" >/dev/null 2>&1 || true
     echo "Certificate staging integrity check failed" >&2
-    return 74
+    return 70
   }
-  uri="$(certificate_stage_uri "$handle")"
-  if [[ -f "$CERT_STAGE_RECORD" ]]; then old_stage="$(cat "$CERT_STAGE_RECORD" 2>/dev/null || true)"; fi
-  if result="$(broadcast "$RUN_ID" CERT_SELECT "" "" "$uri")"; then
-    printf '%s\n' "$stage_file" >"$CERT_STAGE_RECORD"
-    chmod 600 "$CERT_STAGE_RECORD"
-    if [[ -n "$old_stage" && "$old_stage" != "$stage_file" && "$old_stage" == "$CERT_STAGE_DIR/"*.p12 ]]; then
-      rm -f "$old_stage"
-    fi
+  if result="$(broadcast "$RUN_ID" CERT_SELECT "" "" "$handle")"; then
     printf '%s\n' "$result"
   else
-    rm -f "$stage_file"
+    run_rish "run-as $PACKAGE_NAME rm -f $CERT_RELATIVE_DIR/$handle.p12" >/dev/null 2>&1 || true
     return 70
   fi
 }
@@ -197,13 +181,6 @@ stage_password_and_unlock() {
   fi
 }
 
-cleanup_certificate_stage() {
-  local stage=""
-  if [[ -f "$CERT_STAGE_RECORD" ]]; then stage="$(cat "$CERT_STAGE_RECORD" 2>/dev/null || true)"; fi
-  if [[ -n "$stage" && "$stage" == "$CERT_STAGE_DIR/"*.p12 ]]; then rm -f "$stage"; fi
-  rm -f "$CERT_STAGE_RECORD"
-}
-
 ensure_tools
 (($# >= 1)) || { usage; exit 64; }
 verb="$1"; shift
@@ -224,11 +201,7 @@ case "$verb" in
     case "$verb" in
       state) broadcast "$RUN_ID" STATE ;;
       cert-lock) broadcast "$RUN_ID" CERT_LOCK ;;
-      cert-forget)
-        result="$(broadcast "$RUN_ID" CERT_FORGET)" || exit $?
-        cleanup_certificate_stage
-        printf '%s\n' "$result"
-        ;;
+      cert-forget) broadcast "$RUN_ID" CERT_FORGET ;;
     esac
     ;;
   cert-select)
