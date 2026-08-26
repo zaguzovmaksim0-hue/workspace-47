@@ -82,6 +82,23 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val clientAuth = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, clientAuth.transitionMode)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+            clientAuth.requestOrigins,
+        )
+        assertEquals(
+            setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")),
+            clientAuth.sourceUrls,
+        )
+        assertEquals("/IdP2/AuthenticateCitizen", clientAuth.requestPath)
+        assertEquals(HttpMethod.POST, clientAuth.requestMethod)
+        assertEquals(443, clientAuth.requestPort)
+        assertTrue(clientAuth.fixedQueryParameters.isEmpty())
+        assertTrue(clientAuth.requiredEphemeralQueryParameters.isEmpty())
+        assertTrue(clientAuth.allowEmptyIssuerList)
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(setOf(SignatureAlgorithm.SHA512_WITH_RSA), operation.algorithms)
         assertEquals(SignatureFormat.XADES, operation.format)
