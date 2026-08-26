@@ -60,6 +60,7 @@ class WebMessageBridge internal constructor(
     private val onCertificateSelectionCancel: (UUID) -> Unit = {},
     private val onEuskadiClientAuthPostRequest:
         ((EuskadiClientAuthPostBridgeRequest) -> Unit)? = null,
+    private val onPortalCallbackObserved: (String, String) -> Unit = { _, _ -> },
     private val onMelillaBatchRequest:
         ((MelillaBatchRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     private val onMelillaBatchCancel: (UUID) -> Unit = {},
@@ -355,7 +356,13 @@ class WebMessageBridge internal constructor(
             )
         ) {
             is PortalCallbackDiagnosticParseResult.Accepted -> {
-                logger.recordPortalCallback(diagnostic.stage.name, sourceOrigin.host.orEmpty())
+                val host = sourceOrigin.host.orEmpty()
+                logger.recordPortalCallback(diagnostic.stage.name, host)
+                try {
+                    onPortalCallbackObserved(diagnostic.stage.name, host)
+                } catch (_: Exception) {
+                    // QA observation must not affect the accepted portal callback path.
+                }
                 return
             }
             PortalCallbackDiagnosticParseResult.Rejected -> {

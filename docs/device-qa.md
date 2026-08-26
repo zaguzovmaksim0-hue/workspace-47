@@ -207,3 +207,57 @@ cerrar ese UI auxiliar, el siguiente dump de `uiautomator` quedó vacío. No se
 usaron coordenadas aproximadas. Por ello siguen pendientes el callback
 `ClientCertRequest`, la confirmación nativa y la aceptación autenticada por AEAT.
 El profile permanece `VERIFIED_CONTRACT / QA_ONLY`.
+
+## Diseño 2026-08-26 — E2E intent harness QA-only
+
+El harness usa el propio APK `qa`; no se añade un segundo APK de aplicación. La
+razón es funcional y de seguridad: el flujo debe observar el `WebView`, el
+estado de certificado desbloqueado y las state machines de firma reales de la
+misma instancia de `MainActivity`. Un APK paralelo no debe duplicar catálogo,
+políticas de origen, lógica de firma ni material de certificado.
+
+La superficie shell vive exclusivamente en `src/debug`, que también alimenta el
+source set `qa`. `release` usa un observer no operativo y no contiene el receiver
+ni la action `dev.junta.firmamobile.action.CATALOG_SMOKE`. El receiver QA:
+
+- existe solo mientras `MainActivity` está en foreground;
+- exige `android.permission.DUMP` y package targeting;
+- acepta `runId`, un `portalId` **o** un `profileId` y `OPEN`/`INSPECT`;
+- no acepta URL, JavaScript, selector, certificado, contraseña ni payload;
+- enlaza cada run al UUID de un `BrowserScreen` nuevo y al profile/epoch exactos,
+  por lo que un evento atrasado de un WebView anterior no prueba un run nuevo.
+
+El JSON schema v2 expone únicamente códigos cerrados y metadatos sanitizados:
+`host`, longitud del path y prefijo SHA-256 del path. El path literal, query y
+fragment no se exportan. Entre los hitos observables están
+`WEBVIEW_ACTIVE`, `CLIENT_CERT_REQUEST`, `CLIENT_CERT_ACCEPTED`,
+`SIGNING_AWAITING_CONFIRMATION`, `SIGNING_COMPLETED`, `PORTAL_CALLBACK` y errores
+fail-closed. `CLIENT_CERT_ACCEPTED` solo se emite después de las validaciones del
+`ClientAuthRequestHandler` y después de que `ClientCertRequest.proceed(...)`
+retorne; no significa por sí solo que el servidor haya aceptado la sesión.
+`SIGNING_COMPLETED` procede del `SigningCoordinator`/`BatchSigningCoordinator`
+real y solo aparece tras entregar el resultado al bridge del portal.
+
+El runner recomendado es:
+
+```text
+scripts/android-site-smoke.sh --timeout 60 aeat-sede
+scripts/android-site-smoke.sh --timeout 60 --implemented
+```
+
+Los informes se escriben en `build/reports/site-smoke/latest.json` y
+`latest.md`. El batch distingue `failed`, `timeout`, `crashDetected`,
+`anrDetected`, `blocked`, `manualActionRequired`, `reason` y `observedStage`.
+Una confirmación nativa de certificado o firma se informa como bloqueo manual;
+el runner no pulsa ese control. Si el usuario confirma manualmente, el mismo run
+puede observar los callbacks posteriores sin screenshot/UIAutomator.
+
+Este mecanismo recopila evidencia; no promociona automáticamente
+`E2E_PENDING` a `E2E_VERIFIED`. Una firma, pago, presentación o modificación
+administrativa sigue requiriendo una autorización y decisión separadas.
+
+## Обновление 2026-08-26 — QA E2E Intent control plane
+
+Для device E2E введён typed Intent control plane, чтобы не использовать UI coordinate tapping как штатный механизм автоматизации. Контракт и secret-handling описаны в `docs/e2e-intent-control.md`; wrapper — `scripts/android-e2e-control.sh`.
+
+Control plane остаётся debug/QA-only, lifecycle-bound и `android.permission.DUMP`-protected. Сертификат передаётся granted `content://` data URI, password — только через одноразовый app-private `secretHandle`; raw password/certificate bytes не являются Intent extras и не попадают в machine-readable result. Portal/client-auth/certificate-selection/signing действия привязаны к exact catalog ID и `runId`; confirmation commands дополнительно требуют соответствующий runtime-required event из того же bound browser session.

@@ -40,6 +40,7 @@ APP_RUNTIME_CONFIGURATIONS = {
     "releaseRuntimeClasspath",
 }
 EXPECTED_GITLEAKS_IGNORES = {
+    "68b8bf9b778f7d8246aa963bb2318391aa927cda:app/src/test/java/dev/junta/firmamobile/control/E2eControlIntentParserTest.kt:generic-api-key:26",
     "f15a1d272cb088da8d900c238f7c745a9633b667:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1283",
     "2c4b1b77d61c6d348db0a6114bf21c5dbb419d20:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1057",
     "36ae2899b4039eb5da9d40c158ff2ebcd4a944a7:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:2999",
@@ -109,6 +110,7 @@ class CiPolicyTest(unittest.TestCase):
             "actions/setup-java",
             "actions/setup-go",
             "actions/setup-python",
+            "actions/upload-artifact",
             "android-actions/setup-android",
             "gradle/actions/setup-gradle",
         }
@@ -157,6 +159,36 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("cache: false", source)
         self.assertIn("set +o pipefail", source)
         self.assertIn("set -o pipefail", source)
+        self.assertIn(
+            "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+            source,
+        )
+        self.assertIn("startsWith(github.ref, 'refs/heads/feature/e2e-')", source)
+        self.assertIn("retention-days: 1", source)
+        self.assertIn("compression-level: 0", source)
+        self.assertIn("path: app/build/outputs/apk/qa/app-qa.apk", source)
+
+    def test_e2e_intent_control_is_release_isolated_and_secret_safe(self) -> None:
+        release_gate = self.read(ROOT / "scripts/ci/verify-e2e-harness-release-surface.sh")
+        runner = self.read(ROOT / "scripts/android-e2e-control.sh")
+        self.assertIn("dev.junta.firmamobile.action.E2E_CONTROL", release_gate)
+        self.assertIn("E2eControlHook", release_gate)
+        self.assertIn("E2eSecretInbox", release_gate)
+        self.assertIn("--password-file", runner)
+        self.assertIn("--password-stdin", runner)
+        self.assertNotRegex(runner, r"--password(?:=|\s)")
+        self.assertIn("secretHandle", runner)
+        self.assertIn("certificateHandle", runner)
+        self.assertIn("no_backup/e2e-control/certificates", runner)
+        self.assertIn('if result="$(extract_json "$output")"; then', runner)
+        self.assertIn("transport_rc", runner)
+        hook = (ROOT / "app/src/debug/java/dev/junta/firmamobile/control/E2eControlHook.kt").read_text()
+        self.assertIn("pending.setResultCode(Activity.RESULT_OK)", hook)
+        self.assertNotIn("if (outcome.success) Activity.RESULT_OK", hook)
+        self.assertNotIn("content://com.android.externalstorage.documents", runner)
+        self.assertNotIn("--grant-read-uri-permission", runner)
+        self.assertNotIn("uiautomator", runner)
+        self.assertNotIn("input tap", runner)
 
     def test_security_workflow_scans_history_and_dependencies_with_pinned_tools(self) -> None:
         source = self.read(SECURITY)
