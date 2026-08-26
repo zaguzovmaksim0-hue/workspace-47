@@ -65,6 +65,15 @@ jobs:
         run: scripts/ci/verify-android-artifacts.sh
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
+      - name: Publish short-lived QA device artifact
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/e2e-')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qa-device-apk-${{ github.sha }}
+          path: app/build/outputs/apk/qa/app-qa.apk
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
 
   python:
     name: Python catalog and policy tests
