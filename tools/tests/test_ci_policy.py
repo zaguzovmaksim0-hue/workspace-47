@@ -40,6 +40,7 @@ APP_RUNTIME_CONFIGURATIONS = {
     "releaseRuntimeClasspath",
 }
 EXPECTED_GITLEAKS_IGNORES = {
+    "68b8bf9b778f7d8246aa963bb2318391aa927cda:app/src/test/java/dev/junta/firmamobile/control/E2eControlIntentParserTest.kt:generic-api-key:26",
     "f15a1d272cb088da8d900c238f7c745a9633b667:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1283",
     "2c4b1b77d61c6d348db0a6114bf21c5dbb419d20:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1057",
     "36ae2899b4039eb5da9d40c158ff2ebcd4a944a7:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:2999",

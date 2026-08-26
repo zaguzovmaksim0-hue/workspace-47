@@ -23,7 +23,7 @@ class E2eControlIntentParserTest {
         val passwordIntent = Intent(E2eControlHook.ACTION)
             .putExtra(E2eControlHook.EXTRA_RUN_ID, "run-1")
             .putExtra(E2eControlHook.EXTRA_COMMAND, "CERT_UNLOCK")
-            .putExtra(E2eControlHook.EXTRA_SECRET_HANDLE, "0123456789abcdef0123456789abcdef")
+            .putExtra(E2eControlHook.EXTRA_SECRET_HANDLE, "a".repeat(32))
             .putExtra("password", "must-never-be-accepted")
         assertNull(E2eControlIntentParser.parse(passwordIntent))
 
