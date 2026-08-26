@@ -43,9 +43,9 @@ internal class E2eControlHook(
                         controller.execute(parsed)
                     }
                     val json = outcome.toJson()
-                    pending.setResultCode(
-                        if (outcome.success) Activity.RESULT_OK else Activity.RESULT_CANCELED,
-                    )
+                    // Broadcast result code reports protocol transport, not domain success.
+                    // Valid schema-v3 outcomes always return RESULT_OK; callers inspect success/result in JSON.
+                    pending.setResultCode(Activity.RESULT_OK)
                     pending.setResultData(json)
                     Log.i(LOG_TAG, json)
                 } catch (_: Exception) {
