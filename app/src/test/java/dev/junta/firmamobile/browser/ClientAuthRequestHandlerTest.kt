@@ -116,7 +116,12 @@ class ClientAuthRequestHandlerTest {
     @Test
     fun exactEmptyIssuerRequestProceedsOnceWithoutExportingThePrivateKey() {
         val clears = AtomicInteger()
-        val handler = handler(epoch = 9, clears = clears)
+        val provided = mutableListOf<Pair<String, Int>>()
+        val handler = handler(
+            epoch = 9,
+            clears = clears,
+            onCertificateProvided = { host, port -> provided += host to port },
+        )
         val first = RecordingRequest()
 
         handler.handle(first)
@@ -127,6 +132,7 @@ class ClientAuthRequestHandlerTest {
         assertEquals(0, synthetic.encodedReads.get())
         assertEquals(identity.chain.size, first.chain?.size)
         assertEquals(0, clears.get())
+        assertEquals(listOf(first.host to first.port), provided)
 
         handler.abandon()
         assertEquals(1, clears.get())
@@ -139,6 +145,23 @@ class ClientAuthRequestHandlerTest {
         assertEquals(0, replay.proceeds)
         assertEquals(1, replay.ignores)
         assertEquals(1, clears.get())
+    }
+
+    @Test
+    fun diagnosticFailureAfterProceedDoesNotChangeClientAuthDecision() {
+        val clears = AtomicInteger()
+        val handler = handler(
+            epoch = 9,
+            clears = clears,
+            onCertificateProvided = { _, _ -> error("diagnostic failure") },
+        )
+        val request = RecordingRequest()
+
+        handler.handle(request)
+
+        assertEquals(1, request.proceeds)
+        assertEquals(0, request.ignores)
+        assertEquals(0, clears.get())
     }
 
     @Test
@@ -335,6 +358,7 @@ class ClientAuthRequestHandlerTest {
         clears: AtomicInteger = AtomicInteger(),
         clock: Clock = this.clock,
         monotonic: MutableMonotonicClock = this.monotonic,
+        onCertificateProvided: (String, Int) -> Unit = { _, _ -> },
     ) = ClientAuthRequestHandler(
         grant = ClientAuthGrant(authorized(monotonic), epoch),
         identityProvider = { identity },
@@ -342,6 +366,7 @@ class ClientAuthRequestHandlerTest {
         clearClientCertPreferences = { clears.incrementAndGet() },
         clock = clock,
         monotonicNanos = monotonic::nowNanos,
+        onCertificateProvided = onCertificateProvided,
     )
 
     private fun authorized(monotonic: MutableMonotonicClock = this.monotonic): AuthorizedClientAuthTarget {

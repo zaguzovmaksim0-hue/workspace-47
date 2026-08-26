@@ -10,3 +10,4 @@ c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile
 c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:139
 c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:140
 f3c8755356639b1e7842b9d20271186182dd754c:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:1307
+68b8bf9b778f7d8246aa963bb2318391aa927cda:app/src/test/java/dev/junta/firmamobile/control/E2eControlIntentParserTest.kt:generic-api-key:26

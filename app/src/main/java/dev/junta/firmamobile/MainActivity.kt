@@ -95,8 +95,8 @@ import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.SigningPreparationResult
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
-import dev.junta.firmamobile.smoke.CatalogSmokeController
-import dev.junta.firmamobile.smoke.CatalogSmokeHook
+import dev.junta.firmamobile.diagnostics.RuntimeDiagnosticsFactory
+import dev.junta.firmamobile.diagnostics.RuntimeDiagnosticsObserver
 import dev.junta.firmamobile.ui.AppRoot
 import dev.junta.firmamobile.ui.BrowserScreen
 import dev.junta.firmamobile.ui.CertificateUiState
@@ -114,6 +114,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private var currentWebView: WebView? = null
     private var destination by mutableStateOf<AppDestination>(AppDestination.Certificate)
+    private var browserInstanceGeneration by mutableStateOf(0L)
     private lateinit var signingCoordinator: SigningCoordinator
     private lateinit var batchSigningCoordinator: BatchSigningCoordinator
     private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
@@ -125,7 +126,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var burgosBatchSigningAdapter: BurgosBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
-    private lateinit var catalogSmokeHook: CatalogSmokeHook
+    private lateinit var runtimeDiagnosticsObserver: RuntimeDiagnosticsObserver
     private var currentNavigationEpoch: Long = 0L
     private val signingJobs = SigningJobRegistry()
 
@@ -293,24 +294,35 @@ class MainActivity : ComponentActivity() {
             profileCatalog = BuiltInSiteProfiles.catalog,
             publicCatalog = publicCatalog,
         )
-        catalogSmokeHook = CatalogSmokeHook(
+        runtimeDiagnosticsObserver = RuntimeDiagnosticsFactory.create(
             activity = this,
-            execute = CatalogSmokeController(
-                repository = catalogRepository,
-                certificateUnlocked = {
-                    certificateViewModel.state.value is CertificateUiState.Unlocked
-                },
-                openProfile = { launch ->
-                    cancelSigning(SigningCancelReason.NAVIGATION)
-                    currentWebView = null
-                    destination = AppDestination.Browser(
-                        profileId = launch.profileId,
-                        entryUrl = launch.entryUrl,
-                    )
-                },
-                activeWebViewMatches = { profileId -> activeWebViewMatches(profileId) },
-                adapterIdForProfile = { profileId -> smokeAdapterId(profileId) },
-            )::execute,
+            scope = lifecycleScope,
+            repository = catalogRepository,
+            certificateState = certificateViewModel.state,
+            certificateUnlocked = {
+                certificateViewModel.state.value is CertificateUiState.Unlocked
+            },
+            selectCertificate = { uri -> selectCertificateForControl(uri) },
+            unlockCertificate = certificateViewModel::unlock,
+            lockCertificate = ::lockCertificateForControl,
+            forgetCertificate = ::forgetCertificateForControl,
+            openProfile = { launch ->
+                cancelSigning(SigningCancelReason.NAVIGATION)
+                dismissSigningState()
+                currentWebView = null
+                browserInstanceGeneration++
+                destination = AppDestination.Browser(
+                    profileId = launch.profileId,
+                    entryUrl = launch.entryUrl,
+                )
+            },
+            closeProfile = ::closeProfileForControl,
+            activeWebViewMatches = { profileId -> activeWebViewMatches(profileId) },
+            adapterIdForProfile = { profileId -> smokeAdapterId(profileId) },
+            signingState = ::currentSigningState,
+            confirmCurrentSigning = ::confirmCurrentSigningForControl,
+            cancelCurrentSigning = ::cancelCurrentSigningForControl,
+            dismissCurrentSigning = ::dismissCurrentSigningForControl,
         )
         val paperSystemBar = getColor(R.color.jfm_paper)
         enableEdgeToEdge(
@@ -355,6 +367,7 @@ class MainActivity : ComponentActivity() {
                     key(
                         browserDestination.profileId.value,
                         browserDestination.entryUrl.toASCIIString(),
+                        browserInstanceGeneration,
                     ) {
                         BrowserScreen(
                         profileId = browserDestination.profileId,
@@ -418,7 +431,9 @@ class MainActivity : ComponentActivity() {
                         },
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onWebViewChanged = { currentWebView = it },
-                            onNavigationEpochChanged = { currentNavigationEpoch = it },
+                        onNavigationEpochChanged = { currentNavigationEpoch = it },
+                        onRuntimeDiagnostic = runtimeDiagnosticsObserver::observe,
+                        onInteractiveControlChanged = runtimeDiagnosticsObserver::updateInteractiveControl,
                         )
                     }
                 } else if (destination == AppDestination.Catalog && unlocked != null) {
@@ -441,6 +456,7 @@ class MainActivity : ComponentActivity() {
                                 while (recentPortals.size > MAX_RECENT_PROFILES) {
                                     recentPortals.removeAt(recentPortals.lastIndex)
                                 }
+                                browserInstanceGeneration++
                                 destination = AppDestination.Browser(
                                     profileId = launch.profileId,
                                     entryUrl = launch.entryUrl,
@@ -465,11 +481,11 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         certificateViewModel.onAppForegrounded()
-        catalogSmokeHook.start()
+        runtimeDiagnosticsObserver.start()
     }
 
     override fun onStop() {
-        catalogSmokeHook.stop()
+        runtimeDiagnosticsObserver.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         certificateViewModel.onAppBackgrounded()
         super.onStop()
@@ -488,7 +504,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        catalogSmokeHook.stop()
+        runtimeDiagnosticsObserver.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         signingCoordinator.close()
         batchSigningCoordinator.close()
@@ -611,6 +627,81 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun selectCertificateForControl(uri: Uri) {
+        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = AppDestination.Certificate
+        certificateViewModel.prepareForCertificateSelection()
+        certificateViewModel.onCertificateSelected(uri)
+    }
+
+    private fun lockCertificateForControl() {
+        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = AppDestination.Certificate
+        certificateViewModel.lock()
+    }
+
+    private fun forgetCertificateForControl() {
+        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = AppDestination.Certificate
+        certificateViewModel.forget()
+    }
+
+    private fun closeProfileForControl(profileId: ProfileId): Boolean {
+        val browser = destination as? AppDestination.Browser ?: return false
+        if (browser.profileId != profileId || !activeWebViewMatches(profileId)) return false
+        cancelSigning(SigningCancelReason.NAVIGATION)
+        dismissSigningState()
+        currentWebView = null
+        browserInstanceGeneration++
+        destination = if (certificateViewModel.state.value is CertificateUiState.Unlocked) {
+            AppDestination.Catalog
+        } else {
+            AppDestination.Certificate
+        }
+        return true
+    }
+
+    private fun currentSigningState(): SigningUiState {
+        val owner = signingFlowOwnership.current() ?: return SigningUiState.Idle
+        return when (owner.kind) {
+            SigningFlowKind.ORDINARY -> signingCoordinator.state.value
+            SigningFlowKind.BATCH -> batchSigningCoordinator.state.value
+        }
+    }
+
+    private fun confirmCurrentSigningForControl(): Boolean {
+        val awaiting = currentSigningState() as? SigningUiState.AwaitingConfirmation ?: return false
+        confirmSigning(awaiting.requestId)
+        return true
+    }
+
+    private fun cancelCurrentSigningForControl(): Boolean {
+        val owner = signingFlowOwnership.current() ?: return false
+        if (currentSigningState() is SigningUiState.Idle) return false
+        cancelSigning(SigningCancelReason.USER, owner.requestId)
+        return true
+    }
+
+    private fun dismissCurrentSigningForControl(): Boolean {
+        when (currentSigningState()) {
+            is SigningUiState.Completed,
+            is SigningUiState.Failed,
+            -> Unit
+            else -> return false
+        }
+        dismissSigningState()
+        return true
+    }
+
     private fun currentSigningOrigin() =
         (destination as? AppDestination.Browser)?.profileId?.let { selectedProfileId ->
             currentWebView?.url?.let { url ->
@@ -635,7 +726,9 @@ class MainActivity : ComponentActivity() {
         if (browser.profileId != profileId) return false
         val currentUrl = currentWebView?.url ?: return false
         val uri = runCatching { URI(currentUrl) }.getOrNull() ?: return false
-        return BuiltInSiteProfiles.runtimeRegistry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId
+        val registry = BuiltInSiteProfiles.runtimeRegistry
+        return registry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId ||
+            registry.resolveRedirect(profileId, uri)?.profile?.profileId == profileId
     }
 
     private fun smokeAdapterId(profileId: ProfileId): String? {

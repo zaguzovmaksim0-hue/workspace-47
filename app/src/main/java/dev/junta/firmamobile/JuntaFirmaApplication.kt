@@ -6,11 +6,11 @@ import android.util.Log
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
 import dev.junta.firmamobile.certificate.AndroidKeystoreCertificateUnlockCache
+import dev.junta.firmamobile.certificate.BuildVariantCertificateDocumentAccessFactory
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
-import dev.junta.firmamobile.certificate.ContentResolverCertificateDocumentAccess
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.PreferencesCertificateReferenceStore
 import dev.junta.firmamobile.certificate.certificateReferenceDataStore
@@ -54,7 +54,7 @@ class JuntaFirmaApplication : Application() {
         certificateSession = CertificateSession(monotonicNanos = SystemClock::elapsedRealtimeNanos)
         certificateUnlockCache = AndroidKeystoreCertificateUnlockCache(this)
         certificateGateway = CertificateRepository(
-            documentAccess = ContentResolverCertificateDocumentAccess(contentResolver),
+            documentAccess = BuildVariantCertificateDocumentAccessFactory.create(this),
             referenceStore = PreferencesCertificateReferenceStore(certificateReferenceDataStore),
             loader = Pkcs12Loader(),
         )
