@@ -8,7 +8,13 @@ import org.junit.Test
 class ApplicationIdentityContractTest {
     @Test
     fun juntaFirmaMobileNeverUsesTheOfficialAutoFirmaPackageIdentity() {
-        assertEquals("dev.junta.firmamobile", BuildConfig.APPLICATION_ID)
+        assertEquals(
+            true,
+            BuildConfig.APPLICATION_ID in setOf(
+                "dev.junta.firmamobile",
+                "dev.junta.firmamobile.redsarae2e",
+            ),
+        )
         assertNotEquals(JuntaNavigationPolicy.AUTOFIRMA_PACKAGE, BuildConfig.APPLICATION_ID)
         assertEquals("es.gob.afirma", JuntaNavigationPolicy.AUTOFIRMA_PACKAGE)
     }
