@@ -110,6 +110,18 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun regAgeInPlaceClientAuthAllowsOnlyExactQuerylessSourceWithoutSourceParameters() {
+        val source = "\"sourceUrls\":[\"https://pasarela.clave.gob.es/Proxy2/ServiceProvider\"]"
+        val expanded =
+            "\"sourceUrls\":[\"https://pasarela.clave.gob.es/Proxy2/ServiceProvider?state=hidden\"]"
+
+        assertTrue(BuiltInSiteProfiles.JSON.contains(source))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(source, expanded))
+        }
+    }
+
+    @Test
     fun preservesTheExactMelillaQaOnlyBatchContract() {
         val profileId = ProfileId("melilla-sede")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }

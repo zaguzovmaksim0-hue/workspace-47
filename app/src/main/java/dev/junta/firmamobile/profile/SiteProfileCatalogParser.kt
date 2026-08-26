@@ -132,6 +132,8 @@ object SiteProfileCatalogParser {
             HttpMethod.GET
         }
         val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
+        val sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
+            .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) }
         val fixed = stringMap(o.objValue("fixedQueryParameters"))
         val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
         val sourceFixed = if ("sourceFixedQueryParameters" in o.values) {
@@ -188,14 +190,16 @@ object SiteProfileCatalogParser {
                 require(requestPort == 443)
                 require(fixed.isEmpty() && ephemeral.isEmpty())
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
-                require(sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty())
+                require(
+                    sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty() ||
+                        sourceUrls.all { it.rawQuery == null }
+                )
             }
         }
         return ClientAuthPolicy(
             transitionMode = transitionMode,
             requestOrigins = origins(o.array("requestOrigins")).also { require(it.size == 1) },
-            sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
-                .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) },
+            sourceUrls = sourceUrls,
             requestPath = o.string("requestPath").also {
                 require(it.startsWith('/') && URI(null, null, it, null).rawPath == it)
             },
