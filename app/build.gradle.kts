@@ -216,6 +216,12 @@ android {
         compose = true
     }
 
+    packaging {
+        resources {
+            excludes += "/META-INF/LICENSE.md"
+        }
+    }
+
     signingConfigs {
         if (releaseSigningConfigured) {
             create("privateRelease") {
