@@ -12,6 +12,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import dev.junta.firmamobile.diagnostics.RuntimeDiagnosticEvent
+import java.util.UUID
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.ConscryptMode
@@ -129,9 +131,23 @@ class CatalogSmokeControllerTest {
     }
 
     @Test
-    fun `inspect reports active webview only for the requested profile`() {
+    fun `inspect reports active webview only for the exact run profile and browser session`() {
         val active = ProfileId("junta-ofvirtual")
-        val controller = controller(activeProfile = active)
+        val runtime = CatalogSmokeRuntime()
+        runtime.beginRun("run-5", active)
+        val sessionId = UUID.randomUUID()
+        runtime.observe(
+            RuntimeDiagnosticEvent.WebViewState(active, sessionId, 0L, active = true),
+        )
+        runtime.observe(
+            RuntimeDiagnosticEvent.NavigationChanged(
+                active,
+                sessionId,
+                1L,
+                "https://ws024.juntadeandalucia.es/ae/adminelec/areatecnica/afirma",
+            ),
+        )
+        val controller = controller(activeProfile = active, runtime = runtime)
 
         assertEquals(
             CatalogSmokeResultCode.WEBVIEW_ACTIVE,
@@ -140,11 +156,48 @@ class CatalogSmokeControllerTest {
             ).result,
         )
         assertEquals(
-            CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE,
+            CatalogSmokeResultCode.RUN_NOT_ACTIVE,
             controller.execute(
-                CatalogSmokeRequest("run-6", "age-reg-redsara", "INSPECT"),
+                CatalogSmokeRequest("other-run", "junta-andalucia-ofvirtual", "INSPECT"),
             ).result,
         )
+    }
+
+    @Test
+    fun `profile identifier is accepted only when it maps to one catalog portal`() {
+        val opened = mutableListOf<PortalLaunchTarget>()
+        val runtime = CatalogSmokeRuntime()
+        val unique = repository.portals()
+            .groupBy { it.profileId }
+            .entries
+            .first { (profileId, portals) -> profileId != null && portals.size == 1 }
+            .value
+            .single()
+        val uniqueProfileId = requireNotNull(unique.profileId)
+
+        val uniqueResult = controller(unlocked = true, opened = opened, runtime = runtime).execute(
+            CatalogSmokeRequest(
+                runId = "profile-run",
+                operation = "OPEN",
+                profileId = uniqueProfileId.value,
+            ),
+        )
+        assertEquals(CatalogSmokeResultCode.OPEN_REQUESTED, uniqueResult.result)
+        assertEquals(uniqueProfileId, uniqueResult.profileId)
+
+        val duplicateProfile = repository.portals()
+            .groupBy { it.profileId }
+            .entries
+            .first { (profileId, portals) -> profileId != null && portals.size > 1 }
+            .key
+        val ambiguousResult = controller(unlocked = true, runtime = CatalogSmokeRuntime()).execute(
+            CatalogSmokeRequest(
+                runId = "ambiguous-run",
+                operation = "OPEN",
+                profileId = requireNotNull(duplicateProfile).value,
+            ),
+        )
+        assertEquals(CatalogSmokeResultCode.AMBIGUOUS_PROFILE, ambiguousResult.result)
     }
 
     @Test
@@ -153,8 +206,11 @@ class CatalogSmokeControllerTest {
             setOf(
                 CatalogSmokeResultCode.INVALID_REQUEST,
                 CatalogSmokeResultCode.UNKNOWN_PORTAL,
+                CatalogSmokeResultCode.UNKNOWN_PROFILE,
+                CatalogSmokeResultCode.AMBIGUOUS_PROFILE,
                 CatalogSmokeResultCode.PROFILE_DISABLED,
                 CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE,
+                CatalogSmokeResultCode.RUN_NOT_ACTIVE,
             ),
             CatalogSmokeResultCode.entries.filterTo(mutableSetOf()) {
                 it.isOrderedBroadcastFailure()
@@ -167,11 +223,13 @@ class CatalogSmokeControllerTest {
         unlocked: Boolean = false,
         opened: MutableList<PortalLaunchTarget> = mutableListOf(),
         activeProfile: ProfileId? = null,
+        runtime: CatalogSmokeRuntime = CatalogSmokeRuntime(),
     ) = CatalogSmokeController(
         repository = catalogRepository,
         certificateUnlocked = { unlocked },
         openProfile = opened::add,
         activeWebViewMatches = { it == activeProfile },
         adapterIdForProfile = { "test-adapter" },
+        runtime = runtime,
     )
 }

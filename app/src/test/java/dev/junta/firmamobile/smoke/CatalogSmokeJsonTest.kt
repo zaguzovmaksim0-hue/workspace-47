@@ -1,0 +1,67 @@
+package dev.junta.firmamobile.smoke
+
+import dev.junta.firmamobile.catalog.PortalId
+import dev.junta.firmamobile.profile.ProfileId
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class CatalogSmokeJsonTest {
+    @Test
+    fun `schema two exposes bounded runtime evidence without arbitrary payload fields`() {
+        val snapshot = CatalogSmokeRuntimeSnapshot(
+            runId = "run-json",
+            profileId = ProfileId("reg-age-redsara"),
+            browserSessionBound = true,
+            webViewActive = true,
+            navigationEpoch = 2L,
+            currentHost = "reg.redsara.es",
+            currentPath = "/es/",
+            currentUrlAllowed = true,
+            clientCertRequestObserved = true,
+            clientCertAcceptedObserved = true,
+            clientAuthConfirmationRequired = false,
+            certificateSelectionRequired = false,
+            afirmaRequestObserved = false,
+            autofirmaIntentObserved = false,
+            signingConfirmationRequired = false,
+            signingStartedObserved = false,
+            signingCompletedObserved = false,
+            signingFailedObserved = false,
+            portalCallbackObserved = false,
+            renderProcessGone = false,
+            failureCode = null,
+            events = listOf(
+                CatalogSmokeRuntimeEvent(
+                    sequence = 1L,
+                    code = CatalogSmokeEventCode.CLIENT_CERT_ACCEPTED,
+                    navigationEpoch = 2L,
+                    host = "reg.redsara.es",
+                    detail = "443",
+                ),
+            ),
+        )
+        val json = JSONObject(
+            CatalogSmokeOutcome(
+                runId = "run-json",
+                portalId = PortalId("age-reg-redsara"),
+                profileId = ProfileId("reg-age-redsara"),
+                adapterId = "client-tls-auth",
+                entryUrl = "https://reg.redsara.es/es/",
+                supportStatus = "IMPLEMENTED_NOT_E2E",
+                result = CatalogSmokeResultCode.WEBVIEW_ACTIVE,
+                runtime = snapshot,
+            ).toJson(),
+        )
+
+        assertEquals(2, json.getInt("schemaVersion"))
+        assertTrue(json.getJSONObject("runtime").getBoolean("clientCertAcceptedObserved"))
+        val serialized = json.toString()
+        assertFalse(serialized.contains("privateKey", ignoreCase = true))
+        assertFalse(serialized.contains("password", ignoreCase = true))
+        assertFalse(serialized.contains("cookie", ignoreCase = true))
+        assertFalse(serialized.contains("payload", ignoreCase = true))
+    }
+}

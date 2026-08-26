@@ -47,6 +47,8 @@ interface BrowserNavigationCallbacks {
     fun onTopLevelNavigationStarted(url: String) = Unit
 
     fun onTopLevelUrlChanged(url: String) = Unit
+
+    fun onClientCertRequestObserved(host: String, port: Int) = Unit
 }
 
 class JuntaWebViewClient(
@@ -238,6 +240,7 @@ class JuntaWebViewClient(
             request.ignore()
             return
         }
+        callbacks.onClientCertRequestObserved(request.host, request.port)
         onInPlaceClientAuthChallenge(pending.authorized, request)
     }
 
