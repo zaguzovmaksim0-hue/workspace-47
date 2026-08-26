@@ -2389,6 +2389,7 @@ object SiteProfileCatalogParser {
                             CACERES_PROFILE_ID,
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
+                            REG_AGE_PROFILE_ID,
                             OURENSE_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
                             CORUNA_PROFILE_ID,
