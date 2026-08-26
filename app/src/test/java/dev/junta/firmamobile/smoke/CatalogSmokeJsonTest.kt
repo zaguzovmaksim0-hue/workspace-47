@@ -7,7 +7,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
+import org.robolectric.annotation.GraphicsMode
+import org.robolectric.annotation.SQLiteMode
 
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
+@SQLiteMode(SQLiteMode.Mode.LEGACY)
 class CatalogSmokeJsonTest {
     @Test
     fun `schema two exposes bounded runtime evidence without arbitrary payload fields`() {

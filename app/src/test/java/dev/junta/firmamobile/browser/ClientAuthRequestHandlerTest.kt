@@ -148,6 +148,23 @@ class ClientAuthRequestHandlerTest {
     }
 
     @Test
+    fun diagnosticFailureAfterProceedDoesNotChangeClientAuthDecision() {
+        val clears = AtomicInteger()
+        val handler = handler(
+            epoch = 9,
+            clears = clears,
+            onCertificateProvided = { _, _ -> error("diagnostic failure") },
+        )
+        val request = RecordingRequest()
+
+        handler.handle(request)
+
+        assertEquals(1, request.proceeds)
+        assertEquals(0, request.ignores)
+        assertEquals(0, clears.get())
+    }
+
+    @Test
     fun wrongHostPortKeyTypeIssuerEpochAndExpiryAlwaysIgnore() {
         val cases = listOf(
             RecordingRequest(host = "ws235.juntadeandalucia.es.evil.example"),

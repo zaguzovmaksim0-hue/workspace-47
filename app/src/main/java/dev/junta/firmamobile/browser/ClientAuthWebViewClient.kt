@@ -53,7 +53,11 @@ internal class ClientAuthRequestHandler(
                 check(privateKey.algorithm.equals(identity.certificate.publicKey.algorithm, ignoreCase = true))
                 proceeded = true
                 request.proceed(privateKey, chain)
-                onCertificateProvided(request.host, request.port)
+                try {
+                    onCertificateProvided(request.host, request.port)
+                } catch (_: Exception) {
+                    // Observation must not convert a successful client-cert decision into failure.
+                }
             }
         } catch (_: Exception) {
             if (!proceeded) request.ignore()

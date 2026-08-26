@@ -2,6 +2,7 @@ package dev.junta.firmamobile.smoke
 
 import dev.junta.firmamobile.browser.NavigationBlockReason
 import dev.junta.firmamobile.diagnostics.RuntimeDiagnosticEvent
+import dev.junta.firmamobile.diagnostics.observeSafely
 import dev.junta.firmamobile.profile.ProfileId
 import java.util.UUID
 import org.junit.Assert.assertEquals
@@ -11,6 +12,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CatalogSmokeRuntimeTest {
+    @Test
+    fun `diagnostic callback failures are isolated`() {
+        val observer: (RuntimeDiagnosticEvent) -> Unit = { error("boom") }
+        observer.observeSafely(
+            RuntimeDiagnosticEvent.WebViewState(
+                ProfileId("reg-age-redsara"),
+                UUID.randomUUID(),
+                0L,
+                active = true,
+            ),
+        )
+    }
+
     private val profileId = ProfileId("reg-age-redsara")
 
     @Test
