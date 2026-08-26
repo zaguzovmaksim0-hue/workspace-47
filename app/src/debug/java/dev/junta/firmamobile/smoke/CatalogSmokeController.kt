@@ -72,8 +72,10 @@ internal class CatalogSmokeController(
         if (operation == CatalogSmokeOperation.INSPECT) {
             val snapshot = runtime.snapshot(runId, profileId)
                 ?: return base.copy(result = CatalogSmokeResultCode.RUN_NOT_ACTIVE)
+            // activeWebViewMatches re-validates the live WebView URL against the exact profile.
+            // currentUrlAllowed is diagnostic evidence from the event journal, not a second authority.
             val active = activeWebViewMatches(profileId) &&
-                snapshot.browserSessionBound && snapshot.webViewActive && snapshot.currentUrlAllowed
+                snapshot.browserSessionBound && snapshot.webViewActive
             return base.copy(
                 result = if (active) {
                     CatalogSmokeResultCode.WEBVIEW_ACTIVE

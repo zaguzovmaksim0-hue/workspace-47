@@ -2,7 +2,6 @@ package dev.junta.firmamobile.smoke
 
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.profile.ProfileId
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -27,7 +26,8 @@ class CatalogSmokeJsonTest {
             webViewActive = true,
             navigationEpoch = 2L,
             currentHost = "reg.redsara.es",
-            currentPath = "/es/",
+            currentPathLength = 4,
+            currentPathSha256_8 = "8df12444",
             currentUrlAllowed = true,
             clientCertRequestObserved = true,
             clientCertAcceptedObserved = true,
@@ -52,22 +52,23 @@ class CatalogSmokeJsonTest {
                 ),
             ),
         )
-        val json = JSONObject(
-            CatalogSmokeOutcome(
-                runId = "run-json",
-                portalId = PortalId("age-reg-redsara"),
-                profileId = ProfileId("reg-age-redsara"),
-                adapterId = "client-tls-auth",
-                entryUrl = "https://reg.redsara.es/es/",
-                supportStatus = "IMPLEMENTED_NOT_E2E",
-                result = CatalogSmokeResultCode.WEBVIEW_ACTIVE,
-                runtime = snapshot,
-            ).toJson(),
-        )
+        val serialized = CatalogSmokeOutcome(
+            runId = "run-json",
+            portalId = PortalId("age-reg-redsara"),
+            profileId = ProfileId("reg-age-redsara"),
+            adapterId = "client-tls-auth",
+            entryUrl = "https://reg.redsara.es/es/",
+            supportStatus = "IMPLEMENTED_NOT_E2E",
+            result = CatalogSmokeResultCode.WEBVIEW_ACTIVE,
+            runtime = snapshot,
+        ).toJson()
 
-        assertEquals(2, json.getInt("schemaVersion"))
-        assertTrue(json.getJSONObject("runtime").getBoolean("clientCertAcceptedObserved"))
-        val serialized = json.toString()
+        assertTrue(serialized.contains("\"schemaVersion\":2"))
+        assertTrue(serialized.contains("\"clientCertAcceptedObserved\":true"))
+        assertTrue(serialized.contains("\"currentPathLength\":4"))
+        assertTrue(serialized.contains("\"currentPathSha256_8\":\"8df12444\""))
+        assertFalse(serialized.contains("\"currentPath\":"))
+        assertFalse(serialized.contains("\"path\":"))
         assertFalse(serialized.contains("privateKey", ignoreCase = true))
         assertFalse(serialized.contains("password", ignoreCase = true))
         assertFalse(serialized.contains("cookie", ignoreCase = true))

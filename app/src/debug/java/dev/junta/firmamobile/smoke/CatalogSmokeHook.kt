@@ -89,7 +89,8 @@ private fun CatalogSmokeRuntimeSnapshot.toJsonObject(): JSONObject = JSONObject(
     .put("webViewActive", webViewActive)
     .put("navigationEpoch", navigationEpoch)
     .put("currentHost", currentHost ?: JSONObject.NULL)
-    .put("currentPath", currentPath ?: JSONObject.NULL)
+    .put("currentPathLength", currentPathLength ?: JSONObject.NULL)
+    .put("currentPathSha256_8", currentPathSha256_8 ?: JSONObject.NULL)
     .put("currentUrlAllowed", currentUrlAllowed)
     .put("clientCertRequestObserved", clientCertRequestObserved)
     .put("clientCertAcceptedObserved", clientCertAcceptedObserved)
@@ -114,7 +115,8 @@ private fun CatalogSmokeRuntimeSnapshot.toJsonObject(): JSONObject = JSONObject(
                         .put("code", event.code.name)
                         .put("navigationEpoch", event.navigationEpoch)
                         .put("host", event.host ?: JSONObject.NULL)
-                        .put("path", event.path ?: JSONObject.NULL)
+                        .put("pathLength", event.pathLength ?: JSONObject.NULL)
+                        .put("pathSha256_8", event.pathSha256_8 ?: JSONObject.NULL)
                         .put("detail", event.detail ?: JSONObject.NULL),
                 )
             }

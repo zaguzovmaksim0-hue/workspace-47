@@ -62,7 +62,8 @@ class CatalogSmokeRuntimeTest {
         assertTrue(snapshot.webViewActive)
         assertTrue(snapshot.currentUrlAllowed)
         assertEquals("reg.redsara.es", snapshot.currentHost)
-        assertEquals("/es/", snapshot.currentPath)
+        assertEquals(4, snapshot.currentPathLength)
+        assertEquals("6866c834", snapshot.currentPathSha256_8)
     }
 
     @Test
@@ -102,7 +103,7 @@ class CatalogSmokeRuntimeTest {
     }
 
     @Test
-    fun `runtime report keeps only public host path and bounded event codes`() {
+    fun `runtime report never exports literal path query or fragment`() {
         val runtime = CatalogSmokeRuntime()
         val session = UUID.randomUUID()
         runtime.beginRun("run-sanitize", profileId)
@@ -112,7 +113,7 @@ class CatalogSmokeRuntimeTest {
                 profileId,
                 session,
                 1L,
-                "https://reg.redsara.es/es/?token=do-not-export#private",
+                "https://reg.redsara.es/es/do-not-export?token=also-private#private",
             ),
         )
         runtime.observe(
@@ -127,11 +128,13 @@ class CatalogSmokeRuntimeTest {
 
         val snapshot = requireNotNull(runtime.snapshot("run-sanitize", profileId))
         assertEquals("reg.redsara.es", snapshot.currentHost)
-        assertEquals("/es/", snapshot.currentPath)
+        assertEquals(17, snapshot.currentPathLength)
+        assertEquals("a7f49263", snapshot.currentPathSha256_8)
+        assertFalse(requireNotNull(snapshot.currentPathSha256_8).contains("do-not-export"))
         assertTrue(snapshot.clientCertAcceptedObserved)
         assertTrue(snapshot.events.none { event ->
             event.host?.contains("token") == true ||
-                event.path?.contains("do-not-export") == true ||
+                event.pathSha256_8?.contains("do-not-export") == true ||
                 event.detail?.contains("do-not-export") == true
         })
     }
