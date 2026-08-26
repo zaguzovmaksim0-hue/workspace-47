@@ -245,6 +245,7 @@ android {
         }
         create("qa") {
             initWith(getByName("debug"))
+            applicationIdSuffix = ".intente2e2"
             matchingFallbacks += listOf("debug")
             isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
