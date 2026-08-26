@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import java.net.URI
 
 internal enum class E2eControlCommand {
     STATE,
@@ -24,6 +25,7 @@ internal enum class E2eControlCommand {
     PORTAL_OPEN,
     PORTAL_INSPECT,
     PORTAL_CLOSE,
+    PORTAL_LOGIN,
     CLIENT_AUTH_CONFIRM,
     CLIENT_AUTH_CANCEL,
     PORTAL_CERT_CONFIRM,
@@ -65,6 +67,7 @@ internal class E2eControlController(
     private val forgetCertificate: () -> Unit,
     private val consumeSecret: suspend (String) -> E2eSecretReadResult,
     private val executePortal: (CatalogSmokeRequest) -> CatalogSmokeOutcome,
+    private val navigateReviewedUrl: (ProfileId, URI) -> Boolean,
     private val signingState: () -> SigningUiState,
     private val confirmClientAuth: (ProfileId) -> Boolean,
     private val cancelClientAuth: (ProfileId) -> Boolean,
@@ -101,6 +104,7 @@ internal class E2eControlController(
             E2eControlCommand.PORTAL_OPEN -> portal(normalized, "OPEN")
             E2eControlCommand.PORTAL_INSPECT -> portal(normalized, "INSPECT")
             E2eControlCommand.PORTAL_CLOSE -> portal(normalized, "CLOSE")
+            E2eControlCommand.PORTAL_LOGIN -> redSaraLogin(normalized)
             E2eControlCommand.CLIENT_AUTH_CONFIRM ->
                 browserConfirmationAction(normalized, BrowserConfirmationAction.CLIENT_AUTH_CONFIRM)
             E2eControlCommand.CLIENT_AUTH_CANCEL ->
@@ -185,6 +189,26 @@ internal class E2eControlController(
             portal.result.name,
             success = !portal.result.isOrderedBroadcastFailure(),
             portal = portal,
+        )
+    }
+
+    private fun redSaraLogin(request: E2eControlRequest): E2eControlOutcome {
+        val portal = inspectPortal(request)
+        val profileId = portal.profileId
+        val runtime = portal.runtime
+        if (portal.portalId?.value != REDSARA_PORTAL_ID ||
+            profileId != REDSARA_PROFILE_ID ||
+            portal.result != CatalogSmokeResultCode.WEBVIEW_ACTIVE ||
+            !runtimeContextIsBound(runtime)
+        ) {
+            return outcome(request, "PORTAL_LOGIN_NOT_AVAILABLE", success = false, portal = portal)
+        }
+        val accepted = navigateReviewedUrl(profileId, REDSARA_LOGIN_URI)
+        return outcome(
+            request,
+            if (accepted) "PORTAL_LOGIN_REQUESTED" else "PORTAL_LOGIN_REJECTED",
+            accepted,
+            portal,
         )
     }
 
@@ -316,6 +340,7 @@ internal class E2eControlController(
             E2eControlCommand.PORTAL_OPEN,
             E2eControlCommand.PORTAL_INSPECT,
             E2eControlCommand.PORTAL_CLOSE,
+            E2eControlCommand.PORTAL_LOGIN,
             E2eControlCommand.CLIENT_AUTH_CONFIRM,
             E2eControlCommand.CLIENT_AUTH_CANCEL,
             E2eControlCommand.PORTAL_CERT_CONFIRM,
@@ -361,6 +386,9 @@ internal class E2eControlController(
 
     private companion object {
         const val OPERATION_TIMEOUT_MILLIS = 10_000L
+        const val REDSARA_PORTAL_ID = "age-reg-redsara"
+        val REDSARA_PROFILE_ID = ProfileId("reg-age-redsara")
+        val REDSARA_LOGIN_URI = URI("https://reg.redsara.es/es/login")
         val RUN_ID = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
         val COMMAND_TOKEN = Regex("[A-Z_]{1,64}")
     }

@@ -1212,6 +1212,30 @@ internal fun BrowserScreen(
         return true
     }
 
+    fun navigateReviewedUrl(target: URI): Boolean {
+        val webView = webViewRef.get() ?: return false
+        val raw = target.toASCIIString()
+        val resolution = BrowserUrlPolicy(
+            registry = BuiltInSiteProfiles.runtimeRegistry,
+            selectedProfileId = selectedServiceId,
+        ).resolve(raw, effectiveTopLevelProfileId)
+        val trusted = resolution.uri?.toASCIIString() == raw &&
+            resolution.site?.profile?.profileId == selectedServiceId &&
+            resolution.trustMode in setOf(
+                TrustMode.TRUSTED_SIGNING,
+                TrustMode.TRUSTED_CLIENT_AUTH,
+                TrustMode.TRUSTED_BROWSE,
+            )
+        if (!trusted) return false
+        mainHandler.post {
+            if (webViewRef.get() === webView) {
+                pageProgress = 0
+                webView.loadUrl(raw)
+            }
+        }
+        return true
+    }
+
     fun cancelPendingClientAuthForUser(): Boolean {
         val inPlace = pendingInPlaceClientAuth
         if (inPlace != null) {
@@ -1238,6 +1262,7 @@ internal fun BrowserScreen(
                 cancelClientAuth = ::cancelPendingClientAuthForUser,
                 confirmCertificateSelection = ::confirmPendingCertificateSelection,
                 cancelCertificateSelection = ::cancelPendingCertificateSelectionForUser,
+                navigateReviewedUrl = ::navigateReviewedUrl,
             ),
         )
     }

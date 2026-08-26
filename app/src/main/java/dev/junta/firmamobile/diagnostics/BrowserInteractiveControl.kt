@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.diagnostics
 
 import dev.junta.firmamobile.profile.ProfileId
+import java.net.URI
 
 /**
  * Lifecycle-scoped handles for confirmation actions already owned by BrowserScreen.
@@ -12,4 +13,5 @@ internal data class BrowserInteractiveControl(
     val cancelClientAuth: () -> Boolean,
     val confirmCertificateSelection: () -> Boolean,
     val cancelCertificateSelection: () -> Boolean,
+    val navigateReviewedUrl: (URI) -> Boolean,
 )

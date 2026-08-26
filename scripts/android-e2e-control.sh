@@ -24,6 +24,7 @@ Usage:
   scripts/android-e2e-control.sh portal-open RUN_ID portal|profile ID
   scripts/android-e2e-control.sh portal-inspect RUN_ID portal|profile ID
   scripts/android-e2e-control.sh portal-close RUN_ID portal|profile ID
+  scripts/android-e2e-control.sh portal-login RUN_ID portal|profile ID
   scripts/android-e2e-control.sh client-auth-confirm RUN_ID portal|profile ID
   scripts/android-e2e-control.sh client-auth-cancel RUN_ID portal|profile ID
   scripts/android-e2e-control.sh portal-cert-confirm RUN_ID portal|profile ID
@@ -252,13 +253,14 @@ case "$verb" in
       *) fail "Use --password-file, --password-stdin, or --password-clipboard; raw password arguments are forbidden" ;;
     esac
     ;;
-  portal-open|portal-inspect|portal-close|client-auth-confirm|client-auth-cancel|portal-cert-confirm|portal-cert-cancel|sign-confirm|sign-cancel|sign-dismiss)
+  portal-open|portal-inspect|portal-close|portal-login|client-auth-confirm|client-auth-cancel|portal-cert-confirm|portal-cert-cancel|sign-confirm|sign-cancel|sign-dismiss)
     (($# == 3)) || fail "$verb requires RUN_ID portal|profile ID"
     RUN_ID="$1"; kind="$2"; id="$3"; ensure_foreground
     case "$verb" in
       portal-open) command=PORTAL_OPEN ;;
       portal-inspect) command=PORTAL_INSPECT ;;
       portal-close) command=PORTAL_CLOSE ;;
+      portal-login) command=PORTAL_LOGIN ;;
       client-auth-confirm) command=CLIENT_AUTH_CONFIRM ;;
       client-auth-cancel) command=CLIENT_AUTH_CANCEL ;;
       portal-cert-confirm) command=PORTAL_CERT_CONFIRM ;;

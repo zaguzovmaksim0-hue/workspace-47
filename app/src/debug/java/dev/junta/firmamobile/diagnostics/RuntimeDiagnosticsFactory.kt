@@ -70,6 +70,9 @@ internal object RuntimeDiagnosticsFactory {
                 forgetCertificate = forgetCertificate,
                 consumeSecret = secretInbox::consume,
                 executePortal = portalController::execute,
+                navigateReviewedUrl = { profileId, uri ->
+                    interactiveAction(profileId) { it.navigateReviewedUrl(uri) }
+                },
                 signingState = signingState,
                 confirmClientAuth = { profileId ->
                     interactiveAction(profileId) { it.confirmClientAuth() }
