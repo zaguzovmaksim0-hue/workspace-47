@@ -15,7 +15,8 @@ import org.json.JSONObject
 
 /**
  * QA/debug-only typed control ingress for device E2E. The receiver is lifecycle-bound and the
- * sender must hold android.permission.DUMP. Secrets are never accepted as Intent extras.
+ * sender must hold android.permission.DUMP. Secrets and certificate bytes are never accepted as
+ * Intent extras.
  */
 internal class E2eControlHook(
     private val activity: Activity,
@@ -24,10 +25,7 @@ internal class E2eControlHook(
 ) {
     private var registered = false
 
-    private val actionReceiver = receiver()
-    private val contentReceiver = receiver()
-
-    private fun receiver() = object : BroadcastReceiver() {
+    private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action != ACTION || !isOrderedBroadcast) return
             val parsed = E2eControlIntentParser.parse(intent)
@@ -64,32 +62,18 @@ internal class E2eControlHook(
         if (registered) return
         ContextCompat.registerReceiver(
             activity,
-            actionReceiver,
-            e2eControlActionFilter(),
+            receiver,
+            IntentFilter(ACTION),
             Manifest.permission.DUMP,
             null,
             ContextCompat.RECEIVER_EXPORTED,
         )
-        try {
-            ContextCompat.registerReceiver(
-                activity,
-                contentReceiver,
-                e2eControlContentFilter(),
-                Manifest.permission.DUMP,
-                null,
-                ContextCompat.RECEIVER_EXPORTED,
-            )
-        } catch (error: Exception) {
-            runCatching { activity.unregisterReceiver(actionReceiver) }
-            throw error
-        }
         registered = true
     }
 
     fun stop() {
         if (!registered) return
-        runCatching { activity.unregisterReceiver(contentReceiver) }
-        runCatching { activity.unregisterReceiver(actionReceiver) }
+        runCatching { activity.unregisterReceiver(receiver) }
         registered = false
     }
 
@@ -100,15 +84,9 @@ internal class E2eControlHook(
         const val EXTRA_PORTAL_ID = "portalId"
         const val EXTRA_PROFILE_ID = "profileId"
         const val EXTRA_SECRET_HANDLE = "secretHandle"
+        const val EXTRA_CERTIFICATE_HANDLE = "certificateHandle"
         const val LOG_TAG = "JfmE2eControl"
     }
-}
-
-
-internal fun e2eControlActionFilter(): IntentFilter = IntentFilter(E2eControlHook.ACTION)
-
-internal fun e2eControlContentFilter(): IntentFilter = IntentFilter(E2eControlHook.ACTION).apply {
-    addDataScheme("content")
 }
 
 private fun internalErrorJson(): String = JSONObject()
@@ -129,10 +107,11 @@ internal object E2eControlIntentParser {
         E2eControlHook.EXTRA_PORTAL_ID,
         E2eControlHook.EXTRA_PROFILE_ID,
         E2eControlHook.EXTRA_SECRET_HANDLE,
+        E2eControlHook.EXTRA_CERTIFICATE_HANDLE,
     )
 
     fun parse(intent: Intent): E2eControlRequest? {
-        if (intent.action != E2eControlHook.ACTION) return null
+        if (intent.action != E2eControlHook.ACTION || intent.data != null) return null
         val keys = intent.extras?.keySet().orEmpty()
         if (keys.any { it !in ALLOWED_EXTRAS }) return null
         return E2eControlRequest(
@@ -141,8 +120,7 @@ internal object E2eControlIntentParser {
             portalId = intent.getStringExtra(E2eControlHook.EXTRA_PORTAL_ID),
             profileId = intent.getStringExtra(E2eControlHook.EXTRA_PROFILE_ID),
             secretHandle = intent.getStringExtra(E2eControlHook.EXTRA_SECRET_HANDLE),
-            certificateUri = intent.data,
-            intentFlags = intent.flags,
+            certificateHandle = intent.getStringExtra(E2eControlHook.EXTRA_CERTIFICATE_HANDLE),
         )
     }
 }

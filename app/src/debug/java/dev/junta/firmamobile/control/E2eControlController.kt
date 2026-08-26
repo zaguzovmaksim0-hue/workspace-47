@@ -1,7 +1,7 @@
 package dev.junta.firmamobile.control
 
-import android.content.Intent
 import android.net.Uri
+import dev.junta.firmamobile.certificate.E2eStagedCertificateDocumentAccess
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.smoke.CatalogSmokeOutcome
@@ -39,8 +39,7 @@ internal data class E2eControlRequest(
     val portalId: String? = null,
     val profileId: String? = null,
     val secretHandle: String? = null,
-    val certificateUri: Uri? = null,
-    val intentFlags: Int = 0,
+    val certificateHandle: String? = null,
 )
 
 internal data class E2eCertificateStateSnapshot(
@@ -117,10 +116,8 @@ internal class E2eControlController(
     }
 
     private suspend fun select(request: E2eControlRequest): E2eControlOutcome {
-        val uri = requireNotNull(request.certificateUri)
-        if (!isAllowedCertificateUri(uri, request.intentFlags)) {
-            return outcome(request, "CERTIFICATE_URI_REJECTED", success = false)
-        }
+        val handle = requireNotNull(request.certificateHandle)
+        val uri = E2eStagedCertificateDocumentAccess.uriForHandle(handle)
         selectCertificate(uri)
         val terminal = awaitCertificateTerminal()
             ?: return outcome(request, "CERTIFICATE_OPERATION_TIMEOUT", success = false)
@@ -309,11 +306,12 @@ internal class E2eControlController(
             E2eControlCommand.STATE,
             E2eControlCommand.CERT_LOCK,
             E2eControlCommand.CERT_FORGET,
-            -> !hasPortal && !hasProfile && request.secretHandle == null && request.certificateUri == null
+            -> !hasPortal && !hasProfile && request.secretHandle == null && request.certificateHandle == null
             E2eControlCommand.CERT_SELECT ->
-                !hasPortal && !hasProfile && request.secretHandle == null && request.certificateUri != null
+                !hasPortal && !hasProfile && request.secretHandle == null &&
+                    request.certificateHandle?.let(E2eStagedCertificateDocumentAccess.HANDLE::matches) == true
             E2eControlCommand.CERT_UNLOCK ->
-                !hasPortal && !hasProfile && request.certificateUri == null &&
+                !hasPortal && !hasProfile && request.certificateHandle == null &&
                     request.secretHandle?.let(E2eSecretInbox.HANDLE::matches) == true
             E2eControlCommand.PORTAL_OPEN,
             E2eControlCommand.PORTAL_INSPECT,
@@ -325,18 +323,8 @@ internal class E2eControlController(
             E2eControlCommand.SIGN_CONFIRM,
             E2eControlCommand.SIGN_CANCEL,
             E2eControlCommand.SIGN_DISMISS,
-            -> hasTarget && request.secretHandle == null && request.certificateUri == null
+            -> hasTarget && request.secretHandle == null && request.certificateHandle == null
         }
-    }
-
-    private fun isAllowedCertificateUri(uri: Uri, flags: Int): Boolean {
-        val hasReadGrant = flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0
-        val hasPersistableGrant = flags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION != 0
-        return hasReadGrant && hasPersistableGrant &&
-            uri.scheme.equals("content", ignoreCase = true) &&
-            uri.authority in ALLOWED_CERTIFICATE_AUTHORITIES &&
-            uri.fragment == null &&
-            uri.toString().length <= MAX_CERTIFICATE_URI_CHARS
     }
 
     private fun outcome(
@@ -373,12 +361,7 @@ internal class E2eControlController(
 
     private companion object {
         const val OPERATION_TIMEOUT_MILLIS = 10_000L
-        const val MAX_CERTIFICATE_URI_CHARS = 4096
         val RUN_ID = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
         val COMMAND_TOKEN = Regex("[A-Z_]{1,64}")
-        val ALLOWED_CERTIFICATE_AUTHORITIES = setOf(
-            "com.android.externalstorage.documents",
-            "com.android.providers.downloads.documents",
-        )
     }
 }

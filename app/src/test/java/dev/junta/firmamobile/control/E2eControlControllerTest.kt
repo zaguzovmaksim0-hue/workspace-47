@@ -1,6 +1,5 @@
 package dev.junta.firmamobile.control
 
-import android.content.Intent
 import android.net.Uri
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.certificate.CertificateSummary
@@ -45,37 +44,38 @@ class E2eControlControllerTest {
     )
 
     @Test
-    fun `certificate select requires exact content provider and both URI grants`() = runTest {
+    fun `certificate select accepts only exact opaque staging handle`() = runTest {
         val state = MutableStateFlow<CertificateUiState>(CertificateUiState.NoCertificate())
+        var selectedUri: Uri? = null
         val controller = controller(
             state = state,
-            select = { state.value = CertificateUiState.Locked(reference, null, null) },
+            select = { uri ->
+                selectedUri = uri
+                state.value = CertificateUiState.Locked(reference, null, null)
+            },
         )
+        val handle = "0123456789abcdef0123456789abcdef"
         val valid = E2eControlRequest(
             runId = "select-run",
             command = "CERT_SELECT",
-            certificateUri = Uri.parse(
-                "content://com.android.externalstorage.documents/document/primary%3ADownload%2Ffixture.p12",
-            ),
-            intentFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
+            certificateHandle = handle,
         )
-        assertEquals("CERTIFICATE_SELECTED", controller.execute(valid).result)
+        val outcome = controller.execute(valid)
+
+        assertEquals("CERTIFICATE_SELECTED", outcome.result)
+        assertTrue(outcome.success)
+        assertEquals("dev.junta.firmamobile.e2e.certificate", selectedUri?.authority)
+        assertEquals(listOf(handle), selectedUri?.pathSegments)
+        assertFalse(outcome.toJson().contains(handle))
 
         state.value = CertificateUiState.NoCertificate()
         assertEquals(
-            "CERTIFICATE_URI_REJECTED",
-            controller.execute(valid.copy(certificateUri = Uri.parse("https://example.test/fixture.p12"))).result,
+            "INVALID_REQUEST",
+            controller.execute(valid.copy(certificateHandle = "../outside")).result,
         )
         assertEquals(
-            "CERTIFICATE_URI_REJECTED",
-            controller.execute(valid.copy(intentFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION)).result,
-        )
-        assertEquals(
-            "CERTIFICATE_URI_REJECTED",
-            controller.execute(
-                valid.copy(certificateUri = Uri.parse("content://lookalike.example/document/fixture")),
-            ).result,
+            "INVALID_REQUEST",
+            controller.execute(valid.copy(certificateHandle = "a".repeat(31))).result,
         )
     }
 

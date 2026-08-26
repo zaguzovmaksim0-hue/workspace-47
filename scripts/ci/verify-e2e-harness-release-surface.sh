@@ -8,6 +8,8 @@ readonly -a FORBIDDEN_TOKENS=(
   'dev.junta.firmamobile.action.E2E_CONTROL'
   'E2eControlHook'
   'E2eSecretInbox'
+  'E2eStagedCertificateDocumentAccess'
+  'dev.junta.firmamobile.e2e.certificate'
 )
 
 for token in "${FORBIDDEN_TOKENS[@]}"; do

@@ -2,7 +2,7 @@
 
 Дата: 2026-08-26
 
-`E2E_CONTROL` — debug/QA-only control plane для воспроизводимого device E2E без поиска элементов UI и координатных tap-сценариев. Release-сборка не содержит receiver/action/parser/secret inbox.
+`E2E_CONTROL` — debug/QA-only control plane для воспроизводимого device E2E без поиска элементов UI и координатных tap-сценариев. Release-сборка не содержит receiver/action/parser/secret inbox или app-private E2E certificate adapter.
 
 ## Ingress
 
@@ -12,7 +12,7 @@ Receiver регистрируется только пока `MainActivity` на�
 dev.junta.firmamobile.action.E2E_CONTROL
 ```
 
-Ответ — JSON schema v3 в ordered-broadcast result data. Он содержит только bounded state/result fields и sanitized portal diagnostics. URI сертификата, secret handle, пароль, certificate bytes, private key, cookies и signing payload в JSON не экспортируются.
+Ответ — JSON schema v3 в ordered-broadcast result data. Он содержит только bounded state/result fields и sanitized portal diagnostics. Certificate/secret handles, URI сертификата, пароль, certificate bytes, private key, cookies и signing payload в JSON не экспортируются.
 
 Операторский wrapper:
 
@@ -25,7 +25,7 @@ scripts/android-e2e-control.sh
 ## Закрытый набор команд
 
 - `STATE` — состояние сертификатной/signing сессии;
-- `CERT_SELECT` — выбрать сертификат через granted `content://` data URI;
+- `CERT_SELECT` — выбрать сертификат через одноразовый opaque `certificateHandle`;
 - `CERT_UNLOCK` — разблокировать через одноразовый `secretHandle`;
 - `CERT_LOCK` / `CERT_FORGET`;
 - `PORTAL_OPEN` / `PORTAL_INSPECT` / `PORTAL_CLOSE` — только exact catalog portal/profile ID;
@@ -37,8 +37,9 @@ Arbitrary URL, JavaScript, selector, network payload, certificate bytes и raw p
 
 ## Сертификат
 
-`cert-select` создаёт локальную копию с random basename в
-`/storage/emulated/0/Download/.w47-e2e-control/` и передаёт приложению только `content://com.android.externalstorage.documents/...` data URI с read + persistable grant. Исходное имя файла в Intent/JSON не попадает. Копия нужна, пока production `CertificateRepository` хранит persistable URI reference; `cert-forget` удаляет tracked staging copy после успешного forget.
+`cert-select` через Shizuku/`run-as` помещает PKCS#12 в app-private `no_backup/e2e-control/certificates/<random-handle>.p12` с mode `600`. Broadcast содержит только 32-hex `certificateHandle`; путь, исходное имя и bytes в Intent/JSON не попадают.
+
+В debug/QA `BuildVariantCertificateDocumentAccessFactory` добавляет узкий `E2eStagedCertificateDocumentAccess`: он обслуживает только exact synthetic authority `dev.junta.firmamobile.e2e.certificate` + один bounded handle и делегирует все остальные URI обычному `ContentResolverCertificateDocumentAccess`. Production `CertificateRepository`, reference store и `Pkcs12Loader` не дублируются. Release factory использует только обычный `ContentResolverCertificateDocumentAccess` и не содержит E2E adapter. При `CERT_FORGET`/замене reference repository вызывает release permission hook, который удаляет exact staged private file.
 
 Пример формы команды без реального пути:
 
@@ -80,7 +81,8 @@ producer-without-logging | scripts/android-e2e-control.sh cert-unlock run-1 --pa
 - closed command enum и exact argument shape;
 - portal/profile IDs вместо URL;
 - browser/signing confirmation commands требуют exact run/profile и соответствующий runtime-required event;
-- certificate URI только `content://` от reviewed Android document providers;
+- `CERT_SELECT` не принимает Intent data URI; только exact 32-hex app-private `certificateHandle`;
+- staged PKCS#12 ограничен `Pkcs12Loader.MAX_INPUT_BYTES`, regular-file/no-symlink и exact app-private directory;
 - password только one-shot app-private handle;
 - serialized result не содержит certificate identity, URI, password, payload или private key;
 - release factory no-op; action/parser/secret inbox отсутствуют в main/release sources.

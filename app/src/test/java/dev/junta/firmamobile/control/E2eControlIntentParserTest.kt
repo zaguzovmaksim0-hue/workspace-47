@@ -5,7 +5,6 @@ import android.net.Uri
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -36,54 +35,20 @@ class E2eControlIntentParserTest {
     }
 
     @Test
-    fun `certificate URI is data not an arbitrary string extra`() {
-        val uri = Uri.parse(
-            "content://com.android.externalstorage.documents/document/primary%3ADownload%2Ffixture.p12",
-        )
+    fun `certificate selection accepts only opaque handle and rejects data URI`() {
+        val handle = "0123456789abcdef0123456789abcdef"
         val intent = Intent(E2eControlHook.ACTION)
-            .setData(uri)
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
             .putExtra(E2eControlHook.EXTRA_RUN_ID, "run-cert")
             .putExtra(E2eControlHook.EXTRA_COMMAND, "CERT_SELECT")
+            .putExtra(E2eControlHook.EXTRA_CERTIFICATE_HANDLE, handle)
 
         val parsed = requireNotNull(E2eControlIntentParser.parse(intent))
-        assertEquals(uri, parsed.certificateUri)
-        assertTrue(parsed.intentFlags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
-        assertTrue(parsed.intentFlags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION != 0)
+        assertEquals(handle, parsed.certificateHandle)
         assertFalse(intent.extras?.keySet().orEmpty().any { it.contains("password", ignoreCase = true) })
+
+        val withData = Intent(intent).setData(
+            Uri.parse("content://com.android.externalstorage.documents/document/fixture.p12"),
+        )
+        assertNull(E2eControlIntentParser.parse(withData))
     }
-
-    @Test
-    fun `control receiver filters accept no-data commands and content certificate URI only`() {
-        val actionFilter = e2eControlActionFilter()
-        val contentFilter = e2eControlContentFilter()
-        val certificateUri = Uri.parse(
-            "content://com.android.externalstorage.documents/document/primary%3ADownload%2Ffixture.p12",
-        )
-        val httpUri = Uri.parse("https://example.invalid/fixture.p12")
-
-        assertTrue(actionFilter.match(E2eControlHook.ACTION, null, null, null, null, "test") >= 0)
-        assertTrue(
-            contentFilter.match(
-                E2eControlHook.ACTION,
-                null,
-                certificateUri.scheme,
-                certificateUri,
-                null,
-                "test",
-            ) >= 0,
-        )
-        assertTrue(
-            contentFilter.match(
-                E2eControlHook.ACTION,
-                null,
-                httpUri.scheme,
-                httpUri,
-                null,
-                "test",
-            ) < 0,
-        )
-    }
-
 }
