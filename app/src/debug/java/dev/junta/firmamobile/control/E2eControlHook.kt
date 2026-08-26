@@ -24,7 +24,10 @@ internal class E2eControlHook(
 ) {
     private var registered = false
 
-    private val receiver = object : BroadcastReceiver() {
+    private val actionReceiver = receiver()
+    private val contentReceiver = receiver()
+
+    private fun receiver() = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action != ACTION || !isOrderedBroadcast) return
             val parsed = E2eControlIntentParser.parse(intent)
@@ -61,18 +64,32 @@ internal class E2eControlHook(
         if (registered) return
         ContextCompat.registerReceiver(
             activity,
-            receiver,
-            IntentFilter(ACTION),
+            actionReceiver,
+            e2eControlActionFilter(),
             Manifest.permission.DUMP,
             null,
             ContextCompat.RECEIVER_EXPORTED,
         )
+        try {
+            ContextCompat.registerReceiver(
+                activity,
+                contentReceiver,
+                e2eControlContentFilter(),
+                Manifest.permission.DUMP,
+                null,
+                ContextCompat.RECEIVER_EXPORTED,
+            )
+        } catch (error: Exception) {
+            runCatching { activity.unregisterReceiver(actionReceiver) }
+            throw error
+        }
         registered = true
     }
 
     fun stop() {
         if (!registered) return
-        runCatching { activity.unregisterReceiver(receiver) }
+        runCatching { activity.unregisterReceiver(contentReceiver) }
+        runCatching { activity.unregisterReceiver(actionReceiver) }
         registered = false
     }
 
@@ -85,6 +102,13 @@ internal class E2eControlHook(
         const val EXTRA_SECRET_HANDLE = "secretHandle"
         const val LOG_TAG = "JfmE2eControl"
     }
+}
+
+
+internal fun e2eControlActionFilter(): IntentFilter = IntentFilter(E2eControlHook.ACTION)
+
+internal fun e2eControlContentFilter(): IntentFilter = IntentFilter(E2eControlHook.ACTION).apply {
+    addDataScheme("content")
 }
 
 private fun internalErrorJson(): String = JSONObject()

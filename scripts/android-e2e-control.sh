@@ -16,6 +16,7 @@ usage() {
   cat <<'USAGE'
 Usage:
   scripts/android-e2e-control.sh launch
+  scripts/android-e2e-control.sh app-stop
   scripts/android-e2e-control.sh state RUN_ID
   scripts/android-e2e-control.sh cert-select RUN_ID /local/path/to/certificate.p12
   scripts/android-e2e-control.sh cert-unlock RUN_ID --password-file /path/to/mode-600-file
@@ -67,6 +68,21 @@ ensure_tools() {
     echo "Installed package is not a debuggable QA build" >&2
     exit 69
   }
+}
+
+stop_app() {
+  local attempt pids
+  for attempt in 1 2; do
+    run_rish "am force-stop --user 0 $PACKAGE_NAME" >/dev/null 2>&1 || true
+    sleep 1
+    pids="$(run_rish "pidof $PACKAGE_NAME" 2>/dev/null || true)"
+    [[ -z "$pids" ]] && {
+      printf '{"schemaVersion":3,"result":"APP_STOPPED","success":true}\n'
+      return 0
+    }
+  done
+  echo "Application process is still running after force-stop" >&2
+  return 70
 }
 
 ensure_foreground() {
@@ -197,6 +213,10 @@ case "$verb" in
     (($# == 0)) || fail "launch takes no arguments"
     ensure_foreground
     printf '{"schemaVersion":3,"result":"APP_FOREGROUND","success":true}\n'
+    ;;
+  app-stop)
+    (($# == 0)) || fail "app-stop takes no arguments"
+    stop_app
     ;;
   state|cert-lock|cert-forget)
     (($# == 1)) || fail "$verb requires RUN_ID"

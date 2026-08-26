@@ -53,4 +53,37 @@ class E2eControlIntentParserTest {
         assertTrue(parsed.intentFlags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION != 0)
         assertFalse(intent.extras?.keySet().orEmpty().any { it.contains("password", ignoreCase = true) })
     }
+
+    @Test
+    fun `control receiver filters accept no-data commands and content certificate URI only`() {
+        val actionFilter = e2eControlActionFilter()
+        val contentFilter = e2eControlContentFilter()
+        val certificateUri = Uri.parse(
+            "content://com.android.externalstorage.documents/document/primary%3ADownload%2Ffixture.p12",
+        )
+        val httpUri = Uri.parse("https://example.invalid/fixture.p12")
+
+        assertTrue(actionFilter.match(E2eControlHook.ACTION, null, null, null, null, "test") >= 0)
+        assertTrue(
+            contentFilter.match(
+                E2eControlHook.ACTION,
+                null,
+                certificateUri.scheme,
+                certificateUri,
+                null,
+                "test",
+            ) >= 0,
+        )
+        assertTrue(
+            contentFilter.match(
+                E2eControlHook.ACTION,
+                null,
+                httpUri.scheme,
+                httpUri,
+                null,
+                "test",
+            ) < 0,
+        )
+    }
+
 }
