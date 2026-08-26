@@ -4396,5 +4396,69 @@
             <sha256 value="edb82dcbe738ca78b31612cb307bf99e5f02f25c8125048f933e792fd7778beb" origin="Verified from Google Maven"/>
          </artifact>
       </component>
+      <component group="com.android.tools.external.com-intellij" name="intellij-core" version="32.3.1">
+         <artifact name="intellij-core-32.3.1.jar">
+            <sha256 value="4ec6a9163036699a296c8ae5a838c774eaa5b91fdc8f97cecbdf8f6d3ce14155" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="intellij-core-32.3.1.pom">
+            <sha256 value="24102e304b93af85ad57d2186aaad790441e83ed837eb145658431e16f2df118" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.external.com-intellij" name="kotlin-compiler" version="32.3.1">
+         <artifact name="kotlin-compiler-32.3.1.jar">
+            <sha256 value="f7605ecd8e5157f1df689951e0f200ff7ccb0b1443e8c4ab35a595cb1ccdc886" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="kotlin-compiler-32.3.1.pom">
+            <sha256 value="e0797e657a343b0b81b326d5f5ed207cb3187faa762943c831397f1285341b8d" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.lint" name="lint" version="32.3.1">
+         <artifact name="lint-32.3.1.jar">
+            <sha256 value="178c00adc88b769a6fc555725907efcd4defa318726e888b9fcc49be6eeadf5f" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="lint-32.3.1.pom">
+            <sha256 value="dfccaa2f7fc88eb7a6265c0b830d2d14e50dcdc28578acf8b871c5ed7574846f" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.lint" name="lint-api" version="32.3.1">
+         <artifact name="lint-api-32.3.1.jar">
+            <sha256 value="dd3c0c1f12e04c8b61854119d0f29558b96b581b71685318d7808fc83b0ea6b7" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="lint-api-32.3.1.pom">
+            <sha256 value="63205457fc51dd1b6690f6b738724c87c78846edb19699df7c7bfe21765cc307" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.lint" name="lint-checks" version="32.3.1">
+         <artifact name="lint-checks-32.3.1.jar">
+            <sha256 value="1e794f3d8536b3ab4e445dc4eec2a760d229473e49b01f49d9d248963569571d" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="lint-checks-32.3.1.pom">
+            <sha256 value="3528cd9cc49c804a3466b4d695e4fcf9372e0248d76c0fae1e45f2e19bfa2c94" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.lint" name="lint-gradle" version="32.3.1">
+         <artifact name="lint-gradle-32.3.1.jar">
+            <sha256 value="9e457a5bdb3e59428eab1e8b745db2362b4395131e31a346c7a1b74ccaf77a23" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="lint-gradle-32.3.1.pom">
+            <sha256 value="860cb27ddfbe578b4eb9faf19af472d61463b2ef47d86241d70b6d409ab81d5b" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools" name="play-sdk-proto" version="32.3.1">
+         <artifact name="play-sdk-proto-32.3.1.jar">
+            <sha256 value="43951d8d287f27b3c1242139179899af5c564e862b760353d558e4f73a881e03" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="play-sdk-proto-32.3.1.pom">
+            <sha256 value="4f0dee180fabc426069cbf4719fcd347860bda58177e25479dd134ee49b25b7b" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.external.org-jetbrains" name="uast" version="32.3.1">
+         <artifact name="uast-32.3.1.jar">
+            <sha256 value="708e340ad13c5cd1837d6a0ceb9f3dba9eed9f12d702fac97a26b46aa594cc8d" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="uast-32.3.1.pom">
+            <sha256 value="5f8f30913511efe29187587cbbeed3b0715c43cd18fd4e4ac5e8ba9e57a2533e" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
    </components>
 </verification-metadata>
