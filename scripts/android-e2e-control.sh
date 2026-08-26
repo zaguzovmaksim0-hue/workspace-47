@@ -18,6 +18,7 @@ Usage:
   scripts/android-e2e-control.sh cert-select RUN_ID /local/path/to/certificate.p12
   scripts/android-e2e-control.sh cert-unlock RUN_ID --password-file /path/to/mode-600-file
   scripts/android-e2e-control.sh cert-unlock RUN_ID --password-stdin
+  scripts/android-e2e-control.sh cert-unlock RUN_ID --password-clipboard
   scripts/android-e2e-control.sh cert-lock RUN_ID
   scripts/android-e2e-control.sh cert-forget RUN_ID
   scripts/android-e2e-control.sh portal-open RUN_ID portal|profile ID
@@ -180,6 +181,14 @@ stage_password_and_unlock() {
     timeout "$TIMEOUT_SECONDS" "$RISH_BIN" -c \
       "run-as $PACKAGE_NAME sh -c 'umask 077; mkdir -p $SECRET_RELATIVE_DIR; cat > $SECRET_RELATIVE_DIR/$handle; chmod 600 $SECRET_RELATIVE_DIR/$handle'" \
       <"$input_file" >/dev/null 2>&1 || { echo "Password staging failed" >&2; return 70; }
+  elif [[ "$mode" == clipboard ]]; then
+    command -v termux-clipboard-get >/dev/null || { echo "termux-clipboard-get is unavailable" >&2; return 69; }
+    termux-clipboard-get | timeout "$TIMEOUT_SECONDS" "$RISH_BIN" -c \
+      "run-as $PACKAGE_NAME sh -c 'umask 077; mkdir -p $SECRET_RELATIVE_DIR; cat > $SECRET_RELATIVE_DIR/$handle; chmod 600 $SECRET_RELATIVE_DIR/$handle'" \
+      >/dev/null 2>&1 || { echo "Password clipboard staging failed" >&2; return 70; }
+    if command -v termux-clipboard-set >/dev/null; then
+      printf '' | termux-clipboard-set >/dev/null 2>&1 || true
+    fi
   else
     [[ ! -t 0 ]] || { echo "--password-stdin requires redirected/non-terminal stdin" >&2; return 64; }
     timeout "$TIMEOUT_SECONDS" "$RISH_BIN" -c \
@@ -236,7 +245,11 @@ case "$verb" in
         (($# == 1)) || fail "--password-stdin takes no path"
         stage_password_and_unlock stdin
         ;;
-      *) fail "Use --password-file or --password-stdin; raw password arguments are forbidden" ;;
+      --password-clipboard)
+        (($# == 1)) || fail "--password-clipboard takes no path"
+        stage_password_and_unlock clipboard
+        ;;
+      *) fail "Use --password-file, --password-stdin, or --password-clipboard; raw password arguments are forbidden" ;;
     esac
     ;;
   portal-open|portal-inspect|portal-close|client-auth-confirm|client-auth-cancel|portal-cert-confirm|portal-cert-cancel|sign-confirm|sign-cancel|sign-dismiss)
