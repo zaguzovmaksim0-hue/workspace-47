@@ -227,8 +227,9 @@ ni la action `dev.junta.firmamobile.action.CATALOG_SMOKE`. El receiver QA:
 - enlaza cada run al UUID de un `BrowserScreen` nuevo y al profile/epoch exactos,
   por lo que un evento atrasado de un WebView anterior no prueba un run nuevo.
 
-El JSON schema v2 expone únicamente códigos cerrados y metadatos públicos
-sanitizados `host`/`path`. Entre los hitos observables están
+El JSON schema v2 expone únicamente códigos cerrados y metadatos sanitizados:
+`host`, longitud del path y prefijo SHA-256 del path. El path literal, query y
+fragment no se exportan. Entre los hitos observables están
 `WEBVIEW_ACTIVE`, `CLIENT_CERT_REQUEST`, `CLIENT_CERT_ACCEPTED`,
 `SIGNING_AWAITING_CONFIRMATION`, `SIGNING_COMPLETED`, `PORTAL_CALLBACK` y errores
 fail-closed. `CLIENT_CERT_ACCEPTED` solo se emite después de las validaciones del

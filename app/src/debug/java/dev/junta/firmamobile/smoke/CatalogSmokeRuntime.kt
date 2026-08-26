@@ -5,6 +5,7 @@ import dev.junta.firmamobile.diagnostics.SigningDiagnosticState
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import java.net.URI
+import java.security.MessageDigest
 import java.util.ArrayDeque
 import java.util.Locale
 import java.util.UUID
@@ -36,7 +37,8 @@ internal data class CatalogSmokeRuntimeEvent(
     val code: CatalogSmokeEventCode,
     val navigationEpoch: Long,
     val host: String? = null,
-    val path: String? = null,
+    val pathLength: Int? = null,
+    val pathSha256_8: String? = null,
     val detail: String? = null,
 )
 
@@ -47,7 +49,8 @@ internal data class CatalogSmokeRuntimeSnapshot(
     val webViewActive: Boolean,
     val navigationEpoch: Long,
     val currentHost: String?,
-    val currentPath: String?,
+    val currentPathLength: Int?,
+    val currentPathSha256_8: String?,
     val currentUrlAllowed: Boolean,
     val clientCertRequestObserved: Boolean,
     val clientCertAcceptedObserved: Boolean,
@@ -112,16 +115,28 @@ internal class CatalogSmokeRuntime {
             is RuntimeDiagnosticEvent.NavigationStarted -> {
                 val safe = safeUrl(event.url, run.profileId)
                 run.currentHost = safe.host
-                run.currentPath = safe.path
+                run.currentPathLength = safe.pathLength
+                run.currentPathSha256_8 = safe.pathSha256_8
                 run.currentUrlAllowed = safe.allowed
-                run.add(CatalogSmokeEventCode.NAVIGATION_STARTED, safe.host, safe.path)
+                run.add(
+                    CatalogSmokeEventCode.NAVIGATION_STARTED,
+                    host = safe.host,
+                    pathLength = safe.pathLength,
+                    pathSha256_8 = safe.pathSha256_8,
+                )
             }
             is RuntimeDiagnosticEvent.NavigationChanged -> {
                 val safe = safeUrl(event.url, run.profileId)
                 run.currentHost = safe.host
-                run.currentPath = safe.path
+                run.currentPathLength = safe.pathLength
+                run.currentPathSha256_8 = safe.pathSha256_8
                 run.currentUrlAllowed = safe.allowed
-                run.add(CatalogSmokeEventCode.NAVIGATION_CHANGED, safe.host, safe.path)
+                run.add(
+                    CatalogSmokeEventCode.NAVIGATION_CHANGED,
+                    host = safe.host,
+                    pathLength = safe.pathLength,
+                    pathSha256_8 = safe.pathSha256_8,
+                )
             }
             is RuntimeDiagnosticEvent.NavigationBlocked -> {
                 run.failureCode = event.reason.name
@@ -210,19 +225,44 @@ internal class CatalogSmokeRuntime {
     }
 
     private fun safeUrl(raw: String, profileId: ProfileId): SafeUrl {
-        val uri = runCatching { URI(raw) }.getOrNull() ?: return SafeUrl(null, null, false)
+        if (raw.length > MAX_URL_CHARS) return SafeUrl(null, null, null, false)
+        val uri = runCatching { URI(raw) }.getOrNull()
+            ?: return SafeUrl(null, null, null, false)
         if (!uri.scheme.equals("https", ignoreCase = true) || uri.host.isNullOrBlank() || uri.userInfo != null) {
-            return SafeUrl(null, null, false)
+            return SafeUrl(null, null, null, false)
         }
         val host = safeHost(uri.host)
-        val path = (uri.rawPath.takeUnless { it.isNullOrBlank() } ?: "/")
-            .take(MAX_PATH_CHARS)
+        val path = uri.rawPath.takeUnless { it.isNullOrBlank() } ?: "/"
         val allowed = runCatching {
             val registry = BuiltInSiteProfiles.runtimeRegistry
             registry.resolveForProfile(profileId, uri)?.profile?.profileId == profileId ||
                 registry.resolveRedirect(profileId, uri)?.profile?.profileId == profileId
         }.getOrDefault(false)
-        return SafeUrl(host, path, allowed)
+        return SafeUrl(
+            host = host,
+            pathLength = path.length.coerceAtMost(MAX_REPORTED_PATH_LENGTH),
+            pathSha256_8 = sha256Prefix(path),
+            allowed = allowed,
+        )
+    }
+
+    private fun sha256Prefix(value: String): String {
+        val bytes = value.encodeToByteArray()
+        val digest = try {
+            MessageDigest.getInstance("SHA-256").digest(bytes)
+        } finally {
+            bytes.fill(0)
+        }
+        return try {
+            buildString(SHA256_PREFIX_BYTES * 2) {
+                repeat(SHA256_PREFIX_BYTES) { index ->
+                    append(HEX[(digest[index].toInt() ushr 4) and 0x0f])
+                    append(HEX[digest[index].toInt() and 0x0f])
+                }
+            }
+        } finally {
+            digest.fill(0)
+        }
     }
 
     private fun safeHost(raw: String): String? = raw.lowercase(Locale.ROOT)
@@ -230,7 +270,12 @@ internal class CatalogSmokeRuntime {
 
     private fun safeToken(raw: String): String? = raw.takeIf { TOKEN.matches(it) }
 
-    private data class SafeUrl(val host: String?, val path: String?, val allowed: Boolean)
+    private data class SafeUrl(
+        val host: String?,
+        val pathLength: Int?,
+        val pathSha256_8: String?,
+        val allowed: Boolean,
+    )
 
     private class ActiveRun(
         val runId: String,
@@ -241,7 +286,8 @@ internal class CatalogSmokeRuntime {
         var webViewActive = false
         var navigationEpoch = 0L
         var currentHost: String? = null
-        var currentPath: String? = null
+        var currentPathLength: Int? = null
+        var currentPathSha256_8: String? = null
         var currentUrlAllowed = false
         var clientCertRequestObserved = false
         var clientCertAcceptedObserved = false
@@ -262,7 +308,8 @@ internal class CatalogSmokeRuntime {
         fun add(
             code: CatalogSmokeEventCode,
             host: String? = null,
-            path: String? = null,
+            pathLength: Int? = null,
+            pathSha256_8: String? = null,
             detail: String? = null,
         ) {
             sequence++
@@ -273,7 +320,8 @@ internal class CatalogSmokeRuntime {
                     code = code,
                     navigationEpoch = navigationEpoch,
                     host = host,
-                    path = path,
+                    pathLength = pathLength,
+                    pathSha256_8 = pathSha256_8,
                     detail = detail,
                 ),
             )
@@ -286,7 +334,8 @@ internal class CatalogSmokeRuntime {
             webViewActive = webViewActive,
             navigationEpoch = navigationEpoch,
             currentHost = currentHost,
-            currentPath = currentPath,
+            currentPathLength = currentPathLength,
+            currentPathSha256_8 = currentPathSha256_8,
             currentUrlAllowed = currentUrlAllowed,
             clientCertRequestObserved = clientCertRequestObserved,
             clientCertAcceptedObserved = clientCertAcceptedObserved,
@@ -307,7 +356,10 @@ internal class CatalogSmokeRuntime {
 
     private companion object {
         const val MAX_EVENTS = 64
-        const val MAX_PATH_CHARS = 256
+        const val MAX_URL_CHARS = 16_384
+        const val MAX_REPORTED_PATH_LENGTH = 1_048_576
+        const val SHA256_PREFIX_BYTES = 4
+        const val HEX = "0123456789abcdef"
         val HOST = Regex("[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?")
         val TOKEN = Regex("[A-Za-z0-9._+\\-]{1,64}")
     }

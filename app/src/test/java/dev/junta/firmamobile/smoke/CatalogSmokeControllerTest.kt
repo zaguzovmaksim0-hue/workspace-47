@@ -164,6 +164,33 @@ class CatalogSmokeControllerTest {
     }
 
     @Test
+    fun `inspect still fails closed when live webview no longer matches profile`() {
+        val active = ProfileId("junta-ofvirtual")
+        val runtime = CatalogSmokeRuntime()
+        runtime.beginRun("run-live-mismatch", active)
+        val sessionId = UUID.randomUUID()
+        runtime.observe(RuntimeDiagnosticEvent.WebViewState(active, sessionId, 0L, active = true))
+        runtime.observe(
+            RuntimeDiagnosticEvent.NavigationChanged(
+                active,
+                sessionId,
+                1L,
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
+            ),
+        )
+
+        val result = controller(activeProfile = null, runtime = runtime).execute(
+            CatalogSmokeRequest(
+                "run-live-mismatch",
+                "junta-andalucia-ofvirtual",
+                "INSPECT",
+            ),
+        )
+
+        assertEquals(CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE, result.result)
+    }
+
+    @Test
     fun `profile identifier is accepted only when it maps to one catalog portal`() {
         val opened = mutableListOf<PortalLaunchTarget>()
         val runtime = CatalogSmokeRuntime()
