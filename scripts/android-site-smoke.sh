@@ -91,6 +91,11 @@ bridge_identity="$(run_rish 'id')" || { echo "Shizuku/rish shell is unavailable"
 grep -q 'uid=2000(shell)' <<<"$bridge_identity" || { echo "Shizuku bridge did not return Android shell identity" >&2; exit 69; }
 package_path="$(run_rish "pm path $PACKAGE_NAME")" || true
 grep -q '^package:' <<<"$package_path" || { echo "Package is not installed: $PACKAGE_NAME" >&2; exit 69; }
+run_as_identity="$(run_rish "run-as $PACKAGE_NAME id")" || {
+  echo "Installed package is not a debuggable QA build (run-as unavailable)" >&2
+  exit 69
+}
+grep -q "u0_a" <<<"$run_as_identity" || { echo "Unexpected run-as identity" >&2; exit 69; }
 
 resumed_activity="$(run_rish 'dumpsys activity activities | grep -m1 -E "mResumedActivity|topResumedActivity|ResumedActivity"')" || true
 if [[ "$resumed_activity" != *"$PACKAGE_NAME/.MainActivity"* ]]; then
@@ -181,6 +186,12 @@ for target in "${targets[@]}"; do
   inspect_file="$RAW_DIR/$run_id-inspect.txt"
   timed_out=false
   opened_webview=false
+  # The file contains only QaDiagnosticFileSink allowlisted ASCII records. Clearing it per target
+  # makes the foreground-loss fallback exact to this single sequential run.
+  run_rish "run-as $PACKAGE_NAME sh -c ': > files/qa-navigation.log'" >/dev/null || {
+    echo "Could not reset QA sanitized diagnostic log" >&2
+    exit 70
+  }
 
   set +e
   open_json="$(run_command "$target_kind" "$target_id" "$run_id" OPEN "$open_file")"
@@ -236,6 +247,12 @@ for target in "${targets[@]}"; do
   grep -q "FATAL EXCEPTION" <<<"$crash_signals" && crash_detected=true
   grep -q "ANR in $PACKAGE_NAME" <<<"$anr_signals" && anr_detected=true
 
+  qa_diagnostics="$(run_rish "run-as $PACKAGE_NAME cat files/qa-navigation.log")" || true
+  autofirma_handoff=false
+  portal_callback_fallback=false
+  grep -qE '(^| )event=EXTERNAL_NAVIGATION( |$).*host=autofirma( |$)' <<<"$qa_diagnostics" && autofirma_handoff=true
+  grep -qE '(^| )event=PORTAL_CALLBACK( |$)' <<<"$qa_diagnostics" && portal_callback_fallback=true
+
   finished_ms="$(date +%s%3N)"
   duration_ms=$((finished_ms - started_ms))
   open_result="$(jq -r '.result' <<<"$open_json")"
@@ -243,6 +260,12 @@ for target in "${targets[@]}"; do
   [[ "$open_result" == "OPEN_REQUESTED" ]] && final_json="$inspect_json"
   final_result="$(jq -r '.result' <<<"$final_json")"
   stage="$(observed_stage "$final_json")"
+  if [[ "$autofirma_handoff" == true ]]; then
+    stage="AUTOFIRMA_INTENT"
+    opened_webview=true
+  elif [[ "$portal_callback_fallback" == true && "$stage" =~ ^(BRIDGE_ERROR|WEBVIEW_ACTIVE)$ ]]; then
+    stage="PORTAL_CALLBACK"
+  fi
 
   manual_action=false
   blocked=false
@@ -258,9 +281,10 @@ for target in "${targets[@]}"; do
 
   hard_failure=false
   [[ "$open_result" =~ ^(BRIDGE_ERROR|INVALID_REQUEST|UNKNOWN_PORTAL|UNKNOWN_PROFILE|AMBIGUOUS_PROFILE|PROFILE_DISABLED)$ ]] && hard_failure=true
-  [[ "$final_result" == "BRIDGE_ERROR" ]] && hard_failure=true
+  if [[ "$final_result" == "BRIDGE_ERROR" && "$autofirma_handoff" != true ]]; then hard_failure=true; fi
   jq -e '(.runtime // {}) | (.signingFailedObserved == true or .renderProcessGone == true or .failureCode != null)' >/dev/null <<<"$final_json" && hard_failure=true
-  [[ "$activity_started" != true || "$process_alive" != true || "$timed_out" == true || "$crash_detected" == true || "$anr_detected" == true ]] && hard_failure=true
+  [[ "$process_alive" != true || "$timed_out" == true || "$crash_detected" == true || "$anr_detected" == true ]] && hard_failure=true
+  if [[ "$activity_started" != true && "$autofirma_handoff" != true ]]; then hard_failure=true; fi
 
   jq -cn \
     --argjson open "$open_json" --argjson final "$final_json" \
@@ -269,7 +293,8 @@ for target in "${targets[@]}"; do
     --argjson webViewOpened "$opened_webview" --argjson timeoutDetected "$timed_out" \
     --argjson crashDetected "$crash_detected" --argjson anrDetected "$anr_detected" \
     --argjson blocked "$blocked" --argjson manualActionRequired "$manual_action" \
-    --argjson failed "$hard_failure" --argjson reason "$reason" --argjson durationMs "$duration_ms" '
+    --argjson failed "$hard_failure" --argjson reason "$reason" --argjson durationMs "$duration_ms" \
+    --argjson autofirmaFallback "$autofirma_handoff" --argjson portalCallbackFallback "$portal_callback_fallback" '
     {
       runId: $open.runId,
       targetKind: $targetKind,
@@ -283,6 +308,8 @@ for target in "${targets[@]}"; do
       profileResolved: ($open.result == "PROFILE_RESOLVED" or $open.result == "OPEN_REQUESTED"),
       webViewOpened: $webViewOpened,
       observedStage: $stage,
+      autofirmaIntentObserved: (((($final.runtime // {}).autofirmaIntentObserved) == true) or $autofirmaFallback),
+      portalCallbackObserved: (((($final.runtime // {}).portalCallbackObserved) == true) or $portalCallbackFallback),
       blocked: $blocked,
       manualActionRequired: $manualActionRequired,
       timeout: $timeoutDetected,
@@ -293,7 +320,10 @@ for target in "${targets[@]}"; do
       durationMs: $durationMs,
       result: (if $open.result == "OPEN_REQUESTED" then $final.result else $open.result end),
       runtime: $final.runtime,
-      evidence: (["DUMP_PROTECTED_ORDERED_BROADCAST", $open.result, $final.result] + (($final.runtime.events // []) | map(.code)) | unique)
+      evidence: (["DUMP_PROTECTED_ORDERED_BROADCAST", $open.result, $final.result]
+        + (if $autofirmaFallback then ["SANITIZED_LOG_AUTOFIRMA_HANDOFF"] else [] end)
+        + (if $portalCallbackFallback then ["SANITIZED_LOG_PORTAL_CALLBACK"] else [] end)
+        + (($final.runtime.events // []) | map(.code)) | unique)
     }' >>"$records_file"
 done
 

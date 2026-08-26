@@ -358,7 +358,11 @@ class WebMessageBridge internal constructor(
             is PortalCallbackDiagnosticParseResult.Accepted -> {
                 val host = sourceOrigin.host.orEmpty()
                 logger.recordPortalCallback(diagnostic.stage.name, host)
-                onPortalCallbackObserved(diagnostic.stage.name, host)
+                try {
+                    onPortalCallbackObserved(diagnostic.stage.name, host)
+                } catch (_: Exception) {
+                    // QA observation must not affect the accepted portal callback path.
+                }
                 return
             }
             PortalCallbackDiagnosticParseResult.Rejected -> {

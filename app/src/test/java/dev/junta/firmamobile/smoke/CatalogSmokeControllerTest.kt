@@ -144,7 +144,7 @@ class CatalogSmokeControllerTest {
                 active,
                 sessionId,
                 1L,
-                "https://ws024.juntadeandalucia.es/ae/adminelec/areatecnica/afirma",
+                "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs",
             ),
         )
         val controller = controller(activeProfile = active, runtime = runtime)

@@ -130,3 +130,11 @@ internal interface RuntimeDiagnosticsObserver {
     fun stop()
     fun observe(event: RuntimeDiagnosticEvent)
 }
+
+internal fun ((RuntimeDiagnosticEvent) -> Unit).observeSafely(event: RuntimeDiagnosticEvent) {
+    try {
+        invoke(event)
+    } catch (_: Exception) {
+        // Diagnostics must never alter navigation, client-auth or signing behavior.
+    }
+}

@@ -87,6 +87,7 @@ import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.diagnostics.RuntimeDiagnosticEvent
 import dev.junta.firmamobile.diagnostics.SigningDiagnosticState
+import dev.junta.firmamobile.diagnostics.observeSafely
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
@@ -293,7 +294,7 @@ internal fun BrowserScreen(
             certificateFingerprint = fingerprint,
             certificateOwner = identity.summary.ownerName,
         )
-        onRuntimeDiagnostic(
+        onRuntimeDiagnostic.observeSafely(
             RuntimeDiagnosticEvent.CertificateSelectionRequired(
                 profileId = selectedServiceId,
                 browserSessionId = runtimeBrowserSessionId,
@@ -435,7 +436,7 @@ internal fun BrowserScreen(
             is SigningUiState.Completed -> SigningDiagnosticState.COMPLETED to null
             is SigningUiState.Failed -> SigningDiagnosticState.FAILED to signingState.code
         }
-        onRuntimeDiagnostic(
+        onRuntimeDiagnostic.observeSafely(
             RuntimeDiagnosticEvent.SigningStateObserved(
                 profileId = selectedServiceId,
                 browserSessionId = runtimeBrowserSessionId,
@@ -448,7 +449,7 @@ internal fun BrowserScreen(
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
         pendingRequest = request
-        onRuntimeDiagnostic(
+        onRuntimeDiagnostic.observeSafely(
             RuntimeDiagnosticEvent.AfirmaRequestObserved(
                 profileId = selectedServiceId,
                 browserSessionId = runtimeBrowserSessionId,
@@ -479,7 +480,7 @@ internal fun BrowserScreen(
             }
 
             override fun openOfficialAutoFirma(uri: Uri) {
-                onRuntimeDiagnostic(
+                onRuntimeDiagnostic.observeSafely(
                     RuntimeDiagnosticEvent.AutoFirmaIntentObserved(
                         profileId = selectedServiceId,
                         browserSessionId = runtimeBrowserSessionId,
@@ -501,7 +502,7 @@ internal fun BrowserScreen(
 
             override fun onNavigationBlocked(reason: NavigationBlockReason) {
                 blockedReason = reason
-                onRuntimeDiagnostic(
+                onRuntimeDiagnostic.observeSafely(
                     RuntimeDiagnosticEvent.NavigationBlocked(
                         profileId = selectedServiceId,
                         browserSessionId = runtimeBrowserSessionId,
@@ -514,7 +515,7 @@ internal fun BrowserScreen(
             override fun onBrowserError(error: BrowserErrorCode) {
                 browserError = error
                 pageProgress = 100
-                onRuntimeDiagnostic(
+                onRuntimeDiagnostic.observeSafely(
                     RuntimeDiagnosticEvent.BrowserError(
                         profileId = selectedServiceId,
                         browserSessionId = runtimeBrowserSessionId,
@@ -526,7 +527,7 @@ internal fun BrowserScreen(
 
             override fun onRenderProcessGone(view: WebView) {
                 if (!webViewRef.compareAndSet(view, null)) return
-                onRuntimeDiagnostic(
+                onRuntimeDiagnostic.observeSafely(
                     RuntimeDiagnosticEvent.RenderProcessGone(
                         profileId = selectedServiceId,
                         browserSessionId = runtimeBrowserSessionId,
@@ -563,7 +564,7 @@ internal fun BrowserScreen(
                     abandonClientAuth()
                 }
                 advanceNavigationEpoch()
-                onRuntimeDiagnostic(
+                onRuntimeDiagnostic.observeSafely(
                     RuntimeDiagnosticEvent.NavigationStarted(
                         profileId = selectedServiceId,
                         browserSessionId = runtimeBrowserSessionId,
@@ -576,7 +577,7 @@ internal fun BrowserScreen(
 
             override fun onTopLevelUrlChanged(url: String) {
                 currentUrl = safeBrowserDisplayUrl(url)
-                onRuntimeDiagnostic(
+                onRuntimeDiagnostic.observeSafely(
                     RuntimeDiagnosticEvent.NavigationChanged(
                         profileId = selectedServiceId,
                         browserSessionId = runtimeBrowserSessionId,
@@ -587,7 +588,7 @@ internal fun BrowserScreen(
             }
 
             override fun onClientCertRequestObserved(host: String, port: Int) {
-                onRuntimeDiagnostic(
+                onRuntimeDiagnostic.observeSafely(
                     RuntimeDiagnosticEvent.ClientCertRequestObserved(
                         profileId = selectedServiceId,
                         browserSessionId = runtimeBrowserSessionId,
@@ -863,7 +864,7 @@ internal fun BrowserScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                         webViewRef.set(webView)
-                        onRuntimeDiagnostic(
+                        onRuntimeDiagnostic.observeSafely(
                             RuntimeDiagnosticEvent.WebViewState(
                                 profileId = selectedServiceId,
                                 browserSessionId = runtimeBrowserSessionId,
@@ -891,7 +892,7 @@ internal fun BrowserScreen(
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
                                         pendingClientAuthTarget = authorized
-                                        onRuntimeDiagnostic(
+                                        onRuntimeDiagnostic.observeSafely(
                                             RuntimeDiagnosticEvent.ClientAuthConfirmationRequired(
                                                 profileId = selectedServiceId,
                                                 browserSessionId = runtimeBrowserSessionId,
@@ -913,7 +914,7 @@ internal fun BrowserScreen(
                                             request = request,
                                             navigationEpoch = navigationEpoch.longValue,
                                         )
-                                        onRuntimeDiagnostic(
+                                        onRuntimeDiagnostic.observeSafely(
                                             RuntimeDiagnosticEvent.ClientAuthConfirmationRequired(
                                                 profileId = selectedServiceId,
                                                 browserSessionId = runtimeBrowserSessionId,
@@ -956,7 +957,7 @@ internal fun BrowserScreen(
                                         } else {
                                             pendingClientAuthPostBody.getAndSet(request.postBody)?.fill(0)
                                             pendingClientAuthTarget = request.authorized
-                                            onRuntimeDiagnostic(
+                                            onRuntimeDiagnostic.observeSafely(
                                                 RuntimeDiagnosticEvent.ClientAuthConfirmationRequired(
                                                     profileId = selectedServiceId,
                                                     browserSessionId = runtimeBrowserSessionId,
@@ -967,7 +968,7 @@ internal fun BrowserScreen(
                                         }
                                     },
                                     onPortalCallbackObserved = { stage, host ->
-                                        onRuntimeDiagnostic(
+                                        onRuntimeDiagnostic.observeSafely(
                                             RuntimeDiagnosticEvent.PortalCallbackObserved(
                                                 profileId = selectedServiceId,
                                                 browserSessionId = runtimeBrowserSessionId,
@@ -1024,7 +1025,7 @@ internal fun BrowserScreen(
                                     }
                                 },
                                 onCertificateProvided = { host, port ->
-                                    onRuntimeDiagnostic(
+                                    onRuntimeDiagnostic.observeSafely(
                                         RuntimeDiagnosticEvent.ClientCertRequestAccepted(
                                             profileId = selectedServiceId,
                                             browserSessionId = runtimeBrowserSessionId,
@@ -1086,7 +1087,7 @@ internal fun BrowserScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     onRelease = { webView ->
-                        onRuntimeDiagnostic(
+                        onRuntimeDiagnostic.observeSafely(
                             RuntimeDiagnosticEvent.WebViewState(
                                 profileId = selectedServiceId,
                                 browserSessionId = runtimeBrowserSessionId,
@@ -1182,7 +1183,7 @@ internal fun BrowserScreen(
                             mainHandler.post { clientCertPreferenceCoordinator.requestClear() }
                         },
                         onCertificateProvided = { host, port ->
-                            onRuntimeDiagnostic(
+                            onRuntimeDiagnostic.observeSafely(
                                 RuntimeDiagnosticEvent.ClientCertRequestAccepted(
                                     profileId = selectedServiceId,
                                     browserSessionId = runtimeBrowserSessionId,
