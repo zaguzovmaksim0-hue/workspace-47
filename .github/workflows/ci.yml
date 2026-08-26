@@ -66,7 +66,7 @@ jobs:
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
       - name: Publish short-lived QA device artifact
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/e2e-')
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/e2e-')) || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/device/e2e-'))
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: qa-device-apk-${{ github.sha }}
