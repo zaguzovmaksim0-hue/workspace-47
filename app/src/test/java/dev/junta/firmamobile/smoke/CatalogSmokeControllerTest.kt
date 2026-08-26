@@ -32,6 +32,32 @@ class CatalogSmokeControllerTest {
         )
     }
 
+    private val metadataOnlyRepository by lazy {
+        val catalog = loadBundledPublicPortalCatalog()
+        val metadataOnly = catalog.entries.first().copy(
+            portalId = PortalId("catalog-only-fixture"),
+            inventoryId = null,
+            profileId = null,
+            displayName = "Catalog-only fixture",
+            entryUrl = java.net.URI("https://catalog-only.example.test/"),
+            launchUrl = null,
+            observedMechanisms = emptySet(),
+            observedSignatureFormats = emptySet(),
+            protocolFamily = "CATALOG_ONLY_FIXTURE",
+            catalogStatus = dev.junta.firmamobile.catalog.PublicCatalogStatus.CATALOGED,
+            inventoryStatus = dev.junta.firmamobile.catalog.PortalInventoryStatus.BROWSE_ONLY,
+            discoveryState = dev.junta.firmamobile.catalog.PortalDiscoveryState.REVIEWED,
+            evidenceIds = setOf("test-catalog-only"),
+            reviewedOn = null,
+            limitations = "Test fixture only",
+        )
+        PortalCatalogRepository(
+            registry = SiteProfileRegistry(profileCatalog, BuildTrustPolicy.QA),
+            profileCatalog = profileCatalog,
+            publicCatalog = catalog.copy(entries = catalog.entries + metadataOnly),
+        )
+    }
+
     @Test
     fun `rejects missing unsafe and unknown identifiers without opening`() {
         val opened = mutableListOf<PortalLaunchTarget>()
@@ -55,8 +81,12 @@ class CatalogSmokeControllerTest {
     @Test
     fun `metadata only entries stay catalog only even when certificate is unlocked`() {
         val opened = mutableListOf<PortalLaunchTarget>()
-        val metadataOnly = repository.portals().single { it.profileId == null }
-        val outcome = controller(unlocked = true, opened = opened).execute(
+        val metadataOnly = metadataOnlyRepository.portals().single { it.profileId == null }
+        val outcome = controller(
+            catalogRepository = metadataOnlyRepository,
+            unlocked = true,
+            opened = opened,
+        ).execute(
             CatalogSmokeRequest("run-2", metadataOnly.portalId.value, "OPEN"),
         )
 
@@ -133,11 +163,12 @@ class CatalogSmokeControllerTest {
     }
 
     private fun controller(
+        catalogRepository: PortalCatalogRepository = repository,
         unlocked: Boolean = false,
         opened: MutableList<PortalLaunchTarget> = mutableListOf(),
         activeProfile: ProfileId? = null,
     ) = CatalogSmokeController(
-        repository = repository,
+        repository = catalogRepository,
         certificateUnlocked = { unlocked },
         openProfile = opened::add,
         activeWebViewMatches = { it == activeProfile },

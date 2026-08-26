@@ -67,10 +67,12 @@ class PortalCatalogScreenTest {
         )
         val contractPending = sections.singleOrNull { it.kind == PortalCatalogSectionKind.CONTRACT_PENDING }
         assertEquals(null, contractPending)
-        val fullCatalog = sections.single { it.kind == PortalCatalogSectionKind.FULL_CATALOG }
+        val fullCatalog = sections.singleOrNull { it.kind == PortalCatalogSectionKind.FULL_CATALOG }
+            ?.items
+            .orEmpty()
         assertEquals(
             repository.portals().size - compatible.items.size,
-            fullCatalog.items.size,
+            fullCatalog.size,
         )
         val acceda = compatible.items.single { it.portalId == PortalId("age-acceda") }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, acceda.supportStatus)
