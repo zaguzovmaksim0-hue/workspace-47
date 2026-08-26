@@ -457,7 +457,10 @@ object SiteProfileCatalogParser {
                         p.capabilities ==
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
-                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                } else if (
+                    p.profileId.value == JCCM_REGISTRO_PROFILE_ID ||
+                    p.profileId.value == REG_AGE_PROFILE_ID
+                ) {
                     require(p.endpoints.isEmpty())
                     require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
                     require(p.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
@@ -497,6 +500,10 @@ object SiteProfileCatalogParser {
                         p.profileId.value == TARRAGONA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ->
                             p.trustedBrowseOrigins
+                        p.profileId.value == REG_AGE_PROFILE_ID &&
+                            policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+                            policy.sourceUrls == setOf(URI(REG_AGE_CLIENT_AUTH_SOURCE_URL)) ->
+                            setOf(ExactOrigin.parse(REG_AGE_CLAVE_SOURCE_ORIGIN))
                         else -> p.initiatorOrigins
                     }
                     (source.origin() in allowedSourceOrigins ||
@@ -3286,6 +3293,10 @@ object SiteProfileCatalogParser {
         "https://sede.mites.gob.es/chunk-MX4YJU4O.js",
     )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
+    private const val REG_AGE_PROFILE_ID = "reg-age-redsara"
+    private const val REG_AGE_CLAVE_SOURCE_ORIGIN = "https://pasarela.clave.gob.es"
+    private const val REG_AGE_CLIENT_AUTH_SOURCE_URL =
+        "$REG_AGE_CLAVE_SOURCE_ORIGIN/Proxy2/ServiceProvider"
     private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
     private const val JCCM_REGISTRO_PROFILE_VERSION = 1
     private const val JCCM_REGISTRO_DISPLAY_NAME = "JCCM — Registro Electrónico / Solicitud Genérica"

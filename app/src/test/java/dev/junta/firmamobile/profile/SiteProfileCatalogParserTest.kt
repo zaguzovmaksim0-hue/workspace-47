@@ -112,12 +112,17 @@ class SiteProfileCatalogParserTest {
     @Test
     fun regAgeInPlaceClientAuthAllowsOnlyExactQuerylessSourceWithoutSourceParameters() {
         val source = "\"sourceUrls\":[\"https://pasarela.clave.gob.es/Proxy2/ServiceProvider\"]"
-        val expanded =
-            "\"sourceUrls\":[\"https://pasarela.clave.gob.es/Proxy2/ServiceProvider?state=hidden\"]"
+        val invalidSources = listOf(
+            "\"sourceUrls\":[\"https://pasarela.clave.gob.es/Proxy2/ServiceProvider?state=hidden\"]",
+            "\"sourceUrls\":[\"https://pasarela.clave.gob.es/Proxy2/Other\"]",
+            "\"sourceUrls\":[\"https://pasarela.clave.gob.es.evil.example/Proxy2/ServiceProvider\"]",
+        )
 
         assertTrue(BuiltInSiteProfiles.JSON.contains(source))
-        assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(source, expanded))
+        invalidSources.forEach { invalid ->
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(source, invalid))
+            }
         }
     }
 
