@@ -30,6 +30,7 @@ internal class ClientAuthRequestHandler(
     private val clearClientCertPreferences: () -> Unit,
     private val clock: Clock = Clock.systemUTC(),
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
+    private val onCertificateProvided: (String, Int) -> Unit = { _, _ -> },
 ) {
     private val terminal = AtomicBoolean(false)
     private val preferencesCleared = AtomicBoolean(false)
@@ -52,6 +53,7 @@ internal class ClientAuthRequestHandler(
                 check(privateKey.algorithm.equals(identity.certificate.publicKey.algorithm, ignoreCase = true))
                 proceeded = true
                 request.proceed(privateKey, chain)
+                onCertificateProvided(request.host, request.port)
             }
         } catch (_: Exception) {
             if (!proceeded) request.ignore()
@@ -145,6 +147,7 @@ internal class ClientAuthWebViewClient(
             requestHandler.abandon()
             return
         }
+        callbacks.onClientCertRequestObserved(request.host, request.port)
         requestHandler.handle(request)
     }
 

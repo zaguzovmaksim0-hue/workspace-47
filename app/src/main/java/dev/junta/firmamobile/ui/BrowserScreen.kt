@@ -85,6 +85,8 @@ import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.SanitizedLogger
+import dev.junta.firmamobile.diagnostics.RuntimeDiagnosticEvent
+import dev.junta.firmamobile.diagnostics.SigningDiagnosticState
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
@@ -140,7 +142,7 @@ internal fun certificateEligibleForSelection(
 }
 
 @Composable
-fun BrowserScreen(
+internal fun BrowserScreen(
     profileId: ProfileId,
     entryUrl: URI,
     certificateState: CertificateUiState.Unlocked,
@@ -161,12 +163,14 @@ fun BrowserScreen(
     clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator,
     onWebViewChanged: (WebView?) -> Unit,
     onNavigationEpochChanged: (Long) -> Unit = {},
+    onRuntimeDiagnostic: (RuntimeDiagnosticEvent) -> Unit = {},
     onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     onMelillaBatchCancel: (UUID) -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val selectedServiceId = profileId
+    val runtimeBrowserSessionId = remember(selectedServiceId, entryUrl) { UUID.randomUUID() }
     val clientCertPreferenceState by
         clientCertPreferenceCoordinator.state.collectAsStateWithLifecycle()
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
@@ -288,6 +292,14 @@ fun BrowserScreen(
             reply = reply,
             certificateFingerprint = fingerprint,
             certificateOwner = identity.summary.ownerName,
+        )
+        onRuntimeDiagnostic(
+            RuntimeDiagnosticEvent.CertificateSelectionRequired(
+                profileId = selectedServiceId,
+                browserSessionId = runtimeBrowserSessionId,
+                navigationEpoch = navigationEpoch.longValue,
+                host = request.context.origin.host,
+            ),
         )
     }
 
@@ -412,8 +424,38 @@ fun BrowserScreen(
         if (requiresInPlaceClientAuth) beginClientCertPreferenceRecovery()
     }
 
+    LaunchedEffect(signingState, selectedServiceId, runtimeBrowserSessionId) {
+        val diagnostic = when (signingState) {
+            SigningUiState.Idle -> SigningDiagnosticState.IDLE to null
+            is SigningUiState.AwaitingConfirmation ->
+                SigningDiagnosticState.AWAITING_CONFIRMATION to null
+            is SigningUiState.ConnectingSecurely ->
+                SigningDiagnosticState.CONNECTING_SECURELY to null
+            is SigningUiState.Signing -> SigningDiagnosticState.SIGNING to null
+            is SigningUiState.Completed -> SigningDiagnosticState.COMPLETED to null
+            is SigningUiState.Failed -> SigningDiagnosticState.FAILED to signingState.code
+        }
+        onRuntimeDiagnostic(
+            RuntimeDiagnosticEvent.SigningStateObserved(
+                profileId = selectedServiceId,
+                browserSessionId = runtimeBrowserSessionId,
+                navigationEpoch = navigationEpoch.longValue,
+                state = diagnostic.first,
+                error = diagnostic.second,
+            ),
+        )
+    }
+
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
         pendingRequest = request
+        onRuntimeDiagnostic(
+            RuntimeDiagnosticEvent.AfirmaRequestObserved(
+                profileId = selectedServiceId,
+                browserSessionId = runtimeBrowserSessionId,
+                navigationEpoch = navigationEpoch.longValue,
+                host = request.origin.host,
+            ),
+        )
     }
     val callbacks = remember(
         selectedServiceId,
@@ -421,6 +463,8 @@ fun BrowserScreen(
         onOpenExternal,
         onCancelSigning,
         onWebViewChanged,
+        onRuntimeDiagnostic,
+        runtimeBrowserSessionId,
         clientCertPreferenceCoordinator,
     ) {
         object : BrowserNavigationCallbacks {
@@ -435,6 +479,13 @@ fun BrowserScreen(
             }
 
             override fun openOfficialAutoFirma(uri: Uri) {
+                onRuntimeDiagnostic(
+                    RuntimeDiagnosticEvent.AutoFirmaIntentObserved(
+                        profileId = selectedServiceId,
+                        browserSessionId = runtimeBrowserSessionId,
+                        navigationEpoch = navigationEpoch.longValue,
+                    ),
+                )
                 pendingClientAuthTarget = null
                 clientAuthGrant = null
                 pendingRequest = null
@@ -450,15 +501,38 @@ fun BrowserScreen(
 
             override fun onNavigationBlocked(reason: NavigationBlockReason) {
                 blockedReason = reason
+                onRuntimeDiagnostic(
+                    RuntimeDiagnosticEvent.NavigationBlocked(
+                        profileId = selectedServiceId,
+                        browserSessionId = runtimeBrowserSessionId,
+                        navigationEpoch = navigationEpoch.longValue,
+                        reason = reason,
+                    ),
+                )
             }
 
             override fun onBrowserError(error: BrowserErrorCode) {
                 browserError = error
                 pageProgress = 100
+                onRuntimeDiagnostic(
+                    RuntimeDiagnosticEvent.BrowserError(
+                        profileId = selectedServiceId,
+                        browserSessionId = runtimeBrowserSessionId,
+                        navigationEpoch = navigationEpoch.longValue,
+                        error = error,
+                    ),
+                )
             }
 
             override fun onRenderProcessGone(view: WebView) {
                 if (!webViewRef.compareAndSet(view, null)) return
+                onRuntimeDiagnostic(
+                    RuntimeDiagnosticEvent.RenderProcessGone(
+                        profileId = selectedServiceId,
+                        browserSessionId = runtimeBrowserSessionId,
+                        navigationEpoch = navigationEpoch.longValue,
+                    ),
+                )
                 onWebViewChanged(null)
                 effectiveTopLevelProfileId = null
                 pendingClientAuthTarget = null
@@ -489,11 +563,39 @@ fun BrowserScreen(
                     abandonClientAuth()
                 }
                 advanceNavigationEpoch()
+                onRuntimeDiagnostic(
+                    RuntimeDiagnosticEvent.NavigationStarted(
+                        profileId = selectedServiceId,
+                        browserSessionId = runtimeBrowserSessionId,
+                        navigationEpoch = navigationEpoch.longValue,
+                        url = url,
+                    ),
+                )
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
             }
 
             override fun onTopLevelUrlChanged(url: String) {
                 currentUrl = safeBrowserDisplayUrl(url)
+                onRuntimeDiagnostic(
+                    RuntimeDiagnosticEvent.NavigationChanged(
+                        profileId = selectedServiceId,
+                        browserSessionId = runtimeBrowserSessionId,
+                        navigationEpoch = navigationEpoch.longValue,
+                        url = url,
+                    ),
+                )
+            }
+
+            override fun onClientCertRequestObserved(host: String, port: Int) {
+                onRuntimeDiagnostic(
+                    RuntimeDiagnosticEvent.ClientCertRequestObserved(
+                        profileId = selectedServiceId,
+                        browserSessionId = runtimeBrowserSessionId,
+                        navigationEpoch = navigationEpoch.longValue,
+                        host = host,
+                        port = port,
+                    ),
+                )
             }
         }
     }
@@ -761,6 +863,14 @@ fun BrowserScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                         webViewRef.set(webView)
+                        onRuntimeDiagnostic(
+                            RuntimeDiagnosticEvent.WebViewState(
+                                profileId = selectedServiceId,
+                                browserSessionId = runtimeBrowserSessionId,
+                                navigationEpoch = navigationEpoch.longValue,
+                                active = true,
+                            ),
+                        )
                         webView.setPageProgressListener { progress ->
                             webView.post {
                                 if (webViewRef.get() === webView) pageProgress = progress
@@ -781,6 +891,14 @@ fun BrowserScreen(
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
                                         pendingClientAuthTarget = authorized
+                                        onRuntimeDiagnostic(
+                                            RuntimeDiagnosticEvent.ClientAuthConfirmationRequired(
+                                                profileId = selectedServiceId,
+                                                browserSessionId = runtimeBrowserSessionId,
+                                                navigationEpoch = navigationEpoch.longValue,
+                                                host = authorized.target.host,
+                                            ),
+                                        )
                                     } else {
                                         clientAuthAuthorizer.invalidate()
                                     }
@@ -794,6 +912,14 @@ fun BrowserScreen(
                                             authorized = authorized,
                                             request = request,
                                             navigationEpoch = navigationEpoch.longValue,
+                                        )
+                                        onRuntimeDiagnostic(
+                                            RuntimeDiagnosticEvent.ClientAuthConfirmationRequired(
+                                                profileId = selectedServiceId,
+                                                browserSessionId = runtimeBrowserSessionId,
+                                                navigationEpoch = navigationEpoch.longValue,
+                                                host = authorized.target.host,
+                                            ),
                                         )
                                     } else {
                                         request.ignore()
@@ -830,7 +956,26 @@ fun BrowserScreen(
                                         } else {
                                             pendingClientAuthPostBody.getAndSet(request.postBody)?.fill(0)
                                             pendingClientAuthTarget = request.authorized
+                                            onRuntimeDiagnostic(
+                                                RuntimeDiagnosticEvent.ClientAuthConfirmationRequired(
+                                                    profileId = selectedServiceId,
+                                                    browserSessionId = runtimeBrowserSessionId,
+                                                    navigationEpoch = navigationEpoch.longValue,
+                                                    host = request.authorized.target.host,
+                                                ),
+                                            )
                                         }
+                                    },
+                                    onPortalCallbackObserved = { stage, host ->
+                                        onRuntimeDiagnostic(
+                                            RuntimeDiagnosticEvent.PortalCallbackObserved(
+                                                profileId = selectedServiceId,
+                                                browserSessionId = runtimeBrowserSessionId,
+                                                navigationEpoch = navigationEpoch.longValue,
+                                                stage = stage,
+                                                host = host,
+                                            ),
+                                        )
                                     },
                                     onMelillaBatchRequest = {
                                         request: MelillaBatchBridgeRequest,
@@ -877,6 +1022,17 @@ fun BrowserScreen(
                                     mainHandler.post {
                                         clientCertPreferenceCoordinator.requestClear()
                                     }
+                                },
+                                onCertificateProvided = { host, port ->
+                                    onRuntimeDiagnostic(
+                                        RuntimeDiagnosticEvent.ClientCertRequestAccepted(
+                                            profileId = selectedServiceId,
+                                            browserSessionId = runtimeBrowserSessionId,
+                                            navigationEpoch = navigationEpoch.longValue,
+                                            host = host,
+                                            port = port,
+                                        ),
+                                    )
                                 },
                             )
                             val client = ClientAuthWebViewClient(
@@ -930,6 +1086,14 @@ fun BrowserScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     onRelease = { webView ->
+                        onRuntimeDiagnostic(
+                            RuntimeDiagnosticEvent.WebViewState(
+                                profileId = selectedServiceId,
+                                browserSessionId = runtimeBrowserSessionId,
+                                navigationEpoch = navigationEpoch.longValue,
+                                active = false,
+                            ),
+                        )
                         bridgeAttachmentLease.release(webView)
                         inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
                         cancelPendingInPlaceClientAuth()
@@ -1016,6 +1180,17 @@ fun BrowserScreen(
                         currentNavigationEpoch = { navigationEpoch.longValue },
                         clearClientCertPreferences = {
                             mainHandler.post { clientCertPreferenceCoordinator.requestClear() }
+                        },
+                        onCertificateProvided = { host, port ->
+                            onRuntimeDiagnostic(
+                                RuntimeDiagnosticEvent.ClientCertRequestAccepted(
+                                    profileId = selectedServiceId,
+                                    browserSessionId = runtimeBrowserSessionId,
+                                    navigationEpoch = navigationEpoch.longValue,
+                                    host = host,
+                                    port = port,
+                                ),
+                            )
                         },
                     )
                     inPlaceClientAuthHandlerRef.getAndSet(handler)?.abandon()
