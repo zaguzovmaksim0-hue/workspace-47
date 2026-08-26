@@ -220,7 +220,7 @@ Por estado del inventario:
 | Estado | Registros |
 | --- | ---: |
 | `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 178 |
+| `IMPLEMENTED_NOT_E2E` | 179 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 0 |
@@ -233,9 +233,9 @@ Por mantenimiento del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `REVIEWED` | 179 |
-| `RECHECK_REQUIRED` | 1 |
-| `DISCOVERED` | 3 |
+| `REVIEWED` | 183 |
+| `RECHECK_REQUIRED` | 0 |
+| `DISCOVERED` | 0 |
 | `CANDIDATE`, `RETIRED` | 0 |
 | **Total** | **183** |
 

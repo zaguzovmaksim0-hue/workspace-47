@@ -267,7 +267,7 @@ keystore.
 **Controles:** workflows con `contents: read`, sin `pull_request_target` y con
 Actions fijadas a SHA de 40 caracteres; Gradle 9.4.1 wrapper/distribution y
 artifacts resueltos verificados por SHA-256 sin trusted wildcard; Gitleaks pinned
-sobre historial completo; Dependabot para Gradle, Go y Actions; Go 1.26.5 con
+sobre historial completo; Dependabot para Gradle, Go y Actions; CI Go 1.26.6 con
 race/vet/build/`govulncheck`; locking Gradle `STRICT` limitado a los tres
 runtime classpaths instalables; OSV pinned sobre el runtime lock Android y los
 manifests Python/Go explícitos. Release no acepta debug-key fallback y falla

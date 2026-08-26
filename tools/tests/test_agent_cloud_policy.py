@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -110,8 +111,12 @@ class AgentCloudPolicyTest(unittest.TestCase):
                 "W47_CODEX_CLOUD_CACHE_DIR": str(tmp_path / "cache"),
                 "W47_CAPTURE": str(capture),
             })
+            bash = shutil.which("bash")
+            self.assertIsNotNone(bash)
+            assert bash is not None
             result = subprocess.run(
                 [
+                    bash,
                     str(ROOT / "tools/w47-cloud"),
                     "gradle",
                     "--branch", branch,

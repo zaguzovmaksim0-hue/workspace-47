@@ -1,1 +1,4 @@
 PyYAML==6.0.3
+cryptography==50.0.0
+pyasn1==0.6.4
+pyasn1-modules==0.4.2

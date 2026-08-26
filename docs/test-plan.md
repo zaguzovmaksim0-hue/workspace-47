@@ -406,7 +406,7 @@ Cada `push`, pull request y ejecución manual debe conservar estos límites:
   prohibidos ausentes;
 - release sin las cuatro entradas privadas de firma: fallo obligatorio y ningún
   `app-release.apk` residual;
-- Go 1.26.5: test normal, race en Linux, vet, build y `govulncheck` 1.6.0;
+- Go 1.26.6: test normal, race en Linux, vet, build y `govulncheck` 1.6.0;
 - Gitleaks 8.30.1: archivo descargado con checksum exacto y scan de historial Git
   completo con redacción;
 - Gradle runtime locking estricto: `app/gradle.lockfile` contiene solo
