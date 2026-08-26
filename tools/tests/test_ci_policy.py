@@ -242,9 +242,9 @@ class CiPolicyTest(unittest.TestCase):
             seen_configurations.update(configurations.split(","))
         self.assertEqual(APP_RUNTIME_CONFIGURATIONS, seen_configurations)
 
-    def test_go_module_keeps_android_compatible_toolchain_floor(self) -> None:
+    def test_go_module_requires_the_patched_toolchain(self) -> None:
         source = self.read(GO_MOD)
-        self.assertRegex(source, r"(?m)^go 1\.26\.5$")
+        self.assertRegex(source, r"(?m)^go 1\.26\.6$")
 
     def test_dependabot_covers_all_package_managers(self) -> None:
         source = self.read(DEPENDABOT)

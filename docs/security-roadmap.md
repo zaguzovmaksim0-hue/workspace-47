@@ -77,9 +77,9 @@ Completed:
   resolved artifacts are SHA-256 verified; complete Git history is scanned with
   pinned Gitleaks; Dependabot covers Gradle, Go modules, GitHub Actions and pip at `/tools`; Android APKs
   are checked for alignment, signature count, manifest hardening and forbidden
-  canaries; release still fails closed without the private signing key. Go is
-  CI toolchain pinned to 1.26.6 while the module keeps a 1.26.5 compatibility floor
-  for the Android/arm64 development environment; OSV scans the explicit Python and Go manifests.
+  canaries; release still fails closed without the private signing key. CI and the
+  module manifest are pinned to patched Go 1.26.6; OSV scans the explicit Python
+  and Go manifests.
 
 Completed isolated PR — public IPv6 DNS results (F-17):
 
@@ -123,9 +123,8 @@ Latest completed isolated PR — CI and supply-chain gate (F-14):
   APK; debug signing is never accepted as a fallback.
 - Gitleaks 8.30.1 scans complete history with redaction; its exact Linux x64
   archive checksum is verified before execution.
-- Dependabot covers Gradle, Go modules, GitHub Actions and pip at `/tools`. CI uses the
-  patched 1.26.6 toolchain while the module keeps a 1.26.5 compatibility floor;
-  `govulncheck` and OSV cover the relay and the explicit
+- Dependabot covers Gradle, Go modules, GitHub Actions and pip at `/tools`. CI and the
+  module manifest use the patched 1.26.6 toolchain; `govulncheck` and OSV cover the relay and the explicit
   Python/Go manifests.
 - OSV intentionally does not parse `gradle/verification-metadata.xml` as a runtime
   lockfile: it is an integrity checksum ledger containing build-tool artifacts.
