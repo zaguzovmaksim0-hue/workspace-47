@@ -602,6 +602,38 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun inPlaceClientAuthTargetDoesNotInvalidatePendingChallengeWhenPageStarts() {
+        val profileId = ProfileId("reg-age-redsara")
+        val source = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        val target = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        var navigationEpoch = 200L
+        var capturedRequest: ClientCertRequest? = null
+        val authCallbacks = RecordingBrowserCallbacks().also {
+            it.onNavigationStarted = { navigationEpoch++ }
+        }
+        val authClient = JuntaWebViewClient(
+            callbacks = authCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { navigationEpoch },
+            onInPlaceClientAuthChallenge = { _, request -> capturedRequest = request },
+        )
+
+        authClient.onPageStarted(webView, source, null)
+        assertNull(authClient.shouldInterceptRequest(webView, request(target, method = "POST")))
+        authClient.onPageStarted(webView, target, null)
+        val clientCert = RecordingClientCertRequest(requestHost = "pasarela-ident.clave.gob.es")
+        authClient.onReceivedClientCertRequest(webView, clientCert)
+
+        assertEquals(listOf("start:$source", "url:$source", "url:$target"), authCallbacks.events)
+        assertEquals(201L, navigationEpoch)
+        assertSame(clientCert, capturedRequest)
+        assertEquals(0, clientCert.ignores)
+    }
+
+    @Test
     fun tarragonaGetWrongTargetAndUnarmedClientCertificateChallengeFailClosed() {
         val profileId = ProfileId("diputacion-tarragona-sede")
         val scenarios = listOf(
@@ -887,6 +919,7 @@ class JuntaWebViewClientTest {
     private class RecordingBrowserCallbacks : BrowserNavigationCallbacks {
         val events = mutableListOf<String>()
         var rendererView: WebView? = null
+        var onNavigationStarted: ((String) -> Unit)? = null
 
         override fun openExternal(uri: Uri) {
             events += "external:${uri.host}"
@@ -919,6 +952,7 @@ class JuntaWebViewClientTest {
 
         override fun onTopLevelNavigationStarted(url: String) {
             events += "start:$url"
+            onNavigationStarted?.invoke(url)
         }
     }
 

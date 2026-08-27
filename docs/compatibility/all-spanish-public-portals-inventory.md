@@ -139,7 +139,7 @@ histórica de la matriz ni constituye una escala automática:
 | `INACCESSIBLE` | No se puede alcanzar o revalidar de forma segura y repetible la superficie oficial; no se hacen afirmaciones técnicas mientras persista. |
 | `DEPRECATED` | Una fuente oficial confirma retirada o sustitución del flujo; se conserva únicamente para trazabilidad. |
 
-P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW), P20 (Oficina Virtual) y P17 (UniZAR) cuentan con verificación E2E delimitada a sus logins CAdES observados el 2026-07-28, 2026-07-29 y 2026-07-30, respectivamente. Tests locales, hashes de JS y
+P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW), P20 (Oficina Virtual) y P17 (UniZAR) cuentan con verificación E2E delimitada a sus logins CAdES observados el 2026-07-28, 2026-07-29 y 2026-07-30, respectivamente. El login CLIENT_TLS_AUTH de ES-PUB-0002 (REG-AGE/RedSARA) fue aceptado en dispositivo físico el 2026-08-27, pero la entrada completa conserva E2E_PENDING hasta verificar XAdES. Tests locales, hashes de JS y
 revisión documental nunca producen por sí solos ese estado. La implementación Junta Ovorion se
 mapea a `IMPLEMENTED_NOT_E2E`; los límites específicos de cada flujo se
 mantienen en su ficha. No se asigna
@@ -200,7 +200,7 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Entradas `IMPLEMENTED_NOT_E2E` | 179 |
 | Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 183 |
 | Entradas restantes fuera de ambos estados | 0 |
-| Evidencia exacta de `ClientCertRequest` | 7 |
+| Evidencia exacta de `ClientCertRequest` | 8 |
 
 Por nivel administrativo:
 
@@ -365,6 +365,7 @@ requiera traducción manual.
 | `P12` | Universidad de Granada | [P12][P12A] | Pantalla AutoFirma y requisitos; transporte exacto no probado. |
 | `P13` | Universidad de Sevilla | [P13][P13A] | Requisitos técnicos y ficha pública ISG_01 que delega exactamente a REG-AGE. |
 | `P14` | REG/RedSARA | [P14][P14A][P14B][P14C][P14D] | Entrada, manual y JS público con contrato estático. |
+| `E2E-REDSARA-CLIENTTLS-2026-08-27` | REG/RedSARA | [E2E-REDSARA-CLIENTTLS-2026-08-27] | Evidencia física sanitizada de aceptación del login client-TLS mediante Cl@ve eIdentifier; alcance limitado al retorno autenticado. |
 | `P15` | ACCEDA | [P15][P15A][P15B] | Entrada y helper/AutoScript públicos; uso runtime del helper no observado. |
 | `P16` | Gobierno de Aragón / SIRAW | [P16][P16B][P16C] | Entrada y JS público con MiniApplet y Storage/Retrieve. |
 | `P17` | Universidad de Zaragoza | [P17][P17A][P17B] | Entrada e integration JS con firma de challenge y tri-phase móvil; login CAdES aceptado E2E en dispositivo físico el 2026-07-30. |
@@ -532,13 +533,13 @@ records:
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
-    operation_summary: "Firma del XML de resumen antes de guardarlo en el expediente."
-    protocol_evidence: "Revalidación física 2026-08-26: REG ofrece Cl@ve eIdentifier para cualquier certificado electrónico cualificado; el flujo observado hace POST desde https://pasarela.clave.gob.es/Proxy2/ServiceProvider a https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen sin query. TLS estricto en ese host devuelve CertificateRequest con lista de CA vacía. El contrato XAdES posterior sigue siendo AutoScript.sign y callback saveXMLAutoSign."
-    client_tls_auth: "SI"
-    evidence_ids: ["P14", "P14B", "P14C", "P14D", "LIVE-REDSARA-2026-07-30", "LIVE-REDSARA-CLIENTTLS-2026-08-26"]
-    reason: "Revalidación física 2026-08-26 confirma el client-TLS de Cl@ve eIdentifier y su POST exacto; el perfil sigue QA_ONLY/IMPLEMENTED_NOT_E2E hasta confirmar una sesión autenticada correcta y la aceptación XAdES por REG-AGE, sin completar una presentación administrativa."
-    reviewed_at: "2026-08-26"
-    next_gate: "Repetir físicamente eIdentifier con el client-TLS exacto, alcanzar el resumen de una actuación autorizada, comprobar la firma XAdES real y detenerse antes de cualquier presentación final no autorizada."
+    operation_summary: "Acceso autenticado al Registro Electrónico General mediante Cl@ve eIdentifier; la firma XAdES del registro permanece como operación separada."
+    protocol_evidence: "Revalidación física 2026-08-27: desde REG, Cl@ve eIdentifier abrió la petición POST desde https://pasarela.clave.gob.es/Proxy2/ServiceProvider a https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen sin query; la aplicación mostró la confirmación de certificado para pasarela-ident.clave.gob.es, aceptó el ClientCertRequest y el portal devolvió el formulario de REG con sesión autenticada. El contrato XAdES posterior sigue siendo AutoScript.sign y callback saveXMLAutoSign, sin ejecutarse en esta comprobación."
+    client_tls_auth: "VERIFIED_E2E"
+    evidence_ids: ["P14", "P14B", "P14C", "P14D", "LIVE-REDSARA-2026-07-30", "LIVE-REDSARA-CLIENTTLS-2026-08-26", "E2E-REDSARA-CLIENTTLS-2026-08-27"]
+    reason: "El login CLIENT_TLS_AUTH mediante Cl@ve eIdentifier fue aceptado por el portal y devolvió la vista autenticada de REG en un dispositivo físico; la entrada completa permanece IMPLEMENTED_NOT_E2E porque la firma XAdES, la presentación administrativa y el registro final no se han verificado."
+    reviewed_at: "2026-08-27"
+    next_gate: "Validar por separado la aceptación XAdES de un resumen de actuación autorizada; detenerse antes de cualquier presentación o registro administrativo final no autorizado."
 
   - inventory_id: "ES-PUB-0003"
     surface_key: "age-acceda"
@@ -6262,7 +6263,7 @@ grandes y explícitos:
    institucional.
 6. No existe inventario separado de proveedores compartidos, plataformas
    multi-tenant, SSO, Storage/Retrieve o endpoints tri-phase.
-7. Hay cuatro entradas con evidencia E2E delimitada y siete evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
+7. Hay cuatro entradas con evidencia E2E delimitada y ocho evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
 8. Las variantes lingüísticas no crean registros; los dominios históricos y
    redirects solo se separan cuando existe una frontera funcional acreditada.
    Los candidatos INAGA de Aragón, el checker técnico de Castilla y León, el
@@ -6429,6 +6430,7 @@ Orden de expansión recomendado:
 [E2E-JUNTA-OFVIRTUAL-2026-07-29]: ../e2e/2026-07-29-junta-ofvirtual-auth-success.md
 [LIVE-EDUCACION-ENTRY-2026-07-22]: https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46
 [EDUCACION-CONV46-CLIENTTLS-2026-08-19]: https://www.educacion.gob.es/claveedu/claveEduPeticion.form
+[E2E-REDSARA-CLIENTTLS-2026-08-27]: ../e2e/2026-08-27-redsara-client-auth-success.md
 
 ### Evidencia de comunidades y ciudades autónomas
 

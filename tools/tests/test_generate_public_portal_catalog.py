@@ -666,11 +666,18 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("reg-age-redsara", redsara["profileId"])
         self.assertEqual("E2E_PENDING", redsara["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", redsara["inventoryStatus"])
-        self.assertEqual("2026-08-26", redsara["reviewedOn"])
+        self.assertEqual("2026-08-27", redsara["reviewedOn"])
         self.assertIn("CLIENT_TLS_AUTH", redsara["observedMechanisms"])
-        self.assertIn("cl@ve", redsara["limitations"].lower())
-        self.assertIn("administrativa", redsara["limitations"].lower())
+        self.assertIn("client_tls_auth", redsara["limitations"].lower())
+        self.assertIn("login", redsara["limitations"].lower())
         self.assertIn("xades", redsara["limitations"].lower())
+
+        redsara_profile = next(
+            profile for profile in json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+            if profile["profileId"] == "reg-age-redsara"
+        )
+        self.assertEqual("VERIFIED_CONTRACT", redsara_profile["compatibilityStatus"])
+        self.assertEqual("QA_ONLY", redsara_profile["activation"])
 
         aemps = next(
             entry for entry in catalog["entries"]

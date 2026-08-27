@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "b164687c1e1620e5f84138c6800920a18d5f7d1459ac2333a37537d863e22d8e",
+  "sourceRevision": "1a6de091db255df2033f16bb1b585bd3241e056bd916aec4b5341c49523042fd",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -40,7 +40,7 @@
       "organization": "Administración General del Estado",
       "governmentLevel": "STATE",
       "territory": "España",
-      "purpose": "Firma del XML de resumen antes de guardarlo en el expediente.",
+      "purpose": "Acceso autenticado al Registro Electrónico General mediante Cl@ve eIdentifier; la firma XAdES del registro permanece como operación separada.",
       "entryUrl": "https://reg.redsara.es/es/",
       "observedMechanisms": [
         "AUTOSCRIPT",
@@ -61,10 +61,11 @@
         "P14C",
         "P14D",
         "LIVE-REDSARA-2026-07-30",
-        "LIVE-REDSARA-CLIENTTLS-2026-08-26"
+        "LIVE-REDSARA-CLIENTTLS-2026-08-26",
+        "E2E-REDSARA-CLIENTTLS-2026-08-27"
       ],
-      "reviewedOn": "2026-08-26",
-      "limitations": "Revalidación física 2026-08-26 confirma el client-TLS de Cl@ve eIdentifier y su POST exacto; el perfil sigue QA_ONLY/IMPLEMENTED_NOT_E2E hasta confirmar una sesión autenticada correcta y la aceptación XAdES por REG-AGE, sin completar una presentación administrativa."
+      "reviewedOn": "2026-08-27",
+      "limitations": "El login CLIENT_TLS_AUTH mediante Cl@ve eIdentifier fue aceptado por el portal y devolvió la vista autenticada de REG en un dispositivo físico; la entrada completa permanece IMPLEMENTED_NOT_E2E porque la firma XAdES, la presentación administrativa y el registro final no se han verificado."
     },
     {
       "portalId": "age-acceda",

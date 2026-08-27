@@ -11,8 +11,9 @@ Completed:
 - Junta legacy Ovorion, Carné Joven, Aragón SIRAW and Junta Oficina Virtual are
   tracked separately. Carné Joven `CLIENT_TLS_AUTH` was verified on a physical
   device on 2026-07-21; Aragón login CAdES on 2026-07-28; Oficina Virtual
-  MiniApplet 1.5 login CAdES on 2026-07-29; UniZAR login CAdES on 2026-07-30.
-  RedSARA remains `QA_ONLY`; historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL`, is available only under
+  MiniApplet 1.5 login CAdES on 2026-07-29; UniZAR login CAdES on 2026-07-30;
+  RedSARA `CLIENT_TLS_AUTH` login on 2026-08-27. RedSARA remains `QA_ONLY`
+  because its XAdES/document-submission branch is not E2E verified; historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL`, is available only under
   QA policy for sensitive operations, and is excluded from release.
 - Profile/public-catalog E2E consistency gate (F-15A): every bound profile marked
   `VERIFIED_E2E` must have the exact public metadata pair
