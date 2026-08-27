@@ -130,6 +130,7 @@ internal fun CatalogSmokeResultCode.isOrderedBroadcastFailure(): Boolean = when 
     CatalogSmokeResultCode.AMBIGUOUS_PROFILE,
     CatalogSmokeResultCode.PROFILE_DISABLED,
     CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE,
+    CatalogSmokeResultCode.PUBLIC_ENTRY_ACTIVATION_UNAVAILABLE,
     CatalogSmokeResultCode.RUN_NOT_ACTIVE,
     -> true
 
@@ -137,5 +138,6 @@ internal fun CatalogSmokeResultCode.isOrderedBroadcastFailure(): Boolean = when 
     CatalogSmokeResultCode.PROFILE_RESOLVED,
     CatalogSmokeResultCode.OPEN_REQUESTED,
     CatalogSmokeResultCode.WEBVIEW_ACTIVE,
+    CatalogSmokeResultCode.PUBLIC_ENTRY_ACTIVATION_REQUESTED,
     -> false
 }

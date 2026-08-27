@@ -191,6 +191,32 @@ class CatalogSmokeControllerTest {
     }
 
     @Test
+    fun `activate requests only the closed public entry action for the active run profile`() {
+        val active = ProfileId("aeat-mis-datos-censales")
+        val runtime = CatalogSmokeRuntime()
+        runtime.beginRun("run-aeat-activate", active)
+        val sessionId = UUID.randomUUID()
+        runtime.observe(RuntimeDiagnosticEvent.WebViewState(active, sessionId, 0L, active = true))
+        runtime.observe(
+            RuntimeDiagnosticEvent.NavigationChanged(
+                active,
+                sessionId,
+                1L,
+                "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html",
+            ),
+        )
+        val activated = mutableListOf<ProfileId>()
+        val result = controller(
+            activeProfile = active,
+            runtime = runtime,
+            activated = activated,
+        ).execute(CatalogSmokeRequest("run-aeat-activate", "aeat-sede", "ACTIVATE"))
+
+        assertEquals(CatalogSmokeResultCode.PUBLIC_ENTRY_ACTIVATION_REQUESTED, result.result)
+        assertEquals(listOf(active), activated)
+    }
+
+    @Test
     fun `profile identifier is accepted only when it maps to one catalog portal`() {
         val opened = mutableListOf<PortalLaunchTarget>()
         val runtime = CatalogSmokeRuntime()
@@ -237,6 +263,7 @@ class CatalogSmokeControllerTest {
                 CatalogSmokeResultCode.AMBIGUOUS_PROFILE,
                 CatalogSmokeResultCode.PROFILE_DISABLED,
                 CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE,
+                CatalogSmokeResultCode.PUBLIC_ENTRY_ACTIVATION_UNAVAILABLE,
                 CatalogSmokeResultCode.RUN_NOT_ACTIVE,
             ),
             CatalogSmokeResultCode.entries.filterTo(mutableSetOf()) {
@@ -251,11 +278,13 @@ class CatalogSmokeControllerTest {
         opened: MutableList<PortalLaunchTarget> = mutableListOf(),
         activeProfile: ProfileId? = null,
         runtime: CatalogSmokeRuntime = CatalogSmokeRuntime(),
+        activated: MutableList<ProfileId> = mutableListOf(),
     ) = CatalogSmokeController(
         repository = catalogRepository,
         certificateUnlocked = { unlocked },
         openProfile = opened::add,
         activeWebViewMatches = { it == activeProfile },
+        activatePublicEntry = { profileId -> activated.add(profileId) },
         adapterIdForProfile = { "test-adapter" },
         runtime = runtime,
     )

@@ -232,6 +232,39 @@ object SiteProfileCatalogParser {
         require(profile.clientAuthPolicy == null)
     }
 
+    private fun validateAeatProfile(profile: SiteProfile) {
+        require(profile.profileVersion == AEAT_PROFILE_VERSION)
+        require(profile.displayName == AEAT_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == AEAT_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(AEAT_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(AEAT_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(AEAT_START_URL)),
+                requestPath = AEAT_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AEAT_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-31") })
+    }
+
     private fun certificateRules(value: JValue): CertificateFilterRules {
         val o = value.obj("certificateRules")
         o.exact("allowedKeyAlgorithms", "requireDigitalSignatureKeyUsage")
@@ -396,6 +429,9 @@ object SiteProfileCatalogParser {
             }
             if (p.profileId.value == ACCEDA_PROFILE_ID) {
                 validateAccedaProfile(p)
+            }
+            if (p.profileId.value == AEAT_PROFILE_ID) {
+                validateAeatProfile(p)
             }
             if (p.profileId.value == SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID) {
                 validateSeguridadSocialAutoFirmaProfile(p)
@@ -2716,6 +2752,18 @@ object SiteProfileCatalogParser {
         "https://seuelectronica.dipta.cat/instancia-generica",
         "https://valid.aoc.cat/o/oauth2/js/login.js",
         "https://cert.valid.aoc.cat/o/oauth2/cert",
+    )
+    private const val AEAT_PROFILE_ID = "aeat-mis-datos-censales"
+    private const val AEAT_PROFILE_VERSION = 1
+    private const val AEAT_DISPLAY_NAME = "Agencia Tributaria — Mis datos censales"
+    private const val AEAT_START_URL =
+        "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+    private const val AEAT_ORIGIN = "https://sede.agenciatributaria.gob.es"
+    private const val AEAT_REQUEST_ORIGIN = "https://www1.agenciatributaria.gob.es"
+    private const val AEAT_REQUEST_PATH = "/wlpl/BUGC-JDIT/MdcAcceso"
+    private val AEAT_EVIDENCE_URLS = setOf(
+        AEAT_START_URL,
+        "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso",
     )
     private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"
     private const val TEA_PROFILE_VERSION = 1

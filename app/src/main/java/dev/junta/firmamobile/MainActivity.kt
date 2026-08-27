@@ -311,6 +311,7 @@ class MainActivity : ComponentActivity() {
                 )
             },
             activeWebViewMatches = { profileId -> activeWebViewMatches(profileId) },
+            currentWebView = { currentWebView },
             adapterIdForProfile = { profileId -> smokeAdapterId(profileId) },
         )
         val paperSystemBar = getColor(R.color.jfm_paper)

@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.diagnostics
 
 import android.app.Activity
+import android.webkit.WebView
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.profile.ProfileId
@@ -13,6 +14,7 @@ internal object RuntimeDiagnosticsFactory {
         certificateUnlocked: () -> Boolean,
         openProfile: (PortalLaunchTarget) -> Unit,
         activeWebViewMatches: (ProfileId) -> Boolean,
+        currentWebView: () -> WebView?,
         adapterIdForProfile: (ProfileId) -> String?,
     ): RuntimeDiagnosticsObserver = NoOpRuntimeDiagnosticsObserver
 

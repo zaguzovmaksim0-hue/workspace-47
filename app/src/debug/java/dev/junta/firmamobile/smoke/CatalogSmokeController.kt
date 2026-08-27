@@ -6,7 +6,7 @@ import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.profile.ProfileId
 
-internal enum class CatalogSmokeOperation { OPEN, INSPECT }
+internal enum class CatalogSmokeOperation { OPEN, INSPECT, ACTIVATE }
 
 internal enum class CatalogSmokeResultCode {
     INVALID_REQUEST,
@@ -19,6 +19,8 @@ internal enum class CatalogSmokeResultCode {
     OPEN_REQUESTED,
     WEBVIEW_ACTIVE,
     WEBVIEW_NOT_ACTIVE,
+    PUBLIC_ENTRY_ACTIVATION_REQUESTED,
+    PUBLIC_ENTRY_ACTIVATION_UNAVAILABLE,
     RUN_NOT_ACTIVE,
 }
 
@@ -45,6 +47,7 @@ internal class CatalogSmokeController(
     private val certificateUnlocked: () -> Boolean,
     private val openProfile: (PortalLaunchTarget) -> Unit,
     private val activeWebViewMatches: (ProfileId) -> Boolean,
+    private val activatePublicEntry: (ProfileId) -> Boolean,
     private val adapterIdForProfile: (ProfileId) -> String?,
     private val runtime: CatalogSmokeRuntime,
 ) {
@@ -69,21 +72,30 @@ internal class CatalogSmokeController(
         )
         val profileId = portal.profileId ?: return base
 
-        if (operation == CatalogSmokeOperation.INSPECT) {
+        if (operation == CatalogSmokeOperation.INSPECT || operation == CatalogSmokeOperation.ACTIVATE) {
             val snapshot = runtime.snapshot(runId, profileId)
                 ?: return base.copy(result = CatalogSmokeResultCode.RUN_NOT_ACTIVE)
             // activeWebViewMatches re-validates the live WebView URL against the exact profile.
             // currentUrlAllowed is diagnostic evidence from the event journal, not a second authority.
             val active = activeWebViewMatches(profileId) &&
                 snapshot.browserSessionBound && snapshot.webViewActive
-            return base.copy(
-                result = if (active) {
-                    CatalogSmokeResultCode.WEBVIEW_ACTIVE
-                } else {
-                    CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE
-                },
-                runtime = snapshot,
-            )
+            if (!active) {
+                return base.copy(
+                    result = CatalogSmokeResultCode.WEBVIEW_NOT_ACTIVE,
+                    runtime = snapshot,
+                )
+            }
+            if (operation == CatalogSmokeOperation.ACTIVATE) {
+                return base.copy(
+                    result = if (activatePublicEntry(profileId)) {
+                        CatalogSmokeResultCode.PUBLIC_ENTRY_ACTIVATION_REQUESTED
+                    } else {
+                        CatalogSmokeResultCode.PUBLIC_ENTRY_ACTIVATION_UNAVAILABLE
+                    },
+                    runtime = snapshot,
+                )
+            }
+            return base.copy(result = CatalogSmokeResultCode.WEBVIEW_ACTIVE, runtime = snapshot)
         }
 
         val target = repository.resolveLaunch(portal)
