@@ -15,7 +15,7 @@ object PublicPortalCatalogParser {
         root.exact("schemaVersion", "catalogVersion", "sourceRevision", "entries")
         val entries = root.array("entries").map(::entry)
         val catalog = PublicPortalCatalog(
-            schemaVersion = root.int("schemaVersion").also { require(it == 1) },
+            schemaVersion = root.int("schemaVersion").also { require(it == 2) },
             catalogVersion = root.int("catalogVersion").also { require(it >= 1) },
             sourceRevision = root.string("sourceRevision").also { require(SHA256.matches(it)) },
             entries = entries,
@@ -40,7 +40,7 @@ object PublicPortalCatalogParser {
         o.exactWithOptional(
             setOf("launchUrl"),
             "portalId", "inventoryId", "profileId", "displayName", "organization",
-            "governmentLevel", "territory", "purpose", "entryUrl", "observedMechanisms",
+            "governmentLevel", "regionCode", "territory", "purpose", "entryUrl", "observedMechanisms",
             "observedSignatureFormats", "protocolFamily", "catalogStatus", "inventoryStatus",
             "discoveryState", "evidenceIds", "reviewedOn", "limitations",
         )
@@ -63,6 +63,8 @@ object PublicPortalCatalogParser {
             displayName = bounded(o.string("displayName"), 160),
             organization = bounded(o.string("organization"), 180),
             governmentLevel = enum(o.string("governmentLevel")),
+            regionCode = PortalRegionCode.fromWireValue(o.string("regionCode"))
+                ?: error("unknown regionCode"),
             territory = bounded(o.string("territory"), 120),
             purpose = bounded(o.string("purpose"), 500),
             entryUrl = strictHttpsUrl(o.string("entryUrl")),

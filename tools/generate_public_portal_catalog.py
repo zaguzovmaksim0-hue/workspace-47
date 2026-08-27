@@ -31,6 +31,61 @@ LEVELS = {
 MIN_INVENTORY_RECORDS = 182
 SITE_PROFILE_ROOT_KEYS = {"schemaVersion", "catalogVersion", "profiles"}
 
+COMMUNITY_REGION_CODES = {
+    "Andalucía": "ES-AN",
+    "Aragón": "ES-AR",
+    "Principado de Asturias": "ES-AS",
+    "Cantabria": "ES-CB",
+    "Castilla y León": "ES-CL",
+    "Castilla-La Mancha": "ES-CM",
+    "Canarias": "ES-CN",
+    "Cataluña": "ES-CT",
+    "Extremadura": "ES-EX",
+    "Galicia": "ES-GA",
+    "Illes Balears": "ES-IB",
+    "Región de Murcia": "ES-MC",
+    "Comunidad de Madrid": "ES-MD",
+    "Comunidad Foral de Navarra": "ES-NC",
+    "País Vasco": "ES-PV",
+    "La Rioja": "ES-RI",
+    "Comunidad Valenciana": "ES-VC",
+    "Comunitat Valenciana": "ES-VC",
+    "Ciudad Autónoma de Ceuta": "ES-CE",
+    "Ciudad Autónoma de Melilla": "ES-ML",
+}
+
+EXPLICIT_REGION_OVERRIDES = {
+    "ES-PUB-0015": "ES-CL",
+    "ES-PUB-0016": "ES-AN",
+    "ES-PUB-0017": "ES-MD",
+    "ES-PUB-0018": "ES-AN",
+    "ES-PUB-0020": "ES-AR",
+    "ES-PUB-0092": "ES",
+}
+
+REGION_TERRITORY_NAMES = {
+    "ES": "España",
+    "ES-AN": "Andalucía",
+    "ES-AR": "Aragón",
+    "ES-AS": "Principado de Asturias",
+    "ES-CB": "Cantabria",
+    "ES-CL": "Castilla y León",
+    "ES-CM": "Castilla-La Mancha",
+    "ES-CN": "Canarias",
+    "ES-CT": "Cataluña",
+    "ES-EX": "Extremadura",
+    "ES-GA": "Galicia",
+    "ES-IB": "Illes Balears",
+    "ES-MC": "Región de Murcia",
+    "ES-MD": "Comunidad de Madrid",
+    "ES-NC": "Comunidad Foral de Navarra",
+    "ES-PV": "País Vasco",
+    "ES-RI": "La Rioja",
+    "ES-VC": "Comunitat Valenciana",
+    "ES-CE": "Ciudad Autónoma de Ceuta",
+    "ES-ML": "Ciudad Autónoma de Melilla",
+}
+
 
 def _records(markdown: str) -> list[dict[str, object]]:
     records: list[dict[str, object]] = []
@@ -185,7 +240,27 @@ def _territory(record: dict[str, object]) -> str:
         return community
     if locality not in {"NO_APLICA", "NO_VERIFICADO"}:
         return locality
-    return "España"
+    return REGION_TERRITORY_NAMES[_region_code(record)]
+
+
+def _region_code(record: dict[str, object]) -> str:
+    inventory_id = str(record.get("inventory_id", ""))
+    explicit = record.get("region_code")
+    expected_override = EXPLICIT_REGION_OVERRIDES.get(inventory_id)
+    if explicit is not None:
+        if expected_override is None or explicit != expected_override:
+            raise ValueError(f"invalid explicit region_code for {inventory_id}")
+        return str(explicit)
+    if expected_override is not None:
+        raise ValueError(f"missing explicit region_code for {inventory_id}")
+
+    community = str(record.get("autonomous_community", "NO_VERIFICADO"))
+    mapped = COMMUNITY_REGION_CODES.get(community)
+    if mapped is not None:
+        return mapped
+    if community == "NO_APLICA" and record.get("administrative_level") == "ESTATAL":
+        return "ES"
+    raise ValueError(f"region cannot be resolved for {inventory_id}")
 
 
 def _entry(record: dict[str, object], profile_bindings: dict[str, str]) -> dict[str, object]:
@@ -203,6 +278,7 @@ def _entry(record: dict[str, object], profile_bindings: dict[str, str]) -> dict[
         "displayName": str(record["surface_name"]),
         "organization": str(record["institution_name"]),
         "governmentLevel": LEVELS[str(record["administrative_level"])],
+        "regionCode": _region_code(record),
         "territory": _territory(record),
         "purpose": str(record["operation_summary"]),
         "entryUrl": entry_url,
@@ -239,8 +315,8 @@ def generate(source: Path, profiles_source: Path) -> dict[str, object]:
     if bound_profile_ids != {profile_id for profile_id, _ in profiles}:
         raise ValueError("not all profiles were mapped")
     return {
-        "schemaVersion": 1,
-        "catalogVersion": 1,
+        "schemaVersion": 2,
+        "catalogVersion": 2,
         "sourceRevision": hashlib.sha256(raw).hexdigest(),
         "entries": entries,
     }
