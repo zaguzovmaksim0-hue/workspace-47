@@ -13,19 +13,19 @@ SITE_PROFILES = ROOT / "config" / "site_profiles_v1.json"
 
 
 class EducationPublicCatalogContractTest(unittest.TestCase):
-    def test_convocatoria_46_exposes_only_bounded_client_tls_auth(self) -> None:
+    def test_convocatoria_46_exposes_verified_client_tls_auth_only(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0182")
         self.assertEqual("educacion-convocatoria", target["profileId"])
-        self.assertEqual("E2E_PENDING", target["catalogStatus"])
-        self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
+        self.assertEqual("E2E_VERIFIED", target["catalogStatus"])
+        self.assertEqual("VERIFIED_E2E", target["inventoryStatus"])
         self.assertEqual("CLIENT_TLS_AUTH", target["protocolFamily"])
         self.assertIn("CLIENT_TLS_AUTH", target["observedMechanisms"])
         self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
         self.assertNotIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
-        self.assertEqual("2026-08-19", target["reviewedOn"])
-        self.assertIn("qa", target["limitations"].lower())
+        self.assertEqual("2026-08-27", target["reviewedOn"])
+        self.assertIn("e2e", target["limitations"].lower())
         self.assertIn("firma", target["limitations"].lower())
 
 

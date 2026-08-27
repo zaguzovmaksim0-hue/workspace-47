@@ -56,7 +56,13 @@ class PortalCatalogScreenTest {
             },
             compatible.items.size,
         )
-        val verifiedIds = setOf("carne-joven-andalucia", "aragon-siraw", "junta-ofvirtual", "unizar-tramitador")
+        val verifiedIds = setOf(
+            "carne-joven-andalucia",
+            "aragon-siraw",
+            "junta-ofvirtual",
+            "unizar-tramitador",
+            "educacion-convocatoria",
+        )
         assertTrue(
             compatible.items.filter { it.profileId?.value in verifiedIds }
                 .all { it.supportStatus == PortalSupportStatus.VERIFIED_E2E },
@@ -78,7 +84,7 @@ class PortalCatalogScreenTest {
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, acceda.supportStatus)
         assertTrue(acceda.isEnabled)
         val education = compatible.items.single { it.portalId == PortalId("educacion-convocatoria-46") }
-        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, education.supportStatus)
+        assertEquals(PortalSupportStatus.VERIFIED_E2E, education.supportStatus)
         assertTrue(education.isEnabled)
         val formentera = compatible.items.single { it.portalId == PortalId("formentera-sede-electronica") }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, formentera.supportStatus)

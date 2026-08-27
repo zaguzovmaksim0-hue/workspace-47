@@ -936,10 +936,9 @@ class SiteProfileCatalogParserTest {
         val aragon = ProfileId("aragon-siraw")
         val ofvirtual = ProfileId("junta-ofvirtual")
         val unizar = ProfileId("unizar-tramitador")
-        val releaseProfiles = setOf(carne, aragon, ofvirtual, unizar)
+        val releaseProfiles = setOf(carne, education, aragon, ofvirtual, unizar)
         val qaOnly = setOf(
             junta,
-            education,
             ProfileId("formentera-sede-electronica"),
             ProfileId("iac-sede-public-navigation"),
             ProfileId("icac-sede-public-navigation"),
@@ -980,7 +979,7 @@ class SiteProfileCatalogParserTest {
             assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
             assertTrue(BuiltInSiteProfiles.qaRegistry.profile(profileId) != null)
         }
-        setOf(carne, aragon, ofvirtual, unizar).forEach { profileId ->
+        setOf(carne, education, aragon, ofvirtual, unizar).forEach { profileId ->
             assertEquals(
                 CompatibilityStatus.VERIFIED_E2E,
                 BuiltInSiteProfiles.releaseRegistry.profile(profileId)?.compatibilityStatus,
@@ -991,7 +990,7 @@ class SiteProfileCatalogParserTest {
             BuiltInSiteProfiles.qaRegistry.profile(junta)?.compatibilityStatus,
         )
         assertEquals(
-            CompatibilityStatus.VERIFIED_CONTRACT,
+            CompatibilityStatus.VERIFIED_E2E,
             BuiltInSiteProfiles.qaRegistry.profile(education)?.compatibilityStatus,
         )
         assertEquals(
@@ -1155,7 +1154,10 @@ class SiteProfileCatalogParserTest {
     @Test
     fun releaseDoesNotActivateQaOnlyProfileAndResolutionIsExact() {
         val qaCatalog = SiteProfileCatalogParser.parse(
-            BuiltInSiteProfiles.JSON.replace("\"activation\": \"ENABLED\"", "\"activation\": \"QA_ONLY\""),
+            BuiltInSiteProfiles.JSON.replaceFirst(
+                "\"activation\": \"ENABLED\"",
+                "\"activation\": \"QA_ONLY\"",
+            ),
         )
         val release = SiteProfileRegistry(qaCatalog, BuildTrustPolicy.RELEASE)
         val qa = SiteProfileRegistry(qaCatalog, BuildTrustPolicy.QA)

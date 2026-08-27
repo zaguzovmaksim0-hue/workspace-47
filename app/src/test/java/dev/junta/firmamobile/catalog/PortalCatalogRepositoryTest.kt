@@ -202,6 +202,7 @@ class PortalCatalogRepositoryTest {
             ProfileId("aragon-siraw"),
             ProfileId("junta-ofvirtual"),
             ProfileId("unizar-tramitador"),
+            ProfileId("educacion-convocatoria"),
         )
         verifiedIds.forEach { profileId ->
             assertEquals(PortalSupportStatus.VERIFIED_E2E, qaPortals.single { it.profileId == profileId }.supportStatus)
@@ -871,11 +872,11 @@ class PortalCatalogRepositoryTest {
         )
         val item = qaRepository.portals().single { it.profileId == id }
 
-        assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, item.supportStatus)
+        assertEquals(PortalSupportStatus.VERIFIED_E2E, item.supportStatus)
         assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), item.capabilities)
         assertTrue(item.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(id, exact), qaRepository.resolveLaunch(id, exact))
-        assertNull(releaseRepository.resolveLaunch(id, exact))
+        assertEquals(PortalLaunchTarget(id, exact), releaseRepository.resolveLaunch(id, exact))
 
         listOf(
             "http://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",

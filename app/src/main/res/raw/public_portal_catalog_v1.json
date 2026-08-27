@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "1a6de091db255df2033f16bb1b585bd3241e056bd916aec4b5341c49523042fd",
+  "sourceRevision": "a9bfe0e101909d87fa73c85fd629ce74207d96b7df5456e6128e84984c8146c2",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -5107,15 +5107,16 @@
       ],
       "observedSignatureFormats": [],
       "protocolFamily": "CLIENT_TLS_AUTH",
-      "catalogStatus": "E2E_PENDING",
-      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "LIVE-EDUCACION-ENTRY-2026-07-22",
-        "EDUCACION-CONV46-CLIENTTLS-2026-08-19"
+        "EDUCACION-CONV46-CLIENTTLS-2026-08-19",
+        "E2E-EDUCACION-CLIENTTLS-2026-08-27"
       ],
-      "reviewedOn": "2026-08-19",
-      "limitations": "Implementación QA-only limitada a CLIENT_TLS_AUTH; firma, formato, algoritmo, callback y aceptación E2E permanecen no verificados."
+      "reviewedOn": "2026-08-27",
+      "limitations": "CLIENT_TLS_AUTH verificado E2E en dispositivo físico para la autenticación de la Convocatoria 46; la firma documental, formato, algoritmo, callback de firma y presentación final permanecen fuera de alcance."
     },
     {
       "portalId": "castilla-la-mancha-certificate-login-probe",

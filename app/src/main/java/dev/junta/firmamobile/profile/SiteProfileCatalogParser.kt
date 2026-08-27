@@ -1528,8 +1528,8 @@ object SiteProfileCatalogParser {
     private fun validateEducationProfile(profile: SiteProfile) {
         require(profile.profileVersion == EDUCATION_PROFILE_VERSION)
         require(profile.displayName == EDUCATION_DISPLAY_NAME)
-        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
-        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_E2E)
+        require(profile.activation == ProfileActivation.ENABLED)
         require(profile.startUrl.toASCIIString() == EDUCATION_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EDUCATION_ORIGIN)))
         require(
