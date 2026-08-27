@@ -236,8 +236,11 @@ for target in "${targets[@]}"; do
   started_epoch="$(date +%s)"
   open_file="$RAW_DIR/$run_id-open.txt"
   inspect_file="$RAW_DIR/$run_id-inspect.txt"
+  activate_file="$RAW_DIR/$run_id-activate.txt"
   timed_out=false
   opened_webview=false
+  activation_attempted=false
+  activation_requested=false
   if ((index == 1 || (index - 1) % PROCESS_RESET_INTERVAL == 0)); then
     reset_main_activity || {
       echo "MainActivity could not be restarted before $target_id" >&2
@@ -287,6 +290,23 @@ for target in "${targets[@]}"; do
       inspect_result="$(jq -r '.result' <<<"$inspect_json")"
       if [[ "$inspect_result" == "WEBVIEW_ACTIVE" ]]; then
         opened_webview=true
+        if [[ "$target_id" == "aeat-sede" && "$activation_attempted" != true ]]; then
+          activation_attempted=true
+          set +e
+          activate_json="$(run_command "$target_kind" "$target_id" "$run_id" ACTIVATE "$activate_file")"
+          activate_code=$?
+          set -e
+          if ((activate_code != 0)) || ! jq -e . >/dev/null 2>&1 <<<"$activate_json"; then
+            inspect_json="$(synthetic_result "$run_id" "$target_kind" "$target_id" BRIDGE_ERROR)"
+            break
+          fi
+          activate_result="$(jq -r '.result' <<<"$activate_json")"
+          if [[ "$activate_result" != "PUBLIC_ENTRY_ACTIVATION_REQUESTED" ]]; then
+            inspect_json="$activate_json"
+            break
+          fi
+          activation_requested=true
+        fi
         runtime_terminal "$inspect_json" && break
         sequence="$(jq -r '(.runtime.events[-1].sequence // 0)' <<<"$inspect_json")"
         if [[ "$sequence" != "$last_sequence" ]]; then last_sequence="$sequence"; stable_since=$SECONDS; fi
@@ -369,6 +389,7 @@ for target in "${targets[@]}"; do
   [[ "$open_result" =~ ^(BRIDGE_ERROR|INVALID_REQUEST|UNKNOWN_PORTAL|UNKNOWN_PROFILE|AMBIGUOUS_PROFILE|PROFILE_DISABLED)$ ]] && hard_failure=true
   if [[ "$final_result" == "BRIDGE_ERROR" && "$autofirma_handoff" != true &&
         "$external_navigation_fallback" != true && "$portal_callback_fallback" != true ]]; then hard_failure=true; fi
+  [[ "$final_result" == "PUBLIC_ENTRY_ACTIVATION_UNAVAILABLE" ]] && hard_failure=true
   jq -e '(.runtime // {}) | (.signingFailedObserved == true or .renderProcessGone == true or .failureCode != null)' >/dev/null <<<"$final_json" && hard_failure=true
   [[ "$process_alive" != true || "$timed_out" == true || "$crash_detected" == true || "$anr_detected" == true ]] && hard_failure=true
   if [[ "$activity_started" != true && "$autofirma_handoff" != true &&
@@ -382,6 +403,7 @@ for target in "${targets[@]}"; do
     --argjson crashDetected "$crash_detected" --argjson anrDetected "$anr_detected" \
     --argjson blocked "$blocked" --argjson manualActionRequired "$manual_action" \
     --argjson failed "$hard_failure" --argjson reason "$reason" --argjson durationMs "$duration_ms" \
+    --argjson activationRequested "$activation_requested" \
     --argjson autofirmaFallback "$autofirma_handoff" --argjson externalNavigationFallback "$external_navigation_fallback" \
     --argjson portalCallbackFallback "$portal_callback_fallback" '
     {
@@ -397,6 +419,7 @@ for target in "${targets[@]}"; do
       profileResolved: ($open.result == "PROFILE_RESOLVED" or $open.result == "OPEN_REQUESTED"),
       webViewOpened: $webViewOpened,
       observedStage: $stage,
+      publicEntryActivationRequested: $activationRequested,
       autofirmaIntentObserved: (((($final.runtime // {}).autofirmaIntentObserved) == true) or $autofirmaFallback),
       externalNavigationObserved: (((($final.runtime // {}).externalNavigationObserved) == true) or $externalNavigationFallback),
       portalCallbackObserved: (((($final.runtime // {}).portalCallbackObserved) == true) or $portalCallbackFallback),
@@ -416,6 +439,7 @@ for target in "${targets[@]}"; do
         else $open.result end),
       runtime: $final.runtime,
       evidence: (["DUMP_PROTECTED_ORDERED_BROADCAST", $open.result, $final.result]
+        + (if $activationRequested then ["PUBLIC_ENTRY_ACTIVATION_REQUESTED"] else [] end)
         + (if $autofirmaFallback then ["SANITIZED_LOG_AUTOFIRMA_HANDOFF"] else [] end)
         + (if $externalNavigationFallback then ["SANITIZED_LOG_EXTERNAL_NAVIGATION"] else [] end)
         + (if $portalCallbackFallback then ["SANITIZED_LOG_PORTAL_CALLBACK"] else [] end)
