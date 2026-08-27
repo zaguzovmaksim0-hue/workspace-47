@@ -52,7 +52,7 @@ class EducationClientAuthProfileTest {
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
         assertEquals(
             setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
             policy.requestOrigins,
@@ -70,6 +70,7 @@ class EducationClientAuthProfileTest {
         assertTrue(policy.linkedEphemeralQueryParameterMappings.isEmpty())
         assertEquals(15, policy.grantTtlSeconds)
         assertEquals(443, policy.requestPort)
+        assertEquals(HttpMethod.POST, policy.requestMethod)
         assertTrue(policy.allowEmptyIssuerList)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)

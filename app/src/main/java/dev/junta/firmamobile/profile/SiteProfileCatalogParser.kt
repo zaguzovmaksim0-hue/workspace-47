@@ -1545,7 +1545,7 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(
             profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)),
                 sourceUrls = setOf(URI(EDUCATION_CLIENT_AUTH_SOURCE_URL)),
                 requestPath = AIREF_CLIENT_AUTH_REQUEST_PATH,
@@ -1554,6 +1554,7 @@ object SiteProfileCatalogParser {
                 allowEmptyIssuerList = true,
                 grantTtlSeconds = 15,
                 requestPort = 443,
+                requestMethod = HttpMethod.POST,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EDUCATION_EVIDENCE_URLS)

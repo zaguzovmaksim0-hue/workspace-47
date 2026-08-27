@@ -441,10 +441,15 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
-    fun exactEducationClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
+    fun exactEducationClavePostResourceRequestAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val education = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
-        val authorized = education.observeTopLevelNavigation(
-            EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, 78, true,
+        val authorized = education.observeTopLevelResourceRequest(
+            activeProfileId = EDUCATION_PROFILE,
+            currentUrl = EDUCATION_SOURCE,
+            targetUrl = EDUCATION_TARGET,
+            method = "POST",
+            currentEpoch = 78,
+            isMainFrameRequest = true,
         )
 
         assertEquals(EDUCATION_PROFILE, authorized?.profileId)
@@ -452,7 +457,14 @@ class ClientAuthNavigationAuthorizerTest {
         assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
         assertNull(authorized?.target?.rawQuery)
         assertNull(
-            education.observeTopLevelNavigation(EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, 78, true),
+            education.observeTopLevelResourceRequest(
+                EDUCATION_PROFILE,
+                EDUCATION_SOURCE,
+                EDUCATION_TARGET,
+                "POST",
+                78,
+                true,
+            ),
         )
 
         listOf(
@@ -464,8 +476,13 @@ class ClientAuthNavigationAuthorizerTest {
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             assertNull(
                 invalidTarget,
-                fresh.observeTopLevelNavigation(
-                    EDUCATION_PROFILE, EDUCATION_SOURCE, invalidTarget, 180L + index, true,
+                fresh.observeTopLevelResourceRequest(
+                    EDUCATION_PROFILE,
+                    EDUCATION_SOURCE,
+                    invalidTarget,
+                    "POST",
+                    180L + index,
+                    true,
                 ),
             )
         }
@@ -478,8 +495,13 @@ class ClientAuthNavigationAuthorizerTest {
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             assertNull(
                 invalidSource,
-                fresh.observeTopLevelNavigation(
-                    EDUCATION_PROFILE, invalidSource, EDUCATION_TARGET, 190L + index, true,
+                fresh.observeTopLevelResourceRequest(
+                    EDUCATION_PROFILE,
+                    invalidSource,
+                    EDUCATION_TARGET,
+                    "POST",
+                    190L + index,
+                    true,
                 ),
             )
         }
