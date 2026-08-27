@@ -91,19 +91,28 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
+    fun `AEAT client TLS profile is exact and release active after physical E2E`() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")
         val target = URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso")
 
-        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
-        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(source))
-        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(target))
+        val releaseProfile = BuiltInSiteProfiles.releaseRegistry.profile(profileId)
+        assertNotNull(releaseProfile)
+        assertEquals(CompatibilityStatus.VERIFIED_E2E, releaseProfile?.compatibilityStatus)
+        assertEquals(ProfileActivation.ENABLED, releaseProfile?.activation)
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.releaseRegistry.resolve(source)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.releaseRegistry.resolve(target)?.trustMode,
+        )
 
         val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
         assertNotNull(profile)
-        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
-        assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
+        assertEquals(CompatibilityStatus.VERIFIED_E2E, profile?.compatibilityStatus)
+        assertEquals(ProfileActivation.ENABLED, profile?.activation)
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(source)?.trustMode)
         assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(target)?.trustMode)
     }

@@ -333,13 +333,13 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
-    fun `AEAT record binds only the exact pending Client TLS profile`() {
+    fun `AEAT record binds only the exact verified Client TLS profile`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val aeat = catalog.entries.single { it.portalId == PortalId("aeat-sede") }
 
         assertEquals(ProfileId("aeat-mis-datos-censales"), aeat.profileId)
-        assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, aeat.inventoryStatus)
-        assertEquals(PublicCatalogStatus.E2E_PENDING, aeat.catalogStatus)
+        assertEquals(PortalInventoryStatus.VERIFIED_E2E, aeat.inventoryStatus)
+        assertEquals(PublicCatalogStatus.E2E_VERIFIED, aeat.catalogStatus)
         assertTrue(PortalMechanism.CERTIFICATE_ACCESS in aeat.observedMechanisms)
         assertTrue(PortalMechanism.CLIENT_TLS_AUTH in aeat.observedMechanisms)
         assertFalse(aeat.observedSignatureFormats.isNotEmpty())

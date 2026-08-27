@@ -72,10 +72,10 @@
     },
     {
       "profileId": "aeat-mis-datos-censales",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Agencia Tributaria — Mis datos censales",
-      "compatibilityStatus": "VERIFIED_CONTRACT",
-      "activation": "QA_ONLY",
+      "compatibilityStatus": "VERIFIED_E2E",
+      "activation": "ENABLED",
       "startUrl": "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html",
       "initiatorOrigins": ["https://sede.agenciatributaria.gob.es"],
       "redirectOrigins": [],
@@ -83,9 +83,9 @@
       "endpoints": [],
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode": "DIRECT_FROM_SOURCE","requestOrigins":["https://www1.agenciatributaria.gob.es"],"sourceUrls":["https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"],"requestPath":"/wlpl/BUGC-JDIT/MdcAcceso","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
+      "clientAuthPolicy": {"transitionMode":"DIRECT_OR_REDIRECT_FROM_SOURCE","requestOrigins":["https://www1.agenciatributaria.gob.es"],"sourceUrls":["https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP"],"requestPath":"/wlpl/OVCT-CXEW/DialogoRepresentacion","fixedQueryParameters":{"ref":"/wlpl/BUGC-JDIT/MdcAcceso"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15,"directSourceUrls":["https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"]},
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html","reviewedOn":"2026-07-31"},{"url":"https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso","reviewedOn":"2026-07-31"}]
+      "evidence": [{"url":"https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html","reviewedOn":"2026-08-27"},{"url":"https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP","reviewedOn":"2026-08-27"},{"url":"https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso","reviewedOn":"2026-08-27"},{"url":"https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso","reviewedOn":"2026-08-27"}]
     },
     {
       "profileId": "junta-ofvirtual",

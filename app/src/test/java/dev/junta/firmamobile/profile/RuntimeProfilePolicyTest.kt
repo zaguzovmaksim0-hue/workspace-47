@@ -29,11 +29,12 @@ class RuntimeProfilePolicyTest {
                 ?.compatibilityStatus,
         )
         assertEquals(
-            null,
-            BuiltInSiteProfiles.releaseRegistry.profile(ProfileId("aeat-mis-datos-censales")),
+            CompatibilityStatus.VERIFIED_E2E,
+            BuiltInSiteProfiles.releaseRegistry.profile(ProfileId("aeat-mis-datos-censales"))
+                ?.compatibilityStatus,
         )
         assertEquals(
-            CompatibilityStatus.VERIFIED_CONTRACT,
+            CompatibilityStatus.VERIFIED_E2E,
             BuiltInSiteProfiles.qaRegistry.profile(ProfileId("aeat-mis-datos-censales"))
                 ?.compatibilityStatus,
         )

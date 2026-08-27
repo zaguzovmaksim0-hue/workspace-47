@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "a9bfe0e101909d87fa73c85fd629ce74207d96b7df5456e6128e84984c8146c2",
+  "sourceRevision": "2b08d61f24ddd103650ba40b0ff6e00cfe718b2aa466237d291c6691196ddfce",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -115,18 +115,21 @@
       ],
       "observedSignatureFormats": [],
       "protocolFamily": "CLIENT_TLS",
-      "catalogStatus": "E2E_PENDING",
-      "inventoryStatus": "IMPLEMENTED_NOT_E2E",
+      "catalogStatus": "E2E_VERIFIED",
+      "inventoryStatus": "VERIFIED_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "P02",
         "P02A",
         "P02C",
         "P02D",
+        "P02E",
+        "P02F",
+        "E2E-AEAT-CLIENTTLS-2026-08-27",
         "D11"
       ],
-      "reviewedOn": "2026-07-31",
-      "limitations": "Contrato Client TLS exacto implementado solo en QA; faltan callback WebView y aceptación E2E del portal. No se afirma firma ni presentación administrativa."
+      "reviewedOn": "2026-08-27",
+      "limitations": "El login Client TLS exacto fue aceptado por el portal en un dispositivo físico; el profile se habilita en release únicamente para este acceso de solo lectura. No se afirma firma, modificación, pago ni presentación administrativa."
     },
     {
       "portalId": "seguridad-social-sede",

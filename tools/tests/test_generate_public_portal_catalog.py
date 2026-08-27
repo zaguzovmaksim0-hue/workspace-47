@@ -741,12 +741,12 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             if entry["portalId"] == "aeat-sede"
         )
         self.assertEqual("aeat-mis-datos-censales", aeat["profileId"])
-        self.assertEqual("E2E_PENDING", aeat["catalogStatus"])
-        self.assertEqual("IMPLEMENTED_NOT_E2E", aeat["inventoryStatus"])
-        self.assertEqual("2026-07-31", aeat["reviewedOn"])
+        self.assertEqual("E2E_VERIFIED", aeat["catalogStatus"])
+        self.assertEqual("VERIFIED_E2E", aeat["inventoryStatus"])
+        self.assertEqual("2026-08-27", aeat["reviewedOn"])
         self.assertIn("client tls", aeat["limitations"].lower())
-        self.assertIn("qa", aeat["limitations"].lower())
-        self.assertIn("e2e", aeat["limitations"].lower())
+        self.assertIn("dispositivo físico", aeat["limitations"].lower())
+        self.assertIn("acept", aeat["limitations"].lower())
         self.assertNotIn("firma aceptada", aeat["limitations"].lower())
 
         ugr = next(

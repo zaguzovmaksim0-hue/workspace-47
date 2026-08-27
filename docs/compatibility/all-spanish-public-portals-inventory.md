@@ -139,7 +139,7 @@ histórica de la matriz ni constituye una escala automática:
 | `INACCESSIBLE` | No se puede alcanzar o revalidar de forma segura y repetible la superficie oficial; no se hacen afirmaciones técnicas mientras persista. |
 | `DEPRECATED` | Una fuente oficial confirma retirada o sustitución del flujo; se conserva únicamente para trazabilidad. |
 
-P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW), P20 (Oficina Virtual) y P17 (UniZAR) cuentan con verificación E2E delimitada a sus logins CAdES observados el 2026-07-28, 2026-07-29 y 2026-07-30, respectivamente. El login CLIENT_TLS_AUTH de ES-PUB-0002 (REG-AGE/RedSARA) fue aceptado en dispositivo físico el 2026-08-27, pero la entrada completa conserva E2E_PENDING hasta verificar XAdES. Tests locales, hashes de JS y
+P19 (Carné Joven Europeo de Andalucía) cuenta con verificación E2E delimitada a CLIENT_TLS_AUTH en dispositivo físico (2026-07-21, commit dc3c231). P16 (Aragón SIRAW), P20 (Oficina Virtual) y P17 (UniZAR) cuentan con verificación E2E delimitada a sus logins CAdES observados el 2026-07-28, 2026-07-29 y 2026-07-30, respectivamente. Los logins CLIENT_TLS_AUTH de ES-PUB-0002 (REG-AGE/RedSARA) y ES-PUB-0004 (AEAT) fueron aceptados en dispositivos físicos el 2026-08-27; REG conserva E2E_PENDING porque su firma XAdES queda fuera de esta verificación, mientras AEAT queda verificada solo para el acceso Client TLS de lectura. Tests locales, hashes de JS y
 revisión documental nunca producen por sí solos ese estado. La implementación Junta Ovorion se
 mapea a `IMPLEMENTED_NOT_E2E`; los límites específicos de cada flujo se
 mantienen en su ficha. No se asigna
@@ -196,8 +196,8 @@ secundarias quedan diferidas. D05 sigue capturado pero pendiente de ingestión.
 | Colas enumeradoras pendientes de ingestión | 8/12 |
 | Fuentes oficiales portal-specific registradas | 281 |
 | Fuentes oficiales totales registradas | 293 |
-| Entradas `VERIFIED_E2E` | 4 |
-| Entradas `IMPLEMENTED_NOT_E2E` | 179 |
+| Entradas `VERIFIED_E2E` | 6 |
+| Entradas `IMPLEMENTED_NOT_E2E` | 177 |
 | Entradas implementadas (`VERIFIED_E2E` + `IMPLEMENTED_NOT_E2E`) | 183 |
 | Entradas restantes fuera de ambos estados | 0 |
 | Evidencia exacta de `ClientCertRequest` | 8 |
@@ -219,8 +219,8 @@ Por estado del inventario:
 
 | Estado | Registros |
 | --- | ---: |
-| `VERIFIED_E2E` | 4 |
-| `IMPLEMENTED_NOT_E2E` | 179 |
+| `VERIFIED_E2E` | 6 |
+| `IMPLEMENTED_NOT_E2E` | 177 |
 | `VERIFIED_CONTRACT` | 0 |
 | `REQUIRES_AUTHENTICATED_RESEARCH` | 0 |
 | `BROWSE_ONLY` | 0 |
@@ -352,7 +352,7 @@ requiera traducción manual.
 | Ficha | Institución o superficie | Fuentes oficiales | Tipo de evidencia |
 | --- | --- | --- | --- |
 | `P01` | PAG / enlace al REG-AGE | [P01][P01B] | Ficha oficial PAG y enlace público exacto de Acceso al Registro Electrónico General hacia REG-AGE; el ABI pertenece al perfil RedSARA ya verificado. |
-| `P02` | AEAT | [P02][P02A][P02B] | Certificado en navegador/Android y fase documental de firma; sin `ClientCertRequest` exacto. |
+| `P02` | AEAT | [P02][P02A][P02B][P02C][P02D][P02E][P02F][E2E-AEAT-CLIENTTLS-2026-08-27] | Entrada Mi área personal, selector y gateway observados; `ClientCertRequest` aceptado en dispositivo físico. Alcance limitado al acceso Client TLS de solo lectura. |
 | `P03` | Seguridad Social / Import@ss | [P03][P03A] | Ayuda oficial; AutoFirma móvil rechazada en la Sede y métodos de acceso Import@ss. |
 | `P04` | SEPE | [P04] | FAQ oficial de AutoFirma de escritorio. |
 | `P05` | DGT | [P05][DGT-JS-MAIN-2026-08-09][DGT-JS-CONSTANTES-2026-08-09][DGT-JS-MINIAPPLET-2026-08-09] | Entrada y scripts oficiales con llamada MiniApplet CAdES exacta; sin endpoint de resultado. |
@@ -583,23 +583,23 @@ records:
     official_site: "https://sede.agenciatributaria.gob.es/"
     e_sede: "https://sede.agenciatributaria.gob.es/"
     entry_url: "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
-    procedure_page: "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+    procedure_page: "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso"
     certificate_required: "SI"
     signature_required: "NO_VERIFICADO"
     js_client: "NO_VERIFICADO"
     protocol_family: "CLIENT_TLS"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+    endpoint: "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso"
     discovery_state: "REVIEWED"
-    inventory_status: "IMPLEMENTED_NOT_E2E"
+    inventory_status: "VERIFIED_E2E"
     operation_summary: "Autenticación Client TLS para el acceso de solo lectura a Mis datos censales."
-    protocol_evidence: "La transición exacta desde Mi área personal al endpoint MdcAcceso solicita certificado de cliente en TLS 1.2; sin certificado termina en error 403."
-    client_tls_auth: "SI"
-    evidence_ids: ["P02", "P02A", "P02C", "P02D", "D11"]
-    reason: "Contrato Client TLS exacto implementado solo en QA; faltan callback WebView y aceptación E2E del portal. No se afirma firma ni presentación administrativa."
-    reviewed_at: "2026-07-31"
-    next_gate: "Confirmar ClientCertRequest y autenticación de solo lectura en dispositivo físico; mantener QA_ONLY si cualquier gate falla."
+    protocol_evidence: "Revalidación física 2026-08-27: desde Mi área personal la app abrió el selector de acceso y el gateway DialogoRepresentacion con ref=/wlpl/BUGC-JDIT/MdcAcceso; el WebView observó ClientCertRequest en www1.agenciatributaria.gob.es:443, mostró la confirmación nativa y aceptó el certificado de cliente. La navegación alcanzó el gateway exacto permitido. No se afirma la representación final de datos ni ninguna operación administrativa."
+    client_tls_auth: "VERIFIED_E2E"
+    evidence_ids: ["P02", "P02A", "P02C", "P02D", "P02E", "P02F", "E2E-AEAT-CLIENTTLS-2026-08-27", "D11"]
+    reason: "El login Client TLS exacto fue aceptado por el portal en un dispositivo físico; el profile se habilita en release únicamente para este acceso de solo lectura. No se afirma firma, modificación, pago ni presentación administrativa."
+    reviewed_at: "2026-08-27"
+    next_gate: "No hay otro gate de Client TLS para este profile; cualquier firma, modificación, pago o presentación queda fuera de alcance."
 
   - inventory_id: "ES-PUB-0005"
     surface_key: "seguridad-social-sede"
@@ -6263,7 +6263,7 @@ grandes y explícitos:
    institucional.
 6. No existe inventario separado de proveedores compartidos, plataformas
    multi-tenant, SSO, Storage/Retrieve o endpoints tri-phase.
-7. Hay cuatro entradas con evidencia E2E delimitada y ocho evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
+7. Hay seis entradas con evidencia E2E delimitada y nueve evidencias exactas de `ClientCertRequest`; ningún otro registro hereda esos resultados.
 8. Las variantes lingüísticas no crean registros; los dominios históricos y
    redirects solo se separan cuando existe una frontera funcional acreditada.
    Los candidatos INAGA de Aragón, el checker técnico de Castilla y León, el
@@ -6346,6 +6346,9 @@ Orden de expansión recomendado:
 [P02B]: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/otros-servicios-ayuda-tecnica/documentos-pendientes-firma.html
 [P02C]: https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html
 [P02D]: https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso
+[P02E]: https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP
+[P02F]: https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso
+[E2E-AEAT-CLIENTTLS-2026-08-27]: ../e2e/2026-08-27-aeat-client-auth-success.md
 [P03]: https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es
 [P03A]: https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda
 [IMPORTASS-IDP-IPCE-2026-08-21]: https://idp.seg-social.es/PGIS/Login?seleccion=IPCE

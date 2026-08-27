@@ -119,6 +119,7 @@ object SiteProfileCatalogParser {
             "sourceRequiredEphemeralQueryParameters",
             "linkedEphemeralQueryParameters",
             "linkedEphemeralQueryParameterMappings",
+            "directSourceUrls",
         ).filter { it in o.values }
         o.exact(*(baseKeys.toList() + optionalKeys).toTypedArray())
         val requestPort = if ("requestPort" in o.values) {
@@ -154,6 +155,12 @@ object SiteProfileCatalogParser {
         } else {
             emptyMap()
         }
+        val directSourceUrls = if ("directSourceUrls" in o.values) {
+            o.array("directSourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
+                .also { require(it.isNotEmpty() && it.size == o.array("directSourceUrls").size) }
+        } else {
+            emptySet()
+        }
         require((fixed.keys intersect ephemeral).isEmpty())
         require((sourceFixed.keys intersect sourceEphemeral).isEmpty())
         require(linkedEphemeral.all { it in ephemeral && it in sourceEphemeral })
@@ -165,6 +172,7 @@ object SiteProfileCatalogParser {
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
                 require(requestMethod == HttpMethod.GET)
+                require(directSourceUrls.isEmpty())
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 require(
                     fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443 ||
@@ -173,6 +181,7 @@ object SiteProfileCatalogParser {
             }
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
                 require(requestMethod == HttpMethod.GET)
+                require(directSourceUrls.isEmpty())
                 val boundSourceParameters = linkedEphemeral + linkedEphemeralMappings.keys
                 val boundTargetParameters = linkedEphemeral + linkedEphemeralMappings.values
                 require(sourceEphemeral == boundSourceParameters)
@@ -183,9 +192,17 @@ object SiteProfileCatalogParser {
                     require(ephemeral.isEmpty())
                 }
             }
+            ClientAuthTransitionMode.DIRECT_OR_REDIRECT_FROM_SOURCE -> {
+                require(requestMethod == HttpMethod.GET)
+                require(directSourceUrls.isNotEmpty())
+                require(sourceFixed.isEmpty() && sourceEphemeral.isEmpty())
+                require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
+                require(fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443)
+            }
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
                 require(requestMethod == HttpMethod.POST)
                 require(requestPort == 443)
+                require(directSourceUrls.isEmpty())
                 require(fixed.isEmpty() && ephemeral.isEmpty())
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 // A source POST may be bound by its exact URL alone. Query binding is
@@ -216,6 +233,7 @@ object SiteProfileCatalogParser {
             sourceRequiredEphemeralQueryParameters = sourceEphemeral,
             linkedEphemeralQueryParameters = linkedEphemeral,
             linkedEphemeralQueryParameterMappings = linkedEphemeralMappings,
+            directSourceUrls = directSourceUrls,
         )
     }
 
@@ -235,8 +253,8 @@ object SiteProfileCatalogParser {
     private fun validateAeatProfile(profile: SiteProfile) {
         require(profile.profileVersion == AEAT_PROFILE_VERSION)
         require(profile.displayName == AEAT_DISPLAY_NAME)
-        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
-        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_E2E)
+        require(profile.activation == ProfileActivation.ENABLED)
         require(profile.startUrl.toASCIIString() == AEAT_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(AEAT_ORIGIN)))
         require(profile.redirectOrigins.isEmpty())
@@ -247,11 +265,11 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
         require(
             profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                transitionMode = ClientAuthTransitionMode.DIRECT_OR_REDIRECT_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(AEAT_REQUEST_ORIGIN)),
-                sourceUrls = setOf(URI(AEAT_START_URL)),
+                sourceUrls = setOf(URI(AEAT_SELECTOR_URL)),
                 requestPath = AEAT_REQUEST_PATH,
-                fixedQueryParameters = emptyMap(),
+                fixedQueryParameters = mapOf("ref" to AEAT_MDC_PATH),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
                 grantTtlSeconds = 15,
@@ -259,10 +277,11 @@ object SiteProfileCatalogParser {
                 sourceFixedQueryParameters = emptyMap(),
                 sourceRequiredEphemeralQueryParameters = emptySet(),
                 linkedEphemeralQueryParameters = emptySet(),
+                directSourceUrls = setOf(URI(AEAT_START_URL)),
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AEAT_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-31") })
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-27") })
     }
 
     private fun certificateRules(value: JValue): CertificateFilterRules {
@@ -522,7 +541,7 @@ object SiteProfileCatalogParser {
                             p.profileId.value == "diputacion-soria-sede-client-auth"
                     )
                 }
-                require(policy.sourceUrls.all { source ->
+                require((policy.sourceUrls + policy.directSourceUrls).all { source ->
                     val allowedSourceOrigins = when {
                         p.profileId.value in setOf(
                             AIREF_PROFILE_ID,
@@ -2754,15 +2773,21 @@ object SiteProfileCatalogParser {
         "https://cert.valid.aoc.cat/o/oauth2/cert",
     )
     private const val AEAT_PROFILE_ID = "aeat-mis-datos-censales"
-    private const val AEAT_PROFILE_VERSION = 1
+    private const val AEAT_PROFILE_VERSION = 2
     private const val AEAT_DISPLAY_NAME = "Agencia Tributaria — Mis datos censales"
     private const val AEAT_START_URL =
         "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+    private const val AEAT_SELECTOR_URL =
+        "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/" +
+            "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP"
     private const val AEAT_ORIGIN = "https://sede.agenciatributaria.gob.es"
     private const val AEAT_REQUEST_ORIGIN = "https://www1.agenciatributaria.gob.es"
-    private const val AEAT_REQUEST_PATH = "/wlpl/BUGC-JDIT/MdcAcceso"
+    private const val AEAT_MDC_PATH = "/wlpl/BUGC-JDIT/MdcAcceso"
+    private const val AEAT_REQUEST_PATH = "/wlpl/OVCT-CXEW/DialogoRepresentacion"
     private val AEAT_EVIDENCE_URLS = setOf(
         AEAT_START_URL,
+        AEAT_SELECTOR_URL,
+        "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso",
         "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso",
     )
     private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"

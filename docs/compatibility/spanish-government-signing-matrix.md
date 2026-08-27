@@ -74,7 +74,7 @@ rama heredada y no el API general del producto. [C0]
 | AGE / PAG | Punto de Acceso General — `https://sede.administracion.gob.es` | Acceso al catálogo y al Registro General | No verificado | `BROWSE_ONLY` |
 | AGE / RedSARA | Registro Electrónico General — `https://reg.redsara.es` | Firma de XML de resumen mediante AutoScript | No verificado | `VERIFIED_CONTRACT`; profile/adapter implementados, sin E2E |
 | AGE / ACCEDA | Sede Administraciones Públicas — `https://sede.administracionespublicas.gob.es` | Firma PAdES de solicitud; rama genérica XAdES | No verificado | `VERIFIED_CONTRACT` estático; no implementado/E2E |
-| Estatal | AEAT — `https://sede.agenciatributaria.gob.es` → `https://www1.agenciatributaria.gob.es` | Acceso de solo lectura a `Mis datos censales` mediante Client TLS exacto | `CertificateRequest` TLS observado; callback WebView y aceptación aún no E2E | `VERIFIED_CONTRACT / QA_ONLY`; release no lo incluye |
+| Estatal | AEAT — `https://sede.agenciatributaria.gob.es` → `https://www1.agenciatributaria.gob.es` | Acceso de solo lectura a `Mis datos censales` mediante Client TLS exacto | `ClientCertRequest` observado y aceptado en WebView físico; gateway exacto alcanzado | `VERIFIED_E2E / ENABLED`; release incluye solo este acceso |
 | Estatal | Sede Seguridad Social — `https://sede.seg-social.gob.es` | Firma con AutoFirma | No verificado | `UNSUPPORTED` en móvil para ese flujo |
 | Estatal | Import@ss — `https://portal.seg-social.gob.es` | Identificación con certificado/DNIe, Cl@ve o SMS | No verificado | `BROWSE_ONLY` |
 | Estatal | SEPE — `https://sede.sepe.gob.es` | Firma con AutoFirma tras identificación con certificado | No verificado | `BROWSE_ONLY` |
@@ -120,27 +120,29 @@ otro portal.
 
 - **Organización:** Agencia Tributaria (AEAT).
 - **Source exacto:** [Mi área personal][P02C],
-  `https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html`.
-- **Target exacto:** [Mis datos censales][P02D],
-  `https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso`.
+  `https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html`; la ruta
+  observada por el selector es [SelectorAccesos][P02E].
+- **Target exacto:** [gateway DialogoRepresentacion][P02F],
+  `https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso`.
 - **Operación acotada:** autenticación Client TLS y acceso de solo lectura a
   `Mis datos censales`; no incluye modificación censal, presentación, pago ni
   firma. La documentación general de certificado móvil permanece como contexto
   [P02][P02A]; las ramas de firma separadas no forman parte del profile [P02B].
-- **Evidencia runtime:** un handshake TLS 1.2 sin certificado recibió
-  `CertificateRequest` con lista de issuers no vacía; sin certificado, el
-  servidor terminó en la página de error 403. Esto prueba el contrato TLS del
-  endpoint, no el callback Android ni la aceptación del certificado.
+- **Evidencia runtime:** en la revalidación física del 2026-08-27 la app abrió
+  la confirmación nativa, observó `ClientCertRequest` para
+  `www1.agenciatributaria.gob.es:443`, aceptó el certificado y alcanzó el
+  gateway exacto permitido [E2E-AEAT-CLIENTTLS-2026-08-27]. No se afirma que se
+  haya mostrado la vista final de datos.
 - **Contrato implementado:** profile `aeat-mis-datos-censales`, transición
-  `DIRECT_FROM_SOURCE`, source/host/443/path exactos, sin query ni fragment,
+  `DIRECT_OR_REDIRECT_FROM_SOURCE`, selector como source redirigido y Mi área
+  personal como direct source, host/443/path exactos y query `ref` fijada,
   key algorithms RSA/EC, issuer obligatorio y TTL de 15 segundos.
 - **Signing endpoint / formato / algoritmo / callback:** no verificados y fuera
   de alcance.
-- **Estado:** `VERIFIED_CONTRACT / QA_ONLY`; el release no contiene este trust
-  profile.
-- **Gate restante:** observar `onReceivedClientCertRequest` en WebView y que el
-  portal acepte el acceso de solo lectura en dispositivo físico. Solo entonces
-  puede evaluarse `VERIFIED_E2E / ENABLED`.
+- **Estado:** `VERIFIED_E2E / ENABLED`; el release contiene este trust profile
+  únicamente para el acceso Client TLS de solo lectura.
+- **Gate restante:** no queda otro gate de Client TLS; firma, modificación, pago
+  y presentación administrativa no forman parte del profile y no se verificaron.
 
 ### P03 — Seguridad Social e Import@ss
 
@@ -525,9 +527,9 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
    precondiciones del XAdES observado. ACCEDA permanece como candidato estático.
    Aragón SIRAW y UniZAR están habilitados solo para sus logins CAdES verificados
    E2E; Storage/Retrieve, firma documental y presentación continúan bloqueados.
-4. AEAT es candidata a la primera investigación de `CLIENT_TLS_AUTH`, pero no
-   entra como profile confiable hasta observar host, puerto, key types, issuer
-   constraints, frame/origin y resultado real.
+4. AEAT tiene `CLIENT_TLS_AUTH` verificado en dispositivo físico para el acceso
+   exacto de solo lectura a `Mis datos censales`; el profile release-enabled no
+   añade firma, modificación, pago ni presentación administrativa.
 5. Comunidad de Madrid es candidata a `LOCAL_PADES`; primero debe verificarse
    el formato de firma que acepta el registro y el contrato de subida.
 6. Universidad de Granada es candidata a un contrato alternativo de selección
@@ -588,6 +590,9 @@ los contratos de TLS client auth y firma continúan sin verificar.
 [P02B]: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/otros-servicios-ayuda-tecnica/documentos-pendientes-firma.html
 [P02C]: https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html
 [P02D]: https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso
+[P02E]: https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP
+[P02F]: https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso
+[E2E-AEAT-CLIENTTLS-2026-08-27]: ../e2e/2026-08-27-aeat-client-auth-success.md
 [P03]: https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es
 [P03A]: https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda
 [P04]: https://sede.sepe.gob.es/portalSede/firma-electronica/preguntas-frecuentes/autofirma

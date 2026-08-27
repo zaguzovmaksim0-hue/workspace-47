@@ -24,7 +24,7 @@ class ClientAuthNavigationAuthorizerTest {
     )
 
     @Test
-    fun exactDirectSourceTransitionProducesOneBoundedAeatTarget() {
+    fun exactDirectSourceTransitionProducesOneBoundedAeatRepresentationTarget() {
         val direct = aeatAuthorizer()
 
         val result = direct.observeTopLevelNavigation(
@@ -37,11 +37,76 @@ class ClientAuthNavigationAuthorizerTest {
 
         assertEquals(AEAT_PROFILE, result?.profileId)
         assertEquals("www1.agenciatributaria.gob.es", result?.target?.host)
-        assertEquals("/wlpl/BUGC-JDIT/MdcAcceso", result?.target?.rawPath)
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", result?.target?.rawPath)
+        assertEquals("ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso", result?.target?.rawQuery)
         assertNull(
             direct.observeTopLevelNavigation(
                 AEAT_PROFILE, AEAT_SOURCE, AEAT_TARGET, 40, true,
             ),
+        )
+    }
+
+    @Test
+    fun exactAeatSelectorRedirectAlsoProducesTheSameBoundedRepresentationTarget() {
+        val redirect = aeatAuthorizer()
+
+        assertNull(
+            redirect.observeTopLevelNavigation(
+                AEAT_PROFILE,
+                AEAT_SOURCE,
+                AEAT_SELECTOR,
+                40,
+                true,
+            ),
+        )
+        redirect.onTopLevelPageStarted(AEAT_SELECTOR, 41)
+
+        val result = redirect.observeTopLevelNavigation(
+            AEAT_PROFILE,
+            AEAT_SELECTOR,
+            AEAT_TARGET,
+            41,
+            true,
+        )
+
+        assertEquals(AEAT_PROFILE, result?.profileId)
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", result?.target?.rawPath)
+        assertEquals("ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso", result?.target?.rawQuery)
+        assertNull(
+            redirect.observeTopLevelNavigation(
+                AEAT_PROFILE,
+                AEAT_SELECTOR,
+                AEAT_TARGET,
+                41,
+                true,
+            ),
+        )
+    }
+
+    @Test
+    fun aeatSelectorRedirectAcceptsEquivalentWebViewQuerySerialization() {
+        val redirect = aeatAuthorizer()
+
+        assertNull(
+            redirect.observeTopLevelNavigation(
+                AEAT_PROFILE,
+                AEAT_SOURCE,
+                AEAT_SELECTOR,
+                45,
+                true,
+            ),
+        )
+        redirect.onTopLevelPageStarted(AEAT_SELECTOR.replace("%2F", "/"), 46)
+
+        assertEquals(
+            AEAT_PROFILE,
+            redirect.observeTopLevelNavigation(
+                AEAT_PROFILE,
+                AEAT_SELECTOR.replace("%2F", "/"),
+                AEAT_TARGET,
+                46,
+                true,
+            )?.profileId,
         )
     }
 
@@ -842,8 +907,8 @@ class ClientAuthNavigationAuthorizerTest {
     fun aeatDirectTransitionRejectsEveryTargetExpansion() {
         val invalidTargets = listOf(
             AEAT_TARGET.replace("www1.agenciatributaria.gob.es", "www1.agenciatributaria.gob.es.evil.example"),
-            AEAT_TARGET.replace("/MdcAcceso", "/Other"),
-            AEAT_TARGET.replace("/MdcAcceso", "/MdcAcceso%2Fother"),
+            AEAT_TARGET.replace("DialogoRepresentacion", "Other"),
+            AEAT_TARGET.replace("%2FMdcAcceso", "%2FOther"),
             AEAT_TARGET.replace("www1.agenciatributaria.gob.es", "www1.agenciatributaria.gob.es:8443"),
             "$AEAT_TARGET#fragment",
             "$AEAT_TARGET?extra=1",
@@ -1433,14 +1498,15 @@ class ClientAuthNavigationAuthorizerTest {
             operationPolicies = emptyMap(),
             capabilities = setOf(Capability.CLIENT_TLS_AUTH),
             clientAuthPolicy = ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                transitionMode = ClientAuthTransitionMode.DIRECT_OR_REDIRECT_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse("https://www1.agenciatributaria.gob.es")),
-                sourceUrls = setOf(URI(AEAT_SOURCE)),
-                requestPath = "/wlpl/BUGC-JDIT/MdcAcceso",
-                fixedQueryParameters = emptyMap(),
+                sourceUrls = setOf(URI(AEAT_SELECTOR)),
+                requestPath = "/wlpl/OVCT-CXEW/DialogoRepresentacion",
+                fixedQueryParameters = mapOf("ref" to "/wlpl/BUGC-JDIT/MdcAcceso"),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
                 grantTtlSeconds = 15,
+                directSourceUrls = setOf(URI(AEAT_SOURCE)),
             ),
             evidence = emptyList(),
         )
@@ -1704,8 +1770,12 @@ class ClientAuthNavigationAuthorizerTest {
         val TOLEDO_PROFILE = ProfileId("diputacion-toledo-sede")
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+        const val AEAT_SELECTOR =
+            "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/" +
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP"
         const val AEAT_TARGET =
-            "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+            "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?" +
+                "ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso"
         const val TOLEDO_SOURCE =
             "https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/" +
                 "seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&" +

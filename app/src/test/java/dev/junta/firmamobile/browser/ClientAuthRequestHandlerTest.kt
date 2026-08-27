@@ -441,7 +441,8 @@ class ClientAuthRequestHandlerTest {
         const val AEAT_SOURCE =
             "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
         const val AEAT_TARGET =
-            "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+            "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?" +
+                "ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso"
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"

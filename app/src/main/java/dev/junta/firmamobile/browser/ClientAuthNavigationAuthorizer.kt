@@ -32,9 +32,9 @@ data class AuthorizedClientAuthTarget internal constructor(
 
 /**
  * Authorizes Client TLS only for an explicit profile transition contract:
- * either one exact direct source-to-target navigation or the existing bounded
- * two-stage source/redirect flow. Ephemeral values are checked in memory and
- * never retained separately.
+ * either one exact direct source-to-target navigation, the existing bounded
+ * two-stage source/redirect flow, or a profile that explicitly documents both
+ * routes. Ephemeral values are checked in memory and never retained separately.
  */
 class ClientAuthNavigationAuthorizer internal constructor(
     private val registry: SiteProfileRegistry,
@@ -87,6 +87,15 @@ class ClientAuthNavigationAuthorizer internal constructor(
                 currentEpoch = currentEpoch,
                 nowNanos = nowNanos,
             )
+            ClientAuthTransitionMode.DIRECT_OR_REDIRECT_FROM_SOURCE ->
+                authorizeDirectOrRedirectTransition(
+                    profile = profile,
+                    policy = policy,
+                    currentUrl = currentUrl,
+                    target = target,
+                    currentEpoch = currentEpoch,
+                    nowNanos = nowNanos,
+                )
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> null
         }
     }
@@ -134,12 +143,13 @@ class ClientAuthNavigationAuthorizer internal constructor(
         target: URI,
         currentEpoch: Long,
         nowNanos: Long,
+        sourceMatches: (URI) -> Boolean = { source -> source.matchesSource(policy) },
     ): AuthorizedClientAuthTarget? {
         pending = null
         val source = currentUrl?.let(::strictHttpsUri) ?: run {
             return null
         }
-        if (!source.matchesSource(policy) || !target.matches(policy) ||
+        if (!sourceMatches(source) || !target.matches(policy) ||
             !source.hasLinkedEphemeralParameters(target, policy)
         ) {
             return null
@@ -166,6 +176,46 @@ class ClientAuthNavigationAuthorizer internal constructor(
         return authorized(profile, policy, target, nowNanos, lifetimeNanos)
     }
 
+    private fun authorizeDirectOrRedirectTransition(
+        profile: SiteProfile,
+        policy: ClientAuthPolicy,
+        currentUrl: String?,
+        target: URI,
+        currentEpoch: Long,
+        nowNanos: Long,
+    ): AuthorizedClientAuthTarget? {
+        if (target.matchesSource(policy) && currentBelongsTo(profile, currentUrl)) {
+            return authorizeRedirectTransition(
+                profile = profile,
+                policy = policy,
+                currentUrl = currentUrl,
+                target = target,
+                currentEpoch = currentEpoch,
+                nowNanos = nowNanos,
+            )
+        }
+        val directSource = currentUrl?.let(::strictHttpsUri)
+        if (directSource != null && directSource.matchesDirectSource(policy)) {
+            return authorizeDirectTransition(
+                profile = profile,
+                policy = policy,
+                currentUrl = currentUrl,
+                target = target,
+                currentEpoch = currentEpoch,
+                nowNanos = nowNanos,
+                sourceMatches = { source -> source.matchesDirectSource(policy) },
+            )
+        }
+        return authorizeRedirectTransition(
+            profile = profile,
+            policy = policy,
+            currentUrl = currentUrl,
+            target = target,
+            currentEpoch = currentEpoch,
+            nowNanos = nowNanos,
+        )
+    }
+
     private fun authorizeRedirectTransition(
         profile: SiteProfile,
         policy: ClientAuthPolicy,
@@ -178,6 +228,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             pending = PendingSource(
                 profileId = profile.profileId,
                 source = target,
+                policy = policy,
                 armingEpoch = currentEpoch,
                 observedAtMonotonicNanos = nowNanos,
                 lifetimeNanos = grantLifetimeNanos(policy),
@@ -220,7 +271,8 @@ class ClientAuthNavigationAuthorizer internal constructor(
     fun onTopLevelPageStarted(url: String, currentEpoch: Long) {
         val source = pending ?: return
         val uri = strictHttpsUri(url)
-        if (uri != source.source || currentEpoch != source.armingEpoch + 1 ||
+        if (uri == null || !uri.matchesSource(source.policy) ||
+            currentEpoch != source.armingEpoch + 1 ||
             source.isExpiredOrInvalid(monotonicNanos())
         ) {
             pending = null
@@ -253,7 +305,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         if (policy.sourceFixedQueryParameters.isEmpty() &&
             policy.sourceRequiredEphemeralQueryParameters.isEmpty()
         ) {
-            return this in policy.sourceUrls
+            return policy.sourceUrls.any { expected -> matchesExactSource(expected) }
         }
         val effectivePort = if (port == -1) 443 else port
         val baseMatches = policy.sourceUrls.any { base ->
@@ -275,6 +327,22 @@ class ClientAuthNavigationAuthorizer internal constructor(
                 value.none(Char::isISOControl) &&
                 (name != LEON_IDTOKEN_PARAMETER || LEON_IDTOKEN.matches(value))
         }
+    }
+
+    private fun URI.matchesDirectSource(policy: ClientAuthPolicy): Boolean =
+        policy.directSourceUrls.any { expected -> matchesExactSource(expected) }
+
+    private fun URI.matchesExactSource(expected: URI): Boolean {
+        if (scheme != expected.scheme || host != expected.host || rawPath != expected.rawPath) {
+            return false
+        }
+        val effectivePort = if (port == -1) 443 else port
+        val expectedPort = if (expected.port == -1) 443 else expected.port
+        if (effectivePort != expectedPort || rawFragment != expected.rawFragment) return false
+        if (expected.rawQuery == null) return rawQuery == null
+        val expectedParameters = parseQuery(expected.rawQuery) ?: return false
+        val actualParameters = parseQuery(rawQuery ?: return false) ?: return false
+        return actualParameters == expectedParameters
     }
 
     private fun URI.hasLinkedEphemeralParameters(target: URI, policy: ClientAuthPolicy): Boolean {
@@ -367,6 +435,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
     private data class PendingSource(
         val profileId: ProfileId,
         val source: URI,
+        val policy: ClientAuthPolicy,
         val armingEpoch: Long,
         val observedAtMonotonicNanos: Long,
         val lifetimeNanos: Long,

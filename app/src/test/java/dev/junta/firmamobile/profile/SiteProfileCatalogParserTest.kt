@@ -644,12 +644,12 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun rejectsDirectFixedQueryOutsideThePinnedSanidadContract() {
+    fun rejectsAnyUnexpectedAeatClientTlsTargetQuery() {
         val aeatPathAndQuery =
-            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\",\"fixedQueryParameters\":{}"
+            "\"requestPath\":\"/wlpl/OVCT-CXEW/DialogoRepresentacion\",\"fixedQueryParameters\":{\"ref\":\"/wlpl/BUGC-JDIT/MdcAcceso\"}"
         val expanded =
-            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\"," +
-                "\"fixedQueryParameters\":{\"unexpected\":\"1\"}"
+            "\"requestPath\":\"/wlpl/OVCT-CXEW/DialogoRepresentacion\"," +
+                "\"fixedQueryParameters\":{\"ref\":\"/wlpl/BUGC-JDIT/MdcAcceso\",\"unexpected\":\"1\"}"
 
         assertTrue(BuiltInSiteProfiles.JSON.contains(aeatPathAndQuery))
         assertThrows(IllegalArgumentException::class.java) {
@@ -693,12 +693,13 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun preservesTheExactAeatClientTlsQaContract() {
+    fun preservesTheExactAeatClientTlsE2eContract() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
-        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(2, profile.profileVersion)
+        assertEquals(CompatibilityStatus.VERIFIED_E2E, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.ENABLED, profile.activation)
         assertEquals(
             URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"),
             profile.startUrl,
@@ -709,21 +710,30 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         val policy = checkNotNull(profile.clientAuthPolicy)
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(ClientAuthTransitionMode.DIRECT_OR_REDIRECT_FROM_SOURCE, policy.transitionMode)
         assertEquals(
             setOf(ExactOrigin.parse("https://www1.agenciatributaria.gob.es")),
             policy.requestOrigins,
         )
-        assertEquals(setOf(profile.startUrl), policy.sourceUrls)
-        assertEquals("/wlpl/BUGC-JDIT/MdcAcceso", policy.requestPath)
-        assertTrue(policy.fixedQueryParameters.isEmpty())
+        assertEquals(
+            setOf(
+                URI(
+                    "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/" +
+                        "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP",
+                ),
+            ),
+            policy.sourceUrls,
+        )
+        assertEquals(setOf(profile.startUrl), policy.directSourceUrls)
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", policy.requestPath)
+        assertEquals(mapOf("ref" to "/wlpl/BUGC-JDIT/MdcAcceso"), policy.fixedQueryParameters)
         assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
         assertEquals(false, policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)
         assertEquals(443, policy.requestPort)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+        assertEquals(profile, BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(
             TrustMode.TRUSTED_CLIENT_AUTH,
@@ -735,11 +745,15 @@ class SiteProfileCatalogParserTest {
                 URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"),
             )?.trustMode,
         )
-        assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl))
-        assertNull(
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.releaseRegistry.resolve(profile.startUrl)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.releaseRegistry.resolve(
                 URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"),
-            ),
+            )?.trustMode,
         )
     }
 
@@ -936,7 +950,8 @@ class SiteProfileCatalogParserTest {
         val aragon = ProfileId("aragon-siraw")
         val ofvirtual = ProfileId("junta-ofvirtual")
         val unizar = ProfileId("unizar-tramitador")
-        val releaseProfiles = setOf(carne, education, aragon, ofvirtual, unizar)
+        val aeat = ProfileId("aeat-mis-datos-censales")
+        val releaseProfiles = setOf(carne, education, aragon, ofvirtual, unizar, aeat)
         val qaOnly = setOf(
             junta,
             ProfileId("formentera-sede-electronica"),
@@ -957,7 +972,6 @@ class SiteProfileCatalogParserTest {
             ProfileId("zamora-sede-public-navigation"),
             ProfileId("zaragoza-sede-public-navigation"),
             ProfileId("reg-age-redsara"),
-            ProfileId("aeat-mis-datos-censales"),
             ProfileId("dgt-verificacion-equipo"),
             ProfileId("junta-andalucia-vea-peg"),
             ProfileId("mjusticia-fundaciones-idp75"),
@@ -979,7 +993,7 @@ class SiteProfileCatalogParserTest {
             assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
             assertTrue(BuiltInSiteProfiles.qaRegistry.profile(profileId) != null)
         }
-        setOf(carne, education, aragon, ofvirtual, unizar).forEach { profileId ->
+        setOf(carne, education, aragon, ofvirtual, unizar, aeat).forEach { profileId ->
             assertEquals(
                 CompatibilityStatus.VERIFIED_E2E,
                 BuiltInSiteProfiles.releaseRegistry.profile(profileId)?.compatibilityStatus,
