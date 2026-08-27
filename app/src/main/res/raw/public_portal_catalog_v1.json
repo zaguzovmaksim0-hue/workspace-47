@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 1,
-  "sourceRevision": "75d893563561bed95d35272e0d39752c23ef369f64cb8ded289af5a03d8d1847",
+  "sourceRevision": "b164687c1e1620e5f84138c6800920a18d5f7d1459ac2333a37537d863e22d8e",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -45,6 +45,7 @@
       "observedMechanisms": [
         "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [
@@ -59,10 +60,11 @@
         "P14B",
         "P14C",
         "P14D",
-        "LIVE-REDSARA-2026-07-30"
+        "LIVE-REDSARA-2026-07-30",
+        "LIVE-REDSARA-CLIENTTLS-2026-08-26"
       ],
-      "reviewedOn": "2026-07-30",
-      "limitations": "Revalidación física 2026-07-30: Nuevo registro y Mis registros exigen Cl@ve; XAdES solo aparece tras preparar una solicitud, sin E2E público seguro antes de una actuación administrativa."
+      "reviewedOn": "2026-08-26",
+      "limitations": "Revalidación física 2026-08-26 confirma el client-TLS de Cl@ve eIdentifier y su POST exacto; el perfil sigue QA_ONLY/IMPLEMENTED_NOT_E2E hasta confirmar una sesión autenticada correcta y la aceptación XAdES por REG-AGE, sin completar una presentación administrativa."
     },
     {
       "portalId": "age-acceda",

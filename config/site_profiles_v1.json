@@ -27,14 +27,14 @@
       "activation": "QA_ONLY",
       "startUrl": "https://reg.redsara.es/es/",
       "initiatorOrigins": ["https://reg.redsara.es"],
-      "redirectOrigins": [],
+      "redirectOrigins": ["https://pasarela.clave.gob.es"],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma del resumen XML del registro","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA512_WITH_RSA"],"format":"XADES","packaging":"DETACHED","mode":null,"fixedExtraProperties":{},"allowedExtraProperties":[]}],
-      "capabilities": ["SIGN"],
-      "clientAuthPolicy": null,
+      "capabilities": ["SIGN", "CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode":"IN_PLACE_FROM_SOURCE","requestOrigins":["https://pasarela-ident.clave.gob.es"],"sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],"requestPath":"/IdP2/AuthenticateCitizen","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":true,"grantTtlSeconds":15,"requestPort":443,"requestMethod":"POST"},
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://reg.redsara.es/es/chunk-64DWZJJG.js","reviewedOn":"2026-07-18"},{"url":"https://reg.redsara.es/es/scripts-IIDJLUBL.js","reviewedOn":"2026-07-18"}]
+      "evidence": [{"url":"https://reg.redsara.es/es/chunk-64DWZJJG.js","reviewedOn":"2026-07-18"},{"url":"https://reg.redsara.es/es/scripts-IIDJLUBL.js","reviewedOn":"2026-07-18"},{"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-26"},{"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-26"}]
     },
     {
       "profileId": "unizar-tramitador",

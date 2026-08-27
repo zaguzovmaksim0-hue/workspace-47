@@ -533,12 +533,12 @@ records:
     discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Firma del XML de resumen antes de guardarlo en el expediente."
-    protocol_evidence: "AutoScript.sign estático; el wrapper consume signatureB64 y llama a saveXMLAutoSign."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["P14", "P14B", "P14C", "P14D", "LIVE-REDSARA-2026-07-30"]
-    reason: "Revalidación física 2026-07-30: Nuevo registro y Mis registros exigen Cl@ve; XAdES solo aparece tras preparar una solicitud, sin E2E público seguro antes de una actuación administrativa."
-    reviewed_at: "2026-07-30"
-    next_gate: "Caso administrativo real autorizado: Cl@ve, preparación de solicitud y aceptación XAdES por RedSARA; no usar datos ficticios ni automatizar la presentación."
+    protocol_evidence: "Revalidación física 2026-08-26: REG ofrece Cl@ve eIdentifier para cualquier certificado electrónico cualificado; el flujo observado hace POST desde https://pasarela.clave.gob.es/Proxy2/ServiceProvider a https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen sin query. TLS estricto en ese host devuelve CertificateRequest con lista de CA vacía. El contrato XAdES posterior sigue siendo AutoScript.sign y callback saveXMLAutoSign."
+    client_tls_auth: "SI"
+    evidence_ids: ["P14", "P14B", "P14C", "P14D", "LIVE-REDSARA-2026-07-30", "LIVE-REDSARA-CLIENTTLS-2026-08-26"]
+    reason: "Revalidación física 2026-08-26 confirma el client-TLS de Cl@ve eIdentifier y su POST exacto; el perfil sigue QA_ONLY/IMPLEMENTED_NOT_E2E hasta confirmar una sesión autenticada correcta y la aceptación XAdES por REG-AGE, sin completar una presentación administrativa."
+    reviewed_at: "2026-08-26"
+    next_gate: "Repetir físicamente eIdentifier con el client-TLS exacto, alcanzar el resumen de una actuación autorizada, comprobar la firma XAdES real y detenerse antes de cualquier presentación final no autorizada."
 
   - inventory_id: "ES-PUB-0003"
     surface_key: "age-acceda"

@@ -1267,6 +1267,67 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun regAgeExactPostResourceRequestAuthorizesOnlyTheObservedClaveCertificateTarget() {
+        val regAge = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        val authorized = regAge.observeTopLevelResourceRequest(
+            activeProfileId = REG_AGE_PROFILE,
+            currentUrl = REG_AGE_CLAVE_SOURCE,
+            targetUrl = REG_AGE_CERT_TARGET,
+            method = "POST",
+            currentEpoch = 118,
+            isMainFrameRequest = true,
+        )
+
+        assertEquals(REG_AGE_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+        assertNull(authorized?.target?.rawQuery)
+        assertEquals(443, authorized?.policy?.requestPort)
+        assertEquals(true, authorized?.policy?.allowEmptyIssuerList)
+    }
+
+    @Test
+    fun regAgeInPlaceClientTlsRejectsSourceTargetMethodAndFrameExpansion() {
+        data class Attempt(val source: String, val target: String, val method: String, val mainFrame: Boolean)
+        val invalid = listOf(
+            Attempt(REG_AGE_CLAVE_SOURCE, REG_AGE_CERT_TARGET, "GET", true),
+            Attempt(REG_AGE_CLAVE_SOURCE, "$REG_AGE_CERT_TARGET?extra=1", "POST", true),
+            Attempt(REG_AGE_CLAVE_SOURCE, REG_AGE_CERT_TARGET.replace("/AuthenticateCitizen", "/Other"), "POST", true),
+            Attempt(
+                REG_AGE_CLAVE_SOURCE,
+                REG_AGE_CERT_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+                "POST",
+                true,
+            ),
+            Attempt(REG_AGE_CLAVE_SOURCE.replace("ServiceProvider", "ServiceRedirect"), REG_AGE_CERT_TARGET, "POST", true),
+            Attempt("$REG_AGE_CLAVE_SOURCE?extra=1", REG_AGE_CERT_TARGET, "POST", true),
+            Attempt(REG_AGE_CLAVE_SOURCE, REG_AGE_CERT_TARGET, "POST", false),
+        )
+
+        invalid.forEachIndexed { index, attempt ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                "${attempt.source} -> ${attempt.target} [${attempt.method}]",
+                fresh.observeTopLevelResourceRequest(
+                    activeProfileId = REG_AGE_PROFILE,
+                    currentUrl = attempt.source,
+                    targetUrl = attempt.target,
+                    method = attempt.method,
+                    currentEpoch = 119L + index,
+                    isMainFrameRequest = attempt.mainFrame,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun tarragonaExactPostResourceRequestAuthorizesOnlyTheObservedValidCertificateTarget() {
         val tarragona = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,
@@ -1645,6 +1706,9 @@ class ClientAuthNavigationAuthorizerTest {
             "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"
         const val VALLADOLID_TARGET =
             "https://www.sede.diputaciondevalladolid.es:21460/c/portal/cert-login"
+        val REG_AGE_PROFILE = ProfileId("reg-age-redsara")
+        const val REG_AGE_CLAVE_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val REG_AGE_CERT_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val TARRAGONA_PROFILE = ProfileId("diputacion-tarragona-sede")
         const val TARRAGONA_VALID_SOURCE =
             "https://valid.aoc.cat/o/oauth2/auth?response_type=code&client_id=valid.dipta.cat&" +

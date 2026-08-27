@@ -188,7 +188,14 @@ object SiteProfileCatalogParser {
                 require(requestPort == 443)
                 require(fixed.isEmpty() && ephemeral.isEmpty())
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
-                require(sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty())
+                // A source POST may be bound by its exact URL alone. Query binding is
+                // optional here because some shared identity gateways receive a
+                // query-free SAML form POST before requesting the client certificate.
+                require(
+                    sourceFixed.isNotEmpty() ||
+                        sourceEphemeral.isNotEmpty() ||
+                        o.array("sourceUrls").isNotEmpty(),
+                )
             }
         }
         return ClientAuthPolicy(
@@ -453,10 +460,14 @@ object SiteProfileCatalogParser {
                         p.capabilities ==
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
-                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID ||
+                    p.profileId.value == REG_AGE_PROFILE_ID
+                ) {
                     require(p.endpoints.isEmpty())
                     require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
-                    require(p.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+                    require(p.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH)) {
+                        "unexpected client-auth capability shape: ${p.profileId.value}"
+                    }
                 } else {
                     require(p.operationPolicies.isEmpty() && p.endpoints.isEmpty())
                     require(p.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
@@ -485,6 +496,7 @@ object SiteProfileCatalogParser {
                             CATALUNYA_SEU_PROFILE_ID,
                             EUSKADI_PROFILE_ID,
                             MUGEJU_PROFILE_ID,
+                            REG_AGE_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
@@ -2355,6 +2367,7 @@ object SiteProfileCatalogParser {
                             FEGA_PROFILE_ID,
                             CACERES_PROFILE_ID,
                             MUGEJU_PROFILE_ID,
+                            REG_AGE_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             SEGOVIA_PROFILE_ID,
                             PALENCIA_PROFILE_ID,
@@ -2377,6 +2390,7 @@ object SiteProfileCatalogParser {
                             FEGA_PROFILE_ID,
                             CACERES_PROFILE_ID,
                             MUGEJU_PROFILE_ID,
+                            REG_AGE_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
@@ -3282,6 +3296,7 @@ object SiteProfileCatalogParser {
         "https://sede.mites.gob.es/chunk-MX4YJU4O.js",
     )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
+    private const val REG_AGE_PROFILE_ID = "reg-age-redsara"
     private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
     private const val JCCM_REGISTRO_PROFILE_VERSION = 1
     private const val JCCM_REGISTRO_DISPLAY_NAME = "JCCM — Registro Electrónico / Solicitud Genérica"

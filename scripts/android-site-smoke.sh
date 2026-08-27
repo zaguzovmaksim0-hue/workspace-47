@@ -9,6 +9,7 @@ readonly PACKAGE_NAME="dev.junta.firmamobile"
 readonly MAIN_COMPONENT="$PACKAGE_NAME/.MainActivity"
 readonly ACTION="dev.junta.firmamobile.action.CATALOG_SMOKE"
 readonly RISH_BIN="${RISH_BIN:-/data/data/com.termux/files/usr/bin/rish}"
+readonly PROCESS_RESET_INTERVAL=25
 
 timeout_seconds=60
 settle_seconds=3
@@ -25,6 +26,8 @@ It never accepts a URL, JavaScript, selector, certificate, password, cookie or s
 
 The runner does not confirm certificate sharing, client-auth or signing dialogs. Those remain visible
 manual boundaries. If a user confirms one, subsequent real runtime events are captured in the same run.
+Approved HTTPS handoffs to the system browser are recorded as EXTERNAL_NAVIGATION and are not treated
+as process failures.
 USAGE
 }
 
@@ -70,8 +73,11 @@ case "$selection" in
       profile_count="$(jq -r --arg id "$identifier" '[.entries[] | select(.profileId == $id)] | length' "$CATALOG_FILE")"
       if ((portal_count == 1)); then
         targets+=("portal:$identifier")
-      elif ((profile_count > 0)); then
+      elif ((profile_count == 1)); then
         targets+=("profile:$identifier")
+      elif ((profile_count > 1)); then
+        echo "Profile ID is ambiguous; use an exact portal ID: $identifier" >&2
+        exit 65
       else
         echo "Unknown catalog portal/profile ID: $identifier" >&2
         exit 65
@@ -111,7 +117,8 @@ batch_pid="${batch_pid%% *}"
 
 mkdir -p "$RAW_DIR"
 records_file="$(mktemp "$REPORT_DIR/.records.XXXXXX")"
-cleanup() { rm -f "$records_file" "$REPORT_DIR/.latest.json.tmp" "$REPORT_DIR/.latest.md.tmp"; }
+schema_probe_file="$REPORT_DIR/.schema-probe.txt"
+cleanup() { rm -f "$records_file" "$schema_probe_file" "$REPORT_DIR/.latest.json.tmp" "$REPORT_DIR/.latest.md.tmp"; }
 trap cleanup EXIT
 
 extract_result_json() {
@@ -145,14 +152,58 @@ run_command() {
   return 70
 }
 
+ensure_main_activity() {
+  local launch_output
+  if ! is_main_activity_resumed; then
+    launch_output="$(run_rish "am start -W --user 0 -f 0x24000000 -n $MAIN_COMPONENT")" || return 1
+    grep -q '^Status: ok' <<<"$launch_output" || return 1
+  fi
+  is_main_activity_resumed
+}
+
+reset_main_activity() {
+  run_rish "am force-stop $PACKAGE_NAME" >/dev/null || return 1
+  sleep 0.5
+  ensure_main_activity
+}
+
+is_main_activity_resumed() {
+  local resumed
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    resumed="$(run_rish 'dumpsys activity activities | grep -m1 -E "mResumedActivity|topResumedActivity|ResumedActivity"')" || true
+    [[ "$resumed" == *"$PACKAGE_NAME/.MainActivity"* ]] && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
 synthetic_result() {
   local run_id="$1" target_kind="$2" target_id="$3" result="$4"
   jq -cn --arg runId "$run_id" --arg kind "$target_kind" --arg id "$target_id" --arg result "$result" '
     {schemaVersion:2,runId:$runId,portalId:(if $kind=="portal" then $id else null end),profileId:(if $kind=="profile" then $id else null end),adapterId:null,entryUrl:null,supportStatus:null,result:$result,runtime:null}'
 }
 
+schema_probe_json="$(run_command portal definitely-unknown-portal schema-probe-v2 INSPECT "$schema_probe_file")" || {
+  echo "Installed QA package does not expose the required E2E schema v2 bridge" >&2
+  exit 70
+}
+if [[ "$(jq -r '.schemaVersion' <<<"$schema_probe_json")" != "2" ||
+      "$(jq -r '.result' <<<"$schema_probe_json")" != "UNKNOWN_PORTAL" ]]; then
+  echo "Installed QA package returned an unexpected E2E bridge schema" >&2
+  exit 70
+fi
+rm -f "$schema_probe_file"
+
 runtime_terminal() {
-  jq -e '(.runtime // {}) as $r | ($r.failureCode != null) or ($r.renderProcessGone == true) or ($r.signingCompletedObserved == true) or ($r.signingFailedObserved == true) or ($r.clientAuthConfirmationRequired == true) or ($r.certificateSelectionRequired == true) or ($r.signingConfirmationRequired == true)' >/dev/null <<<"$1"
+  jq -e '(.runtime // {}) as $r |
+    ($r.failureCode != null) or
+    ($r.renderProcessGone == true) or
+    ($r.signingCompletedObserved == true) or
+    ($r.signingFailedObserved == true) or
+    ($r.clientAuthConfirmationRequired == true) or
+    ($r.certificateSelectionRequired == true) or
+    ($r.signingConfirmationRequired == true) or
+    ($r.webViewActive == true and $r.currentHost != null and $r.currentUrlAllowed == false)' >/dev/null <<<"$1"
 }
 
 observed_stage() {
@@ -168,6 +219,7 @@ observed_stage() {
     elif $r.afirmaRequestObserved == true then "AFIRMA_REQUEST"
     elif $r.autofirmaIntentObserved == true then "AUTOFIRMA_INTENT"
     elif $r.clientCertRequestObserved == true then "CLIENT_CERT_REQUEST"
+    elif $r.webViewActive == true and $r.currentHost != null and $r.currentUrlAllowed == false then "WEBVIEW_NOT_ACTIVE"
     elif $r.webViewActive == true then "WEBVIEW_ACTIVE"
     else .result end' <<<"$1"
 }
@@ -186,6 +238,19 @@ for target in "${targets[@]}"; do
   inspect_file="$RAW_DIR/$run_id-inspect.txt"
   timed_out=false
   opened_webview=false
+  if ((index == 1 || (index - 1) % PROCESS_RESET_INTERVAL == 0)); then
+    reset_main_activity || {
+      echo "MainActivity could not be restarted before $target_id" >&2
+      exit 70
+    }
+  else
+    ensure_main_activity || {
+      echo "MainActivity could not be restored before $target_id" >&2
+      exit 70
+    }
+  fi
+  target_pid="$(run_rish "pidof $PACKAGE_NAME")" || true
+  target_pid="${target_pid%% *}"
   # The file contains only QaDiagnosticFileSink allowlisted ASCII records. Clearing it per target
   # makes the foreground-loss fallback exact to this single sequential run.
   run_rish "run-as $PACKAGE_NAME sh -c ': > files/qa-navigation.log'" >/dev/null || {
@@ -226,11 +291,23 @@ for target in "${targets[@]}"; do
         sequence="$(jq -r '(.runtime.events[-1].sequence // 0)' <<<"$inspect_json")"
         if [[ "$sequence" != "$last_sequence" ]]; then last_sequence="$sequence"; stable_since=$SECONDS; fi
         if ((stable_since >= 0 && SECONDS - stable_since >= settle_seconds)); then break; fi
+      elif [[ "$inspect_result" == "WEBVIEW_NOT_ACTIVE" ]] &&
+           jq -e '(.runtime // {}) | .webViewActive == true and .currentHost != null and .currentUrlAllowed == false' >/dev/null <<<"$inspect_json"; then
+        # A live WebView that reached a profile-disallowed origin is a terminal,
+        # fail-closed observation. Do not turn the intentional boundary into a timeout.
+        break
       elif [[ "$inspect_result" != "WEBVIEW_NOT_ACTIVE" && "$inspect_result" != "RUN_NOT_ACTIVE" ]]; then
         break
       fi
     done
-    if [[ "$opened_webview" != true && "$(jq -r '.result' <<<"$inspect_json")" =~ ^(WEBVIEW_NOT_ACTIVE|RUN_NOT_ACTIVE)$ ]]; then timed_out=true; fi
+    if [[ "$opened_webview" != true ]]; then
+      inspect_result="$(jq -r '.result' <<<"$inspect_json")"
+      policy_mismatch="$(jq -r '((.runtime // {}) | (.webViewActive == true and .currentHost != null and .currentUrlAllowed == false))' <<<"$inspect_json")"
+      if [[ "$inspect_result" == "RUN_NOT_ACTIVE" ||
+            ("$inspect_result" == "WEBVIEW_NOT_ACTIVE" && "$policy_mismatch" != true) ]]; then
+        timed_out=true
+      fi
+    fi
   fi
 
   process_alive=true
@@ -239,18 +316,22 @@ for target in "${targets[@]}"; do
   anr_detected=false
   pid_output="$(run_rish "pidof $PACKAGE_NAME")" || true
   pid_after="${pid_output%% *}"
-  [[ "$pid_after" == "$batch_pid" ]] || process_alive=false
-  focus_output="$(run_rish 'dumpsys activity activities | grep -m1 -E "mResumedActivity|topResumedActivity|ResumedActivity"')" || true
-  [[ "$focus_output" == *"$PACKAGE_NAME/.MainActivity"* ]] || activity_started=false
-  crash_signals="$(run_rish "logcat -d --pid $batch_pid -v brief -T $started_epoch.000 AndroidRuntime:E '*:S'")" || true
+  grep -q '[0-9]' <<<"$pid_output" || process_alive=false
+  is_main_activity_resumed || activity_started=false
+  crash_signals=""
+  if [[ "$target_pid" =~ ^[0-9]+$ ]]; then
+    crash_signals="$(run_rish "logcat -d --pid $target_pid -v brief -T $started_epoch.000 AndroidRuntime:E '*:S'")" || true
+  fi
   anr_signals="$(run_rish "logcat -d -v brief -T $started_epoch.000 ActivityManager:E '*:S'")" || true
   grep -q "FATAL EXCEPTION" <<<"$crash_signals" && crash_detected=true
   grep -q "ANR in $PACKAGE_NAME" <<<"$anr_signals" && anr_detected=true
 
   qa_diagnostics="$(run_rish "run-as $PACKAGE_NAME cat files/qa-navigation.log")" || true
   autofirma_handoff=false
+  external_navigation_fallback=false
   portal_callback_fallback=false
   grep -qE '(^| )event=EXTERNAL_NAVIGATION( |$).*host=autofirma( |$)' <<<"$qa_diagnostics" && autofirma_handoff=true
+  grep -qE '(^| )event=EXTERNAL_NAVIGATION( |$)' <<<"$qa_diagnostics" && external_navigation_fallback=true
   grep -qE '(^| )event=PORTAL_CALLBACK( |$)' <<<"$qa_diagnostics" && portal_callback_fallback=true
 
   finished_ms="$(date +%s%3N)"
@@ -265,6 +346,8 @@ for target in "${targets[@]}"; do
     opened_webview=true
   elif [[ "$portal_callback_fallback" == true && "$stage" =~ ^(BRIDGE_ERROR|WEBVIEW_ACTIVE)$ ]]; then
     stage="PORTAL_CALLBACK"
+  elif [[ "$external_navigation_fallback" == true && "$stage" == "BRIDGE_ERROR" ]]; then
+    stage="EXTERNAL_NAVIGATION"
   fi
 
   manual_action=false
@@ -274,6 +357,9 @@ for target in "${targets[@]}"; do
   elif jq -e '(.runtime // {}) | .clientAuthConfirmationRequired == true' >/dev/null <<<"$final_json"; then manual_action=true; blocked=true; reason='"MANUAL_CLIENT_AUTH_CONFIRMATION_REQUIRED"';
   elif jq -e '(.runtime // {}) | .certificateSelectionRequired == true' >/dev/null <<<"$final_json"; then manual_action=true; blocked=true; reason='"MANUAL_CERTIFICATE_SHARING_CONFIRMATION_REQUIRED"';
   elif [[ "$open_result" == "PROFILE_RESOLVED" ]]; then blocked=true; reason='"CERTIFICATE_SESSION_LOCKED"';
+  elif jq -e '(.runtime // {}) | .webViewActive == true and .currentHost != null and .currentUrlAllowed == false' >/dev/null <<<"$final_json"; then
+    blocked=true
+    reason='"NAVIGATION_OUTSIDE_PROFILE_ALLOWLIST"'
   else
     runtime_reason="$(jq -r '(.runtime.failureCode // empty)' <<<"$final_json")"
     [[ -n "$runtime_reason" ]] && reason="$(jq -cn --arg v "$runtime_reason" '$v')"
@@ -281,10 +367,12 @@ for target in "${targets[@]}"; do
 
   hard_failure=false
   [[ "$open_result" =~ ^(BRIDGE_ERROR|INVALID_REQUEST|UNKNOWN_PORTAL|UNKNOWN_PROFILE|AMBIGUOUS_PROFILE|PROFILE_DISABLED)$ ]] && hard_failure=true
-  if [[ "$final_result" == "BRIDGE_ERROR" && "$autofirma_handoff" != true ]]; then hard_failure=true; fi
+  if [[ "$final_result" == "BRIDGE_ERROR" && "$autofirma_handoff" != true &&
+        "$external_navigation_fallback" != true && "$portal_callback_fallback" != true ]]; then hard_failure=true; fi
   jq -e '(.runtime // {}) | (.signingFailedObserved == true or .renderProcessGone == true or .failureCode != null)' >/dev/null <<<"$final_json" && hard_failure=true
   [[ "$process_alive" != true || "$timed_out" == true || "$crash_detected" == true || "$anr_detected" == true ]] && hard_failure=true
-  if [[ "$activity_started" != true && "$autofirma_handoff" != true ]]; then hard_failure=true; fi
+  if [[ "$activity_started" != true && "$autofirma_handoff" != true &&
+        "$external_navigation_fallback" != true && "$portal_callback_fallback" != true ]]; then hard_failure=true; fi
 
   jq -cn \
     --argjson open "$open_json" --argjson final "$final_json" \
@@ -294,7 +382,8 @@ for target in "${targets[@]}"; do
     --argjson crashDetected "$crash_detected" --argjson anrDetected "$anr_detected" \
     --argjson blocked "$blocked" --argjson manualActionRequired "$manual_action" \
     --argjson failed "$hard_failure" --argjson reason "$reason" --argjson durationMs "$duration_ms" \
-    --argjson autofirmaFallback "$autofirma_handoff" --argjson portalCallbackFallback "$portal_callback_fallback" '
+    --argjson autofirmaFallback "$autofirma_handoff" --argjson externalNavigationFallback "$external_navigation_fallback" \
+    --argjson portalCallbackFallback "$portal_callback_fallback" '
     {
       runId: $open.runId,
       targetKind: $targetKind,
@@ -309,6 +398,7 @@ for target in "${targets[@]}"; do
       webViewOpened: $webViewOpened,
       observedStage: $stage,
       autofirmaIntentObserved: (((($final.runtime // {}).autofirmaIntentObserved) == true) or $autofirmaFallback),
+      externalNavigationObserved: (((($final.runtime // {}).externalNavigationObserved) == true) or $externalNavigationFallback),
       portalCallbackObserved: (((($final.runtime // {}).portalCallbackObserved) == true) or $portalCallbackFallback),
       blocked: $blocked,
       manualActionRequired: $manualActionRequired,
@@ -318,20 +408,29 @@ for target in "${targets[@]}"; do
       failed: $failed,
       reason: $reason,
       durationMs: $durationMs,
-      result: (if $open.result == "OPEN_REQUESTED" then $final.result else $open.result end),
+      result: (if $open.result == "OPEN_REQUESTED" then
+        (if $autofirmaFallback then "AUTOFIRMA_HANDOFF"
+         elif $portalCallbackFallback then "PORTAL_CALLBACK"
+         elif $externalNavigationFallback then "EXTERNAL_NAVIGATION"
+         else $final.result end)
+        else $open.result end),
       runtime: $final.runtime,
       evidence: (["DUMP_PROTECTED_ORDERED_BROADCAST", $open.result, $final.result]
         + (if $autofirmaFallback then ["SANITIZED_LOG_AUTOFIRMA_HANDOFF"] else [] end)
+        + (if $externalNavigationFallback then ["SANITIZED_LOG_EXTERNAL_NAVIGATION"] else [] end)
         + (if $portalCallbackFallback then ["SANITIZED_LOG_PORTAL_CALLBACK"] else [] end)
         + (($final.runtime.events // []) | map(.code)) | unique)
     }' >>"$records_file"
 done
 
+ensure_main_activity || {
+  echo "MainActivity could not be restored after the catalog run" >&2
+  exit 70
+}
 final_pid="$(run_rish "pidof $PACKAGE_NAME")" || true
 final_pid="${final_pid%% *}"
-batch_process_alive=false; [[ "$final_pid" == "$batch_pid" ]] && batch_process_alive=true
-final_focus="$(run_rish 'dumpsys activity activities | grep -m1 -E "mResumedActivity|topResumedActivity|ResumedActivity"')" || true
-batch_activity_started=false; [[ "$final_focus" == *"$PACKAGE_NAME/.MainActivity"* ]] && batch_activity_started=true
+batch_process_alive=false; grep -q '[0-9]' <<<"$final_pid" && batch_process_alive=true
+batch_activity_started=false; is_main_activity_resumed && batch_activity_started=true
 batch_crash_signals="$(run_rish "logcat -d --pid $batch_pid -v brief -T $run_started_epoch.000 AndroidRuntime:E '*:S'")" || true
 batch_anr_signals="$(run_rish "logcat -d -v brief -T $run_started_epoch.000 ActivityManager:E '*:S'")" || true
 batch_crash_detected=false; batch_anr_detected=false

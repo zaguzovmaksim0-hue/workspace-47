@@ -1,0 +1,65 @@
+{
+  "reportKind": "catalog-e2e-observation-summary",
+  "schemaVersion": 1,
+  "observedAt": "2026-08-27",
+  "selection": "--implemented",
+  "catalogEntries": 183,
+  "catalogStatus": {
+    "E2E_PENDING": 179,
+    "E2E_VERIFIED": 4
+  },
+  "inventoryStatus": {
+    "IMPLEMENTED_NOT_E2E": 179,
+    "VERIFIED_E2E": 4
+  },
+  "fullRun": {
+    "webViewOpened": 180,
+    "observedStages": {
+      "WEBVIEW_ACTIVE": 175,
+      "WEBVIEW_NOT_ACTIVE": 4,
+      "CERTIFICATE_SELECTION_REQUIRED": 1,
+      "CLIENT_AUTH_CONFIRMATION_REQUIRED": 2,
+      "EXTERNAL_NAVIGATION": 1
+    },
+    "clientCertAccepted": 0,
+    "signingCompleted": 0,
+    "portalCallbackObserved": 0,
+    "blocked": 7,
+    "timeout": 0,
+    "crashDetected": 0,
+    "anrDetected": 0,
+    "failed": 1,
+    "failedTarget": "diputacion-lugo-sede"
+  },
+  "isolatedRecheck": {
+    "target": "diputacion-lugo-sede",
+    "failed": false,
+    "webViewActive": true,
+    "crashDetected": false,
+    "anrDetected": false
+  },
+  "manualBoundaries": [
+    "age-instituto-de-salud-carlos-iii",
+    "extremadura-portal-tributario",
+    "diputacion-toledo-sede"
+  ],
+  "allowlistBoundaries": [
+    "justicia-sede-judicial",
+    "caib-seu-electronica",
+    "caib-registre-electronic",
+    "diputacion-malaga-sede"
+  ],
+  "externalHttpsHandoff": [
+    "diputacion-girona-portal"
+  ],
+  "validation": {
+    "androidQaUnitTests": "1282/1282",
+    "pythonCatalogPolicyCoverageTests": "156/156",
+    "assembleQa": "PASS",
+    "catalogGenerationMatches": true,
+    "scriptSyntax": true,
+    "diffCheck": true,
+    "localQaApkSha256": "623e487dea2b6a0c9c0d026f0346511a2347e7cec28cb8cbdd427e0da647ba42"
+  },
+  "interpretation": "The runner proves catalog resolution, app/WebView launch and safe runtime boundaries. It does not promote E2E_PENDING to VERIFIED_E2E without physical certificate selection, user confirmation, portal acceptance and a non-destructive stopping point."
+}
