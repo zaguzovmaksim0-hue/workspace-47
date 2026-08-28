@@ -249,15 +249,17 @@ las tres acciones; instrumentation de capabilities sin iniciar la UI.
 
 **Riesgo:** secreto disponible a otras apps o soporte.
 **Controles:** logger con esquema allowlist, hashes truncados, almacenamiento
-privado y export sanitizado; `FLAG_SECURE` state-driven en `MainActivity` durante
-password, unlock, certificado desbloqueado, catálogo asociado, WebView de portal
-y cualquier estado de firma no idle; no copiar secreto; `allowBackup=false` y
-exclusiones explícitas completas por dominio en legacy/cloud/D2D. La pantalla inicial
-sin certificado y el probe debug
-aislado no heredan el flag.
-**Verificación:** tests del redactor y de la policy de estados, instrumentation
-sobre unlock/recreate/lock, inspección de exports/logcat/manifest y `dumpsys
-window` en dispositivo físico para certificado restaurado y WebView activo.
+privado y export sanitizado; por requisito de producto las capturas de pantalla están
+permitidas en toda la aplicación y `MainActivity` no aplica `FLAG_SECURE`, incluso
+durante password, unlock, certificado desbloqueado, catálogo, WebView o firma. La
+prevención de capturas deja por tanto de ser un control de confidencialidad: no se
+deben conservar ni adjuntar como evidencia capturas que contengan identidad, secretos
+o datos autenticados. Se mantiene la prohibición de copiar secretos, `allowBackup=false`
+y las exclusiones explícitas completas por dominio en legacy/cloud/D2D.
+**Verificación:** tests del redactor y de la policy de ventana que exigen captura
+habilitada para todos los estados, inspección de exports/logcat/manifest y `dumpsys
+window` en dispositivo físico confirmando ausencia de `FLAG_SECURE`; la QA no persiste
+capturas con datos sensibles.
 
 ### T11. Build/release o cadena de suministro comprometidos
 

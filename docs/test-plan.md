@@ -285,8 +285,8 @@ Ejecutar en API 36 real o emulador equivalente:
 - bloqueo manual obliga a introducir contraseña otra vez;
 - background timeout bloquea identidad;
 - una hoja de confirmación aparece y cancelar no firma;
-- `FLAG_SECURE` está inactivo solo en loading/no-certificate idle y activo
-  durante password, unlock, certificado desbloqueado, catálogo/WebView y firma;
+- `FLAG_SECURE` permanece inactivo en todos los estados, incluidos password, unlock,
+  certificado desbloqueado, catálogo/WebView y firma, para permitir screenshots;
 - borrar datos del sitio no afecta otros origins y muestra resultado
   exacto/limitado/fallido;
 - una limpieza confirmada del sitio o global debe avanzar `navigationEpoch` antes de
@@ -341,9 +341,9 @@ Secuencia de aceptación:
 8. aceptar, completar pre-sign/local/post-sign y entregar resultado;
 9. confirmar que el portal acepta y continúa;
 10. bloquear certificado y confirmar que otra firma exige contraseña;
-11. inspeccionar `FLAG_SECURE` mediante window state y usar UI tree/logcat
-    sanitizados; no capturar screenshot de certificado, catálogo autenticado,
-    WebView ni firma;
+11. inspeccionar mediante window state que `FLAG_SECURE` no está activo y usar UI
+    tree/logcat sanitizados; la aplicación permite screenshots, pero la evidencia de QA
+    no debe conservar capturas con certificado, contenido autenticado, WebView ni firma;
 12. repetir el camino de cancelación y sesión expirada.
 
 Para F-03 AEAT, la aceptación física se limita a:
