@@ -89,15 +89,33 @@ class JuntaAndaluciaVeaClientAuthProfileTest {
                 ),
                 ClientAuthUrlConstraint(
                     ExactOrigin.parse(API_ORIGIN),
+                    "/auth/returnLogin",
+                    mapOf("appId" to "CHIE.VEA"),
+                    setOf("resCode", "ticketId", "webSessionId"),
+                ),
+                ClientAuthUrlConstraint(
+                    ExactOrigin.parse(API_ORIGIN),
                     "/auth/endLogin",
                     emptyMap(),
                     emptySet(),
+                ),
+                ClientAuthUrlConstraint(
+                    ExactOrigin.parse(VEA_ORIGIN),
+                    "/authFacade",
+                    emptyMap(),
+                    setOf("error", "redirectUrl"),
+                ),
+                ClientAuthUrlConstraint(
+                    ExactOrigin.parse(VEA_ORIGIN),
+                    "/authFacade",
+                    emptyMap(),
+                    setOf("token", "redirectUrl"),
                 ),
             ),
             policy.returnUrlConstraints,
         )
         assertTrue(policy.allowEmptyIssuerList)
-        assertEquals(15, policy.grantTtlSeconds)
+        assertEquals(60, policy.grantTtlSeconds)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-28" })
@@ -106,6 +124,36 @@ class JuntaAndaluciaVeaClientAuthProfileTest {
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
+    }
+
+    @Test
+    fun observedReturnLoginShapeIsBoundToTheConfirmedTlsRequest() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        val tlsTarget = URI(
+            "$WS235_ORIGIN/authenticationFacade?action=validateCert&appId=CHIE.VEA" +
+                "&comeBackURL=${urlEncode(base64(API_RETURN))}" +
+                "&ticketId=synthetic-ticket&webSessionId=synthetic-session",
+        )
+        val exactReturn = URI(
+            "$API_RETURN?appId=CHIE.VEA&resCode=synthetic-result" +
+                "&ticketId=synthetic-ticket&webSessionId=synthetic-session",
+        )
+
+        assertFalse(policy.matchesReturnUrl(exactReturn))
+        assertTrue(policy.matchesReturnUrl(exactReturn, tlsTarget))
+        assertFalse(
+            policy.matchesReturnUrl(
+                URI(exactReturn.toString().replace("ticketId=synthetic-ticket", "ticketId=other-ticket")),
+                tlsTarget,
+            ),
+        )
+        assertFalse(
+            policy.matchesReturnUrl(
+                URI(exactReturn.toString().replace("appId=CHIE.VEA", "appId=OTHER.APP")),
+                tlsTarget,
+            ),
+        )
     }
 
     @Test

@@ -102,7 +102,8 @@ internal class ClientAuthRequestHandler(
     fun isAuthFlowUrl(rawUrl: String): Boolean {
         if (!hasProceeded()) return false
         val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return false
-        return uri == grant.authorized.target || grant.authorized.policy.matchesReturnUrl(uri)
+        return uri == grant.authorized.target ||
+            grant.authorized.policy.matchesReturnUrl(uri, grant.authorized.target)
     }
 
     fun delegatePreferenceCleanup(): Boolean {

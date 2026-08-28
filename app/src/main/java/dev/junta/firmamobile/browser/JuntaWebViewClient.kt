@@ -70,6 +70,7 @@ class JuntaWebViewClient(
     private val onInPlaceClientAuthChallenge: (AuthorizedClientAuthTarget, ClientCertRequest) -> Unit = { _, request ->
         request.ignore()
     },
+    private val isConfirmedClientAuthReturnUrl: (String) -> Boolean = { false },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
@@ -95,7 +96,18 @@ class JuntaWebViewClient(
         method: String,
     ): Boolean {
         if (!isCurrentWebView(view)) return true
-        if (isModernMainFrame) recordVeaAuthReturnDiagnostic(targetUrl)
+        if (isModernMainFrame) {
+            recordVeaAuthReturnDiagnostic(targetUrl)
+            if (isConfirmedClientAuthReturnUrl(targetUrl)) {
+                logger.recordNavigationEvent(
+                    code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                    rawUrl = targetUrl,
+                    isMainFrame = true,
+                    method = method,
+                )
+                return false
+            }
+        }
         val currentUrl = currentPageUrl(view)
         val currentProfileId = activeProfileId()
         if (isModernMainFrame) {

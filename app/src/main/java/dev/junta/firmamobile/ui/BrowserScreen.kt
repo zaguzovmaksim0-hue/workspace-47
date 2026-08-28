@@ -874,6 +874,9 @@ fun BrowserScreen(
                                         clientAuthAuthorizer.invalidate()
                                     }
                                 },
+                                isConfirmedClientAuthReturnUrl = { rawUrl ->
+                                    inPlaceClientAuthHandlerRef.get()?.isAuthFlowUrl(rawUrl) == true
+                                },
                                 onInPlaceClientAuthChallenge = { authorized, request ->
                                     val preconfirmed = preconfirmedInPlaceClientAuthRef.getAndSet(null)
                                     if (preconfirmed != null &&

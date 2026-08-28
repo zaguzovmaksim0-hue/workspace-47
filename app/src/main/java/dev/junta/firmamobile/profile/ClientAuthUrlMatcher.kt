@@ -60,7 +60,29 @@ internal fun ClientAuthPolicy.matchesRequestUrl(uri: URI): Boolean {
 }
 
 internal fun ClientAuthPolicy.matchesReturnUrl(uri: URI): Boolean =
-    returnUrlConstraints.any { constraint -> uri.matchesClientAuthConstraint(constraint) }
+    returnUrlConstraints.any { constraint ->
+        !constraint.isSessionBoundToRequest(this) && uri.matchesClientAuthConstraint(constraint)
+    }
+
+internal fun ClientAuthPolicy.matchesReturnUrl(uri: URI, requestUri: URI): Boolean {
+    val requestParameters = parseClientAuthQuery(requestUri.rawQuery ?: return false) ?: return false
+    val requestNames = fixedQueryParameters.keys + requiredEphemeralQueryParameters
+    return returnUrlConstraints.any { constraint ->
+        if (!uri.matchesClientAuthConstraint(constraint)) return@any false
+        val linkedNames = constraint.queryParameterNames().intersect(requestNames)
+        if (linkedNames.isEmpty()) return@any true
+        val returnParameters = parseClientAuthQuery(uri.rawQuery ?: return@any false) ?: return@any false
+        linkedNames.all { name -> returnParameters[name] == requestParameters[name] }
+    }
+}
+
+private fun ClientAuthUrlConstraint.queryParameterNames(): Set<String> =
+    fixedQueryParameters.keys + requiredEphemeralQueryParameters
+
+private fun ClientAuthUrlConstraint.isSessionBoundToRequest(policy: ClientAuthPolicy): Boolean {
+    val requestNames = policy.fixedQueryParameters.keys + policy.requiredEphemeralQueryParameters
+    return queryParameterNames().any { it in requestNames }
+}
 
 internal fun ClientAuthPolicy.matchesInPlaceGetTransition(current: URI, target: URI): Boolean =
     transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&

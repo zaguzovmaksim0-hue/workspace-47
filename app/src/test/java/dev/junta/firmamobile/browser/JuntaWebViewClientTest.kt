@@ -948,6 +948,29 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun veaObservedReturnLoginShapeRequiresLiveConfirmedClientAuthFlow() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val returnUrl = "$VEA_API_RETURN?appId=CHIE.VEA&resCode=synthetic-result" +
+            "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+        val staticClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+        )
+        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+
+        val liveClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            isConfirmedClientAuthReturnUrl = { it == returnUrl },
+        )
+        assertFalse(liveClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+    }
+
+    @Test
     fun veaClientCertChallengeIsNotArmedByDirectOrNearMissNavigation() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
