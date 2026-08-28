@@ -897,6 +897,50 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun veaConfirmedTargetCanBeArmedInPlaceAfterUserConfirmation() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        val source = veaSourceUrl()
+        val target = veaTargetUrl()
+        var captured: AuthorizedClientAuthTarget? = null
+        val captureClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            currentPageUrl = { VEA_AUTH_FACADE },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 40L },
+            onClientAuthTarget = { captured = it },
+        )
+        assertFalse(captureClient.shouldOverrideUrlLoading(webView, request(source)))
+        assertTrue(captureClient.shouldOverrideUrlLoading(webView, request(target)))
+        val confirmed = checkNotNull(captured).refreshedAfterUserConfirmation()
+
+        val epoch = 40L
+        var challengeCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { authorized, _ ->
+                assertEquals(confirmed.target, authorized.target)
+                challengeCount++
+            },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+        inPlaceClient.onPageStarted(webView, target, null)
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(1, challengeCount)
+        assertEquals(0, request.ignores)
+    }
+
+    @Test
     fun veaClientCertChallengeIsNotArmedByDirectOrNearMissNavigation() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)

@@ -17,6 +17,8 @@ import androidx.annotation.RequiresApi
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
+import dev.junta.firmamobile.profile.ClientAuthTransitionMode
+import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ProfileId
 import java.util.concurrent.atomic.AtomicReference
 
@@ -237,6 +239,20 @@ class JuntaWebViewClient(
             }
         }
         clientAuthAuthorizer?.onTopLevelPageStarted(url, currentNavigationEpoch())
+    }
+
+    internal fun armConfirmedInPlaceClientAuth(
+        authorized: AuthorizedClientAuthTarget,
+        navigationEpoch: Long,
+    ): Boolean {
+        if (authorized.policy.transitionMode != ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ||
+            authorized.policy.requestMethod != HttpMethod.GET ||
+            authorized.isExpiredOrInvalid()
+        ) {
+            return false
+        }
+        pendingInPlaceClientAuth.set(PendingInPlaceClientAuth(authorized, navigationEpoch))
+        return true
     }
 
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
