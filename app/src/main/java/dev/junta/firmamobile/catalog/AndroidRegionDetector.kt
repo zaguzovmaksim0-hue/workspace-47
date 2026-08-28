@@ -56,6 +56,11 @@ class AndroidRegionDetector internal constructor(
         geocoder = AndroidRegionGeocoder(context),
     )
 
+    internal constructor(context: Context, locationManager: LocationManager) : this(
+        locationSource = AndroidRegionLocationSource(context, locationManager),
+        geocoder = AndroidRegionGeocoder(context),
+    )
+
     override suspend fun detect(): RegionDetectionResult {
         if (!locationSource.hasCoarseLocationPermission()) return RegionDetectionResult.PermissionDenied
         if (!locationSource.isLocationEnabled()) return RegionDetectionResult.LocationDisabled
