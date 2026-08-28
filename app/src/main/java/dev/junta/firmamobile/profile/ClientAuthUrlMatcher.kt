@@ -59,6 +59,17 @@ internal fun ClientAuthPolicy.matchesRequestUrl(uri: URI): Boolean {
     return requiredEphemeralQueryParameters.all { name -> validClientAuthEphemeral(name, parameters[name]) }
 }
 
+internal fun ClientAuthPolicy.matchesRequestContinuationUrl(uri: URI, requestUri: URI): Boolean {
+    if (!matchesRequestUrl(requestUri)) return false
+    val requestParameters = parseClientAuthQuery(requestUri.rawQuery ?: return false) ?: return false
+    val requestNames = fixedQueryParameters.keys + requiredEphemeralQueryParameters
+    return requestContinuationUrlConstraints.any { constraint ->
+        if (!uri.matchesClientAuthConstraint(constraint)) return@any false
+        val continuationParameters = parseClientAuthQuery(uri.rawQuery ?: return@any false) ?: return@any false
+        requestNames.all { name -> continuationParameters[name] == requestParameters[name] }
+    }
+}
+
 internal fun ClientAuthPolicy.matchesReturnUrl(uri: URI): Boolean =
     returnUrlConstraints.any { constraint ->
         !constraint.isSessionBoundToRequest(this) && uri.matchesClientAuthConstraint(constraint)

@@ -240,8 +240,10 @@ class ClientAuthRequestHandlerTest {
             clock = clock,
             monotonicNanos = monotonic::nowNanos,
         )
+        assertEquals(null, firstHandler.resolveRequestContinuation(VEA_CLUSTER_CONTINUATION))
         firstHandler.handle(RecordingRequest())
 
+        val continued = checkNotNull(firstHandler.resolveRequestContinuation(VEA_CLUSTER_CONTINUATION))
         assertTrue(firstHandler.isAuthFlowUrl(VEA_CLUSTER_CONTINUATION))
         assertFalse(
             firstHandler.isAuthFlowUrl(
@@ -256,7 +258,7 @@ class ClientAuthRequestHandlerTest {
 
         val continuedHandler = ClientAuthRequestHandler(
             grant = ClientAuthGrant(
-                authorized.copy(target = java.net.URI(VEA_CLUSTER_CONTINUATION)),
+                continued,
                 43,
             ),
             identityProvider = { identity },

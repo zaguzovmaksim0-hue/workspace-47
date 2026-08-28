@@ -129,7 +129,10 @@ internal fun certificateSelectionFingerprint(identity: UnlockedIdentity): String
 }.getOrNull()
 
 internal fun shouldUseConfirmedInPlaceClientAuth(policy: ClientAuthPolicy): Boolean =
-    policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+    policy.transitionMode in setOf(
+        ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+        ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+    ) &&
         policy.requestMethod == HttpMethod.GET
 
 internal fun dispatchConfirmedClientAuthPreparation(
@@ -567,9 +570,15 @@ fun BrowserScreen(
 
             override fun onTopLevelNavigationStarted(url: String) {
                 val inPlaceHandler = inPlaceClientAuthHandlerRef.get()
-                if (inPlaceHandler?.hasProceeded() != true) {
-                    inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
+                val continuingConfirmedClientAuth =
+                    inPlaceHandler?.hasProceeded() == true && inPlaceHandler.isAuthFlowUrl(url)
+                if (continuingConfirmedClientAuth) {
+                    pageProgress = 0
+                    browserError = null
+                    blockedReason = null
+                    return
                 }
+                inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
                 cancelPendingInPlaceClientAuth()
                 pageProgress = 0
                 browserError = null
@@ -891,7 +900,48 @@ fun BrowserScreen(
                                 isConfirmedClientAuthReturnUrl = { rawUrl ->
                                     inPlaceClientAuthHandlerRef.get()?.isAuthFlowUrl(rawUrl) == true
                                 },
-                                onInPlaceClientAuthChallenge = { authorized, request ->
+                                resolveConfirmedClientAuthContinuationUrl = { rawUrl ->
+                                    inPlaceClientAuthHandlerRef.get()?.resolveRequestContinuation(rawUrl)
+                                },
+                                onInPlaceClientAuthChallenge = onInPlaceChallenge@{ authorized, request ->
+                                    val currentHandler = inPlaceClientAuthHandlerRef.get()
+                                    val continuation = currentHandler?.resolveRequestContinuation(
+                                        authorized.target.toASCIIString(),
+                                    )
+                                    if (currentHandler != null && continuation == authorized &&
+                                        currentHandler.hasProceeded()
+                                    ) {
+                                        val nextHandler = ClientAuthRequestHandler(
+                                            grant = ClientAuthGrant(
+                                                authorized = authorized,
+                                                navigationEpoch = navigationEpoch.longValue,
+                                            ),
+                                            identityProvider = clientCertificateIdentityProvider,
+                                            currentNavigationEpoch = { navigationEpoch.longValue },
+                                            clearClientCertPreferences = {
+                                                mainHandler.post {
+                                                    clientCertPreferenceCoordinator.requestClear()
+                                                }
+                                            },
+                                            onDiagnostic = { event ->
+                                                logger.recordPortalCallback(
+                                                    stage = event.stage,
+                                                    host = authorized.target.host,
+                                                )
+                                            },
+                                        )
+                                        if (inPlaceClientAuthHandlerRef.compareAndSet(currentHandler, nextHandler) &&
+                                            currentHandler.delegatePreferenceCleanup()
+                                        ) {
+                                            currentHandler.abandon()
+                                            nextHandler.handle(request)
+                                            return@onInPlaceChallenge
+                                        }
+                                        inPlaceClientAuthHandlerRef.compareAndSet(nextHandler, null)
+                                        nextHandler.abandon()
+                                        request.ignore()
+                                        return@onInPlaceChallenge
+                                    }
                                     val preconfirmed = preconfirmedInPlaceClientAuthRef.getAndSet(null)
                                     if (preconfirmed != null &&
                                         preconfirmed.profileId == authorized.profileId &&

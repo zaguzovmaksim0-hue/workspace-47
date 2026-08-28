@@ -122,6 +122,7 @@ object SiteProfileCatalogParser {
             "linkedEphemeralQueryParameters",
             "linkedEphemeralQueryParameterMappings",
             "sourceBase64UrlConstraints",
+            "requestContinuationUrlConstraints",
             "returnUrlConstraints",
         ).filter { it in o.values }
         o.exact(*(baseKeys.toList() + optionalKeys).toTypedArray())
@@ -174,6 +175,12 @@ object SiteProfileCatalogParser {
         } else {
             emptyMap()
         }
+        val requestContinuationUrlConstraints = if ("requestContinuationUrlConstraints" in o.values) {
+            o.array("requestContinuationUrlConstraints").map(::clientAuthUrlConstraint).toSet()
+                .also { require(it.size == o.array("requestContinuationUrlConstraints").size) }
+        } else {
+            emptySet()
+        }
         val returnUrlConstraints = if ("returnUrlConstraints" in o.values) {
             o.array("returnUrlConstraints").map(::clientAuthUrlConstraint).toSet()
                 .also { require(it.size == o.array("returnUrlConstraints").size) }
@@ -190,11 +197,19 @@ object SiteProfileCatalogParser {
         require((linkedEphemeral intersect linkedEphemeralMappings.values.toSet()).isEmpty())
         require(sourceBase64UrlConstraints.keys.all { it in sourceEphemeral })
         require(sourceBase64UrlConstraints.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
+        require(requestContinuationUrlConstraints.all { continuation ->
+            continuation.fixedQueryParameters == fixed &&
+                continuation.requiredEphemeralQueryParameters == ephemeral
+        })
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
                 require(requestMethod == HttpMethod.GET)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
-                require(sourceBase64UrlConstraints.isEmpty() && returnUrlConstraints.isEmpty())
+                require(
+                    sourceBase64UrlConstraints.isEmpty() &&
+                        requestContinuationUrlConstraints.isEmpty() &&
+                        returnUrlConstraints.isEmpty()
+                )
                 require(
                     fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443 ||
                         sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()
@@ -202,7 +217,11 @@ object SiteProfileCatalogParser {
             }
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
                 require(requestMethod == HttpMethod.GET)
-                require(sourceBase64UrlConstraints.isEmpty() && returnUrlConstraints.isEmpty())
+                require(
+                    sourceBase64UrlConstraints.isEmpty() &&
+                        requestContinuationUrlConstraints.isEmpty() &&
+                        returnUrlConstraints.isEmpty()
+                )
                 val boundSourceParameters = linkedEphemeral + linkedEphemeralMappings.keys
                 val boundTargetParameters = linkedEphemeral + linkedEphemeralMappings.values
                 require(sourceEphemeral == boundSourceParameters)
@@ -220,7 +239,11 @@ object SiteProfileCatalogParser {
                 when (requestMethod) {
                     HttpMethod.POST -> {
                         require(fixed.isEmpty() && ephemeral.isEmpty())
-                        require(sourceBase64UrlConstraints.isEmpty() && returnUrlConstraints.isEmpty())
+                        require(
+                            sourceBase64UrlConstraints.isEmpty() &&
+                                requestContinuationUrlConstraints.isEmpty() &&
+                                returnUrlConstraints.isEmpty()
+                        )
                     }
                     HttpMethod.GET -> {
                         require(sourceBase64UrlConstraints.isNotEmpty())
@@ -251,6 +274,7 @@ object SiteProfileCatalogParser {
             linkedEphemeralQueryParameters = linkedEphemeral,
             linkedEphemeralQueryParameterMappings = linkedEphemeralMappings,
             sourceBase64UrlConstraints = sourceBase64UrlConstraints,
+            requestContinuationUrlConstraints = requestContinuationUrlConstraints,
             returnUrlConstraints = returnUrlConstraints,
         )
     }

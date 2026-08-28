@@ -10,7 +10,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.matchesRequestContinuationUrl
 import dev.junta.firmamobile.profile.matchesReturnUrl
+import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
 import java.security.MessageDigest
@@ -103,7 +105,17 @@ internal class ClientAuthRequestHandler(
         if (!hasProceeded()) return false
         val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return false
         return uri == grant.authorized.target ||
+            grant.authorized.policy.matchesRequestContinuationUrl(uri, grant.authorized.target) ||
             grant.authorized.policy.matchesReturnUrl(uri, grant.authorized.target)
+    }
+
+    fun resolveRequestContinuation(rawUrl: String): AuthorizedClientAuthTarget? {
+        if (!hasProceeded() || currentNavigationEpoch() != grant.navigationEpoch ||
+            grant.authorized.isExpiredOrInvalid(monotonicNanos())
+        ) return null
+        val uri = strictClientAuthHttpsUri(rawUrl) ?: return null
+        if (!grant.authorized.policy.matchesRequestContinuationUrl(uri, grant.authorized.target)) return null
+        return grant.authorized.copy(target = uri)
     }
 
     fun delegatePreferenceCleanup(): Boolean {
@@ -131,10 +143,9 @@ internal class ClientAuthRequestHandler(
         if (currentNavigationEpoch() != navigationEpoch || authorized.isExpiredOrInvalid(nowNanos)) {
             return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EPOCH_TTL)
         }
-        val requestOrigin = authorized.policy.requestOrigins.singleOrNull()
-            ?: return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_HOST_PORT)
-        if (!request.host.equals(requestOrigin.host, ignoreCase = true) ||
-            request.port != authorized.policy.requestPort
+        val targetPort = if (authorized.target.port == -1) 443 else authorized.target.port
+        if (!request.host.equals(authorized.target.host, ignoreCase = true) ||
+            request.port != targetPort
         ) {
             return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_HOST_PORT)
         }

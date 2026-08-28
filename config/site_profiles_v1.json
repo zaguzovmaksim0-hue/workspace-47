@@ -1644,7 +1644,7 @@
     },
     {
       "profileId": "junta-andalucia-vea-peg",
-      "profileVersion": 2,
+      "profileVersion": 3,
       "displayName": "Junta de Andalucía — Presentación electrónica general",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1673,6 +1673,14 @@
         "sourceBase64UrlConstraints": {
           "redirectUrl": {"origin":"https://veaja.cloud.juntadeandalucia.es","path":"/inicio/procedimiento-detalle/PEG_VEA","fixedQueryParameters":{"iniciarSolicitud":"true"},"requiredEphemeralQueryParameters":["procedureId","versionId"]}
         },
+        "requestContinuationUrlConstraints": [
+          {"origin":"https://ws235-1.juntadeandalucia.es","path":"/authenticationFacade/2","fixedQueryParameters":{"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},"requiredEphemeralQueryParameters":["ticketId","webSessionId"]},
+          {"origin":"https://ws235-2.juntadeandalucia.es","path":"/authenticationFacade/3","fixedQueryParameters":{"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},"requiredEphemeralQueryParameters":["ticketId","webSessionId"]},
+          {"origin":"https://ws235-3.juntadeandalucia.es","path":"/authenticationFacade/4","fixedQueryParameters":{"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},"requiredEphemeralQueryParameters":["ticketId","webSessionId"]},
+          {"origin":"https://ws235-4.juntadeandalucia.es","path":"/authenticationFacade/5","fixedQueryParameters":{"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},"requiredEphemeralQueryParameters":["ticketId","webSessionId"]},
+          {"origin":"https://ws235-5.juntadeandalucia.es","path":"/authenticationFacade/6","fixedQueryParameters":{"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},"requiredEphemeralQueryParameters":["ticketId","webSessionId"]},
+          {"origin":"https://ws235-6.juntadeandalucia.es","path":"/authenticationFacade/7","fixedQueryParameters":{"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},"requiredEphemeralQueryParameters":["ticketId","webSessionId"]}
+        ],
         "returnUrlConstraints": [
           {"origin":"https://api-veaja.cloud.juntadeandalucia.es","path":"/auth/returnLogin","fixedQueryParameters":{},"requiredEphemeralQueryParameters":["resCode"]},
           {"origin":"https://api-veaja.cloud.juntadeandalucia.es","path":"/auth/returnLogin","fixedQueryParameters":{"appId":"CHIE.VEA"},"requiredEphemeralQueryParameters":["resCode","ticketId","webSessionId"]},
@@ -1686,7 +1694,10 @@
         {"url":"https://www.juntadeandalucia.es/servicios/sede/tramites.html","reviewedOn":"2026-08-28"},
         {"url":"https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA","reviewedOn":"2026-08-28"},
         {"url":"https://api-veaja.cloud.juntadeandalucia.es/auth/login","reviewedOn":"2026-08-28"},
-        {"url":"https://ws235.juntadeandalucia.es/authenticationFacade","reviewedOn":"2026-08-28"}
+        {"url":"https://ws235.juntadeandalucia.es/authenticationFacade","reviewedOn":"2026-08-28"},
+        {"url":"https://ws235-2.juntadeandalucia.es/authenticationFacade/3","reviewedOn":"2026-08-28"},
+        {"url":"https://ws235-3.juntadeandalucia.es/authenticationFacade/4","reviewedOn":"2026-08-28"},
+        {"url":"https://ws235-4.juntadeandalucia.es/authenticationFacade/5","reviewedOn":"2026-08-28"}
       ]
     },
     {

@@ -1491,6 +1491,30 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun `Junta VEA request continuation cannot weaken the confirmed TLS tuple`() {
+        val exactContinuation =
+            "{\"origin\":\"https://ws235-3.juntadeandalucia.es\"," +
+                "\"path\":\"/authenticationFacade/4\"," +
+                "\"fixedQueryParameters\":{\"action\":\"validateCert\",\"appId\":\"CHIE.VEA\"," +
+                "\"comeBackURL\":\"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu\"}," +
+                "\"requiredEphemeralQueryParameters\":[\"ticketId\",\"webSessionId\"]}"
+        assertTrue(BuiltInSiteProfiles.JSON.contains(exactContinuation))
+
+        listOf(
+            exactContinuation.replace("CHIE.VEA", "OTHER.APP"),
+            exactContinuation.replace(
+                "[\"ticketId\",\"webSessionId\"]",
+                "[\"ticketId\"]",
+            ),
+        ).forEach { weakenedContinuation ->
+            val mutated = BuiltInSiteProfiles.JSON.replaceFirst(exactContinuation, weakenedContinuation)
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(mutated)
+            }
+        }
+    }
+
+    @Test
     fun `El Hierro Solicitud general is QA navigation only with observed Clave handoff`() {
         val profileId = ProfileId("el-hierro-solicitud-general")
         val start = URI("https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71")

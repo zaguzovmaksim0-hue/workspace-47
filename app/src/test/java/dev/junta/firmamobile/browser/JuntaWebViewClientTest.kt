@@ -1069,6 +1069,44 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun veaObservedClusterContinuationRequiresLiveSessionBindingAndArmsOnlyExactChallenge() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val confirmed = confirmedVeaTarget(70L)
+        val exactContinuation = confirmed.copy(target = java.net.URI(veaClusterContinuationUrl()))
+        val staticClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+        )
+        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+
+        var challenge: AuthorizedClientAuthTarget? = null
+        val liveClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+            resolveConfirmedClientAuthContinuationUrl = { raw ->
+                exactContinuation.takeIf { raw == veaClusterContinuationUrl() }
+            },
+            onInPlaceClientAuthChallenge = { authorized, _ -> challenge = authorized },
+        )
+        assertFalse(liveClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+        liveClient.onPageStarted(webView, veaClusterContinuationUrl(), null)
+        val clientCert = RecordingClientCertRequest(requestHost = "ws235-4.juntadeandalucia.es")
+        liveClient.onReceivedClientCertRequest(webView, clientCert)
+        assertEquals(exactContinuation, challenge)
+        assertEquals(0, clientCert.ignores)
+
+        val nearMiss = veaClusterContinuationUrl()
+            .replace("ticketId=synthetic-ticket", "ticketId=other-ticket")
+        assertTrue(liveClient.shouldOverrideUrlLoading(webView, request(nearMiss)))
+    }
+
+    @Test
     fun veaClientCertChallengeIsNotArmedByDirectOrNearMissNavigation() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
@@ -1125,6 +1163,12 @@ class JuntaWebViewClientTest {
 
     private fun veaTargetUrl(): String =
         "https://ws235.juntadeandalucia.es/authenticationFacade" +
+            "?action=validateCert&appId=CHIE.VEA" +
+            "&comeBackURL=${encode(base64(VEA_API_RETURN))}" +
+            "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+
+    private fun veaClusterContinuationUrl(): String =
+        "https://ws235-4.juntadeandalucia.es/authenticationFacade/5" +
             "?action=validateCert&appId=CHIE.VEA" +
             "&comeBackURL=${encode(base64(VEA_API_RETURN))}" +
             "&ticketId=synthetic-ticket&webSessionId=synthetic-session"

@@ -40,7 +40,7 @@ class JuntaAndaluciaVeaClientAuthProfileTest {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(2, profile.profileVersion)
+        assertEquals(3, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
@@ -74,6 +74,21 @@ class JuntaAndaluciaVeaClientAuthProfileTest {
             policy.sourceFixedQueryParameters,
         )
         assertEquals(setOf("redirectUrl"), policy.sourceRequiredEphemeralQueryParameters)
+        assertEquals(
+            (1..6).mapTo(linkedSetOf()) { node ->
+                ClientAuthUrlConstraint(
+                    ExactOrigin.parse("https://ws235-$node.juntadeandalucia.es"),
+                    "/authenticationFacade/${node + 1}",
+                    mapOf(
+                        "action" to "validateCert",
+                        "appId" to "CHIE.VEA",
+                        "comeBackURL" to base64(API_RETURN),
+                    ),
+                    setOf("ticketId", "webSessionId"),
+                )
+            },
+            policy.requestContinuationUrlConstraints,
+        )
         val redirect = policy.sourceBase64UrlConstraints.getValue("redirectUrl")
         assertEquals(ExactOrigin.parse(VEA_ORIGIN), redirect.origin)
         assertEquals("/inicio/procedimiento-detalle/PEG_VEA", redirect.path)
@@ -154,6 +169,35 @@ class JuntaAndaluciaVeaClientAuthProfileTest {
                 tlsTarget,
             ),
         )
+    }
+
+    @Test
+    fun observedWs235ClusterContinuationIsBoundToTheConfirmedTlsRequest() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        val tlsTarget = URI(
+            "$WS235_ORIGIN/authenticationFacade?action=validateCert&appId=CHIE.VEA" +
+                "&comeBackURL=${urlEncode(base64(API_RETURN))}" +
+                "&ticketId=synthetic-ticket&webSessionId=synthetic-session",
+        )
+        val exactContinuation = URI(
+            "$WS235_CLUSTER_ORIGIN/authenticationFacade/5?action=validateCert&appId=CHIE.VEA" +
+                "&comeBackURL=${urlEncode(base64(API_RETURN))}" +
+                "&ticketId=synthetic-ticket&webSessionId=synthetic-session",
+        )
+
+        assertTrue(policy.matchesRequestContinuationUrl(exactContinuation, tlsTarget))
+        listOf(
+            exactContinuation.toString().replace("ticketId=synthetic-ticket", "ticketId=other-ticket"),
+            exactContinuation.toString().replace("webSessionId=synthetic-session", "webSessionId=other-session"),
+            exactContinuation.toString().replace("appId=CHIE.VEA", "appId=OTHER.APP"),
+            exactContinuation.toString().replace("/authenticationFacade/5", "/authenticationFacade/4"),
+            exactContinuation.toString().replace("ws235-4.juntadeandalucia.es", "ws235-7.juntadeandalucia.es"),
+            exactContinuation.toString() + "&extra=1",
+        ).forEach { mutated ->
+            assertFalse(mutated, policy.matchesRequestContinuationUrl(URI(mutated), tlsTarget))
+        }
+        assertFalse(policy.matchesReturnUrl(exactContinuation, tlsTarget))
     }
 
     @Test
@@ -244,6 +288,7 @@ class JuntaAndaluciaVeaClientAuthProfileTest {
         const val VEA_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
         const val API_ORIGIN = "https://api-veaja.cloud.juntadeandalucia.es"
         const val WS235_ORIGIN = "https://ws235.juntadeandalucia.es"
+        const val WS235_CLUSTER_ORIGIN = "https://ws235-4.juntadeandalucia.es"
         const val VEA_START = "$VEA_ORIGIN/inicio/procedimiento-detalle/PEG_VEA"
         const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"
         const val API_LOGIN = "$API_ORIGIN/auth/login"

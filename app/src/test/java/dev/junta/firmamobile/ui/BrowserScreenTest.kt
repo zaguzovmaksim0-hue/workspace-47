@@ -53,6 +53,11 @@ class BrowserScreenTest {
                 .profile(ProfileId("carne-joven-andalucia"))
                 ?.clientAuthPolicy,
         )
+        val aeatPolicy = checkNotNull(
+            BuiltInSiteProfiles.qaRegistry
+                .profile(ProfileId("aeat-mis-datos-censales"))
+                ?.clientAuthPolicy,
+        )
 
         fun route(policy: dev.junta.firmamobile.profile.ClientAuthPolicy): List<String> {
             val events = mutableListOf<String>()
@@ -67,6 +72,7 @@ class BrowserScreenTest {
         assertEquals(listOf("in-place"), route(veaPolicy))
         assertEquals(listOf("dedicated"), route(veaPolicy.copy(requestMethod = HttpMethod.POST)))
         assertEquals(listOf("in-place"), route(carneJovenPolicy))
+        assertEquals(listOf("dedicated"), route(aeatPolicy))
     }
 
     @Test

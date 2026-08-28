@@ -70,6 +70,7 @@ class JuntaWebViewClient(
     private val onInPlaceClientAuthChallenge: (AuthorizedClientAuthTarget, ClientCertRequest) -> Unit = { _, request ->
         request.ignore()
     },
+    private val resolveConfirmedClientAuthContinuationUrl: (String) -> AuthorizedClientAuthTarget? = { null },
     private val isConfirmedClientAuthReturnUrl: (String) -> Boolean = { false },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
@@ -98,6 +99,21 @@ class JuntaWebViewClient(
         if (!isCurrentWebView(view)) return true
         if (isModernMainFrame) {
             recordVeaAuthReturnDiagnostic(targetUrl)
+            val continuation = resolveConfirmedClientAuthContinuationUrl(targetUrl)
+            if (continuation != null && continuation.profileId == activeProfileId() &&
+                !continuation.isExpiredOrInvalid()
+            ) {
+                pendingInPlaceClientAuth.set(
+                    PendingInPlaceClientAuth(continuation, currentNavigationEpoch()),
+                )
+                logger.recordNavigationEvent(
+                    code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                    rawUrl = targetUrl,
+                    isMainFrame = true,
+                    method = method,
+                )
+                return false
+            }
             if (isConfirmedClientAuthReturnUrl(targetUrl)) {
                 logger.recordNavigationEvent(
                     code = DiagnosticEventCode.NAVIGATION_ALLOWED,
@@ -308,7 +324,7 @@ class JuntaWebViewClient(
         authorized: AuthorizedClientAuthTarget,
         navigationEpoch: Long,
     ): Boolean {
-        if (authorized.policy.transitionMode != ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ||
+        if (authorized.policy.transitionMode !in CONFIRMED_IN_PLACE_TRANSITIONS ||
             authorized.policy.requestMethod != HttpMethod.GET ||
             authorized.isExpiredOrInvalid() ||
             !authorized.policy.matchesSourceUrl(authorized.source)
@@ -502,5 +518,9 @@ class JuntaWebViewClient(
         const val HTTP_ERROR_START = 400
         const val UNKNOWN_METHOD = "UNKNOWN"
         const val GET_METHOD = "GET"
+        val CONFIRMED_IN_PLACE_TRANSITIONS = setOf(
+            ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+            ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+        )
     }
 }
