@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import java.io.IOException
 import java.util.Locale
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -45,6 +46,33 @@ internal interface RegionGeocoder {
     suspend fun reverseGeocode(location: Location, maxResults: Int): List<RegionAddress>
 }
 
+internal enum class RegionDetectionFailureReason {
+    NO_PROVIDER,
+    LOCATION_TIMEOUT,
+    LOCATION_NULL,
+    GEOCODER_UNAVAILABLE,
+    GEOCODER_TIMEOUT,
+    GEOCODER_ERROR,
+    REGION_UNRESOLVED,
+}
+
+internal enum class RegionProviderAttemptOutcome {
+    TIMEOUT,
+    NULL,
+    LOCATION_RECEIVED,
+}
+
+internal data class RegionProviderAttempt(
+    val provider: String,
+    val outcome: RegionProviderAttemptOutcome,
+)
+
+internal data class RegionDetectionDetails(
+    val result: RegionDetectionResult,
+    val failureReason: RegionDetectionFailureReason? = null,
+    val providerAttempts: List<RegionProviderAttempt> = emptyList(),
+)
+
 class AndroidRegionDetector internal constructor(
     private val locationSource: RegionLocationSource,
     private val geocoder: RegionGeocoder,
@@ -56,54 +84,174 @@ class AndroidRegionDetector internal constructor(
         geocoder = AndroidRegionGeocoder(context),
     )
 
-    internal constructor(context: Context, locationManager: LocationManager) : this(
-        locationSource = AndroidRegionLocationSource(context, locationManager),
-        geocoder = AndroidRegionGeocoder(context),
-    )
+    override suspend fun detect(): RegionDetectionResult = detectDetailed().result
 
-    override suspend fun detect(): RegionDetectionResult {
-        if (!locationSource.hasCoarseLocationPermission()) return RegionDetectionResult.PermissionDenied
-        if (!locationSource.isLocationEnabled()) return RegionDetectionResult.LocationDisabled
-        if (!geocoder.isPresent()) return RegionDetectionResult.Unavailable
+    internal suspend fun detectDetailed(): RegionDetectionDetails {
+        if (!locationSource.hasCoarseLocationPermission()) {
+            return RegionDetectionDetails(RegionDetectionResult.PermissionDenied)
+        }
+        if (!locationSource.isLocationEnabled()) {
+            return RegionDetectionDetails(RegionDetectionResult.LocationDisabled)
+        }
+        if (!geocoder.isPresent()) {
+            return RegionDetectionDetails(
+                result = RegionDetectionResult.Unavailable,
+                failureReason = RegionDetectionFailureReason.GEOCODER_UNAVAILABLE,
+            )
+        }
 
-        val location = try {
+        val locationAcquisition = try {
             currentLocation()
         } catch (_: SecurityException) {
-            return RegionDetectionResult.PermissionDenied
-        } ?: return RegionDetectionResult.Unavailable
+            return RegionDetectionDetails(RegionDetectionResult.PermissionDenied)
+        }
+        if (locationAcquisition is LocationAcquisition.Failure) {
+            return RegionDetectionDetails(
+                result = RegionDetectionResult.Unavailable,
+                failureReason = locationAcquisition.reason,
+                providerAttempts = locationAcquisition.attempts,
+            )
+        }
+        locationAcquisition as LocationAcquisition.Success
 
-        val address = try {
-            reverseGeocode(location)
+        val geocodeAttempt = try {
+            reverseGeocode(locationAcquisition.location)
         } catch (_: IOException) {
-            null
+            return RegionDetectionDetails(
+                result = RegionDetectionResult.Unavailable,
+                failureReason = RegionDetectionFailureReason.GEOCODER_ERROR,
+                providerAttempts = locationAcquisition.attempts,
+            )
         } catch (_: IllegalArgumentException) {
-            null
-        } ?: return RegionDetectionResult.Unavailable
-
-        if (address.countryCode?.uppercase(Locale.ROOT) != "ES") {
-            return RegionDetectionResult.OutsideSpain
+            return RegionDetectionDetails(
+                result = RegionDetectionResult.Unavailable,
+                failureReason = RegionDetectionFailureReason.GEOCODER_ERROR,
+                providerAttempts = locationAcquisition.attempts,
+            )
         }
-        val region = PortalRegionResolver.resolve(address) ?: return RegionDetectionResult.Unavailable
-        return RegionDetectionResult.Success(region)
+
+        if (geocodeAttempt is GeocodeAttempt.Timeout) {
+            return RegionDetectionDetails(
+                result = RegionDetectionResult.Unavailable,
+                failureReason = RegionDetectionFailureReason.GEOCODER_TIMEOUT,
+                providerAttempts = locationAcquisition.attempts,
+            )
+        }
+        geocodeAttempt as GeocodeAttempt.Addresses
+
+        return when (val resolution = resolveAddresses(geocodeAttempt.addresses)) {
+            is AddressResolution.Success -> RegionDetectionDetails(
+                result = RegionDetectionResult.Success(resolution.region),
+                providerAttempts = locationAcquisition.attempts,
+            )
+            AddressResolution.OutsideSpain -> RegionDetectionDetails(
+                result = RegionDetectionResult.OutsideSpain,
+                providerAttempts = locationAcquisition.attempts,
+            )
+            AddressResolution.Unresolved -> RegionDetectionDetails(
+                result = RegionDetectionResult.Unavailable,
+                failureReason = RegionDetectionFailureReason.REGION_UNRESOLVED,
+                providerAttempts = locationAcquisition.attempts,
+            )
+        }
     }
 
-    // Intentionally preserves the original whole-chain timeout until the regression test is red.
-    private suspend fun currentLocation(): Location? = withTimeoutOrNull(locationTimeoutMillis) {
-        for (provider in locationSource.availableProviders()) {
-            val location = locationSource.currentLocation(provider)
-            if (location != null) return@withTimeoutOrNull location
+    private suspend fun currentLocation(): LocationAcquisition {
+        val providers = locationSource.availableProviders()
+        if (providers.isEmpty()) {
+            return LocationAcquisition.Failure(
+                reason = RegionDetectionFailureReason.NO_PROVIDER,
+                attempts = emptyList(),
+            )
         }
-        null
+
+        val attempts = mutableListOf<RegionProviderAttempt>()
+        var sawTimeout = false
+        for (provider in providers) {
+            val attempt = withTimeoutOrNull(locationTimeoutMillis) {
+                ProviderAttemptCompletion(locationSource.currentLocation(provider))
+            }
+            if (attempt == null) {
+                sawTimeout = true
+                attempts += RegionProviderAttempt(provider, RegionProviderAttemptOutcome.TIMEOUT)
+                continue
+            }
+            if (attempt.location == null) {
+                attempts += RegionProviderAttempt(provider, RegionProviderAttemptOutcome.NULL)
+                continue
+            }
+            attempts += RegionProviderAttempt(provider, RegionProviderAttemptOutcome.LOCATION_RECEIVED)
+            return LocationAcquisition.Success(attempt.location, attempts.toList())
+        }
+
+        return LocationAcquisition.Failure(
+            reason = if (sawTimeout) {
+                RegionDetectionFailureReason.LOCATION_TIMEOUT
+            } else {
+                RegionDetectionFailureReason.LOCATION_NULL
+            },
+            attempts = attempts.toList(),
+        )
     }
 
-    private suspend fun reverseGeocode(location: Location): RegionAddress? =
+    private suspend fun reverseGeocode(location: Location): GeocodeAttempt =
         withTimeoutOrNull(geocoderTimeoutMillis) {
-            geocoder.reverseGeocode(location, 1).firstOrNull()
+            GeocodeAttempt.Addresses(
+                geocoder.reverseGeocode(location, MAX_GEOCODER_RESULTS),
+            )
+        } ?: GeocodeAttempt.Timeout
+
+    private fun resolveAddresses(addresses: List<RegionAddress>): AddressResolution {
+        var sawSpain = false
+        var sawOutsideSpain = false
+        addresses.forEach { address ->
+            when (address.countryCode?.uppercase(Locale.ROOT)) {
+                null -> Unit
+                "ES" -> {
+                    sawSpain = true
+                    PortalRegionResolver.resolve(address)?.let { region ->
+                        return AddressResolution.Success(region)
+                    }
+                }
+                else -> sawOutsideSpain = true
+            }
         }
+        return when {
+            sawSpain -> AddressResolution.Unresolved
+            sawOutsideSpain -> AddressResolution.OutsideSpain
+            else -> AddressResolution.Unresolved
+        }
+    }
+
+    private data class ProviderAttemptCompletion(val location: Location?)
+
+    private sealed interface LocationAcquisition {
+        data class Success(
+            val location: Location,
+            val attempts: List<RegionProviderAttempt>,
+        ) : LocationAcquisition
+
+        data class Failure(
+            val reason: RegionDetectionFailureReason,
+            val attempts: List<RegionProviderAttempt>,
+        ) : LocationAcquisition
+    }
+
+    private sealed interface GeocodeAttempt {
+        data class Addresses(val addresses: List<RegionAddress>) : GeocodeAttempt
+        data object Timeout : GeocodeAttempt
+    }
+
+    private sealed interface AddressResolution {
+        data class Success(val region: PortalRegionCode) : AddressResolution
+        data object OutsideSpain : AddressResolution
+        data object Unresolved : AddressResolution
+    }
 
     private companion object {
         const val LOCATION_TIMEOUT_MILLIS = 12_000L
         const val GEOCODER_TIMEOUT_MILLIS = 8_000L
+        const val MAX_GEOCODER_RESULTS = 3
     }
 }
 
@@ -132,8 +280,7 @@ internal class AndroidRegionLocationSource(
             currentLocationLegacy(provider)
         }
 
-    private fun candidateProviders(): List<String> =
-        listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
+    private fun candidateProviders(): List<String> = regionLocationProviderCandidates(Build.VERSION.SDK_INT)
 
     private fun isProviderEnabled(provider: String): Boolean =
         runCatching { locationManager.isProviderEnabled(provider) }.getOrDefault(false)
@@ -174,6 +321,12 @@ internal class AndroidRegionLocationSource(
     }
 }
 
+internal fun regionLocationProviderCandidates(sdkInt: Int): List<String> = buildList {
+    if (sdkInt >= Build.VERSION_CODES.S) add(LocationManager.FUSED_PROVIDER)
+    add(LocationManager.NETWORK_PROVIDER)
+    add(LocationManager.GPS_PROVIDER)
+}
+
 internal class AndroidRegionGeocoder(
     private val context: Context,
 ) : RegionGeocoder {
@@ -205,7 +358,9 @@ internal class AndroidRegionGeocoder(
                 }
 
                 override fun onError(errorMessage: String?) {
-                    if (continuation.isActive) continuation.resume(emptyList())
+                    if (continuation.isActive) {
+                        continuation.resumeWithException(IOException("Geocoder failed"))
+                    }
                 }
             },
         )
