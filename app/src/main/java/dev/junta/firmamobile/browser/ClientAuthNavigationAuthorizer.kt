@@ -30,6 +30,10 @@ data class AuthorizedClientAuthTarget internal constructor(
         lifetimeNanos,
         nowNanos,
     )
+
+    internal fun refreshedAfterUserConfirmation(
+        nowNanos: Long = MonotonicSecurityTime.nowNanos(),
+    ): AuthorizedClientAuthTarget = copy(observedAtMonotonicNanos = nowNanos)
 }
 
 /**

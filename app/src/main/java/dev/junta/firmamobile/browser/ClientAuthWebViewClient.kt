@@ -24,11 +24,21 @@ internal data class ClientAuthGrant(
     val navigationEpoch: Long,
 )
 
+internal enum class ClientAuthRequestDiagnostic(val stage: String) {
+    CHALLENGE_RECEIVED("client-cert-received"),
+    PROCEEDED("client-cert-proceeded"),
+    REJECTED_TERMINAL("client-cert-rejected-terminal"),
+    REJECTED_NO_IDENTITY("client-cert-rejected-no-identity"),
+    REJECTED_POLICY("client-cert-rejected-policy"),
+    REJECTED_EXCEPTION("client-cert-rejected-exception"),
+}
+
 internal class ClientAuthRequestHandler(
     private val grant: ClientAuthGrant,
     private val identityProvider: () -> UnlockedIdentity?,
     private val currentNavigationEpoch: () -> Long,
     private val clearClientCertPreferences: () -> Unit,
+    private val onDiagnostic: (ClientAuthRequestDiagnostic) -> Unit = {},
     private val clock: Clock = Clock.systemUTC(),
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
@@ -36,13 +46,22 @@ internal class ClientAuthRequestHandler(
     private val preferencesCleared = AtomicBoolean(false)
 
     fun handle(request: ClientCertRequest) {
+        onDiagnostic(ClientAuthRequestDiagnostic.CHALLENGE_RECEIVED)
         if (!terminal.compareAndSet(false, true)) {
             request.ignore()
+            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_TERMINAL)
             return
         }
         val identity = identityProvider()
-        if (identity == null || !grant.isValidFor(request, identity, clock, monotonicNanos())) {
+        if (identity == null) {
             request.ignore()
+            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_NO_IDENTITY)
+            clearPreferencesOnce()
+            return
+        }
+        if (!grant.isValidFor(request, identity, clock, monotonicNanos())) {
+            request.ignore()
+            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_POLICY)
             clearPreferencesOnce()
             return
         }
@@ -54,8 +73,10 @@ internal class ClientAuthRequestHandler(
                 proceeded = true
                 request.proceed(privateKey, chain)
             }
+            onDiagnostic(ClientAuthRequestDiagnostic.PROCEEDED)
         } catch (_: Exception) {
             if (!proceeded) request.ignore()
+            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_EXCEPTION)
             clearPreferencesOnce()
         }
     }

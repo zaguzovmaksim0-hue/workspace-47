@@ -226,6 +226,7 @@ fun BrowserScreen(
     var pendingClientAuthTarget by remember {
         mutableStateOf<AuthorizedClientAuthTarget?>(null)
     }
+    var pendingClientAuthTargetEpoch by remember { mutableLongStateOf(-1L) }
     var pendingInPlaceClientAuth by remember {
         mutableStateOf<PendingInPlaceClientAuthChallenge?>(null)
     }
@@ -780,6 +781,7 @@ fun BrowserScreen(
                                 onClientAuthTarget = { authorized ->
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
+                                        pendingClientAuthTargetEpoch = navigationEpoch.longValue
                                         pendingClientAuthTarget = authorized
                                     } else {
                                         clientAuthAuthorizer.invalidate()
@@ -829,6 +831,7 @@ fun BrowserScreen(
                                             request.postBody.fill(0)
                                         } else {
                                             pendingClientAuthPostBody.getAndSet(request.postBody)?.fill(0)
+                                            pendingClientAuthTargetEpoch = navigationEpoch.longValue
                                             pendingClientAuthTarget = request.authorized
                                         }
                                     },
@@ -877,6 +880,12 @@ fun BrowserScreen(
                                     mainHandler.post {
                                         clientCertPreferenceCoordinator.requestClear()
                                     }
+                                },
+                                onDiagnostic = { event ->
+                                    logger.recordPortalCallback(
+                                        stage = event.stage,
+                                        host = tlsGrant.authorized.target.host,
+                                    )
                                 },
                             )
                             val client = ClientAuthWebViewClient(
@@ -1017,6 +1026,12 @@ fun BrowserScreen(
                         clearClientCertPreferences = {
                             mainHandler.post { clientCertPreferenceCoordinator.requestClear() }
                         },
+                        onDiagnostic = { event ->
+                            logger.recordPortalCallback(
+                                stage = event.stage,
+                                host = pending.authorized.target.host,
+                            )
+                        },
                     )
                     inPlaceClientAuthHandlerRef.getAndSet(handler)?.abandon()
                     handler.handle(pending.request)
@@ -1041,10 +1056,13 @@ fun BrowserScreen(
             host = authorized.target.host,
             certificateOwner = certificateState.summary.ownerName,
             onContinue = {
-                if (authorized.profileId != effectiveTopLevelProfileId) {
+                if (authorized.profileId != effectiveTopLevelProfileId ||
+                    pendingClientAuthTargetEpoch != navigationEpoch.longValue
+                ) {
                     pendingClientAuthTarget = null
                     abandonClientAuth()
                 } else {
+                    val confirmedTarget = authorized.refreshedAfterUserConfirmation()
                     pendingClientAuthTarget = null
                     advanceNavigationEpoch()
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
@@ -1052,7 +1070,7 @@ fun BrowserScreen(
                     webViewRef.get()?.stopLoading()
                     beginClientAuthPreparation(
                         ClientAuthGrant(
-                            authorized = authorized,
+                            authorized = confirmedTarget,
                             navigationEpoch = navigationEpoch.longValue,
                         ),
                     )

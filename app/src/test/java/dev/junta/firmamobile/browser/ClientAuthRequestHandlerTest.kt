@@ -178,6 +178,36 @@ class ClientAuthRequestHandlerTest {
     }
 
     @Test
+    fun explicitUserConfirmationRefreshesOnlyTheShortTlsWindow() {
+        val localMonotonic = MutableMonotonicClock(4_000_000_000L)
+        val old = shortTtlAuthorized(monotonic = localMonotonic, ttlSeconds = 1)
+        localMonotonic.advance(Duration.ofSeconds(10))
+        val refreshed = old.refreshedAfterUserConfirmation(localMonotonic.nowNanos())
+        val diagnostics = mutableListOf<ClientAuthRequestDiagnostic>()
+        val handler = ClientAuthRequestHandler(
+            grant = ClientAuthGrant(refreshed, 44),
+            identityProvider = { identity },
+            currentNavigationEpoch = { 44 },
+            clearClientCertPreferences = {},
+            onDiagnostic = diagnostics::add,
+            clock = clock,
+            monotonicNanos = localMonotonic::nowNanos,
+        )
+
+        val request = RecordingRequest()
+        handler.handle(request)
+
+        assertEquals(1, request.proceeds)
+        assertEquals(
+            listOf(
+                ClientAuthRequestDiagnostic.CHALLENGE_RECEIVED,
+                ClientAuthRequestDiagnostic.PROCEEDED,
+            ),
+            diagnostics,
+        )
+    }
+
+    @Test
     fun civilClockRollbackCannotExtendAcceptedClientAuthGrantTtl() {
         val mutableClock = MutableClock(now)
         val localMonotonic = MutableMonotonicClock(3_000_000_000L)
