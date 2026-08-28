@@ -1663,7 +1663,7 @@
         "fixedQueryParameters": {"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},
         "requiredEphemeralQueryParameters": ["ticketId", "webSessionId"],
         "allowEmptyIssuerList": true,
-        "grantTtlSeconds": 15,
+        "grantTtlSeconds": 60,
         "requireOfferedKeyTypeMatch": false,
         "requireTlsClientAuthExtendedKeyUsage": false,
         "requestPort": 443,
