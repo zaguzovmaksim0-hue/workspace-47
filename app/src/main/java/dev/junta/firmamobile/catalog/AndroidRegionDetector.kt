@@ -33,15 +33,33 @@ fun interface RegionDetector {
     suspend fun detect(): RegionDetectionResult
 }
 
-class AndroidRegionDetector(
-    private val context: Context,
-    private val locationManager: LocationManager =
-        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager,
+internal interface RegionLocationSource {
+    fun hasCoarseLocationPermission(): Boolean
+    fun isLocationEnabled(): Boolean
+    fun availableProviders(): List<String>
+    suspend fun currentLocation(provider: String): Location?
+}
+
+internal interface RegionGeocoder {
+    fun isPresent(): Boolean
+    suspend fun reverseGeocode(location: Location, maxResults: Int): List<RegionAddress>
+}
+
+class AndroidRegionDetector internal constructor(
+    private val locationSource: RegionLocationSource,
+    private val geocoder: RegionGeocoder,
+    private val locationTimeoutMillis: Long = LOCATION_TIMEOUT_MILLIS,
+    private val geocoderTimeoutMillis: Long = GEOCODER_TIMEOUT_MILLIS,
 ) : RegionDetector {
+    constructor(context: Context) : this(
+        locationSource = AndroidRegionLocationSource(context),
+        geocoder = AndroidRegionGeocoder(context),
+    )
+
     override suspend fun detect(): RegionDetectionResult {
-        if (!hasCoarseLocationPermission()) return RegionDetectionResult.PermissionDenied
-        if (!isLocationEnabled()) return RegionDetectionResult.LocationDisabled
-        if (!Geocoder.isPresent()) return RegionDetectionResult.Unavailable
+        if (!locationSource.hasCoarseLocationPermission()) return RegionDetectionResult.PermissionDenied
+        if (!locationSource.isLocationEnabled()) return RegionDetectionResult.LocationDisabled
+        if (!geocoder.isPresent()) return RegionDetectionResult.Unavailable
 
         val location = try {
             currentLocation()
@@ -60,54 +78,64 @@ class AndroidRegionDetector(
         if (address.countryCode?.uppercase(Locale.ROOT) != "ES") {
             return RegionDetectionResult.OutsideSpain
         }
-        val region = PortalRegionResolver.resolve(
-            RegionAddress(
-                countryCode = address.countryCode,
-                adminArea = address.adminArea,
-                subAdminArea = address.subAdminArea,
-                locality = address.locality,
-            ),
-        ) ?: return RegionDetectionResult.Unavailable
+        val region = PortalRegionResolver.resolve(address) ?: return RegionDetectionResult.Unavailable
         return RegionDetectionResult.Success(region)
     }
 
-    private fun hasCoarseLocationPermission(): Boolean = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-    ) == PackageManager.PERMISSION_GRANTED
-
-    private fun isLocationEnabled(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        locationManager.isLocationEnabled
-    } else {
-        runCatching {
-            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        }.getOrDefault(false)
-    }
-
-    private suspend fun currentLocation(): Location? = withTimeoutOrNull(LOCATION_TIMEOUT_MILLIS) {
-        val providers = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
-            .filter { provider -> runCatching { locationManager.isProviderEnabled(provider) }.getOrDefault(false) }
-        for (provider in providers) {
-            val location = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                currentLocationApi30(provider)
-            } else {
-                currentLocationLegacy(provider)
-            }
+    // Intentionally preserves the original whole-chain timeout until the regression test is red.
+    private suspend fun currentLocation(): Location? = withTimeoutOrNull(locationTimeoutMillis) {
+        for (provider in locationSource.availableProviders()) {
+            val location = locationSource.currentLocation(provider)
             if (location != null) return@withTimeoutOrNull location
         }
         null
     }
 
+    private suspend fun reverseGeocode(location: Location): RegionAddress? =
+        withTimeoutOrNull(geocoderTimeoutMillis) {
+            geocoder.reverseGeocode(location, 1).firstOrNull()
+        }
+
+    private companion object {
+        const val LOCATION_TIMEOUT_MILLIS = 12_000L
+        const val GEOCODER_TIMEOUT_MILLIS = 8_000L
+    }
+}
+
+internal class AndroidRegionLocationSource(
+    private val context: Context,
+    private val locationManager: LocationManager =
+        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager,
+) : RegionLocationSource {
+    override fun hasCoarseLocationPermission(): Boolean = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED
+
+    override fun isLocationEnabled(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        locationManager.isLocationEnabled
+    } else {
+        candidateProviders().any(::isProviderEnabled)
+    }
+
+    override fun availableProviders(): List<String> = candidateProviders().filter(::isProviderEnabled)
+
+    override suspend fun currentLocation(provider: String): Location? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            currentLocationApi30(provider)
+        } else {
+            currentLocationLegacy(provider)
+        }
+
+    private fun candidateProviders(): List<String> =
+        listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
+
+    private fun isProviderEnabled(provider: String): Boolean =
+        runCatching { locationManager.isProviderEnabled(provider) }.getOrDefault(false)
+
     @androidx.annotation.RequiresApi(Build.VERSION_CODES.R)
     private suspend fun currentLocationApi30(provider: String): Location? {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return null
-        }
+        if (!hasCoarseLocationPermission()) return null
         return suspendCancellableCoroutine { continuation ->
             val cancellationSignal = CancellationSignal()
             continuation.invokeOnCancellation { cancellationSignal.cancel() }
@@ -123,13 +151,7 @@ class AndroidRegionDetector(
 
     @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     private suspend fun currentLocationLegacy(provider: String): Location? {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return null
-        }
+        if (!hasCoarseLocationPermission()) return null
         return suspendCancellableCoroutine { continuation ->
             val listener = object : LocationListener {
                 override fun onLocationChanged(location: Location) {
@@ -145,44 +167,58 @@ class AndroidRegionDetector(
             locationManager.requestSingleUpdate(provider, listener, Looper.getMainLooper())
         }
     }
+}
 
-    private suspend fun reverseGeocode(location: Location): Address? =
-        withTimeoutOrNull(GEOCODER_TIMEOUT_MILLIS) {
-            val geocoder = Geocoder(context, Locale.forLanguageTag("es-ES"))
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                reverseGeocodeApi33(geocoder, location)
-            } else {
-                reverseGeocodeLegacy(geocoder, location)
-            }
+internal class AndroidRegionGeocoder(
+    private val context: Context,
+) : RegionGeocoder {
+    override fun isPresent(): Boolean = Geocoder.isPresent()
+
+    override suspend fun reverseGeocode(location: Location, maxResults: Int): List<RegionAddress> {
+        val geocoder = Geocoder(context, Locale.forLanguageTag("es-ES"))
+        val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            reverseGeocodeApi33(geocoder, location, maxResults)
+        } else {
+            reverseGeocodeLegacy(geocoder, location, maxResults)
         }
+        return addresses.map { address -> address.toRegionAddress() }
+    }
 
     @androidx.annotation.RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private suspend fun reverseGeocodeApi33(geocoder: Geocoder, location: Location): Address? =
-        suspendCancellableCoroutine { continuation ->
-            geocoder.getFromLocation(
-                location.latitude,
-                location.longitude,
-                1,
-                object : Geocoder.GeocodeListener {
-                    override fun onGeocode(addresses: MutableList<Address>) {
-                        if (continuation.isActive) continuation.resume(addresses.firstOrNull())
-                    }
+    private suspend fun reverseGeocodeApi33(
+        geocoder: Geocoder,
+        location: Location,
+        maxResults: Int,
+    ): List<Address> = suspendCancellableCoroutine { continuation ->
+        geocoder.getFromLocation(
+            location.latitude,
+            location.longitude,
+            maxResults,
+            object : Geocoder.GeocodeListener {
+                override fun onGeocode(addresses: MutableList<Address>) {
+                    if (continuation.isActive) continuation.resume(addresses.toList())
+                }
 
-                    override fun onError(errorMessage: String?) {
-                        if (continuation.isActive) continuation.resume(null)
-                    }
-                },
-            )
-        }
+                override fun onError(errorMessage: String?) {
+                    if (continuation.isActive) continuation.resume(emptyList())
+                }
+            },
+        )
+    }
 
     @Suppress("DEPRECATION")
-    private suspend fun reverseGeocodeLegacy(geocoder: Geocoder, location: Location): Address? =
-        withContext(Dispatchers.IO) {
-            geocoder.getFromLocation(location.latitude, location.longitude, 1)?.firstOrNull()
-        }
-
-    private companion object {
-        const val LOCATION_TIMEOUT_MILLIS = 12_000L
-        const val GEOCODER_TIMEOUT_MILLIS = 8_000L
+    private suspend fun reverseGeocodeLegacy(
+        geocoder: Geocoder,
+        location: Location,
+        maxResults: Int,
+    ): List<Address> = withContext(Dispatchers.IO) {
+        geocoder.getFromLocation(location.latitude, location.longitude, maxResults).orEmpty()
     }
+
+    private fun Address.toRegionAddress(): RegionAddress = RegionAddress(
+        countryCode = countryCode,
+        adminArea = adminArea,
+        subAdminArea = subAdminArea,
+        locality = locality,
+    )
 }
