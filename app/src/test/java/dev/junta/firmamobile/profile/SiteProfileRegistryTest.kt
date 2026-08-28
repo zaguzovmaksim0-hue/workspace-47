@@ -23,11 +23,11 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, clave)?.trustMode,
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, claveIdent)?.trustMode,
         )
         assertEquals(
@@ -39,11 +39,11 @@ class SiteProfileRegistryTest {
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, claveIdent)?.trustMode,
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, clave)?.trustMode,
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, claveIdent)?.trustMode,
         )
         assertEquals(
@@ -68,7 +68,7 @@ class SiteProfileRegistryTest {
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(jccmRegistro, clave)?.trustMode,
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(jccmRegistro, claveIdent)?.trustMode,
         )
     }
@@ -406,7 +406,7 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `Junta VEA PEG is QA-only browse and rejects auth API as profile origin`() {
+    fun `Junta VEA PEG is QA-only client auth and keeps auth API profile scoped`() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val start = URI("https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA")
 
@@ -414,7 +414,7 @@ class SiteProfileRegistryTest {
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, BuiltInSiteProfiles.qaRegistry.profile(profileId)?.activation)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://api-veaja.cloud.juntadeandalucia.es/auth/login")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://veaja.cloud.juntadeandalucia.es:444/")))

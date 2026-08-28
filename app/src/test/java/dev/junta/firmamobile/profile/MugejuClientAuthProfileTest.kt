@@ -61,11 +61,11 @@ class MugejuClientAuthProfileTest {
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, sourceUrl)?.trustMode,
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, targetUrl)?.trustMode,
         )
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))

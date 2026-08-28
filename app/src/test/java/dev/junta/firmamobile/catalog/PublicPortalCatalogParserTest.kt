@@ -1596,13 +1596,19 @@ class PublicPortalCatalogParserTest {
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
         assertEquals(
-            setOf("AUTOFIRMA", "AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"),
+            setOf(
+                "AUTOFIRMA",
+                "AUTOSCRIPT",
+                "CERTIFICATE_ACCESS",
+                "CLIENT_TLS_AUTH",
+                "ELECTRONIC_SIGNATURE",
+            ),
             metadata.observedMechanisms.map { it.name }.toSet(),
         )
         assertTrue(metadata.observedSignatureFormats.isEmpty())
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
         assertTrue(portal.isEnabled)
-        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), portal.capabilities)
         assertEquals(PortalLaunchTarget(ProfileId("junta-andalucia-vea-peg"), start), repository.resolveLaunch(portal))
     }
 

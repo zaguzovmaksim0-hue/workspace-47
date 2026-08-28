@@ -773,11 +773,10 @@ class SiteProfileCatalogParserTest {
         assertTrue(policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)
         assertEquals(443, policy.requestPort)
-        assertEquals(
-            TrustMode.BROWSE_ONLY,
+        assertNull(
             BuiltInSiteProfiles.qaRegistry.resolve(
                 URI("https://ws235.juntadeandalucia.es/authenticationFacade"),
-            )?.trustMode,
+            ),
         )
         assertEquals(
             TrustMode.TRUSTED_CLIENT_AUTH,
@@ -1483,12 +1482,12 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        checkNotNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
     }
 
     @Test

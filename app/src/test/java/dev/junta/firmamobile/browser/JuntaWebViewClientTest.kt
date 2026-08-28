@@ -386,9 +386,13 @@ class JuntaWebViewClientTest {
         val target = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj"
 
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
-        assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
-
         assertEquals(emptyList<String>(), sedessCallbacks.events)
+
+        assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        assertEquals(
+            listOf("blocked:UNSUPPORTED_EXTERNAL_INTENT"),
+            sedessCallbacks.events,
+        )
     }
 
     @Test

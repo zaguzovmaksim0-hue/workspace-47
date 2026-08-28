@@ -99,6 +99,7 @@ class PortalCatalogScreenTest {
         val externalOnly = releaseRepository.portals().first { !it.isEnabled }
         var opened: PortalCatalogItem? = null
         val state = PortalCatalogUiState(
+            searchText = "show external test card",
             selectedRegion = externalOnly.regionCode,
             sections = listOf(
                 PortalCatalogSection(
@@ -243,7 +244,7 @@ class PortalCatalogScreenTest {
     @Test
     @Config(qualifiers = "w320dp-h640dp")
     fun `catalog remains usable at narrow width and large font scale`() {
-        val state = stateFor(searchText = "carne joven europeo")
+        val state = stateFor(searchText = "carne joven europeo", selectedRegion = PortalRegionCode.ANDALUSIA)
         rule.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(
@@ -267,9 +268,9 @@ class PortalCatalogScreenTest {
             }
         }
 
-        rule.onNodeWithText("Carné Joven Europeo de Andalucía")
-            .performScrollTo()
-            .assertIsDisplayed()
+        rule.onNode(hasScrollToIndexAction())
+            .performScrollToNode(hasText("Carné Joven Europeo de Andalucía"))
+        rule.onNodeWithText("Carné Joven Europeo de Andalucía").assertIsDisplayed()
         rule.onNodeWithText("Favorito").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Abrir").assertIsDisplayed()
     }
