@@ -2751,7 +2751,7 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `open target is internal only for an exact active binding and otherwise external`() {
+    fun `open target is internal only for an exact active binding and otherwise stays closed`() {
         val releaseById = releaseRepository.portals().associateBy { it.portalId }
         val qaItem = qaRepository.portals().first {
             it.isEnabled && releaseById.getValue(it.portalId).isEnabled.not()
@@ -2760,10 +2760,7 @@ class PortalCatalogRepositoryTest {
         assertTrue(internal is PortalOpenTarget.InApp)
 
         val releaseItem = releaseRepository.portals().single { it.portalId == qaItem.portalId }
-        assertEquals(
-            PortalOpenTarget.External(releaseItem.entryUrl),
-            releaseRepository.resolveOpenTarget(releaseItem),
-        )
+        assertNull(releaseRepository.resolveOpenTarget(releaseItem))
         assertNull(
             releaseRepository.resolveOpenTarget(
                 releaseItem.copy(entryUrl = java.net.URI("https://example.org/")),

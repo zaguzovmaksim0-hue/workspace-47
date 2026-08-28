@@ -142,18 +142,19 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 
 ### JuntaWebViewClient external-navigation frame-boundary regressions
 
-- HTTPS externo directo en callback moderno main-frame mantiene un único
-  `openExternal`;
-- `intent:` validado con `browser_fallback_url=https://...` en main-frame mantiene el
-  handoff externo aprobado;
-- el mismo HTTPS desde subframe se consume como `UNTRUSTED_EXTERNAL_NAVIGATION` sin
-  `openExternal` ni `onNavigationBlocked`;
-- el callback String deprecated tampoco puede entregar `OpenExternal` porque no prueba
-  propiedad main-frame;
-- un `intent:` con browser fallback desde subframe falla cerrado por el mismo límite;
+- HTTPS externo directo en callback moderno main-frame se consume como
+  `UNTRUSTED_EXTERNAL_NAVIGATION` y no puede producir `openExternal`;
+- `intent:` con `browser_fallback_url=https://...` también falla cerrado dentro de la app;
+- el mismo HTTPS o intent desde subframe se consume sin callback UI top-level;
+- el callback String deprecated no puede entregar contenido a una Activity externa;
+- una petición que requiera el paquete oficial AutoFirma falla cerrada como
+  `UNSUPPORTED_EXTERNAL_INTENT`; los perfiles con bridge Afirma interno conservan su ruta
+  native dentro de la aplicación;
+- el catálogo solo devuelve un target para un binding exacto activo; no existe fallback al
+  navegador del sistema para entradas públicas no vinculadas;
 - el diagnóstico bloqueado no conserva query/fragment sensibles del URL de prueba;
 - ejecutar la familia WebView/navigation/WebMessage en Debug y QA y mantener el E2E
-  físico del navegador/portal como gate separado.
+  físico del portal como gate separado.
 
 ### JuntaWebViewClient blocked-navigation callback ownership regressions
 

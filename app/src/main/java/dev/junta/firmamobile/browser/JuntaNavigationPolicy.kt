@@ -95,7 +95,7 @@ class JuntaNavigationPolicy(
             return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
         }
         return if (isSafeExternalHttpsUrl(target)) {
-            NavigationDecision.OpenExternal(target)
+            NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION)
         } else {
             NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
@@ -239,7 +239,7 @@ class JuntaNavigationPolicy(
         ) {
             return NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI)
         }
-        return NavigationDecision.OpenOfficialAutoFirma(uri)
+        return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)
     }
 
     private fun hasSafeOfficialAutoFirmaQuery(encodedQuery: String): Boolean {
@@ -374,7 +374,7 @@ class JuntaNavigationPolicy(
                 null
             }
             if (fallbackUri != null && isSafeExternalHttpsUrl(fallbackUri)) {
-                return NavigationDecision.OpenExternal(fallbackUri)
+                return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION)
             }
         }
         return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)

@@ -41,10 +41,10 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
-    fun routesThirdPartyHttpsExternallyButBlocksHttpDowngrades() {
+    fun blocksThirdPartyHttpsInsideTheAppAndBlocksHttpDowngrades() {
         val https = policy.decide("https://example.org/help", trustedPage)
-            as NavigationDecision.OpenExternal
-        assertEquals("https://example.org/help", https.uri.toString())
+            as NavigationDecision.Block
+        assertEquals(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION, https.reason)
 
         val http = policy.decide("http://example.org/help", trustedPage)
             as NavigationDecision.Block

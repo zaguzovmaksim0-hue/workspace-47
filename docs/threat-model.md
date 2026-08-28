@@ -101,14 +101,16 @@ Afirma nativa o lanzamiento del handoff a navegador externo desde un subframe/ca
 legacy sin propiedad top-level probada. El handoff externo además puede invalidar
 estado Client TLS/Afirma/firma de nivel superior antes de abrir la Activity.
 **Controles:** interceptar `afirma://`, `intent://`, `market://` y URLs Play; rechazar
-package/component explícitos no aprobados; nunca usar `es.gob.afirma`; evento
-sanitizado de fallback. Solo una navegación Afirma directa o embedded-Afirma recibida
-por el callback moderno y marcada `isForMainFrame=true` puede llegar a
-`onAfirmaRequest`; subframes y el callback String deprecated se consumen con diagnóstico
-`UNTRUSTED_AFIRMA_ORIGIN` pero no publican `onNavigationBlocked` ni otra señal top-level de
-aplicación. De forma independiente, `OpenExternal` solo puede llegar a
-la aplicación desde un callback moderno main-frame; subframe/legacy se consume con
-`UNTRUSTED_EXTERNAL_NAVIGATION` y sin `openExternal` ni callback UI de bloqueo.
+package/component explícitos no aprobados; nunca lanzar `es.gob.afirma` ni un navegador
+externo desde el runtime del portal; evento sanitizado de fallback. Solo una navegación
+Afirma directa o embedded-Afirma recibida por el callback moderno y marcada
+`isForMainFrame=true` puede llegar al bridge interno `onAfirmaRequest`; subframes y el
+callback String deprecated se consumen sin entrega native. HTTPS fuera del profile exacto
+y `intent:` con `browser_fallback_url` fallan cerrados como
+`UNTRUSTED_EXTERNAL_NAVIGATION`; una petición AutoFirma que solo podría resolverse mediante
+una Activity externa falla cerrada como `UNSUPPORTED_EXTERNAL_INTENT`. El catálogo solo
+abre bindings exactos activos en el WebView interno; una entrada pública sin binding activo
+no se delega al navegador del sistema.
 **Verificación:** regressions Debug/QA con controles positivos main-frame y negativos
 subframe/legacy para Afirma, incluyendo ausencia de entrega native y de callback UI top-level,
 HTTPS externo e `intent:` con browser fallback; instrumentation sin resolución de

@@ -1,7 +1,6 @@
 package dev.junta.firmamobile
 
 import android.Manifest
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -34,7 +33,6 @@ import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
 import dev.junta.firmamobile.browser.HuescaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.HuescaBatchSigningAdapter
-import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.LaPalmaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.LaPalmaBatchSigningAdapter
 import dev.junta.firmamobile.browser.LugoBatchBridgeAdapter
@@ -402,26 +400,13 @@ class MainActivity : ComponentActivity() {
                             cancelSigning(SigningCancelReason.NAVIGATION)
                             destination = AppDestination.Catalog
                         },
-                        onOpenExternal = { uri ->
+                        onOpenExternal = {
+                            // External browser handoffs are intentionally disabled application-wide.
                             cancelSigning(SigningCancelReason.NAVIGATION)
-                            try {
-                                startActivity(Intent(Intent.ACTION_VIEW, uri))
-                            } catch (_: ActivityNotFoundException) {
-                                // The validated URL stays closed if no browser can handle it.
-                            }
                         },
-                        onOpenOfficialAutoFirma = { uri ->
+                        onOpenOfficialAutoFirma = {
+                            // External AutoFirma handoffs are intentionally disabled application-wide.
                             cancelSigning(SigningCancelReason.NAVIGATION)
-                            try {
-                                startActivity(
-                                    Intent(Intent.ACTION_VIEW, uri)
-                                        .setPackage(JuntaNavigationPolicy.AUTOFIRMA_PACKAGE),
-                                )
-                            } catch (_: ActivityNotFoundException) {
-                                // Keep the validated request closed if official AutoFirma is unavailable.
-                            } catch (_: SecurityException) {
-                                // Fail closed if Android refuses the explicit external package handoff.
-                            }
                         },
                         onChangeCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
@@ -493,21 +478,6 @@ class MainActivity : ComponentActivity() {
                                         profileId = target.launch.profileId,
                                         entryUrl = target.launch.entryUrl,
                                     )
-                                }
-                                is PortalOpenTarget.External -> {
-                                    try {
-                                        startActivity(
-                                            Intent(
-                                                Intent.ACTION_VIEW,
-                                                Uri.parse(target.entryUrl.toASCIIString()),
-                                            ).addCategory(Intent.CATEGORY_BROWSABLE),
-                                        )
-                                        catalogViewModel.recordOpened(item.portalId)
-                                    } catch (_: ActivityNotFoundException) {
-                                        catalogViewModel.onOpenFailed()
-                                    } catch (_: SecurityException) {
-                                        catalogViewModel.onOpenFailed()
-                                    }
                                 }
                                 null -> catalogViewModel.onOpenFailed()
                             }

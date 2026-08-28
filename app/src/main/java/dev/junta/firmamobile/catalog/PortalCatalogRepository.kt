@@ -70,17 +70,14 @@ class PortalCatalogRepository(
         resolveLaunch(item.portalId, item.entryUrl)
 
     /**
-     * Returns an internal launch only for an active exact profile binding. Every other exact
-     * bundled entry falls back to its validated public HTTPS URL in the system browser.
+     * Returns an in-app launch only for an active exact profile binding.
+     * Unbound public catalog entries stay fail-closed instead of leaving the application.
      */
     fun resolveOpenTarget(item: PortalCatalogItem): PortalOpenTarget? {
         val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId }
             ?: return null
         if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
-        resolveLaunch(item)?.let { return PortalOpenTarget.InApp(it) }
-        return metadata.entryUrl
-            .takeIf(::isSafeExternalCatalogUrl)
-            ?.let { PortalOpenTarget.External(it) }
+        return resolveLaunch(item)?.let(PortalOpenTarget::InApp)
     }
 
     private fun resolve(metadata: PublicPortalEntry): PortalCatalogItem {
@@ -224,14 +221,6 @@ class PortalCatalogRepository(
             PortalSupportStatus.BROWSE_ONLY,
         )
     }
-}
-
-private fun isSafeExternalCatalogUrl(uri: URI): Boolean {
-    val raw = uri.toASCIIString()
-    return raw.length <= 2_048 && !raw.any(Char::isISOControl) &&
-        !uri.isOpaque && uri.scheme == "https" && uri.host != null &&
-        uri.userInfo == null && uri.port == -1 && uri.rawFragment == null &&
-        uri.normalize() == uri
 }
 
 private fun PublicPortalEntry.metadataSupportStatus(): PortalSupportStatus = when (inventoryStatus) {

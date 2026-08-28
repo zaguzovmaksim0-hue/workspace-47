@@ -351,7 +351,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun seguridadSocialOfficialAutoFirmaHandoffUsesDedicatedNativeCallback() {
+    fun seguridadSocialOfficialAutoFirmaHandoffIsBlockedInsideTheApp() {
         val sedessCallbacks = RecordingBrowserCallbacks()
         val sedessClient = JuntaWebViewClient(
             callbacks = sedessCallbacks,
@@ -365,7 +365,10 @@ class JuntaWebViewClientTest {
 
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target)))
 
-        assertEquals(listOf("official-autofirma:sign"), sedessCallbacks.events)
+        assertEquals(
+            listOf("blocked:UNSUPPORTED_EXTERNAL_INTENT"),
+            sedessCallbacks.events,
+        )
     }
 
     @Test
@@ -386,7 +389,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun externalAndAfirmaNavigationAreConsumedByNativeCallbacks() {
+    fun externalHttpsIsBlockedWhileInAppAfirmaNavigationUsesNativeBridge() {
         assertTrue(
             client.shouldOverrideUrlLoading(webView, request("https://example.org/help")),
         )
@@ -406,7 +409,7 @@ class JuntaWebViewClientTest {
             ),
         )
 
-        assertEquals("external:example.org", callbacks.events[0])
+        assertEquals("blocked:UNTRUSTED_EXTERNAL_NAVIGATION", callbacks.events[0])
         assertEquals("afirma:sign", callbacks.events[1])
         assertEquals("afirma:sign", callbacks.events[2])
     }
@@ -463,7 +466,10 @@ class JuntaWebViewClientTest {
         )
 
         assertTrue(mainClient.shouldOverrideUrlLoading(webView, request(fallbackIntent)))
-        assertEquals(listOf("external:example.org"), mainCallbacks.events)
+        assertEquals(
+            listOf("blocked:UNTRUSTED_EXTERNAL_NAVIGATION"),
+            mainCallbacks.events,
+        )
 
         assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(fallbackIntent)))
         assertEquals(emptyList<String>(), frameCallbacks.events)

@@ -180,7 +180,6 @@ data class PortalLaunchTarget(
 
 sealed interface PortalOpenTarget {
     data class InApp(val launch: PortalLaunchTarget) : PortalOpenTarget
-    data class External(val entryUrl: URI) : PortalOpenTarget
 }
 
 data class PortalCatalogQuery(
