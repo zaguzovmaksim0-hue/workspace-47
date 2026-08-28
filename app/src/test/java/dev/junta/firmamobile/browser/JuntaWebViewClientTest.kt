@@ -899,28 +899,12 @@ class JuntaWebViewClientTest {
     @Test
     fun veaConfirmedTargetCanBeArmedInPlaceAfterUserConfirmation() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
-        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
         val source = veaSourceUrl()
-        val target = veaTargetUrl()
-        var captured: AuthorizedClientAuthTarget? = null
-        val captureClient = JuntaWebViewClient(
-            callbacks = RecordingBrowserCallbacks(),
-            logger = logger,
-            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
-            currentPageUrl = { VEA_AUTH_FACADE },
-            clientAuthAuthorizer = authorizer,
-            activeProfileId = { profileId },
-            currentNavigationEpoch = { 40L },
-            onClientAuthTarget = { captured = it },
-        )
-        assertFalse(captureClient.shouldOverrideUrlLoading(webView, request(source)))
-        assertTrue(captureClient.shouldOverrideUrlLoading(webView, request(target)))
-        val confirmed = checkNotNull(captured).refreshedAfterUserConfirmation()
-
-        val epoch = 40L
+        val confirmed = confirmedVeaTarget(40L)
+        var epoch = 40L
         var challengeCount = 0
         val inPlaceClient = JuntaWebViewClient(
-            callbacks = RecordingBrowserCallbacks(),
+            callbacks = EpochAdvancingBrowserCallbacks { epoch++ },
             logger = logger,
             navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
             clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
@@ -933,9 +917,12 @@ class JuntaWebViewClientTest {
             },
         )
         assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
-        val sourceRequest = request(source)
-        inPlaceClient.shouldInterceptRequest(webView, sourceRequest)
-        val refreshedTarget = target
+
+        // Chromium may observe the main-frame request before onPageStarted. The
+        // exact source start must rebind the preconfirmed state to the new epoch.
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+        inPlaceClient.onPageStarted(webView, source, null)
+        val refreshedTarget = veaTargetUrl()
             .replace("ticketId=synthetic-ticket", "ticketId=synthetic-ticket-2")
             .replace("webSessionId=synthetic-session", "webSessionId=synthetic-session-2")
         assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
@@ -943,8 +930,72 @@ class JuntaWebViewClientTest {
         val request = RecordingClientCertRequest()
         inPlaceClient.onReceivedClientCertRequest(webView, request)
 
+        assertEquals(42L, epoch)
         assertEquals(1, challengeCount)
         assertEquals(0, request.ignores)
+    }
+
+    @Test
+    fun veaPreconfirmedSourceAlsoRebindsWhenPageStartedPrecedesIntercept() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val source = veaSourceUrl()
+        val confirmed = confirmedVeaTarget(50L)
+        var epoch = 50L
+        var challengeCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = EpochAdvancingBrowserCallbacks { epoch++ },
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { _, _ -> challengeCount++ },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+
+        // WebView callback order is not a security assumption: the reverse order
+        // must reach the same exact source/epoch-bound state.
+        inPlaceClient.onPageStarted(webView, source, null)
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+        val refreshedTarget = veaTargetUrl()
+            .replace("ticketId=synthetic-ticket", "ticketId=synthetic-ticket-3")
+            .replace("webSessionId=synthetic-session", "webSessionId=synthetic-session-3")
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
+        inPlaceClient.onPageStarted(webView, refreshedTarget, null)
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(52L, epoch)
+        assertEquals(1, challengeCount)
+        assertEquals(0, request.ignores)
+    }
+
+    @Test
+    fun veaPreconfirmedTargetFailsClosedAfterUnrelatedEpochChange() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val source = veaSourceUrl()
+        val confirmed = confirmedVeaTarget(60L)
+        var epoch = 60L
+        var challengeCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { _, _ -> challengeCount++ },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+
+        epoch++ // An unrelated navigation invalidates the preconfirmed source epoch.
+        inPlaceClient.shouldOverrideUrlLoading(webView, request(veaTargetUrl()))
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(0, challengeCount)
+        assertEquals(1, request.ignores)
     }
 
     @Test
@@ -999,6 +1050,24 @@ class JuntaWebViewClientTest {
         assertEquals(1, nearMissRequest.ignores)
     }
 
+    private fun confirmedVeaTarget(epoch: Long): AuthorizedClientAuthTarget {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        var captured: AuthorizedClientAuthTarget? = null
+        val captureClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            currentPageUrl = { VEA_AUTH_FACADE },
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onClientAuthTarget = { captured = it },
+        )
+        assertFalse(captureClient.shouldOverrideUrlLoading(webView, request(veaSourceUrl())))
+        assertTrue(captureClient.shouldOverrideUrlLoading(webView, request(veaTargetUrl())))
+        return checkNotNull(captured).refreshedAfterUserConfirmation()
+    }
+
     private fun veaSourceUrl(): String {
         val redirect = "$VEA_START?iniciarSolicitud=true&procedureId=123&versionId=456"
         return "$VEA_API_LOGIN?modoAcceso=afirma" +
@@ -1041,6 +1110,17 @@ class JuntaWebViewClientTest {
             evaluatedScripts += script
             resultCallback?.onReceiveValue("null")
         }
+    }
+
+    private class EpochAdvancingBrowserCallbacks(
+        private val advanceEpoch: () -> Unit,
+    ) : BrowserNavigationCallbacks {
+        override fun openExternal(uri: Uri) = Unit
+        override fun openOfficialAutoFirma(uri: Uri) = Unit
+        override fun onAfirmaRequest(request: AfirmaRequest) = Unit
+        override fun onNavigationBlocked(reason: NavigationBlockReason) = Unit
+        override fun onBrowserError(error: BrowserErrorCode) = Unit
+        override fun onTopLevelNavigationStarted(url: String) = advanceEpoch()
     }
 
     private class RecordingBrowserCallbacks : BrowserNavigationCallbacks {

@@ -81,7 +81,9 @@ import dev.junta.firmamobile.browser.WebViewProfileCapabilities
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ClientAuthPolicy
 import dev.junta.firmamobile.profile.ClientAuthTransitionMode
+import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.matchesReturnUrl
 import dev.junta.firmamobile.profile.ProfileId
@@ -125,6 +127,18 @@ internal fun certificateSelectionFingerprint(identity: UnlockedIdentity): String
         certificateDer.fill(0)
     }
 }.getOrNull()
+
+internal fun shouldUseConfirmedInPlaceClientAuth(policy: ClientAuthPolicy): Boolean =
+    policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+        policy.requestMethod == HttpMethod.GET
+
+internal fun dispatchConfirmedClientAuthPreparation(
+    policy: ClientAuthPolicy,
+    beginInPlace: () -> Unit,
+    beginDedicated: () -> Unit,
+) {
+    if (shouldUseConfirmedInPlaceClientAuth(policy)) beginInPlace() else beginDedicated()
+}
 
 internal fun certificateEligibleForSelection(
     profileId: String,
@@ -1212,14 +1226,22 @@ fun BrowserScreen(
                     val confirmedTarget = authorized.refreshedAfterUserConfirmation()
                     pendingClientAuthTarget = null
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
-                    advanceNavigationEpoch()
-                    bridgeAttachmentLease.close()
-                    webViewRef.get()?.stopLoading()
-                    beginClientAuthPreparation(
-                        ClientAuthGrant(
-                            authorized = confirmedTarget,
-                            navigationEpoch = navigationEpoch.longValue,
-                        ),
+                    dispatchConfirmedClientAuthPreparation(
+                        policy = confirmedTarget.policy,
+                        beginInPlace = {
+                            beginConfirmedInPlaceClientAuthPreparation(confirmedTarget)
+                        },
+                        beginDedicated = {
+                            advanceNavigationEpoch()
+                            bridgeAttachmentLease.close()
+                            webViewRef.get()?.stopLoading()
+                            beginClientAuthPreparation(
+                                ClientAuthGrant(
+                                    authorized = confirmedTarget,
+                                    navigationEpoch = navigationEpoch.longValue,
+                                ),
+                            )
+                        },
                     )
                 }
             },

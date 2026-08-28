@@ -114,6 +114,7 @@ class JuntaWebViewClient(
             val preconfirmed = preconfirmedInPlaceSource.get()
             val target = strictClientAuthHttpsUri(targetUrl)
             if (preconfirmed != null && target != null && preconfirmed.sourceObserved &&
+                preconfirmed.navigationEpoch == currentNavigationEpoch() &&
                 preconfirmed.authorized.profileId == currentProfileId &&
                 !preconfirmed.authorized.isExpiredOrInvalid() &&
                 preconfirmed.authorized.policy.matchesSourceUrl(preconfirmed.authorized.source) &&
@@ -261,6 +262,10 @@ class JuntaWebViewClient(
                 null
             }
         }
+        val preconfirmedSourceStart = preconfirmedInPlaceSource.get()?.takeIf { preconfirmed ->
+            preconfirmed.navigationEpoch == currentNavigationEpoch() &&
+                url == preconfirmed.authorized.source.toASCIIString()
+        }
         recordVeaAuthReturnDiagnostic(url)
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.PAGE_STARTED,
@@ -270,6 +275,20 @@ class JuntaWebViewClient(
         )
         callbacks.onTopLevelNavigationStarted(url)
         callbacks.onTopLevelUrlChanged(url)
+        preconfirmedSourceStart?.let { started ->
+            val current = preconfirmedInPlaceSource.get()
+            if (current != null &&
+                current.authorized == started.authorized &&
+                current.navigationEpoch == started.navigationEpoch &&
+                current.authorized.profileId == activeProfileId() &&
+                !current.authorized.isExpiredOrInvalid()
+            ) {
+                preconfirmedInPlaceSource.compareAndSet(
+                    current,
+                    current.copy(navigationEpoch = currentNavigationEpoch()),
+                )
+            }
+        }
         inPlaceTargetStart?.let { pending ->
             val current = pendingInPlaceClientAuth.get()
             if (current === pending &&

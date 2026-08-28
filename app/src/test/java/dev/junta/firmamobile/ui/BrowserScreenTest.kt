@@ -21,6 +21,7 @@ import dev.junta.firmamobile.browser.NavigationBlockReason
 import dev.junta.firmamobile.browser.SiteClearResult
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ProfileId
 import org.junit.Rule
 import org.junit.Assert.assertEquals
@@ -39,6 +40,34 @@ import org.robolectric.annotation.SQLiteMode
 class BrowserScreenTest {
     @get:Rule
     val rule = createComposeRule()
+
+    @Test
+    fun confirmedClientAuthDispatchPreservesInPlaceAndDedicatedBoundaries() {
+        val veaPolicy = checkNotNull(
+            BuiltInSiteProfiles.qaRegistry
+                .profile(ProfileId("junta-andalucia-vea-peg"))
+                ?.clientAuthPolicy,
+        )
+        val carneJovenPolicy = checkNotNull(
+            BuiltInSiteProfiles.qaRegistry
+                .profile(ProfileId("carne-joven-andalucia"))
+                ?.clientAuthPolicy,
+        )
+
+        fun route(policy: dev.junta.firmamobile.profile.ClientAuthPolicy): List<String> {
+            val events = mutableListOf<String>()
+            dispatchConfirmedClientAuthPreparation(
+                policy = policy,
+                beginInPlace = { events += "in-place" },
+                beginDedicated = { events += "dedicated" },
+            )
+            return events
+        }
+
+        assertEquals(listOf("in-place"), route(veaPolicy))
+        assertEquals(listOf("dedicated"), route(veaPolicy.copy(requestMethod = HttpMethod.POST)))
+        assertEquals(listOf("dedicated"), route(carneJovenPolicy))
+    }
 
     @Test
     fun webMessageBridgeIsRequiredOnlyForProfilesWithNativeSigningCapabilities() {
