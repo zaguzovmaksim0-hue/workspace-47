@@ -20,6 +20,7 @@ import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ProfileId
+import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
 enum class BrowserErrorCode {
@@ -218,6 +219,7 @@ class JuntaWebViewClient(
                 null
             }
         }
+        recordVeaAuthReturnDiagnostic(url)
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.PAGE_STARTED,
             rawUrl = url,
@@ -291,6 +293,7 @@ class JuntaWebViewClient(
     ): WebResourceResponse? {
         if (!isCurrentWebView(view)) return null
         if (request.isForMainFrame) {
+            recordVeaAuthReturnDiagnostic(request.url.toString())
             logger.recordNavigationEvent(
                 code = DiagnosticEventCode.NETWORK_REQUEST,
                 rawUrl = request.url.toString(),
@@ -367,6 +370,33 @@ class JuntaWebViewClient(
     ): Boolean {
         if (isCurrentWebView(view)) callbacks.onRenderProcessGone(view)
         return true
+    }
+
+    private fun recordVeaAuthReturnDiagnostic(rawUrl: String) {
+        val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return
+        if (!uri.scheme.equals("https", ignoreCase = true)) return
+        val host = uri.host?.lowercase() ?: return
+        val names = uri.rawQuery
+            ?.split('&')
+            ?.mapNotNull { part -> part.substringBefore('=').takeIf(String::isNotEmpty) }
+            ?.toSet()
+            .orEmpty()
+        val stage = when {
+            host == "api-veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/auth/returnLogin" && names == setOf("resCode") ->
+                "vea-auth-return-rescode"
+
+            host == "veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/authFacade" && names == setOf("token", "redirectUrl") ->
+                "vea-auth-success"
+
+            host == "veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/authFacade" && names == setOf("error", "redirectUrl") ->
+                "vea-auth-error"
+
+            else -> null
+        } ?: return
+        logger.recordPortalCallback(stage = stage, host = host)
     }
 
     private fun isCurrentWebView(view: WebView): Boolean = try {
