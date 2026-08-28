@@ -137,6 +137,12 @@
     <string name="catalog_section_spain_copy">Organismos y servicios estatales disponibles desde cualquier región.</string>
     <string name="catalog_section_other_regions">Otros territorios</string>
     <string name="catalog_section_other_regions_copy">Resultados encontrados en el resto de España.</string>
+    <plurals name="catalog_section_service_count">
+        <item quantity="one">%1$d servicio</item>
+        <item quantity="other">%1$d servicios</item>
+    </plurals>
+    <string name="catalog_section_expanded">Sección desplegada</string>
+    <string name="catalog_section_collapsed">Sección contraída</string>
     <string name="catalog_location_permission_title">Ubicación no autorizada</string>
     <string name="catalog_location_permission_copy">Puedes permitir la ubicación cuando vuelvas a intentarlo o elegir tu región manualmente.</string>
     <string name="catalog_location_disabled_title">La ubicación está desactivada</string>

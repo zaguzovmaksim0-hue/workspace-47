@@ -3,6 +3,7 @@ package dev.junta.firmamobile.catalog
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,10 +44,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -75,6 +79,12 @@ fun PortalCatalogScreen(
     onUserMessageShown: () -> Unit,
 ) {
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
+    var expandedRegionalSectionKey by rememberSaveable(
+        state.selectedRegion.wireValue,
+        state.searchText.isNotBlank(),
+    ) {
+        mutableStateOf(state.initialExpandedRegionalSectionKey())
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val openFailureMessage = stringResource(R.string.catalog_open_failed)
 
@@ -128,17 +138,33 @@ fun PortalCatalogScreen(
             } else {
                 state.sections.forEach { section ->
                     val sectionKey = section.stableKey
-                    item(key = "section-$sectionKey") { CatalogSectionHeader(section) }
-                    items(
-                        items = section.items,
-                        key = { portal -> "portal-$sectionKey-${portal.portalId.value}" },
-                    ) { portal ->
-                        PortalCard(
-                            portal = portal,
-                            isFavorite = portal.portalId in state.favoritePortalIds,
-                            onToggleFavorite = onToggleFavorite,
-                            onOpenPortal = onOpenPortal,
+                    val collapsible = state.searchText.isBlank() && section.kind.isRegional
+                    val expanded = !collapsible || expandedRegionalSectionKey == sectionKey
+                    item(key = "section-$sectionKey") {
+                        CatalogSectionHeader(
+                            section = section,
+                            expanded = expanded,
+                            onToggle = if (collapsible) {
+                                {
+                                    expandedRegionalSectionKey = if (expanded) null else sectionKey
+                                }
+                            } else {
+                                null
+                            },
                         )
+                    }
+                    if (expanded) {
+                        items(
+                            items = section.items,
+                            key = { portal -> "portal-$sectionKey-${portal.portalId.value}" },
+                        ) { portal ->
+                            PortalCard(
+                                portal = portal,
+                                isFavorite = portal.portalId in state.favoritePortalIds,
+                                onToggleFavorite = onToggleFavorite,
+                                onOpenPortal = onOpenPortal,
+                            )
+                        }
                     }
                 }
             }
@@ -262,20 +288,68 @@ private fun RegionSelectorCard(
 }
 
 @Composable
-private fun CatalogSectionHeader(section: PortalCatalogSection) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun CatalogSectionHeader(
+    section: PortalCatalogSection,
+    expanded: Boolean,
+    onToggle: (() -> Unit)?,
+) {
+    val expandedState = stringResource(R.string.catalog_section_expanded)
+    val collapsedState = stringResource(R.string.catalog_section_collapsed)
+    val headerModifier = if (onToggle == null) {
+        Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) { heading() }
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .semantics(mergeDescendants = true) {
+                heading()
+                stateDescription = if (expanded) expandedState else collapsedState
+            }
+            .clickable(role = Role.Button, onClick = onToggle)
+    }
+
+    Column {
         HorizontalDivider(color = JuntaTeal, thickness = 2.dp)
-        Text(
-            text = section.localizedTitle(),
-            color = JuntaTealDark,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.semantics { heading() },
-        )
-        Text(
-            text = section.localizedDescription(),
-            color = JuntaMutedInk,
-            style = MaterialTheme.typography.bodySmall,
-        )
+        Row(
+            modifier = headerModifier.padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = section.localizedTitle(),
+                    color = JuntaTealDark,
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    text = section.localizedDescription(),
+                    color = JuntaMutedInk,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.catalog_section_service_count,
+                        section.items.size,
+                        section.items.size,
+                    ),
+                    color = JuntaTeal,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            if (onToggle != null) {
+                Text(
+                    text = if (expanded) "\u2212" else "+",
+                    color = JuntaTealDark,
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+            }
+        }
     }
 }
 
@@ -611,6 +685,25 @@ private fun String.catalogSearchKey(): String = Normalizer.normalize(this, Norma
 
 private val PortalCatalogSection.stableKey: String
     get() = "${kind.name}-${regionCode?.wireValue.orEmpty()}"
+
+private val PortalCatalogSectionKind.isRegional: Boolean
+    get() = when (this) {
+        PortalCatalogSectionKind.SELECTED_REGION,
+        PortalCatalogSectionKind.NATIONAL,
+        PortalCatalogSectionKind.REGION,
+        PortalCatalogSectionKind.OTHER_REGIONS,
+        -> true
+        PortalCatalogSectionKind.FAVORITES,
+        PortalCatalogSectionKind.RECENT,
+        -> false
+    }
+
+private fun PortalCatalogUiState.initialExpandedRegionalSectionKey(): String? =
+    if (searchText.isNotBlank()) {
+        null
+    } else {
+        sections.firstOrNull { it.kind == PortalCatalogSectionKind.SELECTED_REGION }?.stableKey
+    }
 
 private val CatalogShape = CutCornerShape(
     topStart = 7.dp,

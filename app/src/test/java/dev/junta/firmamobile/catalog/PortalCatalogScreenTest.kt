@@ -119,6 +119,41 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    @Config(qualifiers = "w600dp-h2000dp")
+    fun `regional sections reveal only the region the user opens`() {
+        val aragon = repository.portals().first { it.regionCode == PortalRegionCode.ARAGON }
+        val andalusia = repository.portals().first { it.regionCode == PortalRegionCode.ANDALUSIA }
+        val state = PortalCatalogUiState(
+            selectedRegion = PortalRegionCode.SPAIN,
+            sections = listOf(
+                PortalCatalogSection(
+                    kind = PortalCatalogSectionKind.REGION,
+                    items = listOf(aragon),
+                    regionCode = PortalRegionCode.ARAGON,
+                ),
+                PortalCatalogSection(
+                    kind = PortalCatalogSectionKind.REGION,
+                    items = listOf(andalusia),
+                    regionCode = PortalRegionCode.ANDALUSIA,
+                ),
+            ),
+        )
+
+        setCatalogContent(state = state)
+
+        rule.onNodeWithText(aragon.displayName).assertDoesNotExist()
+        rule.onNodeWithText(andalusia.displayName).assertDoesNotExist()
+
+        rule.onNodeWithText("Aragón").performClick()
+        rule.onNodeWithText(aragon.displayName).assertIsDisplayed()
+        rule.onNodeWithText(andalusia.displayName).assertDoesNotExist()
+
+        rule.onNodeWithText("Andalucía").performClick()
+        rule.onNodeWithText(andalusia.displayName).assertIsDisplayed()
+        rule.onNodeWithText(aragon.displayName).assertDoesNotExist()
+    }
+
+    @Test
     fun `location is requested only from the explicit button`() {
         var requests = 0
         setCatalogContent(
