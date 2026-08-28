@@ -326,14 +326,18 @@ que demuestran ausencia completa del profile/origins en release.
 **Riesgo:** contenido remoto intenta convertir una capacidad WebView opcional en acceso
 a ubicación u otros recursos del dispositivo.
 **Controles:** `TrustedJuntaWebView` desactiva explícitamente geolocalización con
-`setGeolocationEnabled(false)`; el manifest no declara `ACCESS_COARSE_LOCATION` ni
-`ACCESS_FINE_LOCATION`; `JuntaWebChromeClient` rechaza tanto el prompt específico de
-geolocalización como `PermissionRequest` genérico. File/content access y ventanas
-múltiples siguen desactivados de forma independiente.
-**Verificación:** source regression exige el setter explícito; pre-commit scan comprueba
-la ausencia de permisos location y conserva el callback `allow=false, retain=false`;
-lint/build compilan también el contrato instrumentado. No se afirma E2E físico de
-geolocalización.
+`setGeolocationEnabled(false)` y `JuntaWebChromeClient` rechaza tanto el prompt específico
+de geolocalización como `PermissionRequest` genérico. La aplicación declara únicamente
+`ACCESS_COARSE_LOCATION` para el selector nativo de región: se solicita después de que el
+usuario pulse «Usar mi ubicación», se obtiene una sola posición foreground y se descartan
+inmediatamente coordenadas y dirección tras resolver el código territorial. No se declaran
+`ACCESS_FINE_LOCATION` ni `ACCESS_BACKGROUND_LOCATION`, no se guarda ni registra la
+posición y ese permiso nunca se expone al WebView. File/content access y ventanas múltiples
+siguen desactivados de forma independiente.
+**Verificación:** source regression exige el setter explícito y el callback
+`allow=false, retain=false`; tests de manifest exigen coarse y rechazan fine/background;
+tests de preferencias comprueban que solo persiste el código regional. Lint/build compilan
+también el contrato instrumentado.
 
 ### T15. Un subframe bloqueado altera el estado UI de nivel superior
 
