@@ -10,6 +10,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.matchesReturnUrl
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
 import java.security.MessageDigest
@@ -228,9 +229,14 @@ internal class ClientAuthWebViewClient(
         val effectivePort = if (uri.port == -1) 443 else uri.port
         if (effectivePort !in 1..65_535) return false
         val origin = runCatching { ExactOrigin.parse("https://${uri.host}") }.getOrNull() ?: return false
-        val requestOrigins = grant.authorized.policy.requestOrigins
-        if (origin in requestOrigins && effectivePort == grant.authorized.policy.requestPort) return true
-        val returnOrigins = grant.authorized.policy.sourceUrls.mapTo(linkedSetOf()) {
+        val policy = grant.authorized.policy
+        if (uri == grant.authorized.target) return true
+        if (policy.returnUrlConstraints.isNotEmpty()) {
+            return effectivePort == 443 && policy.matchesReturnUrl(uri)
+        }
+        val requestOrigins = policy.requestOrigins
+        if (origin in requestOrigins && effectivePort == policy.requestPort) return true
+        val returnOrigins = policy.sourceUrls.mapTo(linkedSetOf()) {
             ExactOrigin.parse("https://${it.host}")
         }
         return effectivePort == 443 && origin in returnOrigins

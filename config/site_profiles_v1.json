@@ -1673,7 +1673,9 @@
         },
         "returnUrlConstraints": [
           {"origin":"https://api-veaja.cloud.juntadeandalucia.es","path":"/auth/returnLogin","fixedQueryParameters":{},"requiredEphemeralQueryParameters":["resCode"]},
-          {"origin":"https://api-veaja.cloud.juntadeandalucia.es","path":"/auth/endLogin","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[]}
+          {"origin":"https://api-veaja.cloud.juntadeandalucia.es","path":"/auth/endLogin","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[]},
+          {"origin":"https://veaja.cloud.juntadeandalucia.es","path":"/authFacade","fixedQueryParameters":{},"requiredEphemeralQueryParameters":["error","redirectUrl"]},
+          {"origin":"https://veaja.cloud.juntadeandalucia.es","path":"/authFacade","fixedQueryParameters":{},"requiredEphemeralQueryParameters":["token","redirectUrl"]}
         ]
       },
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},

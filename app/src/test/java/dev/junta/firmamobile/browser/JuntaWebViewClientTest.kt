@@ -867,43 +867,32 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun veaExactGetRedirectArmsClientCertChallengeInTheSameWebView() {
+    fun veaExactGetRedirectStopsBeforeTlsAndRequestsUserConfirmation() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
         val source = veaSourceUrl()
         val target = veaTargetUrl()
-        var currentUrl = VEA_AUTH_FACADE
-        var epoch = 20L
-        var capturedProfile: ProfileId? = null
-        var capturedRequest: ClientCertRequest? = null
+        var captured: AuthorizedClientAuthTarget? = null
         val veaCallbacks = RecordingBrowserCallbacks()
         val veaClient = JuntaWebViewClient(
             callbacks = veaCallbacks,
             logger = logger,
             navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
-            currentPageUrl = { currentUrl },
+            currentPageUrl = { VEA_AUTH_FACADE },
             clientAuthAuthorizer = authorizer,
             activeProfileId = { profileId },
-            currentNavigationEpoch = { epoch },
-            onInPlaceClientAuthChallenge = { authorized, request ->
-                capturedProfile = authorized.profileId
-                capturedRequest = request
-            },
+            currentNavigationEpoch = { 20L },
+            onClientAuthTarget = { captured = it },
         )
 
         assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(source)))
 
-        // /auth/login responds with a server-side 302, so it never becomes WebView.url.
-        assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(target)))
-        assertNull(veaClient.shouldInterceptRequest(webView, request(target)))
-        epoch++
-        veaClient.onPageStarted(webView, target, null)
-        val clientCertRequest = RecordingClientCertRequest()
-        veaClient.onReceivedClientCertRequest(webView, clientCertRequest)
+        // /auth/login is only a server-side redirect hop. The ws235 TLS request is
+        // stopped so BrowserScreen can ask the user before any private-key use.
+        assertTrue(veaClient.shouldOverrideUrlLoading(webView, request(target)))
 
-        assertEquals(profileId, capturedProfile)
-        assertSame(clientCertRequest, capturedRequest)
-        assertEquals(0, clientCertRequest.ignores)
+        assertEquals(profileId, captured?.profileId)
+        assertEquals(target, captured?.target?.toASCIIString())
         assertTrue(veaCallbacks.events.none { it.startsWith("external:") })
     }
 
