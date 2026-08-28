@@ -67,6 +67,27 @@ class ClientAuthWebViewClientTest {
     }
 
     @Test
+    fun proceededClientAuthCanDelegatePreferenceCleanupAcrossReturnNavigation() {
+        val clears = AtomicInteger()
+        val handler = ClientAuthRequestHandler(
+            grant = ClientAuthGrant(authorized(), 9L),
+            identityProvider = { synthetic.identity },
+            currentNavigationEpoch = { 9L },
+            clearClientCertPreferences = { clears.incrementAndGet() },
+            clock = clock,
+        )
+        val request = RecordingRequest()
+
+        handler.handle(request)
+
+        assertEquals(1, request.proceeds)
+        assertTrue(handler.hasProceeded())
+        assertTrue(handler.delegatePreferenceCleanup())
+        handler.abandon()
+        assertEquals(0, clears.get())
+    }
+
+    @Test
     fun veaDedicatedTlsWebViewAllowsOnlyExactReturnContract() {
         val epoch = AtomicInteger(30)
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }

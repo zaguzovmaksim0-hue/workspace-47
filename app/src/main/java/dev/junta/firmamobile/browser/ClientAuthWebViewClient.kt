@@ -55,6 +55,8 @@ internal class ClientAuthRequestHandler(
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
     private val terminal = AtomicBoolean(false)
+    private val proceeded = AtomicBoolean(false)
+    private val preferenceCleanupDelegated = AtomicBoolean(false)
     private val preferencesCleared = AtomicBoolean(false)
 
     fun handle(request: ClientCertRequest) {
@@ -86,6 +88,7 @@ internal class ClientAuthRequestHandler(
                 proceeded = true
                 request.proceed(privateKey, chain)
             }
+            this.proceeded.set(true)
             onDiagnostic(ClientAuthRequestDiagnostic.PROCEEDED)
         } catch (_: Exception) {
             if (!proceeded) request.ignore()
@@ -94,12 +97,27 @@ internal class ClientAuthRequestHandler(
         }
     }
 
+    fun hasProceeded(): Boolean = proceeded.get()
+
+    fun isAuthFlowUrl(rawUrl: String): Boolean {
+        if (!hasProceeded()) return false
+        val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return false
+        return uri == grant.authorized.target || grant.authorized.policy.matchesReturnUrl(uri)
+    }
+
+    fun delegatePreferenceCleanup(): Boolean {
+        if (!hasProceeded()) return false
+        preferenceCleanupDelegated.set(true)
+        return true
+    }
+
     fun abandon() {
         terminal.compareAndSet(false, true)
         clearPreferencesOnce()
     }
 
     private fun clearPreferencesOnce() {
+        if (preferenceCleanupDelegated.get()) return
         if (preferencesCleared.compareAndSet(false, true)) clearClientCertPreferences()
     }
 

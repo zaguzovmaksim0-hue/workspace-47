@@ -357,6 +357,26 @@ fun BrowserScreen(
         webViewRecreationEpoch++
     }
 
+    fun finishConfirmedInPlaceClientAuthAfterNavigation(handler: ClientAuthRequestHandler) {
+        if (!inPlaceClientAuthHandlerRef.compareAndSet(handler, null)) return
+        if (!handler.delegatePreferenceCleanup()) {
+            handler.abandon()
+            return
+        }
+        preserveWebViewDuringClientAuthClear = true
+        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+            mainHandler.post {
+                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                preserveWebViewDuringClientAuthClear = false
+                if (result == ClientCertPreferenceClearResult.FAILED) {
+                    browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                    pageProgress = 100
+                }
+            }
+        }
+        clientAuthClearRequest.set(request)
+    }
+
     fun beginConfirmedInPlaceClientAuthPreparation(
         authorized: AuthorizedClientAuthTarget,
     ) {
@@ -532,7 +552,10 @@ fun BrowserScreen(
             }
 
             override fun onTopLevelNavigationStarted(url: String) {
-                inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
+                val inPlaceHandler = inPlaceClientAuthHandlerRef.get()
+                if (inPlaceHandler?.hasProceeded() != true) {
+                    inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
+                }
                 cancelPendingInPlaceClientAuth()
                 pageProgress = 0
                 browserError = null
@@ -552,6 +575,13 @@ fun BrowserScreen(
 
             override fun onTopLevelUrlChanged(url: String) {
                 currentUrl = safeBrowserDisplayUrl(url)
+            }
+
+            override fun onTopLevelPageFinished(url: String) {
+                val handler = inPlaceClientAuthHandlerRef.get() ?: return
+                if (handler.hasProceeded() && !handler.isAuthFlowUrl(url)) {
+                    finishConfirmedInPlaceClientAuthAfterNavigation(handler)
+                }
             }
         }
     }

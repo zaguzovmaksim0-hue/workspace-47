@@ -50,6 +50,8 @@ interface BrowserNavigationCallbacks {
     fun onTopLevelNavigationStarted(url: String) = Unit
 
     fun onTopLevelUrlChanged(url: String) = Unit
+
+    fun onTopLevelPageFinished(url: String) = Unit
 }
 
 class JuntaWebViewClient(
@@ -284,6 +286,7 @@ class JuntaWebViewClient(
             method = UNKNOWN_METHOD,
         )
         callbacks.onTopLevelUrlChanged(url)
+        callbacks.onTopLevelPageFinished(url)
         OfvirtualPageCompatibility.apply(view, url)
     }
 
