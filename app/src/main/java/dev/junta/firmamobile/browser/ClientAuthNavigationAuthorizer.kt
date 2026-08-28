@@ -6,10 +6,12 @@ import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.SiteProfileRegistry
+import dev.junta.firmamobile.profile.hasLinkedEphemeralParameters
+import dev.junta.firmamobile.profile.matchesRequestUrl
+import dev.junta.firmamobile.profile.matchesSourceUrl
+import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import java.time.Duration
 
 @ConsistentCopyVisibility
@@ -64,7 +66,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             clearPending()
             return null
         }
-        val target = strictHttpsUri(targetUrl) ?: run {
+        val target = strictClientAuthHttpsUri(targetUrl) ?: run {
             clearPending()
             return null
         }
@@ -106,8 +108,8 @@ class ClientAuthNavigationAuthorizer internal constructor(
         if (policy.transitionMode != ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ||
             !method.equals(policy.requestMethod.name, ignoreCase = true)
         ) return null
-        val source = currentUrl?.let(::strictHttpsUri)?.takeIf { it.matchesSource(policy) } ?: return null
-        val target = strictHttpsUri(targetUrl)?.takeIf { it.matches(policy) } ?: return null
+        val source = currentUrl?.let(::strictClientAuthHttpsUri)?.takeIf { policy.matchesSourceUrl(it) } ?: return null
+        val target = strictClientAuthHttpsUri(targetUrl)?.takeIf { policy.matchesRequestUrl(it) } ?: return null
         val nowNanos = monotonicNanos()
         val previous = consumedInPlace
         if (previous != null &&
@@ -136,11 +138,11 @@ class ClientAuthNavigationAuthorizer internal constructor(
         nowNanos: Long,
     ): AuthorizedClientAuthTarget? {
         pending = null
-        val source = currentUrl?.let(::strictHttpsUri) ?: run {
+        val source = currentUrl?.let(::strictClientAuthHttpsUri) ?: run {
             return null
         }
-        if (!source.matchesSource(policy) || !target.matches(policy) ||
-            !source.hasLinkedEphemeralParameters(target, policy)
+        if (!policy.matchesSourceUrl(source) || !policy.matchesRequestUrl(target) ||
+            !policy.hasLinkedEphemeralParameters(source, target)
         ) {
             return null
         }
@@ -174,7 +176,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         currentEpoch: Long,
         nowNanos: Long,
     ): AuthorizedClientAuthTarget? {
-        if (target.matchesSource(policy) && currentBelongsTo(profile, currentUrl)) {
+        if (policy.matchesSourceUrl(target) && currentBelongsTo(profile, currentUrl)) {
             pending = PendingSource(
                 profileId = profile.profileId,
                 source = target,
@@ -190,7 +192,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         if (source == null || source.profileId != profile.profileId) return null
         if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) return null
         if (source.isExpiredOrInvalid(nowNanos)) return null
-        if (!source.source.matchesSource(policy) || !target.matches(policy)) return null
+        if (!policy.matchesSourceUrl(source.source) || !policy.matchesRequestUrl(target)) return null
 
         return authorized(
             profile = profile,
@@ -219,7 +221,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
     @Synchronized
     fun onTopLevelPageStarted(url: String, currentEpoch: Long) {
         val source = pending ?: return
-        val uri = strictHttpsUri(url)
+        val uri = strictClientAuthHttpsUri(url)
         if (uri != source.source || currentEpoch != source.armingEpoch + 1 ||
             source.isExpiredOrInvalid(monotonicNanos())
         ) {
@@ -243,126 +245,10 @@ class ClientAuthNavigationAuthorizer internal constructor(
     }
 
     private fun currentBelongsTo(profile: SiteProfile, currentUrl: String?): Boolean {
-        val current = currentUrl?.let(::strictHttpsUri) ?: return false
+        val current = currentUrl?.let(::strictClientAuthHttpsUri) ?: return false
         if (current.port !in setOf(-1, 443)) return false
         return runCatching { ExactOrigin.parse("https://${current.host}") }.getOrNull() in profile.initiatorOrigins
     }
-
-    private fun URI.matchesSource(policy: ClientAuthPolicy): Boolean {
-        if (rawFragment != null) return false
-        if (policy.sourceFixedQueryParameters.isEmpty() &&
-            policy.sourceRequiredEphemeralQueryParameters.isEmpty()
-        ) {
-            return this in policy.sourceUrls
-        }
-        val effectivePort = if (port == -1) 443 else port
-        val baseMatches = policy.sourceUrls.any { base ->
-            val basePort = if (base.port == -1) 443 else base.port
-            scheme == "https" && host == base.host && effectivePort == basePort &&
-                rawPath == base.rawPath && base.rawQuery == null && base.rawFragment == null
-        }
-        if (!baseMatches) return false
-        val expectedNames = policy.sourceFixedQueryParameters.keys +
-            policy.sourceRequiredEphemeralQueryParameters
-        val parameters = parseQuery(rawQuery ?: return false) ?: return false
-        if (parameters.keys != expectedNames) return false
-        if (policy.sourceFixedQueryParameters.any { (name, value) -> parameters[name] != value }) {
-            return false
-        }
-        return policy.sourceRequiredEphemeralQueryParameters.all { name ->
-            val value = parameters[name]
-            value != null && value.isNotEmpty() && value.length <= MAX_EPHEMERAL_CHARS &&
-                value.none(Char::isISOControl) &&
-                (name != LEON_IDTOKEN_PARAMETER || LEON_IDTOKEN.matches(value))
-        }
-    }
-
-    private fun URI.hasLinkedEphemeralParameters(target: URI, policy: ClientAuthPolicy): Boolean {
-        if (policy.linkedEphemeralQueryParameters.isEmpty() &&
-            policy.linkedEphemeralQueryParameterMappings.isEmpty()
-        ) {
-            return true
-        }
-        val sourceParameters = parseQuery(rawQuery ?: return false) ?: return false
-        val targetParameters = parseQuery(target.rawQuery ?: return false) ?: return false
-        if (policy.linkedEphemeralQueryParameters.any { name ->
-                sourceParameters[name] != targetParameters[name]
-            }
-        ) {
-            return false
-        }
-        return policy.linkedEphemeralQueryParameterMappings.all { (sourceName, targetName) ->
-            sourceParameters[sourceName] == targetParameters[targetName]
-        }
-    }
-
-    private fun URI.matches(policy: ClientAuthPolicy): Boolean {
-        if (rawPath != policy.requestPath || rawFragment != null) return false
-        val effectivePort = if (port == -1) 443 else port
-        if (effectivePort != policy.requestPort) return false
-        val origin = runCatching { ExactOrigin.parse("https://$host") }.getOrNull() ?: return false
-        if (origin !in policy.requestOrigins) return false
-        val expectedNames = policy.fixedQueryParameters.keys + policy.requiredEphemeralQueryParameters
-        if (expectedNames.isEmpty()) return rawQuery == null
-        val parameters = parseQuery(rawQuery ?: return false) ?: return false
-        if (parameters.keys != expectedNames) return false
-        if (policy.fixedQueryParameters.any { (name, value) ->
-            val paramValue = parameters[name] ?: return false
-            !isEquivalentQueryParameter(name, paramValue, value)
-        }) return false
-        return policy.requiredEphemeralQueryParameters.all { name ->
-            val value = parameters[name]
-            value != null && value.isNotEmpty() && value.length <= MAX_EPHEMERAL_CHARS &&
-                value.none(Char::isISOControl) &&
-                (name != LEON_IDTOKEN_PARAMETER || LEON_IDTOKEN.matches(value))
-        }
-    }
-
-    private fun isEquivalentQueryParameter(name: String, paramValue: String, expectedValue: String): Boolean {
-        if (paramValue == expectedValue) return true
-        if (name == "comeBackURL") {
-            val paramDecoded = decodeStrictBase64(paramValue) ?: return false
-            val expectedDecoded = decodeStrictBase64(expectedValue) ?: return false
-            return paramDecoded.contentEquals(expectedDecoded)
-        }
-        return false
-    }
-
-    private fun decodeStrictBase64(input: String): ByteArray? {
-        if (input.any(Char::isWhitespace)) return null
-        if (input.length % 4 == 1) return null
-        val normalized = input.replace('-', '+').replace('_', '/')
-        val padded = when (normalized.length % 4) {
-            2 -> "$normalized=="
-            3 -> "$normalized="
-            else -> normalized
-        }
-        return runCatching {
-            java.util.Base64.getDecoder().decode(padded)
-        }.getOrNull()
-    }
-
-    private fun parseQuery(rawQuery: String): Map<String, String>? = runCatching {
-        if (rawQuery.isEmpty() || rawQuery.length > MAX_QUERY_CHARS) return null
-        val result = linkedMapOf<String, String>()
-        rawQuery.split('&').forEach { pair ->
-            val separator = pair.indexOf('=')
-            if (separator <= 0) return null
-            val name = URLDecoder.decode(pair.substring(0, separator), StandardCharsets.UTF_8.name())
-            val value = URLDecoder.decode(pair.substring(separator + 1), StandardCharsets.UTF_8.name())
-            if (!PARAMETER_NAME.matches(name) || result.put(name, value) != null) return null
-        }
-        result
-    }.getOrNull()
-
-    private fun strictHttpsUri(raw: String): URI? = runCatching {
-        require(raw.length <= MAX_URL_CHARS && raw.none(Char::isISOControl))
-        val uri = URI(raw)
-        require(!uri.isOpaque && uri.scheme == "https" && uri.host != null && uri.userInfo == null)
-        require(uri.port == -1 || uri.port in 1..65_535)
-        ExactOrigin.parse("https://${uri.host}")
-        uri
-    }.getOrNull()
 
     private data class PendingSource(
         val profileId: ProfileId,
@@ -396,12 +282,4 @@ class ClientAuthNavigationAuthorizer internal constructor(
     private fun grantLifetimeNanos(policy: ClientAuthPolicy): Long =
         MonotonicSecurityTime.durationNanos(Duration.ofSeconds(policy.grantTtlSeconds.toLong()))
 
-    private companion object {
-        const val MAX_URL_CHARS = 8_192
-        const val MAX_QUERY_CHARS = 4_096
-        const val MAX_EPHEMERAL_CHARS = 1_024
-        val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_.]{0,63}")
-        const val LEON_IDTOKEN_PARAMETER = "idtoken"
-        val LEON_IDTOKEN = Regex("[0-9]{8}-[A-Za-z0-9_-]{20,64}")
-    }
 }

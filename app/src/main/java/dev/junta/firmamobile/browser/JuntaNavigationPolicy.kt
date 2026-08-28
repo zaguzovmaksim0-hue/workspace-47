@@ -59,7 +59,7 @@ class JuntaNavigationPolicy(
             return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
         return when (target.scheme?.lowercase(Locale.ROOT)) {
-            "https" -> decideHttpsUrl(target, targetUrl)
+            "https" -> decideHttpsUrl(target, targetUrl, currentPageUrl)
             "http" -> decideLegacyHttpUpgrade(target, currentPageUrl)
             "afirma" -> if (selectedProfileId == SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID) {
                 decideOfficialAutoFirmaUri(targetUrl, currentPageUrl)
@@ -80,9 +80,19 @@ class JuntaNavigationPolicy(
         }
     }
 
-    private fun decideHttpsUrl(target: Uri, rawUrl: String): NavigationDecision {
+    private fun decideHttpsUrl(target: Uri, rawUrl: String, currentPageUrl: String?): NavigationDecision {
         if (isAutoFirmaPlayStoreUrl(target, rawUrl)) {
             return NavigationDecision.Block(NavigationBlockReason.PLAY_STORE_FALLBACK)
+        }
+        val targetUri = runCatching { java.net.URI(rawUrl) }.getOrNull()
+        if (targetUri != null && registry.isClientAuthBrowseUrl(selectedProfileId, targetUri)) {
+            return NavigationDecision.AllowInWebView
+        }
+        val currentUri = currentPageUrl?.let { runCatching { java.net.URI(it) }.getOrNull() }
+        if (targetUri != null && currentUri != null &&
+            registry.isInPlaceClientAuthTransition(selectedProfileId, currentUri, targetUri)
+        ) {
+            return NavigationDecision.AllowInWebView
         }
         if (JuntaOriginPolicy.isAllowed(target, selectedProfileId)) {
             return NavigationDecision.AllowInWebView
