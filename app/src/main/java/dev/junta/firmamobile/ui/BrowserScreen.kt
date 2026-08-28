@@ -82,6 +82,8 @@ import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ClientAuthTransitionMode
+import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.matchesReturnUrl
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.SanitizedLogger
@@ -893,6 +895,27 @@ fun BrowserScreen(
                                 requestHandler = handler,
                                 callbacks = callbacks,
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
+                                isTerminalReturnUrl = { rawUrl ->
+                                    val uri = runCatching { URI(rawUrl) }.getOrNull()
+                                    val origin = uri?.host?.let { host ->
+                                        runCatching { ExactOrigin.parse("https://$host") }.getOrNull()
+                                    }
+                                    uri != null && origin != null &&
+                                        tlsGrant.authorized.policy.matchesReturnUrl(uri) &&
+                                        origin in selectedProfile?.initiatorOrigins.orEmpty()
+                                },
+                                onTerminalReturnUrl = { rawUrl ->
+                                    mainHandler.post {
+                                        if (webViewRef.get() !== webView || clientAuthGrant != tlsGrant) {
+                                            return@post
+                                        }
+                                        pendingNormalUrl.set(rawUrl)
+                                        clientAuthGrant = null
+                                        pageProgress = 0
+                                        advanceNavigationEpoch()
+                                        onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                                    }
+                                },
                             )
                             dedicatedClientRef.set(client)
                             dedicatedWebViewRef.set(webView)

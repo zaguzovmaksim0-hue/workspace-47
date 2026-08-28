@@ -97,6 +97,32 @@ class ClientAuthWebViewClientTest {
     }
 
     @Test
+    fun veaExplicitReturnChainHandsOffOnlyAtTerminalVeajaReturn() {
+        val epoch = AtomicInteger(40)
+        val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
+        val terminal = mutableListOf<String>()
+        val client = veaClient(
+            epoch = epoch,
+            callbacks = callbacks,
+            isTerminalReturnUrl = { it.startsWith(VEA_AUTH_FACADE) },
+            onTerminalReturnUrl = terminal::add,
+        )
+
+        client.onPageStarted(webView, VEA_TARGET, null)
+        client.onPageStarted(webView, "$VEA_API_RETURN?resCode=1", null)
+        client.onPageStarted(webView, VEA_API_END, null)
+
+        assertTrue(terminal.isEmpty())
+        assertFalse(callbacks.events.contains("start"))
+
+        val finalUrl = "$VEA_AUTH_FACADE?token=synthetic-token&redirectUrl=synthetic"
+        client.onPageStarted(webView, finalUrl, null)
+
+        assertEquals(listOf(finalUrl), terminal)
+        assertFalse(callbacks.events.contains("start"))
+    }
+
+    @Test
     fun valladolidDedicatedTlsWebViewPinsTheRequestPortAndAllowsOnlyTheDefaultPortReturn() {
         val epoch = AtomicInteger(15)
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
@@ -299,6 +325,8 @@ class ClientAuthWebViewClientTest {
         epoch: AtomicInteger,
         callbacks: BrowserNavigationCallbacks,
         clears: AtomicInteger = AtomicInteger(),
+        isTerminalReturnUrl: (String) -> Boolean = { false },
+        onTerminalReturnUrl: (String) -> Unit = {},
     ): ClientAuthWebViewClient {
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
         authorizer.observeTopLevelNavigation(
@@ -317,7 +345,13 @@ class ClientAuthWebViewClientTest {
             clearClientCertPreferences = { clears.incrementAndGet() },
             clock = clock,
         )
-        return ClientAuthWebViewClient(grant, handler, callbacks)
+        return ClientAuthWebViewClient(
+            grant = grant,
+            requestHandler = handler,
+            callbacks = callbacks,
+            isTerminalReturnUrl = isTerminalReturnUrl,
+            onTerminalReturnUrl = onTerminalReturnUrl,
+        )
     }
 
     private fun valladolidClient(

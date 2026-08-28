@@ -190,6 +190,8 @@ internal class ClientAuthWebViewClient(
     private val requestHandler: ClientAuthRequestHandler,
     private val callbacks: BrowserNavigationCallbacks,
     private val isActiveWebView: (WebView) -> Boolean = { true },
+    private val isTerminalReturnUrl: (String) -> Boolean = { false },
+    private val onTerminalReturnUrl: (String) -> Unit = {},
 ) : WebViewClient() {
     private val initialTargetStarted = AtomicBoolean(false)
 
@@ -231,6 +233,15 @@ internal class ClientAuthWebViewClient(
         val isInitialTarget = url == grant.authorized.target.toASCIIString() &&
             initialTargetStarted.compareAndSet(false, true)
         if (!isInitialTarget) {
+            if (grant.authorized.policy.returnUrlConstraints.isNotEmpty()) {
+                requestHandler.abandon()
+                if (isTerminalReturnUrl(url)) {
+                    onTerminalReturnUrl(url)
+                    return
+                }
+                callbacks.onTopLevelUrlChanged(url)
+                return
+            }
             requestHandler.abandon()
             callbacks.onTopLevelNavigationStarted(url)
         }
