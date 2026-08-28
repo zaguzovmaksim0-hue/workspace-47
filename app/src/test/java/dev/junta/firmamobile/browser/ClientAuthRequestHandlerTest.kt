@@ -18,8 +18,10 @@ import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicInteger
 import javax.security.auth.x500.X500Principal
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClientAuthRequestHandlerTest {
@@ -213,6 +215,61 @@ class ClientAuthRequestHandlerTest {
         assertEquals(1, request.proceeds)
         assertEquals(0, request.ignores)
         assertEquals(ClientAuthRequestDiagnostic.PROCEEDED, diagnostics.last())
+    }
+
+    @Test
+    fun veaClusterContinuationKeepsTheConfirmedTicketAndTlsIdentity() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("junta-andalucia-vea-peg")
+        }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        val authorized = AuthorizedClientAuthTarget(
+            profileId = profile.profileId,
+            source = java.net.URI(VEA_SOURCE),
+            target = java.net.URI(VEA_TARGET),
+            policy = policy,
+            certificateRules = profile.certificateRules,
+            observedAtMonotonicNanos = monotonic.nowNanos(),
+            lifetimeNanos = Duration.ofSeconds(policy.grantTtlSeconds.toLong()).toNanos(),
+        )
+        val firstHandler = ClientAuthRequestHandler(
+            grant = ClientAuthGrant(authorized, 43),
+            identityProvider = { identity },
+            currentNavigationEpoch = { 43 },
+            clearClientCertPreferences = {},
+            clock = clock,
+            monotonicNanos = monotonic::nowNanos,
+        )
+        firstHandler.handle(RecordingRequest())
+
+        assertTrue(firstHandler.isAuthFlowUrl(VEA_CLUSTER_CONTINUATION))
+        assertFalse(
+            firstHandler.isAuthFlowUrl(
+                VEA_CLUSTER_CONTINUATION.replace("ticketId=synthetic-ticket", "ticketId=other-ticket"),
+            ),
+        )
+        assertFalse(
+            firstHandler.isAuthFlowUrl(
+                VEA_CLUSTER_CONTINUATION.replace("appId=CHIE.VEA", "appId=OTHER.APP"),
+            ),
+        )
+
+        val continuedHandler = ClientAuthRequestHandler(
+            grant = ClientAuthGrant(
+                authorized.copy(target = java.net.URI(VEA_CLUSTER_CONTINUATION)),
+                43,
+            ),
+            identityProvider = { identity },
+            currentNavigationEpoch = { 43 },
+            clearClientCertPreferences = {},
+            clock = clock,
+            monotonicNanos = monotonic::nowNanos,
+        )
+        val continuedRequest = RecordingRequest(host = "ws235-4.juntadeandalucia.es")
+        continuedHandler.handle(continuedRequest)
+
+        assertEquals(1, continuedRequest.proceeds)
+        assertEquals(0, continuedRequest.ignores)
     }
 
     @Test
@@ -474,6 +531,12 @@ class ClientAuthRequestHandlerTest {
     }
 
     private companion object {
+        const val VEA_SOURCE =
+            "https://api-veaja.cloud.juntadeandalucia.es/auth/login?modoAcceso=afirma&codigoProcedimiento=PEG_VEA&comeBackUrl=aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2F1dGhGYWNhZGU=&redirectUrl=aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2luaWNpby9wcm9jZWRpbWllbnRvLWRldGFsbGUvUEVHX1ZFQT9pbmljaWFyU29saWNpdHVkPXRydWUmcHJvY2VkdXJlSWQ9MSZ2ZXJzaW9uSWQ9MQ=="
+        const val VEA_TARGET =
+            "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=CHIE.VEA&comeBackURL=aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+        const val VEA_CLUSTER_CONTINUATION =
+            "https://ws235-4.juntadeandalucia.es/authenticationFacade/5?action=validateCert&appId=CHIE.VEA&comeBackURL=aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu&ticketId=synthetic-ticket&webSessionId=synthetic-session"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         const val VALLADOLID_INDEX = "https://www.sede.diputaciondevalladolid.es/tgauth/login"
         const val VALLADOLID_SOURCE = "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"

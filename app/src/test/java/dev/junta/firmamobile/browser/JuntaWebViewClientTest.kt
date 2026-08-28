@@ -940,6 +940,49 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun carneJovenConfirmedRedirectRefreshesTicketInsideOriginalWebView() {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val index = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+        val source = "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
+        val target =
+            "https://ws235.juntadeandalucia.es/authenticationFacade" +
+                "?action=validateCert&appId=IAJ.CARNETJOVEN" +
+                "&ticketId=synthetic-ticket&webSessionId=synthetic-session" +
+                "&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        authorizer.observeTopLevelNavigation(profileId, index, source, 70L, true)
+        authorizer.onTopLevelPageStarted(source, 70L)
+        val confirmed = checkNotNull(
+            authorizer.observeTopLevelNavigation(profileId, source, target, 70L, true),
+        ).refreshedAfterUserConfirmation()
+        var epoch = 70L
+        var challenge: AuthorizedClientAuthTarget? = null
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = EpochAdvancingBrowserCallbacks { epoch++ },
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { authorized, _ -> challenge = authorized },
+        )
+
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+        inPlaceClient.onPageStarted(webView, source, null)
+        val refreshedTarget = target
+            .replace("ticketId=synthetic-ticket", "ticketId=synthetic-ticket-2")
+            .replace("webSessionId=synthetic-session", "webSessionId=synthetic-session-2")
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
+        inPlaceClient.onPageStarted(webView, refreshedTarget, null)
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(refreshedTarget, challenge?.target?.toASCIIString())
+        assertEquals(0, request.ignores)
+    }
+
+    @Test
     fun veaPreconfirmedSourceAlsoRebindsWhenPageStartedPrecedesIntercept() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val source = veaSourceUrl()

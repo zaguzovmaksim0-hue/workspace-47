@@ -66,7 +66,7 @@ class BrowserScreenTest {
 
         assertEquals(listOf("in-place"), route(veaPolicy))
         assertEquals(listOf("dedicated"), route(veaPolicy.copy(requestMethod = HttpMethod.POST)))
-        assertEquals(listOf("dedicated"), route(carneJovenPolicy))
+        assertEquals(listOf("in-place"), route(carneJovenPolicy))
     }
 
     @Test
