@@ -950,7 +950,7 @@ class JuntaWebViewClientTest {
                 "&ticketId=synthetic-ticket&webSessionId=synthetic-session" +
                 "&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
-        authorizer.observeTopLevelNavigation(profileId, index, source, 70L, true)
+        authorizer.observeTopLevelNavigation(profileId, index, source, 69L, true)
         authorizer.onTopLevelPageStarted(source, 70L)
         val confirmed = checkNotNull(
             authorizer.observeTopLevelNavigation(profileId, source, target, 70L, true),
