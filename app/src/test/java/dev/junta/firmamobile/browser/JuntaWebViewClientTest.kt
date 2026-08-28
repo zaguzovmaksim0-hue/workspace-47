@@ -892,10 +892,8 @@ class JuntaWebViewClientTest {
         )
 
         assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(source)))
-        currentUrl = source
-        epoch++
-        veaClient.onPageStarted(webView, source, null)
 
+        // /auth/login responds with a server-side 302, so it never becomes WebView.url.
         assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(target)))
         assertNull(veaClient.shouldInterceptRequest(webView, request(target)))
         epoch++

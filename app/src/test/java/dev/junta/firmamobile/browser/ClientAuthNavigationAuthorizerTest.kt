@@ -1524,6 +1524,26 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun veaServerRedirectAuthorizesExactWs235WithoutCommittingApiSourcePage() {
+        val vea = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val source = veaSource()
+        val target = veaTarget()
+
+        assertNull(
+            vea.observeTopLevelNavigation(
+                VEA_PROFILE, VEA_AUTH_FACADE, source, 195, true,
+            ),
+        )
+        val authorized = vea.observeTopLevelNavigation(
+            VEA_PROFILE, VEA_AUTH_FACADE, target, 195, true,
+        )
+
+        assertEquals(VEA_PROFILE, authorized?.profileId)
+        assertEquals("ws235.juntadeandalucia.es", authorized?.target?.host)
+        assertEquals("/authenticationFacade", authorized?.target?.rawPath)
+    }
+
+    @Test
     fun veaInPlaceGetAuthorizesOnlyExactApiSourceToExactWs235Target() {
         val vea = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
         val source = veaSource()

@@ -96,6 +96,20 @@ class JuntaWebViewClient(
                 currentEpoch = currentNavigationEpoch(),
                 isModernMainFrameRequest = isModernMainFrame,
             )?.let { authorized ->
+                if (authorized.policy.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+                    authorized.policy.requestMethod == dev.junta.firmamobile.profile.HttpMethod.GET
+                ) {
+                    pendingInPlaceClientAuth.set(
+                        PendingInPlaceClientAuth(authorized, currentNavigationEpoch()),
+                    )
+                    logger.recordNavigationEvent(
+                        code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                        rawUrl = targetUrl,
+                        isMainFrame = true,
+                        method = method,
+                    )
+                    return false
+                }
                 onClientAuthTarget(authorized)
                 return true
             }

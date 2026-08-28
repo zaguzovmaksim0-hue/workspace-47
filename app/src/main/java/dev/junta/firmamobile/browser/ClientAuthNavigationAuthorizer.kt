@@ -89,7 +89,20 @@ class ClientAuthNavigationAuthorizer internal constructor(
                 currentEpoch = currentEpoch,
                 nowNanos = nowNanos,
             )
-            ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> null
+            ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
+                if (policy.requestMethod == dev.junta.firmamobile.profile.HttpMethod.GET) {
+                    authorizeInPlaceGetRedirectTransition(
+                        profile = profile,
+                        policy = policy,
+                        currentUrl = currentUrl,
+                        target = target,
+                        currentEpoch = currentEpoch,
+                        nowNanos = nowNanos,
+                    )
+                } else {
+                    null
+                }
+            }
         }
     }
 
@@ -121,6 +134,51 @@ class ClientAuthNavigationAuthorizer internal constructor(
         consumedInPlace = DirectConsumption(
             profileId = profile.profileId,
             source = source,
+            target = target,
+            epoch = currentEpoch,
+            observedAtMonotonicNanos = nowNanos,
+            lifetimeNanos = lifetimeNanos,
+        )
+        return authorized(profile, policy, target, nowNanos, lifetimeNanos)
+    }
+
+    private fun authorizeInPlaceGetRedirectTransition(
+        profile: SiteProfile,
+        policy: ClientAuthPolicy,
+        currentUrl: String?,
+        target: URI,
+        currentEpoch: Long,
+        nowNanos: Long,
+    ): AuthorizedClientAuthTarget? {
+        if (policy.matchesSourceUrl(target) && currentBelongsTo(profile, currentUrl)) {
+            pending = PendingSource(
+                profileId = profile.profileId,
+                source = target,
+                armingEpoch = currentEpoch,
+                observedAtMonotonicNanos = nowNanos,
+                lifetimeNanos = grantLifetimeNanos(policy),
+            )
+            return null
+        }
+
+        val source = pending
+        pending = null
+        if (source == null || source.profileId != profile.profileId) return null
+        if (currentEpoch != source.armingEpoch && currentEpoch != source.armingEpoch + 1) return null
+        if (source.isExpiredOrInvalid(nowNanos)) return null
+        if (!policy.matchesSourceUrl(source.source) || !policy.matchesRequestUrl(target)) return null
+
+        val previous = consumedInPlace
+        if (previous != null &&
+            previous.profileId == profile.profileId && previous.source == source.source &&
+            previous.target == target && previous.epoch == currentEpoch &&
+            !previous.isExpiredOrInvalid(nowNanos)
+        ) return null
+
+        val lifetimeNanos = grantLifetimeNanos(policy)
+        consumedInPlace = DirectConsumption(
+            profileId = profile.profileId,
+            source = source.source,
             target = target,
             epoch = currentEpoch,
             observedAtMonotonicNanos = nowNanos,
