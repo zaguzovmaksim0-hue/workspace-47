@@ -22,6 +22,9 @@ import java.time.ZoneOffset
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -863,6 +866,93 @@ class JuntaWebViewClientTest {
         assertEquals(emptyList<String>(), legacyCallbacks.events)
     }
 
+    @Test
+    fun veaExactGetRedirectArmsClientCertChallengeInTheSameWebView() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        val source = veaSourceUrl()
+        val target = veaTargetUrl()
+        var currentUrl = VEA_AUTH_FACADE
+        var epoch = 20L
+        var capturedProfile: ProfileId? = null
+        var capturedRequest: ClientCertRequest? = null
+        val veaCallbacks = RecordingBrowserCallbacks()
+        val veaClient = JuntaWebViewClient(
+            callbacks = veaCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            currentPageUrl = { currentUrl },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { authorized, request ->
+                capturedProfile = authorized.profileId
+                capturedRequest = request
+            },
+        )
+
+        assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(source)))
+        currentUrl = source
+        epoch++
+        veaClient.onPageStarted(webView, source, null)
+
+        assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(target)))
+        assertNull(veaClient.shouldInterceptRequest(webView, request(target)))
+        val clientCertRequest = RecordingClientCertRequest()
+        veaClient.onReceivedClientCertRequest(webView, clientCertRequest)
+
+        assertEquals(profileId, capturedProfile)
+        assertSame(clientCertRequest, capturedRequest)
+        assertEquals(0, clientCertRequest.ignores)
+        assertTrue(veaCallbacks.events.none { it.startsWith("external:") })
+    }
+
+    @Test
+    fun veaClientCertChallengeIsNotArmedByDirectOrNearMissNavigation() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        var currentUrl = VEA_START
+        val veaClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            currentPageUrl = { currentUrl },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 30L },
+        )
+        val directTarget = veaTargetUrl()
+
+        assertTrue(veaClient.shouldOverrideUrlLoading(webView, request(directTarget)))
+        veaClient.shouldInterceptRequest(webView, request(directTarget))
+        val request = RecordingClientCertRequest()
+        veaClient.onReceivedClientCertRequest(webView, request)
+        assertEquals(1, request.ignores)
+
+        currentUrl = veaSourceUrl().replace("modoAcceso=afirma", "modoAcceso=clave")
+        veaClient.shouldInterceptRequest(webView, request(directTarget))
+        val nearMissRequest = RecordingClientCertRequest()
+        veaClient.onReceivedClientCertRequest(webView, nearMissRequest)
+        assertEquals(1, nearMissRequest.ignores)
+    }
+
+    private fun veaSourceUrl(): String {
+        val redirect = "$VEA_START?iniciarSolicitud=true&procedureId=123&versionId=456"
+        return "$VEA_API_LOGIN?modoAcceso=afirma" +
+            "&comeBackUrl=${encode(base64(VEA_AUTH_FACADE))}" +
+            "&redirectUrl=${encode(base64(redirect))}" +
+            "&codigoProcedimiento=PEG_VEA"
+    }
+
+    private fun veaTargetUrl(): String =
+        "https://ws235.juntadeandalucia.es/authenticationFacade" +
+            "?action=validateCert&appId=CHIE.VEA" +
+            "&comeBackURL=${encode(base64(VEA_API_RETURN))}" +
+            "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+
+    private fun base64(value: String): String = Base64.getEncoder().encodeToString(value.toByteArray())
+    private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+
     private fun request(rawUrl: String, method: String = "GET") = object : WebResourceRequest {
         override fun getUrl(): Uri = Uri.parse(rawUrl)
         override fun isForMainFrame(): Boolean = true
@@ -978,6 +1068,11 @@ class JuntaWebViewClientTest {
     }
 
     private companion object {
+        const val VEA_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
+        const val VEA_START = "$VEA_ORIGIN/inicio/procedimiento-detalle/PEG_VEA"
+        const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"
+        const val VEA_API_LOGIN = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
+        const val VEA_API_RETURN = "https://api-veaja.cloud.juntadeandalucia.es/auth/returnLogin"
         const val TARRAGONA_VALID_SOURCE =
             "https://valid.aoc.cat/o/oauth2/auth?response_type=code&client_id=valid.dipta.cat&" +
                 "redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode&" +

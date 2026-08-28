@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "536825eef8738d28394824c88d1b264359bca553f4a863f8570a9decd22269ed",
+  "sourceRevision": "48ab3e017ca185ddb7d88f04bd8597dc4bf1600cc341f6630d39219b9be8d312",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2580,16 +2580,17 @@
       "governmentLevel": "AUTONOMOUS_COMMUNITY",
       "regionCode": "ES-AN",
       "territory": "Andalucía",
-      "purpose": "La Sede Electrónica General dirige la Presentación electrónica general al procedimiento PEG_VEA de Ventanilla Electrónica; Workspace-47 habilita únicamente la navegación QA al inicio público exacto, manteniendo autenticación y firma bloqueadas.",
+      "purpose": "Acceso con certificado electrónico al PEG_VEA mediante el contrato público VEA → api-veaja → authenticationFacade; Workspace-47 implementa únicamente CLIENT_TLS_AUTH en QA y mantiene firma y presentación fuera de alcance.",
       "entryUrl": "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA",
       "observedMechanisms": [
         "AUTOFIRMA",
         "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "VEA_AUTOSCRIPT_DYNAMIC",
+      "protocolFamily": "VEA_CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
@@ -2598,10 +2599,11 @@
         "A01A",
         "A01B",
         "JUNTA-VEA-PEG-2026-08-17",
-        "JUNTA-VEA-RUNTIME-2026-08-17"
+        "JUNTA-VEA-RUNTIME-2026-08-17",
+        "JUNTA-VEA-CLIENT-AUTH-2026-08-28"
       ],
-      "reviewedOn": "2026-08-17",
-      "limitations": "Perfil QA-only de navegación al PEG_VEA público exacto. La firma es obligatoria en la entrega y AutoScript es observable, pero el contrato sensible exacto depende de estado autenticado/borrador; no se copian constantes de OVORION, Oficina Virtual ni otros portales Junta."
+      "reviewedOn": "2026-08-28",
+      "limitations": "CLIENT_TLS_AUTH exacto implementado solo en QA con origin/path/query allowlist y challenge en el mismo WebView para conservar la sesión. SIGN, SELECT_CERTIFICATE, AFIRMA_URI, firma documental y presentación final permanecen bloqueados; falta E2E físico con certificado autorizado."
     },
     {
       "portalId": "aragon-tramites-sede",

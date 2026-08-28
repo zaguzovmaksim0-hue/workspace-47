@@ -53,9 +53,27 @@ class SiteProfileRegistry(
     fun resolveForProfile(profileId: ProfileId, uri: URI): ResolvedSiteProfile? {
         val profile = profile(profileId) ?: return null
         val origin = exactOrigin(uri) ?: return null
+        profile.clientAuthPolicy?.let { policy ->
+            if (policy.matchesSourceUrl(uri) || policy.matchesReturnUrl(uri)) {
+                return ResolvedSiteProfile(profile, origin, TrustMode.TRUSTED_BROWSE)
+            }
+            if (policy.matchesRequestUrl(uri)) {
+                return ResolvedSiteProfile(profile, origin, TrustMode.TRUSTED_CLIENT_AUTH)
+            }
+        }
         val trustMode = profile.trustMode(origin) ?: return null
         return ResolvedSiteProfile(profile, origin, trustMode)
             .takeIf { acceptsBrowseOnlyUrl(profile, uri) }
+    }
+
+    fun isClientAuthBrowseUrl(profileId: ProfileId, uri: URI): Boolean {
+        val policy = profile(profileId)?.clientAuthPolicy ?: return false
+        return policy.matchesSourceUrl(uri) || policy.matchesReturnUrl(uri)
+    }
+
+    fun isInPlaceClientAuthTransition(profileId: ProfileId, current: URI, target: URI): Boolean {
+        val policy = profile(profileId)?.clientAuthPolicy ?: return false
+        return policy.matchesInPlaceGetTransition(current, target)
     }
 
     fun resolve(uri: Uri): ResolvedSiteProfile? = runCatching { URI(uri.toString()) }

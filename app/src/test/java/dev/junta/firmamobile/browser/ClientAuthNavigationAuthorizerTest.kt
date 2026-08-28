@@ -11,6 +11,9 @@ import dev.junta.firmamobile.profile.ProfileActivation
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.ProfileId
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 import java.time.Duration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -1520,7 +1523,100 @@ class ClientAuthNavigationAuthorizerTest {
         )
     }
 
+    @Test
+    fun veaInPlaceGetAuthorizesOnlyExactApiSourceToExactWs235Target() {
+        val vea = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val source = veaSource()
+        val target = veaTarget()
+
+        val authorized = vea.observeTopLevelResourceRequest(
+            activeProfileId = VEA_PROFILE,
+            currentUrl = source,
+            targetUrl = target,
+            method = "GET",
+            currentEpoch = 200,
+            isMainFrameRequest = true,
+        )
+
+        assertEquals(VEA_PROFILE, authorized?.profileId)
+        assertEquals("ws235.juntadeandalucia.es", authorized?.target?.host)
+        assertEquals("/authenticationFacade", authorized?.target?.rawPath)
+        assertEquals("CHIE.VEA", authorized?.policy?.fixedQueryParameters?.get("appId"))
+        assertNull(
+            vea.observeTopLevelResourceRequest(
+                VEA_PROFILE, source, target, "GET", 200, true,
+            ),
+        )
+    }
+
+    @Test
+    fun veaInPlaceGetRejectsSourceTargetMethodAndFrameNearMisses() {
+        val invalidCalls = listOf(
+            Triple(veaSource(redirectUrl = "https://evil.example/?iniciarSolicitud=true&procedureId=1&versionId=2"), veaTarget(), "GET"),
+            Triple(veaSource(redirectUrl = "$VEA_START?iniciarSolicitud=false&procedureId=1&versionId=2"), veaTarget(), "GET"),
+            Triple(veaSource(redirectUrl = "$VEA_START?iniciarSolicitud=true&procedureId=1&versionId=2&extra=1"), veaTarget(), "GET"),
+            Triple(veaSource().replace("modoAcceso=afirma", "modoAcceso=clave"), veaTarget(), "GET"),
+            Triple(veaSource().replace("codigoProcedimiento=PEG_VEA", "codigoProcedimiento=OTHER"), veaTarget(), "GET"),
+            Triple(veaSource(), veaTarget(appId = "IAJ.CARNETJOVEN"), "GET"),
+            Triple(veaSource(), veaTarget(action = "other"), "GET"),
+            Triple(veaSource(), veaTarget(callback = "https://evil.example/return"), "GET"),
+            Triple(veaSource(), veaTarget().replace("ws235.juntadeandalucia.es", "ws235.juntadeandalucia.es.evil.example"), "GET"),
+            Triple(veaSource(), veaTarget() + "&extra=1", "GET"),
+            Triple(veaSource(), veaTarget(), "POST"),
+        )
+
+        invalidCalls.forEachIndexed { index, (source, target, method) ->
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                "$source -> $target",
+                fresh.observeTopLevelResourceRequest(
+                    VEA_PROFILE, source, target, method, 210L + index, true,
+                ),
+            )
+        }
+
+        val subframe = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        assertNull(
+            subframe.observeTopLevelResourceRequest(
+                VEA_PROFILE, veaSource(), veaTarget(), "GET", 230, false,
+            ),
+        )
+    }
+
+    private fun veaSource(
+        redirectUrl: String = "$VEA_START?iniciarSolicitud=true&procedureId=123&versionId=456",
+    ): String = buildString {
+        append(VEA_API_LOGIN)
+        append("?modoAcceso=afirma")
+        append("&comeBackUrl=").append(urlEncode(base64(VEA_AUTH_FACADE)))
+        append("&redirectUrl=").append(urlEncode(base64(redirectUrl)))
+        append("&codigoProcedimiento=PEG_VEA")
+    }
+
+    private fun veaTarget(
+        appId: String = "CHIE.VEA",
+        action: String = "validateCert",
+        callback: String = VEA_API_RETURN,
+    ): String = buildString {
+        append("https://ws235.juntadeandalucia.es/authenticationFacade")
+        append("?action=").append(action)
+        append("&appId=").append(appId)
+        append("&comeBackURL=").append(urlEncode(base64(callback)))
+        append("&ticketId=synthetic-ticket")
+        append("&webSessionId=synthetic-session")
+    }
+
+    private fun base64(value: String): String = Base64.getEncoder().encodeToString(value.toByteArray())
+
+    private fun urlEncode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+
     private companion object {
+        val VEA_PROFILE = ProfileId("junta-andalucia-vea-peg")
+        const val VEA_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
+        const val VEA_START = "$VEA_ORIGIN/inicio/procedimiento-detalle/PEG_VEA"
+        const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"
+        const val VEA_API_LOGIN = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
+        const val VEA_API_RETURN = "https://api-veaja.cloud.juntadeandalucia.es/auth/returnLogin"
         val CATALUNYA_SEU_PROFILE = ProfileId("catalunya-seu-registre-client-auth")
         const val CATALUNYA_SEU_SOURCE =
             "https://valid.aoc.cat/o/oauth2/auth?lang=ca&scope=autenticacio_usuari&state=state&" +

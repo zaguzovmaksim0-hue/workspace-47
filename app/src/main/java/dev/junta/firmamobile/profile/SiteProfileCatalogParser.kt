@@ -119,6 +119,8 @@ object SiteProfileCatalogParser {
             "sourceRequiredEphemeralQueryParameters",
             "linkedEphemeralQueryParameters",
             "linkedEphemeralQueryParameterMappings",
+            "sourceBase64UrlConstraints",
+            "returnUrlConstraints",
         ).filter { it in o.values }
         o.exact(*(baseKeys.toList() + optionalKeys).toTypedArray())
         val requestPort = if ("requestPort" in o.values) {
@@ -154,6 +156,18 @@ object SiteProfileCatalogParser {
         } else {
             emptyMap()
         }
+        val sourceBase64UrlConstraints = if ("sourceBase64UrlConstraints" in o.values) {
+            val constraints = o.objValue("sourceBase64UrlConstraints").obj("sourceBase64UrlConstraints")
+            constraints.values.mapValues { (_, value) -> clientAuthUrlConstraint(value) }
+        } else {
+            emptyMap()
+        }
+        val returnUrlConstraints = if ("returnUrlConstraints" in o.values) {
+            o.array("returnUrlConstraints").map(::clientAuthUrlConstraint).toSet()
+                .also { require(it.size == o.array("returnUrlConstraints").size) }
+        } else {
+            emptySet()
+        }
         require((fixed.keys intersect ephemeral).isEmpty())
         require((sourceFixed.keys intersect sourceEphemeral).isEmpty())
         require(linkedEphemeral.all { it in ephemeral && it in sourceEphemeral })
@@ -162,10 +176,13 @@ object SiteProfileCatalogParser {
         require(linkedEphemeralMappings.values.toSet().size == linkedEphemeralMappings.size)
         require((linkedEphemeral intersect linkedEphemeralMappings.keys).isEmpty())
         require((linkedEphemeral intersect linkedEphemeralMappings.values.toSet()).isEmpty())
+        require(sourceBase64UrlConstraints.keys.all { it in sourceEphemeral })
+        require(sourceBase64UrlConstraints.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
         when (transitionMode) {
             ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE -> {
                 require(requestMethod == HttpMethod.GET)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
+                require(sourceBase64UrlConstraints.isEmpty() && returnUrlConstraints.isEmpty())
                 require(
                     fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443 ||
                         sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()
@@ -173,6 +190,7 @@ object SiteProfileCatalogParser {
             }
             ClientAuthTransitionMode.DIRECT_FROM_SOURCE -> {
                 require(requestMethod == HttpMethod.GET)
+                require(sourceBase64UrlConstraints.isEmpty() && returnUrlConstraints.isEmpty())
                 val boundSourceParameters = linkedEphemeral + linkedEphemeralMappings.keys
                 val boundTargetParameters = linkedEphemeral + linkedEphemeralMappings.values
                 require(sourceEphemeral == boundSourceParameters)
@@ -184,11 +202,20 @@ object SiteProfileCatalogParser {
                 }
             }
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
-                require(requestMethod == HttpMethod.POST)
                 require(requestPort == 443)
-                require(fixed.isEmpty() && ephemeral.isEmpty())
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 require(sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty())
+                when (requestMethod) {
+                    HttpMethod.POST -> {
+                        require(fixed.isEmpty() && ephemeral.isEmpty())
+                        require(sourceBase64UrlConstraints.isEmpty() && returnUrlConstraints.isEmpty())
+                    }
+                    HttpMethod.GET -> {
+                        require(sourceBase64UrlConstraints.isNotEmpty())
+                        require(returnUrlConstraints.isNotEmpty())
+                        require(fixed.isNotEmpty() || ephemeral.isNotEmpty())
+                    }
+                }
             }
         }
         return ClientAuthPolicy(
@@ -209,6 +236,27 @@ object SiteProfileCatalogParser {
             sourceRequiredEphemeralQueryParameters = sourceEphemeral,
             linkedEphemeralQueryParameters = linkedEphemeral,
             linkedEphemeralQueryParameterMappings = linkedEphemeralMappings,
+            sourceBase64UrlConstraints = sourceBase64UrlConstraints,
+            returnUrlConstraints = returnUrlConstraints,
+        )
+    }
+
+    private fun clientAuthUrlConstraint(value: JValue): ClientAuthUrlConstraint {
+        val o = value.obj("clientAuthUrlConstraint")
+        o.exact("origin", "path", "fixedQueryParameters", "requiredEphemeralQueryParameters")
+        val fixed = stringMap(o.objValue("fixedQueryParameters"))
+        val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
+        require((fixed.keys intersect ephemeral).isEmpty())
+        require(fixed.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
+        require(ephemeral.all(CLIENT_AUTH_PARAMETER_NAME::matches))
+        require(fixed.values.all { it.length <= 2_048 && it.none(Char::isISOControl) })
+        return ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(o.string("origin")),
+            path = o.string("path").also {
+                require(it.startsWith('/') && URI(null, null, it, null).rawPath == it)
+            },
+            fixedQueryParameters = fixed,
+            requiredEphemeralQueryParameters = ephemeral,
         )
     }
 
@@ -496,6 +544,9 @@ object SiteProfileCatalogParser {
                         else -> p.initiatorOrigins
                     }
                     (source.origin() in allowedSourceOrigins ||
+                        policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+                            policy.requestMethod == HttpMethod.GET &&
+                            policy.sourceBase64UrlConstraints.isNotEmpty() ||
                         p.profileId.value == NAVARRA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                             source.origin() in p.redirectOrigins ||
@@ -506,19 +557,19 @@ object SiteProfileCatalogParser {
                             policy.sourceRequiredEphemeralQueryParameters.isEmpty() ||
                             source.rawQuery == null)
                 })
-                require(policy.fixedQueryParameters.keys.all(PARAMETER_NAME::matches))
+                require(policy.fixedQueryParameters.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
                 require(policy.fixedQueryParameters.values.all { value ->
                     value.length <= 2_048 && value.none(Char::isISOControl)
                 })
-                require(policy.requiredEphemeralQueryParameters.all(PARAMETER_NAME::matches))
-                require(policy.sourceFixedQueryParameters.keys.all(PARAMETER_NAME::matches))
+                require(policy.requiredEphemeralQueryParameters.all(CLIENT_AUTH_PARAMETER_NAME::matches))
+                require(policy.sourceFixedQueryParameters.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
                 require(policy.sourceFixedQueryParameters.values.all { value ->
                     value.length <= 2_048 && value.none(Char::isISOControl)
                 })
-                require(policy.sourceRequiredEphemeralQueryParameters.all(PARAMETER_NAME::matches))
-                require(policy.linkedEphemeralQueryParameters.all(PARAMETER_NAME::matches))
-                require(policy.linkedEphemeralQueryParameterMappings.keys.all(PARAMETER_NAME::matches))
-                require(policy.linkedEphemeralQueryParameterMappings.values.all(PARAMETER_NAME::matches))
+                require(policy.sourceRequiredEphemeralQueryParameters.all(CLIENT_AUTH_PARAMETER_NAME::matches))
+                require(policy.linkedEphemeralQueryParameters.all(CLIENT_AUTH_PARAMETER_NAME::matches))
+                require(policy.linkedEphemeralQueryParameterMappings.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
+                require(policy.linkedEphemeralQueryParameterMappings.values.all(CLIENT_AUTH_PARAMETER_NAME::matches))
             }
             p.operationPolicies.values.forEach { op ->
                 require(op.capabilities.all { it in p.capabilities })
@@ -2432,6 +2483,10 @@ object SiteProfileCatalogParser {
                         owners == setOf(TRANSPORTES_PROFILE_ID, SEPES_TRANSPORTES_PROFILE_ID) &&
                         origin.serialized == TRANSPORTES_SHARED_ORIGIN)
             }) ||
+            (setOf(firstOwner.value, secondOwner.value) ==
+                setOf("carne-joven-andalucia", "junta-andalucia-vea-peg") &&
+                !firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+                origin.serialized == "https://ws235.juntadeandalucia.es") ||
             (setOf(firstOwner.value, secondOwner.value) ==
                 setOf(ARAGON_LOCAL_CADES_PROFILE_ID, ARAGON_TRAMITES_PROFILE_ID) &&
                 origin.serialized == ARAGON_TRAMITES_ORIGIN) ||

@@ -1644,7 +1644,7 @@
     },
     {
       "profileId": "junta-andalucia-vea-peg",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Junta de Andalucía — Presentación electrónica general",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1654,12 +1654,34 @@
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": [],
-      "clientAuthPolicy": null,
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
+        "requestOrigins": ["https://ws235.juntadeandalucia.es"],
+        "sourceUrls": ["https://api-veaja.cloud.juntadeandalucia.es/auth/login"],
+        "requestPath": "/authenticationFacade",
+        "fixedQueryParameters": {"action":"validateCert","appId":"CHIE.VEA","comeBackURL":"aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu"},
+        "requiredEphemeralQueryParameters": ["ticketId", "webSessionId"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443,
+        "requestMethod": "GET",
+        "sourceFixedQueryParameters": {"modoAcceso":"afirma","codigoProcedimiento":"PEG_VEA","comeBackUrl":"aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2F1dGhGYWNhZGU="},
+        "sourceRequiredEphemeralQueryParameters": ["redirectUrl"],
+        "sourceBase64UrlConstraints": {
+          "redirectUrl": {"origin":"https://veaja.cloud.juntadeandalucia.es","path":"/inicio/procedimiento-detalle/PEG_VEA","fixedQueryParameters":{"iniciarSolicitud":"true"},"requiredEphemeralQueryParameters":["procedureId","versionId"]}
+        },
+        "returnUrlConstraints": [
+          {"origin":"https://api-veaja.cloud.juntadeandalucia.es","path":"/auth/returnLogin","fixedQueryParameters":{},"requiredEphemeralQueryParameters":["resCode"]},
+          {"origin":"https://api-veaja.cloud.juntadeandalucia.es","path":"/auth/endLogin","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[]}
+        ]
+      },
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
       "evidence": [
-        {"url":"https://www.juntadeandalucia.es/servicios/sede/tramites.html","reviewedOn":"2026-08-17"},
-        {"url":"https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA","reviewedOn":"2026-08-17"}
+        {"url":"https://www.juntadeandalucia.es/servicios/sede/tramites.html","reviewedOn":"2026-08-28"},
+        {"url":"https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA","reviewedOn":"2026-08-28"},
+        {"url":"https://api-veaja.cloud.juntadeandalucia.es/auth/login","reviewedOn":"2026-08-28"},
+        {"url":"https://ws235.juntadeandalucia.es/authenticationFacade","reviewedOn":"2026-08-28"}
       ]
     },
     {
