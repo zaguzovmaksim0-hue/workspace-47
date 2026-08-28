@@ -8,6 +8,8 @@ import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.SiteProfileCatalog
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
+import java.net.URI
+import java.text.Collator
 import java.text.Normalizer
 import java.util.Locale
 
@@ -23,11 +25,16 @@ class PortalCatalogRepository(
     private val publicCatalog: PublicPortalCatalog,
 ) {
     val bundledCatalogVersion: Int = publicCatalog.catalogVersion
+    val portalIds: Set<PortalId> = publicCatalog.entries.mapTo(linkedSetOf()) { it.portalId }
+    private val resolvedItems by lazy(LazyThreadSafetyMode.NONE) {
+        publicCatalog.entries.map(::resolve)
+    }
 
     fun portals(query: PortalCatalogQuery = PortalCatalogQuery()): List<PortalCatalogItem> {
-        val items = publicCatalog.entries.map(::resolve)
-        val filtered = items.filter { it.matches(query) }
-        if (query.filter != PortalCatalogFilter.RECENT) return filtered
+        val filtered = resolvedItems.filter { it.matches(query) }
+        if (query.filter != PortalCatalogFilter.RECENT) {
+            return filtered.sortedWith(portalComparator(query.selectedRegion))
+        }
 
         val recentOrder = query.recentPortalIds.withIndex().associate { (index, id) -> id to index }
         return filtered.sortedBy { recentOrder.getValue(it.portalId) }
@@ -61,6 +68,20 @@ class PortalCatalogRepository(
 
     fun resolveLaunch(item: PortalCatalogItem): PortalLaunchTarget? =
         resolveLaunch(item.portalId, item.entryUrl)
+
+    /**
+     * Returns an internal launch only for an active exact profile binding. Every other exact
+     * bundled entry falls back to its validated public HTTPS URL in the system browser.
+     */
+    fun resolveOpenTarget(item: PortalCatalogItem): PortalOpenTarget? {
+        val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId }
+            ?: return null
+        if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
+        resolveLaunch(item)?.let { return PortalOpenTarget.InApp(it) }
+        return metadata.entryUrl
+            .takeIf(::isSafeExternalCatalogUrl)
+            ?.let { PortalOpenTarget.External(it) }
+    }
 
     private fun resolve(metadata: PublicPortalEntry): PortalCatalogItem {
         val profile = metadata.profileId?.let { profileId ->
@@ -104,6 +125,7 @@ class PortalCatalogRepository(
             supportStatus = supportStatus,
             entryUrl = metadata.entryUrl,
             isEnabled = isOpenable,
+            regionCode = metadata.regionCode,
         )
     }
 
@@ -124,6 +146,16 @@ class PortalCatalogRepository(
                 PortalMechanism.ELECTRONIC_SIGNATURE in observedMechanisms
         }
         if (!matchesFilter) return false
+
+        if (query.regionScope == PortalCatalogRegionScope.SELECTED_AND_NATIONAL) {
+            val selected = query.selectedRegion ?: return false
+            val allowedRegions = if (selected == PortalRegionCode.SPAIN) {
+                setOf(PortalRegionCode.SPAIN)
+            } else {
+                setOf(PortalRegionCode.SPAIN, selected)
+            }
+            if (regionCode !in allowedRegions) return false
+        }
 
         val needle = query.searchText.searchKey()
         if (needle.isEmpty()) return true
@@ -164,6 +196,26 @@ class PortalCatalogRepository(
         .lowercase(Locale.ROOT)
         .trim()
 
+    private fun portalComparator(selectedRegion: PortalRegionCode?): Comparator<PortalCatalogItem> {
+        val collator = Collator.getInstance(Locale.forLanguageTag("es-ES")).apply {
+            strength = Collator.PRIMARY
+        }
+        return Comparator { left, right ->
+            val rank = regionRank(left.regionCode, selectedRegion)
+                .compareTo(regionRank(right.regionCode, selectedRegion))
+            if (rank != 0) return@Comparator rank
+            val name = collator.compare(left.displayName, right.displayName)
+            if (name != 0) return@Comparator name
+            left.portalId.value.compareTo(right.portalId.value)
+        }
+    }
+
+    private fun regionRank(region: PortalRegionCode, selected: PortalRegionCode?): Int = when {
+        selected != null && selected != PortalRegionCode.SPAIN && region == selected -> 0
+        region == PortalRegionCode.SPAIN -> if (selected == null) 0 else 1
+        else -> 2 + region.ordinal
+    }
+
     private companion object {
         val COMBINING_MARKS = Regex("\\p{M}+")
         val OPENABLE_SUPPORT_STATUSES = setOf(
@@ -172,6 +224,14 @@ class PortalCatalogRepository(
             PortalSupportStatus.BROWSE_ONLY,
         )
     }
+}
+
+private fun isSafeExternalCatalogUrl(uri: URI): Boolean {
+    val raw = uri.toASCIIString()
+    return raw.length <= 2_048 && !raw.any(Char::isISOControl) &&
+        !uri.isOpaque && uri.scheme == "https" && uri.host != null &&
+        uri.userInfo == null && uri.port == -1 && uri.rawFragment == null &&
+        uri.normalize() == uri
 }
 
 private fun PublicPortalEntry.metadataSupportStatus(): PortalSupportStatus = when (inventoryStatus) {
