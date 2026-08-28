@@ -86,7 +86,7 @@ fun PortalCatalogScreen(
         state.selectedRegion.wireValue,
         state.searchText.isNotBlank(),
     ) {
-        mutableStateOf(state.initialExpandedRegionalSectionKey())
+        mutableStateOf<String?>(null)
     }
     val snackbarHostState = remember { SnackbarHostState() }
     val openFailureMessage = stringResource(R.string.catalog_open_failed)
@@ -718,12 +718,6 @@ private val PortalCatalogSectionKind.isRegional: Boolean
         -> false
     }
 
-private fun PortalCatalogUiState.initialExpandedRegionalSectionKey(): String? =
-    if (searchText.isNotBlank()) {
-        null
-    } else {
-        sections.firstOrNull { it.kind == PortalCatalogSectionKind.SELECTED_REGION }?.stableKey
-    }
 
 private val CatalogShape = CutCornerShape(
     topStart = 7.dp,

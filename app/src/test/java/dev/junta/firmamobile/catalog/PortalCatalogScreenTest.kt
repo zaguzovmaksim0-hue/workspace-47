@@ -137,6 +137,32 @@ class PortalCatalogScreenTest {
 
     @Test
     @Config(qualifiers = "w600dp-h2000dp")
+    fun `regional catalog starts fully collapsed`() {
+        val andalusia = repository.portals().first { it.regionCode == PortalRegionCode.ANDALUSIA }
+        val national = repository.portals().first { it.regionCode == PortalRegionCode.SPAIN }
+        val state = PortalCatalogUiState(
+            selectedRegion = PortalRegionCode.ANDALUSIA,
+            sections = listOf(
+                PortalCatalogSection(
+                    kind = PortalCatalogSectionKind.SELECTED_REGION,
+                    items = listOf(andalusia),
+                    regionCode = PortalRegionCode.ANDALUSIA,
+                ),
+                PortalCatalogSection(
+                    kind = PortalCatalogSectionKind.NATIONAL,
+                    items = listOf(national),
+                ),
+            ),
+        )
+
+        setCatalogContent(state = state)
+
+        rule.onNodeWithText(andalusia.displayName).assertDoesNotExist()
+        rule.onNodeWithText(national.displayName).assertDoesNotExist()
+    }
+
+    @Test
+    @Config(qualifiers = "w600dp-h2000dp")
     fun `regional sections reveal only the region the user opens`() {
         val aragon = repository.portals().first { it.regionCode == PortalRegionCode.ARAGON }
         val andalusia = repository.portals().first { it.regionCode == PortalRegionCode.ANDALUSIA }
