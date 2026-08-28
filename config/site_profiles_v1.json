@@ -1664,6 +1664,8 @@
         "requiredEphemeralQueryParameters": ["ticketId", "webSessionId"],
         "allowEmptyIssuerList": true,
         "grantTtlSeconds": 15,
+        "requireOfferedKeyTypeMatch": false,
+        "requireTlsClientAuthExtendedKeyUsage": false,
         "requestPort": 443,
         "requestMethod": "GET",
         "sourceFixedQueryParameters": {"modoAcceso":"afirma","codigoProcedimiento":"PEG_VEA","comeBackUrl":"aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2F1dGhGYWNhZGU="},

@@ -115,6 +115,8 @@ object SiteProfileCatalogParser {
         val optionalKeys = listOf(
             "requestPort",
             "requestMethod",
+            "requireOfferedKeyTypeMatch",
+            "requireTlsClientAuthExtendedKeyUsage",
             "sourceFixedQueryParameters",
             "sourceRequiredEphemeralQueryParameters",
             "linkedEphemeralQueryParameters",
@@ -132,6 +134,16 @@ object SiteProfileCatalogParser {
             enum<HttpMethod>(o.string("requestMethod"))
         } else {
             HttpMethod.GET
+        }
+        val requireOfferedKeyTypeMatch = if ("requireOfferedKeyTypeMatch" in o.values) {
+            o.boolean("requireOfferedKeyTypeMatch")
+        } else {
+            true
+        }
+        val requireTlsClientAuthExtendedKeyUsage = if ("requireTlsClientAuthExtendedKeyUsage" in o.values) {
+            o.boolean("requireTlsClientAuthExtendedKeyUsage")
+        } else {
+            true
         }
         val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
         val fixed = stringMap(o.objValue("fixedQueryParameters"))
@@ -230,6 +242,8 @@ object SiteProfileCatalogParser {
             requiredEphemeralQueryParameters = ephemeral,
             allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
             grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
+            requireOfferedKeyTypeMatch = requireOfferedKeyTypeMatch,
+            requireTlsClientAuthExtendedKeyUsage = requireTlsClientAuthExtendedKeyUsage,
             requestPort = requestPort,
             requestMethod = requestMethod,
             sourceFixedQueryParameters = sourceFixed,

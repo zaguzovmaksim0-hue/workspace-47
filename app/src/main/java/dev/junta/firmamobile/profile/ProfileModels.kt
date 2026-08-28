@@ -123,6 +123,8 @@ data class ClientAuthPolicy(
     val requiredEphemeralQueryParameters: Set<String>,
     val allowEmptyIssuerList: Boolean,
     val grantTtlSeconds: Int,
+    val requireOfferedKeyTypeMatch: Boolean = true,
+    val requireTlsClientAuthExtendedKeyUsage: Boolean = true,
     val requestPort: Int = 443,
     val requestMethod: HttpMethod = HttpMethod.GET,
     val sourceFixedQueryParameters: Map<String, String> = emptyMap(),

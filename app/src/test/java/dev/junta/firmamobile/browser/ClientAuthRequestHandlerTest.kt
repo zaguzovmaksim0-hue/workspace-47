@@ -178,6 +178,41 @@ class ClientAuthRequestHandlerTest {
     }
 
     @Test
+    fun veaUsesServerTlsValidationForOfferedKeyTypeCompatibility() {
+        val profile = BuiltInSiteProfiles.catalog.profiles.single {
+            it.profileId == ProfileId("junta-andalucia-vea-peg")
+        }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(false, policy.requireOfferedKeyTypeMatch)
+        assertEquals(false, policy.requireTlsClientAuthExtendedKeyUsage)
+        val authorized = AuthorizedClientAuthTarget(
+            profileId = profile.profileId,
+            target = java.net.URI(
+                "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=CHIE.VEA&comeBackURL=aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu&ticketId=synthetic-ticket&webSessionId=synthetic-session",
+            ),
+            policy = policy,
+            certificateRules = profile.certificateRules,
+            observedAtMonotonicNanos = monotonic.nowNanos(),
+            lifetimeNanos = Duration.ofSeconds(policy.grantTtlSeconds.toLong()).toNanos(),
+        )
+        val diagnostics = mutableListOf<ClientAuthRequestDiagnostic>()
+        val request = RecordingRequest(keyTypes = arrayOf("UNRECOGNIZED_BY_LOCAL_POLICY"))
+        ClientAuthRequestHandler(
+            grant = ClientAuthGrant(authorized, 43),
+            identityProvider = { identity },
+            currentNavigationEpoch = { 43 },
+            clearClientCertPreferences = {},
+            onDiagnostic = diagnostics::add,
+            clock = clock,
+            monotonicNanos = monotonic::nowNanos,
+        ).handle(request)
+
+        assertEquals(1, request.proceeds)
+        assertEquals(0, request.ignores)
+        assertEquals(ClientAuthRequestDiagnostic.PROCEEDED, diagnostics.last())
+    }
+
+    @Test
     fun explicitUserConfirmationRefreshesOnlyTheShortTlsWindow() {
         val localMonotonic = MutableMonotonicClock(4_000_000_000L)
         val old = shortTtlAuthorized(monotonic = localMonotonic, ttlSeconds = 1)

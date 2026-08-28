@@ -108,9 +108,11 @@ internal class ClientAuthRequestHandler(
         val certificate = identity.certificate
         val algorithm = certificate.publicKey.algorithm.uppercase()
         if (algorithm !in authorized.certificateRules.allowedKeyAlgorithms) return false
-        val offeredKeyTypes = request.keyTypes?.map(String::uppercase)?.toSet().orEmpty()
-        if (offeredKeyTypes.isEmpty() || offeredKeyTypes.none { it == algorithm || (algorithm == "EC" && it == "ECDSA") }) {
-            return false
+        if (authorized.policy.requireOfferedKeyTypeMatch) {
+            val offeredKeyTypes = request.keyTypes?.map(String::uppercase)?.toSet().orEmpty()
+            if (offeredKeyTypes.isEmpty() || offeredKeyTypes.none { it == algorithm || (algorithm == "EC" && it == "ECDSA") }) {
+                return false
+            }
         }
         try {
             certificate.checkValidity(Date.from(clock.instant()))
@@ -128,7 +130,8 @@ internal class ClientAuthRequestHandler(
         } catch (_: Exception) {
             return false
         }
-        if (extendedKeyUsage != null &&
+        if (authorized.policy.requireTlsClientAuthExtendedKeyUsage &&
+            extendedKeyUsage != null &&
             TLS_CLIENT_AUTH_OID !in extendedKeyUsage && ANY_EXTENDED_KEY_USAGE_OID !in extendedKeyUsage
         ) {
             return false
