@@ -1019,7 +1019,10 @@ fun BrowserScreen(
                                         runCatching { ExactOrigin.parse("https://$host") }.getOrNull()
                                     }
                                     uri != null && origin != null &&
-                                        tlsGrant.authorized.policy.matchesReturnUrl(uri) &&
+                                        tlsGrant.authorized.policy.matchesReturnUrl(
+                                            uri,
+                                            tlsGrant.authorized.target,
+                                        ) &&
                                         origin in selectedProfile?.initiatorOrigins.orEmpty()
                                 },
                                 onTerminalReturnUrl = { rawUrl ->
@@ -1209,21 +1212,15 @@ fun BrowserScreen(
                     val confirmedTarget = authorized.refreshedAfterUserConfirmation()
                     pendingClientAuthTarget = null
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
-                    if (confirmedTarget.policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
-                        confirmedTarget.policy.requestMethod == dev.junta.firmamobile.profile.HttpMethod.GET
-                    ) {
-                        beginConfirmedInPlaceClientAuthPreparation(confirmedTarget)
-                    } else {
-                        advanceNavigationEpoch()
-                        bridgeAttachmentLease.close()
-                        webViewRef.get()?.stopLoading()
-                        beginClientAuthPreparation(
-                            ClientAuthGrant(
-                                authorized = confirmedTarget,
-                                navigationEpoch = navigationEpoch.longValue,
-                            ),
-                        )
-                    }
+                    advanceNavigationEpoch()
+                    bridgeAttachmentLease.close()
+                    webViewRef.get()?.stopLoading()
+                    beginClientAuthPreparation(
+                        ClientAuthGrant(
+                            authorized = confirmedTarget,
+                            navigationEpoch = navigationEpoch.longValue,
+                        ),
+                    )
                 }
             },
             onCancel = {

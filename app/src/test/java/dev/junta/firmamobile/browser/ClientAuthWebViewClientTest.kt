@@ -99,6 +99,22 @@ class ClientAuthWebViewClientTest {
         ))
         assertFalse(client.shouldOverrideUrlLoading(
             webView,
+            navigationRequest(
+                "$VEA_API_RETURN?appId=CHIE.VEA&resCode=ok" +
+                    "&ticketId=synthetic-ticket&webSessionId=synthetic-session",
+                isMainFrame = true,
+            ),
+        ))
+        assertTrue(client.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest(
+                "$VEA_API_RETURN?appId=CHIE.VEA&resCode=ok" +
+                    "&ticketId=other-ticket&webSessionId=synthetic-session",
+                isMainFrame = true,
+            ),
+        ))
+        assertFalse(client.shouldOverrideUrlLoading(
+            webView,
             navigationRequest(VEA_API_END, isMainFrame = true),
         ))
         assertFalse(client.shouldOverrideUrlLoading(

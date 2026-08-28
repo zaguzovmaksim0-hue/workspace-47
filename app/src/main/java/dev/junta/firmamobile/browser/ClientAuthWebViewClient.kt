@@ -315,7 +315,7 @@ internal class ClientAuthWebViewClient(
         val policy = grant.authorized.policy
         if (uri == grant.authorized.target) return true
         if (policy.returnUrlConstraints.isNotEmpty()) {
-            return effectivePort == 443 && policy.matchesReturnUrl(uri)
+            return effectivePort == 443 && policy.matchesReturnUrl(uri, grant.authorized.target)
         }
         val requestOrigins = policy.requestOrigins
         if (origin in requestOrigins && effectivePort == policy.requestPort) return true
