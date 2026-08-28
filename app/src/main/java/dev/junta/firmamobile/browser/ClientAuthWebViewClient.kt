@@ -29,9 +29,21 @@ internal enum class ClientAuthRequestDiagnostic(val stage: String) {
     PROCEEDED("client-cert-proceeded"),
     REJECTED_TERMINAL("client-cert-rejected-terminal"),
     REJECTED_NO_IDENTITY("client-cert-rejected-no-identity"),
-    REJECTED_POLICY("client-cert-rejected-policy"),
+    REJECTED_EPOCH_TTL("client-cert-rejected-epoch-ttl"),
+    REJECTED_HOST_PORT("client-cert-rejected-host-port"),
+    REJECTED_ALGORITHM("client-cert-rejected-algorithm"),
+    REJECTED_KEY_TYPE("client-cert-rejected-key-type"),
+    REJECTED_VALIDITY("client-cert-rejected-validity"),
+    REJECTED_KEY_USAGE("client-cert-rejected-key-usage"),
+    REJECTED_EKU("client-cert-rejected-eku"),
+    REJECTED_ISSUER("client-cert-rejected-issuer"),
     REJECTED_EXCEPTION("client-cert-rejected-exception"),
 }
+
+private data class ClientAuthValidation(
+    val accepted: Boolean,
+    val rejection: ClientAuthRequestDiagnostic? = null,
+)
 
 internal class ClientAuthRequestHandler(
     private val grant: ClientAuthGrant,
@@ -59,9 +71,10 @@ internal class ClientAuthRequestHandler(
             clearPreferencesOnce()
             return
         }
-        if (!grant.isValidFor(request, identity, clock, monotonicNanos())) {
+        val validation = grant.validateFor(request, identity, clock, monotonicNanos())
+        if (!validation.accepted) {
             request.ignore()
-            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_POLICY)
+            onDiagnostic(checkNotNull(validation.rejection))
             clearPreferencesOnce()
             return
         }
@@ -90,62 +103,78 @@ internal class ClientAuthRequestHandler(
         if (preferencesCleared.compareAndSet(false, true)) clearClientCertPreferences()
     }
 
-    private fun ClientAuthGrant.isValidFor(
+    private fun ClientAuthGrant.validateFor(
         request: ClientCertRequest,
         identity: UnlockedIdentity,
         clock: Clock,
         nowNanos: Long,
-    ): Boolean {
+    ): ClientAuthValidation {
         if (currentNavigationEpoch() != navigationEpoch || authorized.isExpiredOrInvalid(nowNanos)) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EPOCH_TTL)
         }
-        val requestOrigin = authorized.policy.requestOrigins.singleOrNull() ?: return false
+        val requestOrigin = authorized.policy.requestOrigins.singleOrNull()
+            ?: return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_HOST_PORT)
         if (!request.host.equals(requestOrigin.host, ignoreCase = true) ||
             request.port != authorized.policy.requestPort
         ) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_HOST_PORT)
         }
         val certificate = identity.certificate
         val algorithm = certificate.publicKey.algorithm.uppercase()
-        if (algorithm !in authorized.certificateRules.allowedKeyAlgorithms) return false
+        if (algorithm !in authorized.certificateRules.allowedKeyAlgorithms) {
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ALGORITHM)
+        }
         if (authorized.policy.requireOfferedKeyTypeMatch) {
             val offeredKeyTypes = request.keyTypes?.map(String::uppercase)?.toSet().orEmpty()
             if (offeredKeyTypes.isEmpty() || offeredKeyTypes.none { it == algorithm || (algorithm == "EC" && it == "ECDSA") }) {
-                return false
+                return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_KEY_TYPE)
             }
         }
         try {
             certificate.checkValidity(Date.from(clock.instant()))
         } catch (_: Exception) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_VALIDITY)
         }
         val keyUsage = certificate.keyUsage
         if (authorized.certificateRules.requireDigitalSignatureKeyUsage &&
             keyUsage != null && (keyUsage.isEmpty() || !keyUsage[0])
         ) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_KEY_USAGE)
         }
         val extendedKeyUsage = try {
             certificate.extendedKeyUsage
         } catch (_: Exception) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EKU)
         }
         if (authorized.policy.requireTlsClientAuthExtendedKeyUsage &&
             extendedKeyUsage != null &&
             TLS_CLIENT_AUTH_OID !in extendedKeyUsage && ANY_EXTENDED_KEY_USAGE_OID !in extendedKeyUsage
         ) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EKU)
         }
         val principals = request.principals?.toList().orEmpty()
-        if (principals.isEmpty()) return authorized.policy.allowEmptyIssuerList
+        if (principals.isEmpty()) {
+            return if (authorized.policy.allowEmptyIssuerList) {
+                ClientAuthValidation(true)
+            } else {
+                ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
+            }
+        }
         val acceptableIssuerDer = principals.mapNotNull { principal ->
             (principal as? X500Principal)?.encoded
         }
-        if (acceptableIssuerDer.size != principals.size) return false
+        if (acceptableIssuerDer.size != principals.size) {
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
+        }
         val chain = identity.chain.ifEmpty { listOf(certificate) }
-        return chain.any { chainCertificate ->
+        val issuerMatches = chain.any { chainCertificate ->
             val issuer = chainCertificate.issuerX500Principal.encoded
             acceptableIssuerDer.any { acceptable -> MessageDigest.isEqual(issuer, acceptable) }
+        }
+        return if (issuerMatches) {
+            ClientAuthValidation(true)
+        } else {
+            ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
         }
     }
 
