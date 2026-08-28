@@ -95,6 +95,7 @@ class JuntaWebViewClient(
         method: String,
     ): Boolean {
         if (!isCurrentWebView(view)) return true
+        if (isModernMainFrame) recordVeaAuthReturnDiagnostic(targetUrl)
         val currentUrl = currentPageUrl(view)
         val currentProfileId = activeProfileId()
         if (isModernMainFrame) {
