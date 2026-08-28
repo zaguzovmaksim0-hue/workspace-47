@@ -18,7 +18,7 @@ enum class CatalogLocationState {
     OUTSIDE_SPAIN,
 }
 
-enum class CatalogUserMessage { OPEN_FAILED }
+enum class CatalogUserMessage { OPEN_FAILED, LOCATION_DETECTED }
 
 enum class PortalCatalogSectionKind {
     FAVORITES,
@@ -124,6 +124,7 @@ class PortalCatalogViewModel(
                         CatalogRegionSelectionSource.LOCATION,
                     )
                     locationState.value = CatalogLocationState.IDLE
+                    userMessage.value = CatalogUserMessage.LOCATION_DETECTED
                 }
                 RegionDetectionResult.PermissionDenied ->
                     locationState.value = CatalogLocationState.PERMISSION_DENIED

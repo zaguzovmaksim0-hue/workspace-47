@@ -119,6 +119,7 @@
     <string name="catalog_change_region">Cambiar región</string>
     <string name="catalog_use_location">Usar mi ubicación</string>
     <string name="catalog_locating">Buscando mi región…</string>
+    <string name="catalog_location_detected">Región detectada automáticamente.</string>
     <string name="catalog_search_label">Buscar organismo o servicio</string>
     <string name="catalog_empty_title">Sin resultados</string>
     <string name="catalog_empty_copy">Prueba con otro nombre o elige otra región.</string>

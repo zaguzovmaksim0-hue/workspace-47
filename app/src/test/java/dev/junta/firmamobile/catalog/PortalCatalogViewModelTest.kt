@@ -59,6 +59,7 @@ class PortalCatalogViewModelTest {
             assertEquals(PortalRegionCode.GALICIA, viewModel.state.value.selectedRegion)
             assertEquals(CatalogRegionSelectionSource.LOCATION, store.current.selectionSource)
             assertEquals(CatalogLocationState.IDLE, viewModel.state.value.locationState)
+            assertEquals(CatalogUserMessage.LOCATION_DETECTED, viewModel.state.value.userMessage)
             collection.cancel()
         } finally {
             Dispatchers.resetMain()

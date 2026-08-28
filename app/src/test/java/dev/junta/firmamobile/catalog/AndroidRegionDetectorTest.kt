@@ -72,6 +72,33 @@ class AndroidRegionDetectorTest {
     }
 
     @Test
+    fun `geocoder failure on fused falls back to network provider`() = runTest {
+        val source = source(
+            LocationManager.FUSED_PROVIDER to ProviderResponse.LocationValue(location(LocationManager.FUSED_PROVIDER)),
+            LocationManager.NETWORK_PROVIDER to ProviderResponse.LocationValue(location(LocationManager.NETWORK_PROVIDER)),
+            LocationManager.GPS_PROVIDER to ProviderResponse.LocationValue(location(LocationManager.GPS_PROVIDER)),
+        )
+        val geocoder = object : RegionGeocoder {
+            override fun isPresent(): Boolean = true
+
+            override suspend fun reverseGeocode(location: Location, maxResults: Int): List<RegionAddress> =
+                if (location.provider == LocationManager.FUSED_PROVIDER) {
+                    throw IOException("synthetic first-provider failure")
+                } else {
+                    listOf(aragonAddress())
+                }
+        }
+
+        val details = detector(source = source, geocoder = geocoder).detectDetailed()
+
+        assertEquals(
+            listOf(LocationManager.FUSED_PROVIDER, LocationManager.NETWORK_PROVIDER),
+            source.attemptedProviders,
+        )
+        assertEquals(RegionDetectionResult.Success(PortalRegionCode.ARAGON), details.result)
+    }
+
+    @Test
     fun `fused timeout continues through network to gps`() = runTest {
         val source = source(
             LocationManager.FUSED_PROVIDER to ProviderResponse.Hang,
@@ -282,7 +309,7 @@ class AndroidRegionDetectorTest {
     private fun detector(
         source: FakeRegionLocationSource,
         addresses: List<RegionAddress> = emptyList(),
-        geocoder: FakeRegionGeocoder = FakeRegionGeocoder(response = GeocoderResponse.Addresses(addresses)),
+        geocoder: RegionGeocoder = FakeRegionGeocoder(response = GeocoderResponse.Addresses(addresses)),
     ): AndroidRegionDetector = AndroidRegionDetector(
         locationSource = source,
         geocoder = geocoder,

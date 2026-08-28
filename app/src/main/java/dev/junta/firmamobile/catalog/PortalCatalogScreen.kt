@@ -90,12 +90,18 @@ fun PortalCatalogScreen(
     }
     val snackbarHostState = remember { SnackbarHostState() }
     val openFailureMessage = stringResource(R.string.catalog_open_failed)
+    val locationDetectedMessage = stringResource(R.string.catalog_location_detected)
 
     BackHandler(onBack = onBackToCertificate)
 
     LaunchedEffect(state.userMessage) {
-        if (state.userMessage == CatalogUserMessage.OPEN_FAILED) {
-            snackbarHostState.showSnackbar(openFailureMessage)
+        val message = when (state.userMessage) {
+            CatalogUserMessage.OPEN_FAILED -> openFailureMessage
+            CatalogUserMessage.LOCATION_DETECTED -> locationDetectedMessage
+            null -> null
+        }
+        if (message != null) {
+            snackbarHostState.showSnackbar(message)
             onUserMessageShown()
         }
     }
