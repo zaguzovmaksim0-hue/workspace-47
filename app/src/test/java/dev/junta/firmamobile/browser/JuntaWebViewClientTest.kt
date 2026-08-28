@@ -898,6 +898,8 @@ class JuntaWebViewClientTest {
 
         assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(target)))
         assertNull(veaClient.shouldInterceptRequest(webView, request(target)))
+        epoch++
+        veaClient.onPageStarted(webView, target, null)
         val clientCertRequest = RecordingClientCertRequest()
         veaClient.onReceivedClientCertRequest(webView, clientCertRequest)
 

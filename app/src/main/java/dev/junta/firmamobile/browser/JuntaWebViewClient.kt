@@ -208,9 +208,12 @@ class JuntaWebViewClient(
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         if (!isCurrentWebView(view)) return
         observedTopLevelUrl.set(url)
-        pendingInPlaceClientAuth.get()?.let { pending ->
-            if (url != pending.authorized.target.toASCIIString()) {
+        val inPlaceTargetStart = pendingInPlaceClientAuth.get()?.let { pending ->
+            if (url == pending.authorized.target.toASCIIString()) {
+                pending
+            } else {
                 pendingInPlaceClientAuth.compareAndSet(pending, null)
+                null
             }
         }
         logger.recordNavigationEvent(
@@ -221,6 +224,18 @@ class JuntaWebViewClient(
         )
         callbacks.onTopLevelNavigationStarted(url)
         callbacks.onTopLevelUrlChanged(url)
+        inPlaceTargetStart?.let { pending ->
+            val current = pendingInPlaceClientAuth.get()
+            if (current === pending &&
+                pending.authorized.profileId == activeProfileId() &&
+                !pending.authorized.isExpiredOrInvalid()
+            ) {
+                pendingInPlaceClientAuth.compareAndSet(
+                    pending,
+                    pending.copy(navigationEpoch = currentNavigationEpoch()),
+                )
+            }
+        }
         clientAuthAuthorizer?.onTopLevelPageStarted(url, currentNavigationEpoch())
     }
 
