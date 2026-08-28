@@ -389,6 +389,10 @@ class JuntaWebViewClient(
                 uri.rawPath == "/auth/returnLogin" && names == setOf("resCode") ->
                 "vea-auth-return-rescode"
 
+            host == "api-veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/auth/returnLogin" && names.isNotEmpty() ->
+                "vea-auth-return-shape-" + names.sorted().joinToString("-")
+
             host == "veaja.cloud.juntadeandalucia.es" &&
                 uri.rawPath == "/authFacade" && names == setOf("token", "redirectUrl") ->
                 "vea-auth-success"
