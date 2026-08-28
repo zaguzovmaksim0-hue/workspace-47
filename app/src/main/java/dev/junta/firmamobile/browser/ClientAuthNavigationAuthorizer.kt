@@ -17,6 +17,7 @@ import java.time.Duration
 @ConsistentCopyVisibility
 data class AuthorizedClientAuthTarget internal constructor(
     val profileId: ProfileId,
+    internal val source: URI,
     internal val target: URI,
     internal val policy: ClientAuthPolicy,
     internal val certificateRules: dev.junta.firmamobile.profile.CertificateFilterRules,
@@ -143,7 +144,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             observedAtMonotonicNanos = nowNanos,
             lifetimeNanos = lifetimeNanos,
         )
-        return authorized(profile, policy, target, nowNanos, lifetimeNanos)
+        return authorized(profile, policy, source, target, nowNanos, lifetimeNanos)
     }
 
     private fun authorizeInPlaceGetRedirectTransition(
@@ -188,7 +189,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             observedAtMonotonicNanos = nowNanos,
             lifetimeNanos = lifetimeNanos,
         )
-        return authorized(profile, policy, target, nowNanos, lifetimeNanos)
+        return authorized(profile, policy, source.source, target, nowNanos, lifetimeNanos)
     }
 
     private fun authorizeDirectTransition(
@@ -227,7 +228,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             observedAtMonotonicNanos = nowNanos,
             lifetimeNanos = lifetimeNanos,
         )
-        return authorized(profile, policy, target, nowNanos, lifetimeNanos)
+        return authorized(profile, policy, source, target, nowNanos, lifetimeNanos)
     }
 
     private fun authorizeRedirectTransition(
@@ -259,6 +260,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         return authorized(
             profile = profile,
             policy = policy,
+            source = source.source,
             target = target,
             observedAtMonotonicNanos = nowNanos,
             lifetimeNanos = grantLifetimeNanos(policy),
@@ -268,11 +270,13 @@ class ClientAuthNavigationAuthorizer internal constructor(
     private fun authorized(
         profile: SiteProfile,
         policy: ClientAuthPolicy,
+        source: URI,
         target: URI,
         observedAtMonotonicNanos: Long,
         lifetimeNanos: Long,
     ) = AuthorizedClientAuthTarget(
         profileId = profile.profileId,
+        source = source,
         target = target,
         policy = policy,
         certificateRules = profile.certificateRules,

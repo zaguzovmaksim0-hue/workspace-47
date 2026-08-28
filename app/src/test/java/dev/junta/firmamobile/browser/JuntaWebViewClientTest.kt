@@ -927,12 +927,19 @@ class JuntaWebViewClientTest {
             activeProfileId = { profileId },
             currentNavigationEpoch = { epoch },
             onInPlaceClientAuthChallenge = { authorized, _ ->
-                assertEquals(confirmed.target, authorized.target)
+                assertEquals(confirmed.profileId, authorized.profileId)
+                assertEquals(confirmed.source, authorized.source)
                 challengeCount++
             },
         )
         assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
-        inPlaceClient.onPageStarted(webView, target, null)
+        val sourceRequest = request(source)
+        inPlaceClient.shouldInterceptRequest(webView, sourceRequest)
+        val refreshedTarget = target
+            .replace("ticketId=synthetic-ticket", "ticketId=synthetic-ticket-2")
+            .replace("webSessionId=synthetic-session", "webSessionId=synthetic-session-2")
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
+        inPlaceClient.onPageStarted(webView, refreshedTarget, null)
         val request = RecordingClientCertRequest()
         inPlaceClient.onReceivedClientCertRequest(webView, request)
 

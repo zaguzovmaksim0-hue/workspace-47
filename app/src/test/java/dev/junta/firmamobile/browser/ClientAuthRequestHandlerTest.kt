@@ -187,6 +187,9 @@ class ClientAuthRequestHandlerTest {
         assertEquals(false, policy.requireTlsClientAuthExtendedKeyUsage)
         val authorized = AuthorizedClientAuthTarget(
             profileId = profile.profileId,
+            source = java.net.URI(
+                "https://api-veaja.cloud.juntadeandalucia.es/auth/login?modoAcceso=afirma&codigoProcedimiento=PEG_VEA&comeBackUrl=aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2F1dGhGYWNhZGU=&redirectUrl=aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2luaWNpby9wcm9jZWRpbWllbnRvLWRldGFsbGUvUEVHX1ZFQT9pbmljaWFyU29saWNpdHVkPXRydWUmcHJvY2VkdXJlSWQ9MSZ2ZXJzaW9uSWQ9MQ==",
+            ),
             target = java.net.URI(
                 "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=CHIE.VEA&comeBackURL=aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu&ticketId=synthetic-ticket&webSessionId=synthetic-session",
             ),

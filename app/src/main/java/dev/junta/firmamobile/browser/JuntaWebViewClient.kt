@@ -20,6 +20,9 @@ import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
+import dev.junta.firmamobile.profile.matchesSourceUrl
+import dev.junta.firmamobile.profile.matchesRequestUrl
 import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
@@ -70,6 +73,7 @@ class JuntaWebViewClient(
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
+    private val preconfirmedInPlaceSource = AtomicReference<PreconfirmedInPlaceSource?>(null)
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
@@ -93,6 +97,29 @@ class JuntaWebViewClient(
         if (!isCurrentWebView(view)) return true
         val currentUrl = currentPageUrl(view)
         val currentProfileId = activeProfileId()
+        if (isModernMainFrame) {
+            val preconfirmed = preconfirmedInPlaceSource.get()
+            val target = strictClientAuthHttpsUri(targetUrl)
+            if (preconfirmed != null && target != null && preconfirmed.sourceObserved &&
+                preconfirmed.authorized.profileId == currentProfileId &&
+                !preconfirmed.authorized.isExpiredOrInvalid() &&
+                preconfirmed.authorized.policy.matchesSourceUrl(preconfirmed.authorized.source) &&
+                preconfirmed.authorized.policy.matchesRequestUrl(target)
+            ) {
+                val refreshed = preconfirmed.authorized.copy(target = target).refreshedAfterUserConfirmation()
+                preconfirmedInPlaceSource.compareAndSet(preconfirmed, null)
+                pendingInPlaceClientAuth.set(
+                    PendingInPlaceClientAuth(refreshed, currentNavigationEpoch()),
+                )
+                logger.recordNavigationEvent(
+                    code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                    rawUrl = targetUrl,
+                    isMainFrame = true,
+                    method = method,
+                )
+                return false
+            }
+        }
         if (currentProfileId?.value != EuskadiClientAuthPostBridgeAdapter.PROFILE_ID) {
             clientAuthAuthorizer?.observeTopLevelNavigation(
                 activeProfileId = currentProfileId,
@@ -251,11 +278,14 @@ class JuntaWebViewClient(
     ): Boolean {
         if (authorized.policy.transitionMode != ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ||
             authorized.policy.requestMethod != HttpMethod.GET ||
-            authorized.isExpiredOrInvalid()
+            authorized.isExpiredOrInvalid() ||
+            !authorized.policy.matchesSourceUrl(authorized.source)
         ) {
             return false
         }
-        pendingInPlaceClientAuth.set(PendingInPlaceClientAuth(authorized, navigationEpoch))
+        preconfirmedInPlaceSource.set(
+            PreconfirmedInPlaceSource(authorized, navigationEpoch, sourceObserved = false),
+        )
         return true
     }
 
@@ -296,6 +326,19 @@ class JuntaWebViewClient(
     ): WebResourceResponse? {
         if (!isCurrentWebView(view)) return null
         if (request.isForMainFrame) {
+            val preconfirmed = preconfirmedInPlaceSource.get()
+            if (preconfirmed != null &&
+                preconfirmed.navigationEpoch == currentNavigationEpoch() &&
+                request.method.equals(GET_METHOD, ignoreCase = true)
+            ) {
+                val requestUri = strictClientAuthHttpsUri(request.url.toString())
+                if (requestUri == preconfirmed.authorized.source) {
+                    preconfirmedInPlaceSource.compareAndSet(
+                        preconfirmed,
+                        preconfirmed.copy(sourceObserved = true),
+                    )
+                }
+            }
             recordVeaAuthReturnDiagnostic(request.url.toString())
             logger.recordNavigationEvent(
                 code = DiagnosticEventCode.NETWORK_REQUEST,
@@ -411,6 +454,12 @@ class JuntaWebViewClient(
     } catch (_: Exception) {
         false
     }
+
+    private data class PreconfirmedInPlaceSource(
+        val authorized: AuthorizedClientAuthTarget,
+        val navigationEpoch: Long,
+        val sourceObserved: Boolean,
+    )
 
     private data class PendingInPlaceClientAuth(
         val authorized: AuthorizedClientAuthTarget,

@@ -412,7 +412,7 @@ fun BrowserScreen(
                             return@post
                         }
                         preconfirmedInPlaceClientAuthRef.set(authorized)
-                        webView.loadUrl(authorized.target.toASCIIString())
+                        webView.loadUrl(authorized.source.toASCIIString())
                     }
 
                     ClientCertPreferenceClearResult.FAILED -> {
@@ -878,13 +878,13 @@ fun BrowserScreen(
                                     val preconfirmed = preconfirmedInPlaceClientAuthRef.getAndSet(null)
                                     if (preconfirmed != null &&
                                         preconfirmed.profileId == authorized.profileId &&
-                                        preconfirmed.target == authorized.target &&
+                                        preconfirmed.source == authorized.source &&
                                         authorized.profileId == effectiveTopLevelProfileId &&
                                         !preconfirmed.isExpiredOrInvalid()
                                     ) {
                                         val handler = ClientAuthRequestHandler(
                                             grant = ClientAuthGrant(
-                                                authorized = preconfirmed,
+                                                authorized = authorized,
                                                 navigationEpoch = navigationEpoch.longValue,
                                             ),
                                             identityProvider = clientCertificateIdentityProvider,
@@ -897,7 +897,7 @@ fun BrowserScreen(
                                             onDiagnostic = { event ->
                                                 logger.recordPortalCallback(
                                                     stage = event.stage,
-                                                    host = preconfirmed.target.host,
+                                                    host = authorized.target.host,
                                                 )
                                             },
                                         )
