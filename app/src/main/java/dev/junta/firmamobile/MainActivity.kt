@@ -482,6 +482,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onDismissLocationMessage = catalogViewModel::dismissLocationMessage,
                         onToggleFavorite = catalogViewModel::toggleFavorite,
+                        onBackToCertificate = { destination = AppDestination.Certificate },
                         onOpenPortal = { item ->
                             when (val target = catalogRepository.resolveOpenTarget(item)) {
                                 is PortalOpenTarget.InApp -> {

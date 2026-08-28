@@ -113,6 +113,7 @@
     <string name="unknown_value">desconocido</string>
     <string name="catalog_title">SERVICIOS PÚBLICOS</string>
     <string name="catalog_subtitle">Encuentra y abre la sede o el servicio público que necesitas.</string>
+    <string name="catalog_back_to_certificate">← Volver al certificado</string>
     <string name="catalog_my_region_label">MI REGIÓN</string>
     <string name="catalog_region_copy">Mostramos primero los servicios de tu región y los disponibles en toda España.</string>
     <string name="catalog_change_region">Cambiar región</string>

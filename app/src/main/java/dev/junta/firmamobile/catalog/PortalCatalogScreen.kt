@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.catalog
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -76,6 +78,7 @@ fun PortalCatalogScreen(
     onDismissLocationMessage: () -> Unit,
     onToggleFavorite: (PortalId) -> Unit,
     onOpenPortal: (PortalCatalogItem) -> Unit,
+    onBackToCertificate: () -> Unit,
     onUserMessageShown: () -> Unit,
 ) {
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
@@ -87,6 +90,8 @@ fun PortalCatalogScreen(
     }
     val snackbarHostState = remember { SnackbarHostState() }
     val openFailureMessage = stringResource(R.string.catalog_open_failed)
+
+    BackHandler(onBack = onBackToCertificate)
 
     LaunchedEffect(state.userMessage) {
         if (state.userMessage == CatalogUserMessage.OPEN_FAILED) {
@@ -108,7 +113,7 @@ fun PortalCatalogScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "catalog-header") { CatalogHeader() }
+            item(key = "catalog-header") { CatalogHeader(onBackToCertificate) }
             item(key = "catalog-region") {
                 RegionSelectorCard(
                     selectedRegion = state.selectedRegion,
@@ -216,14 +221,29 @@ fun PortalCatalogScreen(
 }
 
 @Composable
-private fun CatalogHeader() {
+private fun CatalogHeader(onBackToCertificate: () -> Unit) {
+    val backLabel = stringResource(R.string.catalog_back_to_certificate)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = stringResource(R.string.catalog_title),
-            color = JuntaTealDark,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.semantics { heading() },
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedButton(
+                onClick = onBackToCertificate,
+                shape = CatalogShape,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .semantics { contentDescription = backLabel },
+            ) {
+                Text("←")
+            }
+            Text(
+                text = stringResource(R.string.catalog_title),
+                color = JuntaTealDark,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
         Text(
             text = stringResource(R.string.catalog_subtitle),
             color = JuntaMutedInk,

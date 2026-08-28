@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -49,6 +50,22 @@ class PortalCatalogScreenTest {
             profileCatalog,
             publicCatalog,
         )
+    }
+
+
+    @Test
+    fun `catalog offers a visible way back to the certificate screen`() {
+        var backRequested = false
+        setCatalogContent(
+            state = stateFor(selectedRegion = PortalRegionCode.ANDALUSIA),
+            onBackToCertificate = { backRequested = true },
+        )
+
+        rule.onNodeWithContentDescription("← Volver al certificado")
+            .assertIsDisplayed()
+            .performClick()
+
+        rule.runOnIdle { assertEquals(true, backRequested) }
     }
 
     @Test
@@ -217,6 +234,7 @@ class PortalCatalogScreenTest {
                         onDismissLocationMessage = {},
                         onToggleFavorite = {},
                         onOpenPortal = {},
+                        onBackToCertificate = {},
                         onUserMessageShown = {},
                     )
                 }
@@ -265,6 +283,7 @@ class PortalCatalogScreenTest {
         onUseLocation: () -> Unit = {},
         onOpenLocationSettings: () -> Unit = {},
         onOpenPortal: (PortalCatalogItem) -> Unit = {},
+        onBackToCertificate: () -> Unit = {},
     ) {
         rule.setContent {
             JuntaFirmaTheme {
@@ -278,6 +297,7 @@ class PortalCatalogScreenTest {
                     onDismissLocationMessage = {},
                     onToggleFavorite = {},
                     onOpenPortal = onOpenPortal,
+                    onBackToCertificate = onBackToCertificate,
                     onUserMessageShown = {},
                 )
             }
