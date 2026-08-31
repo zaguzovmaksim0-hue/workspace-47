@@ -4295,6 +4295,126 @@
             <sha256 value="2d3defd14992363d9ded44bc9e80c5d196045522b5b8162d8595bbd56c28fdfe" origin="Verified from Google Maven"/>
          </artifact>
       </component>
+      <component group="com.android.tools.utp" name="android-device-provider-ddmlib" version="32.3.1">
+         <artifact name="android-device-provider-ddmlib-32.3.1.jar">
+            <sha256 value="6a8fc9399f558786b7380c89f887dea99424a39497a7b487b57d2bfebb78913f" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-device-provider-ddmlib-32.3.1.module">
+            <sha256 value="d5141434cc5b79b79d1e7252d1d85cb7955a1d3ea3476c0d162b2757d305ba18" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-device-provider-ddmlib-proto" version="32.3.1">
+         <artifact name="android-device-provider-ddmlib-proto-32.3.1.jar">
+            <sha256 value="9e210c80fc7404a847be7890de4dbe688ec762574bcb6fed11c48184898da0e6" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-device-provider-ddmlib-proto-32.3.1.pom">
+            <sha256 value="58a1d172d1ac3742d749c090a68d637e5394c4557750490f659e237eeca94062" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-apk-installer" version="32.3.1">
+         <artifact name="android-test-plugin-host-apk-installer-32.3.1.jar">
+            <sha256 value="4bb496d441ac14a1039558f9e101fa6f9fe2582995c88a4212428144e9b01efb" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-apk-installer-32.3.1.module">
+            <sha256 value="f581f1535e163fd26824ae8c7cf545d0a295a9eb42b4c7da0260676ac8d4e2d8" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-apk-installer-proto" version="32.3.1">
+         <artifact name="android-test-plugin-host-apk-installer-proto-32.3.1.jar">
+            <sha256 value="16c8b04620c9ef89a59df30c8b92a020d21d7fad87af43921ed0e5684fffa0d3" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-apk-installer-proto-32.3.1.pom">
+            <sha256 value="495d7e605455bfb5ece1fd9aabb1467f71ed19bc74dd3d6e5ce2c089661beaab" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-coverage" version="32.3.1">
+         <artifact name="android-test-plugin-host-coverage-32.3.1.jar">
+            <sha256 value="7ca810d8805764ff80d21178314f4789a6e1a319fbb5850bd409e05a103071fb" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-coverage-32.3.1.module">
+            <sha256 value="8d2c88b61770508e8f91f39d6de1d917770edf0e8dce6b3840cf3ab976151833" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-coverage-proto" version="32.3.1">
+         <artifact name="android-test-plugin-host-coverage-proto-32.3.1.jar">
+            <sha256 value="1b273e16b8eb0f31804d1bfeedca0cb3e63f51bedc241a523004f41269dd38fa" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-coverage-proto-32.3.1.pom">
+            <sha256 value="8bcf9f399571ac989314cb243438c41235f9c223f02762894ed730a752465c4c" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-device-info" version="32.3.1">
+         <artifact name="android-test-plugin-host-device-info-32.3.1.jar">
+            <sha256 value="59f29e342d8246fb25a979b9dd20a7abc3ccf28b367ba2b5bbc2298d88137fcb" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-device-info-32.3.1.module">
+            <sha256 value="c2337f25f2c2a7e47c400c83d4733f3dc9ec2bc46b37b9f4e2bc5d6add6ea769" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-device-info-proto" version="32.3.1">
+         <artifact name="android-test-plugin-host-device-info-proto-32.3.1.jar">
+            <sha256 value="fa656dae94af18cfd321c63514cd2ab713ee5ec1db838938bc45a638a3e318b7" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-device-info-proto-32.3.1.pom">
+            <sha256 value="033398ef5bb6eb79d9609f09088bad63a6c115d0aeb44fe90af6cc02aa68d7bc" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-emulator-control" version="32.3.1">
+         <artifact name="android-test-plugin-host-emulator-control-32.3.1.jar">
+            <sha256 value="fac52d6112041f1a62bb7a0363934798fac6b91776b0479d9a0ba8a93d7d635f" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-emulator-control-32.3.1.module">
+            <sha256 value="b5f5394209f5c005485b2d6848ffb5a271002ea18d5c62d7f0d882cd4a2c68ad" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-emulator-control-proto" version="32.3.1">
+         <artifact name="android-test-plugin-host-emulator-control-proto-32.3.1.jar">
+            <sha256 value="9d42092ea872690f24dc9c4ce643841afa31f933c8910ae61be654abe61d0f05" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-emulator-control-proto-32.3.1.pom">
+            <sha256 value="d96f886e3a064013f585528d861e014987387cea613d514c9b30c7ee0e88af8f" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-logcat" version="32.3.1">
+         <artifact name="android-test-plugin-host-logcat-32.3.1.jar">
+            <sha256 value="22f490f2d2758cc02f255fc9e785f58395921256e0853104cb9839ffec2c00b5" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-logcat-32.3.1.module">
+            <sha256 value="02375fb7f31a1ff72a2f55f406e90c19afa1159245e56edeadb032d8c397a536" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-logcat-proto" version="32.3.1">
+         <artifact name="android-test-plugin-host-logcat-proto-32.3.1.jar">
+            <sha256 value="f190631031abc8bf11e73929d69884a457179629835cc860145794f196d1b4bf" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-logcat-proto-32.3.1.pom">
+            <sha256 value="237553cc2f69e539b9bbbc156992abdca6310c364e2f70e2a8cb8bbd7f32296a" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-result-listener-gradle" version="32.3.1">
+         <artifact name="android-test-plugin-result-listener-gradle-32.3.1.jar">
+            <sha256 value="93114fe5c508102aeae85254a9a12c83f2c4e6307243b2888708bd7309fec535" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-result-listener-gradle-32.3.1.module">
+            <sha256 value="af5b516122f7975567a69e2091d66f9a252edc1a39e84cd34ca75feefb06b4a8" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-result-listener-gradle-proto" version="32.3.1">
+         <artifact name="android-test-plugin-result-listener-gradle-proto-32.3.1.jar">
+            <sha256 value="ae763a044ac7fc488ce0d13cd4a49ccae5fc9112e70601a145c9a9e7156bf9b1" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-result-listener-gradle-proto-32.3.1.pom">
+            <sha256 value="46253f2026967f5ef177861048dc525105f62f9655ca05f80d33e73d433ab395" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="gradle-work-action" version="32.3.1">
+         <artifact name="gradle-work-action-32.3.1.jar">
+            <sha256 value="c89422f7d3462bd5525e6e79abb5a9808050e3a1352e0c6ef771b1b7a22fd307" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="gradle-work-action-32.3.1.module">
+            <sha256 value="3d58586564b4182fce9eba87b6a961c540fc82ea159612f9252ce844d0180e65" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
       <component group="com.android.tools.utp" name="gradle-work-action-api" version="32.3.1">
          <artifact name="gradle-work-action-api-32.3.1.jar">
             <sha256 value="de87773a677e87f619c751c306af6ee73a04a7b26e5f205fff287728d8af4ace" origin="Verified from Google Maven"/>
