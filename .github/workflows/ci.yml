@@ -108,6 +108,16 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: ./gradlew connectedQaAndroidTest --no-daemon --console=plain
+      - name: Upload instrumentation failure report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-instrumentation-failure-${{ github.sha }}
+          path: |
+            app/build/reports/androidTests/connected/qa/
+            app/build/outputs/androidTest-results/connected/qa/
+          if-no-files-found: error
+          retention-days: 1
 
   python:
     name: Python catalog and policy tests

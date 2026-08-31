@@ -113,6 +113,7 @@ class CiPolicyTest(unittest.TestCase):
             "android-actions/setup-android",
             "gradle/actions/setup-gradle",
             "ReactiveCircus/android-emulator-runner",
+            "actions/upload-artifact",
         }
         for path in (CI, SECURITY):
             source = self.read(path)
@@ -162,6 +163,11 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn('GO_VERSION: "1.26.6"', source)
         self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
         self.assertIn("ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d", source)
+        self.assertIn("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", source)
+        self.assertIn("if: failure()", source)
+        self.assertIn("app/build/reports/androidTests/connected/qa/", source)
+        self.assertIn("app/build/outputs/androidTest-results/connected/qa/", source)
+        self.assertIn("retention-days: 1", source)
         self.assertIn("api-level: 36", source)
         self.assertIn("target: google_apis", source)
         self.assertIn("arch: x86_64", source)
