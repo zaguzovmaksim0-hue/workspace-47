@@ -75,13 +75,50 @@ class RealE2ePolicyTest(unittest.TestCase):
 
     def test_runner_streams_credentials_without_remote_shell_redirection(self) -> None:
         runner = self.read(RUNNER)
-        self.assertIn('adb shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"', runner)
-        self.assertIn('adb exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null', runner)
-        self.assertIn('adb exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null', runner)
+        self.assertIn('adb_bounded shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"', runner)
+        self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null', runner)
+        self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null', runner)
         self.assertIn('chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"', runner)
         self.assertNotIn('run-as "$PACKAGE_NAME" sh -c', runner)
         self.assertNotIn("cat > '$CERTIFICATE_PATH'", runner)
         self.assertNotIn("cat > '$PASSWORD_PATH'", runner)
+
+    def test_runner_bounds_adb_operations_outside_instrumentation(self) -> None:
+        runner = self.read(RUNNER)
+        self.assertIn("readonly ADB_TIMEOUT_SECONDS=30", runner)
+        self.assertIn("readonly ADB_INSTALL_TIMEOUT_SECONDS=120", runner)
+        self.assertIn('timeout --signal=TERM --kill-after=5s "${ADB_TIMEOUT_SECONDS}s" adb "$@"', runner)
+        self.assertIn('timeout --signal=TERM --kill-after=5s "${ADB_INSTALL_TIMEOUT_SECONDS}s" adb install --no-streaming -r "$1"', runner)
+        self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" cat "$RESULT_PATH"', runner)
+        self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" cat files/qa-navigation.log', runner)
+        self.assertIn('adb_bounded shell am force-stop "$PACKAGE_NAME"', runner)
+        self.assertIn('timeout --signal=TERM --kill-after=10s "${PORTAL_TIMEOUT_SECONDS}s" \\', runner)
+        self.assertIn('      adb shell am instrument -w -r \\', runner)
+        self.assertNotIn('\n  adb install -r ', runner)
+        self.assertNotIn('\n    adb exec-out ', runner)
+        self.assertNotIn('\n    adb shell run-as ', runner)
+
+    def test_progress_and_partial_results_are_validated_before_upload(self) -> None:
+        workflow = self.read(WORKFLOW)
+        runner = self.read(RUNNER)
+        helper = self.read(REPORT_HELPER)
+        self.assertIn('PROGRESS_PATH="$REPORT_DIR/progress.tsv"', runner)
+        self.assertIn('progress INSTALL_QA_START', runner)
+        self.assertIn('progress INSTALL_QA_DONE', runner)
+        self.assertIn('progress INSTALL_TEST_START', runner)
+        self.assertIn('progress STAGE_FIXTURE_START', runner)
+        self.assertIn('progress PORTAL_START', runner)
+        self.assertIn('progress INSTRUMENT_START', runner)
+        self.assertIn('progress RESULT_READ_START', runner)
+        self.assertIn('progress NAV_READ_START', runner)
+        self.assertIn('progress PORTAL_DONE', runner)
+        self.assertIn('validate-progress', workflow)
+        self.assertIn('validate-partial-results', workflow)
+        self.assertIn('build/reports/real-e2e/progress.tsv', workflow)
+        self.assertIn('build/reports/real-e2e/results/', workflow)
+        self.assertIn("PROGRESS_STAGES", helper)
+        self.assertIn("validate_progress", helper)
+        self.assertIn("validate_partial_results", helper)
 
     def test_runner_uses_private_fixture_and_never_clears_app_data(self) -> None:
         source = self.read(RUNNER)
@@ -186,6 +223,23 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertEqual([selected], completed.stdout.splitlines())
         rejected = self.helper("select", "--catalog", str(CATALOG), "--portal", "not-a-real-portal")
         self.assertNotEqual(0, rejected.returncode)
+
+    def test_progress_validator_accepts_only_sanitized_checkpoint_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "progress.tsv"
+            path.write_text(
+                "2026-08-31T22:00:00Z\t0\t1/31\tjunta-andalucia-carne-joven\tPORTAL_START\t42\n"
+                "2026-08-31T22:00:01Z\t0\t1/31\tjunta-andalucia-carne-joven\tINSTRUMENT_DONE_0\t43\n",
+                encoding="ascii",
+            )
+            accepted = self.helper("validate-progress", "--progress", str(path))
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+            path.write_text(
+                "2026-08-31T22:00:00Z\t0\t1/31\tjunta-andalucia-carne-joven\tPASSWORD=my-secret\t42\n",
+                encoding="ascii",
+            )
+            rejected = self.helper("validate-progress", "--progress", str(path))
+            self.assertNotEqual(0, rejected.returncode)
 
     def test_report_helper_rejects_secret_like_extra_fields(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
