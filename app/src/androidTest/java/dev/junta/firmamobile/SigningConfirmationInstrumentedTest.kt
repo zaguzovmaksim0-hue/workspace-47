@@ -234,10 +234,14 @@ class SigningConfirmationInstrumentedTest {
         val searchLabel = targetContext.getString(R.string.catalog_search_label)
         val openLabel = targetContext.getString(R.string.catalog_open)
         rule.onNodeWithText(searchLabel).performTextInput(OVORION_DISPLAY_NAME)
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(OVORION_DISPLAY_NAME))
-        rule.onNodeWithText(OVORION_DISPLAY_NAME).assertIsDisplayed()
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(openLabel))
-        rule.onNodeWithText(openLabel).performClick()
+        rule.waitUntil(timeoutMillis = 15_000) {
+            rule.onAllNodesWithText(OVORION_DISPLAY_NAME).fetchSemanticsNodes().size >= 2
+        }
+        rule.onAllNodesWithText(OVORION_DISPLAY_NAME)[1].performScrollTo()
+        rule.waitUntil(timeoutMillis = 15_000) {
+            rule.onAllNodesWithText(openLabel).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onAllNodesWithText(openLabel)[0].performScrollTo().performClick()
     }
 
     private fun waitForText(text: String) {
