@@ -73,6 +73,16 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn("identity.p12", source)
         self.assertNotIn("password\n", source.lower())
 
+    def test_runner_streams_credentials_without_remote_shell_redirection(self) -> None:
+        runner = self.read(RUNNER)
+        self.assertIn('adb shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"', runner)
+        self.assertIn('adb exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null', runner)
+        self.assertIn('adb exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null', runner)
+        self.assertIn('chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"', runner)
+        self.assertNotIn('run-as "$PACKAGE_NAME" sh -c', runner)
+        self.assertNotIn("cat > '$CERTIFICATE_PATH'", runner)
+        self.assertNotIn("cat > '$PASSWORD_PATH'", runner)
+
     def test_runner_uses_private_fixture_and_never_clears_app_data(self) -> None:
         source = self.read(RUNNER)
         self.assertTrue(source.startswith("#!/usr/bin/env bash\nset -euo pipefail\n"))
