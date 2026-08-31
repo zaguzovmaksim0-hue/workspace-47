@@ -614,6 +614,8 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             sort_keys=False,
         ) + "\n"
 
+        self.assertEqual(2, catalog["schemaVersion"])
+        self.assertEqual(2, catalog["catalogVersion"])
         self.assertEqual(OUTPUT.read_text(encoding="utf-8"), generated)
         inventory_count = sum(entry["inventoryId"] is not None for entry in catalog["entries"])
         self.assertGreaterEqual(inventory_count, GENERATOR.MIN_INVENTORY_RECORDS)
@@ -626,6 +628,28 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertGreaterEqual(
             sum(entry["profileId"] is not None for entry in catalog["entries"]),
             profile_count,
+        )
+        valid_region_codes = {
+            "ES", "ES-AN", "ES-AR", "ES-AS", "ES-CB", "ES-CL", "ES-CM",
+            "ES-CN", "ES-CT", "ES-EX", "ES-GA", "ES-IB", "ES-MC", "ES-MD",
+            "ES-NC", "ES-PV", "ES-RI", "ES-VC", "ES-CE", "ES-ML",
+        }
+        self.assertTrue(all(entry["regionCode"] in valid_region_codes for entry in catalog["entries"]))
+        expected_overrides = {
+            "ES-PUB-0015": "ES-CL",
+            "ES-PUB-0016": "ES-AN",
+            "ES-PUB-0017": "ES-MD",
+            "ES-PUB-0018": "ES-AN",
+            "ES-PUB-0020": "ES-AR",
+            "ES-PUB-0092": "ES",
+        }
+        self.assertEqual(
+            expected_overrides,
+            {
+                entry["inventoryId"]: entry["regionCode"]
+                for entry in catalog["entries"]
+                if entry["inventoryId"] in expected_overrides
+            },
         )
         pag_reg = next(
             entry for entry in catalog["entries"]
@@ -3225,18 +3249,26 @@ records:
             target["entryUrl"],
         )
         self.assertNotIn("launchUrl", target)
-        self.assertEqual("VEA_AUTOSCRIPT_DYNAMIC", target["protocolFamily"])
+        self.assertEqual("VEA_CLIENT_TLS_AUTH", target["protocolFamily"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertEqual("2026-08-28", target["reviewedOn"])
         self.assertEqual(
-            ["AUTOFIRMA", "AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            [
+                "AUTOFIRMA",
+                "AUTOSCRIPT",
+                "CERTIFICATE_ACCESS",
+                "CLIENT_TLS_AUTH",
+                "ELECTRONIC_SIGNATURE",
+            ],
             target["observedMechanisms"],
         )
         self.assertEqual([], target["observedSignatureFormats"])
-        self.assertIn("qa-only", target["limitations"].lower())
-        self.assertIn("autenticado", target["limitations"].lower())
+        limitations = target["limitations"].lower()
+        self.assertIn("client_tls_auth", limitations)
+        self.assertIn("solo en qa", limitations)
+        self.assertIn("falta e2e", limitations)
 
 
     def test_fuerteventura_pades_profile_binds_exact_qa_pending_contract(self) -> None:

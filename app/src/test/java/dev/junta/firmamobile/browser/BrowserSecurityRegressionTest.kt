@@ -324,6 +324,34 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun clearSessionActuallyEndsTheSelectedProfileWebSessionBeforeLockingCertificate() {
+        val screenSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
+        )
+        val sessionBlock = screenSource
+            .substringAfter("        onClearSession = {", missingDelimiterValue = "")
+            .substringBefore("        onDeleteAllBrowserData = {")
+
+        assertTrue("Clear-session handler must be present", sessionBlock.isNotEmpty())
+        val epochIndex = sessionBlock.indexOf("advanceNavigationEpoch()")
+        val clearIndex = sessionBlock.indexOf("siteDataCleaner.clearProfileSession")
+        val preferenceIndex = sessionBlock.indexOf("clientCertPreferenceCoordinator.requestClear")
+        val exitIndex = sessionBlock.indexOf("onClearSession()")
+        assertTrue(
+            "Closing the certificate session must invalidate the active navigation before deleting profile session state",
+            epochIndex >= 0 && clearIndex in (epochIndex + 1) until preferenceIndex,
+        )
+        assertTrue(
+            "Closing the certificate session must clear WebView client-certificate preferences after deleting profile session state",
+            preferenceIndex in (clearIndex + 1) until exitIndex,
+        )
+        assertTrue(
+            "The app may lock the certificate only after browser-session and client-certificate cleanup were requested",
+            exitIndex > preferenceIndex,
+        )
+    }
+
+    @Test
     fun globalBrowserDataClearRemovesResourceCacheWithoutWideningCurrentSiteClear() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",

@@ -89,14 +89,14 @@ class AirefProfileCatalogBindingTest {
             ),
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(
                 profileId,
                 URI(AirefXadesEnvelopingAdapter.CLIENT_AUTH_SOURCE_URL),
             )?.trustMode,
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(
                 profileId,
                 URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),

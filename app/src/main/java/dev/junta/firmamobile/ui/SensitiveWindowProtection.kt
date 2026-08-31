@@ -9,28 +9,18 @@ import androidx.compose.runtime.rememberUpdatedState
 import dev.junta.firmamobile.signing.SigningUiState
 
 internal object SensitiveWindowStatePolicy {
+    @Suppress("UNUSED_PARAMETER")
     fun requiresSecureWindow(
         certificateState: CertificateUiState,
         signingState: SigningUiState,
-    ): Boolean = when (certificateState) {
-        CertificateUiState.LoadingReference,
-        is CertificateUiState.NoCertificate,
-        -> signingState !is SigningUiState.Idle
-
-        is CertificateUiState.Locked,
-        is CertificateUiState.Unlocking,
-        is CertificateUiState.Unlocked,
-        -> true
-    }
+    ): Boolean = false
 }
 
 object WindowSecureFlagPolicy {
+    @Suppress("UNUSED_PARAMETER")
     fun apply(window: Window, sensitive: Boolean) {
-        if (sensitive) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        }
+        // Screen capture is intentionally allowed across the whole app.
+        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 }
 

@@ -101,14 +101,16 @@ Afirma nativa o lanzamiento del handoff a navegador externo desde un subframe/ca
 legacy sin propiedad top-level probada. El handoff externo además puede invalidar
 estado Client TLS/Afirma/firma de nivel superior antes de abrir la Activity.
 **Controles:** interceptar `afirma://`, `intent://`, `market://` y URLs Play; rechazar
-package/component explícitos no aprobados; nunca usar `es.gob.afirma`; evento
-sanitizado de fallback. Solo una navegación Afirma directa o embedded-Afirma recibida
-por el callback moderno y marcada `isForMainFrame=true` puede llegar a
-`onAfirmaRequest`; subframes y el callback String deprecated se consumen con diagnóstico
-`UNTRUSTED_AFIRMA_ORIGIN` pero no publican `onNavigationBlocked` ni otra señal top-level de
-aplicación. De forma independiente, `OpenExternal` solo puede llegar a
-la aplicación desde un callback moderno main-frame; subframe/legacy se consume con
-`UNTRUSTED_EXTERNAL_NAVIGATION` y sin `openExternal` ni callback UI de bloqueo.
+package/component explícitos no aprobados; nunca lanzar `es.gob.afirma` ni un navegador
+externo desde el runtime del portal; evento sanitizado de fallback. Solo una navegación
+Afirma directa o embedded-Afirma recibida por el callback moderno y marcada
+`isForMainFrame=true` puede llegar al bridge interno `onAfirmaRequest`; subframes y el
+callback String deprecated se consumen sin entrega native. HTTPS fuera del profile exacto
+y `intent:` con `browser_fallback_url` fallan cerrados como
+`UNTRUSTED_EXTERNAL_NAVIGATION`; una petición AutoFirma que solo podría resolverse mediante
+una Activity externa falla cerrada como `UNSUPPORTED_EXTERNAL_INTENT`. El catálogo solo
+abre bindings exactos activos en el WebView interno; una entrada pública sin binding activo
+no se delega al navegador del sistema.
 **Verificación:** regressions Debug/QA con controles positivos main-frame y negativos
 subframe/legacy para Afirma, incluyendo ausencia de entrega native y de callback UI top-level,
 HTTPS externo e `intent:` con browser fallback; instrumentation sin resolución de
@@ -249,15 +251,17 @@ las tres acciones; instrumentation de capabilities sin iniciar la UI.
 
 **Riesgo:** secreto disponible a otras apps o soporte.
 **Controles:** logger con esquema allowlist, hashes truncados, almacenamiento
-privado y export sanitizado; `FLAG_SECURE` state-driven en `MainActivity` durante
-password, unlock, certificado desbloqueado, catálogo asociado, WebView de portal
-y cualquier estado de firma no idle; no copiar secreto; `allowBackup=false` y
-exclusiones explícitas completas por dominio en legacy/cloud/D2D. La pantalla inicial
-sin certificado y el probe debug
-aislado no heredan el flag.
-**Verificación:** tests del redactor y de la policy de estados, instrumentation
-sobre unlock/recreate/lock, inspección de exports/logcat/manifest y `dumpsys
-window` en dispositivo físico para certificado restaurado y WebView activo.
+privado y export sanitizado; por requisito de producto las capturas de pantalla están
+permitidas en toda la aplicación y `MainActivity` no aplica `FLAG_SECURE`, incluso
+durante password, unlock, certificado desbloqueado, catálogo, WebView o firma. La
+prevención de capturas deja por tanto de ser un control de confidencialidad: no se
+deben conservar ni adjuntar como evidencia capturas que contengan identidad, secretos
+o datos autenticados. Se mantiene la prohibición de copiar secretos, `allowBackup=false`
+y las exclusiones explícitas completas por dominio en legacy/cloud/D2D.
+**Verificación:** tests del redactor y de la policy de ventana que exigen captura
+habilitada para todos los estados, inspección de exports/logcat/manifest y `dumpsys
+window` en dispositivo físico confirmando ausencia de `FLAG_SECURE`; la QA no persiste
+capturas con datos sensibles.
 
 ### T11. Build/release o cadena de suministro comprometidos
 
@@ -326,14 +330,18 @@ que demuestran ausencia completa del profile/origins en release.
 **Riesgo:** contenido remoto intenta convertir una capacidad WebView opcional en acceso
 a ubicación u otros recursos del dispositivo.
 **Controles:** `TrustedJuntaWebView` desactiva explícitamente geolocalización con
-`setGeolocationEnabled(false)`; el manifest no declara `ACCESS_COARSE_LOCATION` ni
-`ACCESS_FINE_LOCATION`; `JuntaWebChromeClient` rechaza tanto el prompt específico de
-geolocalización como `PermissionRequest` genérico. File/content access y ventanas
-múltiples siguen desactivados de forma independiente.
-**Verificación:** source regression exige el setter explícito; pre-commit scan comprueba
-la ausencia de permisos location y conserva el callback `allow=false, retain=false`;
-lint/build compilan también el contrato instrumentado. No se afirma E2E físico de
-geolocalización.
+`setGeolocationEnabled(false)` y `JuntaWebChromeClient` rechaza tanto el prompt específico
+de geolocalización como `PermissionRequest` genérico. La aplicación declara únicamente
+`ACCESS_COARSE_LOCATION` para el selector nativo de región: se solicita después de que el
+usuario pulse «Usar mi ubicación», se obtiene una sola posición foreground y se descartan
+inmediatamente coordenadas y dirección tras resolver el código territorial. No se declaran
+`ACCESS_FINE_LOCATION` ni `ACCESS_BACKGROUND_LOCATION`, no se guarda ni registra la
+posición y ese permiso nunca se expone al WebView. File/content access y ventanas múltiples
+siguen desactivados de forma independiente.
+**Verificación:** source regression exige el setter explícito y el callback
+`allow=false, retain=false`; tests de manifest exigen coarse y rechazan fine/background;
+tests de preferencias comprueban que solo persiste el código regional. Lint/build compilan
+también el contrato instrumentado.
 
 ### T15. Un subframe bloqueado altera el estado UI de nivel superior
 

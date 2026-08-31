@@ -67,6 +67,99 @@ class ClientAuthWebViewClientTest {
     }
 
     @Test
+    fun proceededClientAuthCanDelegatePreferenceCleanupAcrossReturnNavigation() {
+        val clears = AtomicInteger()
+        val handler = ClientAuthRequestHandler(
+            grant = ClientAuthGrant(authorized(), 9L),
+            identityProvider = { synthetic.identity },
+            currentNavigationEpoch = { 9L },
+            clearClientCertPreferences = { clears.incrementAndGet() },
+            clock = clock,
+        )
+        val request = RecordingRequest()
+
+        handler.handle(request)
+
+        assertEquals(1, request.proceeds)
+        assertTrue(handler.hasProceeded())
+        assertTrue(handler.delegatePreferenceCleanup())
+        handler.abandon()
+        assertEquals(0, clears.get())
+    }
+
+    @Test
+    fun veaDedicatedTlsWebViewAllowsOnlyExactReturnContract() {
+        val epoch = AtomicInteger(30)
+        val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
+        val client = veaClient(epoch, callbacks)
+
+        assertFalse(client.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest("$VEA_API_RETURN?resCode=1", isMainFrame = true),
+        ))
+        assertFalse(client.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest(
+                "$VEA_API_RETURN?appId=CHIE.VEA&resCode=ok" +
+                    "&ticketId=synthetic-ticket&webSessionId=synthetic-session",
+                isMainFrame = true,
+            ),
+        ))
+        assertTrue(client.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest(
+                "$VEA_API_RETURN?appId=CHIE.VEA&resCode=ok" +
+                    "&ticketId=other-ticket&webSessionId=synthetic-session",
+                isMainFrame = true,
+            ),
+        ))
+        assertFalse(client.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest(VEA_API_END, isMainFrame = true),
+        ))
+        assertFalse(client.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest("$VEA_AUTH_FACADE?error=AUTH_ERROR&redirectUrl=synthetic", isMainFrame = true),
+        ))
+        assertFalse(client.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest("$VEA_AUTH_FACADE?token=synthetic-token&redirectUrl=synthetic", isMainFrame = true),
+        ))
+
+        val blocked = veaClient(AtomicInteger(31), RecordingCallbacks {})
+        assertTrue(blocked.shouldOverrideUrlLoading(
+            webView,
+            navigationRequest("https://api-veaja.cloud.juntadeandalucia.es/auth/other", isMainFrame = true),
+        ))
+    }
+
+    @Test
+    fun veaExplicitReturnChainHandsOffOnlyAtTerminalVeajaReturn() {
+        val epoch = AtomicInteger(40)
+        val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
+        val terminal = mutableListOf<String>()
+        val client = veaClient(
+            epoch = epoch,
+            callbacks = callbacks,
+            isTerminalReturnUrl = { it.startsWith(VEA_AUTH_FACADE) },
+            onTerminalReturnUrl = terminal::add,
+        )
+
+        client.onPageStarted(webView, VEA_TARGET, null)
+        client.onPageStarted(webView, "$VEA_API_RETURN?resCode=1", null)
+        client.onPageStarted(webView, VEA_API_END, null)
+
+        assertTrue(terminal.isEmpty())
+        assertFalse(callbacks.events.contains("start"))
+
+        val finalUrl = "$VEA_AUTH_FACADE?token=synthetic-token&redirectUrl=synthetic"
+        client.onPageStarted(webView, finalUrl, null)
+
+        assertEquals(listOf(finalUrl), terminal)
+        assertFalse(callbacks.events.contains("start"))
+    }
+
+    @Test
     fun valladolidDedicatedTlsWebViewPinsTheRequestPortAndAllowsOnlyTheDefaultPortReturn() {
         val epoch = AtomicInteger(15)
         val callbacks = RecordingCallbacks { epoch.incrementAndGet() }
@@ -265,6 +358,39 @@ class ClientAuthWebViewClientTest {
             override fun getRequestHeaders(): Map<String, String> = emptyMap()
         }
 
+    private fun veaClient(
+        epoch: AtomicInteger,
+        callbacks: BrowserNavigationCallbacks,
+        clears: AtomicInteger = AtomicInteger(),
+        isTerminalReturnUrl: (String) -> Boolean = { false },
+        onTerminalReturnUrl: (String) -> Unit = {},
+    ): ClientAuthWebViewClient {
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        authorizer.observeTopLevelNavigation(
+            VEA_PROFILE, VEA_AUTH_FACADE, VEA_API_LOGIN, 4, true,
+        )
+        val authorized = checkNotNull(
+            authorizer.observeTopLevelNavigation(
+                VEA_PROFILE, VEA_AUTH_FACADE, VEA_TARGET, 4, true,
+            ),
+        )
+        val grant = ClientAuthGrant(authorized, epoch.get().toLong())
+        val handler = ClientAuthRequestHandler(
+            grant = grant,
+            identityProvider = { synthetic.identity },
+            currentNavigationEpoch = { epoch.get().toLong() },
+            clearClientCertPreferences = { clears.incrementAndGet() },
+            clock = clock,
+        )
+        return ClientAuthWebViewClient(
+            grant = grant,
+            requestHandler = handler,
+            callbacks = callbacks,
+            isTerminalReturnUrl = isTerminalReturnUrl,
+            onTerminalReturnUrl = onTerminalReturnUrl,
+        )
+    }
+
     private fun valladolidClient(
         epoch: AtomicInteger,
         callbacks: BrowserNavigationCallbacks,
@@ -367,6 +493,12 @@ class ClientAuthWebViewClientTest {
     }
 
     private companion object {
+        val VEA_PROFILE = ProfileId("junta-andalucia-vea-peg")
+        const val VEA_AUTH_FACADE = "https://veaja.cloud.juntadeandalucia.es/authFacade"
+        const val VEA_API_LOGIN = "https://api-veaja.cloud.juntadeandalucia.es/auth/login?modoAcceso=afirma&codigoProcedimiento=PEG_VEA&comeBackUrl=aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2F1dGhGYWNhZGU=&redirectUrl=aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2luaWNpby9wcm9jZWRpbWllbnRvLWRldGFsbGUvUEVHX1ZFQT9pbmljaWFyU29saWNpdHVkPXRydWUmcHJvY2VkdXJlSWQ9MSZ2ZXJzaW9uSWQ9MQ=="
+        const val VEA_API_RETURN = "https://api-veaja.cloud.juntadeandalucia.es/auth/returnLogin"
+        const val VEA_API_END = "https://api-veaja.cloud.juntadeandalucia.es/auth/endLogin"
+        const val VEA_TARGET = "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=CHIE.VEA&comeBackURL=aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu&ticketId=synthetic-ticket&webSessionId=synthetic-session"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         const val VALLADOLID_INDEX = "https://www.sede.diputaciondevalladolid.es/tgauth/login"
         const val VALLADOLID_SOURCE = "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"

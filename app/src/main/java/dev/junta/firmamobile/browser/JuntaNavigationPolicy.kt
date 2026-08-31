@@ -59,7 +59,7 @@ class JuntaNavigationPolicy(
             return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
         return when (target.scheme?.lowercase(Locale.ROOT)) {
-            "https" -> decideHttpsUrl(target, targetUrl)
+            "https" -> decideHttpsUrl(target, targetUrl, currentPageUrl)
             "http" -> decideLegacyHttpUpgrade(target, currentPageUrl)
             "afirma" -> if (selectedProfileId == SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID) {
                 decideOfficialAutoFirmaUri(targetUrl, currentPageUrl)
@@ -80,9 +80,19 @@ class JuntaNavigationPolicy(
         }
     }
 
-    private fun decideHttpsUrl(target: Uri, rawUrl: String): NavigationDecision {
+    private fun decideHttpsUrl(target: Uri, rawUrl: String, currentPageUrl: String?): NavigationDecision {
         if (isAutoFirmaPlayStoreUrl(target, rawUrl)) {
             return NavigationDecision.Block(NavigationBlockReason.PLAY_STORE_FALLBACK)
+        }
+        val targetUri = runCatching { java.net.URI(rawUrl) }.getOrNull()
+        if (targetUri != null && registry.isClientAuthBrowseUrl(selectedProfileId, targetUri)) {
+            return NavigationDecision.AllowInWebView
+        }
+        val currentUri = currentPageUrl?.let { runCatching { java.net.URI(it) }.getOrNull() }
+        if (targetUri != null && currentUri != null &&
+            registry.isInPlaceClientAuthTransition(selectedProfileId, currentUri, targetUri)
+        ) {
+            return NavigationDecision.AllowInWebView
         }
         if (JuntaOriginPolicy.isAllowed(target, selectedProfileId)) {
             return NavigationDecision.AllowInWebView
@@ -95,7 +105,7 @@ class JuntaNavigationPolicy(
             return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
         }
         return if (isSafeExternalHttpsUrl(target)) {
-            NavigationDecision.OpenExternal(target)
+            NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION)
         } else {
             NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
@@ -239,7 +249,7 @@ class JuntaNavigationPolicy(
         ) {
             return NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI)
         }
-        return NavigationDecision.OpenOfficialAutoFirma(uri)
+        return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)
     }
 
     private fun hasSafeOfficialAutoFirmaQuery(encodedQuery: String): Boolean {
@@ -374,7 +384,7 @@ class JuntaNavigationPolicy(
                 null
             }
             if (fallbackUri != null && isSafeExternalHttpsUrl(fallbackUri)) {
-                return NavigationDecision.OpenExternal(fallbackUri)
+                return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION)
             }
         }
         return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)

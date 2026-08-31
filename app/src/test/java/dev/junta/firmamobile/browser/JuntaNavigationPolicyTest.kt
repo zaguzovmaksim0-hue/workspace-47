@@ -1,7 +1,11 @@
 package dev.junta.firmamobile.browser
 
 import dev.junta.firmamobile.afirma.AfirmaOperation
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,10 +45,10 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
-    fun routesThirdPartyHttpsExternallyButBlocksHttpDowngrades() {
+    fun blocksThirdPartyHttpsInsideTheAppAndBlocksHttpDowngrades() {
         val https = policy.decide("https://example.org/help", trustedPage)
-            as NavigationDecision.OpenExternal
-        assertEquals("https://example.org/help", https.uri.toString())
+            as NavigationDecision.Block
+        assertEquals(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION, https.reason)
 
         val http = policy.decide("http://example.org/help", trustedPage)
             as NavigationDecision.Block
@@ -176,6 +180,86 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
+    fun veaCertificateAuthNavigationStaysInWebViewOnlyForExactBoundedContract() {
+        val vea = JuntaNavigationPolicy(
+            ProfileId("junta-andalucia-vea-peg"),
+            BuiltInSiteProfiles.qaRegistry,
+        )
+        val source = veaSource()
+        val target = veaTarget()
+
+        assertEquals(
+            NavigationDecision.AllowInWebView,
+            vea.decide(source, VEA_AUTH_FACADE),
+        )
+        assertEquals(
+            NavigationDecision.AllowInWebView,
+            vea.decide(target, source),
+        )
+        assertEquals(
+            NavigationDecision.AllowInWebView,
+            vea.decide("$VEA_API_RETURN?resCode=1", target),
+        )
+        assertEquals(
+            NavigationDecision.AllowInWebView,
+            vea.decide(VEA_API_END, "$VEA_API_RETURN?resCode=1"),
+        )
+
+        val directTarget = vea.decide(target, VEA_START) as NavigationDecision.Block
+        assertEquals(NavigationBlockReason.CROSS_PROFILE_NAVIGATION, directTarget.reason)
+    }
+
+    @Test
+    fun veaCertificateAuthNavigationRejectsApiAndRedirectNearMisses() {
+        val vea = JuntaNavigationPolicy(
+            ProfileId("junta-andalucia-vea-peg"),
+            BuiltInSiteProfiles.qaRegistry,
+        )
+        val invalidSources = listOf(
+            veaSource(redirect = "https://evil.example/?iniciarSolicitud=true&procedureId=1&versionId=2"),
+            veaSource(redirect = "$VEA_START?iniciarSolicitud=false&procedureId=1&versionId=2"),
+            veaSource(redirect = "$VEA_START?iniciarSolicitud=true&procedureId=1&versionId=2&extra=1"),
+            veaSource().replace("modoAcceso=afirma", "modoAcceso=clave"),
+        )
+        invalidSources.forEach { source ->
+            assertTrue(source, vea.decide(source, VEA_AUTH_FACADE) !is NavigationDecision.AllowInWebView)
+        }
+        listOf(
+            "$VEA_API_RETURN?resCode=1&extra=1",
+            "$VEA_API_END?extra=1",
+            "https://api-veaja.cloud.juntadeandalucia.es/auth/other",
+        ).forEach { target ->
+            assertTrue(target, vea.decide(target, VEA_AUTH_FACADE) !is NavigationDecision.AllowInWebView)
+        }
+        listOf(
+            veaTarget(appId = "IAJ.CARNETJOVEN"),
+            veaTarget(callback = "https://evil.example/return"),
+            veaTarget() + "&extra=1",
+        ).forEach { target ->
+            val blocked = vea.decide(target, veaSource()) as NavigationDecision.Block
+            assertEquals(target, NavigationBlockReason.CROSS_PROFILE_NAVIGATION, blocked.reason)
+        }
+    }
+
+    private fun veaSource(
+        redirect: String = "$VEA_START?iniciarSolicitud=true&procedureId=123&versionId=456",
+    ): String = "$VEA_API_LOGIN?modoAcceso=afirma" +
+        "&comeBackUrl=${urlEncode(base64(VEA_AUTH_FACADE))}" +
+        "&redirectUrl=${urlEncode(base64(redirect))}" +
+        "&codigoProcedimiento=PEG_VEA"
+
+    private fun veaTarget(
+        appId: String = "CHIE.VEA",
+        callback: String = VEA_API_RETURN,
+    ): String = "https://ws235.juntadeandalucia.es/authenticationFacade" +
+        "?action=validateCert&appId=$appId" +
+        "&comeBackURL=${urlEncode(base64(callback))}" +
+        "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+
+    private fun base64(value: String): String = Base64.getEncoder().encodeToString(value.toByteArray())
+    private fun urlEncode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+
+    @Test
     fun exactOriginMatcherRequiresHttpsSchemeCanonicalHostAndEffectivePort() {
         val carneJovenPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia"))
         val carneJovenPage = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
@@ -212,4 +296,13 @@ class JuntaNavigationPolicyTest {
             (userInfoDecision as NavigationDecision.Block).reason,
         )
     }
+    private companion object {
+        const val VEA_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
+        const val VEA_START = "$VEA_ORIGIN/inicio/procedimiento-detalle/PEG_VEA"
+        const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"
+        const val VEA_API_LOGIN = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
+        const val VEA_API_RETURN = "https://api-veaja.cloud.juntadeandalucia.es/auth/returnLogin"
+        const val VEA_API_END = "https://api-veaja.cloud.juntadeandalucia.es/auth/endLogin"
+    }
+
 }

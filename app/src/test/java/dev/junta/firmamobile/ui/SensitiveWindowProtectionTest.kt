@@ -31,7 +31,7 @@ class SensitiveWindowProtectionTest {
     val rule = createComposeRule()
 
     @Test
-    fun statePolicyProtectsPasswordUnlockedBrowserAndSigningStates() {
+    fun statePolicyAllowsScreenshotsForPasswordBrowserAndSigningStates() {
         val reference = StoredCertificateReference(
             uri = Uri.parse("content://tests/certificate.p12"),
             displayName = "certificate.p12",
@@ -62,35 +62,35 @@ class SensitiveWindowProtectionTest {
             ),
         )
         assertEquals(
-            true,
+            false,
             SensitiveWindowStatePolicy.requiresSecureWindow(
                 CertificateUiState.Locked(reference, null, null),
                 idle,
             ),
         )
         assertEquals(
-            true,
+            false,
             SensitiveWindowStatePolicy.requiresSecureWindow(
                 CertificateUiState.Unlocking(reference, null),
                 idle,
             ),
         )
         assertEquals(
-            true,
+            false,
             SensitiveWindowStatePolicy.requiresSecureWindow(
                 CertificateUiState.Unlocked(reference, summary),
                 idle,
             ),
         )
         assertEquals(
-            true,
+            false,
             SensitiveWindowStatePolicy.requiresSecureWindow(
                 CertificateUiState.NoCertificate(),
                 SigningUiState.Signing(UUID.fromString("00000000-0000-0000-0000-000000000001")),
             ),
         )
         assertEquals(
-            true,
+            false,
             SensitiveWindowStatePolicy.requiresSecureWindow(
                 CertificateUiState.NoCertificate(),
                 SigningUiState.Failed(null, SigningErrorCode.INVALID_REQUEST),
@@ -99,13 +99,16 @@ class SensitiveWindowProtectionTest {
     }
 
     @Test
-    fun realWindowFlagCanBeEnabledAndCleared() {
+    fun realWindowFlagIsAlwaysClearedSoScreenshotsStayAllowed() {
         val activity = Robolectric.buildActivity(ComponentActivity::class.java)
             .setup()
             .get()
 
-        WindowSecureFlagPolicy.apply(activity.window, sensitive = true)
+        activity.window.addFlags(FLAG_SECURE)
         assertTrue(activity.window.attributes.flags and FLAG_SECURE != 0)
+
+        WindowSecureFlagPolicy.apply(activity.window, sensitive = true)
+        assertEquals(0, activity.window.attributes.flags and FLAG_SECURE)
 
         WindowSecureFlagPolicy.apply(activity.window, sensitive = false)
         assertEquals(0, activity.window.attributes.flags and FLAG_SECURE)

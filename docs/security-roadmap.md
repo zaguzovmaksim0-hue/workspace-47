@@ -37,10 +37,11 @@ Completed:
   exact origin, 20-byte precalculated challenge, detached CAdES,
   `SHA1withRSA`, exact `precalculatedHashAlgorithm=SHA1` and `serverUrl`;
   Storage/Retrieve, co-sign, counter-sign and document-signing remain blocked.
-- MainActivity secure-window policy completed (F-05): `FLAG_SECURE` remains
-  active during password entry, certificate unlocking, every unlocked certificate
-  surface, portal WebView and every non-idle signing state. First-run/no-certificate
-  idle UI remains capturable; the isolated debug probe policy is unchanged.
+- MainActivity screenshot policy supersedes the previous F-05 secure-window behavior
+  (2026-08-28): screenshots are intentionally allowed across the whole application.
+  `FLAG_SECURE` is never applied and is defensively cleared even for password, unlocked
+  certificate, portal WebView and signing states. This is an explicit privacy trade-off;
+  sensitive screenshots remain prohibited as persisted QA/repository evidence.
 - Profile-scoped cookie/session hardening completed (F-08): native cookie
   access requires an active `SiteProfile` and an exact declared network endpoint;
   the historical WebView facade is profile-bound; current-site cleanup deletes

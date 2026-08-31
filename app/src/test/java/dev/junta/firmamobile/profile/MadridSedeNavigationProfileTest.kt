@@ -2,6 +2,7 @@ package dev.junta.firmamobile.profile
 
 import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.NavigationDecision
+import dev.junta.firmamobile.browser.NavigationBlockReason
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
@@ -81,7 +82,10 @@ class MadridSedeNavigationProfileTest {
         assertEquals(NavigationDecision.AllowInWebView, policy.decide(applicationUrl.toString(), startUrl.toString()))
         assertEquals(NavigationDecision.AllowInWebView, policy.decide(casUrl.toString(), applicationUrl.toString()))
         val claveDecision = policy.decide(claveUrl.toString(), casUrl.toString())
-        assertTrue(claveDecision is NavigationDecision.OpenExternal)
+        assertEquals(
+            NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION),
+            claveDecision,
+        )
     }
 
     @Test

@@ -107,6 +107,13 @@ data class OperationPolicy(
     val allowedExtraProperties: Set<String>,
 )
 
+data class ClientAuthUrlConstraint(
+    val origin: ExactOrigin,
+    val path: String,
+    val fixedQueryParameters: Map<String, String> = emptyMap(),
+    val requiredEphemeralQueryParameters: Set<String> = emptySet(),
+)
+
 data class ClientAuthPolicy(
     val transitionMode: ClientAuthTransitionMode,
     val requestOrigins: Set<ExactOrigin>,
@@ -116,12 +123,17 @@ data class ClientAuthPolicy(
     val requiredEphemeralQueryParameters: Set<String>,
     val allowEmptyIssuerList: Boolean,
     val grantTtlSeconds: Int,
+    val requireOfferedKeyTypeMatch: Boolean = true,
+    val requireTlsClientAuthExtendedKeyUsage: Boolean = true,
     val requestPort: Int = 443,
     val requestMethod: HttpMethod = HttpMethod.GET,
     val sourceFixedQueryParameters: Map<String, String> = emptyMap(),
     val sourceRequiredEphemeralQueryParameters: Set<String> = emptySet(),
     val linkedEphemeralQueryParameters: Set<String> = emptySet(),
     val linkedEphemeralQueryParameterMappings: Map<String, String> = emptyMap(),
+    val sourceBase64UrlConstraints: Map<String, ClientAuthUrlConstraint> = emptyMap(),
+    val requestContinuationUrlConstraints: Set<ClientAuthUrlConstraint> = emptySet(),
+    val returnUrlConstraints: Set<ClientAuthUrlConstraint> = emptySet(),
 )
 
 data class CertificateFilterRules(

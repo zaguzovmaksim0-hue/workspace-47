@@ -142,18 +142,19 @@ instrumentación para Android/WebView; E2E real separado; release gates al final
 
 ### JuntaWebViewClient external-navigation frame-boundary regressions
 
-- HTTPS externo directo en callback moderno main-frame mantiene un único
-  `openExternal`;
-- `intent:` validado con `browser_fallback_url=https://...` en main-frame mantiene el
-  handoff externo aprobado;
-- el mismo HTTPS desde subframe se consume como `UNTRUSTED_EXTERNAL_NAVIGATION` sin
-  `openExternal` ni `onNavigationBlocked`;
-- el callback String deprecated tampoco puede entregar `OpenExternal` porque no prueba
-  propiedad main-frame;
-- un `intent:` con browser fallback desde subframe falla cerrado por el mismo límite;
+- HTTPS externo directo en callback moderno main-frame se consume como
+  `UNTRUSTED_EXTERNAL_NAVIGATION` y no puede producir `openExternal`;
+- `intent:` con `browser_fallback_url=https://...` también falla cerrado dentro de la app;
+- el mismo HTTPS o intent desde subframe se consume sin callback UI top-level;
+- el callback String deprecated no puede entregar contenido a una Activity externa;
+- una petición que requiera el paquete oficial AutoFirma falla cerrada como
+  `UNSUPPORTED_EXTERNAL_INTENT`; los perfiles con bridge Afirma interno conservan su ruta
+  native dentro de la aplicación;
+- el catálogo solo devuelve un target para un binding exacto activo; no existe fallback al
+  navegador del sistema para entradas públicas no vinculadas;
 - el diagnóstico bloqueado no conserva query/fragment sensibles del URL de prueba;
 - ejecutar la familia WebView/navigation/WebMessage en Debug y QA y mantener el E2E
-  físico del navegador/portal como gate separado.
+  físico del portal como gate separado.
 
 ### JuntaWebViewClient blocked-navigation callback ownership regressions
 
@@ -285,8 +286,8 @@ Ejecutar en API 36 real o emulador equivalente:
 - bloqueo manual obliga a introducir contraseña otra vez;
 - background timeout bloquea identidad;
 - una hoja de confirmación aparece y cancelar no firma;
-- `FLAG_SECURE` está inactivo solo en loading/no-certificate idle y activo
-  durante password, unlock, certificado desbloqueado, catálogo/WebView y firma;
+- `FLAG_SECURE` permanece inactivo en todos los estados, incluidos password, unlock,
+  certificado desbloqueado, catálogo/WebView y firma, para permitir screenshots;
 - borrar datos del sitio no afecta otros origins y muestra resultado
   exacto/limitado/fallido;
 - una limpieza confirmada del sitio o global debe avanzar `navigationEpoch` antes de
@@ -341,9 +342,9 @@ Secuencia de aceptación:
 8. aceptar, completar pre-sign/local/post-sign y entregar resultado;
 9. confirmar que el portal acepta y continúa;
 10. bloquear certificado y confirmar que otra firma exige contraseña;
-11. inspeccionar `FLAG_SECURE` mediante window state y usar UI tree/logcat
-    sanitizados; no capturar screenshot de certificado, catálogo autenticado,
-    WebView ni firma;
+11. inspeccionar mediante window state que `FLAG_SECURE` no está activo y usar UI
+    tree/logcat sanitizados; la aplicación permite screenshots, pero la evidencia de QA
+    no debe conservar capturas con certificado, contenido autenticado, WebView ni firma;
 12. repetir el camino de cancelación y sesión expirada.
 
 Para F-03 AEAT, la aceptación física se limita a:

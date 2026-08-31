@@ -46,7 +46,7 @@ class PortalCatalogRepositoryTest {
         val qaPortals = qaRepository.portals()
         val releasePortals = releaseRepository.portals()
 
-        assertEquals(1, qaRepository.bundledCatalogVersion)
+        assertEquals(2, qaRepository.bundledCatalogVersion)
         assertEquals(publicCatalog.entries.size, qaPortals.size)
         assertEquals(publicCatalog.entries.size, releasePortals.size)
         assertEquals(
@@ -2459,7 +2459,7 @@ class PortalCatalogRepositoryTest {
         assertEquals(start, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(qaPortal))
 
@@ -2725,6 +2725,47 @@ class PortalCatalogRepositoryTest {
         assertTrue(tamperedPortal.capabilities.isEmpty())
         assertTrue(tamperedPortal.signatureFormats.isEmpty())
         assertEquals(null, tampered.resolveLaunch(tamperedPortal))
+    }
+
+    @Test
+    fun `selected region scope contains only that region and national services`() {
+        val portals = qaRepository.portals(
+            PortalCatalogQuery(
+                selectedRegion = PortalRegionCode.ARAGON,
+                regionScope = PortalCatalogRegionScope.SELECTED_AND_NATIONAL,
+            ),
+        )
+
+        assertTrue(portals.isNotEmpty())
+        assertTrue(portals.any { it.regionCode == PortalRegionCode.ARAGON })
+        assertTrue(portals.any { it.regionCode == PortalRegionCode.SPAIN })
+        assertTrue(
+            portals.all {
+                it.regionCode == PortalRegionCode.ARAGON ||
+                    it.regionCode == PortalRegionCode.SPAIN
+            },
+        )
+        assertTrue(
+            portals.takeWhile { it.regionCode == PortalRegionCode.ARAGON }.isNotEmpty(),
+        )
+    }
+
+    @Test
+    fun `open target is internal only for an exact active binding and otherwise stays closed`() {
+        val releaseById = releaseRepository.portals().associateBy { it.portalId }
+        val qaItem = qaRepository.portals().first {
+            it.isEnabled && releaseById.getValue(it.portalId).isEnabled.not()
+        }
+        val internal = qaRepository.resolveOpenTarget(qaItem)
+        assertTrue(internal is PortalOpenTarget.InApp)
+
+        val releaseItem = releaseRepository.portals().single { it.portalId == qaItem.portalId }
+        assertNull(releaseRepository.resolveOpenTarget(releaseItem))
+        assertNull(
+            releaseRepository.resolveOpenTarget(
+                releaseItem.copy(entryUrl = java.net.URI("https://example.org/")),
+            ),
+        )
     }
 
 }

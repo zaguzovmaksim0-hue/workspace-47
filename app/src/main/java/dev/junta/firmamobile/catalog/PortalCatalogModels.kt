@@ -19,6 +19,39 @@ enum class PortalGovernmentLevel {
     PUBLIC_INSTITUTION,
 }
 
+/** Stable catalog geography. Wire values intentionally follow ISO 3166-2 where available. */
+enum class PortalRegionCode(val wireValue: String) {
+    SPAIN("ES"),
+    ANDALUSIA("ES-AN"),
+    ARAGON("ES-AR"),
+    ASTURIAS("ES-AS"),
+    CANTABRIA("ES-CB"),
+    CASTILE_AND_LEON("ES-CL"),
+    CASTILE_LA_MANCHA("ES-CM"),
+    CANARY_ISLANDS("ES-CN"),
+    CATALONIA("ES-CT"),
+    EXTREMADURA("ES-EX"),
+    GALICIA("ES-GA"),
+    BALEARIC_ISLANDS("ES-IB"),
+    MURCIA("ES-MC"),
+    MADRID("ES-MD"),
+    NAVARRE("ES-NC"),
+    BASQUE_COUNTRY("ES-PV"),
+    LA_RIOJA("ES-RI"),
+    VALENCIAN_COMMUNITY("ES-VC"),
+    CEUTA("ES-CE"),
+    MELILLA("ES-ML"),
+    ;
+
+    companion object {
+        fun fromWireValue(value: String): PortalRegionCode? = entries.singleOrNull {
+            it.wireValue == value
+        }
+
+        val selectableRegions: List<PortalRegionCode> = entries.filterNot { it == SPAIN }
+    }
+}
+
 enum class PortalServiceCapability {
     CERTIFICATE_ACCESS,
     ELECTRONIC_SIGNATURE,
@@ -72,6 +105,7 @@ data class PublicPortalEntry(
     val displayName: String,
     val organization: String,
     val governmentLevel: PortalGovernmentLevel,
+    val regionCode: PortalRegionCode,
     val territory: String,
     val purpose: String,
     val entryUrl: URI,
@@ -112,6 +146,11 @@ enum class PortalCatalogFilter {
     ELECTRONIC_SIGNATURE,
 }
 
+enum class PortalCatalogRegionScope {
+    ALL,
+    SELECTED_AND_NATIONAL,
+}
+
 data class PortalCatalogItem(
     val portalId: PortalId,
     val profileId: ProfileId?,
@@ -130,6 +169,7 @@ data class PortalCatalogItem(
     val supportStatus: PortalSupportStatus,
     val entryUrl: URI,
     val isEnabled: Boolean,
+    val regionCode: PortalRegionCode = PortalRegionCode.SPAIN,
 )
 
 /** Canonical, registry-validated launch input. */
@@ -138,9 +178,15 @@ data class PortalLaunchTarget(
     val entryUrl: URI,
 )
 
+sealed interface PortalOpenTarget {
+    data class InApp(val launch: PortalLaunchTarget) : PortalOpenTarget
+}
+
 data class PortalCatalogQuery(
     val searchText: String = "",
     val filter: PortalCatalogFilter = PortalCatalogFilter.ALL,
     val favoritePortalIds: Set<PortalId> = emptySet(),
     val recentPortalIds: List<PortalId> = emptyList(),
+    val selectedRegion: PortalRegionCode? = null,
+    val regionScope: PortalCatalogRegionScope = PortalCatalogRegionScope.ALL,
 )

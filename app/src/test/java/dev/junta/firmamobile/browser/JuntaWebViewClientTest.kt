@@ -22,6 +22,9 @@ import java.time.ZoneOffset
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -351,7 +354,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun seguridadSocialOfficialAutoFirmaHandoffUsesDedicatedNativeCallback() {
+    fun seguridadSocialOfficialAutoFirmaHandoffIsBlockedInsideTheApp() {
         val sedessCallbacks = RecordingBrowserCallbacks()
         val sedessClient = JuntaWebViewClient(
             callbacks = sedessCallbacks,
@@ -365,7 +368,10 @@ class JuntaWebViewClientTest {
 
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target)))
 
-        assertEquals(listOf("official-autofirma:sign"), sedessCallbacks.events)
+        assertEquals(
+            listOf("blocked:UNSUPPORTED_EXTERNAL_INTENT"),
+            sedessCallbacks.events,
+        )
     }
 
     @Test
@@ -380,13 +386,17 @@ class JuntaWebViewClientTest {
         val target = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj"
 
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
-        assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
-
         assertEquals(emptyList<String>(), sedessCallbacks.events)
+
+        assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        assertEquals(
+            listOf("blocked:UNSUPPORTED_EXTERNAL_INTENT"),
+            sedessCallbacks.events,
+        )
     }
 
     @Test
-    fun externalAndAfirmaNavigationAreConsumedByNativeCallbacks() {
+    fun externalHttpsIsBlockedWhileInAppAfirmaNavigationUsesNativeBridge() {
         assertTrue(
             client.shouldOverrideUrlLoading(webView, request("https://example.org/help")),
         )
@@ -406,7 +416,7 @@ class JuntaWebViewClientTest {
             ),
         )
 
-        assertEquals("external:example.org", callbacks.events[0])
+        assertEquals("blocked:UNTRUSTED_EXTERNAL_NAVIGATION", callbacks.events[0])
         assertEquals("afirma:sign", callbacks.events[1])
         assertEquals("afirma:sign", callbacks.events[2])
     }
@@ -463,7 +473,10 @@ class JuntaWebViewClientTest {
         )
 
         assertTrue(mainClient.shouldOverrideUrlLoading(webView, request(fallbackIntent)))
-        assertEquals(listOf("external:example.org"), mainCallbacks.events)
+        assertEquals(
+            listOf("blocked:UNTRUSTED_EXTERNAL_NAVIGATION"),
+            mainCallbacks.events,
+        )
 
         assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(fallbackIntent)))
         assertEquals(emptyList<String>(), frameCallbacks.events)
@@ -857,6 +870,312 @@ class JuntaWebViewClientTest {
         assertEquals(emptyList<String>(), legacyCallbacks.events)
     }
 
+    @Test
+    fun veaExactGetRedirectStopsBeforeTlsAndRequestsUserConfirmation() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        val source = veaSourceUrl()
+        val target = veaTargetUrl()
+        var captured: AuthorizedClientAuthTarget? = null
+        val veaCallbacks = RecordingBrowserCallbacks()
+        val veaClient = JuntaWebViewClient(
+            callbacks = veaCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            currentPageUrl = { VEA_AUTH_FACADE },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 20L },
+            onClientAuthTarget = { captured = it },
+        )
+
+        assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(source)))
+
+        // /auth/login is only a server-side redirect hop. The ws235 TLS request is
+        // stopped so BrowserScreen can ask the user before any private-key use.
+        assertTrue(veaClient.shouldOverrideUrlLoading(webView, request(target)))
+
+        assertEquals(profileId, captured?.profileId)
+        assertEquals(target, captured?.target?.toASCIIString())
+        assertTrue(veaCallbacks.events.none { it.startsWith("external:") })
+    }
+
+    @Test
+    fun veaConfirmedTargetCanBeArmedInPlaceAfterUserConfirmation() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val source = veaSourceUrl()
+        val confirmed = confirmedVeaTarget(40L)
+        var epoch = 40L
+        var challengeCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = EpochAdvancingBrowserCallbacks { epoch++ },
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { authorized, _ ->
+                assertEquals(confirmed.profileId, authorized.profileId)
+                assertEquals(confirmed.source, authorized.source)
+                challengeCount++
+            },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+
+        // Chromium may observe the main-frame request before onPageStarted. The
+        // exact source start must rebind the preconfirmed state to the new epoch.
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+        inPlaceClient.onPageStarted(webView, source, null)
+        val refreshedTarget = veaTargetUrl()
+            .replace("ticketId=synthetic-ticket", "ticketId=synthetic-ticket-2")
+            .replace("webSessionId=synthetic-session", "webSessionId=synthetic-session-2")
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
+        inPlaceClient.onPageStarted(webView, refreshedTarget, null)
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(42L, epoch)
+        assertEquals(1, challengeCount)
+        assertEquals(0, request.ignores)
+    }
+
+    @Test
+    fun carneJovenConfirmedRedirectRefreshesTicketInsideOriginalWebView() {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val index = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+        val source = "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
+        val target =
+            "https://ws235.juntadeandalucia.es/authenticationFacade" +
+                "?action=validateCert&appId=IAJ.CARNETJOVEN" +
+                "&ticketId=synthetic-ticket&webSessionId=synthetic-session" +
+                "&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        authorizer.observeTopLevelNavigation(profileId, index, source, 69L, true)
+        authorizer.onTopLevelPageStarted(source, 70L)
+        val confirmed = checkNotNull(
+            authorizer.observeTopLevelNavigation(profileId, source, target, 70L, true),
+        ).refreshedAfterUserConfirmation()
+        var epoch = 70L
+        var challenge: AuthorizedClientAuthTarget? = null
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = EpochAdvancingBrowserCallbacks { epoch++ },
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { authorized, _ -> challenge = authorized },
+        )
+
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+        inPlaceClient.onPageStarted(webView, source, null)
+        val refreshedTarget = target
+            .replace("ticketId=synthetic-ticket", "ticketId=synthetic-ticket-2")
+            .replace("webSessionId=synthetic-session", "webSessionId=synthetic-session-2")
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
+        inPlaceClient.onPageStarted(webView, refreshedTarget, null)
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(refreshedTarget, challenge?.target?.toASCIIString())
+        assertEquals(0, request.ignores)
+    }
+
+    @Test
+    fun veaPreconfirmedSourceAlsoRebindsWhenPageStartedPrecedesIntercept() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val source = veaSourceUrl()
+        val confirmed = confirmedVeaTarget(50L)
+        var epoch = 50L
+        var challengeCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = EpochAdvancingBrowserCallbacks { epoch++ },
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { _, _ -> challengeCount++ },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+
+        // WebView callback order is not a security assumption: the reverse order
+        // must reach the same exact source/epoch-bound state.
+        inPlaceClient.onPageStarted(webView, source, null)
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+        val refreshedTarget = veaTargetUrl()
+            .replace("ticketId=synthetic-ticket", "ticketId=synthetic-ticket-3")
+            .replace("webSessionId=synthetic-session", "webSessionId=synthetic-session-3")
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
+        inPlaceClient.onPageStarted(webView, refreshedTarget, null)
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(52L, epoch)
+        assertEquals(1, challengeCount)
+        assertEquals(0, request.ignores)
+    }
+
+    @Test
+    fun veaPreconfirmedTargetFailsClosedAfterUnrelatedEpochChange() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val source = veaSourceUrl()
+        val confirmed = confirmedVeaTarget(60L)
+        var epoch = 60L
+        var challengeCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onInPlaceClientAuthChallenge = { _, _ -> challengeCount++ },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, epoch))
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+
+        epoch++ // An unrelated navigation invalidates the preconfirmed source epoch.
+        inPlaceClient.shouldOverrideUrlLoading(webView, request(veaTargetUrl()))
+        val request = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(0, challengeCount)
+        assertEquals(1, request.ignores)
+    }
+
+    @Test
+    fun veaObservedReturnLoginShapeRequiresLiveConfirmedClientAuthFlow() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val returnUrl = "$VEA_API_RETURN?appId=CHIE.VEA&resCode=synthetic-result" +
+            "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+        val staticClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+        )
+        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+
+        val liveClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            isConfirmedClientAuthReturnUrl = { it == returnUrl },
+        )
+        assertFalse(liveClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+    }
+
+    @Test
+    fun veaObservedClusterContinuationRequiresLiveSessionBindingAndArmsOnlyExactChallenge() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val confirmed = confirmedVeaTarget(70L)
+        val exactContinuation = confirmed.copy(target = java.net.URI(veaClusterContinuationUrl()))
+        val staticClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+        )
+        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+
+        var challenge: AuthorizedClientAuthTarget? = null
+        val liveClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+            resolveConfirmedClientAuthContinuationUrl = { raw ->
+                exactContinuation.takeIf { raw == veaClusterContinuationUrl() }
+            },
+            onInPlaceClientAuthChallenge = { authorized, _ -> challenge = authorized },
+        )
+        assertFalse(liveClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+        liveClient.onPageStarted(webView, veaClusterContinuationUrl(), null)
+        val clientCert = RecordingClientCertRequest(requestHost = "ws235-4.juntadeandalucia.es")
+        liveClient.onReceivedClientCertRequest(webView, clientCert)
+        assertEquals(exactContinuation, challenge)
+        assertEquals(0, clientCert.ignores)
+
+        val nearMiss = veaClusterContinuationUrl()
+            .replace("ticketId=synthetic-ticket", "ticketId=other-ticket")
+        assertTrue(liveClient.shouldOverrideUrlLoading(webView, request(nearMiss)))
+    }
+
+    @Test
+    fun veaClientCertChallengeIsNotArmedByDirectOrNearMissNavigation() {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        var currentUrl = VEA_START
+        val veaClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            currentPageUrl = { currentUrl },
+            clientAuthAuthorizer = authorizer,
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 30L },
+        )
+        val directTarget = veaTargetUrl()
+
+        assertTrue(veaClient.shouldOverrideUrlLoading(webView, request(directTarget)))
+        veaClient.shouldInterceptRequest(webView, request(directTarget))
+        val request = RecordingClientCertRequest()
+        veaClient.onReceivedClientCertRequest(webView, request)
+        assertEquals(1, request.ignores)
+
+        currentUrl = veaSourceUrl().replace("modoAcceso=afirma", "modoAcceso=clave")
+        veaClient.shouldInterceptRequest(webView, request(directTarget))
+        val nearMissRequest = RecordingClientCertRequest()
+        veaClient.onReceivedClientCertRequest(webView, nearMissRequest)
+        assertEquals(1, nearMissRequest.ignores)
+    }
+
+    private fun confirmedVeaTarget(epoch: Long): AuthorizedClientAuthTarget {
+        val profileId = ProfileId("junta-andalucia-vea-peg")
+        var captured: AuthorizedClientAuthTarget? = null
+        val captureClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            currentPageUrl = { VEA_AUTH_FACADE },
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { epoch },
+            onClientAuthTarget = { captured = it },
+        )
+        assertFalse(captureClient.shouldOverrideUrlLoading(webView, request(veaSourceUrl())))
+        assertTrue(captureClient.shouldOverrideUrlLoading(webView, request(veaTargetUrl())))
+        return checkNotNull(captured).refreshedAfterUserConfirmation()
+    }
+
+    private fun veaSourceUrl(): String {
+        val redirect = "$VEA_START?iniciarSolicitud=true&procedureId=123&versionId=456"
+        return "$VEA_API_LOGIN?modoAcceso=afirma" +
+            "&comeBackUrl=${encode(base64(VEA_AUTH_FACADE))}" +
+            "&redirectUrl=${encode(base64(redirect))}" +
+            "&codigoProcedimiento=PEG_VEA"
+    }
+
+    private fun veaTargetUrl(): String =
+        "https://ws235.juntadeandalucia.es/authenticationFacade" +
+            "?action=validateCert&appId=CHIE.VEA" +
+            "&comeBackURL=${encode(base64(VEA_API_RETURN))}" +
+            "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+
+    private fun veaClusterContinuationUrl(): String =
+        "https://ws235-4.juntadeandalucia.es/authenticationFacade/5" +
+            "?action=validateCert&appId=CHIE.VEA" +
+            "&comeBackURL=${encode(base64(VEA_API_RETURN))}" +
+            "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
+
+    private fun base64(value: String): String = Base64.getEncoder().encodeToString(value.toByteArray())
+    private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+
     private fun request(rawUrl: String, method: String = "GET") = object : WebResourceRequest {
         override fun getUrl(): Uri = Uri.parse(rawUrl)
         override fun isForMainFrame(): Boolean = true
@@ -882,6 +1201,17 @@ class JuntaWebViewClientTest {
             evaluatedScripts += script
             resultCallback?.onReceiveValue("null")
         }
+    }
+
+    private class EpochAdvancingBrowserCallbacks(
+        private val advanceEpoch: () -> Unit,
+    ) : BrowserNavigationCallbacks {
+        override fun openExternal(uri: Uri) = Unit
+        override fun openOfficialAutoFirma(uri: Uri) = Unit
+        override fun onAfirmaRequest(request: AfirmaRequest) = Unit
+        override fun onNavigationBlocked(reason: NavigationBlockReason) = Unit
+        override fun onBrowserError(error: BrowserErrorCode) = Unit
+        override fun onTopLevelNavigationStarted(url: String) = advanceEpoch()
     }
 
     private class RecordingBrowserCallbacks : BrowserNavigationCallbacks {
@@ -972,6 +1302,11 @@ class JuntaWebViewClientTest {
     }
 
     private companion object {
+        const val VEA_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
+        const val VEA_START = "$VEA_ORIGIN/inicio/procedimiento-detalle/PEG_VEA"
+        const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"
+        const val VEA_API_LOGIN = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
+        const val VEA_API_RETURN = "https://api-veaja.cloud.juntadeandalucia.es/auth/returnLogin"
         const val TARRAGONA_VALID_SOURCE =
             "https://valid.aoc.cat/o/oauth2/auth?response_type=code&client_id=valid.dipta.cat&" +
                 "redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode&" +

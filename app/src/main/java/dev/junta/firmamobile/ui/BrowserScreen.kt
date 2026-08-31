@@ -81,8 +81,13 @@ import dev.junta.firmamobile.browser.WebViewProfileCapabilities
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.ClientAuthPolicy
 import dev.junta.firmamobile.profile.ClientAuthTransitionMode
+import dev.junta.firmamobile.profile.HttpMethod
+import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.matchesReturnUrl
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -123,6 +128,27 @@ internal fun certificateSelectionFingerprint(identity: UnlockedIdentity): String
         certificateDer.fill(0)
     }
 }.getOrNull()
+
+internal fun shouldUseConfirmedInPlaceClientAuth(policy: ClientAuthPolicy): Boolean =
+    policy.transitionMode in setOf(
+        ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+        ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+    ) &&
+        policy.requestMethod == HttpMethod.GET
+
+internal fun dispatchConfirmedClientAuthPreparation(
+    policy: ClientAuthPolicy,
+    beginInPlace: () -> Unit,
+    beginDedicated: () -> Unit,
+) {
+    if (shouldUseConfirmedInPlaceClientAuth(policy)) beginInPlace() else beginDedicated()
+}
+
+internal fun requiresFreshJuntaBrowserSession(profile: SiteProfile?): Boolean =
+    profile?.clientAuthPolicy?.requestOrigins?.contains(JUNTA_SHARED_CLIENT_AUTH_ORIGIN) == true
+
+private val JUNTA_SHARED_CLIENT_AUTH_ORIGIN =
+    ExactOrigin.parse("https://ws235.juntadeandalucia.es")
 
 internal fun certificateEligibleForSelection(
     profileId: String,
@@ -172,6 +198,7 @@ fun BrowserScreen(
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
+    val sessionDataClearLease = remember { BrowserDataClearCompletionLease<ProfileId>() }
     val globalDataClearLease = remember { BrowserDataClearCompletionLease<WebView>() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
@@ -184,8 +211,7 @@ fun BrowserScreen(
         ) { "Browser entry URL does not belong to the selected profile" }
     }
     val selectedProfile = BuiltInSiteProfiles.runtimeRegistry.profile(selectedServiceId)
-    val requiresInPlaceClientAuth =
-        selectedProfile?.clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE
+    val requiresClientAuthSessionPreparation = requiresFreshJuntaBrowserSession(selectedProfile)
     val trustController = remember(selectedServiceId, validatedEntryUrl) {
         BrowserTrustController(
             urlPolicy = BrowserUrlPolicy(
@@ -204,9 +230,13 @@ fun BrowserScreen(
     val bridgeAttachmentLease = remember {
         BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>()
     }
+    val normalClientRef = remember { AtomicReference<JuntaWebViewClient?>() }
     val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
     val dedicatedWebViewRef = remember { AtomicReference<TrustedJuntaWebView?>() }
     val inPlaceClientAuthHandlerRef = remember { AtomicReference<ClientAuthRequestHandler?>() }
+    val preconfirmedInPlaceClientAuthRef = remember {
+        AtomicReference<AuthorizedClientAuthTarget?>()
+    }
     val pendingNormalUrl = remember { AtomicReference<String?>() }
     val pendingClientAuthPostBody = remember { AtomicReference<ByteArray?>() }
     val navigationEpoch = remember { mutableLongStateOf(0L) }
@@ -220,12 +250,14 @@ fun BrowserScreen(
         AtomicReference<ClientCertPreferenceClearRequest?>()
     }
     var clientAuthPreparing by remember(selectedServiceId) {
-        mutableStateOf(requiresInPlaceClientAuth)
+        mutableStateOf(requiresClientAuthSessionPreparation)
     }
+    var preserveWebViewDuringClientAuthClear by remember { mutableStateOf(false) }
     var clientAuthGrant by remember { mutableStateOf<ClientAuthGrant?>(null) }
     var pendingClientAuthTarget by remember {
         mutableStateOf<AuthorizedClientAuthTarget?>(null)
     }
+    var pendingClientAuthTargetEpoch by remember { mutableLongStateOf(-1L) }
     var pendingInPlaceClientAuth by remember {
         mutableStateOf<PendingInPlaceClientAuthChallenge?>(null)
     }
@@ -244,7 +276,8 @@ fun BrowserScreen(
     var pageProgress by remember { mutableIntStateOf(100) }
     var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
     val clientCertPreferenceBlocked =
-        clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing
+        !preserveWebViewDuringClientAuthClear &&
+            (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
     fun advanceNavigationEpoch() {
         bridgeAttachmentLease.current()?.abandonMiniAppletRequests()
@@ -309,6 +342,8 @@ fun BrowserScreen(
 
     fun abandonClientAuth() {
         cancelClientAuthClearCallback()
+        preserveWebViewDuringClientAuthClear = false
+        preconfirmedInPlaceClientAuthRef.set(null)
         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
         pendingClientAuthTarget = null
         cancelPendingInPlaceClientAuth()
@@ -344,6 +379,73 @@ fun BrowserScreen(
         browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
         pageProgress = 100
         webViewRecreationEpoch++
+    }
+
+    fun finishConfirmedInPlaceClientAuthAfterNavigation(handler: ClientAuthRequestHandler) {
+        if (!inPlaceClientAuthHandlerRef.compareAndSet(handler, null)) return
+        if (!handler.delegatePreferenceCleanup()) {
+            handler.abandon()
+            return
+        }
+        preserveWebViewDuringClientAuthClear = true
+        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+            mainHandler.post {
+                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                preserveWebViewDuringClientAuthClear = false
+                if (result == ClientCertPreferenceClearResult.FAILED) {
+                    browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                    pageProgress = 100
+                }
+            }
+        }
+        clientAuthClearRequest.set(request)
+    }
+
+    fun beginConfirmedInPlaceClientAuthPreparation(
+        authorized: AuthorizedClientAuthTarget,
+    ) {
+        cancelClientAuthClearCallback()
+        val webView = webViewRef.get()
+        val client = normalClientRef.get()
+        if (webView == null || client == null) {
+            recoverClientAuthPreparationFailure(requestAnotherClear = true)
+            return
+        }
+        browserError = null
+        pageProgress = 0
+        clientAuthPreparing = true
+        preserveWebViewDuringClientAuthClear = true
+        webView.isEnabled = false
+        val expectedEpoch = navigationEpoch.longValue
+        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+            mainHandler.post {
+                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                clientAuthPreparing = false
+                preserveWebViewDuringClientAuthClear = false
+                if (webViewRef.get() === webView) webView.isEnabled = true
+                when (result) {
+                    ClientCertPreferenceClearResult.CLEARED -> {
+                        val stillOwned = webViewRef.get() === webView && normalClientRef.get() === client
+                        if (!stillOwned ||
+                            authorized.profileId != effectiveTopLevelProfileId ||
+                            expectedEpoch != navigationEpoch.longValue ||
+                            authorized.isExpiredOrInvalid() ||
+                            !client.armConfirmedInPlaceClientAuth(authorized, navigationEpoch.longValue)
+                        ) {
+                            recoverClientAuthPreparationFailure(requestAnotherClear = true)
+                            return@post
+                        }
+                        preconfirmedInPlaceClientAuthRef.set(authorized)
+                        webView.loadUrl(authorized.source.toASCIIString())
+                    }
+
+                    ClientCertPreferenceClearResult.FAILED -> {
+                        recoverClientAuthPreparationFailure(requestAnotherClear = false)
+                    }
+                }
+            }
+        }
+        clientAuthClearRequest.set(request)
     }
 
     fun beginClientAuthPreparation(grant: ClientAuthGrant) {
@@ -387,29 +489,46 @@ fun BrowserScreen(
         browserError = null
         pageProgress = 0
         clientAuthPreparing = true
-        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+        val profile = selectedProfile
+        if (profile?.clientAuthPolicy == null) {
+            clientAuthPreparing = false
+            return
+        }
+        val sessionClearRequest = sessionDataClearLease.begin(selectedServiceId)
+        siteDataCleaner.clearProfileSession(profile, webViewCapabilities) { sessionCleared ->
             mainHandler.post {
-                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
-                clientAuthPreparing = false
-                when (result) {
-                    ClientCertPreferenceClearResult.CLEARED -> {
-                        browserError = null
-                        pageProgress = 0
-                        webViewRecreationEpoch++
-                    }
+                if (!sessionDataClearLease.consume(sessionClearRequest)) return@post
+                if (!sessionCleared) {
+                    clientAuthPreparing = false
+                    browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                    pageProgress = 100
+                    return@post
+                }
+                val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+                    mainHandler.post {
+                        if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                        clientAuthPreparing = false
+                        when (result) {
+                            ClientCertPreferenceClearResult.CLEARED -> {
+                                browserError = null
+                                pageProgress = 0
+                                webViewRecreationEpoch++
+                            }
 
-                    ClientCertPreferenceClearResult.FAILED -> {
-                        browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                        pageProgress = 100
+                            ClientCertPreferenceClearResult.FAILED -> {
+                                browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                                pageProgress = 100
+                            }
+                        }
                     }
                 }
+                clientAuthClearRequest.set(request)
             }
         }
-        clientAuthClearRequest.set(request)
     }
 
-    LaunchedEffect(selectedServiceId, requiresInPlaceClientAuth) {
-        if (requiresInPlaceClientAuth) beginClientCertPreferenceRecovery()
+    LaunchedEffect(selectedServiceId, requiresClientAuthSessionPreparation) {
+        if (requiresClientAuthSessionPreparation) beginClientCertPreferenceRecovery()
     }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
@@ -474,6 +593,15 @@ fun BrowserScreen(
             }
 
             override fun onTopLevelNavigationStarted(url: String) {
+                val inPlaceHandler = inPlaceClientAuthHandlerRef.get()
+                val continuingConfirmedClientAuth =
+                    inPlaceHandler?.hasProceeded() == true && inPlaceHandler.isAuthFlowUrl(url)
+                if (continuingConfirmedClientAuth) {
+                    pageProgress = 0
+                    browserError = null
+                    blockedReason = null
+                    return
+                }
                 inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
                 cancelPendingInPlaceClientAuth()
                 pageProgress = 0
@@ -494,6 +622,13 @@ fun BrowserScreen(
 
             override fun onTopLevelUrlChanged(url: String) {
                 currentUrl = safeBrowserDisplayUrl(url)
+            }
+
+            override fun onTopLevelPageFinished(url: String) {
+                val handler = inPlaceClientAuthHandlerRef.get() ?: return
+                if (handler.hasProceeded() && !handler.isAuthFlowUrl(url)) {
+                    finishConfirmedInPlaceClientAuthAfterNavigation(handler)
+                }
             }
         }
     }
@@ -523,6 +658,7 @@ fun BrowserScreen(
     BackHandler(onBack = ::goBack)
     DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
+            sessionDataClearLease.invalidate()
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeAttachmentLease.close()
@@ -657,11 +793,52 @@ fun BrowserScreen(
             webView?.loadUrl(validatedEntryUrl)
         },
         onClearSession = {
+            cancelPendingCertificateSelection(
+                dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
+            )
             clientAuthGrant = null
             abandonClientAuth()
+            advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             pendingRequest = null
-            onClearSession()
+            val webView = webViewRef.get()
+            webView?.apply {
+                stopLoading()
+                clearHistory()
+                clearFormData()
+            }
+            val profile = selectedProfile
+            if (profile == null) {
+                browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                pageProgress = 100
+            } else {
+                clientAuthPreparing = true
+                val sessionClearRequest = sessionDataClearLease.begin(selectedServiceId)
+                siteDataCleaner.clearProfileSession(profile, webViewCapabilities) { sessionCleared ->
+                    mainHandler.post {
+                        if (!sessionDataClearLease.consume(sessionClearRequest)) return@post
+                        if (!sessionCleared) {
+                            clientAuthPreparing = false
+                            browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                            pageProgress = 100
+                            return@post
+                        }
+                        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+                            mainHandler.post {
+                                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                                clientAuthPreparing = false
+                                if (result == ClientCertPreferenceClearResult.CLEARED) {
+                                    onClearSession()
+                                } else {
+                                    browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                                    pageProgress = 100
+                                }
+                            }
+                        }
+                        clientAuthClearRequest.set(request)
+                    }
+                }
+            }
         },
         onDeleteAllBrowserData = {
             clientAuthGrant = null
@@ -780,13 +957,86 @@ fun BrowserScreen(
                                 onClientAuthTarget = { authorized ->
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
+                                        pendingClientAuthTargetEpoch = navigationEpoch.longValue
                                         pendingClientAuthTarget = authorized
                                     } else {
                                         clientAuthAuthorizer.invalidate()
                                     }
                                 },
-                                onInPlaceClientAuthChallenge = { authorized, request ->
-                                    if (authorized.profileId == effectiveTopLevelProfileId &&
+                                isConfirmedClientAuthReturnUrl = { rawUrl ->
+                                    inPlaceClientAuthHandlerRef.get()?.isAuthFlowUrl(rawUrl) == true
+                                },
+                                resolveConfirmedClientAuthContinuationUrl = { rawUrl ->
+                                    inPlaceClientAuthHandlerRef.get()?.resolveRequestContinuation(rawUrl)
+                                },
+                                onInPlaceClientAuthChallenge = onInPlaceChallenge@{ authorized, request ->
+                                    val currentHandler = inPlaceClientAuthHandlerRef.get()
+                                    val continuation = currentHandler?.resolveRequestContinuation(
+                                        authorized.target.toASCIIString(),
+                                    )
+                                    if (currentHandler != null && continuation == authorized &&
+                                        currentHandler.hasProceeded()
+                                    ) {
+                                        val nextHandler = ClientAuthRequestHandler(
+                                            grant = ClientAuthGrant(
+                                                authorized = authorized,
+                                                navigationEpoch = navigationEpoch.longValue,
+                                            ),
+                                            identityProvider = clientCertificateIdentityProvider,
+                                            currentNavigationEpoch = { navigationEpoch.longValue },
+                                            clearClientCertPreferences = {
+                                                mainHandler.post {
+                                                    clientCertPreferenceCoordinator.requestClear()
+                                                }
+                                            },
+                                            onDiagnostic = { event ->
+                                                logger.recordPortalCallback(
+                                                    stage = event.stage,
+                                                    host = authorized.target.host,
+                                                )
+                                            },
+                                        )
+                                        if (inPlaceClientAuthHandlerRef.compareAndSet(currentHandler, nextHandler) &&
+                                            currentHandler.delegatePreferenceCleanup()
+                                        ) {
+                                            currentHandler.abandon()
+                                            nextHandler.handle(request)
+                                            return@onInPlaceChallenge
+                                        }
+                                        inPlaceClientAuthHandlerRef.compareAndSet(nextHandler, null)
+                                        nextHandler.abandon()
+                                        request.ignore()
+                                        return@onInPlaceChallenge
+                                    }
+                                    val preconfirmed = preconfirmedInPlaceClientAuthRef.getAndSet(null)
+                                    if (preconfirmed != null &&
+                                        preconfirmed.profileId == authorized.profileId &&
+                                        preconfirmed.source == authorized.source &&
+                                        authorized.profileId == effectiveTopLevelProfileId &&
+                                        !preconfirmed.isExpiredOrInvalid()
+                                    ) {
+                                        val handler = ClientAuthRequestHandler(
+                                            grant = ClientAuthGrant(
+                                                authorized = authorized,
+                                                navigationEpoch = navigationEpoch.longValue,
+                                            ),
+                                            identityProvider = clientCertificateIdentityProvider,
+                                            currentNavigationEpoch = { navigationEpoch.longValue },
+                                            clearClientCertPreferences = {
+                                                mainHandler.post {
+                                                    clientCertPreferenceCoordinator.requestClear()
+                                                }
+                                            },
+                                            onDiagnostic = { event ->
+                                                logger.recordPortalCallback(
+                                                    stage = event.stage,
+                                                    host = authorized.target.host,
+                                                )
+                                            },
+                                        )
+                                        inPlaceClientAuthHandlerRef.getAndSet(handler)?.abandon()
+                                        handler.handle(request)
+                                    } else if (authorized.profileId == effectiveTopLevelProfileId &&
                                         !authorized.isExpiredOrInvalid() &&
                                         pendingInPlaceClientAuth == null
                                     ) {
@@ -801,6 +1051,7 @@ fun BrowserScreen(
                                     }
                                 },
                             )
+                            normalClientRef.set(client)
                             webView.webViewClient = client
                             if (profileRequiresWebMessageBridge(selectedProfile)) {
                                 val attachment = WebMessageBridge(
@@ -829,6 +1080,7 @@ fun BrowserScreen(
                                             request.postBody.fill(0)
                                         } else {
                                             pendingClientAuthPostBody.getAndSet(request.postBody)?.fill(0)
+                                            pendingClientAuthTargetEpoch = navigationEpoch.longValue
                                             pendingClientAuthTarget = request.authorized
                                         }
                                     },
@@ -868,6 +1120,7 @@ fun BrowserScreen(
                                 bridgeAttachmentLease.close()
                             }
                         } else {
+                            normalClientRef.set(null)
                             onWebViewChanged(browserWebViewForSigning(webView, dedicated = true))
                             val handler = ClientAuthRequestHandler(
                                 grant = tlsGrant,
@@ -878,12 +1131,42 @@ fun BrowserScreen(
                                         clientCertPreferenceCoordinator.requestClear()
                                     }
                                 },
+                                onDiagnostic = { event ->
+                                    logger.recordPortalCallback(
+                                        stage = event.stage,
+                                        host = tlsGrant.authorized.target.host,
+                                    )
+                                },
                             )
                             val client = ClientAuthWebViewClient(
                                 grant = tlsGrant,
                                 requestHandler = handler,
                                 callbacks = callbacks,
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
+                                isTerminalReturnUrl = { rawUrl ->
+                                    val uri = runCatching { URI(rawUrl) }.getOrNull()
+                                    val origin = uri?.host?.let { host ->
+                                        runCatching { ExactOrigin.parse("https://$host") }.getOrNull()
+                                    }
+                                    uri != null && origin != null &&
+                                        tlsGrant.authorized.policy.matchesReturnUrl(
+                                            uri,
+                                            tlsGrant.authorized.target,
+                                        ) &&
+                                        origin in selectedProfile?.initiatorOrigins.orEmpty()
+                                },
+                                onTerminalReturnUrl = { rawUrl ->
+                                    mainHandler.post {
+                                        if (webViewRef.get() !== webView || clientAuthGrant != tlsGrant) {
+                                            return@post
+                                        }
+                                        pendingNormalUrl.set(rawUrl)
+                                        clientAuthGrant = null
+                                        pageProgress = 0
+                                        advanceNavigationEpoch()
+                                        onCancelSigning(SigningCancelReason.NAVIGATION, null)
+                                    }
+                                },
                             )
                             dedicatedClientRef.set(client)
                             dedicatedWebViewRef.set(webView)
@@ -936,7 +1219,10 @@ fun BrowserScreen(
                         if (dedicatedWebViewRef.compareAndSet(webView, null)) {
                             dedicatedClientRef.getAndSet(null)?.abandon()
                         }
-                        if (webViewRef.compareAndSet(webView, null)) onWebViewChanged(null)
+                        if (webViewRef.compareAndSet(webView, null)) {
+                            normalClientRef.set(null)
+                            onWebViewChanged(null)
+                        }
                         webView.stopLoading()
                         webView.destroy()
                     },
@@ -1017,6 +1303,12 @@ fun BrowserScreen(
                         clearClientCertPreferences = {
                             mainHandler.post { clientCertPreferenceCoordinator.requestClear() }
                         },
+                        onDiagnostic = { event ->
+                            logger.recordPortalCallback(
+                                stage = event.stage,
+                                host = pending.authorized.target.host,
+                            )
+                        },
                     )
                     inPlaceClientAuthHandlerRef.getAndSet(handler)?.abandon()
                     handler.handle(pending.request)
@@ -1041,20 +1333,31 @@ fun BrowserScreen(
             host = authorized.target.host,
             certificateOwner = certificateState.summary.ownerName,
             onContinue = {
-                if (authorized.profileId != effectiveTopLevelProfileId) {
+                if (authorized.profileId != effectiveTopLevelProfileId ||
+                    pendingClientAuthTargetEpoch != navigationEpoch.longValue
+                ) {
                     pendingClientAuthTarget = null
                     abandonClientAuth()
                 } else {
+                    val confirmedTarget = authorized.refreshedAfterUserConfirmation()
                     pendingClientAuthTarget = null
-                    advanceNavigationEpoch()
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)
-                    bridgeAttachmentLease.close()
-                    webViewRef.get()?.stopLoading()
-                    beginClientAuthPreparation(
-                        ClientAuthGrant(
-                            authorized = authorized,
-                            navigationEpoch = navigationEpoch.longValue,
-                        ),
+                    dispatchConfirmedClientAuthPreparation(
+                        policy = confirmedTarget.policy,
+                        beginInPlace = {
+                            beginConfirmedInPlaceClientAuthPreparation(confirmedTarget)
+                        },
+                        beginDedicated = {
+                            advanceNavigationEpoch()
+                            bridgeAttachmentLease.close()
+                            webViewRef.get()?.stopLoading()
+                            beginClientAuthPreparation(
+                                ClientAuthGrant(
+                                    authorized = confirmedTarget,
+                                    navigationEpoch = navigationEpoch.longValue,
+                                ),
+                            )
+                        },
                     )
                 }
             },

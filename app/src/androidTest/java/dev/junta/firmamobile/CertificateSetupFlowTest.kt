@@ -57,7 +57,7 @@ class CertificateSetupFlowTest {
                 rule.onNodeWithContentDescription("Contraseña del certificado")
                     .performScrollTo()
                     .assertIsDisplayed()
-                assertSecureFlag(scenario, expected = true)
+                assertScreenshotsAllowed(scenario)
 
                 enterPassword("wrong-password")
                 waitForText(
@@ -67,7 +67,7 @@ class CertificateSetupFlowTest {
                     "La contraseña no es correcta o el archivo PKCS#12 no es válido.",
                 ).performScrollTo().assertIsDisplayed()
                 rule.onNodeWithText("wrong-password").assertDoesNotExist()
-                assertSecureFlag(scenario, expected = true)
+                assertScreenshotsAllowed(scenario)
 
                 enterPassword(TEST_PASSPHRASE)
                 waitForText("Certificado encontrado")
@@ -80,7 +80,7 @@ class CertificateSetupFlowTest {
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
-                assertSecureFlag(scenario, expected = true)
+                assertScreenshotsAllowed(scenario)
 
                 scenario.moveToState(Lifecycle.State.CREATED)
                 rule.runOnIdle {
@@ -89,7 +89,7 @@ class CertificateSetupFlowTest {
                 scenario.moveToState(Lifecycle.State.RESUMED)
                 waitForText("Certificado encontrado")
                 rule.onNodeWithContentDescription("Contraseña del certificado").assertDoesNotExist()
-                assertSecureFlag(scenario, expected = true)
+                assertScreenshotsAllowed(scenario)
 
                 scenario.recreate()
                 waitForText("Certificado encontrado")
@@ -97,7 +97,7 @@ class CertificateSetupFlowTest {
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
-                assertSecureFlag(scenario, expected = true)
+                assertScreenshotsAllowed(scenario)
 
                 rule.onNodeWithText("Bloquear certificado")
                     .performScrollTo()
@@ -108,7 +108,7 @@ class CertificateSetupFlowTest {
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Locked)
                 }
-                assertSecureFlag(scenario, expected = true)
+                assertScreenshotsAllowed(scenario)
             }
         }
     }
@@ -128,14 +128,12 @@ class CertificateSetupFlowTest {
         }
     }
 
-    private fun assertSecureFlag(
+    private fun assertScreenshotsAllowed(
         scenario: ActivityScenario<MainActivity>,
-        expected: Boolean,
     ) {
         scenario.onActivity { activity ->
-            val isSecure = activity.window.attributes.flags and FLAG_SECURE != 0
-            check(isSecure == expected) {
-                "FLAG_SECURE expected=$expected actual=$isSecure"
+            check(activity.window.attributes.flags and FLAG_SECURE == 0) {
+                "FLAG_SECURE must stay disabled so screenshots remain available"
             }
         }
     }

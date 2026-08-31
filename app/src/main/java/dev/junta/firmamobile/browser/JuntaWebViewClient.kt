@@ -17,7 +17,13 @@ import androidx.annotation.RequiresApi
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.SanitizedLogger
+import dev.junta.firmamobile.profile.ClientAuthTransitionMode
+import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
+import dev.junta.firmamobile.profile.matchesSourceUrl
+import dev.junta.firmamobile.profile.matchesRequestUrl
+import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
 enum class BrowserErrorCode {
@@ -47,6 +53,8 @@ interface BrowserNavigationCallbacks {
     fun onTopLevelNavigationStarted(url: String) = Unit
 
     fun onTopLevelUrlChanged(url: String) = Unit
+
+    fun onTopLevelPageFinished(url: String) = Unit
 }
 
 class JuntaWebViewClient(
@@ -62,9 +70,12 @@ class JuntaWebViewClient(
     private val onInPlaceClientAuthChallenge: (AuthorizedClientAuthTarget, ClientCertRequest) -> Unit = { _, request ->
         request.ignore()
     },
+    private val resolveConfirmedClientAuthContinuationUrl: (String) -> AuthorizedClientAuthTarget? = { null },
+    private val isConfirmedClientAuthReturnUrl: (String) -> Boolean = { false },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
+    private val preconfirmedInPlaceSource = AtomicReference<PreconfirmedInPlaceSource?>(null)
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
@@ -86,8 +97,59 @@ class JuntaWebViewClient(
         method: String,
     ): Boolean {
         if (!isCurrentWebView(view)) return true
+        if (isModernMainFrame) {
+            recordVeaAuthReturnDiagnostic(targetUrl)
+            val continuation = resolveConfirmedClientAuthContinuationUrl(targetUrl)
+            if (continuation != null && continuation.profileId == activeProfileId() &&
+                !continuation.isExpiredOrInvalid()
+            ) {
+                pendingInPlaceClientAuth.set(
+                    PendingInPlaceClientAuth(continuation, currentNavigationEpoch()),
+                )
+                logger.recordNavigationEvent(
+                    code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                    rawUrl = targetUrl,
+                    isMainFrame = true,
+                    method = method,
+                )
+                return false
+            }
+            if (isConfirmedClientAuthReturnUrl(targetUrl)) {
+                logger.recordNavigationEvent(
+                    code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                    rawUrl = targetUrl,
+                    isMainFrame = true,
+                    method = method,
+                )
+                return false
+            }
+        }
         val currentUrl = currentPageUrl(view)
         val currentProfileId = activeProfileId()
+        if (isModernMainFrame) {
+            val preconfirmed = preconfirmedInPlaceSource.get()
+            val target = strictClientAuthHttpsUri(targetUrl)
+            if (preconfirmed != null && target != null && preconfirmed.sourceObserved &&
+                preconfirmed.navigationEpoch == currentNavigationEpoch() &&
+                preconfirmed.authorized.profileId == currentProfileId &&
+                !preconfirmed.authorized.isExpiredOrInvalid() &&
+                preconfirmed.authorized.policy.matchesSourceUrl(preconfirmed.authorized.source) &&
+                preconfirmed.authorized.policy.matchesRequestUrl(target)
+            ) {
+                val refreshed = preconfirmed.authorized.copy(target = target).refreshedAfterUserConfirmation()
+                preconfirmedInPlaceSource.compareAndSet(preconfirmed, null)
+                pendingInPlaceClientAuth.set(
+                    PendingInPlaceClientAuth(refreshed, currentNavigationEpoch()),
+                )
+                logger.recordNavigationEvent(
+                    code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                    rawUrl = targetUrl,
+                    isMainFrame = true,
+                    method = method,
+                )
+                return false
+            }
+        }
         if (currentProfileId?.value != EuskadiClientAuthPostBridgeAdapter.PROFILE_ID) {
             clientAuthAuthorizer?.observeTopLevelNavigation(
                 activeProfileId = currentProfileId,
@@ -208,11 +270,19 @@ class JuntaWebViewClient(
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         if (!isCurrentWebView(view)) return
         observedTopLevelUrl.set(url)
-        pendingInPlaceClientAuth.get()?.let { pending ->
-            if (url != pending.authorized.target.toASCIIString()) {
+        val inPlaceTargetStart = pendingInPlaceClientAuth.get()?.let { pending ->
+            if (url == pending.authorized.target.toASCIIString()) {
+                pending
+            } else {
                 pendingInPlaceClientAuth.compareAndSet(pending, null)
+                null
             }
         }
+        val preconfirmedSourceStart = preconfirmedInPlaceSource.get()?.takeIf { preconfirmed ->
+            preconfirmed.navigationEpoch == currentNavigationEpoch() &&
+                url == preconfirmed.authorized.source.toASCIIString()
+        }
+        recordVeaAuthReturnDiagnostic(url)
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.PAGE_STARTED,
             rawUrl = url,
@@ -221,7 +291,50 @@ class JuntaWebViewClient(
         )
         callbacks.onTopLevelNavigationStarted(url)
         callbacks.onTopLevelUrlChanged(url)
+        preconfirmedSourceStart?.let { started ->
+            val current = preconfirmedInPlaceSource.get()
+            if (current != null &&
+                current.authorized == started.authorized &&
+                current.navigationEpoch == started.navigationEpoch &&
+                current.authorized.profileId == activeProfileId() &&
+                !current.authorized.isExpiredOrInvalid()
+            ) {
+                preconfirmedInPlaceSource.compareAndSet(
+                    current,
+                    current.copy(navigationEpoch = currentNavigationEpoch()),
+                )
+            }
+        }
+        inPlaceTargetStart?.let { pending ->
+            val current = pendingInPlaceClientAuth.get()
+            if (current === pending &&
+                pending.authorized.profileId == activeProfileId() &&
+                !pending.authorized.isExpiredOrInvalid()
+            ) {
+                pendingInPlaceClientAuth.compareAndSet(
+                    pending,
+                    pending.copy(navigationEpoch = currentNavigationEpoch()),
+                )
+            }
+        }
         clientAuthAuthorizer?.onTopLevelPageStarted(url, currentNavigationEpoch())
+    }
+
+    internal fun armConfirmedInPlaceClientAuth(
+        authorized: AuthorizedClientAuthTarget,
+        navigationEpoch: Long,
+    ): Boolean {
+        if (authorized.policy.transitionMode !in CONFIRMED_IN_PLACE_TRANSITIONS ||
+            authorized.policy.requestMethod != HttpMethod.GET ||
+            authorized.isExpiredOrInvalid() ||
+            !authorized.policy.matchesSourceUrl(authorized.source)
+        ) {
+            return false
+        }
+        preconfirmedInPlaceSource.set(
+            PreconfirmedInPlaceSource(authorized, navigationEpoch, sourceObserved = false),
+        )
+        return true
     }
 
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
@@ -251,6 +364,7 @@ class JuntaWebViewClient(
             method = UNKNOWN_METHOD,
         )
         callbacks.onTopLevelUrlChanged(url)
+        callbacks.onTopLevelPageFinished(url)
         OfvirtualPageCompatibility.apply(view, url)
     }
 
@@ -260,6 +374,20 @@ class JuntaWebViewClient(
     ): WebResourceResponse? {
         if (!isCurrentWebView(view)) return null
         if (request.isForMainFrame) {
+            val preconfirmed = preconfirmedInPlaceSource.get()
+            if (preconfirmed != null &&
+                preconfirmed.navigationEpoch == currentNavigationEpoch() &&
+                request.method.equals(GET_METHOD, ignoreCase = true)
+            ) {
+                val requestUri = strictClientAuthHttpsUri(request.url.toString())
+                if (requestUri == preconfirmed.authorized.source) {
+                    preconfirmedInPlaceSource.compareAndSet(
+                        preconfirmed,
+                        preconfirmed.copy(sourceObserved = true),
+                    )
+                }
+            }
+            recordVeaAuthReturnDiagnostic(request.url.toString())
             logger.recordNavigationEvent(
                 code = DiagnosticEventCode.NETWORK_REQUEST,
                 rawUrl = request.url.toString(),
@@ -338,11 +466,48 @@ class JuntaWebViewClient(
         return true
     }
 
+    private fun recordVeaAuthReturnDiagnostic(rawUrl: String) {
+        val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return
+        if (!uri.scheme.equals("https", ignoreCase = true)) return
+        val host = uri.host?.lowercase() ?: return
+        val names = uri.rawQuery
+            ?.split('&')
+            ?.mapNotNull { part -> part.substringBefore('=').takeIf(String::isNotEmpty) }
+            ?.toSet()
+            .orEmpty()
+        val stage = when {
+            host == "api-veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/auth/returnLogin" && names == setOf("resCode") ->
+                "vea-auth-return-rescode"
+
+            host == "api-veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/auth/returnLogin" && names.isNotEmpty() ->
+                "vea-auth-return-shape-" + names.sorted().joinToString("-")
+
+            host == "veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/authFacade" && names == setOf("token", "redirectUrl") ->
+                "vea-auth-success"
+
+            host == "veaja.cloud.juntadeandalucia.es" &&
+                uri.rawPath == "/authFacade" && names == setOf("error", "redirectUrl") ->
+                "vea-auth-error"
+
+            else -> null
+        } ?: return
+        logger.recordPortalCallback(stage = stage, host = host)
+    }
+
     private fun isCurrentWebView(view: WebView): Boolean = try {
         isActiveWebView(view)
     } catch (_: Exception) {
         false
     }
+
+    private data class PreconfirmedInPlaceSource(
+        val authorized: AuthorizedClientAuthTarget,
+        val navigationEpoch: Long,
+        val sourceObserved: Boolean,
+    )
 
     private data class PendingInPlaceClientAuth(
         val authorized: AuthorizedClientAuthTarget,
@@ -353,5 +518,9 @@ class JuntaWebViewClient(
         const val HTTP_ERROR_START = 400
         const val UNKNOWN_METHOD = "UNKNOWN"
         const val GET_METHOD = "GET"
+        val CONFIRMED_IN_PLACE_TRANSITIONS = setOf(
+            ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+            ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+        )
     }
 }

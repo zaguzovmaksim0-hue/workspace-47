@@ -10,6 +10,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.matchesRequestContinuationUrl
+import dev.junta.firmamobile.profile.matchesReturnUrl
+import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
 import java.security.MessageDigest
@@ -23,25 +26,59 @@ internal data class ClientAuthGrant(
     val navigationEpoch: Long,
 )
 
+internal enum class ClientAuthRequestDiagnostic(val stage: String) {
+    CHALLENGE_RECEIVED("client-cert-received"),
+    PROCEEDED("client-cert-proceeded"),
+    REJECTED_TERMINAL("client-cert-rejected-terminal"),
+    REJECTED_NO_IDENTITY("client-cert-rejected-no-identity"),
+    REJECTED_EPOCH_TTL("client-cert-rejected-epoch-ttl"),
+    REJECTED_HOST_PORT("client-cert-rejected-host-port"),
+    REJECTED_ALGORITHM("client-cert-rejected-algorithm"),
+    REJECTED_KEY_TYPE("client-cert-rejected-key-type"),
+    REJECTED_VALIDITY("client-cert-rejected-validity"),
+    REJECTED_KEY_USAGE("client-cert-rejected-key-usage"),
+    REJECTED_EKU("client-cert-rejected-eku"),
+    REJECTED_ISSUER("client-cert-rejected-issuer"),
+    REJECTED_EXCEPTION("client-cert-rejected-exception"),
+}
+
+private data class ClientAuthValidation(
+    val accepted: Boolean,
+    val rejection: ClientAuthRequestDiagnostic? = null,
+)
+
 internal class ClientAuthRequestHandler(
     private val grant: ClientAuthGrant,
     private val identityProvider: () -> UnlockedIdentity?,
     private val currentNavigationEpoch: () -> Long,
     private val clearClientCertPreferences: () -> Unit,
+    private val onDiagnostic: (ClientAuthRequestDiagnostic) -> Unit = {},
     private val clock: Clock = Clock.systemUTC(),
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
     private val terminal = AtomicBoolean(false)
+    private val proceeded = AtomicBoolean(false)
+    private val preferenceCleanupDelegated = AtomicBoolean(false)
     private val preferencesCleared = AtomicBoolean(false)
 
     fun handle(request: ClientCertRequest) {
+        onDiagnostic(ClientAuthRequestDiagnostic.CHALLENGE_RECEIVED)
         if (!terminal.compareAndSet(false, true)) {
             request.ignore()
+            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_TERMINAL)
             return
         }
         val identity = identityProvider()
-        if (identity == null || !grant.isValidFor(request, identity, clock, monotonicNanos())) {
+        if (identity == null) {
             request.ignore()
+            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_NO_IDENTITY)
+            clearPreferencesOnce()
+            return
+        }
+        val validation = grant.validateFor(request, identity, clock, monotonicNanos())
+        if (!validation.accepted) {
+            request.ignore()
+            onDiagnostic(checkNotNull(validation.rejection))
             clearPreferencesOnce()
             return
         }
@@ -53,10 +90,38 @@ internal class ClientAuthRequestHandler(
                 proceeded = true
                 request.proceed(privateKey, chain)
             }
+            this.proceeded.set(true)
+            onDiagnostic(ClientAuthRequestDiagnostic.PROCEEDED)
         } catch (_: Exception) {
             if (!proceeded) request.ignore()
+            onDiagnostic(ClientAuthRequestDiagnostic.REJECTED_EXCEPTION)
             clearPreferencesOnce()
         }
+    }
+
+    fun hasProceeded(): Boolean = proceeded.get()
+
+    fun isAuthFlowUrl(rawUrl: String): Boolean {
+        if (!hasProceeded()) return false
+        val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return false
+        return uri == grant.authorized.target ||
+            grant.authorized.policy.matchesRequestContinuationUrl(uri, grant.authorized.target) ||
+            grant.authorized.policy.matchesReturnUrl(uri, grant.authorized.target)
+    }
+
+    fun resolveRequestContinuation(rawUrl: String): AuthorizedClientAuthTarget? {
+        if (!hasProceeded() || currentNavigationEpoch() != grant.navigationEpoch ||
+            grant.authorized.isExpiredOrInvalid(monotonicNanos())
+        ) return null
+        val uri = strictClientAuthHttpsUri(rawUrl) ?: return null
+        if (!grant.authorized.policy.matchesRequestContinuationUrl(uri, grant.authorized.target)) return null
+        return grant.authorized.copy(target = uri)
+    }
+
+    fun delegatePreferenceCleanup(): Boolean {
+        if (!hasProceeded()) return false
+        preferenceCleanupDelegated.set(true)
+        return true
     }
 
     fun abandon() {
@@ -65,62 +130,81 @@ internal class ClientAuthRequestHandler(
     }
 
     private fun clearPreferencesOnce() {
+        if (preferenceCleanupDelegated.get()) return
         if (preferencesCleared.compareAndSet(false, true)) clearClientCertPreferences()
     }
 
-    private fun ClientAuthGrant.isValidFor(
+    private fun ClientAuthGrant.validateFor(
         request: ClientCertRequest,
         identity: UnlockedIdentity,
         clock: Clock,
         nowNanos: Long,
-    ): Boolean {
+    ): ClientAuthValidation {
         if (currentNavigationEpoch() != navigationEpoch || authorized.isExpiredOrInvalid(nowNanos)) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EPOCH_TTL)
         }
-        val requestOrigin = authorized.policy.requestOrigins.singleOrNull() ?: return false
-        if (!request.host.equals(requestOrigin.host, ignoreCase = true) ||
-            request.port != authorized.policy.requestPort
+        val targetPort = if (authorized.target.port == -1) 443 else authorized.target.port
+        if (!request.host.equals(authorized.target.host, ignoreCase = true) ||
+            request.port != targetPort
         ) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_HOST_PORT)
         }
         val certificate = identity.certificate
         val algorithm = certificate.publicKey.algorithm.uppercase()
-        if (algorithm !in authorized.certificateRules.allowedKeyAlgorithms) return false
-        val offeredKeyTypes = request.keyTypes?.map(String::uppercase)?.toSet().orEmpty()
-        if (offeredKeyTypes.isEmpty() || offeredKeyTypes.none { it == algorithm || (algorithm == "EC" && it == "ECDSA") }) {
-            return false
+        if (algorithm !in authorized.certificateRules.allowedKeyAlgorithms) {
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ALGORITHM)
+        }
+        if (authorized.policy.requireOfferedKeyTypeMatch) {
+            val offeredKeyTypes = request.keyTypes?.map(String::uppercase)?.toSet().orEmpty()
+            if (offeredKeyTypes.isEmpty() || offeredKeyTypes.none { it == algorithm || (algorithm == "EC" && it == "ECDSA") }) {
+                return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_KEY_TYPE)
+            }
         }
         try {
             certificate.checkValidity(Date.from(clock.instant()))
         } catch (_: Exception) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_VALIDITY)
         }
         val keyUsage = certificate.keyUsage
         if (authorized.certificateRules.requireDigitalSignatureKeyUsage &&
             keyUsage != null && (keyUsage.isEmpty() || !keyUsage[0])
         ) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_KEY_USAGE)
         }
         val extendedKeyUsage = try {
             certificate.extendedKeyUsage
         } catch (_: Exception) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EKU)
         }
-        if (extendedKeyUsage != null &&
+        if (authorized.policy.requireTlsClientAuthExtendedKeyUsage &&
+            extendedKeyUsage != null &&
             TLS_CLIENT_AUTH_OID !in extendedKeyUsage && ANY_EXTENDED_KEY_USAGE_OID !in extendedKeyUsage
         ) {
-            return false
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EKU)
         }
         val principals = request.principals?.toList().orEmpty()
-        if (principals.isEmpty()) return authorized.policy.allowEmptyIssuerList
+        if (principals.isEmpty()) {
+            return if (authorized.policy.allowEmptyIssuerList) {
+                ClientAuthValidation(true)
+            } else {
+                ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
+            }
+        }
         val acceptableIssuerDer = principals.mapNotNull { principal ->
             (principal as? X500Principal)?.encoded
         }
-        if (acceptableIssuerDer.size != principals.size) return false
+        if (acceptableIssuerDer.size != principals.size) {
+            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
+        }
         val chain = identity.chain.ifEmpty { listOf(certificate) }
-        return chain.any { chainCertificate ->
+        val issuerMatches = chain.any { chainCertificate ->
             val issuer = chainCertificate.issuerX500Principal.encoded
             acceptableIssuerDer.any { acceptable -> MessageDigest.isEqual(issuer, acceptable) }
+        }
+        return if (issuerMatches) {
+            ClientAuthValidation(true)
+        } else {
+            ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
         }
     }
 
@@ -136,6 +220,8 @@ internal class ClientAuthWebViewClient(
     private val requestHandler: ClientAuthRequestHandler,
     private val callbacks: BrowserNavigationCallbacks,
     private val isActiveWebView: (WebView) -> Boolean = { true },
+    private val isTerminalReturnUrl: (String) -> Boolean = { false },
+    private val onTerminalReturnUrl: (String) -> Unit = {},
 ) : WebViewClient() {
     private val initialTargetStarted = AtomicBoolean(false)
 
@@ -177,6 +263,15 @@ internal class ClientAuthWebViewClient(
         val isInitialTarget = url == grant.authorized.target.toASCIIString() &&
             initialTargetStarted.compareAndSet(false, true)
         if (!isInitialTarget) {
+            if (grant.authorized.policy.returnUrlConstraints.isNotEmpty()) {
+                requestHandler.abandon()
+                if (isTerminalReturnUrl(url)) {
+                    onTerminalReturnUrl(url)
+                    return
+                }
+                callbacks.onTopLevelUrlChanged(url)
+                return
+            }
             requestHandler.abandon()
             callbacks.onTopLevelNavigationStarted(url)
         }
@@ -228,9 +323,14 @@ internal class ClientAuthWebViewClient(
         val effectivePort = if (uri.port == -1) 443 else uri.port
         if (effectivePort !in 1..65_535) return false
         val origin = runCatching { ExactOrigin.parse("https://${uri.host}") }.getOrNull() ?: return false
-        val requestOrigins = grant.authorized.policy.requestOrigins
-        if (origin in requestOrigins && effectivePort == grant.authorized.policy.requestPort) return true
-        val returnOrigins = grant.authorized.policy.sourceUrls.mapTo(linkedSetOf()) {
+        val policy = grant.authorized.policy
+        if (uri == grant.authorized.target) return true
+        if (policy.returnUrlConstraints.isNotEmpty()) {
+            return effectivePort == 443 && policy.matchesReturnUrl(uri, grant.authorized.target)
+        }
+        val requestOrigins = policy.requestOrigins
+        if (origin in requestOrigins && effectivePort == policy.requestPort) return true
+        val returnOrigins = policy.sourceUrls.mapTo(linkedSetOf()) {
             ExactOrigin.parse("https://${it.host}")
         }
         return effectivePort == 443 && origin in returnOrigins

@@ -1,10 +1,12 @@
 package dev.junta.firmamobile
 
-import android.content.ActivityNotFoundException
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -16,11 +18,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BurgosBatchBridgeAdapter
 import dev.junta.firmamobile.browser.CaibBatchBridgeAdapter
@@ -30,7 +33,6 @@ import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
 import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
 import dev.junta.firmamobile.browser.HuescaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.HuescaBatchSigningAdapter
-import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.LaPalmaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.LaPalmaBatchSigningAdapter
 import dev.junta.firmamobile.browser.LugoBatchBridgeAdapter
@@ -40,10 +42,14 @@ import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
 import dev.junta.firmamobile.browser.MelillaBatchSigningAdapter
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
+import dev.junta.firmamobile.catalog.AndroidRegionDetector
+import dev.junta.firmamobile.catalog.PortalCatalogViewModel
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
-import dev.junta.firmamobile.catalog.PortalId
+import dev.junta.firmamobile.catalog.PortalOpenTarget
+import dev.junta.firmamobile.catalog.PreferencesCatalogPreferencesStore
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
+import dev.junta.firmamobile.catalog.catalogPreferencesDataStore
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.JuntaOriginPolicy
@@ -125,6 +131,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var burgosBatchSigningAdapter: BurgosBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private lateinit var catalogRepository: PortalCatalogRepository
+    private lateinit var catalogViewModel: PortalCatalogViewModel
     private lateinit var catalogSmokeHook: CatalogSmokeHook
     private var currentNavigationEpoch: Long = 0L
     private val signingJobs = SigningJobRegistry()
@@ -142,6 +149,13 @@ class MainActivity : ComponentActivity() {
         OpenableDocumentContract,
     ) { uri ->
         uri?.let(certificateViewModel::onCertificateSelected)
+    }
+
+    private val coarseLocationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) catalogViewModel.detectRegion()
+        else catalogViewModel.onLocationPermissionDenied()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -293,6 +307,16 @@ class MainActivity : ComponentActivity() {
             profileCatalog = BuiltInSiteProfiles.catalog,
             publicCatalog = publicCatalog,
         )
+        catalogViewModel = ViewModelProvider(
+            this,
+            PortalCatalogViewModel.Factory(
+                repository = catalogRepository,
+                preferencesStore = PreferencesCatalogPreferencesStore(
+                    applicationContext.catalogPreferencesDataStore,
+                ),
+                regionDetector = AndroidRegionDetector(applicationContext),
+            ),
+        )[PortalCatalogViewModel::class.java]
         catalogSmokeHook = CatalogSmokeHook(
             activity = this,
             execute = CatalogSmokeController(
@@ -321,6 +345,7 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             val certificateState = certificateViewModel.state.collectAsStateWithLifecycle()
+            val catalogState = catalogViewModel.state.collectAsStateWithLifecycle()
             val ordinarySigningState = signingCoordinator.state.collectAsStateWithLifecycle()
             val batchSigningState = batchSigningCoordinator.state.collectAsStateWithLifecycle()
             val signingState = when (signingFlowOwnership.current()?.kind) {
@@ -347,8 +372,6 @@ class MainActivity : ComponentActivity() {
             }
             JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
-                val recentPortals = remember { mutableStateListOf<PortalId>() }
-                val favoritePortals = remember { mutableStateListOf<PortalId>() }
                 val browserDestination = destination as? AppDestination.Browser
                 if (browserDestination != null && unlocked != null) {
                     val app = application as JuntaFirmaApplication
@@ -377,26 +400,13 @@ class MainActivity : ComponentActivity() {
                             cancelSigning(SigningCancelReason.NAVIGATION)
                             destination = AppDestination.Catalog
                         },
-                        onOpenExternal = { uri ->
+                        onOpenExternal = {
+                            // External browser handoffs are intentionally disabled application-wide.
                             cancelSigning(SigningCancelReason.NAVIGATION)
-                            try {
-                                startActivity(Intent(Intent.ACTION_VIEW, uri))
-                            } catch (_: ActivityNotFoundException) {
-                                // The validated URL stays closed if no browser can handle it.
-                            }
                         },
-                        onOpenOfficialAutoFirma = { uri ->
+                        onOpenOfficialAutoFirma = {
+                            // External AutoFirma handoffs are intentionally disabled application-wide.
                             cancelSigning(SigningCancelReason.NAVIGATION)
-                            try {
-                                startActivity(
-                                    Intent(Intent.ACTION_VIEW, uri)
-                                        .setPackage(JuntaNavigationPolicy.AUTOFIRMA_PACKAGE),
-                                )
-                            } catch (_: ActivityNotFoundException) {
-                                // Keep the validated request closed if official AutoFirma is unavailable.
-                            } catch (_: SecurityException) {
-                                // Fail closed if Android refuses the explicit external package handoff.
-                            }
                         },
                         onChangeCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
@@ -423,30 +433,56 @@ class MainActivity : ComponentActivity() {
                     }
                 } else if (destination == AppDestination.Catalog && unlocked != null) {
                     PortalCatalogScreen(
-                        repository = catalogRepository,
-                        favoritePortalIds = favoritePortals.toSet(),
-                        recentPortalIds = recentPortals,
-                        onToggleFavorite = { portalId ->
-                            if (!favoritePortals.remove(portalId)) {
-                                favoritePortals.add(portalId)
-                            }
-                        },
-                        onOpenPortal = { item ->
-                            val launch = catalogRepository.resolveLaunch(item)
-                            if (launch != null) {
-                                cancelSigning(SigningCancelReason.NAVIGATION)
-                                currentWebView = null
-                                recentPortals.remove(item.portalId)
-                                recentPortals.add(0, item.portalId)
-                                while (recentPortals.size > MAX_RECENT_PROFILES) {
-                                    recentPortals.removeAt(recentPortals.lastIndex)
-                                }
-                                destination = AppDestination.Browser(
-                                    profileId = launch.profileId,
-                                    entryUrl = launch.entryUrl,
+                        state = catalogState.value,
+                        onSearchTextChange = catalogViewModel::updateSearchText,
+                        onSelectRegion = catalogViewModel::selectRegion,
+                        onUseLocation = {
+                            if (
+                                ContextCompat.checkSelfPermission(
+                                    this,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                catalogViewModel.detectRegion()
+                            } else {
+                                coarseLocationPermission.launch(
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
                                 )
                             }
                         },
+                        onOpenLocationSettings = {
+                            runCatching {
+                                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                            }
+                        },
+                        onOpenAppSettings = {
+                            runCatching {
+                                startActivity(
+                                    Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        Uri.parse("package:$packageName"),
+                                    ),
+                                )
+                            }
+                        },
+                        onDismissLocationMessage = catalogViewModel::dismissLocationMessage,
+                        onToggleFavorite = catalogViewModel::toggleFavorite,
+                        onBackToCertificate = { destination = AppDestination.Certificate },
+                        onOpenPortal = { item ->
+                            when (val target = catalogRepository.resolveOpenTarget(item)) {
+                                is PortalOpenTarget.InApp -> {
+                                    cancelSigning(SigningCancelReason.NAVIGATION)
+                                    currentWebView = null
+                                    catalogViewModel.recordOpened(item.portalId)
+                                    destination = AppDestination.Browser(
+                                        profileId = target.launch.profileId,
+                                        entryUrl = target.launch.entryUrl,
+                                    )
+                                }
+                                null -> catalogViewModel.onOpenFailed()
+                            }
+                        },
+                        onUserMessageShown = catalogViewModel::onUserMessageShown,
                     )
                 } else {
                     AppRoot(
@@ -651,7 +687,6 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val MAX_RECENT_PROFILES = 8
         private object OpenableDocumentContract : ActivityResultContracts.OpenDocument() {
             override fun createIntent(context: Context, input: Array<String>): Intent =
                 super.createIntent(context, input).addCategory(Intent.CATEGORY_OPENABLE)
