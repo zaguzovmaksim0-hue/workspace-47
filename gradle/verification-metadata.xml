@@ -4271,6 +4271,30 @@
             <sha256 value="04a2651a2ba794f49eac2e341c308dd9f4d1389f47c352620da33bf83487226d" origin="Verified from Google Maven"/>
          </artifact>
       </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-additional-test-output" version="32.3.1">
+         <artifact name="android-test-plugin-host-additional-test-output-32.3.1.jar">
+            <sha256 value="fa49e44c56bd06b79977d489fd7f2341ada4fec502bb9f88194c57e20b0b00f8" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-additional-test-output-32.3.1.module">
+            <sha256 value="64147f56ed1c8e9f847d485f6568a99b9dd590c5b8faeb5d8dd6d6f6f390c9c6" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-additional-test-output-proto" version="32.3.1">
+         <artifact name="android-test-plugin-host-additional-test-output-proto-32.3.1.jar">
+            <sha256 value="1bab4d0b9820c1ff390c83316caf233e8bf8cbead24364e4385f8b2fe8a451df" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="android-test-plugin-host-additional-test-output-proto-32.3.1.pom">
+            <sha256 value="548209aeadfd7da21950ca69c2241e7f17156d010a1fcf7b4426242034b11d0d" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.utp" name="utp-common" version="32.3.1">
+         <artifact name="utp-common-32.3.1.jar">
+            <sha256 value="314f2ef53814f3930787ea02afb4ceed95891ed6c9f4d4259d7c2a63a36dd75d" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="utp-common-32.3.1.module">
+            <sha256 value="2d3defd14992363d9ded44bc9e80c5d196045522b5b8162d8595bbd56c28fdfe" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
       <component group="com.android.tools.utp" name="gradle-work-action-api" version="32.3.1">
          <artifact name="gradle-work-action-api-32.3.1.jar">
             <sha256 value="de87773a677e87f619c751c306af6ee73a04a7b26e5f205fff287728d8af4ace" origin="Verified from Google Maven"/>
