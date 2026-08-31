@@ -9,12 +9,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -230,8 +234,8 @@ class SigningConfirmationInstrumentedTest {
         val openLabel = InstrumentationRegistry.getInstrumentation()
             .targetContext
             .getString(R.string.catalog_open)
-        waitForText(openLabel)
-        rule.onAllNodesWithText(openLabel)[0].performScrollTo().performClick()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(openLabel))
+        rule.onAllNodesWithText(openLabel)[0].performClick()
     }
 
     private fun waitForText(text: String) {

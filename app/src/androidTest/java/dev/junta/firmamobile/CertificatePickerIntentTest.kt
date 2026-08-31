@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.intent.Intents
-import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.Intents.intending
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasCategories
@@ -16,6 +15,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasExtra
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasType
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.hamcrest.Matchers.allOf
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,7 +47,10 @@ class CertificatePickerIntentTest {
                 intending(matcher).respondWith(ActivityResult(Activity.RESULT_CANCELED, null))
                 ActivityScenario.launch(MainActivity::class.java).use {
                     rule.onNodeWithText("Seleccionar certificado").performClick()
-                    intended(matcher)
+                    assertTrue(
+                        "Expected ACTION_OPEN_DOCUMENT with the PKCS#12 MIME allowlist",
+                        Intents.getIntents().any(matcher::matches),
+                    )
                 }
             } finally {
                 Intents.release()
