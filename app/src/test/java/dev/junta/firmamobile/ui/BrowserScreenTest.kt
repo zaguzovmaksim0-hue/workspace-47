@@ -76,6 +76,16 @@ class BrowserScreenTest {
     }
 
     @Test
+    fun freshBrowserSessionPreparationIsScopedToJuntaSharedClientAuth() {
+        fun profile(id: String) = BuiltInSiteProfiles.qaRegistry.profile(ProfileId(id))
+
+        assertTrue(requiresFreshJuntaBrowserSession(profile("carne-joven-andalucia")))
+        assertTrue(requiresFreshJuntaBrowserSession(profile("junta-andalucia-vea-peg")))
+        assertTrue(!requiresFreshJuntaBrowserSession(profile("aeat-mis-datos-censales")))
+        assertTrue(!requiresFreshJuntaBrowserSession(profile("junta-andalucia")))
+    }
+
+    @Test
     fun webMessageBridgeIsRequiredOnlyForProfilesWithNativeSigningCapabilities() {
         fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {
             it.profileId == ProfileId(id)

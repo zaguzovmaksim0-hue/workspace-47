@@ -87,6 +87,7 @@ import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.matchesReturnUrl
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -142,6 +143,12 @@ internal fun dispatchConfirmedClientAuthPreparation(
 ) {
     if (shouldUseConfirmedInPlaceClientAuth(policy)) beginInPlace() else beginDedicated()
 }
+
+internal fun requiresFreshJuntaBrowserSession(profile: SiteProfile?): Boolean =
+    profile?.clientAuthPolicy?.requestOrigins?.contains(JUNTA_SHARED_CLIENT_AUTH_ORIGIN) == true
+
+private val JUNTA_SHARED_CLIENT_AUTH_ORIGIN =
+    ExactOrigin.parse("https://ws235.juntadeandalucia.es")
 
 internal fun certificateEligibleForSelection(
     profileId: String,
@@ -204,7 +211,7 @@ fun BrowserScreen(
         ) { "Browser entry URL does not belong to the selected profile" }
     }
     val selectedProfile = BuiltInSiteProfiles.runtimeRegistry.profile(selectedServiceId)
-    val requiresClientAuthSessionPreparation = selectedProfile?.clientAuthPolicy != null
+    val requiresClientAuthSessionPreparation = requiresFreshJuntaBrowserSession(selectedProfile)
     val trustController = remember(selectedServiceId, validatedEntryUrl) {
         BrowserTrustController(
             urlPolicy = BrowserUrlPolicy(
