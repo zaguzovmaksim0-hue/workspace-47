@@ -88,6 +88,11 @@ class SigningConfirmationInstrumentedTest {
                         }
                     }
 
+                    waitForWebViewTitle(scenario, SIGN_READY_TITLE)
+                    scenario.onActivity { activity ->
+                        checkNotNull(findWebView(activity.window.decorView))
+                            .evaluateJavascript("window.__jfmRunSyntheticSign();", null)
+                    }
                     waitForConfirmation(scenario)
                     rule.onNodeWithText("Solicitud de firma").assertIsDisplayed()
                     rule.onNodeWithText("Sitio: www.juntadeandalucia.es").assertIsDisplayed()
@@ -378,6 +383,7 @@ class SigningConfirmationInstrumentedTest {
         const val OVORION_PORTAL_ID = "junta-andalucia-ovorion"
         const val TRUSTED_BASE_URL =
             "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
+        const val SIGN_READY_TITLE = "SIGN_READY"
         const val RENDER_READY_TITLE = "RENDER_READY"
         val RENDER_COLOR: Int = Color.rgb(0, 94, 73)
         val TERMINAL_TITLES = setOf(
@@ -395,7 +401,7 @@ class SigningConfirmationInstrumentedTest {
             window.MiniApplet = {
               sign: function() { originalCalls += 1; document.title = 'ORIGINAL'; }
             };
-            window.addEventListener('DOMContentLoaded', function() {
+            window.__jfmRunSyntheticSign = function() {
               window.MiniApplet.sign(
                 btoa('synthetic-data'),
                 'SHA1withRSA',
@@ -406,7 +412,8 @@ class SigningConfirmationInstrumentedTest {
                   document.title = originalCalls === 0 ? code : 'ORIGINAL';
                 }
               );
-            });
+            };
+            window.addEventListener('DOMContentLoaded', function() { document.title = 'SIGN_READY'; });
             </script></head><body>synthetic</body></html>
         """
         const val SYNTHETIC_RENDER_PAGE = """
