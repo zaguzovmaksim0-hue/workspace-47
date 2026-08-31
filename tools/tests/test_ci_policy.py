@@ -126,15 +126,20 @@ class CiPolicyTest(unittest.TestCase):
             self.assertTrue({name for name, _ in pinned}.issubset(allowed))
             self.assertIn("persist-credentials: false", source)
 
-    def test_workflows_cover_supported_work_branches(self) -> None:
+    def test_workflows_gate_main_push_and_pull_requests_without_duplicate_branch_pushes(self) -> None:
         for path in (CI, SECURITY):
             source = self.read(path)
-            for branch in ("main", "feature/**", "fix/**", "security/**", "agent/**", "oss/**"):
-                self.assertIn(
-                    f"      - {branch}\n",
-                    source,
-                    f"missing push branch {branch} in {path.name}",
-                )
+            push_start = source.index("  push:\n")
+            pr_start = source.index("  pull_request:\n", push_start)
+            push_block = source[push_start:pr_start]
+            self.assertIn("      - main\n", push_block)
+            for branch in ("feature/**", "fix/**", "security/**", "agent/**", "oss/**"):
+                self.assertNotIn(f"      - {branch}\n", push_block)
+            pr_end = source.find("  schedule:\n", pr_start)
+            if pr_end < 0:
+                pr_end = source.find("  workflow_dispatch:\n", pr_start)
+            pull_request_block = source[pr_start:pr_end if pr_end >= 0 else len(source)]
+            self.assertIn("      - main\n", pull_request_block)
 
     def test_ci_runs_android_python_go_and_release_fail_closed_gates(self) -> None:
         source = self.read(CI)
@@ -262,6 +267,8 @@ class CiPolicyTest(unittest.TestCase):
         self.assertEqual(source.count('package-ecosystem: "github-actions"'), 1)
         self.assertEqual(source.count('package-ecosystem: "pip"'), 1)
         self.assertIn('directory: "/ws024-relay"', source)
+        self.assertIn('dependency-name: "org.apache.santuario:xmlsec"', source)
+        self.assertIn('"version-update:semver-major"', source)
 
         pip_start = source.index('package-ecosystem: "pip"')
         next_ecosystem = source.find('\n  - package-ecosystem:', pip_start + 1)

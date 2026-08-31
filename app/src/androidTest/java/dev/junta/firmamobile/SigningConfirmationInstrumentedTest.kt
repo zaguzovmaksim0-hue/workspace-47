@@ -71,7 +71,7 @@ class SigningConfirmationInstrumentedTest {
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
                     waitForText("SERVICIOS PÚBLICOS")
-                    rule.onAllNodesWithText("Abrir sede")[0].performScrollTo().performClick()
+                    openFirstPortal()
 
                     waitForWebView(scenario)
                     scenario.onActivity { activity ->
@@ -142,7 +142,7 @@ class SigningConfirmationInstrumentedTest {
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
                     waitForText("SERVICIOS PÚBLICOS")
-                    rule.onAllNodesWithText("Abrir sede")[0].performScrollTo().performClick()
+                    openFirstPortal()
                     waitForWebView(scenario)
 
                     scenario.onActivity { activity ->
@@ -224,6 +224,14 @@ class SigningConfirmationInstrumentedTest {
         } finally {
             bytes.fill(0)
         }
+    }
+
+    private fun openFirstPortal() {
+        val openLabel = InstrumentationRegistry.getInstrumentation()
+            .targetContext
+            .getString(R.string.catalog_open)
+        waitForText(openLabel)
+        rule.onAllNodesWithText(openLabel)[0].performScrollTo().performClick()
     }
 
     private fun waitForText(text: String) {
