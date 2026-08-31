@@ -3249,18 +3249,26 @@ records:
             target["entryUrl"],
         )
         self.assertNotIn("launchUrl", target)
-        self.assertEqual("VEA_AUTOSCRIPT_DYNAMIC", target["protocolFamily"])
+        self.assertEqual("VEA_CLIENT_TLS_AUTH", target["protocolFamily"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-17", target["reviewedOn"])
+        self.assertEqual("2026-08-28", target["reviewedOn"])
         self.assertEqual(
-            ["AUTOFIRMA", "AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
+            [
+                "AUTOFIRMA",
+                "AUTOSCRIPT",
+                "CERTIFICATE_ACCESS",
+                "CLIENT_TLS_AUTH",
+                "ELECTRONIC_SIGNATURE",
+            ],
             target["observedMechanisms"],
         )
         self.assertEqual([], target["observedSignatureFormats"])
-        self.assertIn("qa-only", target["limitations"].lower())
-        self.assertIn("autenticado", target["limitations"].lower())
+        limitations = target["limitations"].lower()
+        self.assertIn("client_tls_auth", limitations)
+        self.assertIn("solo en qa", limitations)
+        self.assertIn("falta e2e", limitations)
 
 
     def test_fuerteventura_pades_profile_binds_exact_qa_pending_contract(self) -> None:
