@@ -37,9 +37,10 @@ stage_fixture() {
   adb shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"
   printf '%s' "$REAL_E2E_CERT_P12_B64" \
     | base64 --decode \
-    | adb shell run-as "$PACKAGE_NAME" sh -c "umask 077; cat > '$CERTIFICATE_PATH'"
+    | adb exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null
   printf '%s' "$REAL_E2E_CERT_PASSWORD" \
-    | adb shell run-as "$PACKAGE_NAME" sh -c "umask 077; cat > '$PASSWORD_PATH'"
+    | adb exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null
+  adb shell run-as "$PACKAGE_NAME" chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"
 
   local cert_size password_size
   cert_size="$(adb shell run-as "$PACKAGE_NAME" stat -c %s "$CERTIFICATE_PATH" | tr -d '\r')"
