@@ -103,14 +103,29 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: scripts/ci/run-real-e2e.sh
-      - name: Upload sanitized REAL E2E report
+      - name: Validate sanitized REAL E2E diagnostics
+        id: validate-real-e2e-diagnostics
         if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f build/reports/real-e2e/progress.tsv ]]; then
+            scripts/ci/real_e2e_report.py validate-progress \
+              --progress build/reports/real-e2e/progress.tsv
+          fi
+          scripts/ci/real_e2e_report.py validate-partial-results \
+            --catalog app/src/main/res/raw/public_portal_catalog_v1.json \
+            --results build/reports/real-e2e/results
+      - name: Upload sanitized REAL E2E report
+        if: always() && steps.validate-real-e2e-diagnostics.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: real-e2e-sanitized-${{ github.sha }}-shard-${{ matrix.shard_number }}
           path: |
             build/reports/real-e2e/summary.json
             build/reports/real-e2e/summary.md
+            build/reports/real-e2e/progress.tsv
+            build/reports/real-e2e/results/
             build/reports/real-e2e/navigation/
           if-no-files-found: warn
           retention-days: 1

@@ -13,15 +13,38 @@ readonly REPORT_DIR="$ROOT_DIR/build/reports/real-e2e"
 readonly RESULTS_DIR="$REPORT_DIR/results"
 readonly LOGS_DIR="$REPORT_DIR/navigation"
 readonly RESULT_PATH="$FIXTURE_DIR/result.json"
+readonly PROGRESS_PATH="$REPORT_DIR/progress.tsv"
 readonly CATALOG_FILE="$ROOT_DIR/app/src/main/res/raw/public_portal_catalog_v1.json"
 readonly PORTAL_TIMEOUT_SECONDS=165
+readonly ADB_TIMEOUT_SECONDS=30
+readonly ADB_INSTALL_TIMEOUT_SECONDS=120
 readonly REPORT_HELPER="$ROOT_DIR/scripts/ci/real_e2e_report.py"
 readonly QA_APK="$ROOT_DIR/app/build/outputs/apk/qa/app-qa.apk"
 readonly TEST_APK="$ROOT_DIR/app/build/outputs/apk/androidTest/qa/app-qa-androidTest.apk"
 
+adb_bounded() {
+  timeout --signal=TERM --kill-after=5s "${ADB_TIMEOUT_SECONDS}s" adb "$@"
+}
+
+adb_install_bounded() {
+  timeout --signal=TERM --kill-after=5s "${ADB_INSTALL_TIMEOUT_SECONDS}s" adb install --no-streaming -r "$1"
+}
+
+progress() {
+  local stage="$1"
+  local portal_id="${2:--}"
+  local index="${3:-0}"
+  local total="${4:-0}"
+  local elapsed="${SECONDS:-0}"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+    "${REAL_E2E_SHARD_INDEX:-?}" "$index/$total" "$portal_id" "$stage" "$elapsed" \
+    | tee -a "$PROGRESS_PATH"
+}
+
 cleanup() {
   unset REAL_E2E_CERT_P12_B64 REAL_E2E_CERT_PASSWORD || true
-  adb shell run-as "$PACKAGE_NAME" rm -rf "$FIXTURE_DIR" >/dev/null 2>&1 || true
+  adb_bounded shell run-as "$PACKAGE_NAME" rm -rf "$FIXTURE_DIR" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT INT TERM
 
@@ -34,17 +57,17 @@ require_secret() {
 }
 
 stage_fixture() {
-  adb shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"
+  adb_bounded shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"
   printf '%s' "$REAL_E2E_CERT_P12_B64" \
     | base64 --decode \
-    | adb exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null
+    | adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null
   printf '%s' "$REAL_E2E_CERT_PASSWORD" \
-    | adb exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null
-  adb shell run-as "$PACKAGE_NAME" chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"
+    | adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null
+  adb_bounded shell run-as "$PACKAGE_NAME" chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"
 
   local cert_size password_size
-  cert_size="$(adb shell run-as "$PACKAGE_NAME" stat -c %s "$CERTIFICATE_PATH" | tr -d '\r')"
-  password_size="$(adb shell run-as "$PACKAGE_NAME" stat -c %s "$PASSWORD_PATH" | tr -d '\r')"
+  cert_size="$(adb_bounded shell run-as "$PACKAGE_NAME" stat -c %s "$CERTIFICATE_PATH" | tr -d '\r')"
+  password_size="$(adb_bounded shell run-as "$PACKAGE_NAME" stat -c %s "$PASSWORD_PATH" | tr -d '\r')"
   [[ "$cert_size" =~ ^[0-9]+$ && "$cert_size" -ge 1 && "$cert_size" -le 1048576 ]]
   [[ "$password_size" =~ ^[0-9]+$ && "$password_size" -ge 1 && "$password_size" -le 8192 ]]
 
@@ -66,6 +89,8 @@ main() {
 
   rm -rf "$REPORT_DIR"
   mkdir -p "$RESULTS_DIR" "$LOGS_DIR"
+  : >"$PROGRESS_PATH"
+  progress SELECT_START
   mapfile -t portal_ids < <(
     "$REPORT_HELPER" select \
       --catalog "$CATALOG_FILE" \
@@ -75,6 +100,7 @@ main() {
   )
   printf 'REAL_E2E shard %s/%s selected %d catalog portal(s).\n' \
     "$((shard_index + 1))" "$shard_total" "${#portal_ids[@]}"
+  progress SELECT_DONE - 0 "${#portal_ids[@]}"
 
   if ((${#portal_ids[@]} == 0)); then
     "$REPORT_HELPER" summary \
@@ -90,9 +116,15 @@ main() {
 
   require_secret REAL_E2E_CERT_P12_B64
   require_secret REAL_E2E_CERT_PASSWORD
-  adb install -r "$QA_APK" >/dev/null
-  adb install -r "$TEST_APK" >/dev/null
+  progress INSTALL_QA_START - 0 "${#portal_ids[@]}"
+  adb_install_bounded "$QA_APK" >/dev/null
+  progress INSTALL_QA_DONE - 0 "${#portal_ids[@]}"
+  progress INSTALL_TEST_START - 0 "${#portal_ids[@]}"
+  adb_install_bounded "$TEST_APK" >/dev/null
+  progress INSTALL_TEST_DONE - 0 "${#portal_ids[@]}"
+  progress STAGE_FIXTURE_START - 0 "${#portal_ids[@]}"
   stage_fixture
+  progress STAGE_FIXTURE_DONE - 0 "${#portal_ids[@]}"
 
   local deep_arg="${REAL_E2E_DEEP_AUTH_SIGNING:-true}"
   [[ "$deep_arg" == true || "$deep_arg" == false ]] || {
@@ -104,9 +136,11 @@ main() {
   for portal_id in "${portal_ids[@]}"; do
     index=$((index + 1))
     printf '[%d/%d] %s\n' "$index" "${#portal_ids[@]}" "$portal_id"
-    adb shell am force-stop "$PACKAGE_NAME" >/dev/null 2>&1 || true
-    adb shell run-as "$PACKAGE_NAME" rm -f "$RESULT_PATH" files/qa-navigation.log >/dev/null 2>&1 || true
+    progress PORTAL_START "$portal_id" "$index" "${#portal_ids[@]}"
+    adb_bounded shell am force-stop "$PACKAGE_NAME" >/dev/null 2>&1 || true
+    adb_bounded shell run-as "$PACKAGE_NAME" rm -f "$RESULT_PATH" files/qa-navigation.log >/dev/null 2>&1 || true
 
+    progress INSTRUMENT_START "$portal_id" "$index" "${#portal_ids[@]}"
     set +e
     timeout --signal=TERM --kill-after=10s "${PORTAL_TIMEOUT_SECONDS}s" \
       adb shell am instrument -w -r \
@@ -118,9 +152,11 @@ main() {
         >/dev/null 2>&1
     status=$?
     set -e
+    progress "INSTRUMENT_DONE_${status}" "$portal_id" "$index" "${#portal_ids[@]}"
 
+    progress RESULT_READ_START "$portal_id" "$index" "${#portal_ids[@]}"
     result_file="$RESULTS_DIR/$portal_id.json"
-    if ! adb exec-out run-as "$PACKAGE_NAME" cat "$RESULT_PATH" >"$result_file" 2>/dev/null || \
+    if ! adb_bounded exec-out run-as "$PACKAGE_NAME" cat "$RESULT_PATH" >"$result_file" 2>/dev/null || \
        ! "$REPORT_HELPER" validate-result --result "$result_file" --portal "$portal_id"; then
       if [[ $status -eq 124 ]]; then reason=TIMEOUT; else reason=RESULT_MISSING; fi
       "$REPORT_HELPER" synthetic \
@@ -131,14 +167,19 @@ main() {
       "$REPORT_HELPER" validate-result --result "$result_file" --portal "$portal_id"
     fi
 
+    progress RESULT_READ_DONE "$portal_id" "$index" "${#portal_ids[@]}"
+    progress NAV_READ_START "$portal_id" "$index" "${#portal_ids[@]}"
     navigation_file="$LOGS_DIR/$portal_id.log"
-    if adb exec-out run-as "$PACKAGE_NAME" cat files/qa-navigation.log >"$navigation_file" 2>/dev/null; then
+    if adb_bounded exec-out run-as "$PACKAGE_NAME" cat files/qa-navigation.log >"$navigation_file" 2>/dev/null; then
       "$REPORT_HELPER" validate-log --log "$navigation_file"
     else
       : >"$navigation_file"
     fi
+    progress NAV_READ_DONE "$portal_id" "$index" "${#portal_ids[@]}"
+    progress PORTAL_DONE "$portal_id" "$index" "${#portal_ids[@]}"
   done
 
+  progress SUMMARY_START - "${#portal_ids[@]}" "${#portal_ids[@]}"
   "$REPORT_HELPER" summary \
     --catalog "$CATALOG_FILE" \
     --results "$RESULTS_DIR" \
@@ -147,6 +188,7 @@ main() {
     --shard-total "$shard_total" \
     --json-output "$REPORT_DIR/summary.json" \
     --markdown-output "$REPORT_DIR/summary.md"
+  progress SUMMARY_DONE - "${#portal_ids[@]}" "${#portal_ids[@]}"
 }
 
 main "$@"

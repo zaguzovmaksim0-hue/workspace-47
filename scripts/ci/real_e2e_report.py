@@ -81,6 +81,29 @@ ALLOWED_LOG_EVENTS = {
 }
 EVENT_RE = re.compile(r"(?:^| )event=([A-Z_]+)(?: |$)")
 
+PROGRESS_TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
+PROGRESS_INDEX_RE = re.compile(r"\d{1,3}/\d{1,3}")
+PROGRESS_STAGES = {
+    "SELECT_START",
+    "SELECT_DONE",
+    "INSTALL_QA_START",
+    "INSTALL_QA_DONE",
+    "INSTALL_TEST_START",
+    "INSTALL_TEST_DONE",
+    "STAGE_FIXTURE_START",
+    "STAGE_FIXTURE_DONE",
+    "PORTAL_START",
+    "INSTRUMENT_START",
+    "RESULT_READ_START",
+    "RESULT_READ_DONE",
+    "NAV_READ_START",
+    "NAV_READ_DONE",
+    "PORTAL_DONE",
+    "SUMMARY_START",
+    "SUMMARY_DONE",
+}
+INSTRUMENT_DONE_RE = re.compile(r"INSTRUMENT_DONE_[0-9]{1,3}")
+
 
 def read_catalog(path: Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -172,6 +195,51 @@ def validate_log(args: argparse.Namespace) -> None:
         match = EVENT_RE.search(line)
         if match is None or match.group(1) not in ALLOWED_LOG_EVENTS:
             raise ValueError(f"record {number} has a disallowed event")
+
+
+def validate_progress(args: argparse.Namespace) -> None:
+    raw = args.progress.read_bytes()
+    if len(raw) > 262_144:
+        raise ValueError("REAL_E2E progress journal exceeds 256 KiB")
+    text = raw.decode("ascii")
+    for number, line in enumerate(text.splitlines(), 1):
+        fields = line.split("\t")
+        if len(fields) != 6:
+            raise ValueError(f"progress record {number} has wrong field count")
+        timestamp, shard, index, portal, stage, elapsed = fields
+        if not PROGRESS_TIMESTAMP_RE.fullmatch(timestamp):
+            raise ValueError(f"progress record {number} has unsafe timestamp")
+        if not shard.isdigit() or not 0 <= int(shard) < 32:
+            raise ValueError(f"progress record {number} has invalid shard")
+        if not PROGRESS_INDEX_RE.fullmatch(index):
+            raise ValueError(f"progress record {number} has invalid index")
+        current, total = (int(value) for value in index.split("/"))
+        if current > 183 or total > 183 or current > total:
+            raise ValueError(f"progress record {number} has impossible index")
+        if portal != "-" and not PORTAL_RE.fullmatch(portal):
+            raise ValueError(f"progress record {number} has unsafe portal id")
+        if stage not in PROGRESS_STAGES and not INSTRUMENT_DONE_RE.fullmatch(stage):
+            raise ValueError(f"progress record {number} has unsafe stage")
+        if not elapsed.isdigit() or int(elapsed) > 86_400:
+            raise ValueError(f"progress record {number} has invalid elapsed time")
+
+
+def validate_partial_results(args: argparse.Namespace) -> None:
+    catalog = read_catalog(args.catalog)
+    allowed = {entry["portalId"] for entry in catalog["entries"]}
+    if not args.results.exists():
+        return
+    paths = sorted(args.results.iterdir())
+    if len(paths) > len(allowed):
+        raise ValueError("too many partial REAL_E2E results")
+    for path in paths:
+        if not path.is_file() or path.suffix != ".json":
+            raise ValueError("unexpected file in partial REAL_E2E results")
+        portal = path.stem
+        if portal not in allowed or not PORTAL_RE.fullmatch(portal):
+            raise ValueError("unknown partial REAL_E2E portal")
+        data = json.loads(path.read_text(encoding="ascii"))
+        validate_result_data(data, portal)
 
 
 def synthetic(args: argparse.Namespace) -> None:
@@ -270,6 +338,15 @@ def parser() -> argparse.ArgumentParser:
     p = sub.add_parser("validate-log")
     p.add_argument("--log", type=Path, required=True)
     p.set_defaults(func=validate_log)
+
+    p = sub.add_parser("validate-progress")
+    p.add_argument("--progress", required=True, type=Path)
+    p.set_defaults(func=validate_progress)
+
+    p = sub.add_parser("validate-partial-results")
+    p.add_argument("--catalog", required=True, type=Path)
+    p.add_argument("--results", required=True, type=Path)
+    p.set_defaults(func=validate_partial_results)
 
     p = sub.add_parser("synthetic")
     p.add_argument("--catalog", type=Path, required=True)
