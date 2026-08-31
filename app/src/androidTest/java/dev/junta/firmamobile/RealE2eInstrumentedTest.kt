@@ -64,7 +64,7 @@ class RealE2eInstrumentedTest {
     @Test
     fun probeOneCatalogPortalWithRealCertificate() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val arguments = instrumentation.arguments
+        val arguments = InstrumentationRegistry.getArguments()
         val explicitlyEnabled = arguments.getString(REAL_E2E_ARGUMENT) == "true"
         val portalId = arguments.getString(PORTAL_ID_ARGUMENT).orEmpty()
         val deepEnabled = arguments.getString(DEEP_ARGUMENT) == "true"

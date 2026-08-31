@@ -93,11 +93,42 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("deep_auth_signing:", workflow)
         self.assertIn('PORTAL_ID_FILTER: ${{ inputs.portal_id }}', workflow)
         self.assertIn('REAL_E2E_DEEP_AUTH_SIGNING: ${{ inputs.deep_auth_signing }}', workflow)
-        self.assertIn('select --catalog "$CATALOG_FILE" --portal "${PORTAL_ID_FILTER:-}"', runner)
+        self.assertIn('"$REPORT_HELPER" select', runner)
+        self.assertIn('--portal "${PORTAL_ID_FILTER:-}"', runner)
+        self.assertIn('--shard-index "$shard_index"', runner)
+        self.assertIn('--shard-total "$shard_total"', runner)
         self.assertIn('for portal_id in "${portal_ids[@]}"', runner)
         self.assertIn("-e portalId", runner)
         self.assertIn("-e realE2e true", runner)
         self.assertIn("-e realE2eDeep", runner)
+
+    def test_workflow_runs_six_parallel_non_overlapping_shards(self) -> None:
+        workflow = self.read(WORKFLOW)
+        self.assertIn("strategy:\n      fail-fast: false\n      matrix:\n", workflow)
+        self.assertEqual(6, workflow.count("shard_number:"))
+        self.assertEqual(6, workflow.count("shard_index:"))
+        self.assertIn('REAL_E2E_SHARD_INDEX: ${{ matrix.shard_index }}', workflow)
+        self.assertIn("REAL_E2E_SHARD_TOTAL: 6", workflow)
+        self.assertIn('shard ${{ matrix.shard_number }}/6', workflow)
+        self.assertIn('shard-${{ matrix.shard_number }}', workflow)
+
+        shards = []
+        for index in range(6):
+            completed = self.helper(
+                "select",
+                "--catalog",
+                str(CATALOG),
+                "--shard-index",
+                str(index),
+                "--shard-total",
+                "6",
+            )
+            self.assertEqual(0, completed.returncode, completed.stderr)
+            shard = completed.stdout.splitlines()
+            self.assertIn(len(shard), {30, 31})
+            shards.extend(shard)
+        self.assertEqual(183, len(shards))
+        self.assertEqual(183, len(set(shards)))
 
     def test_instrumentation_requires_explicit_opt_in_and_has_no_level_six(self) -> None:
         source = self.read(INSTRUMENTATION)

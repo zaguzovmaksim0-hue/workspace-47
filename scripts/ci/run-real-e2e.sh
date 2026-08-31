@@ -52,23 +52,46 @@ stage_fixture() {
 }
 
 main() {
-  require_secret REAL_E2E_CERT_P12_B64
-  require_secret REAL_E2E_CERT_PASSWORD
   [[ -f "$QA_APK" && -f "$TEST_APK" && -f "$CATALOG_FILE" && -x "$REPORT_HELPER" ]]
   command -v adb >/dev/null
   command -v timeout >/dev/null
 
+  local shard_index="${REAL_E2E_SHARD_INDEX:-}"
+  local shard_total="${REAL_E2E_SHARD_TOTAL:-}"
+  [[ "$shard_index" =~ ^[0-9]+$ && "$shard_total" =~ ^[1-9][0-9]*$ ]] || {
+    echo 'REAL_E2E shard coordinates are required' >&2
+    exit 64
+  }
+
   rm -rf "$REPORT_DIR"
   mkdir -p "$RESULTS_DIR" "$LOGS_DIR"
+  mapfile -t portal_ids < <(
+    "$REPORT_HELPER" select \
+      --catalog "$CATALOG_FILE" \
+      --portal "${PORTAL_ID_FILTER:-}" \
+      --shard-index "$shard_index" \
+      --shard-total "$shard_total"
+  )
+  printf 'REAL_E2E shard %s/%s selected %d catalog portal(s).\n' \
+    "$((shard_index + 1))" "$shard_total" "${#portal_ids[@]}"
+
+  if ((${#portal_ids[@]} == 0)); then
+    "$REPORT_HELPER" summary \
+      --catalog "$CATALOG_FILE" \
+      --results "$RESULTS_DIR" \
+      --portal "${PORTAL_ID_FILTER:-}" \
+      --shard-index "$shard_index" \
+      --shard-total "$shard_total" \
+      --json-output "$REPORT_DIR/summary.json" \
+      --markdown-output "$REPORT_DIR/summary.md"
+    return 0
+  fi
+
+  require_secret REAL_E2E_CERT_P12_B64
+  require_secret REAL_E2E_CERT_PASSWORD
   adb install -r "$QA_APK" >/dev/null
   adb install -r "$TEST_APK" >/dev/null
   stage_fixture
-
-  mapfile -t portal_ids < <(
-    "$REPORT_HELPER" select --catalog "$CATALOG_FILE" --portal "${PORTAL_ID_FILTER:-}"
-  )
-  ((${#portal_ids[@]} > 0))
-  printf 'REAL_E2E selected %d catalog portal(s).\n' "${#portal_ids[@]}"
 
   local deep_arg="${REAL_E2E_DEEP_AUTH_SIGNING:-true}"
   [[ "$deep_arg" == true || "$deep_arg" == false ]] || {
@@ -119,6 +142,8 @@ main() {
     --catalog "$CATALOG_FILE" \
     --results "$RESULTS_DIR" \
     --portal "${PORTAL_ID_FILTER:-}" \
+    --shard-index "$shard_index" \
+    --shard-total "$shard_total" \
     --json-output "$REPORT_DIR/summary.json" \
     --markdown-output "$REPORT_DIR/summary.md"
 }

@@ -95,13 +95,32 @@ def read_catalog(path: Path) -> dict:
     return data
 
 
+def selected_ids(
+    catalog: dict,
+    portal: str = "",
+    shard_index: int | None = None,
+    shard_total: int | None = None,
+) -> list[str]:
+    ids = [entry["portalId"] for entry in catalog["entries"]]
+    if portal and (not PORTAL_RE.fullmatch(portal) or portal not in ids):
+        raise ValueError("portal filter is not exactly one bundled portal")
+    if (shard_index is None) != (shard_total is None):
+        raise ValueError("shard index and total must be supplied together")
+    if shard_total is not None:
+        if shard_total < 1 or shard_total > 32 or shard_index is None or not 0 <= shard_index < shard_total:
+            raise ValueError("invalid shard selection")
+        base, extra = divmod(len(ids), shard_total)
+        start = shard_index * base + min(shard_index, extra)
+        size = base + (1 if shard_index < extra else 0)
+        ids = ids[start : start + size]
+    if portal:
+        ids = [portal] if portal in ids else []
+    return ids
+
+
 def select(args: argparse.Namespace) -> None:
     catalog = read_catalog(args.catalog)
-    ids = [entry["portalId"] for entry in catalog["entries"]]
-    if args.portal:
-        if not PORTAL_RE.fullmatch(args.portal) or args.portal not in ids:
-            raise ValueError("portal filter is not exactly one bundled portal")
-        ids = [args.portal]
+    ids = selected_ids(catalog, args.portal, args.shard_index, args.shard_total)
     print("\n".join(ids))
 
 
@@ -178,11 +197,7 @@ def synthetic(args: argparse.Namespace) -> None:
 
 def summary(args: argparse.Namespace) -> None:
     catalog = read_catalog(args.catalog)
-    expected = [entry["portalId"] for entry in catalog["entries"]]
-    if args.portal:
-        if args.portal not in expected:
-            raise ValueError("unknown summary portal filter")
-        expected = [args.portal]
+    expected = selected_ids(catalog, args.portal, args.shard_index, args.shard_total)
     results = []
     for portal in expected:
         path = args.results / f"{portal}.json"
@@ -243,6 +258,8 @@ def parser() -> argparse.ArgumentParser:
     p = sub.add_parser("select")
     p.add_argument("--catalog", type=Path, required=True)
     p.add_argument("--portal", default="")
+    p.add_argument("--shard-index", type=int)
+    p.add_argument("--shard-total", type=int)
     p.set_defaults(func=select)
 
     p = sub.add_parser("validate-result")
@@ -265,6 +282,8 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--catalog", type=Path, required=True)
     p.add_argument("--results", type=Path, required=True)
     p.add_argument("--portal", default="")
+    p.add_argument("--shard-index", type=int)
+    p.add_argument("--shard-total", type=int)
     p.add_argument("--json-output", type=Path, required=True)
     p.add_argument("--markdown-output", type=Path, required=True)
     p.set_defaults(func=summary)
