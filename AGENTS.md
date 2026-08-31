@@ -6,11 +6,13 @@ Use the Matt Pocock engineering workflow for planning, implementation, debugging
 
 Legacy `superpowers:*` requirements in historical plans are superseded by that workflow. They are not automatic or mandatory for this repository unless the operator explicitly requests them.
 
-## Android / Gradle execution
+## Verification / Android / Gradle
 
-Every Gradle command initiated by ChatGPT Watchdog, Codex, or a subagent runs in the saved Codex Cloud environment. See `docs/agents/codex-cloud-gradle.md`.
+GitHub Actions is the canonical broad verification environment. See `docs/agents/github-actions-verification.md`.
 
-The Android phone is an orchestrator, not a Gradle build host. Push an isolated worker branch, capture its exact SHA, and use `$HOME/bin/w47-cloud`. Once a task is already running inside `workspace-47-android`, run the requested `./gradlew` command directly there and never re-delegate it through `w47-cloud`/`codex cloud`. A local Gradle incident fallback requires explicit operator authorization for that incident.
+Agents may use narrowly scoped local tests during implementation when they shorten the RED/GREEN loop, but must not routinely run the full Android unit/lint/assembly gate on the phone. Commit and push the candidate, open/update the pull request, and use the GitHub Actions checks on the exact PR head SHA as the required broad integration evidence.
+
+Codex Cloud and `w47-cloud` are not the default path and are not an automatic fallback. Use them only when the operator explicitly requests that environment for a specific task. If GitHub Actions is unavailable, diagnose/report the blocker instead of silently moving the full gate to the phone or Codex Cloud.
 
 ## Agent metadata
 

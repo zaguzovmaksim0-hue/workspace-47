@@ -21,7 +21,7 @@ Use `codex/ask-matt` when the route is unclear. It is the router for the install
 
 Native Codex multi-agent fan-out may use up to the configured worker limit. Each implementation worker owns one isolated writable Git worktree/branch. Workers do not share writable worktrees. The orchestrator owns integration and publication.
 
-Each worker commits and pushes its candidate branch before any Gradle verification. Gradle verification then runs in Codex Cloud against the exact pushed SHA according to `docs/agents/codex-cloud-gradle.md`.
+Workers may use narrowly scoped local tests while implementing. Each worker then commits and pushes its candidate branch; broad Android/Gradle and instrumentation acceptance runs through GitHub Actions on the exact pull-request head SHA according to `docs/agents/github-actions-verification.md`. Codex Cloud is not the default verification route.
 
 ## Legacy plans
 

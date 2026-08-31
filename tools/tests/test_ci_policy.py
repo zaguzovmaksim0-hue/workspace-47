@@ -112,6 +112,7 @@ class CiPolicyTest(unittest.TestCase):
             "actions/setup-python",
             "android-actions/setup-android",
             "gradle/actions/setup-gradle",
+            "ReactiveCircus/android-emulator-runner",
         }
         for path in (CI, SECURITY):
             source = self.read(path)
@@ -147,12 +148,19 @@ class CiPolicyTest(unittest.TestCase):
             "govulncheck ./...",
             "scripts/ci/verify-android-artifacts.sh",
             "scripts/ci/verify-release-fail-closed.sh",
+            "connectedQaAndroidTest --no-daemon --console=plain",
+            "Android emulator instrumentation",
             "python -m pip install --disable-pip-version-check --requirement tools/requirements.txt",
         ):
             self.assertIn(required, source)
         self.assertIn("timeout-minutes:", source)
         self.assertIn('GO_VERSION: "1.26.6"', source)
         self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
+        self.assertIn("ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d", source)
+        self.assertIn("api-level: 36", source)
+        self.assertIn("target: google_apis", source)
+        self.assertIn("arch: x86_64", source)
+        self.assertIn("sudo udevadm trigger --name-match=kvm", source)
         self.assertIn("concurrency:", source)
         self.assertNotIn("cache-dependency-path: ws024-relay/go.sum", source)
         self.assertIn("cache: false", source)

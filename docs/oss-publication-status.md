@@ -7,7 +7,7 @@
 **Project product cutoff:** `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`
 **Verification environment:** native Termux Android/arm64; Gradle 9.4.1; launcher Java 17.0.20; Robolectric test worker Java 21; verified Termux AAPT2.
 
-> **Historical publication baseline.** The candidate, environment, and gate matrix below record the 2026-08-12 source-publication decision and are not current build instructions. Current development follows the stable-`main` / pull-request workflow in `CONTEXT.md`, and current agent-initiated Android/Gradle verification follows `docs/agents/codex-cloud-gradle.md`.
+> **Historical publication baseline.** The candidate, environment, and gate matrix below record the 2026-08-12 source-publication decision and are not current build instructions. Current development follows the stable-`main` / pull-request workflow in `CONTEXT.md`, and current broad Android/Gradle verification follows `docs/agents/github-actions-verification.md`.
 
 **Current repository state (verified 2026-08-12):** GitHub visibility is `public` and the default branch is `main`.
 
