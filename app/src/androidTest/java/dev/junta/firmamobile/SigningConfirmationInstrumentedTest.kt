@@ -236,6 +236,7 @@ class SigningConfirmationInstrumentedTest {
         rule.onNodeWithText(searchLabel).performTextInput(OVORION_DISPLAY_NAME)
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(OVORION_DISPLAY_NAME))
         rule.onNodeWithText(OVORION_DISPLAY_NAME).assertIsDisplayed()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(openLabel))
         rule.onNodeWithText(openLabel).performClick()
     }
 
