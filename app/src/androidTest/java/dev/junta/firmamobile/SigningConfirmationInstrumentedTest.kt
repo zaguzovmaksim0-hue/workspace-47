@@ -26,6 +26,7 @@ import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.StoredCertificateReference
+import dev.junta.firmamobile.signing.SigningCoordinator
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.io.InputStream
@@ -89,10 +90,7 @@ class SigningConfirmationInstrumentedTest {
                     }
 
                     waitForWebViewTitle(scenario, SIGN_READY_TITLE)
-                    scenario.onActivity { activity ->
-                        checkNotNull(findWebView(activity.window.decorView))
-                            .evaluateJavascript("window.__jfmRunSyntheticSign();", null)
-                    }
+                    invokeSyntheticSign(scenario)
                     waitForConfirmation(scenario)
                     rule.onNodeWithText("Solicitud de firma").assertIsDisplayed()
                     rule.onNodeWithText("Sitio: www.juntadeandalucia.es").assertIsDisplayed()
@@ -254,10 +252,35 @@ class SigningConfirmationInstrumentedTest {
         }
     }
 
+    private fun invokeSyntheticSign(scenario: ActivityScenario<MainActivity>) {
+        val latch = CountDownLatch(1)
+        var result: String? = null
+        scenario.onActivity { activity ->
+            checkNotNull(findWebView(activity.window.decorView)).evaluateJavascript(
+                """
+                (() => {
+                  if (window.__jfmAfirmaShimInstalled !== true) return 'MISSING_SHIM';
+                  if (!window.__jfmProbeDocumentId) return 'MISSING_DOCUMENT_ID';
+                  if (typeof window.__jfmRunSyntheticSign !== 'function') return 'MISSING_RUNNER';
+                  if (window.MiniApplet.sign === window.__jfmOriginalSign) return 'MISSING_WRAPPER';
+                  window.__jfmRunSyntheticSign();
+                  return 'INVOKED';
+                })()
+                """.trimIndent(),
+            ) { value ->
+                result = value
+                latch.countDown()
+            }
+        }
+        assertTrue("Synthetic sign invocation callback timed out", latch.await(5, TimeUnit.SECONDS))
+        assertEquals("\"INVOKED\"", result)
+    }
+
     private fun waitForConfirmation(scenario: ActivityScenario<MainActivity>) {
         var lastSafeTitle: String? = null
         var lastSafeOrigin: String? = null
         var activityTracksWebView = false
+        var signingState = "unknown"
         try {
             rule.waitUntil(timeoutMillis = 15_000) {
                 val dialogVisible = rule.onAllNodesWithText("Solicitud de firma")
@@ -269,19 +292,25 @@ class SigningConfirmationInstrumentedTest {
                     val field = MainActivity::class.java.getDeclaredField("currentWebView")
                         .apply { isAccessible = true }
                     activityTracksWebView = field.get(activity) === webView
+                    val coordinatorField = MainActivity::class.java.getDeclaredField("signingCoordinator")
+                        .apply { isAccessible = true }
+                    signingState = (coordinatorField.get(activity) as SigningCoordinator)
+                        .state.value.javaClass.simpleName
                 }
                 dialogVisible || lastSafeTitle in TERMINAL_TITLES
             }
         } catch (timeout: androidx.compose.ui.test.ComposeTimeoutException) {
             fail(
                 "Native confirmation missing; title=$lastSafeTitle " +
-                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView",
+                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView " +
+                    "signingState=$signingState",
             )
         }
         if (rule.onAllNodesWithText("Solicitud de firma").fetchSemanticsNodes().isEmpty()) {
             fail(
                 "Native confirmation missing; title=$lastSafeTitle " +
-                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView",
+                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView " +
+                    "signingState=$signingState",
             )
         }
     }
@@ -398,10 +427,10 @@ class SigningConfirmationInstrumentedTest {
         const val SYNTHETIC_MINIAPPLET_PAGE = """
             <!doctype html><html><head><title>START</title><script>
             let originalCalls = 0;
-            window.MiniApplet = {
-              sign: function() { originalCalls += 1; document.title = 'ORIGINAL'; }
-            };
+            window.__jfmOriginalSign = function() { originalCalls += 1; document.title = 'ORIGINAL'; };
+            window.MiniApplet = { sign: window.__jfmOriginalSign };
             window.__jfmRunSyntheticSign = function() {
+              document.title = 'INVOKED';
               window.MiniApplet.sign(
                 btoa('synthetic-data'),
                 'SHA1withRSA',

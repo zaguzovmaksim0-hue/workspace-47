@@ -142,6 +142,18 @@ class CiPolicyTest(unittest.TestCase):
             pull_request_block = source[pr_start:pr_end if pr_end >= 0 else len(source)]
             self.assertIn("      - main\n", pull_request_block)
 
+    def test_pull_request_jobs_checkout_the_exact_head_sha(self) -> None:
+        expression = "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+        for path in (CI, SECURITY):
+            source = self.read(path)
+            self.assertIn(f"VERIFY_REF: {expression}", source)
+            checkout_count = source.count("uses: actions/checkout@")
+            self.assertGreater(checkout_count, 0)
+            self.assertEqual(checkout_count, source.count("ref: ${{ env.VERIFY_REF }}"))
+        ci_source = self.read(CI)
+        self.assertIn("android-instrumentation-failure-${{ env.VERIFY_REF }}", ci_source)
+        self.assertNotIn("android-instrumentation-failure-${{ github.sha }}", ci_source)
+
     def test_ci_runs_android_python_go_and_release_fail_closed_gates(self) -> None:
         source = self.read(CI)
         for required in (
