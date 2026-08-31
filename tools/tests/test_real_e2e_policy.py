@@ -146,6 +146,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('progress PORTAL_START', runner)
         self.assertIn('progress INSTRUMENT_START', runner)
         self.assertIn('progress RESULT_READ_START', runner)
+        self.assertIn('describe-result --result "$result_file" --portal "$portal_id"', runner)
         self.assertIn('progress NAV_READ_START', runner)
         self.assertIn('progress PORTAL_DONE', runner)
         self.assertIn('validate-progress', workflow)
@@ -292,6 +293,30 @@ class RealE2ePolicyTest(unittest.TestCase):
         )
         self.assertEqual(0, empty.returncode, empty.stderr)
         self.assertEqual("", empty.stdout)
+
+    def test_describe_result_emits_only_validated_safe_tokens(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "result.json"
+            synthetic = self.helper(
+                "synthetic", "--catalog", str(CATALOG),
+                "--portal", "junta-andalucia-carne-joven",
+                "--output", str(path), "--reason", "RESULT_MISSING",
+            )
+            self.assertEqual(0, synthetic.returncode, synthetic.stderr)
+            data = json.loads(path.read_text(encoding="ascii"))
+            data["infrastructureError"] = "AssertionError"
+            path.write_text(json.dumps(data), encoding="ascii")
+            described = self.helper(
+                "describe-result", "--result", str(path),
+                "--portal", "junta-andalucia-carne-joven",
+            )
+            self.assertEqual(0, described.returncode, described.stderr)
+            self.assertEqual(
+                "RESULT_DIAGNOSTIC portal=junta-andalucia-carne-joven "
+                "classification=INFRASTRUCTURE_ERROR level=0 "
+                "infrastructure=AssertionError signing=NONE",
+                described.stdout.strip(),
+            )
 
     def test_report_helper_rejects_secret_like_extra_fields(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
