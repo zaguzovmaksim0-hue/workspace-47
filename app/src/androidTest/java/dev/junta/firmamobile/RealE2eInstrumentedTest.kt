@@ -93,10 +93,12 @@ class RealE2eInstrumentedTest {
 
         var password: CharArray? = null
         var unlockCache: RealE2eUnlockCache? = null
+        var probeStage = ProbeStage.INIT
         try {
             require(certificateFile.isFile) { "REAL_E2E_CERTIFICATE_MISSING" }
             require(passwordFile.isFile) { "REAL_E2E_PASSWORD_MISSING" }
 
+            probeStage = ProbeStage.RESET_BROWSER
             resetBrowserState()
             application().sanitizedLogger.clear()
 
@@ -123,9 +125,13 @@ class RealE2eInstrumentedTest {
                 unlockCache = unlockCache,
             ).use {
                 ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    probeStage = ProbeStage.ENTER_CATALOG
                     enterCatalog(result)
+                    probeStage = ProbeStage.OPEN_PORTAL
                     openPortal(portalId, result)
+                    probeStage = ProbeStage.WAIT_FOR_WEBVIEW
                     waitForWebView(scenario, result)
+                    probeStage = ProbeStage.OBSERVE_PORTAL
                     observePortal(
                         scenario = scenario,
                         profileCapabilities = profile.capabilities,
@@ -137,7 +143,7 @@ class RealE2eInstrumentedTest {
                 }
             }
         } catch (throwable: Throwable) {
-            result.infrastructureError = safeInfrastructureCode(throwable)
+            result.infrastructureError = safeInfrastructureCode(throwable, probeStage)
             result.classification = ProbeClassification.INFRASTRUCTURE_ERROR
         } finally {
             unlockCache?.close()
@@ -438,11 +444,14 @@ class RealE2eInstrumentedTest {
         rule.waitUntil(timeoutMillis = timeoutMillis, condition = predicate)
     }
 
-    private fun safeInfrastructureCode(throwable: Throwable): String = when (throwable.message) {
+    private fun safeInfrastructureCode(throwable: Throwable, stage: ProbeStage): String = when (throwable.message) {
         "REAL_E2E_CERTIFICATE_MISSING" -> "CERTIFICATE_MISSING"
         "REAL_E2E_PASSWORD_MISSING" -> "PASSWORD_MISSING"
-        else -> throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
-            ?: "UNKNOWN_ERROR"
+        else -> {
+            val type = throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
+                ?: "UNKNOWN_ERROR"
+            "${type}_${stage.name}"
+        }
     }
 
     private fun writeResult(result: ProbeResult) {
@@ -604,6 +613,15 @@ class RealE2eInstrumentedTest {
     ) {
         fun hasTerminalSecurityFailure(): Boolean =
             clientCertRejected || networkError || sslError || navigationBlocked || unexpectedClientAuthHost
+    }
+
+    private enum class ProbeStage {
+        INIT,
+        RESET_BROWSER,
+        ENTER_CATALOG,
+        OPEN_PORTAL,
+        WAIT_FOR_WEBVIEW,
+        OBSERVE_PORTAL,
     }
 
     private enum class ProbeClassification {

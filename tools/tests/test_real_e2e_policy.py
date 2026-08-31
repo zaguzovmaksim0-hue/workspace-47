@@ -98,7 +98,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertEqual(1, source.count("assumeTrue("))
         self.assertIn('"CERTIFICATE_MISSING"', source)
         self.assertIn('"PASSWORD_MISSING"', source)
-        self.assertIn("safeInfrastructureCode(throwable)", source)
+        self.assertIn("safeInfrastructureCode(throwable, probeStage)", source)
 
     def test_runner_streams_credentials_without_remote_shell_redirection(self) -> None:
         runner = self.read(RUNNER)
