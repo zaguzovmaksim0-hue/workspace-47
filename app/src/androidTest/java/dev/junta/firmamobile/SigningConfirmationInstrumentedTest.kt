@@ -9,15 +9,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasScrollToIndexAction
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -30,6 +27,7 @@ import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.StoredCertificateReference
 import java.io.ByteArrayInputStream
+import java.io.FileInputStream
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -230,18 +228,19 @@ class SigningConfirmationInstrumentedTest {
     }
 
     private fun openOvorionPortal() {
-        val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
-        val searchLabel = targetContext.getString(R.string.catalog_search_label)
-        val openLabel = targetContext.getString(R.string.catalog_open)
-        rule.onNodeWithText(searchLabel).performTextInput(OVORION_DISPLAY_NAME)
-        rule.waitUntil(timeoutMillis = 15_000) {
-            rule.onAllNodesWithText(OVORION_CARD_TITLE).fetchSemanticsNodes().isNotEmpty()
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val command = listOf(
+            "am", "broadcast", "--user", "0",
+            "-a", "dev.junta.firmamobile.action.CATALOG_SMOKE",
+            "-p", "dev.junta.firmamobile",
+            "--es", "runId", "instrumentation-ovorion",
+            "--es", "portalId", OVORION_PORTAL_ID,
+            "--es", "operation", "OPEN",
+        ).joinToString(" ")
+        val output = instrumentation.uiAutomation.executeShellCommand(command).use { descriptor ->
+            FileInputStream(descriptor.fileDescriptor).bufferedReader().use { it.readText() }
         }
-        rule.onNodeWithText(OVORION_CARD_TITLE).performScrollTo()
-        rule.waitUntil(timeoutMillis = 15_000) {
-            rule.onAllNodesWithText(openLabel).fetchSemanticsNodes().isNotEmpty()
-        }
-        rule.onAllNodesWithText(openLabel)[0].performScrollTo().performClick()
+        assertTrue("Catalog smoke OPEN failed: $output", output.contains("OPEN_REQUESTED"))
     }
 
     private fun waitForText(text: String) {
@@ -376,8 +375,7 @@ class SigningConfirmationInstrumentedTest {
 
     private companion object {
         const val TEST_PASSPHRASE = "test-password-123"
-        const val OVORION_DISPLAY_NAME = "Ovorion"
-        const val OVORION_CARD_TITLE = "Junta de Andalucía"
+        const val OVORION_PORTAL_ID = "junta-andalucia-ovorion"
         const val TRUSTED_BASE_URL =
             "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
         const val RENDER_READY_TITLE = "RENDER_READY"
