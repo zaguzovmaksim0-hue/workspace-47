@@ -74,7 +74,7 @@ class SigningConfirmationInstrumentedTest {
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
                     waitForText("SERVICIOS PÚBLICOS")
-                    openFirstPortal()
+                    openOvorionPortal()
 
                     waitForWebView(scenario)
                     scenario.onActivity { activity ->
@@ -145,7 +145,7 @@ class SigningConfirmationInstrumentedTest {
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
                     waitForText("SERVICIOS PÚBLICOS")
-                    openFirstPortal()
+                    openOvorionPortal()
                     waitForWebView(scenario)
 
                     scenario.onActivity { activity ->
@@ -229,14 +229,14 @@ class SigningConfirmationInstrumentedTest {
         }
     }
 
-    private fun openFirstPortal() {
+    private fun openOvorionPortal() {
         val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
-        val nationalSectionLabel = targetContext.getString(R.string.catalog_section_spain)
+        val searchLabel = targetContext.getString(R.string.catalog_search_label)
         val openLabel = targetContext.getString(R.string.catalog_open)
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(nationalSectionLabel))
-        rule.onNodeWithText(nationalSectionLabel).performClick()
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(openLabel))
-        rule.onAllNodesWithText(openLabel)[0].performClick()
+        rule.onNodeWithText(searchLabel).performTextInput(OVORION_DISPLAY_NAME)
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(OVORION_DISPLAY_NAME))
+        rule.onNodeWithText(OVORION_DISPLAY_NAME).assertIsDisplayed()
+        rule.onNodeWithText(openLabel).performClick()
     }
 
     private fun waitForText(text: String) {
@@ -371,7 +371,9 @@ class SigningConfirmationInstrumentedTest {
 
     private companion object {
         const val TEST_PASSPHRASE = "test-password-123"
-        const val TRUSTED_BASE_URL = "https://www.juntadeandalucia.es/"
+        const val OVORION_DISPLAY_NAME = "Ovorion"
+        const val TRUSTED_BASE_URL =
+            "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
         const val RENDER_READY_TITLE = "RENDER_READY"
         val RENDER_COLOR: Int = Color.rgb(0, 94, 73)
         val TERMINAL_TITLES = setOf(
