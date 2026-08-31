@@ -400,7 +400,7 @@ class SigningConfirmationInstrumentedTest {
                 btoa('synthetic-data'),
                 'SHA1withRSA',
                 'CAdES',
-                'serverUrl=https://ws024.juntadeandalucia.es/afirma-server-triphase-signer/SignatureService\nmode=explicit',
+                'serverUrl=https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService\nfilters=keyusage.digitalsignature:true;nonexpired:',
                 function() { document.title = 'UNEXPECTED_SUCCESS'; },
                 function(code) {
                   document.title = originalCalls === 0 ? code : 'ORIGINAL';
