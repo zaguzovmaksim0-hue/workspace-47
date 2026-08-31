@@ -50,7 +50,7 @@ Release builds intentionally require private signing configuration and must not 
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 
-Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Agent-initiated Android/Gradle verification uses the exact-SHA Codex Cloud path documented in [`docs/agents/codex-cloud-gradle.md`](docs/agents/codex-cloud-gradle.md); the former one-shot Termux publication runner is retired.
+Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates and API 36 emulator instrumentation; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
 
 ## Verified publication candidate
 

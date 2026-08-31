@@ -6,6 +6,10 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "org.apache.santuario:xmlsec"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "gomod"
     directory: "/ws024-relay"
     schedule:

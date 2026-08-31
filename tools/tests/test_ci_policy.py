@@ -112,6 +112,8 @@ class CiPolicyTest(unittest.TestCase):
             "actions/setup-python",
             "android-actions/setup-android",
             "gradle/actions/setup-gradle",
+            "ReactiveCircus/android-emulator-runner",
+            "actions/upload-artifact",
         }
         for path in (CI, SECURITY):
             source = self.read(path)
@@ -125,15 +127,32 @@ class CiPolicyTest(unittest.TestCase):
             self.assertTrue({name for name, _ in pinned}.issubset(allowed))
             self.assertIn("persist-credentials: false", source)
 
-    def test_workflows_cover_supported_work_branches(self) -> None:
+    def test_workflows_gate_main_push_and_pull_requests_without_duplicate_branch_pushes(self) -> None:
         for path in (CI, SECURITY):
             source = self.read(path)
-            for branch in ("main", "feature/**", "fix/**", "security/**", "agent/**", "oss/**"):
-                self.assertIn(
-                    f"      - {branch}\n",
-                    source,
-                    f"missing push branch {branch} in {path.name}",
-                )
+            push_start = source.index("  push:\n")
+            pr_start = source.index("  pull_request:\n", push_start)
+            push_block = source[push_start:pr_start]
+            self.assertIn("      - main\n", push_block)
+            for branch in ("feature/**", "fix/**", "security/**", "agent/**", "oss/**"):
+                self.assertNotIn(f"      - {branch}\n", push_block)
+            pr_end = source.find("  schedule:\n", pr_start)
+            if pr_end < 0:
+                pr_end = source.find("  workflow_dispatch:\n", pr_start)
+            pull_request_block = source[pr_start:pr_end if pr_end >= 0 else len(source)]
+            self.assertIn("      - main\n", pull_request_block)
+
+    def test_pull_request_jobs_checkout_the_exact_head_sha(self) -> None:
+        expression = "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+        for path in (CI, SECURITY):
+            source = self.read(path)
+            self.assertIn(f"VERIFY_REF: {expression}", source)
+            checkout_count = source.count("uses: actions/checkout@")
+            self.assertGreater(checkout_count, 0)
+            self.assertEqual(checkout_count, source.count("ref: ${{ env.VERIFY_REF }}"))
+        ci_source = self.read(CI)
+        self.assertIn("android-instrumentation-failure-${{ env.VERIFY_REF }}", ci_source)
+        self.assertNotIn("android-instrumentation-failure-${{ github.sha }}", ci_source)
 
     def test_ci_runs_android_python_go_and_release_fail_closed_gates(self) -> None:
         source = self.read(CI)
@@ -147,12 +166,24 @@ class CiPolicyTest(unittest.TestCase):
             "govulncheck ./...",
             "scripts/ci/verify-android-artifacts.sh",
             "scripts/ci/verify-release-fail-closed.sh",
+            "connectedQaAndroidTest --no-daemon --console=plain",
+            "Android emulator instrumentation",
             "python -m pip install --disable-pip-version-check --requirement tools/requirements.txt",
         ):
             self.assertIn(required, source)
         self.assertIn("timeout-minutes:", source)
         self.assertIn('GO_VERSION: "1.26.6"', source)
         self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
+        self.assertIn("ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d", source)
+        self.assertIn("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", source)
+        self.assertIn("if: failure()", source)
+        self.assertIn("app/build/reports/androidTests/connected/qa/", source)
+        self.assertIn("app/build/outputs/androidTest-results/connected/qa/", source)
+        self.assertIn("retention-days: 1", source)
+        self.assertIn("api-level: 36", source)
+        self.assertIn("target: google_apis", source)
+        self.assertIn("arch: x86_64", source)
+        self.assertIn("sudo udevadm trigger --name-match=kvm", source)
         self.assertIn("concurrency:", source)
         self.assertNotIn("cache-dependency-path: ws024-relay/go.sum", source)
         self.assertIn("cache: false", source)
@@ -254,6 +285,8 @@ class CiPolicyTest(unittest.TestCase):
         self.assertEqual(source.count('package-ecosystem: "github-actions"'), 1)
         self.assertEqual(source.count('package-ecosystem: "pip"'), 1)
         self.assertIn('directory: "/ws024-relay"', source)
+        self.assertIn('dependency-name: "org.apache.santuario:xmlsec"', source)
+        self.assertIn('"version-update:semver-major"', source)
 
         pip_start = source.index('package-ecosystem: "pip"')
         next_ecosystem = source.find('\n  - package-ecosystem:', pip_start + 1)

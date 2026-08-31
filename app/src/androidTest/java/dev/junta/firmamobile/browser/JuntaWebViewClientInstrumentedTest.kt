@@ -3,6 +3,7 @@ package dev.junta.firmamobile.browser
 import android.content.Context
 import android.net.Uri
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -44,13 +45,13 @@ class JuntaWebViewClientInstrumentedTest {
             assertTrue(
                 client.shouldOverrideUrlLoading(
                     webView,
-                    "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj",
+                    mainFrameRequest("afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj"),
                 ),
             )
             assertTrue(
                 client.shouldOverrideUrlLoading(
                     webView,
-                    "market://details?id=es.gob.afirma",
+                    mainFrameRequest("market://details?id=es.gob.afirma"),
                 ),
             )
             assertTrue(callbacks.afirmaObserved)
@@ -82,6 +83,15 @@ class JuntaWebViewClientInstrumentedTest {
             assertSame(webView, callbacks.rendererView)
             webView.destroy()
         }
+    }
+
+    private fun mainFrameRequest(rawUrl: String) = object : WebResourceRequest {
+        override fun getUrl(): Uri = Uri.parse(rawUrl)
+        override fun isForMainFrame(): Boolean = true
+        override fun isRedirect(): Boolean = false
+        override fun hasGesture(): Boolean = true
+        override fun getMethod(): String = "GET"
+        override fun getRequestHeaders(): Map<String, String> = emptyMap()
     }
 
     private class RecordingCallbacks : BrowserNavigationCallbacks {

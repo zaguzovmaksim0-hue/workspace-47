@@ -10,12 +10,14 @@ stable-main development.
 
 Use the current policies instead:
   - branch/PR lifecycle: CONTEXT.md and CONTRIBUTING.md
-  - Android/Gradle execution: docs/agents/codex-cloud-gradle.md
-  - exact pushed Android candidate gate:
-      $HOME/bin/w47-cloud full --branch BRANCH --sha SHA
+  - verification: docs/agents/github-actions-verification.md
+  - broad Android/Python/Go/security gate: repository GitHub Actions on the
+    exact pull-request head SHA
+  - physical certificate/authentication E2E: separate operator-controlled
+    device acceptance when required
 
-For a future release/publication milestone, run only individually reviewed
-non-Gradle release/security checks plus the approved Cloud Android gate until a
-new current release orchestrator is reviewed and merged.
+Do not automatically fall back to a full phone-local Gradle gate or Codex Cloud
+when GitHub Actions is unavailable. Diagnose/report the CI blocker unless the
+operator explicitly authorizes a different incident fallback.
 MESSAGE
 exit 2

@@ -1,14 +1,10 @@
 # Building on Termux
 
-> **Manual contributor compatibility path.** These notes describe the historical/manual native-Termux build path. They do not authorize agent-initiated Gradle execution in Termux. Current agents must use the exact-SHA Codex Cloud workflow in `docs/agents/codex-cloud-gradle.md`.
+> **Optional focused local path.** These notes describe native-Termux compatibility for contributors and agents that need a narrow local RED/GREEN check. The canonical broad candidate gate runs in GitHub Actions according to `docs/agents/github-actions-verification.md`; do not routinely run the full unit/lint/assembly matrix on the phone.
 
 ## Supported scope
 
-The authoritative build environment is native Termux/aarch64 on the target
-POCO F6 Pro. Windows, desktop Linux, cross-host wrapper execution, and a fully
-self-contained AAPT2 runtime are not acceptance targets for this project.
-Desktop hosts may still use AGP's standard Maven AAPT2, but that path is not
-validated or claimed as supported.
+Native Termux/aarch64 is a supported focused-development environment. The authoritative broad integration environment is the repository GitHub Actions workflow on GitHub-hosted Ubuntu, which uses AGP's standard Maven AAPT2 and Android SDK tooling. Termux retains its project-local verified AAPT2 compatibility path for narrow local checks.
 
 The project-local AAPT2 provision pins the binary plus the Abseil/Protobuf pair
 that caused the observed ABI failure. Other native libraries declared by the

@@ -26,7 +26,9 @@ import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.StoredCertificateReference
+import dev.junta.firmamobile.signing.SigningCoordinator
 import java.io.ByteArrayInputStream
+import java.io.FileInputStream
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -71,7 +73,7 @@ class SigningConfirmationInstrumentedTest {
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
                     waitForText("SERVICIOS PÚBLICOS")
-                    rule.onAllNodesWithText("Abrir sede")[0].performScrollTo().performClick()
+                    openOvorionPortal()
 
                     waitForWebView(scenario)
                     scenario.onActivity { activity ->
@@ -87,6 +89,8 @@ class SigningConfirmationInstrumentedTest {
                         }
                     }
 
+                    waitForWebViewTitle(scenario, SIGN_READY_TITLE)
+                    invokeSyntheticSign(scenario)
                     waitForConfirmation(scenario)
                     rule.onNodeWithText("Solicitud de firma").assertIsDisplayed()
                     rule.onNodeWithText("Sitio: www.juntadeandalucia.es").assertIsDisplayed()
@@ -142,7 +146,7 @@ class SigningConfirmationInstrumentedTest {
                     waitForText("Certificado encontrado")
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
                     waitForText("SERVICIOS PÚBLICOS")
-                    rule.onAllNodesWithText("Abrir sede")[0].performScrollTo().performClick()
+                    openOvorionPortal()
                     waitForWebView(scenario)
 
                     scenario.onActivity { activity ->
@@ -226,16 +230,57 @@ class SigningConfirmationInstrumentedTest {
         }
     }
 
+    private fun openOvorionPortal() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val command = listOf(
+            "am", "broadcast", "--user", "0",
+            "-a", "dev.junta.firmamobile.action.CATALOG_SMOKE",
+            "-p", "dev.junta.firmamobile",
+            "--es", "runId", "instrumentation-ovorion",
+            "--es", "portalId", OVORION_PORTAL_ID,
+            "--es", "operation", "OPEN",
+        ).joinToString(" ")
+        val output = instrumentation.uiAutomation.executeShellCommand(command).use { descriptor ->
+            FileInputStream(descriptor.fileDescriptor).bufferedReader().use { it.readText() }
+        }
+        assertTrue("Catalog smoke OPEN failed: $output", output.contains("OPEN_REQUESTED"))
+    }
+
     private fun waitForText(text: String) {
         rule.waitUntil(timeoutMillis = 15_000) {
             rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
+    private fun invokeSyntheticSign(scenario: ActivityScenario<MainActivity>) {
+        val latch = CountDownLatch(1)
+        var result: String? = null
+        scenario.onActivity { activity ->
+            checkNotNull(findWebView(activity.window.decorView)).evaluateJavascript(
+                """
+                (() => {
+                  if (window.__jfmAfirmaShimInstalled !== true) return 'MISSING_SHIM';
+                  if (!window.__jfmProbeDocumentId) return 'MISSING_DOCUMENT_ID';
+                  if (typeof window.__jfmRunSyntheticSign !== 'function') return 'MISSING_RUNNER';
+                  if (window.MiniApplet.sign === window.__jfmOriginalSign) return 'MISSING_WRAPPER';
+                  window.__jfmRunSyntheticSign();
+                  return 'INVOKED';
+                })()
+                """.trimIndent(),
+            ) { value ->
+                result = value
+                latch.countDown()
+            }
+        }
+        assertTrue("Synthetic sign invocation callback timed out", latch.await(5, TimeUnit.SECONDS))
+        assertEquals("\"INVOKED\"", result)
+    }
+
     private fun waitForConfirmation(scenario: ActivityScenario<MainActivity>) {
         var lastSafeTitle: String? = null
         var lastSafeOrigin: String? = null
         var activityTracksWebView = false
+        var signingState = "unknown"
         try {
             rule.waitUntil(timeoutMillis = 15_000) {
                 val dialogVisible = rule.onAllNodesWithText("Solicitud de firma")
@@ -247,19 +292,25 @@ class SigningConfirmationInstrumentedTest {
                     val field = MainActivity::class.java.getDeclaredField("currentWebView")
                         .apply { isAccessible = true }
                     activityTracksWebView = field.get(activity) === webView
+                    val coordinatorField = MainActivity::class.java.getDeclaredField("signingCoordinator")
+                        .apply { isAccessible = true }
+                    signingState = (coordinatorField.get(activity) as SigningCoordinator)
+                        .state.value.javaClass.simpleName
                 }
                 dialogVisible || lastSafeTitle in TERMINAL_TITLES
             }
         } catch (timeout: androidx.compose.ui.test.ComposeTimeoutException) {
             fail(
                 "Native confirmation missing; title=$lastSafeTitle " +
-                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView",
+                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView " +
+                    "signingState=$signingState",
             )
         }
         if (rule.onAllNodesWithText("Solicitud de firma").fetchSemanticsNodes().isEmpty()) {
             fail(
                 "Native confirmation missing; title=$lastSafeTitle " +
-                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView",
+                    "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView " +
+                    "signingState=$signingState",
             )
         }
     }
@@ -358,7 +409,10 @@ class SigningConfirmationInstrumentedTest {
 
     private companion object {
         const val TEST_PASSPHRASE = "test-password-123"
-        const val TRUSTED_BASE_URL = "https://www.juntadeandalucia.es/"
+        const val OVORION_PORTAL_ID = "junta-andalucia-ovorion"
+        const val TRUSTED_BASE_URL =
+            "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
+        const val SIGN_READY_TITLE = "SIGN_READY"
         const val RENDER_READY_TITLE = "RENDER_READY"
         val RENDER_COLOR: Int = Color.rgb(0, 94, 73)
         val TERMINAL_TITLES = setOf(
@@ -373,21 +427,22 @@ class SigningConfirmationInstrumentedTest {
         const val SYNTHETIC_MINIAPPLET_PAGE = """
             <!doctype html><html><head><title>START</title><script>
             let originalCalls = 0;
-            window.MiniApplet = {
-              sign: function() { originalCalls += 1; document.title = 'ORIGINAL'; }
-            };
-            window.addEventListener('DOMContentLoaded', function() {
+            window.__jfmOriginalSign = function() { originalCalls += 1; document.title = 'ORIGINAL'; };
+            window.MiniApplet = { sign: window.__jfmOriginalSign };
+            window.__jfmRunSyntheticSign = function() {
+              document.title = 'INVOKED';
               window.MiniApplet.sign(
                 btoa('synthetic-data'),
                 'SHA1withRSA',
                 'CAdES',
-                'serverUrl=https://ws024.juntadeandalucia.es/afirma-server-triphase-signer/SignatureService\nmode=explicit',
+                'serverUrl=https://ws024.juntadeandalucia.es/afirma-validator-miniapplet-1_4/sign/TriPhaseSignatureService\nfilters=keyusage.digitalsignature:true;nonexpired:',
                 function() { document.title = 'UNEXPECTED_SUCCESS'; },
                 function(code) {
                   document.title = originalCalls === 0 ? code : 'ORIGINAL';
                 }
               );
-            });
+            };
+            window.addEventListener('DOMContentLoaded', function() { document.title = 'SIGN_READY'; });
             </script></head><body>synthetic</body></html>
         """
         const val SYNTHETIC_RENDER_PAGE = """

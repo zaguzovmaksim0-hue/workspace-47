@@ -348,9 +348,14 @@ class MainActivity : ComponentActivity() {
             val catalogState = catalogViewModel.state.collectAsStateWithLifecycle()
             val ordinarySigningState = signingCoordinator.state.collectAsStateWithLifecycle()
             val batchSigningState = batchSigningCoordinator.state.collectAsStateWithLifecycle()
+            // Read both observable states unconditionally. Ownership is an imperative gate rather than
+            // Compose state; conditional reads would leave the initial Idle composition unsubscribed
+            // from the coordinator that later acquires ownership and enters AwaitingConfirmation.
+            val ordinarySigningStateValue = ordinarySigningState.value
+            val batchSigningStateValue = batchSigningState.value
             val signingState = when (signingFlowOwnership.current()?.kind) {
-                SigningFlowKind.BATCH -> batchSigningState.value
-                SigningFlowKind.ORDINARY -> ordinarySigningState.value
+                SigningFlowKind.BATCH -> batchSigningStateValue
+                SigningFlowKind.ORDINARY -> ordinarySigningStateValue
                 null -> SigningUiState.Idle
             }
             val updateSecureWindow = remember(window) {
