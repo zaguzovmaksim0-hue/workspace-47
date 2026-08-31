@@ -91,6 +91,16 @@ PROGRESS_STAGES = {
     "INSTALL_TEST_START",
     "INSTALL_TEST_DONE",
     "STAGE_FIXTURE_START",
+    "STAGE_MKDIR_START",
+    "STAGE_MKDIR_DONE",
+    "STAGE_CERT_WRITE_START",
+    "STAGE_CERT_WRITE_DONE",
+    "STAGE_PASSWORD_WRITE_START",
+    "STAGE_PASSWORD_WRITE_DONE",
+    "STAGE_CHMOD_START",
+    "STAGE_CHMOD_DONE",
+    "STAGE_STAT_START",
+    "STAGE_STAT_DONE",
     "STAGE_FIXTURE_DONE",
     "PORTAL_START",
     "INSTRUMENT_START",
@@ -144,7 +154,8 @@ def selected_ids(
 def select(args: argparse.Namespace) -> None:
     catalog = read_catalog(args.catalog)
     ids = selected_ids(catalog, args.portal, args.shard_index, args.shard_total)
-    print("\n".join(ids))
+    if ids:
+        print("\n".join(ids))
 
 
 def validate_result_data(data: dict, expected_portal: str) -> None:

@@ -76,9 +76,12 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_runner_streams_credentials_without_remote_shell_redirection(self) -> None:
         runner = self.read(RUNNER)
         self.assertIn('adb_bounded shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"', runner)
-        self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null', runner)
-        self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null', runner)
+        self.assertIn('adb_bounded shell -T run-as "$PACKAGE_NAME" dd of="$CERTIFICATE_PATH" bs=4096', runner)
+        self.assertIn('adb_bounded shell -T run-as "$PACKAGE_NAME" dd of="$PASSWORD_PATH" bs=4096', runner)
         self.assertIn('chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"', runner)
+        self.assertIn('progress STAGE_CERT_WRITE_START', runner)
+        self.assertIn('progress STAGE_PASSWORD_WRITE_START', runner)
+        self.assertIn('progress STAGE_STAT_DONE', runner)
         self.assertNotIn('run-as "$PACKAGE_NAME" sh -c', runner)
         self.assertNotIn("cat > '$CERTIFICATE_PATH'", runner)
         self.assertNotIn("cat > '$PASSWORD_PATH'", runner)
@@ -107,6 +110,12 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('progress INSTALL_QA_DONE', runner)
         self.assertIn('progress INSTALL_TEST_START', runner)
         self.assertIn('progress STAGE_FIXTURE_START', runner)
+        self.assertIn('progress STAGE_MKDIR_DONE', runner)
+        self.assertIn('progress STAGE_CERT_WRITE_START', runner)
+        self.assertIn('progress STAGE_CERT_WRITE_DONE', runner)
+        self.assertIn('progress STAGE_PASSWORD_WRITE_DONE', runner)
+        self.assertIn('progress STAGE_STAT_DONE', runner)
+        self.assertIn('::notice title=REAL_E2E progress::', runner)
         self.assertIn('progress PORTAL_START', runner)
         self.assertIn('progress INSTRUMENT_START', runner)
         self.assertIn('progress RESULT_READ_START', runner)
@@ -240,6 +249,22 @@ class RealE2ePolicyTest(unittest.TestCase):
             )
             rejected = self.helper("validate-progress", "--progress", str(path))
             self.assertNotEqual(0, rejected.returncode)
+
+    def test_select_emits_no_blank_record_for_empty_filtered_shard(self) -> None:
+        catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+        portal = catalog["entries"][0]["portalId"]
+        populated = self.helper(
+            "select", "--catalog", str(CATALOG), "--portal", portal,
+            "--shard-index", "0", "--shard-total", "6",
+        )
+        self.assertEqual(0, populated.returncode, populated.stderr)
+        self.assertEqual(portal + "\n", populated.stdout)
+        empty = self.helper(
+            "select", "--catalog", str(CATALOG), "--portal", portal,
+            "--shard-index", "5", "--shard-total", "6",
+        )
+        self.assertEqual(0, empty.returncode, empty.stderr)
+        self.assertEqual("", empty.stdout)
 
     def test_report_helper_rejects_secret_like_extra_fields(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
