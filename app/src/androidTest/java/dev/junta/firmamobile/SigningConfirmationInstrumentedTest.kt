@@ -235,9 +235,9 @@ class SigningConfirmationInstrumentedTest {
         val openLabel = targetContext.getString(R.string.catalog_open)
         rule.onNodeWithText(searchLabel).performTextInput(OVORION_DISPLAY_NAME)
         rule.waitUntil(timeoutMillis = 15_000) {
-            rule.onAllNodesWithText(OVORION_DISPLAY_NAME).fetchSemanticsNodes().size >= 2
+            rule.onAllNodesWithText(OVORION_CARD_TITLE).fetchSemanticsNodes().isNotEmpty()
         }
-        rule.onAllNodesWithText(OVORION_DISPLAY_NAME)[1].performScrollTo()
+        rule.onNodeWithText(OVORION_CARD_TITLE).performScrollTo()
         rule.waitUntil(timeoutMillis = 15_000) {
             rule.onAllNodesWithText(openLabel).fetchSemanticsNodes().isNotEmpty()
         }
@@ -377,6 +377,7 @@ class SigningConfirmationInstrumentedTest {
     private companion object {
         const val TEST_PASSPHRASE = "test-password-123"
         const val OVORION_DISPLAY_NAME = "Ovorion"
+        const val OVORION_CARD_TITLE = "Junta de Andalucía"
         const val TRUSTED_BASE_URL =
             "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
         const val RENDER_READY_TITLE = "RENDER_READY"
