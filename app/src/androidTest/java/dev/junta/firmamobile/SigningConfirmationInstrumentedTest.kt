@@ -230,9 +230,11 @@ class SigningConfirmationInstrumentedTest {
     }
 
     private fun openFirstPortal() {
-        val openLabel = InstrumentationRegistry.getInstrumentation()
-            .targetContext
-            .getString(R.string.catalog_open)
+        val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val nationalSectionLabel = targetContext.getString(R.string.catalog_section_spain)
+        val openLabel = targetContext.getString(R.string.catalog_open)
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(nationalSectionLabel))
+        rule.onNodeWithText(nationalSectionLabel).performClick()
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(openLabel))
         rule.onAllNodesWithText(openLabel)[0].performClick()
     }
