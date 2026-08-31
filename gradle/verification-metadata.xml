@@ -4540,6 +4540,14 @@
             <sha256 value="edb82dcbe738ca78b31612cb307bf99e5f02f25c8125048f933e792fd7778beb" origin="Verified from Google Maven"/>
          </artifact>
       </component>
+      <component group="com.android.tools.emulator" name="proto" version="32.3.1">
+         <artifact name="proto-32.3.1.jar">
+            <sha256 value="2997a64898e7e886746c55882453d5697bfc694d956353b242a8831fb12ac9d6" origin="Verified from Google Maven"/>
+         </artifact>
+         <artifact name="proto-32.3.1.pom">
+            <sha256 value="2e8b9787e879e9558da22ec1b72d7548d03f5cabb81779044b01de97acdfca15" origin="Verified from Google Maven"/>
+         </artifact>
+      </component>
       <component group="com.android.tools.external.com-intellij" name="intellij-core" version="32.3.1">
          <artifact name="intellij-core-32.3.1.jar">
             <sha256 value="4ec6a9163036699a296c8ae5a838c774eaa5b91fdc8f97cecbdf8f6d3ce14155" origin="Verified from Google Maven"/>
