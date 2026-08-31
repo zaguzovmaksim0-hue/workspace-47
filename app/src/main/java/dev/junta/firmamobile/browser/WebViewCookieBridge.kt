@@ -15,6 +15,8 @@ interface WebCookieStore {
 
     fun flush()
 
+    fun removeSessionCookies(callback: (Boolean) -> Unit)
+
     fun removeAllCookies(callback: (Boolean) -> Unit)
 }
 
@@ -32,6 +34,10 @@ class AndroidWebCookieStore(
 
     override fun flush() {
         cookieManager.flush()
+    }
+
+    override fun removeSessionCookies(callback: (Boolean) -> Unit) {
+        cookieManager.removeSessionCookies(callback)
     }
 
     override fun removeAllCookies(callback: (Boolean) -> Unit) {

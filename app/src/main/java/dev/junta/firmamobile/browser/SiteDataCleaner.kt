@@ -2,6 +2,7 @@ package dev.junta.firmamobile.browser
 
 import android.webkit.WebStorage
 import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.SiteProfile
 import java.net.URI
 import java.util.Locale
 
@@ -67,6 +68,40 @@ class SiteDataCleaner(
         }
     }
 
+    fun clearProfileSession(
+        profile: SiteProfile,
+        capabilities: WebViewProfileCapabilities,
+        callback: (Boolean) -> Unit,
+    ) {
+        val targets = profileSessionTargets(profile)
+        var profileStorageCleared = true
+        for (target in targets) {
+            when (clearOrigin(target, capabilities)) {
+                SiteClearResult.FAILED -> profileStorageCleared = false
+                SiteClearResult.CLEARED_EXACTLY,
+                SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE,
+                -> Unit
+            }
+        }
+        try {
+            cookieStore.removeSessionCookies { sessionCookiesRemoved ->
+                val sessionCookieDeletionDurable = if (sessionCookiesRemoved) {
+                    try {
+                        cookieStore.flush()
+                        true
+                    } catch (_: Exception) {
+                        false
+                    }
+                } else {
+                    true
+                }
+                callback(profileStorageCleared && sessionCookieDeletionDurable)
+            }
+        } catch (_: Exception) {
+            callback(false)
+        }
+    }
+
     fun clearAllConfirmed(callback: (Boolean) -> Unit) {
         val storageCleared = try {
             webStorage.deleteAllData()
@@ -90,6 +125,29 @@ class SiteDataCleaner(
             }
         } catch (_: Exception) {
             callback(false)
+        }
+    }
+
+    internal fun profileSessionTargets(profile: SiteProfile): Set<URI> = buildSet {
+        fun addOrigin(origin: ExactOrigin) {
+            add(URI(origin.serialized + "/"))
+        }
+        fun addUri(uri: URI) {
+            val host = uri.host ?: return
+            runCatching { ExactOrigin.parse("https://$host") }.getOrNull()?.let(::addOrigin)
+        }
+
+        addUri(profile.startUrl)
+        profile.initiatorOrigins.forEach(::addOrigin)
+        profile.redirectOrigins.forEach(::addOrigin)
+        profile.trustedBrowseOrigins.forEach(::addOrigin)
+        profile.endpoints.values.forEach { addUri(it.url) }
+        profile.clientAuthPolicy?.let { policy ->
+            policy.requestOrigins.forEach(::addOrigin)
+            policy.sourceUrls.forEach(::addUri)
+            policy.sourceBase64UrlConstraints.values.forEach { addOrigin(it.origin) }
+            policy.requestContinuationUrlConstraints.forEach { addOrigin(it.origin) }
+            policy.returnUrlConstraints.forEach { addOrigin(it.origin) }
         }
     }
 

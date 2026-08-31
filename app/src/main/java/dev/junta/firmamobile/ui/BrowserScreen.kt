@@ -191,6 +191,7 @@ fun BrowserScreen(
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
+    val sessionDataClearLease = remember { BrowserDataClearCompletionLease<ProfileId>() }
     val globalDataClearLease = remember { BrowserDataClearCompletionLease<WebView>() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
@@ -203,8 +204,7 @@ fun BrowserScreen(
         ) { "Browser entry URL does not belong to the selected profile" }
     }
     val selectedProfile = BuiltInSiteProfiles.runtimeRegistry.profile(selectedServiceId)
-    val requiresInPlaceClientAuth =
-        selectedProfile?.clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE
+    val requiresClientAuthSessionPreparation = selectedProfile?.clientAuthPolicy != null
     val trustController = remember(selectedServiceId, validatedEntryUrl) {
         BrowserTrustController(
             urlPolicy = BrowserUrlPolicy(
@@ -243,7 +243,7 @@ fun BrowserScreen(
         AtomicReference<ClientCertPreferenceClearRequest?>()
     }
     var clientAuthPreparing by remember(selectedServiceId) {
-        mutableStateOf(requiresInPlaceClientAuth)
+        mutableStateOf(requiresClientAuthSessionPreparation)
     }
     var preserveWebViewDuringClientAuthClear by remember { mutableStateOf(false) }
     var clientAuthGrant by remember { mutableStateOf<ClientAuthGrant?>(null) }
@@ -482,29 +482,46 @@ fun BrowserScreen(
         browserError = null
         pageProgress = 0
         clientAuthPreparing = true
-        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+        val profile = selectedProfile
+        if (profile?.clientAuthPolicy == null) {
+            clientAuthPreparing = false
+            return
+        }
+        val sessionClearRequest = sessionDataClearLease.begin(selectedServiceId)
+        siteDataCleaner.clearProfileSession(profile, webViewCapabilities) { sessionCleared ->
             mainHandler.post {
-                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
-                clientAuthPreparing = false
-                when (result) {
-                    ClientCertPreferenceClearResult.CLEARED -> {
-                        browserError = null
-                        pageProgress = 0
-                        webViewRecreationEpoch++
-                    }
+                if (!sessionDataClearLease.consume(sessionClearRequest)) return@post
+                if (!sessionCleared) {
+                    clientAuthPreparing = false
+                    browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                    pageProgress = 100
+                    return@post
+                }
+                val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+                    mainHandler.post {
+                        if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                        clientAuthPreparing = false
+                        when (result) {
+                            ClientCertPreferenceClearResult.CLEARED -> {
+                                browserError = null
+                                pageProgress = 0
+                                webViewRecreationEpoch++
+                            }
 
-                    ClientCertPreferenceClearResult.FAILED -> {
-                        browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                        pageProgress = 100
+                            ClientCertPreferenceClearResult.FAILED -> {
+                                browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                                pageProgress = 100
+                            }
+                        }
                     }
                 }
+                clientAuthClearRequest.set(request)
             }
         }
-        clientAuthClearRequest.set(request)
     }
 
-    LaunchedEffect(selectedServiceId, requiresInPlaceClientAuth) {
-        if (requiresInPlaceClientAuth) beginClientCertPreferenceRecovery()
+    LaunchedEffect(selectedServiceId, requiresClientAuthSessionPreparation) {
+        if (requiresClientAuthSessionPreparation) beginClientCertPreferenceRecovery()
     }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
@@ -634,6 +651,7 @@ fun BrowserScreen(
     BackHandler(onBack = ::goBack)
     DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
+            sessionDataClearLease.invalidate()
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeAttachmentLease.close()
@@ -768,11 +786,52 @@ fun BrowserScreen(
             webView?.loadUrl(validatedEntryUrl)
         },
         onClearSession = {
+            cancelPendingCertificateSelection(
+                dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
+            )
             clientAuthGrant = null
             abandonClientAuth()
+            advanceNavigationEpoch()
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             pendingRequest = null
-            onClearSession()
+            val webView = webViewRef.get()
+            webView?.apply {
+                stopLoading()
+                clearHistory()
+                clearFormData()
+            }
+            val profile = selectedProfile
+            if (profile == null) {
+                browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                pageProgress = 100
+            } else {
+                clientAuthPreparing = true
+                val sessionClearRequest = sessionDataClearLease.begin(selectedServiceId)
+                siteDataCleaner.clearProfileSession(profile, webViewCapabilities) { sessionCleared ->
+                    mainHandler.post {
+                        if (!sessionDataClearLease.consume(sessionClearRequest)) return@post
+                        if (!sessionCleared) {
+                            clientAuthPreparing = false
+                            browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                            pageProgress = 100
+                            return@post
+                        }
+                        val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
+                            mainHandler.post {
+                                if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
+                                clientAuthPreparing = false
+                                if (result == ClientCertPreferenceClearResult.CLEARED) {
+                                    onClearSession()
+                                } else {
+                                    browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                                    pageProgress = 100
+                                }
+                            }
+                        }
+                        clientAuthClearRequest.set(request)
+                    }
+                }
+            }
         },
         onDeleteAllBrowserData = {
             clientAuthGrant = null

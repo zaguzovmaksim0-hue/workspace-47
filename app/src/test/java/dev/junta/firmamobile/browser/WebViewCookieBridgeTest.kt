@@ -64,6 +64,8 @@ class WebViewCookieBridgeTest {
             flushCalls += 1
         }
 
+        override fun removeSessionCookies(callback: (Boolean) -> Unit) = callback(false)
+
         override fun removeAllCookies(callback: (Boolean) -> Unit) = callback(true)
     }
 }

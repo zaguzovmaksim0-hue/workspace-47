@@ -70,7 +70,7 @@
     <string name="browser_clear_current_site_failed">No se pudieron borrar los datos del sitio actual.</string>
     <string name="browser_clear_session">Cerrar sesión</string>
     <string name="browser_clear_session_title">Cerrar sesión del certificado</string>
-    <string name="browser_clear_session_copy">Se cerrará el portal y se bloqueará el certificado. No se borrarán datos de otros portales.</string>
+    <string name="browser_clear_session_copy">Se cerrará el portal, se eliminarán sus datos de sesión y se bloqueará el certificado. También se cerrarán otras sesiones web abiertas en la aplicación, sin borrar sus datos persistentes.</string>
     <string name="browser_clear_session_confirm">Cerrar sesión</string>
     <string name="browser_delete_all_data">Borrar todos los datos web</string>
     <string name="browser_delete_all_data_title">Borrar todos los datos web</string>

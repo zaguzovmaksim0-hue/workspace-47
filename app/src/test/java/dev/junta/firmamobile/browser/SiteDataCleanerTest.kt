@@ -101,6 +101,56 @@ class SiteDataCleanerTest {
     }
 
     @Test
+    fun carneJovenSessionClearCoversBothPortalAndSharedAuthenticationOrigins() {
+        val cookies = FakeCookieStore()
+        val storage = FakeSiteWebStorage()
+        val cleaner = SiteDataCleaner(cookies, storage)
+        val profile = checkNotNull(
+            dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+                .profile(dev.junta.firmamobile.profile.ProfileId("carne-joven-andalucia")),
+        )
+        var callback: Boolean? = null
+
+        cleaner.clearProfileSession(profile, capabilities(getCookieInfo = false)) { callback = it }
+
+        assertEquals(true, callback)
+        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(0, cookies.removeAllCalls)
+        assertEquals(
+            setOf(
+                "https://ws104.juntadeandalucia.es",
+                "https://ws235.juntadeandalucia.es",
+            ),
+            storage.deletedOrigins.toSet(),
+        )
+    }
+
+    @Test
+    fun veaSessionClearIncludesObservedWs235ContinuationAndReturnOrigins() {
+        val cookies = FakeCookieStore()
+        val storage = FakeSiteWebStorage()
+        val cleaner = SiteDataCleaner(cookies, storage)
+        val profile = checkNotNull(
+            dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+                .profile(dev.junta.firmamobile.profile.ProfileId("junta-andalucia-vea-peg")),
+        )
+        var callback: Boolean? = null
+
+        cleaner.clearProfileSession(profile, capabilities(getCookieInfo = false)) { callback = it }
+
+        assertEquals(true, callback)
+        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(0, cookies.removeAllCalls)
+        val cleared = storage.deletedOrigins.toSet()
+        assertTrue("https://veaja.cloud.juntadeandalucia.es" in cleared)
+        assertTrue("https://api-veaja.cloud.juntadeandalucia.es" in cleared)
+        assertTrue("https://ws235.juntadeandalucia.es" in cleared)
+        for (index in 1..6) {
+            assertTrue("https://ws235-$index.juntadeandalucia.es" in cleared)
+        }
+    }
+
+    @Test
     fun globalDeletionTreatsNoCookiesRemovedAsSuccessfulCompletion() {
         val cookies = FakeCookieStore(removeAllResult = false)
         val storage = FakeSiteWebStorage()
@@ -211,6 +261,7 @@ class SiteDataCleanerTest {
         val infoUrls = mutableListOf<String>()
         val writes = mutableListOf<Pair<String, String>>()
         var flushCalls = 0
+        var removeSessionCalls = 0
         var removeAllCalls = 0
 
         override fun getCookie(url: String): String? = null
@@ -227,6 +278,11 @@ class SiteDataCleanerTest {
         override fun flush() {
             flushCalls += 1
             if (failFlush) error("flush unavailable")
+        }
+
+        override fun removeSessionCookies(callback: (Boolean) -> Unit) {
+            removeSessionCalls += 1
+            callback(true)
         }
 
         override fun removeAllCookies(callback: (Boolean) -> Unit) {
