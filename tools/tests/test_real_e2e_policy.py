@@ -73,6 +73,18 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn("identity.p12", source)
         self.assertNotIn("password\n", source.lower())
 
+    def test_instrumented_probe_always_writes_result_after_catalog_identity_is_known(self) -> None:
+        source = self.read(ROOT / "app/src/androidTest/java/dev/junta/firmamobile/RealE2eInstrumentedTest.kt")
+        self.assertNotIn("assumeTrue(", source)
+        result_init = source.index("val result = ProbeResult(")
+        fixture_check = source.index('require(certificateFile.isFile) { "REAL_E2E_CERTIFICATE_MISSING" }')
+        final_write = source.index("writeResult(result)")
+        self.assertLess(result_init, fixture_check)
+        self.assertLess(fixture_check, final_write)
+        self.assertIn('"CERTIFICATE_MISSING"', source)
+        self.assertIn('"PASSWORD_MISSING"', source)
+        self.assertIn("safeInfrastructureCode(throwable)", source)
+
     def test_runner_streams_credentials_without_remote_shell_redirection(self) -> None:
         runner = self.read(RUNNER)
         self.assertIn('adb_bounded shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"', runner)
