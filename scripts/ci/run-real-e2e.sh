@@ -184,6 +184,7 @@ main() {
       "$REPORT_HELPER" validate-result --result "$result_file" --portal "$portal_id"
     fi
 
+    "$REPORT_HELPER" describe-result --result "$result_file" --portal "$portal_id"
     progress RESULT_READ_DONE "$portal_id" "$index" "${#portal_ids[@]}"
     progress NAV_READ_START "$portal_id" "$index" "${#portal_ids[@]}"
     navigation_file="$LOGS_DIR/$portal_id.log"

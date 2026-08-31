@@ -191,6 +191,21 @@ def validate_result(args: argparse.Namespace) -> None:
     validate_result_data(data, args.portal)
 
 
+def describe_result(args: argparse.Namespace) -> None:
+    data = json.loads(args.result.read_text(encoding="ascii"))
+    validate_result_data(data, args.portal)
+    infrastructure = data["infrastructureError"] or "NONE"
+    signing = data["signingFailureCode"] or "NONE"
+    print(
+        "RESULT_DIAGNOSTIC "
+        f"portal={data['portalId']} "
+        f"classification={data['classification']} "
+        f"level={data['level']} "
+        f"infrastructure={infrastructure} "
+        f"signing={signing}"
+    )
+
+
 def validate_log(args: argparse.Namespace) -> None:
     raw = args.log.read_bytes()
     if len(raw) > 65_536:
@@ -345,6 +360,11 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--result", type=Path, required=True)
     p.add_argument("--portal", required=True)
     p.set_defaults(func=validate_result)
+
+    p = sub.add_parser("describe-result")
+    p.add_argument("--result", type=Path, required=True)
+    p.add_argument("--portal", required=True)
+    p.set_defaults(func=describe_result)
 
     p = sub.add_parser("validate-log")
     p.add_argument("--log", type=Path, required=True)
