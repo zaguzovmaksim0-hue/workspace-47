@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,7 +73,7 @@ class RealE2eInstrumentedTest {
         val certificateFile = File(fixtureDir, CERTIFICATE_FILE)
         val passwordFile = File(fixtureDir, PASSWORD_FILE)
 
-        require(explicitlyEnabled) { "REAL_E2E_NOT_ENABLED" }
+        assumeTrue("REAL_E2E requires explicit opt-in", explicitlyEnabled)
         require(PORTAL_ID_PATTERN.matches(portalId)) { "REAL_E2E_INVALID_PORTAL_ID" }
 
         val catalog = targetContext.resources.openRawResource(R.raw.public_portal_catalog_v1)
