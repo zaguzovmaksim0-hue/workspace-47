@@ -73,6 +73,22 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn("identity.p12", source)
         self.assertNotIn("password\n", source.lower())
 
+    def test_instrumented_probe_skips_without_opt_in_but_persists_enabled_failures(self) -> None:
+        source = self.read(ROOT / "app/src/androidTest/java/dev/junta/firmamobile/RealE2eInstrumentedTest.kt")
+        opt_in_skip = source.index('assumeTrue("REAL_E2E requires explicit opt-in", explicitlyEnabled)')
+        portal_check = source.index('require(PORTAL_ID_PATTERN.matches(portalId)) { "REAL_E2E_INVALID_PORTAL_ID" }')
+        result_init = source.index("val result = ProbeResult(")
+        fixture_check = source.index('require(certificateFile.isFile) { "REAL_E2E_CERTIFICATE_MISSING" }')
+        final_write = source.index("writeResult(result)")
+        self.assertLess(opt_in_skip, portal_check)
+        self.assertLess(portal_check, result_init)
+        self.assertLess(result_init, fixture_check)
+        self.assertLess(fixture_check, final_write)
+        self.assertEqual(1, source.count("assumeTrue("))
+        self.assertIn('"CERTIFICATE_MISSING"', source)
+        self.assertIn('"PASSWORD_MISSING"', source)
+        self.assertIn("safeInfrastructureCode(throwable)", source)
+
     def test_runner_streams_credentials_without_remote_shell_redirection(self) -> None:
         runner = self.read(RUNNER)
         self.assertIn('adb_bounded shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"', runner)

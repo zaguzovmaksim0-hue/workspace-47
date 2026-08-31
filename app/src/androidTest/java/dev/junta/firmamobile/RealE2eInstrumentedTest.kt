@@ -72,11 +72,9 @@ class RealE2eInstrumentedTest {
         val fixtureDir = File(targetContext.filesDir, REAL_E2E_DIR)
         val certificateFile = File(fixtureDir, CERTIFICATE_FILE)
         val passwordFile = File(fixtureDir, PASSWORD_FILE)
-        assumeTrue(
-            "REAL_E2E requires explicit opt-in and a staged private fixture",
-            explicitlyEnabled && PORTAL_ID_PATTERN.matches(portalId) &&
-                certificateFile.isFile && passwordFile.isFile,
-        )
+
+        assumeTrue("REAL_E2E requires explicit opt-in", explicitlyEnabled)
+        require(PORTAL_ID_PATTERN.matches(portalId)) { "REAL_E2E_INVALID_PORTAL_ID" }
 
         val catalog = targetContext.resources.openRawResource(R.raw.public_portal_catalog_v1)
             .bufferedReader(StandardCharsets.UTF_8)
@@ -93,53 +91,57 @@ class RealE2eInstrumentedTest {
             expectedStartHost = profile.startUrl.host,
         )
 
-        resetBrowserState()
-        application().sanitizedLogger.clear()
-
-        val password = readPassword(passwordFile)
-        val session = CertificateSession(monotonicNanos = SystemClock::elapsedRealtimeNanos)
-        val reference = StoredCertificateReference(
-            uri = REAL_CERT_URI,
-            displayName = "real-e2e-identity.p12",
-            mimeType = CertificateRepository.MIME_X_PKCS12,
-            size = certificateFile.length(),
-            summary = null,
-        )
-        val repository = CertificateRepository(
-            documentAccess = FileCertificateDocumentAccess(certificateFile),
-            referenceStore = MemoryReferenceStore(reference),
-            loader = Pkcs12Loader(),
-        )
-        val unlockCache = RealE2eUnlockCache(password, session)
-
+        var password: CharArray? = null
+        var unlockCache: RealE2eUnlockCache? = null
         try {
+            require(certificateFile.isFile) { "REAL_E2E_CERTIFICATE_MISSING" }
+            require(passwordFile.isFile) { "REAL_E2E_PASSWORD_MISSING" }
+
+            resetBrowserState()
+            application().sanitizedLogger.clear()
+
+            val loadedPassword = readPassword(passwordFile)
+            password = loadedPassword
+            val session = CertificateSession(monotonicNanos = SystemClock::elapsedRealtimeNanos)
+            val reference = StoredCertificateReference(
+                uri = REAL_CERT_URI,
+                displayName = "real-e2e-identity.p12",
+                mimeType = CertificateRepository.MIME_X_PKCS12,
+                size = certificateFile.length(),
+                summary = null,
+            )
+            val repository = CertificateRepository(
+                documentAccess = FileCertificateDocumentAccess(certificateFile),
+                referenceStore = MemoryReferenceStore(reference),
+                loader = Pkcs12Loader(),
+            )
+            unlockCache = RealE2eUnlockCache(loadedPassword, session)
+
             TestCertificateDependencies.install(
                 gateway = repository,
                 session = session,
                 unlockCache = unlockCache,
             ).use {
-                runCatching {
-                    ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                        enterCatalog(result)
-                        openPortal(portalId, result)
-                        waitForWebView(scenario, result)
-                        observePortal(
-                            scenario = scenario,
-                            profileCapabilities = profile.capabilities,
-                            allowedClientAuthHosts = allowedClientAuthHosts(profile),
-                            deepEnabled = deepEnabled,
-                            profileId = profileId,
-                            result = result,
-                        )
-                    }
-                }.onFailure { throwable ->
-                    result.infrastructureError = throwable.javaClass.simpleName
-                    result.classification = ProbeClassification.INFRASTRUCTURE_ERROR
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    enterCatalog(result)
+                    openPortal(portalId, result)
+                    waitForWebView(scenario, result)
+                    observePortal(
+                        scenario = scenario,
+                        profileCapabilities = profile.capabilities,
+                        allowedClientAuthHosts = allowedClientAuthHosts(profile),
+                        deepEnabled = deepEnabled,
+                        profileId = profileId,
+                        result = result,
+                    )
                 }
             }
+        } catch (throwable: Throwable) {
+            result.infrastructureError = safeInfrastructureCode(throwable)
+            result.classification = ProbeClassification.INFRASTRUCTURE_ERROR
         } finally {
-            unlockCache.close()
-            password.fill('\u0000')
+            unlockCache?.close()
+            password?.fill('\u0000')
             writeResult(result)
         }
     }
@@ -430,6 +432,13 @@ class RealE2eInstrumentedTest {
         rule.waitUntil(timeoutMillis = timeoutMillis, condition = predicate)
     }
 
+    private fun safeInfrastructureCode(throwable: Throwable): String = when (throwable.message) {
+        "REAL_E2E_CERTIFICATE_MISSING" -> "CERTIFICATE_MISSING"
+        "REAL_E2E_PASSWORD_MISSING" -> "PASSWORD_MISSING"
+        else -> throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
+            ?: "UNKNOWN_ERROR"
+    }
+
     private fun writeResult(result: ProbeResult) {
         val directory = File(application().filesDir, REAL_E2E_DIR).apply { mkdirs() }
         val output = File(directory, RESULT_FILE)
@@ -622,6 +631,7 @@ class RealE2eInstrumentedTest {
         const val MAX_PASSWORD_BYTES = 8_192
         const val MAX_CLIENT_AUTH_CONFIRMATIONS = 8
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
+        val SAFE_ERROR_TOKEN = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
         val SAFE_AUTH_SIGN_PROFILES = setOf(
             "junta-andalucia",
             "unizar-tramitador",
