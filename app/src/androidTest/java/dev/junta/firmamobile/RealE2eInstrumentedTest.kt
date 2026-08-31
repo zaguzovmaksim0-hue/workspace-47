@@ -399,13 +399,19 @@ class RealE2eInstrumentedTest {
     }
 
     private fun resetBrowserState() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
         val cookies = CountDownLatch(1)
-        CookieManager.getInstance().removeAllCookies { cookies.countDown() }
+        instrumentation.runOnMainSync {
+            CookieManager.getInstance().removeAllCookies { cookies.countDown() }
+        }
         assertTrue("Cookie reset timed out", cookies.await(5, TimeUnit.SECONDS))
-        CookieManager.getInstance().flush()
-        WebStorage.getInstance().deleteAllData()
+
         val clientCert = CountDownLatch(1)
-        WebView.clearClientCertPreferences { clientCert.countDown() }
+        instrumentation.runOnMainSync {
+            CookieManager.getInstance().flush()
+            WebStorage.getInstance().deleteAllData()
+            WebView.clearClientCertPreferences { clientCert.countDown() }
+        }
         assertTrue("Client-certificate preference reset timed out", clientCert.await(5, TimeUnit.SECONDS))
     }
 

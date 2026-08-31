@@ -73,6 +73,17 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn("identity.p12", source)
         self.assertNotIn("password\n", source.lower())
 
+    def test_real_e2e_webview_reset_starts_callback_apis_on_main_thread(self) -> None:
+        source = self.read(ROOT / "app/src/androidTest/java/dev/junta/firmamobile/RealE2eInstrumentedTest.kt")
+        start = source.index("private fun resetBrowserState()")
+        end = source.index("private fun shell(", start)
+        body = source[start:end]
+        self.assertGreaterEqual(body.count("instrumentation.runOnMainSync"), 2)
+        self.assertIn("CookieManager.getInstance().removeAllCookies", body)
+        self.assertIn("WebView.clearClientCertPreferences", body)
+        self.assertIn("cookies.await(5, TimeUnit.SECONDS)", body)
+        self.assertIn("clientCert.await(5, TimeUnit.SECONDS)", body)
+
     def test_instrumented_probe_skips_without_opt_in_but_persists_enabled_failures(self) -> None:
         source = self.read(ROOT / "app/src/androidTest/java/dev/junta/firmamobile/RealE2eInstrumentedTest.kt")
         opt_in_skip = source.index('assumeTrue("REAL_E2E requires explicit opt-in", explicitlyEnabled)')
