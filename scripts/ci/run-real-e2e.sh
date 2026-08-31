@@ -40,6 +40,8 @@ progress() {
     "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
     "${REAL_E2E_SHARD_INDEX:-?}" "$index/$total" "$portal_id" "$stage" "$elapsed" \
     | tee -a "$PROGRESS_PATH"
+  printf '::notice title=REAL_E2E progress::shard=%s index=%s portal=%s stage=%s elapsed=%ss\n' \
+    "${REAL_E2E_SHARD_INDEX:-?}" "$index/$total" "$portal_id" "$stage" "$elapsed"
 }
 
 cleanup() {
@@ -57,23 +59,38 @@ require_secret() {
 }
 
 stage_fixture() {
+  local total="$1"
+  progress STAGE_MKDIR_START - 0 "$total"
   adb_bounded shell run-as "$PACKAGE_NAME" mkdir -p "$FIXTURE_DIR"
+  progress STAGE_MKDIR_DONE - 0 "$total"
+
+  progress STAGE_CERT_WRITE_START - 0 "$total"
   printf '%s' "$REAL_E2E_CERT_P12_B64" \
     | base64 --decode \
-    | adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$CERTIFICATE_PATH" >/dev/null
-  printf '%s' "$REAL_E2E_CERT_PASSWORD" \
-    | adb_bounded exec-out run-as "$PACKAGE_NAME" tee "$PASSWORD_PATH" >/dev/null
-  adb_bounded shell run-as "$PACKAGE_NAME" chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"
+    | adb_bounded shell -T run-as "$PACKAGE_NAME" dd of="$CERTIFICATE_PATH" bs=4096 2>/dev/null
+  progress STAGE_CERT_WRITE_DONE - 0 "$total"
 
+  progress STAGE_PASSWORD_WRITE_START - 0 "$total"
+  printf '%s' "$REAL_E2E_CERT_PASSWORD" \
+    | adb_bounded shell -T run-as "$PACKAGE_NAME" dd of="$PASSWORD_PATH" bs=4096 2>/dev/null
+  progress STAGE_PASSWORD_WRITE_DONE - 0 "$total"
+
+  progress STAGE_CHMOD_START - 0 "$total"
+  adb_bounded shell run-as "$PACKAGE_NAME" chmod 600 "$CERTIFICATE_PATH" "$PASSWORD_PATH"
+  progress STAGE_CHMOD_DONE - 0 "$total"
+
+  progress STAGE_STAT_START - 0 "$total"
   local cert_size password_size
   cert_size="$(adb_bounded shell run-as "$PACKAGE_NAME" stat -c %s "$CERTIFICATE_PATH" | tr -d '\r')"
   password_size="$(adb_bounded shell run-as "$PACKAGE_NAME" stat -c %s "$PASSWORD_PATH" | tr -d '\r')"
   [[ "$cert_size" =~ ^[0-9]+$ && "$cert_size" -ge 1 && "$cert_size" -le 1048576 ]]
   [[ "$password_size" =~ ^[0-9]+$ && "$password_size" -ge 1 && "$password_size" -le 8192 ]]
+  progress STAGE_STAT_DONE - 0 "$total"
 
   # Keep the credential exposure window as short as possible.
   unset REAL_E2E_CERT_P12_B64 REAL_E2E_CERT_PASSWORD
 }
+
 
 main() {
   [[ -f "$QA_APK" && -f "$TEST_APK" && -f "$CATALOG_FILE" && -x "$REPORT_HELPER" ]]
@@ -123,7 +140,7 @@ main() {
   adb_install_bounded "$TEST_APK" >/dev/null
   progress INSTALL_TEST_DONE - 0 "${#portal_ids[@]}"
   progress STAGE_FIXTURE_START - 0 "${#portal_ids[@]}"
-  stage_fixture
+  stage_fixture "${#portal_ids[@]}"
   progress STAGE_FIXTURE_DONE - 0 "${#portal_ids[@]}"
 
   local deep_arg="${REAL_E2E_DEEP_AUTH_SIGNING:-true}"
