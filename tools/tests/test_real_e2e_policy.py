@@ -293,6 +293,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('element.getAttribute(\'href\') !== $quotedExpectedHref', source)
         self.assertIn('element.getAttribute(\'onclick\') !== $quotedExpectedOnClick', source)
         self.assertIn('elements.length !== 1', source)
+        self.assertIn("event => event.preventDefault()", source)
+        self.assertIn("element.addEventListener('click', preventDefault, { once: true })", source)
         self.assertIn('element.click()', source)
 
     def test_auth_sign_waits_for_bounded_post_sign_observation(self) -> None:

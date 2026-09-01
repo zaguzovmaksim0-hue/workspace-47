@@ -323,6 +323,8 @@ class RealE2eInstrumentedTest {
                       if (label !== $quotedExpectedLabel ||
                           element.getAttribute('href') !== $quotedExpectedHref ||
                           element.getAttribute('onclick') !== $quotedExpectedOnClick) return 2;
+                      const preventDefault = event => event.preventDefault();
+                      element.addEventListener('click', preventDefault, { once: true });
                       element.click();
                       return 1;
                     })()
