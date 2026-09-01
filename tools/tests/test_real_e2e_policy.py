@@ -573,6 +573,14 @@ class RealE2ePolicyTest(unittest.TestCase):
         source = self.read(ROOT / "app/src/main/res/raw/afirma_shim.js")
         self.assertIn('postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED")', source)
         self.assertIn('postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY")', source)
+        for stage in (
+            "BADAJOZ_PULSAR_SIGN_ENTRY",
+            "BADAJOZ_FIRMAR_ENTRY",
+            "BADAJOZ_GET_BASE64_ENTRY",
+            "BADAJOZ_ECHO_ENTRY",
+            "BADAJOZ_FORCE_WS_ENTRY",
+        ):
+            self.assertIn(f'"{stage}"', source)
         self.assertIn('window.setInterval(rewrapLateBadajozGlobals, 250)', source)
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])

@@ -36,6 +36,8 @@
   const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const badajozCompatibilityEnabled = __JFM_BADAJOZ_COMPATIBILITY_ENABLED__;
   let badajozSignHookReadyDiagnosticPosted = false;
+  const badajozDiagnosticWrappedFunctions = new WeakSet();
+  const badajozDiagnosticPostedStages = new Set();
 
   function postShimDiagnostic(stage) {
     if (!qaDiagnosticsEnabled || !bridge || typeof bridge.postMessage !== "function") {
@@ -49,6 +51,14 @@
     } catch (_) {
       // Diagnostics must never change the portal method's behavior.
     }
+  }
+
+  function postBadajozDiagnosticOnce(stage) {
+    if (badajozDiagnosticPostedStages.has(stage)) {
+      return;
+    }
+    badajozDiagnosticPostedStages.add(stage);
+    postShimDiagnostic(stage);
   }
 
   postShimDiagnostic("SCRIPT_INSTALLED");
@@ -1446,6 +1456,24 @@
     }
   }
 
+  function wrapBadajozDiagnostic(target, name, stage) {
+    if (target == null || (typeof target !== "object" && typeof target !== "function")) {
+      return;
+    }
+    const current = target[name];
+    if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
+      return;
+    }
+    const wrapped = function() {
+      postBadajozDiagnosticOnce(stage);
+      return Reflect.apply(current, this, arguments);
+    };
+    try {
+      target[name] = wrapped;
+      badajozDiagnosticWrappedFunctions.add(wrapped);
+    } catch (_) {}
+  }
+
   function wrapMiniApplet(
     value,
     includeUgrSetup = false,
@@ -1564,7 +1592,12 @@
     postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
     const rewrapLateBadajozGlobals = () => {
       try {
+        wrapBadajozDiagnostic(window, "pulsarFirmarIdentificate", "BADAJOZ_PULSAR_SIGN_ENTRY");
+        wrapBadajozDiagnostic(window, "firmar", "BADAJOZ_FIRMAR_ENTRY");
         wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
+        wrapBadajozDiagnostic(window.MiniApplet, "getBase64FromText", "BADAJOZ_GET_BASE64_ENTRY");
+        wrapBadajozDiagnostic(window.MiniApplet, "echo", "BADAJOZ_ECHO_ENTRY");
+        wrapBadajozDiagnostic(window.MiniApplet, "setForceWSMode", "BADAJOZ_FORCE_WS_ENTRY");
         wrapMiniApplet(
           window.AutoScript,
           ugrCompatibilityEnabled,
@@ -1576,6 +1609,7 @@
         // A late portal global remains fail-closed until the next bounded retry.
       }
     };
+    rewrapLateBadajozGlobals();
     const lateRewrapTimer = window.setInterval(rewrapLateBadajozGlobals, 250);
     window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis);
   }

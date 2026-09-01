@@ -848,6 +848,11 @@ class WebMessageBridge internal constructor(
             "SIGN_MESSAGE_POSTED",
             "BADAJOZ_LATE_REWRAP_STARTED",
             "BADAJOZ_SIGN_HOOK_READY",
+            "BADAJOZ_PULSAR_SIGN_ENTRY",
+            "BADAJOZ_FIRMAR_ENTRY",
+            "BADAJOZ_GET_BASE64_ENTRY",
+            "BADAJOZ_ECHO_ENTRY",
+            "BADAJOZ_FORCE_WS_ENTRY",
         )
         private val DOCUMENT_UUID_PATTERN = Regex(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-" +
