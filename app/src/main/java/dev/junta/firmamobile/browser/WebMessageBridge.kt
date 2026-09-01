@@ -848,6 +848,7 @@ class WebMessageBridge internal constructor(
             "SIGN_MESSAGE_POSTED",
             "BADAJOZ_LATE_REWRAP_STARTED",
             "BADAJOZ_SIGN_HOOK_READY",
+            "BADAJOZ_CERT_BUTTON_CLICK",
             "BADAJOZ_PULSAR_SIGN_ENTRY",
             "BADAJOZ_FIRMAR_ENTRY",
             "BADAJOZ_GET_BASE64_ENTRY",

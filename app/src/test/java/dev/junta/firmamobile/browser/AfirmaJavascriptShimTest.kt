@@ -62,6 +62,7 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("SIGN_MESSAGE_POSTED"))
         assertTrue(script.contains("BADAJOZ_LATE_REWRAP_STARTED"))
         assertTrue(script.contains("BADAJOZ_SIGN_HOOK_READY"))
+        assertTrue(script.contains("BADAJOZ_CERT_BUTTON_CLICK"))
         assertTrue(script.contains("BADAJOZ_PULSAR_SIGN_ENTRY"))
         assertTrue(script.contains("BADAJOZ_FIRMAR_ENTRY"))
         assertTrue(script.contains("BADAJOZ_GET_BASE64_ENTRY"))

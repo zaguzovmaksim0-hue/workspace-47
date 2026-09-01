@@ -582,6 +582,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         source = self.read(ROOT / "app/src/main/res/raw/afirma_shim.js")
         self.assertIn('postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED")', source)
         self.assertIn('postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY")', source)
+        self.assertIn('postBadajozDiagnosticOnce("BADAJOZ_CERT_BUTTON_CLICK")', source)
         for stage in (
             "BADAJOZ_PULSAR_SIGN_ENTRY",
             "BADAJOZ_FIRMAR_ENTRY",
