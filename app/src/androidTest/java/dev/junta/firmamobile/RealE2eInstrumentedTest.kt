@@ -457,7 +457,15 @@ class RealE2eInstrumentedTest {
                 else -> ProbeClassification.PASS_MECHANISM_BOUNDARY
             }
         } else {
-            result.classification = ProbeClassification.RECIPE_REQUIRED
+            result.classification = if (
+                result.portalId in CONSEQ_RECIPE_PORTALS &&
+                result.webViewActive &&
+                (result.pageStarted || result.pageFinished)
+            ) {
+                ProbeClassification.BLOCKED_CONSEQUENTIAL_ACTION
+            } else {
+                ProbeClassification.RECIPE_REQUIRED
+            }
         }
     }
 
@@ -693,6 +701,7 @@ class RealE2eInstrumentedTest {
         PASS_CLIENT_TLS,
         PASS_CRYPTO_CALLBACK,
         PASS_PORTAL_AUTH,
+        BLOCKED_CONSEQUENTIAL_ACTION,
         RECIPE_REQUIRED,
         FAIL_SECURITY_OR_NETWORK,
         FAIL_UNEXPECTED_CLIENT_AUTH_HOST,
@@ -713,6 +722,9 @@ class RealE2eInstrumentedTest {
         const val CARNE_JOVEN_ENTRY_URL =
             "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val CARNE_JOVEN_AUTH_LINK_ID = "bot-obtener"
+        val CONSEQ_RECIPE_PORTALS = setOf(
+            "age-pag-reg",
+        )
         const val CARNE_JOVEN_AUTH_HREF =
             "/carneJoven/servlet/CallAuthenticationServlet"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
