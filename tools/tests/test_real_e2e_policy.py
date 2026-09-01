@@ -214,6 +214,15 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertEqual(183, len(shards))
         self.assertEqual(183, len(set(shards)))
 
+    def test_real_e2e_waits_for_owned_webview_via_catalog_inspect(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('catalogSmoke(portalId, "INSPECT").contains("WEBVIEW_ACTIVE")', source)
+        self.assertIn('updateCurrentHostFromRecords(records, result)', source)
+        self.assertIn('SANITIZED_HOST', source)
+        self.assertNotIn('activity.window.decorView', source)
+        self.assertNotIn('findWebView(', source)
+        self.assertNotIn('updateCurrentWebView(', source)
+
     def test_instrumentation_requires_explicit_opt_in_and_has_no_level_six(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('arguments.getString(REAL_E2E_ARGUMENT) == "true"', source)

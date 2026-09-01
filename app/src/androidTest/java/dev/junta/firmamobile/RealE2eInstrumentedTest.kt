@@ -2,8 +2,6 @@ package dev.junta.firmamobile
 
 import android.net.Uri
 import android.os.SystemClock
-import android.view.View
-import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import android.webkit.WebView
@@ -130,7 +128,7 @@ class RealE2eInstrumentedTest {
                     probeStage = ProbeStage.OPEN_PORTAL
                     openPortal(portalId, result)
                     probeStage = ProbeStage.WAIT_FOR_WEBVIEW
-                    waitForWebView(scenario, result)
+                    waitForWebView(portalId, result)
                     probeStage = ProbeStage.OBSERVE_PORTAL
                     observePortal(
                         scenario = scenario,
@@ -164,36 +162,35 @@ class RealE2eInstrumentedTest {
     }
 
     private fun openPortal(portalId: String, result: ProbeResult) {
-        val output = shell(
-            listOf(
-                "am", "broadcast", "--user", "0",
-                "-a", "dev.junta.firmamobile.action.CATALOG_SMOKE",
-                "-p", PACKAGE_NAME,
-                "--es", "runId", "real-e2e-${portalId.takeLast(20)}",
-                "--es", "portalId", portalId,
-                "--es", "operation", "OPEN",
-            ).joinToString(" "),
-        )
+        val output = catalogSmoke(portalId, "OPEN")
         if (!output.contains("OPEN_REQUESTED")) error("Protected catalog OPEN was not accepted")
         result.openRequested = true
         result.level = maxOf(result.level, 1)
     }
 
     private fun waitForWebView(
-        scenario: ActivityScenario<MainActivity>,
+        portalId: String,
         result: ProbeResult,
     ) {
         waitUntil(UI_TIMEOUT_MILLIS) {
-            var webView: WebView? = null
-            scenario.onActivity { activity -> webView = findWebView(activity.window.decorView) }
-            webView?.let { current ->
-                result.currentHost = current.url?.let(Uri::parse)?.host
-                true
-            } == true
+            catalogSmoke(portalId, "INSPECT").contains("WEBVIEW_ACTIVE")
         }
         result.webViewActive = true
+        updateCurrentHostFromRecords(diagnosticRecords(), result)
         result.level = maxOf(result.level, 1)
     }
+
+    private fun catalogSmoke(portalId: String, operation: String): String =
+        shell(
+            listOf(
+                "am", "broadcast", "--user", "0",
+                "-a", "dev.junta.firmamobile.action.CATALOG_SMOKE",
+                "-p", PACKAGE_NAME,
+                "--es", "runId", "real-e2e-${operation.lowercase()}-${portalId.takeLast(20)}",
+                "--es", "portalId", portalId,
+                "--es", "operation", operation,
+            ).joinToString(" "),
+        )
 
     private fun observePortal(
         scenario: ActivityScenario<MainActivity>,
@@ -211,7 +208,7 @@ class RealE2eInstrumentedTest {
         while (SystemClock.elapsedRealtime() < deadline) {
             val records = diagnosticRecords()
             updateRecordObservations(records, result)
-            updateCurrentWebView(scenario, result)
+            updateCurrentHostFromRecords(records, result)
 
             if (result.hasTerminalSecurityFailure()) {
                 result.classification = ProbeClassification.FAIL_SECURITY_OR_NETWORK
@@ -343,14 +340,11 @@ class RealE2eInstrumentedTest {
         }
     }
 
-    private fun updateCurrentWebView(
-        scenario: ActivityScenario<MainActivity>,
-        result: ProbeResult,
-    ) {
-        scenario.onActivity { activity ->
-            findWebView(activity.window.decorView)?.url?.let(Uri::parse)?.host?.let { host ->
-                result.currentHost = host
-            }
+    private fun updateCurrentHostFromRecords(records: List<String>, result: ProbeResult) {
+        records.asReversed().firstNotNullOfOrNull { record ->
+            SANITIZED_HOST.find(record)?.groupValues?.getOrNull(1)
+        }?.let { host ->
+            result.currentHost = host
         }
     }
 
@@ -429,15 +423,6 @@ class RealE2eInstrumentedTest {
     private fun diagnosticRecords(): List<String> {
         val file = File(application().filesDir, "qa-navigation.log")
         return if (file.isFile) file.readLines(StandardCharsets.US_ASCII) else emptyList()
-    }
-
-    private fun findWebView(view: View): WebView? {
-        if (view is WebView) return view
-        if (view !is ViewGroup) return null
-        for (index in 0 until view.childCount) {
-            findWebView(view.getChildAt(index))?.let { return it }
-        }
-        return null
     }
 
     private fun waitUntil(timeoutMillis: Long, predicate: () -> Boolean) {
@@ -656,6 +641,7 @@ class RealE2eInstrumentedTest {
         const val MAX_CLIENT_AUTH_CONFIRMATIONS = 8
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
         val SAFE_ERROR_TOKEN = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+        val SANITIZED_HOST = Regex("(?:^| )host=([a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?)(?: |$)")
         val SAFE_AUTH_SIGN_PROFILES = setOf(
             "junta-andalucia",
             "unizar-tramitador",
