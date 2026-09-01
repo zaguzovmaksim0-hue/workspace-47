@@ -240,15 +240,15 @@ class RealE2ePolicyTest(unittest.TestCase):
             source,
         )
         self.assertIn(
-            '"https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"',
+            '"/carneJoven/servlet/CallAuthenticationServlet"',
             source,
         )
         self.assertIn('when (portalId)', source)
         self.assertIn('currentUrl != null && currentUrl != expectedCurrentUrl', source)
         self.assertIn('CARNE_JOVEN_AUTH_LINK_ID = "bot-obtener"', source)
-        self.assertIn('document.getElementById($quotedId)?.href', source)
-        self.assertIn('val quotedExpectedTarget = JSONObject.quote(expectedTargetUrl)', source)
-        self.assertIn('rawHref == quotedExpectedTarget', source)
+        self.assertIn("document.getElementById($quotedId)?.getAttribute('href')", source)
+        self.assertIn('val quotedExpectedHref = JSONObject.quote(expectedHref)', source)
+        self.assertIn('rawHref == quotedExpectedHref', source)
         self.assertIn('REAL_E2E_RECIPE_TARGET_MISMATCH', source)
         self.assertIn('document.getElementById($quotedId).click()', source)
         self.assertIn('SystemClock.sleep(RECIPE_POLL_MILLIS)', source)
