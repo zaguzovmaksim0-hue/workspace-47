@@ -547,6 +547,9 @@ class RealE2eInstrumentedTest {
 
     private fun recordsAddedSince(previous: List<String>, current: List<String>): List<String> {
         if (previous.isEmpty()) return current
+        if (current.size >= previous.size && current.take(previous.size) == previous) {
+            return current.drop(previous.size)
+        }
         val maxOverlap = minOf(previous.size, current.size)
         for (overlap in maxOverlap downTo 1) {
             if (previous.takeLast(overlap) == current.take(overlap)) {
