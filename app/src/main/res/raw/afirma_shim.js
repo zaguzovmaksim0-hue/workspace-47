@@ -35,6 +35,7 @@
   const euskadiClientAuthPostEnabled = __JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__;
   const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const badajozCompatibilityEnabled = __JFM_BADAJOZ_COMPATIBILITY_ENABLED__;
+  let badajozSignHookReadyDiagnosticPosted = false;
 
   function postShimDiagnostic(stage) {
     if (!qaDiagnosticsEnabled || !bridge || typeof bridge.postMessage !== "function") {
@@ -1419,6 +1420,11 @@
     if (descriptor && descriptor.configurable === false) {
       if (descriptor.writable === true && typeof target[name] === "function") {
         target[name] = wrapMiniAppletMethod(target[name], call);
+        if (call === "SIGN" && badajozCompatibilityEnabled &&
+            !badajozSignHookReadyDiagnosticPosted) {
+          badajozSignHookReadyDiagnosticPosted = true;
+          postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY");
+        }
       }
       return;
     }
@@ -1433,6 +1439,11 @@
         current = wrapMiniAppletMethod(value, call);
       }
     });
+    if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&
+        !badajozSignHookReadyDiagnosticPosted) {
+      badajozSignHookReadyDiagnosticPosted = true;
+      postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY");
+    }
   }
 
   function wrapMiniApplet(
@@ -1447,8 +1458,8 @@
       return value;
     }
     try {
-      installMethodHook(value, "cargarMiniApplet", "LOAD");
       installMethodHook(value, "sign", "SIGN");
+      installMethodHook(value, "cargarMiniApplet", "LOAD");
       if (includeIsciiiCertificateSelection) {
         installMethodHook(value, "selectCertificate", "SELECT_CERTIFICATE");
       }
@@ -1550,6 +1561,7 @@
   }
 
   if (functionalSigningEnabled && badajozCompatibilityEnabled) {
+    postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
     const rewrapLateBadajozGlobals = () => {
       try {
         wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);

@@ -568,6 +568,14 @@ class RealE2ePolicyTest(unittest.TestCase):
             rejected = self.helper("validate-log", "--log", str(path))
             self.assertNotEqual(0, rejected.returncode)
 
+    def test_badajoz_hook_diagnostics_are_sanitized_and_bounded(self) -> None:
+        source = self.read(ROOT / "app/src/main/res/raw/afirma_shim.js")
+        self.assertIn('postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED")', source)
+        self.assertIn('postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY")', source)
+        self.assertIn('window.setInterval(rewrapLateBadajozGlobals, 250)', source)
+        self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
+        self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
+
     def test_select_emits_no_blank_record_for_empty_filtered_shard(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
         portal = catalog["entries"][0]["portalId"]
