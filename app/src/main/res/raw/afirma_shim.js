@@ -1468,9 +1468,13 @@
         miniApplet = wrapMiniApplet(value, false, false, xSel, false, caibBatchCompatibilityEnabled);
       }
     });
-    window.addEventListener("DOMContentLoaded", () => {
-      miniApplet = wrapMiniApplet(miniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
-    }, { once: true });
+    const rewrapCurrentMiniApplet = () => {
+      // Some portal scripts replace the global with defineProperty after document-start.
+      // Rewrap the object currently exposed by the page before its login button is used.
+      miniApplet = wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
+    };
+    window.addEventListener("DOMContentLoaded", rewrapCurrentMiniApplet, { once: true });
+    window.addEventListener("load", rewrapCurrentMiniApplet, { once: true });
   } else {
     wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
   }
@@ -1494,15 +1498,18 @@
         );
       }
     });
-    window.addEventListener("DOMContentLoaded", () => {
+    const rewrapCurrentAutoScript = () => {
+      // Keep the hook on the object that the portal actually exposed after document-start.
       autoScript = wrapMiniApplet(
-        autoScript,
+        window.AutoScript,
         ugrCompatibilityEnabled,
         melillaBatchCompatibilityEnabled,
         iSel || vSel || xSel,
         lugoBatchCompatibilityEnabled,
       );
-    }, { once: true });
+    };
+    window.addEventListener("DOMContentLoaded", rewrapCurrentAutoScript, { once: true });
+    window.addEventListener("load", rewrapCurrentAutoScript, { once: true });
   } else {
     wrapMiniApplet(
       window.AutoScript,
