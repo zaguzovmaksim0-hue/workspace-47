@@ -342,6 +342,9 @@ class WebMessageBridge internal constructor(
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
             return
         }
+        if (receiveMiniAppletShimDiagnostic(rawMessage, sourceOrigin, isMainFrame)) {
+            return
+        }
         if (receiveBatchDocumentReady(rawMessage, sourceOrigin, isMainFrame)) {
             return
         }
@@ -591,6 +594,38 @@ class WebMessageBridge internal constructor(
         }
     }
 
+    private fun receiveMiniAppletShimDiagnostic(
+        rawMessage: String,
+        sourceOrigin: android.net.Uri,
+        isMainFrame: Boolean,
+    ): Boolean {
+        if (!qaDiagnosticsEnabled || rawMessage.length > MAX_SHIM_DIAGNOSTIC_CHARS) {
+            return false
+        }
+        val json = runCatching { JSONObject(rawMessage) }.getOrNull() ?: return false
+        if (json.optString(SHIM_DIAGNOSTIC_TYPE_FIELD) != SHIM_DIAGNOSTIC_TYPE) {
+            return false
+        }
+        if (
+            !isMainFrame ||
+                json.length() != SHIM_DIAGNOSTIC_KEYS.size ||
+                SHIM_DIAGNOSTIC_KEYS.any { !json.has(it) }
+        ) {
+            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+            return true
+        }
+        val stage = json.opt(SHIM_DIAGNOSTIC_STAGE_FIELD) as? String
+        if (stage !in SHIM_DIAGNOSTIC_STAGES) {
+            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+            return true
+        }
+        logger.recordMiniAppletBridge(
+            stage = "SHIM_$stage",
+            originHost = sourceOrigin.host.orEmpty(),
+        )
+        return true
+    }
+
     private fun receiveMiniAppletRequest(
         request: MiniAppletBridgeRequest,
         replyProxy: JavaScriptReplyProxy,
@@ -795,6 +830,23 @@ class WebMessageBridge internal constructor(
         private const val DOCUMENT_READY_FIELD = "type"
         private const val DOCUMENT_READY_TYPE = "MINIAPPLET_DOCUMENT_READY"
         private val DOCUMENT_READY_KEYS = setOf("type", "documentId")
+        private const val SHIM_DIAGNOSTIC_TYPE = "MINIAPPLET_SHIM_DIAGNOSTIC"
+        private const val SHIM_DIAGNOSTIC_TYPE_FIELD = "type"
+        private const val SHIM_DIAGNOSTIC_STAGE_FIELD = "stage"
+        private const val MAX_SHIM_DIAGNOSTIC_CHARS = 256
+        private val SHIM_DIAGNOSTIC_KEYS = setOf(
+            SHIM_DIAGNOSTIC_TYPE_FIELD,
+            SHIM_DIAGNOSTIC_STAGE_FIELD,
+        )
+        private val SHIM_DIAGNOSTIC_STAGES = setOf(
+            "SCRIPT_INSTALLED",
+            "MINIAPPLET_DOMCONTENTLOADED_REWRAP",
+            "MINIAPPLET_LOAD_REWRAP",
+            "AUTOSCRIPT_REWRAP",
+            "SIGN_INTERCEPT_ENTRY",
+            "SIGN_INTERCEPT_ACCEPTED",
+            "SIGN_MESSAGE_POSTED",
+        )
         private val DOCUMENT_UUID_PATTERN = Regex(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-" +
                 "[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}",
