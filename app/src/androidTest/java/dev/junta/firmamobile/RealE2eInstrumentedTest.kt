@@ -199,43 +199,57 @@ class RealE2eInstrumentedTest {
         portalId: String,
     ) {
         when (portalId) {
-            CARNE_JOVEN_PORTAL_ID -> navigateCurrentBrowserToExactUrl(
+            CARNE_JOVEN_PORTAL_ID -> clickExactAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = CARNE_JOVEN_ENTRY_URL,
-                targetUrl = CARNE_JOVEN_AUTH_SOURCE_URL,
+                elementId = CARNE_JOVEN_AUTH_LINK_ID,
+                expectedTargetUrl = CARNE_JOVEN_AUTH_SOURCE_URL,
             )
             else -> Unit
         }
     }
 
-    private fun navigateCurrentBrowserToExactUrl(
+    private fun clickExactAnchor(
         scenario: ActivityScenario<MainActivity>,
         expectedCurrentUrl: String,
-        targetUrl: String,
+        elementId: String,
+        expectedTargetUrl: String,
     ) {
-        val completed = CountDownLatch(1)
+        val inspected = CountDownLatch(1)
         var failure: String? = null
+        var webViewRef: WebView? = null
         scenario.onActivity { activity ->
             val field = MainActivity::class.java.getDeclaredField("currentWebView")
                 .apply { isAccessible = true }
             val webView = field.get(activity) as? WebView
             if (webView == null) {
                 failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
-                completed.countDown()
+                inspected.countDown()
                 return@onActivity
             }
+            webViewRef = webView
             if (webView.url != expectedCurrentUrl) {
                 failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
-                completed.countDown()
+                inspected.countDown()
                 return@onActivity
             }
-            val quotedTarget = JSONObject.quote(targetUrl)
-            webView.evaluateJavascript("window.location.assign($quotedTarget)") {
-                completed.countDown()
+            val quotedId = JSONObject.quote(elementId)
+            webView.evaluateJavascript(
+                "document.getElementById($quotedId)?.href || ''",
+            ) { rawHref ->
+                if (rawHref != JSONObject.quote(expectedTargetUrl)) {
+                    failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                }
+                inspected.countDown()
             }
         }
-        check(completed.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_DISPATCH_TIMEOUT" }
+        check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
         check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+        val webView = checkNotNull(webViewRef) { "REAL_E2E_RECIPE_WEBVIEW_MISSING" }
+        val quotedId = JSONObject.quote(elementId)
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            webView.evaluateJavascript("document.getElementById($quotedId).click()", null)
+        }
     }
 
     private fun observePortal(
@@ -682,6 +696,7 @@ class RealE2eInstrumentedTest {
         const val CARNE_JOVEN_PORTAL_ID = "junta-andalucia-carne-joven"
         const val CARNE_JOVEN_ENTRY_URL =
             "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+        const val CARNE_JOVEN_AUTH_LINK_ID = "bot-obtener"
         const val CARNE_JOVEN_AUTH_SOURCE_URL =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
