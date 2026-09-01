@@ -340,10 +340,16 @@ class RealE2eInstrumentedTest {
         var signingHandled = false
         var certificateSelectionHandled = false
         var clientAuthConfirmations = 0
+        var postSignObservationDeadline: Long? = null
+        var postSignTracker: PostSignTracker? = null
 
-        while (SystemClock.elapsedRealtime() < deadline) {
+        while (
+            SystemClock.elapsedRealtime() < deadline ||
+                postSignObservationDeadline?.let { SystemClock.elapsedRealtime() < it } == true
+        ) {
             val records = diagnosticRecords()
             updateRecordObservations(records, result)
+            postSignTracker?.let { updatePostSignObservations(records, it, result) }
             updateCurrentHostFromRecords(records, result)
 
             if (result.hasTerminalSecurityFailure()) {
@@ -394,9 +400,29 @@ class RealE2eInstrumentedTest {
                 result.signingConfirmationObserved = true
                 result.level = maxOf(result.level, 3)
                 if (deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES) {
+                    val preSignRecords = diagnosticRecords()
+                    val signingEvidenceTracker = SigningEvidenceTracker(preSignRecords)
                     rule.onNodeWithText("Firmar").performClick()
                     result.signingConfirmed = true
-                    waitForSigningTerminalState(scenario, result)
+                    val completedRecords = waitForSigningTerminalState(
+                        scenario = scenario,
+                        tracker = signingEvidenceTracker,
+                        result = result,
+                    )
+                    if (completedRecords != null) {
+                        val tracker = PostSignTracker(
+                            baselineNavigation = latestMainFrameNavigation(completedRecords),
+                            previousRecords = completedRecords,
+                        )
+                        postSignTracker = tracker
+                        postSignObservationDeadline =
+                            SystemClock.elapsedRealtime() + POST_SIGN_TIMEOUT_MILLIS
+                        updatePostSignObservations(
+                            diagnosticRecords(),
+                            tracker,
+                            result,
+                        )
+                    }
                 } else {
                     rule.onNodeWithText("Cancelar").performClick()
                     result.signingCancelledAtBoundary = true
@@ -404,7 +430,13 @@ class RealE2eInstrumentedTest {
                 signingHandled = true
             }
 
-            if (isObservationComplete(profileCapabilities, result)) {
+            if (isObservationComplete(
+                    capabilities = profileCapabilities,
+                    profileId = profileId,
+                    result = result,
+                    postSignObservationDeadline = postSignObservationDeadline,
+                )
+            ) {
                 classify(profileCapabilities, result)
                 return
             }
@@ -418,10 +450,12 @@ class RealE2eInstrumentedTest {
 
     private fun waitForSigningTerminalState(
         scenario: ActivityScenario<MainActivity>,
+        tracker: SigningEvidenceTracker,
         result: ProbeResult,
-    ) {
+    ): List<String>? {
         val deadline = SystemClock.elapsedRealtime() + SIGNING_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
+            updateSigningEvidence(diagnosticRecords(), tracker, result)
             var state: SigningUiState? = null
             scenario.onActivity { activity ->
                 val field = MainActivity::class.java.getDeclaredField("signingCoordinator")
@@ -432,17 +466,94 @@ class RealE2eInstrumentedTest {
                 is SigningUiState.Completed -> {
                     result.signatureCompleted = true
                     result.level = maxOf(result.level, 4)
-                    return
+                    return diagnosticRecords()
                 }
                 is SigningUiState.Failed -> {
                     result.signingFailureCode = current.code.name
-                    return
+                    return null
                 }
                 else -> Unit
             }
             SystemClock.sleep(POLL_MILLIS)
         }
         result.signingFailureCode = "TIMEOUT"
+        return null
+    }
+
+    private fun updateSigningEvidence(
+        records: List<String>,
+        tracker: SigningEvidenceTracker,
+        result: ProbeResult,
+    ) {
+        val newRecords = recordsAddedSince(tracker.previousRecords, records)
+        tracker.previousRecords = records
+        if (newRecords.any { it.contains("event=PORTAL_CALLBACK") }) {
+            result.signingCallbackObserved = true
+        }
+    }
+
+    private fun updatePostSignObservations(
+        records: List<String>,
+        tracker: PostSignTracker,
+        result: ProbeResult,
+    ) {
+        val newRecords = recordsAddedSince(tracker.previousRecords, records)
+        tracker.previousRecords = records
+
+        if (newRecords.any { it.contains("event=PORTAL_CALLBACK") }) {
+            result.postSignCallbackObserved = true
+        }
+        if (newRecords.any { isPortalAuthSuccessRecord(it) }) {
+            result.portalAuthSuccess = true
+            result.postSignPortalAuthSuccess = true
+            result.authenticatedReturnObserved = true
+            result.level = maxOf(result.level, 5)
+        }
+
+        val navigations = newRecords.mapNotNull(::parseMainFrameNavigation)
+        if (navigations.isEmpty()) return
+
+        result.postSignNavigationObserved = true
+        result.postSignPageFinished = result.postSignPageFinished || navigations.any {
+            it.event == "PAGE_FINISHED"
+        }
+        tracker.baselineNavigation?.let { baseline ->
+            result.postSignHostChanged = result.postSignHostChanged || navigations.any {
+                it.host != baseline.host
+            }
+            result.postSignPathChanged = result.postSignPathChanged || navigations.any {
+                it.pathLength != baseline.pathLength || it.pathSha2568 != baseline.pathSha2568
+            }
+        }
+    }
+
+    private fun isPortalAuthSuccessRecord(record: String): Boolean =
+        record.contains("stage=vea-auth-success") ||
+            record.contains("stage=auth-success") ||
+            record.contains("stage=authentication-success")
+
+    private fun latestMainFrameNavigation(records: List<String>): SanitizedNavigation? =
+        records.asReversed().firstNotNullOfOrNull(::parseMainFrameNavigation)
+
+    private fun parseMainFrameNavigation(record: String): SanitizedNavigation? {
+        val event = SANITIZED_NAVIGATION_EVENT.find(record)?.groupValues?.getOrNull(1) ?: return null
+        if (!SANITIZED_MAIN_FRAME.containsMatchIn(record)) return null
+        val host = SANITIZED_HOST.find(record)?.groupValues?.getOrNull(1) ?: return null
+        val pathLength = SANITIZED_PATH_LENGTH.find(record)?.groupValues?.getOrNull(1)?.toIntOrNull()
+            ?: return null
+        val pathSha2568 = SANITIZED_PATH_HASH.find(record)?.groupValues?.getOrNull(1) ?: return null
+        return SanitizedNavigation(event, host, pathLength, pathSha2568)
+    }
+
+    private fun recordsAddedSince(previous: List<String>, current: List<String>): List<String> {
+        if (previous.isEmpty()) return current
+        val maxOverlap = minOf(previous.size, current.size)
+        for (overlap in maxOverlap downTo 1) {
+            if (previous.takeLast(overlap) == current.take(overlap)) {
+                return current.drop(overlap)
+            }
+        }
+        return emptyList()
     }
 
     private fun updateRecordObservations(records: List<String>, result: ProbeResult) {
@@ -459,11 +570,7 @@ class RealE2eInstrumentedTest {
         if (result.clientCertReceived) result.level = maxOf(result.level, 2)
         if (result.clientCertProceeded) result.level = maxOf(result.level, 4)
 
-        result.portalAuthSuccess = result.portalAuthSuccess || records.any {
-            it.contains("stage=vea-auth-success") ||
-                it.contains("stage=auth-success") ||
-                it.contains("stage=authentication-success")
-        }
+        result.portalAuthSuccess = result.portalAuthSuccess || records.any(::isPortalAuthSuccessRecord)
         if (result.portalAuthSuccess) result.level = maxOf(result.level, 5)
 
         result.clientCertRejected = result.clientCertRejected || records.any {
@@ -486,13 +593,22 @@ class RealE2eInstrumentedTest {
 
     private fun isObservationComplete(
         capabilities: Set<Capability>,
+        profileId: String,
         result: ProbeResult,
+        postSignObservationDeadline: Long?,
     ): Boolean {
         if (Capability.CLIENT_TLS_AUTH in capabilities && !result.clientCertProceeded) return false
         if (Capability.SELECT_CERTIFICATE in capabilities && !result.publicCertificateShared) return false
         if (Capability.SIGN in capabilities &&
             !result.signingConfirmationObserved && !result.signatureCompleted
         ) return false
+        if (Capability.SIGN in capabilities &&
+            profileId in SAFE_AUTH_SIGN_PROFILES &&
+            result.signatureCompleted
+        ) {
+            val deadline = postSignObservationDeadline ?: return false
+            if (SystemClock.elapsedRealtime() < deadline) return false
+        }
         return result.pageFinished || result.portalAuthSuccess || result.signatureCompleted
     }
 
@@ -515,15 +631,25 @@ class RealE2eInstrumentedTest {
                 ProbeClassification.RECIPE_REQUIRED
             }
         } else if (required.all { it }) {
+            val portalAuthAfterRealSign = Capability.SIGN in capabilities &&
+                result.signatureCompleted &&
+                (result.postSignPortalAuthSuccess || result.authenticatedReturnObserved)
             result.classification = when {
-                result.portalAuthSuccess -> ProbeClassification.PASS_PORTAL_AUTH
-                result.signatureCompleted -> ProbeClassification.PASS_CRYPTO_CALLBACK
+                portalAuthAfterRealSign ||
+                    (Capability.SIGN !in capabilities && result.portalAuthSuccess) ->
+                    ProbeClassification.PASS_PORTAL_AUTH
+                result.signatureCompleted &&
+                    (result.signingCallbackObserved ||
+                        result.postSignNavigationObserved ||
+                        result.postSignCallbackObserved) ->
+                    ProbeClassification.PASS_CRYPTO_CALLBACK
+                result.signatureCompleted -> ProbeClassification.PASS_REAL_CRYPTO_SIGN
                 result.clientCertProceeded -> ProbeClassification.PASS_CLIENT_TLS
                 else -> ProbeClassification.PASS_MECHANISM_BOUNDARY
             }
         } else {
             result.classification = if (
-                result.portalId in CONSEQ_RECIPE_PORTALS &&
+                result.profileId in CONSEQ_RECIPE_PROFILES &&
                 result.webViewActive &&
                 (result.pageStarted || result.pageFinished)
             ) {
@@ -592,7 +718,7 @@ class RealE2eInstrumentedTest {
         val directory = File(application().filesDir, REAL_E2E_DIR).apply { mkdirs() }
         val output = File(directory, RESULT_FILE)
         val json = JSONObject()
-            .put("schemaVersion", 1)
+            .put("schemaVersion", RESULT_SCHEMA_VERSION)
             .put("portalId", result.portalId)
             .put("profileId", result.profileId)
             .put("classification", result.classification.name)
@@ -616,6 +742,14 @@ class RealE2eInstrumentedTest {
             .put("signingConfirmed", result.signingConfirmed)
             .put("signingCancelledAtBoundary", result.signingCancelledAtBoundary)
             .put("signatureCompleted", result.signatureCompleted)
+            .put("signingCallbackObserved", result.signingCallbackObserved)
+            .put("postSignNavigationObserved", result.postSignNavigationObserved)
+            .put("postSignPageFinished", result.postSignPageFinished)
+            .put("postSignCallbackObserved", result.postSignCallbackObserved)
+            .put("postSignHostChanged", result.postSignHostChanged)
+            .put("postSignPathChanged", result.postSignPathChanged)
+            .put("authenticatedReturnObserved", result.authenticatedReturnObserved)
+            .put("postSignPortalAuthSuccess", result.postSignPortalAuthSuccess)
             .put("signingFailureCode", result.signingFailureCode ?: JSONObject.NULL)
             .put("portalAuthSuccess", result.portalAuthSuccess)
             .put("networkError", result.networkError)
@@ -713,6 +847,22 @@ class RealE2eInstrumentedTest {
         }
     }
 
+    private data class SanitizedNavigation(
+        val event: String,
+        val host: String,
+        val pathLength: Int,
+        val pathSha2568: String,
+    )
+
+    private class PostSignTracker(
+        val baselineNavigation: SanitizedNavigation?,
+        var previousRecords: List<String>,
+    )
+
+    private class SigningEvidenceTracker(
+        var previousRecords: List<String>,
+    )
+
     private data class ProbeResult(
         val portalId: String,
         val profileId: String,
@@ -737,6 +887,14 @@ class RealE2eInstrumentedTest {
         var signingConfirmed: Boolean = false,
         var signingCancelledAtBoundary: Boolean = false,
         var signatureCompleted: Boolean = false,
+        var signingCallbackObserved: Boolean = false,
+        var postSignNavigationObserved: Boolean = false,
+        var postSignPageFinished: Boolean = false,
+        var postSignCallbackObserved: Boolean = false,
+        var postSignHostChanged: Boolean = false,
+        var postSignPathChanged: Boolean = false,
+        var authenticatedReturnObserved: Boolean = false,
+        var postSignPortalAuthSuccess: Boolean = false,
         var signingFailureCode: String? = null,
         var portalAuthSuccess: Boolean = false,
         var networkError: Boolean = false,
@@ -764,6 +922,7 @@ class RealE2eInstrumentedTest {
         PASS_BROWSE,
         PASS_MECHANISM_BOUNDARY,
         PASS_CLIENT_TLS,
+        PASS_REAL_CRYPTO_SIGN,
         PASS_CRYPTO_CALLBACK,
         PASS_PORTAL_AUTH,
         BLOCKED_CONSEQUENTIAL_ACTION,
@@ -778,6 +937,7 @@ class RealE2eInstrumentedTest {
         const val REAL_E2E_ARGUMENT = "realE2e"
         const val DEEP_ARGUMENT = "realE2eDeep"
         const val PORTAL_ID_ARGUMENT = "portalId"
+        const val RESULT_SCHEMA_VERSION = 2
         const val REAL_E2E_DIR = "real-e2e"
         const val CERTIFICATE_FILE = "identity.p12"
         const val PASSWORD_FILE = "password"
@@ -787,8 +947,8 @@ class RealE2eInstrumentedTest {
         const val CARNE_JOVEN_ENTRY_URL =
             "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val CARNE_JOVEN_AUTH_LINK_ID = "bot-obtener"
-        val CONSEQ_RECIPE_PORTALS = setOf(
-            "age-pag-reg",
+        val CONSEQ_RECIPE_PROFILES = setOf(
+            "reg-age-redsara",
         )
         const val CARNE_JOVEN_AUTH_HREF =
             "/carneJoven/servlet/CallAuthenticationServlet"
@@ -802,6 +962,7 @@ class RealE2eInstrumentedTest {
         const val UI_TIMEOUT_MILLIS = 30_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
         const val SIGNING_TIMEOUT_MILLIS = 90_000L
+        const val POST_SIGN_TIMEOUT_MILLIS = 30_000L
         const val POLL_MILLIS = 300L
         const val RECIPE_POLL_MILLIS = 200L
         const val MAX_PASSWORD_BYTES = 8_192
@@ -809,6 +970,12 @@ class RealE2eInstrumentedTest {
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
         val SAFE_ERROR_TOKEN = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
         val SANITIZED_HOST = Regex("(?:^| )host=([a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?)(?: |$)")
+        val SANITIZED_NAVIGATION_EVENT = Regex(
+            "(?:^| )event=(NAVIGATION_ALLOWED|PAGE_STARTED|PAGE_FINISHED)(?: |$)",
+        )
+        val SANITIZED_MAIN_FRAME = Regex("(?:^| )main_frame=true(?: |$)")
+        val SANITIZED_PATH_LENGTH = Regex("(?:^| )path_length=([0-9]{1,7})(?: |$)")
+        val SANITIZED_PATH_HASH = Regex("(?:^| )path_sha256_8=([0-9a-f]{8})(?: |$)")
         val SAFE_AUTH_SIGN_PROFILES = setOf(
             "junta-andalucia",
             "unizar-tramitador",
