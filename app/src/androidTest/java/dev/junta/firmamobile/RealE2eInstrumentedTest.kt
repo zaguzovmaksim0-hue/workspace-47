@@ -203,7 +203,7 @@ class RealE2eInstrumentedTest {
                 scenario = scenario,
                 expectedCurrentUrl = CARNE_JOVEN_ENTRY_URL,
                 elementId = CARNE_JOVEN_AUTH_LINK_ID,
-                expectedTargetUrl = CARNE_JOVEN_AUTH_SOURCE_URL,
+                expectedHref = CARNE_JOVEN_AUTH_HREF,
             )
             else -> Unit
         }
@@ -213,11 +213,11 @@ class RealE2eInstrumentedTest {
         scenario: ActivityScenario<MainActivity>,
         expectedCurrentUrl: String,
         elementId: String,
-        expectedTargetUrl: String,
+        expectedHref: String,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedId = JSONObject.quote(elementId)
-        val quotedExpectedTarget = JSONObject.quote(expectedTargetUrl)
+        val quotedExpectedHref = JSONObject.quote(expectedHref)
         while (SystemClock.elapsedRealtime() < deadline) {
             val inspected = CountDownLatch(1)
             var failure: String? = null
@@ -238,10 +238,10 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 webView.evaluateJavascript(
-                    "document.getElementById($quotedId)?.href || ''",
+                    "document.getElementById($quotedId)?.getAttribute('href') || ''",
                 ) { rawHref ->
                     when {
-                        rawHref == quotedExpectedTarget -> {
+                        rawHref == quotedExpectedHref -> {
                             webView.evaluateJavascript("document.getElementById($quotedId).click()", null)
                             clicked = true
                         }
@@ -709,8 +709,8 @@ class RealE2eInstrumentedTest {
         const val CARNE_JOVEN_ENTRY_URL =
             "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val CARNE_JOVEN_AUTH_LINK_ID = "bot-obtener"
-        const val CARNE_JOVEN_AUTH_SOURCE_URL =
-            "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
+        const val CARNE_JOVEN_AUTH_HREF =
+            "/carneJoven/servlet/CallAuthenticationServlet"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
