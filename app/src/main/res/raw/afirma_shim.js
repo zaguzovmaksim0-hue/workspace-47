@@ -1456,41 +1456,22 @@
     }
   }
 
-  function wrapBadajozGlobalDiagnostic(name, stage) {
-    const current = window[name];
-    if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
-      return;
-    }
-    const wrapped = function(...args) {
-      postBadajozDiagnosticOnce(stage);
-      return Reflect.apply(current, this, args);
-    };
-    try {
-      window[name] = wrapped;
-      badajozDiagnosticWrappedFunctions.add(wrapped);
-    } catch (_) {
-      // A protected portal global stays untouched if it cannot be safely wrapped.
-    }
-  }
-
-  function wrapBadajozObjectDiagnostic(target, name, stage) {
-    if ((typeof target !== "object" || target === null) && typeof target !== "function") {
+  function wrapBadajozDiagnostic(target, name, stage) {
+    if (target == null || (typeof target !== "object" && typeof target !== "function")) {
       return;
     }
     const current = target[name];
     if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
       return;
     }
-    const wrapped = function(...args) {
+    const wrapped = function() {
       postBadajozDiagnosticOnce(stage);
-      return Reflect.apply(current, this, args);
+      return Reflect.apply(current, this, arguments);
     };
     try {
       target[name] = wrapped;
       badajozDiagnosticWrappedFunctions.add(wrapped);
-    } catch (_) {
-      // A protected portal method stays untouched if it cannot be safely wrapped.
-    }
+    } catch (_) {}
   }
 
   function wrapMiniApplet(
@@ -1611,23 +1592,12 @@
     postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
     const rewrapLateBadajozGlobals = () => {
       try {
-        wrapBadajozGlobalDiagnostic(
-          "pulsarFirmarIdentificate",
-          "BADAJOZ_PULSAR_SIGN_ENTRY",
-        );
-        wrapBadajozGlobalDiagnostic("firmar", "BADAJOZ_FIRMAR_ENTRY");
+        wrapBadajozDiagnostic(window, "pulsarFirmarIdentificate", "BADAJOZ_PULSAR_SIGN_ENTRY");
+        wrapBadajozDiagnostic(window, "firmar", "BADAJOZ_FIRMAR_ENTRY");
         wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
-        wrapBadajozObjectDiagnostic(
-          window.MiniApplet,
-          "getBase64FromText",
-          "BADAJOZ_GET_BASE64_ENTRY",
-        );
-        wrapBadajozObjectDiagnostic(window.MiniApplet, "echo", "BADAJOZ_ECHO_ENTRY");
-        wrapBadajozObjectDiagnostic(
-          window.MiniApplet,
-          "setForceWSMode",
-          "BADAJOZ_FORCE_WS_ENTRY",
-        );
+        wrapBadajozDiagnostic(window.MiniApplet, "getBase64FromText", "BADAJOZ_GET_BASE64_ENTRY");
+        wrapBadajozDiagnostic(window.MiniApplet, "echo", "BADAJOZ_ECHO_ENTRY");
+        wrapBadajozDiagnostic(window.MiniApplet, "setForceWSMode", "BADAJOZ_FORCE_WS_ENTRY");
         wrapMiniApplet(
           window.AutoScript,
           ugrCompatibilityEnabled,

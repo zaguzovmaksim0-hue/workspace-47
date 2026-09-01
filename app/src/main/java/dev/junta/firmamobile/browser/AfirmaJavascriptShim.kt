@@ -7,7 +7,7 @@ import java.net.URI
 import org.json.JSONObject
 
 object AfirmaJavascriptShim {
-    const val MAX_SCRIPT_CHARS = 64 * 1024
+    const val MAX_SCRIPT_CHARS = 68 * 1024
 
     fun load(context: Context): String = load(
         context,
