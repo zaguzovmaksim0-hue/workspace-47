@@ -215,41 +215,48 @@ class RealE2eInstrumentedTest {
         elementId: String,
         expectedTargetUrl: String,
     ) {
-        val inspected = CountDownLatch(1)
-        var failure: String? = null
-        var webViewRef: WebView? = null
-        scenario.onActivity { activity ->
-            val field = MainActivity::class.java.getDeclaredField("currentWebView")
-                .apply { isAccessible = true }
-            val webView = field.get(activity) as? WebView
-            if (webView == null) {
-                failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
-                inspected.countDown()
-                return@onActivity
-            }
-            webViewRef = webView
-            if (webView.url != expectedCurrentUrl) {
-                failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
-                inspected.countDown()
-                return@onActivity
-            }
-            val quotedId = JSONObject.quote(elementId)
-            webView.evaluateJavascript(
-                "document.getElementById($quotedId)?.href || ''",
-            ) { rawHref ->
-                if (rawHref != JSONObject.quote(expectedTargetUrl)) {
-                    failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
-                }
-                inspected.countDown()
-            }
-        }
-        check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
-        check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
-        val webView = checkNotNull(webViewRef) { "REAL_E2E_RECIPE_WEBVIEW_MISSING" }
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedId = JSONObject.quote(elementId)
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            webView.evaluateJavascript("document.getElementById($quotedId).click()", null)
+        val quotedExpectedTarget = JSONObject.quote(expectedTargetUrl)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && currentUrl != expectedCurrentUrl) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    "document.getElementById($quotedId)?.href || ''",
+                ) { rawHref ->
+                    when {
+                        rawHref == quotedExpectedTarget -> {
+                            webView.evaluateJavascript("document.getElementById($quotedId).click()", null)
+                            clicked = true
+                        }
+                        rawHref != JSONObject.quote("") ->
+                            failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
     private fun observePortal(
@@ -492,6 +499,11 @@ class RealE2eInstrumentedTest {
     private fun safeInfrastructureCode(throwable: Throwable, stage: ProbeStage): String = when (throwable.message) {
         "REAL_E2E_CERTIFICATE_MISSING" -> "CERTIFICATE_MISSING"
         "REAL_E2E_PASSWORD_MISSING" -> "PASSWORD_MISSING"
+        "REAL_E2E_RECIPE_WEBVIEW_MISSING" -> "RECIPE_WEBVIEW_MISSING"
+        "REAL_E2E_RECIPE_SOURCE_MISMATCH" -> "RECIPE_SOURCE_MISMATCH"
+        "REAL_E2E_RECIPE_TARGET_MISMATCH" -> "RECIPE_TARGET_MISMATCH"
+        "REAL_E2E_RECIPE_INSPECT_TIMEOUT" -> "RECIPE_INSPECT_TIMEOUT"
+        "REAL_E2E_RECIPE_TARGET_TIMEOUT" -> "RECIPE_TARGET_TIMEOUT"
         else -> {
             val type = throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
                 ?: "UNKNOWN_ERROR"
@@ -704,6 +716,7 @@ class RealE2eInstrumentedTest {
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
         const val SIGNING_TIMEOUT_MILLIS = 90_000L
         const val POLL_MILLIS = 300L
+        const val RECIPE_POLL_MILLIS = 200L
         const val MAX_PASSWORD_BYTES = 8_192
         const val MAX_CLIENT_AUTH_CONFIRMATIONS = 8
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
