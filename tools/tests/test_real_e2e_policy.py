@@ -364,6 +364,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             'expectedLabel = DIPUTACION_SEVILLA_AUTH_LABEL',
             'expectedHref = DIPUTACION_SEVILLA_AUTH_HREF',
             'expectedOnClick = DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK',
+            'waitForExpectedUrl = true',
         ):
             self.assertIn(expected, source)
 
