@@ -258,6 +258,7 @@ class RealE2eInstrumentedTest {
                     expectedLabel = AEAT_CERTIFICATE_BUTTON_LABEL,
                     expectedAriaLabel = null,
                     expectedOnClick = null,
+                    waitForExpectedUrl = true,
                 )
             }
             LLEIDA_PORTAL_ID -> {
