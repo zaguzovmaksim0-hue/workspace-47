@@ -219,6 +219,47 @@ class RealE2eInstrumentedTest {
                 expectedValue = OFVIRTUAL_AUTH_BUTTON_VALUE,
                 expectedOnClick = OFVIRTUAL_AUTH_BUTTON_ONCLICK,
             )
+            BADAJOZ_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = BADAJOZ_ENTRY_URL,
+                    expectedElementId = null,
+                    expectedLabel = BADAJOZ_CONTINUE_LABEL,
+                    expectedAriaLabel = null,
+                    expectedOnClick = BADAJOZ_CONTINUE_ONCLICK,
+                )
+                clickExactAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = BADAJOZ_LOGIN_PAGE_URL,
+                    elementId = BADAJOZ_LOGIN_LINK_ID,
+                    expectedHref = BADAJOZ_LOGIN_LINK_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = BADAJOZ_LOGIN_PAGE_URL,
+                    expectedElementId = BADAJOZ_CERT_BUTTON_ID,
+                    expectedLabel = BADAJOZ_CERT_BUTTON_LABEL,
+                    expectedAriaLabel = null,
+                    expectedOnClick = BADAJOZ_CERT_BUTTON_ONCLICK,
+                )
+            }
+            LLEIDA_PORTAL_ID -> {
+                clickExactAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = LLEIDA_LOGIN_PAGE_URL,
+                    elementId = LLEIDA_LOGIN_LINK_ID,
+                    expectedHref = LLEIDA_LOGIN_LINK_HREF,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = LLEIDA_LOGIN_PAGE_URL,
+                    expectedElementId = LLEIDA_CERT_BUTTON_ID,
+                    expectedLabel = null,
+                    expectedAriaLabel = LLEIDA_CERT_BUTTON_ARIA_LABEL,
+                    expectedOnClick = LLEIDA_CERT_BUTTON_ONCLICK,
+                )
+            }
             SEVILLA_PORTAL_ID -> clickExactContainedAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = SEVILLA_ENTRY_URL,
@@ -245,14 +286,17 @@ class RealE2eInstrumentedTest {
         expectedCurrentUrl: String,
         elementId: String,
         expectedHref: String,
+        waitForExpectedUrl: Boolean = false,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedId = JSONObject.quote(elementId)
         val quotedExpectedHref = JSONObject.quote(expectedHref)
         while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
             val inspected = CountDownLatch(1)
             var failure: String? = null
             var clicked = false
+            var waitingForExpectedUrl = false
             scenario.onActivity { activity ->
                 val field = MainActivity::class.java.getDeclaredField("currentWebView")
                     .apply { isAccessible = true }
@@ -264,6 +308,11 @@ class RealE2eInstrumentedTest {
                 }
                 val currentUrl = webView.url
                 if (currentUrl != null && currentUrl != expectedCurrentUrl) {
+                    if (waitForExpectedUrl) {
+                        waitingForExpectedUrl = true
+                        inspected.countDown()
+                        return@onActivity
+                    }
                     failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
                     inspected.countDown()
                     return@onActivity
@@ -288,6 +337,10 @@ class RealE2eInstrumentedTest {
             }
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForExpectedUrl) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
             if (clicked) return
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
@@ -435,6 +488,89 @@ class RealE2eInstrumentedTest {
             },
         )
     }
+
+    private fun clickExactButton(
+        scenario: ActivityScenario<MainActivity>,
+        expectedCurrentUrl: String,
+        expectedElementId: String?,
+        expectedLabel: String?,
+        expectedAriaLabel: String?,
+        expectedOnClick: String,
+    ) {
+        require(expectedLabel != null || expectedAriaLabel != null)
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedExpectedElementId = expectedElementId?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedLabel = expectedLabel?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedAriaLabel = expectedAriaLabel?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedOnClick = JSONObject.quote(expectedOnClick)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && !recipeUrlMatches(currentUrl, expectedCurrentUrl)) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const expectedId = $quotedExpectedElementId;
+                      const expectedLabel = $quotedExpectedLabel;
+                      const expectedAriaLabel = $quotedExpectedAriaLabel;
+                      const elements = Array.from(document.querySelectorAll('button')).filter(element => {
+                        if (element.getAttribute('type') !== 'button') return false;
+                        if (expectedId !== null && element.id !== expectedId) return false;
+                        const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
+                        if (expectedLabel !== null && label !== expectedLabel) return false;
+                        if (expectedAriaLabel !== null &&
+                            element.getAttribute('aria-label') !== expectedAriaLabel) return false;
+                        return element.getAttribute('onclick') === $quotedExpectedOnClick;
+                      });
+                      if (elements.length === 0) return 0;
+                      if (elements.length !== 1) return 2;
+                      elements[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        val terminalFailureDeadline =
+            SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun recipeUrlMatches(actualUrl: String, expectedUrl: String): Boolean =
+        actualUrl == expectedUrl ||
+            (expectedUrl.endsWith("/") && actualUrl == expectedUrl.dropLast(1)) ||
+            (!expectedUrl.endsWith("/") && actualUrl == "$expectedUrl/")
 
     private fun clickExactAuthButton(
         scenario: ActivityScenario<MainActivity>,
@@ -1149,6 +1285,26 @@ class RealE2eInstrumentedTest {
         const val OFVIRTUAL_AUTH_BUTTON_ID = "btnacceso"
         const val OFVIRTUAL_AUTH_BUTTON_VALUE = "Acceder"
         const val OFVIRTUAL_AUTH_BUTTON_ONCLICK = "autenticar();"
+        const val BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"
+        const val BADAJOZ_ENTRY_URL = "https://sede.dip-badajoz.es"
+        const val BADAJOZ_LOGIN_PAGE_URL =
+            "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
+        const val BADAJOZ_CONTINUE_LABEL = "CONTINUAR"
+        const val BADAJOZ_CONTINUE_ONCLICK =
+            "javascript: document.location.href='/portal/entidades.do?ent_id=10&idioma=1'"
+        const val BADAJOZ_LOGIN_LINK_ID = "login"
+        const val BADAJOZ_LOGIN_LINK_HREF = "javascript: abrirLogin('')"
+        const val BADAJOZ_CERT_BUTTON_ID = "firmar"
+        const val BADAJOZ_CERT_BUTTON_LABEL = "Certificado digital"
+        const val BADAJOZ_CERT_BUTTON_ONCLICK = "pulsarFirmarIdentificate();"
+        const val LLEIDA_PORTAL_ID = "diputacion-lleida-sede"
+        const val LLEIDA_LOGIN_PAGE_URL =
+            "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
+        const val LLEIDA_LOGIN_LINK_ID = "login"
+        const val LLEIDA_LOGIN_LINK_HREF = "javascript: abrirLogin('')"
+        const val LLEIDA_CERT_BUTTON_ID = "btnValid"
+        const val LLEIDA_CERT_BUTTON_ARIA_LABEL = "VALid"
+        const val LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"
         const val SEVILLA_PORTAL_ID = "sevilla-sede"
         const val SEVILLA_ENTRY_URL =
             "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
