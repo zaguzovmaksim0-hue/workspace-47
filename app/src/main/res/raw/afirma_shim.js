@@ -36,6 +36,8 @@
   const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const badajozCompatibilityEnabled = __JFM_BADAJOZ_COMPATIBILITY_ENABLED__;
   let badajozSignHookReadyDiagnosticPosted = false;
+  const badajozDiagnosticWrappedFunctions = new WeakSet();
+  const badajozDiagnosticPostedStages = new Set();
 
   function postShimDiagnostic(stage) {
     if (!qaDiagnosticsEnabled || !bridge || typeof bridge.postMessage !== "function") {
@@ -49,6 +51,14 @@
     } catch (_) {
       // Diagnostics must never change the portal method's behavior.
     }
+  }
+
+  function postBadajozDiagnosticOnce(stage) {
+    if (badajozDiagnosticPostedStages.has(stage)) {
+      return;
+    }
+    badajozDiagnosticPostedStages.add(stage);
+    postShimDiagnostic(stage);
   }
 
   postShimDiagnostic("SCRIPT_INSTALLED");
@@ -1446,6 +1456,43 @@
     }
   }
 
+  function wrapBadajozGlobalDiagnostic(name, stage) {
+    const current = window[name];
+    if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
+      return;
+    }
+    const wrapped = function(...args) {
+      postBadajozDiagnosticOnce(stage);
+      return Reflect.apply(current, this, args);
+    };
+    try {
+      window[name] = wrapped;
+      badajozDiagnosticWrappedFunctions.add(wrapped);
+    } catch (_) {
+      // A protected portal global stays untouched if it cannot be safely wrapped.
+    }
+  }
+
+  function wrapBadajozObjectDiagnostic(target, name, stage) {
+    if ((typeof target !== "object" || target === null) && typeof target !== "function") {
+      return;
+    }
+    const current = target[name];
+    if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
+      return;
+    }
+    const wrapped = function(...args) {
+      postBadajozDiagnosticOnce(stage);
+      return Reflect.apply(current, this, args);
+    };
+    try {
+      target[name] = wrapped;
+      badajozDiagnosticWrappedFunctions.add(wrapped);
+    } catch (_) {
+      // A protected portal method stays untouched if it cannot be safely wrapped.
+    }
+  }
+
   function wrapMiniApplet(
     value,
     includeUgrSetup = false,
@@ -1564,7 +1611,23 @@
     postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
     const rewrapLateBadajozGlobals = () => {
       try {
+        wrapBadajozGlobalDiagnostic(
+          "pulsarFirmarIdentificate",
+          "BADAJOZ_PULSAR_SIGN_ENTRY",
+        );
+        wrapBadajozGlobalDiagnostic("firmar", "BADAJOZ_FIRMAR_ENTRY");
         wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
+        wrapBadajozObjectDiagnostic(
+          window.MiniApplet,
+          "getBase64FromText",
+          "BADAJOZ_GET_BASE64_ENTRY",
+        );
+        wrapBadajozObjectDiagnostic(window.MiniApplet, "echo", "BADAJOZ_ECHO_ENTRY");
+        wrapBadajozObjectDiagnostic(
+          window.MiniApplet,
+          "setForceWSMode",
+          "BADAJOZ_FORCE_WS_ENTRY",
+        );
         wrapMiniApplet(
           window.AutoScript,
           ugrCompatibilityEnabled,
@@ -1576,6 +1639,7 @@
         // A late portal global remains fail-closed until the next bounded retry.
       }
     };
+    rewrapLateBadajozGlobals();
     const lateRewrapTimer = window.setInterval(rewrapLateBadajozGlobals, 250);
     window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis);
   }
