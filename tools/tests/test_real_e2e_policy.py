@@ -245,7 +245,11 @@ class RealE2ePolicyTest(unittest.TestCase):
         )
         self.assertIn('when (portalId)', source)
         self.assertIn('webView.url != expectedCurrentUrl', source)
-        self.assertIn('window.location.assign($quotedTarget)', source)
+        self.assertIn('CARNE_JOVEN_AUTH_LINK_ID = "bot-obtener"', source)
+        self.assertIn('document.getElementById($quotedId)?.href', source)
+        self.assertIn('rawHref != JSONObject.quote(expectedTargetUrl)', source)
+        self.assertIn('document.getElementById($quotedId).click()', source)
+        self.assertNotIn('window.location.assign(', source)
         self.assertNotIn('targetUrl = portalId', source)
 
     def test_real_e2e_waits_for_owned_webview_via_catalog_inspect(self) -> None:
