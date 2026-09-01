@@ -20,6 +20,7 @@ enum class DiagnosticEventCode {
     NETWORK_ERROR,
     AFIRMA_REQUEST_OBSERVED,
     MINIAPPLET_OBSERVED,
+    MINIAPPLET_BRIDGE,
     PROTOCOL_CORRELATION_REJECTED,
     TUNNEL_ROUTE,
     NAVIGATION_ALLOWED,
@@ -106,6 +107,26 @@ class SanitizedLogger(
                 ?: INVALID_LENGTH
             fields += "argument.$index.length=$safeLength"
         }
+        append(fields.joinToString(separator = " "))
+    }
+
+    @Synchronized
+    fun recordMiniAppletBridge(
+        stage: String,
+        originHost: String,
+        algorithm: String? = null,
+        format: String? = null,
+        errorCode: String? = null,
+    ) {
+        val fields = mutableListOf(
+            "timestamp=${clock.instant()}",
+            "event=${DiagnosticEventCode.MINIAPPLET_BRIDGE.name}",
+            "origin=${safeHost(originHost)}",
+            "stage=${safeToken(stage)}",
+            "algorithm=${safeToken(algorithm)}",
+            "format=${safeToken(format)}",
+        )
+        if (errorCode != null) fields += "error=${safeToken(errorCode)}"
         append(fields.joinToString(separator = " "))
     }
 

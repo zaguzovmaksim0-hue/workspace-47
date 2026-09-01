@@ -16,7 +16,7 @@ class QaDiagnosticFileSinkTest {
     )
 
     @Test
-    fun persistsOnlySanitizedNavigationAndCallbackMetadata() {
+    fun persistsOnlySanitizedNavigationCallbackAndBridgeMetadata() {
         val directory = Files.createTempDirectory("jfm-qa-diagnostic").toFile()
         val file = directory.resolve("qa-navigation.log")
         val logger = SanitizedLogger(
@@ -26,6 +26,13 @@ class QaDiagnosticFileSinkTest {
         val secret = "certificate-signature-secret-canary"
 
         logger.recordPortalCallback("CALLBACK_RETURNED", "ws072.juntadeandalucia.es")
+        logger.recordMiniAppletBridge(
+            stage = "REJECTED",
+            originHost = "sede.dip-badajoz.es",
+            algorithm = "SHA256_WITH_RSA",
+            format = "CADES",
+            errorCode = "UNSUPPORTED_PROTOCOL",
+        )
         logger.recordNavigationEvent(
             code = DiagnosticEventCode.NETWORK_REQUEST,
             rawUrl = "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs?firmaB64=$secret#fragment",
@@ -35,6 +42,9 @@ class QaDiagnosticFileSinkTest {
 
         val persisted = file.readText()
         assertTrue(persisted.contains("event=PORTAL_CALLBACK"))
+        assertTrue(persisted.contains("event=MINIAPPLET_BRIDGE"))
+        assertTrue(persisted.contains("stage=REJECTED"))
+        assertTrue(persisted.contains("error=UNSUPPORTED_PROTOCOL"))
         assertTrue(persisted.contains("stage=CALLBACK_RETURNED"))
         assertTrue(persisted.contains("event=NETWORK_REQUEST"))
         assertTrue(persisted.contains("host=ws072.juntadeandalucia.es"))

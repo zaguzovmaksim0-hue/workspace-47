@@ -514,10 +514,21 @@ class WebMessageBridge internal constructor(
             )
         ) {
             is MiniAppletBridgeRouteResult.Accepted -> {
+                logger.recordMiniAppletBridge(
+                    stage = "ACCEPTED",
+                    originHost = sourceOrigin.host.orEmpty(),
+                    algorithm = directResult.request.normalized.algorithm.name,
+                    format = directResult.request.normalized.format.name,
+                )
                 receiveMiniAppletRequest(directResult.request, replyProxy)
                 return
             }
             is MiniAppletBridgeRouteResult.Rejected -> {
+                logger.recordMiniAppletBridge(
+                    stage = "REJECTED",
+                    originHost = sourceOrigin.host.orEmpty(),
+                    errorCode = directResult.code.name,
+                )
                 logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
                 directResult.requestId?.let { requestId ->
                     MiniAppletReplyChannel(
