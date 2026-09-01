@@ -1549,6 +1549,25 @@
     );
   }
 
+  if (functionalSigningEnabled && badajozCompatibilityEnabled) {
+    const rewrapLateBadajozGlobals = () => {
+      try {
+        wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
+        wrapMiniApplet(
+          window.AutoScript,
+          ugrCompatibilityEnabled,
+          melillaBatchCompatibilityEnabled,
+          iSel || vSel || xSel,
+          lugoBatchCompatibilityEnabled,
+        );
+      } catch (_) {
+        // A late portal global remains fail-closed until the next bounded retry.
+      }
+    };
+    const lateRewrapTimer = window.setInterval(rewrapLateBadajozGlobals, 250);
+    window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis);
+  }
+
   if (document.readyState === "loading") {
     window.addEventListener("DOMContentLoaded", triggerPublicJuntaAccessForProbe, {
       once: true
