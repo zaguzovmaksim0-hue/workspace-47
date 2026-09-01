@@ -277,6 +277,22 @@ class RealE2eInstrumentedTest {
                     expectedOnClick = LLEIDA_CERT_BUTTON_ONCLICK,
                 )
             }
+            DIPUTACION_SEVILLA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = DIPUTACION_SEVILLA_INDEX_URL,
+                    expectedLabel = DIPUTACION_SEVILLA_AUTH_LABEL,
+                    expectedHref = DIPUTACION_SEVILLA_AUTH_HREF,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = DIPUTACION_SEVILLA_AUTH_URL,
+                    expectedElementId = null,
+                    expectedLabel = DIPUTACION_SEVILLA_AUTH_BUTTON_LABEL,
+                    expectedAriaLabel = null,
+                    expectedOnClick = DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK,
+                )
+            }
             SEVILLA_PORTAL_ID -> clickExactContainedAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = SEVILLA_ENTRY_URL,
@@ -1399,6 +1415,16 @@ class RealE2eInstrumentedTest {
         const val LLEIDA_CERT_BUTTON_ID = "btnValid"
         const val LLEIDA_CERT_BUTTON_ARIA_LABEL = "VALid"
         const val LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"
+        const val DIPUTACION_SEVILLA_PORTAL_ID = "diputacion-sevilla-sede"
+        const val DIPUTACION_SEVILLA_INDEX_URL =
+            "https://sedeelectronicadipusevilla.es/opencms/system/modules/sede/elements/secciones/index"
+        const val DIPUTACION_SEVILLA_AUTH_URL =
+            "https://sedeelectronicadipusevilla.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+        const val DIPUTACION_SEVILLA_AUTH_LABEL = "Identificarse"
+        const val DIPUTACION_SEVILLA_AUTH_HREF =
+            "/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+        const val DIPUTACION_SEVILLA_AUTH_BUTTON_LABEL = "ACCEDER"
+        const val DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK = "loginClave();"
         const val SEVILLA_PORTAL_ID = "sevilla-sede"
         const val SEVILLA_ENTRY_URL =
             "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"

@@ -350,6 +350,23 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("element.addEventListener('click', preventDefault, { once: true })", source)
         self.assertIn('element.click()', source)
 
+    def test_diputacion_sevilla_recipe_reaches_the_reviewed_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for expected in (
+            'DIPUTACION_SEVILLA_PORTAL_ID = "diputacion-sevilla-sede"',
+            'DIPUTACION_SEVILLA_INDEX_URL =',
+            'DIPUTACION_SEVILLA_AUTH_URL =',
+            'DIPUTACION_SEVILLA_AUTH_LABEL = "Identificarse"',
+            'DIPUTACION_SEVILLA_AUTH_HREF =',
+            'DIPUTACION_SEVILLA_AUTH_BUTTON_LABEL = "ACCEDER"',
+            'DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK = "loginClave();"',
+            'DIPUTACION_SEVILLA_PORTAL_ID -> {',
+            'expectedLabel = DIPUTACION_SEVILLA_AUTH_LABEL',
+            'expectedHref = DIPUTACION_SEVILLA_AUTH_HREF',
+            'expectedOnClick = DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK',
+        ):
+            self.assertIn(expected, source)
+
     def test_unizar_recipe_targets_the_certificate_button_inside_its_container(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('UNIZAR_PORTAL_ID = "unizar-tramitador"', source)
