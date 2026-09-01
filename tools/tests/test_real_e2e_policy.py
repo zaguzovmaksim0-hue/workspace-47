@@ -306,6 +306,10 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("result.authenticatedReturnObserved", source)
         self.assertIn("result.signingCallbackObserved", source)
         self.assertIn("result.postSignPortalAuthSuccess", source)
+        delta = source[source.index("private fun recordsAddedSince("):]
+        delta = delta[:delta.index("private fun updateRecordObservations(")]
+        self.assertIn("current.take(previous.size) == previous", delta)
+        self.assertIn("current.drop(previous.size)", delta)
         signing_wait = source[source.index("private fun waitForSigningTerminalState("):]
         signing_wait = signing_wait[:signing_wait.index("private fun updateSigningEvidence(")]
         self.assertNotIn("updatePostSignObservations", signing_wait)
