@@ -131,6 +131,7 @@ class AfirmaJavascriptShimTest {
         assertTrue(functional.contains("isIdenticalInFlightCall"))
         assertTrue(functional.contains("pending.dataB64 === args[0]"))
         assertTrue(functional.contains("pending.successCallback === args[4]"))
+        assertTrue(functional.contains("if (call === \"SIGN\" && interceptMiniAppletSign(args))"))
         assertTrue(functional.contains("SHA512withRSA"))
         assertTrue(functional.contains("XAdES Detached"))
         assertTrue(functional.contains("args[3] === null"))

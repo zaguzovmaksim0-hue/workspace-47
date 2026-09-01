@@ -1359,6 +1359,9 @@
     function wrappedMiniAppletMethod(...args) {
       const observedRequestId = tryObserveMiniAppletCall(call, args);
       if (observedRequestId === null) {
+        if (call === "SIGN" && interceptMiniAppletSign(args)) {
+          return undefined;
+        }
         if (call === "SELECT_CERTIFICATE" && interceptCertificateSelection(args)) {
           return undefined;
         }
