@@ -337,6 +337,10 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn("updatePostSignObservations", signing_wait)
         self.assertIn("updateSigningEvidence", signing_wait)
         self.assertIn("return diagnosticRecords()", signing_wait)
+        self.assertIn(
+            "updateSigningEvidence(completedRecords, signingEvidenceTracker, result)",
+            source,
+        )
         sign_branch = source[source.index("if (deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES)") :]
         sign_branch = sign_branch[:sign_branch.index("} else {")]
         self.assertLess(
