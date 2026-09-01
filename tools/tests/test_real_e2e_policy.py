@@ -528,6 +528,29 @@ class RealE2ePolicyTest(unittest.TestCase):
             rejected = self.helper("validate-progress", "--progress", str(path))
             self.assertNotEqual(0, rejected.returncode)
 
+    def test_navigation_validator_accepts_sanitized_mini_applet_bridge_events(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "navigation.log"
+            path.write_text(
+                "timestamp=2026-09-01T19:38:25Z "
+                "event=MINIAPPLET_BRIDGE origin=sede.dip-badajoz.es "
+                "stage=SHIM_SCRIPT_INSTALLED algorithm=invalid format=invalid\n"
+                "timestamp=2026-09-01T19:38:26Z "
+                "event=MINIAPPLET_BRIDGE origin=sede.dip-badajoz.es "
+                "stage=REJECTED algorithm=invalid format=invalid "
+                "error=UNSUPPORTED_PROTOCOL\n",
+                encoding="ascii",
+            )
+            accepted = self.helper("validate-log", "--log", str(path))
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+
+            path.write_text(
+                "timestamp=2026-09-01T19:38:25Z event=UNSAFE_EVENT\n",
+                encoding="ascii",
+            )
+            rejected = self.helper("validate-log", "--log", str(path))
+            self.assertNotEqual(0, rejected.returncode)
+
     def test_select_emits_no_blank_record_for_empty_filtered_shard(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
         portal = catalog["entries"][0]["portalId"]
