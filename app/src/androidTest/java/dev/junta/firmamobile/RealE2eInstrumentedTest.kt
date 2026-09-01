@@ -448,6 +448,7 @@ class RealE2eInstrumentedTest {
         val quotedExpectedValue = JSONObject.quote(expectedValue)
         val quotedExpectedOnClick = JSONObject.quote(expectedOnClick)
         while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
             val inspected = CountDownLatch(1)
             var failure: String? = null
             var clicked = false
@@ -491,8 +492,22 @@ class RealE2eInstrumentedTest {
             if (clicked) return
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
+        val terminalFailureDeadline =
+            SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
+
+    private fun hasObservedTerminalNavigationFailure(): Boolean =
+        diagnosticRecords().any { record ->
+            record.contains("event=NETWORK_ERROR") ||
+                record.contains("event=SSL_ERROR_CANCELLED") ||
+                record.contains("event=NAVIGATION_BLOCKED")
+        }
 
     private fun observePortal(
         scenario: ActivityScenario<MainActivity>,
@@ -1155,6 +1170,7 @@ class RealE2eInstrumentedTest {
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
         const val SIGNING_TIMEOUT_MILLIS = 90_000L
         const val POST_SIGN_TIMEOUT_MILLIS = 30_000L
+        const val RECIPE_TERMINAL_GRACE_MILLIS = 5_000L
         const val POLL_MILLIS = 300L
         const val RECIPE_POLL_MILLIS = 200L
         const val MAX_PASSWORD_BYTES = 8_192

@@ -289,6 +289,20 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('OFVIRTUAL_AUTH_BUTTON_ONCLICK = "autenticar();"', source)
         self.assertIn('OFVIRTUAL_PORTAL_ID -> clickExactAuthButton(', source)
 
+    def test_auth_recipe_surfaces_terminal_navigation_failure_before_timeout(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source[source.index('private fun clickExactAuthButton('):]
+        helper = helper[:helper.index('private fun observePortal(')]
+        self.assertIn('const val RECIPE_TERMINAL_GRACE_MILLIS = 5_000L', source)
+        self.assertIn('hasObservedTerminalNavigationFailure()', helper)
+        for event in (
+            'event=NETWORK_ERROR',
+            'event=SSL_ERROR_CANCELLED',
+            'event=NAVIGATION_BLOCKED',
+        ):
+            self.assertIn(event, helper)
+        self.assertIn('RECIPE_TERMINAL_GRACE_MILLIS', helper)
+
     def test_sevilla_recipe_clicks_only_the_exact_certificate_anchor(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('SEVILLA_PORTAL_ID = "sevilla-sede"', source)
