@@ -186,14 +186,32 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("-e realE2e true", runner)
         self.assertIn("-e realE2eDeep", runner)
 
-    def test_workflow_runs_six_parallel_non_overlapping_shards(self) -> None:
+    def test_targeted_portal_uses_exactly_one_real_shard(self) -> None:
+        workflow = self.read(WORKFLOW)
+        self.assertIn("include: ${{ fromJSON(inputs.portal_id != ''", workflow)
+        self.assertIn('{"shard_number":1,"shard_index":0,"shard_total":1}', workflow)
+        self.assertIn('REAL_E2E_SHARD_TOTAL: ${{ matrix.shard_total }}', workflow)
+        self.assertIn('shard ${{ matrix.shard_number }}/${{ matrix.shard_total }}', workflow)
+        targeted = self.helper(
+            "select",
+            "--catalog",
+            str(CATALOG),
+            "--portal",
+            "junta-andalucia-carne-joven",
+            "--shard-index",
+            "0",
+            "--shard-total",
+            "1",
+        )
+        self.assertEqual(0, targeted.returncode, targeted.stderr)
+        self.assertEqual(["junta-andalucia-carne-joven"], targeted.stdout.splitlines())
+
+    def test_workflow_runs_six_parallel_non_overlapping_shards_for_full_catalog(self) -> None:
         workflow = self.read(WORKFLOW)
         self.assertIn("strategy:\n      fail-fast: false\n      matrix:\n", workflow)
-        self.assertEqual(6, workflow.count("shard_number:"))
-        self.assertEqual(6, workflow.count("shard_index:"))
+        self.assertEqual(6, workflow.count('"shard_total":6'))
         self.assertIn('REAL_E2E_SHARD_INDEX: ${{ matrix.shard_index }}', workflow)
-        self.assertIn("REAL_E2E_SHARD_TOTAL: 6", workflow)
-        self.assertIn('shard ${{ matrix.shard_number }}/6', workflow)
+        self.assertIn('REAL_E2E_SHARD_TOTAL: ${{ matrix.shard_total }}', workflow)
         self.assertIn('shard-${{ matrix.shard_number }}', workflow)
 
         shards = []

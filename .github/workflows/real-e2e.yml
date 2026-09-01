@@ -25,7 +25,7 @@ env:
 
 jobs:
   real-e2e:
-    name: Real certificate catalog E2E shard ${{ matrix.shard_number }}/6
+    name: Real certificate catalog E2E shard ${{ matrix.shard_number }}/${{ matrix.shard_total }}
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 330
@@ -33,19 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - shard_number: 1
-            shard_index: 0
-          - shard_number: 2
-            shard_index: 1
-          - shard_number: 3
-            shard_index: 2
-          - shard_number: 4
-            shard_index: 3
-          - shard_number: 5
-            shard_index: 4
-          - shard_number: 6
-            shard_index: 5
+        include: ${{ fromJSON(inputs.portal_id != '' && '[{"shard_number":1,"shard_index":0,"shard_total":1}]' || '[{"shard_number":1,"shard_index":0,"shard_total":6},{"shard_number":2,"shard_index":1,"shard_total":6},{"shard_number":3,"shard_index":2,"shard_total":6},{"shard_number":4,"shard_index":3,"shard_total":6},{"shard_number":5,"shard_index":4,"shard_total":6},{"shard_number":6,"shard_index":5,"shard_total":6}]') }}
     steps:
       - name: Checkout trusted main SHA
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -94,7 +82,7 @@ jobs:
           PORTAL_ID_FILTER: ${{ inputs.portal_id }}
           REAL_E2E_DEEP_AUTH_SIGNING: ${{ inputs.deep_auth_signing }}
           REAL_E2E_SHARD_INDEX: ${{ matrix.shard_index }}
-          REAL_E2E_SHARD_TOTAL: 6
+          REAL_E2E_SHARD_TOTAL: ${{ matrix.shard_total }}
         with:
           api-level: 36
           target: google_apis
