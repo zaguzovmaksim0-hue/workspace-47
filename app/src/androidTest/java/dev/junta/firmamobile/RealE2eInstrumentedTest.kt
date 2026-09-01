@@ -250,6 +250,7 @@ class RealE2eInstrumentedTest {
                     expectedCurrentUrl = LLEIDA_LOGIN_PAGE_URL,
                     elementId = LLEIDA_LOGIN_LINK_ID,
                     expectedHref = LLEIDA_LOGIN_LINK_HREF,
+                    waitForExpectedUrl = true,
                 )
                 clickExactButton(
                     scenario = scenario,
@@ -1293,7 +1294,7 @@ class RealE2eInstrumentedTest {
         const val BADAJOZ_CONTINUE_ONCLICK =
             "javascript: document.location.href='/portal/entidades.do?ent_id=10&idioma=1'"
         const val BADAJOZ_LOGIN_LINK_ID = "login"
-        const val BADAJOZ_LOGIN_LINK_HREF = "javascript: abrirLogin('')"
+        const val BADAJOZ_LOGIN_LINK_HREF = "javascript: abrirLogin('');"
         const val BADAJOZ_CERT_BUTTON_ID = "firmar"
         const val BADAJOZ_CERT_BUTTON_LABEL = "Certificado digital"
         const val BADAJOZ_CERT_BUTTON_ONCLICK = "pulsarFirmarIdentificate();"
@@ -1301,7 +1302,7 @@ class RealE2eInstrumentedTest {
         const val LLEIDA_LOGIN_PAGE_URL =
             "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
         const val LLEIDA_LOGIN_LINK_ID = "login"
-        const val LLEIDA_LOGIN_LINK_HREF = "javascript: abrirLogin('')"
+        const val LLEIDA_LOGIN_LINK_HREF = "javascript: abrirLogin('');"
         const val LLEIDA_CERT_BUTTON_ID = "btnValid"
         const val LLEIDA_CERT_BUTTON_ARIA_LABEL = "VALid"
         const val LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"
