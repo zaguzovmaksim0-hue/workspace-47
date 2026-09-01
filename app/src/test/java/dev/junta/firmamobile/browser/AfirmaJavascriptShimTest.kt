@@ -812,4 +812,21 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("filters=nonexpired:true;authCert:true"))
     }
 
+    @Test
+    fun badajozCompatibilityRehooksGlobalsReplacedAfterDocumentStart() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            badajozCompatibilityEnabled = true,
+        )
+        assertTrue(enabled.contains("functionalSigningEnabled && badajozCompatibilityEnabled"))
+        assertTrue(enabled.contains("window.setInterval"))
+        assertTrue(enabled.contains("window.clearInterval"))
+        assertTrue(enabled.contains("wrapMiniApplet(window.MiniApplet"))
+        assertTrue(enabled.contains("wrapMiniApplet(window.AutoScript"))
+        assertTrue(enabled.contains("signTimeoutMillis"))
+    }
+
 }
