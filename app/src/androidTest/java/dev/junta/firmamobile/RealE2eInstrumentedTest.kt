@@ -485,6 +485,7 @@ class RealE2eInstrumentedTest {
                         result = result,
                     )
                     if (completedRecords != null) {
+                        updateSigningEvidence(completedRecords, signingEvidenceTracker, result)
                         val tracker = PostSignTracker(
                             baselineNavigation = latestMainFrameNavigation(completedRecords),
                             previousRecords = completedRecords,
