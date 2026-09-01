@@ -1590,6 +1590,11 @@
 
   if (functionalSigningEnabled && badajozCompatibilityEnabled) {
     postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
+    document.addEventListener("click", event => {
+      if (event.target && event.target.id === "firmar") {
+        postBadajozDiagnosticOnce("BADAJOZ_CERT_BUTTON_CLICK");
+      }
+    }, true);
     const rewrapLateBadajozGlobals = () => {
       try {
         wrapBadajozDiagnostic(window, "pulsarFirmarIdentificate", "BADAJOZ_PULSAR_SIGN_ENTRY");
