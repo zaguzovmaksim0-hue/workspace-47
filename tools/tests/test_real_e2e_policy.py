@@ -277,6 +277,15 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn("maxOf(result.level, 6)", source)
         self.assertIn("signingCancelledAtBoundary", source)
 
+    def test_consequential_portals_are_classified_without_deep_automation(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        report = self.read(REPORT_HELPER)
+        self.assertIn('val CONSEQ_RECIPE_PORTALS = setOf(', source)
+        self.assertIn('"age-pag-reg"', source)
+        self.assertIn('ProbeClassification.BLOCKED_CONSEQUENTIAL_ACTION', source)
+        self.assertIn('result.portalId in CONSEQ_RECIPE_PORTALS', source)
+        self.assertIn('"BLOCKED_CONSEQUENTIAL_ACTION"', report)
+
     def test_administrative_signing_profiles_are_not_deep_sign_allowlisted(self) -> None:
         source = self.read(INSTRUMENTATION)
         allowlist = source.split("val SAFE_AUTH_SIGN_PROFILES = setOf(", 1)[1].split(")", 1)[0]
