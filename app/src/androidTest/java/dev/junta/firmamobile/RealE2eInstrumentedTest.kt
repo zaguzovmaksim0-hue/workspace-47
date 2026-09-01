@@ -129,6 +129,8 @@ class RealE2eInstrumentedTest {
                     openPortal(portalId, result)
                     probeStage = ProbeStage.WAIT_FOR_WEBVIEW
                     waitForWebView(portalId, result)
+                    probeStage = ProbeStage.APPLY_RECIPE
+                    applyPortalRecipe(scenario, portalId)
                     probeStage = ProbeStage.OBSERVE_PORTAL
                     observePortal(
                         scenario = scenario,
@@ -191,6 +193,50 @@ class RealE2eInstrumentedTest {
                 "--es", "operation", operation,
             ).joinToString(" "),
         )
+
+    private fun applyPortalRecipe(
+        scenario: ActivityScenario<MainActivity>,
+        portalId: String,
+    ) {
+        when (portalId) {
+            CARNE_JOVEN_PORTAL_ID -> navigateCurrentBrowserToExactUrl(
+                scenario = scenario,
+                expectedCurrentUrl = CARNE_JOVEN_ENTRY_URL,
+                targetUrl = CARNE_JOVEN_AUTH_SOURCE_URL,
+            )
+            else -> Unit
+        }
+    }
+
+    private fun navigateCurrentBrowserToExactUrl(
+        scenario: ActivityScenario<MainActivity>,
+        expectedCurrentUrl: String,
+        targetUrl: String,
+    ) {
+        val completed = CountDownLatch(1)
+        var failure: String? = null
+        scenario.onActivity { activity ->
+            val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                .apply { isAccessible = true }
+            val webView = field.get(activity) as? WebView
+            if (webView == null) {
+                failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                completed.countDown()
+                return@onActivity
+            }
+            if (webView.url != expectedCurrentUrl) {
+                failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                completed.countDown()
+                return@onActivity
+            }
+            val quotedTarget = JSONObject.quote(targetUrl)
+            webView.evaluateJavascript("window.location.assign($quotedTarget)") {
+                completed.countDown()
+            }
+        }
+        check(completed.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_DISPATCH_TIMEOUT" }
+        check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+    }
 
     private fun observePortal(
         scenario: ActivityScenario<MainActivity>,
@@ -606,6 +652,7 @@ class RealE2eInstrumentedTest {
         ENTER_CATALOG,
         OPEN_PORTAL,
         WAIT_FOR_WEBVIEW,
+        APPLY_RECIPE,
         OBSERVE_PORTAL,
     }
 
@@ -632,6 +679,11 @@ class RealE2eInstrumentedTest {
         const val PASSWORD_FILE = "password"
         const val RESULT_FILE = "result.json"
         const val PACKAGE_NAME = "dev.junta.firmamobile"
+        const val CARNE_JOVEN_PORTAL_ID = "junta-andalucia-carne-joven"
+        const val CARNE_JOVEN_ENTRY_URL =
+            "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+        const val CARNE_JOVEN_AUTH_SOURCE_URL =
+            "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L

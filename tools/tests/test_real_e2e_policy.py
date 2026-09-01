@@ -232,6 +232,22 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertEqual(183, len(shards))
         self.assertEqual(183, len(set(shards)))
 
+    def test_carne_joven_recipe_is_exact_and_same_origin_only(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('CARNE_JOVEN_PORTAL_ID = "junta-andalucia-carne-joven"', source)
+        self.assertIn(
+            '"https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"',
+            source,
+        )
+        self.assertIn(
+            '"https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"',
+            source,
+        )
+        self.assertIn('when (portalId)', source)
+        self.assertIn('webView.url != expectedCurrentUrl', source)
+        self.assertIn('window.location.assign($quotedTarget)', source)
+        self.assertNotIn('targetUrl = portalId', source)
+
     def test_real_e2e_waits_for_owned_webview_via_catalog_inspect(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('catalogSmoke(portalId, "INSPECT").contains("WEBVIEW_ACTIVE")', source)
