@@ -259,6 +259,22 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn('window.location.assign(', source)
         self.assertNotIn('targetUrl = portalId', source)
 
+    def test_ovorion_auth_recipe_clicks_only_the_exact_login_button(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('OVORION_PORTAL_ID = "junta-andalucia-ovorion"', source)
+        self.assertIn(
+            '"https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"',
+            source,
+        )
+        self.assertIn('OVORION_AUTH_BUTTON_ID = "btnacceso"', source)
+        self.assertIn('OVORION_AUTH_BUTTON_VALUE = "Acceder"', source)
+        self.assertIn('OVORION_AUTH_BUTTON_ONCLICK = "autenticar();"', source)
+        self.assertIn("element.getAttribute('type') !== 'button'", source)
+        self.assertIn('element.value !== $quotedExpectedValue', source)
+        self.assertIn("element.getAttribute('onclick') !== $quotedExpectedOnClick", source)
+        self.assertIn('OVORION_PORTAL_ID -> clickExactAuthButton(', source)
+        self.assertIn('element.click()', source)
+
     def test_real_e2e_waits_for_owned_webview_via_catalog_inspect(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('catalogSmoke(portalId, "INSPECT").contains("WEBVIEW_ACTIVE")', source)
