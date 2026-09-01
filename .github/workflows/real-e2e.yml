@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: real-e2e-main
+  group: real-e2e-${{ inputs.portal_id || 'catalog' }}
   cancel-in-progress: false
 
 env:

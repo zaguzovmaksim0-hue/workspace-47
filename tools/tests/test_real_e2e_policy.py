@@ -37,6 +37,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("permissions:\n  contents: read", source)
         self.assertIn("if: github.ref == 'refs/heads/main'", source)
         self.assertIn("environment: real-e2e", source)
+        self.assertIn("group: real-e2e-${{ inputs.portal_id || 'catalog' }}", source)
+        self.assertIn("cancel-in-progress: false", source)
         self.assertIn("ref: ${{ github.sha }}", source)
         self.assertIn("persist-credentials: false", source)
         self.assertIn('test "$GITHUB_REF" = refs/heads/main', source)
