@@ -292,6 +292,7 @@ class RealE2eInstrumentedTest {
                     expectedLabel = DIPUTACION_SEVILLA_AUTH_BUTTON_LABEL,
                     expectedAriaLabel = null,
                     expectedOnClick = DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK,
+                    waitForExpectedUrl = true,
                 )
             }
             SEVILLA_PORTAL_ID -> clickExactContainedAnchor(
@@ -606,6 +607,7 @@ class RealE2eInstrumentedTest {
         expectedLabel: String?,
         expectedAriaLabel: String?,
         expectedOnClick: String?,
+        waitForExpectedUrl: Boolean = false,
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
@@ -618,6 +620,7 @@ class RealE2eInstrumentedTest {
             val inspected = CountDownLatch(1)
             var failure: String? = null
             var clicked = false
+            var waitingForExpectedUrl = false
             scenario.onActivity { activity ->
                 val field = MainActivity::class.java.getDeclaredField("currentWebView")
                     .apply { isAccessible = true }
@@ -629,7 +632,11 @@ class RealE2eInstrumentedTest {
                 }
                 val currentUrl = webView.url
                 if (currentUrl != null && !recipeUrlMatches(currentUrl, expectedCurrentUrl)) {
-                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    if (waitForExpectedUrl) {
+                        waitingForExpectedUrl = true
+                    } else {
+                        failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    }
                     inspected.countDown()
                     return@onActivity
                 }
@@ -666,6 +673,10 @@ class RealE2eInstrumentedTest {
             }
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForExpectedUrl) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
             if (clicked) return
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
