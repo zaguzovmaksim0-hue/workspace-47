@@ -318,6 +318,12 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("element.querySelector('img')?.getAttribute('alt') !== $quotedExpectedImageAlt", source)
         self.assertIn("elements.length !== 1", source)
         self.assertIn('element.click()', source)
+        helper = source[source.index('private fun clickExactContainedButton('):]
+        helper = helper[:helper.index('private fun clickExactAuthButton(')]
+        self.assertIn('var targetMismatchObserved = false', helper)
+        self.assertIn('"2" -> targetMismatchObserved = true', helper)
+        self.assertIn('if (targetMismatchObserved)', helper)
+        self.assertIn('"REAL_E2E_RECIPE_TARGET_MISMATCH"', helper)
 
     def test_auth_sign_waits_for_bounded_post_sign_observation(self) -> None:
         source = self.read(INSTRUMENTATION)

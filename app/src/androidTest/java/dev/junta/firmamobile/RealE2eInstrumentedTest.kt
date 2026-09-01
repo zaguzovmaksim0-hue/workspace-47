@@ -369,6 +369,7 @@ class RealE2eInstrumentedTest {
         val quotedExpectedLabel = JSONObject.quote(expectedLabel)
         val quotedExpectedImageAlt = JSONObject.quote(expectedImageAlt)
         val quotedExpectedOnClick = JSONObject.quote(expectedOnClick)
+        var targetMismatchObserved = false
         while (SystemClock.elapsedRealtime() < deadline) {
             val inspected = CountDownLatch(1)
             var failure: String? = null
@@ -408,7 +409,7 @@ class RealE2eInstrumentedTest {
                 ) { recipeCode ->
                     when (recipeCode) {
                         "1" -> clicked = true
-                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                        "2" -> targetMismatchObserved = true
                     }
                     inspected.countDown()
                 }
@@ -418,7 +419,13 @@ class RealE2eInstrumentedTest {
             if (clicked) return
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
-        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+        error(
+            if (targetMismatchObserved) {
+                "REAL_E2E_RECIPE_TARGET_MISMATCH"
+            } else {
+                "REAL_E2E_RECIPE_TARGET_TIMEOUT"
+            },
+        )
     }
 
     private fun clickExactAuthButton(
