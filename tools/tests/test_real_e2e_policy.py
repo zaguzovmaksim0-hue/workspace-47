@@ -186,14 +186,32 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("-e realE2e true", runner)
         self.assertIn("-e realE2eDeep", runner)
 
-    def test_workflow_runs_six_parallel_non_overlapping_shards(self) -> None:
+    def test_targeted_portal_uses_exactly_one_real_shard(self) -> None:
+        workflow = self.read(WORKFLOW)
+        self.assertIn("include: ${{ fromJSON(inputs.portal_id != ''", workflow)
+        self.assertIn('{"shard_number":1,"shard_index":0,"shard_total":1}', workflow)
+        self.assertIn('REAL_E2E_SHARD_TOTAL: ${{ matrix.shard_total }}', workflow)
+        self.assertIn('shard ${{ matrix.shard_number }}/${{ matrix.shard_total }}', workflow)
+        targeted = self.helper(
+            "select",
+            "--catalog",
+            str(CATALOG),
+            "--portal",
+            "junta-andalucia-carne-joven",
+            "--shard-index",
+            "0",
+            "--shard-total",
+            "1",
+        )
+        self.assertEqual(0, targeted.returncode, targeted.stderr)
+        self.assertEqual(["junta-andalucia-carne-joven"], targeted.stdout.splitlines())
+
+    def test_workflow_runs_six_parallel_non_overlapping_shards_for_full_catalog(self) -> None:
         workflow = self.read(WORKFLOW)
         self.assertIn("strategy:\n      fail-fast: false\n      matrix:\n", workflow)
-        self.assertEqual(6, workflow.count("shard_number:"))
-        self.assertEqual(6, workflow.count("shard_index:"))
+        self.assertEqual(6, workflow.count('"shard_total":6'))
         self.assertIn('REAL_E2E_SHARD_INDEX: ${{ matrix.shard_index }}', workflow)
-        self.assertIn("REAL_E2E_SHARD_TOTAL: 6", workflow)
-        self.assertIn('shard ${{ matrix.shard_number }}/6', workflow)
+        self.assertIn('REAL_E2E_SHARD_TOTAL: ${{ matrix.shard_total }}', workflow)
         self.assertIn('shard-${{ matrix.shard_number }}', workflow)
 
         shards = []
@@ -213,6 +231,22 @@ class RealE2ePolicyTest(unittest.TestCase):
             shards.extend(shard)
         self.assertEqual(183, len(shards))
         self.assertEqual(183, len(set(shards)))
+
+    def test_carne_joven_recipe_is_exact_and_same_origin_only(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('CARNE_JOVEN_PORTAL_ID = "junta-andalucia-carne-joven"', source)
+        self.assertIn(
+            '"https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"',
+            source,
+        )
+        self.assertIn(
+            '"https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"',
+            source,
+        )
+        self.assertIn('when (portalId)', source)
+        self.assertIn('webView.url != expectedCurrentUrl', source)
+        self.assertIn('window.location.assign($quotedTarget)', source)
+        self.assertNotIn('targetUrl = portalId', source)
 
     def test_real_e2e_waits_for_owned_webview_via_catalog_inspect(self) -> None:
         source = self.read(INSTRUMENTATION)
