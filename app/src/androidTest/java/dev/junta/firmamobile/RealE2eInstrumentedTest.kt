@@ -205,6 +205,13 @@ class RealE2eInstrumentedTest {
                 elementId = CARNE_JOVEN_AUTH_LINK_ID,
                 expectedHref = CARNE_JOVEN_AUTH_HREF,
             )
+            OVORION_PORTAL_ID -> clickExactAuthButton(
+                scenario = scenario,
+                expectedCurrentUrl = OVORION_ENTRY_URL,
+                elementId = OVORION_AUTH_BUTTON_ID,
+                expectedValue = OVORION_AUTH_BUTTON_VALUE,
+                expectedOnClick = OVORION_AUTH_BUTTON_ONCLICK,
+            )
             else -> Unit
         }
     }
@@ -243,6 +250,64 @@ class RealE2eInstrumentedTest {
                       const element = document.getElementById($quotedId);
                       if (!element) return 0;
                       if (element.getAttribute('href') !== $quotedExpectedHref) return 2;
+                      element.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickExactAuthButton(
+        scenario: ActivityScenario<MainActivity>,
+        expectedCurrentUrl: String,
+        elementId: String,
+        expectedValue: String,
+        expectedOnClick: String,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedId = JSONObject.quote(elementId)
+        val quotedExpectedValue = JSONObject.quote(expectedValue)
+        val quotedExpectedOnClick = JSONObject.quote(expectedOnClick)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && currentUrl != expectedCurrentUrl) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const element = document.getElementById($quotedId);
+                      if (!element) return 0;
+                      if (element.getAttribute('type') !== 'button') return 2;
+                      if (element.value !== $quotedExpectedValue) return 2;
+                      if (element.getAttribute('onclick') !== $quotedExpectedOnClick) return 2;
                       element.click();
                       return 1;
                     })()
@@ -727,6 +792,12 @@ class RealE2eInstrumentedTest {
         )
         const val CARNE_JOVEN_AUTH_HREF =
             "/carneJoven/servlet/CallAuthenticationServlet"
+        const val OVORION_PORTAL_ID = "junta-andalucia-ovorion"
+        const val OVORION_ENTRY_URL =
+            "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
+        const val OVORION_AUTH_BUTTON_ID = "btnacceso"
+        const val OVORION_AUTH_BUTTON_VALUE = "Acceder"
+        const val OVORION_AUTH_BUTTON_ONCLICK = "autenticar();"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
