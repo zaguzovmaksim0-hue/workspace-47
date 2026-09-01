@@ -316,6 +316,15 @@ class RealE2ePolicyTest(unittest.TestCase):
         ):
             self.assertIn(expected, source)
 
+    def test_aeat_recipe_waits_for_the_reviewed_certificate_page_redirect(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        recipe = source[source.index('AEAT_PORTAL_ID -> {'):]
+        recipe = recipe[:recipe.index('LLEIDA_PORTAL_ID -> {')]
+        self.assertIn('AEAT_CERTIFICATE_PAGE_URL', recipe)
+        self.assertIn('AEAT_CERTIFICATE_BUTTON_LABEL', recipe)
+        self.assertIn('expectedOnClick = null', recipe)
+        self.assertIn('waitForExpectedUrl = true', recipe)
+
     def test_auth_recipe_surfaces_terminal_navigation_failure_before_timeout(self) -> None:
         source = self.read(INSTRUMENTATION)
         helper = source[source.index('private fun clickExactAuthButton('):]
