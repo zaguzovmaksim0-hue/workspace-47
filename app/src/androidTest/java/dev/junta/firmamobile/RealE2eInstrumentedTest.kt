@@ -363,6 +363,7 @@ class RealE2eInstrumentedTest {
         expectedImageAlt: String,
         expectedOnClick: String,
     ) {
+        // Unizar can expose a transitional DOM before the final certificate button is ready.
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedContainerId = JSONObject.quote(expectedContainerId)
         val quotedElementId = JSONObject.quote(expectedElementId)
