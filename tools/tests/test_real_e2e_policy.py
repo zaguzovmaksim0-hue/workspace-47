@@ -277,6 +277,18 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('OVORION_PORTAL_ID -> clickExactAuthButton(', source)
         self.assertIn('element.click()', source)
 
+    def test_ofvirtual_auth_recipe_clicks_only_the_exact_login_button(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('OFVIRTUAL_PORTAL_ID = "junta-andalucia-ofvirtual"', source)
+        self.assertIn(
+            '"https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"',
+            source,
+        )
+        self.assertIn('OFVIRTUAL_AUTH_BUTTON_ID = "btnacceso"', source)
+        self.assertIn('OFVIRTUAL_AUTH_BUTTON_VALUE = "Acceder"', source)
+        self.assertIn('OFVIRTUAL_AUTH_BUTTON_ONCLICK = "autenticar();"', source)
+        self.assertIn('OFVIRTUAL_PORTAL_ID -> clickExactAuthButton(', source)
+
     def test_sevilla_recipe_clicks_only_the_exact_certificate_anchor(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('SEVILLA_PORTAL_ID = "sevilla-sede"', source)

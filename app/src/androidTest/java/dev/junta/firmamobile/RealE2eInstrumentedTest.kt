@@ -212,6 +212,13 @@ class RealE2eInstrumentedTest {
                 expectedValue = OVORION_AUTH_BUTTON_VALUE,
                 expectedOnClick = OVORION_AUTH_BUTTON_ONCLICK,
             )
+            OFVIRTUAL_PORTAL_ID -> clickExactAuthButton(
+                scenario = scenario,
+                expectedCurrentUrl = OFVIRTUAL_ENTRY_URL,
+                elementId = OFVIRTUAL_AUTH_BUTTON_ID,
+                expectedValue = OFVIRTUAL_AUTH_BUTTON_VALUE,
+                expectedOnClick = OFVIRTUAL_AUTH_BUTTON_ONCLICK,
+            )
             SEVILLA_PORTAL_ID -> clickExactContainedAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = SEVILLA_ENTRY_URL,
@@ -1121,6 +1128,12 @@ class RealE2eInstrumentedTest {
         const val OVORION_AUTH_BUTTON_ID = "btnacceso"
         const val OVORION_AUTH_BUTTON_VALUE = "Acceder"
         const val OVORION_AUTH_BUTTON_ONCLICK = "autenticar();"
+        const val OFVIRTUAL_PORTAL_ID = "junta-andalucia-ofvirtual"
+        const val OFVIRTUAL_ENTRY_URL =
+            "https://ws072.juntadeandalucia.es/ofvirtual/auth/signInAutcertjs"
+        const val OFVIRTUAL_AUTH_BUTTON_ID = "btnacceso"
+        const val OFVIRTUAL_AUTH_BUTTON_VALUE = "Acceder"
+        const val OFVIRTUAL_AUTH_BUTTON_ONCLICK = "autenticar();"
         const val SEVILLA_PORTAL_ID = "sevilla-sede"
         const val SEVILLA_ENTRY_URL =
             "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
