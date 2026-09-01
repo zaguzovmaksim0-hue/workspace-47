@@ -34,6 +34,7 @@
   const xSel = __JFM_XUNTA_GALICIA_COMPATIBILITY_ENABLED__;
   const euskadiClientAuthPostEnabled = __JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__;
   const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
+  const badajozCompatibilityEnabled = __JFM_BADAJOZ_COMPATIBILITY_ENABLED__;
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -109,6 +110,9 @@
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   const accedaOrigin = "https://sede.administracionespublicas.gob.es";
   const accedaExtraProperties = "format=PAdES Detached\nexpPolicy=FirmaAGE\nnonexpired:true";
+  const badajozOrigin = "https://sede.dip-badajoz.es";
+  const badajozExtraProperties =
+    "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true";
   const euskadiProfileId = "euskadi-sede-electronica";
   const euskadiAuthPage =
     "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication";
@@ -650,6 +654,19 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isBadajozOrigin =
+      badajozCompatibilityEnabled && window.location.origin === badajozOrigin;
+    const isExactBadajozCall =
+      isBadajozOrigin && args.length === 6 &&
+      typeof args[0] === "string" && args[0].length > 0 &&
+      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
+      args[1] === "SHA256withRSA" && args[2] === "Cades" &&
+      args[3] === badajozExtraProperties &&
+      typeof successCallback === "function" && typeof errorCallback === "function";
+    if (isBadajozOrigin && !isExactBadajozCall) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isExactUgrLiteralCall =
       ugrCompatibilityEnabled &&
       window.location.origin === ugrOrigin &&
@@ -698,7 +715,7 @@
           !isExactJccmRegistroCall && !isExactSevillaAtseCall && !isExactAirefCall &&
           !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall &&
           !isExactMinecoCall && !isExactCdtiCall && !isExactXuntaCall &&
-          !isExactAccedaCall &&
+          !isExactAccedaCall && !isExactBadajozCall &&
           !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding) ||
@@ -708,7 +725,7 @@
           !isExactSevillaAtseCall &&
           !isExactAirefCall && !isExactCdtiCall && !isExactPoliciaCall &&
           !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall && !isExactMinecoCall &&
-          !isExactXuntaCall && !isExactAccedaCall)) {
+          !isExactXuntaCall && !isExactAccedaCall && !isExactBadajozCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -747,6 +764,7 @@
       errorCallback,
       timeoutId
     });
+    const nativeFormat = isExactBadajozCall ? "CAdES" : args[2];
     try {
       bridge.postMessage(JSON.stringify({
         type: "MINIAPPLET_SIGN",
@@ -754,7 +772,7 @@
         requestId: directRequestId,
         dataB64,
         algorithm: args[1],
-        format: args[2],
+        format: nativeFormat,
         extraProperties: args[3]
       }));
     } catch (_) {

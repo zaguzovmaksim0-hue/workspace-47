@@ -770,4 +770,34 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("args[2] === \"PAdES\""))
     }
 
+    @Test
+    fun badajozCompatibilityNormalizesTheObservedCadesSpellingOnlyForItsExactLoginTuple() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val enabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            badajozCompatibilityEnabled = true,
+        )
+        val disabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            qaDiagnosticsEnabled = false,
+            badajozCompatibilityEnabled = false,
+        )
+        val flags = WebMessageBridge.shimCompatibilityFlags(
+            profileId = dev.junta.firmamobile.profile.ProfileId("diputacion-badajoz-portal"),
+            profileActive = true,
+            melillaBatchEnabled = false,
+        )
+
+        assertTrue(flags.badajoz)
+        assertTrue(enabled.contains("const badajozCompatibilityEnabled = true"))
+        assertTrue(disabled.contains("const badajozCompatibilityEnabled = false"))
+        assertTrue(enabled.contains("https://sede.dip-badajoz.es"))
+        assertTrue(enabled.contains("args[2] === \"Cades\""))
+        assertTrue(enabled.contains("const nativeFormat = isExactBadajozCall ? \"CAdES\" : args[2]"))
+        assertTrue(enabled.contains("filters=nonexpired:true;authCert:true"))
+    }
+
 }

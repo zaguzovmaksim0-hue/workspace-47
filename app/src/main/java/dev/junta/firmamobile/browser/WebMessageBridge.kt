@@ -46,6 +46,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val xuntaGalicia: Boolean,
     val euskadiClientAuthPost: Boolean,
     val acceda: Boolean,
+    val badajoz: Boolean,
 )
 
 class WebMessageBridge internal constructor(
@@ -313,6 +314,7 @@ class WebMessageBridge internal constructor(
                     xuntaGaliciaCompatibilityEnabled = shimFlags.xuntaGalicia,
                     euskadiClientAuthPostEnabled = shimFlags.euskadiClientAuthPost,
                     accedaCompatibilityEnabled = shimFlags.acceda,
+                    badajozCompatibilityEnabled = shimFlags.badajoz,
                 ),
                 originRules,
             )
@@ -747,6 +749,7 @@ class WebMessageBridge internal constructor(
         private const val ACCEDA_PROFILE_ID = "age-acceda"
         private const val CANARIAS_PROFILE_ID = "canarias-sede"
         private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
+        private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
 
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
@@ -774,6 +777,7 @@ class WebMessageBridge internal constructor(
             euskadiClientAuthPost = profileActive &&
                 profileId.value == EuskadiClientAuthPostBridgeAdapter.PROFILE_ID,
             acceda = profileActive && profileId.value == ACCEDA_PROFILE_ID,
+            badajoz = profileActive && profileId.value == BADAJOZ_PROFILE_ID,
         )
 
         private const val ERROR_NATIVE_HANDLER_FAILURE = "NATIVE_HANDLER_FAILURE"
