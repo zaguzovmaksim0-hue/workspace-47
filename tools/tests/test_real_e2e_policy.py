@@ -98,7 +98,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertEqual(1, source.count("assumeTrue("))
         self.assertIn('"CERTIFICATE_MISSING"', source)
         self.assertIn('"PASSWORD_MISSING"', source)
-        self.assertIn("safeInfrastructureCode(throwable)", source)
+        self.assertIn("safeInfrastructureCode(throwable, probeStage)", source)
 
     def test_runner_streams_credentials_without_remote_shell_redirection(self) -> None:
         runner = self.read(RUNNER)
@@ -213,6 +213,15 @@ class RealE2ePolicyTest(unittest.TestCase):
             shards.extend(shard)
         self.assertEqual(183, len(shards))
         self.assertEqual(183, len(set(shards)))
+
+    def test_real_e2e_waits_for_owned_webview_via_catalog_inspect(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('catalogSmoke(portalId, "INSPECT").contains("WEBVIEW_ACTIVE")', source)
+        self.assertIn('updateCurrentHostFromRecords(records, result)', source)
+        self.assertIn('SANITIZED_HOST', source)
+        self.assertNotIn('activity.window.decorView', source)
+        self.assertNotIn('findWebView(', source)
+        self.assertNotIn('updateCurrentWebView(', source)
 
     def test_instrumentation_requires_explicit_opt_in_and_has_no_level_six(self) -> None:
         source = self.read(INSTRUMENTATION)
