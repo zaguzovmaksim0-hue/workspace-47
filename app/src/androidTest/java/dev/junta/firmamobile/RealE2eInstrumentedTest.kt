@@ -220,6 +220,15 @@ class RealE2eInstrumentedTest {
                 expectedHref = SEVILLA_AUTH_HREF,
                 expectedOnClick = SEVILLA_AUTH_ONCLICK,
             )
+            UNIZAR_PORTAL_ID -> clickExactContainedButton(
+                scenario = scenario,
+                expectedCurrentUrl = UNIZAR_ENTRY_URL,
+                expectedContainerId = UNIZAR_AUTH_CONTAINER_ID,
+                expectedElementId = UNIZAR_AUTH_ELEMENT_ID,
+                expectedLabel = UNIZAR_AUTH_LABEL,
+                expectedImageAlt = UNIZAR_AUTH_IMAGE_ALT,
+                expectedOnClick = UNIZAR_AUTH_ONCLICK,
+            )
             else -> Unit
         }
     }
@@ -325,6 +334,73 @@ class RealE2eInstrumentedTest {
                           element.getAttribute('onclick') !== $quotedExpectedOnClick) return 2;
                       const preventDefault = event => event.preventDefault();
                       element.addEventListener('click', preventDefault, { once: true });
+                      element.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickExactContainedButton(
+        scenario: ActivityScenario<MainActivity>,
+        expectedCurrentUrl: String,
+        expectedContainerId: String,
+        expectedElementId: String,
+        expectedLabel: String,
+        expectedImageAlt: String,
+        expectedOnClick: String,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedContainerId = JSONObject.quote(expectedContainerId)
+        val quotedElementId = JSONObject.quote(expectedElementId)
+        val quotedExpectedLabel = JSONObject.quote(expectedLabel)
+        val quotedExpectedImageAlt = JSONObject.quote(expectedImageAlt)
+        val quotedExpectedOnClick = JSONObject.quote(expectedOnClick)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && currentUrl != expectedCurrentUrl) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const container = document.getElementById($quotedContainerId);
+                      if (!container) return 0;
+                      const elements = Array.from(container.querySelectorAll('button'));
+                      if (elements.length !== 1) return 2;
+                      const element = elements[0];
+                      if (element.id !== $quotedElementId ||
+                          element.getAttribute('type') !== 'button' ||
+                          element.getAttribute('aria-label') !== $quotedExpectedLabel ||
+                          element.querySelector('img')?.getAttribute('alt') !== $quotedExpectedImageAlt ||
+                          element.getAttribute('onclick') !== $quotedExpectedOnClick) return 2;
                       element.click();
                       return 1;
                     })()
@@ -1044,6 +1120,15 @@ class RealE2eInstrumentedTest {
         const val SEVILLA_AUTH_LABEL = "Acceder"
         const val SEVILLA_AUTH_HREF = "#"
         const val SEVILLA_AUTH_ONCLICK = "doSign();"
+        const val UNIZAR_PORTAL_ID = "unizar-tramitador"
+        const val UNIZAR_ENTRY_URL =
+            "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent"
+        const val UNIZAR_AUTH_CONTAINER_ID = "capaAccesoCertificado"
+        const val UNIZAR_AUTH_ELEMENT_ID = "entrar"
+        const val UNIZAR_AUTH_LABEL =
+            "Pulse para ejecutar Autofirma e identificarse con certificado."
+        const val UNIZAR_AUTH_IMAGE_ALT = "certificado login"
+        const val UNIZAR_AUTH_ONCLICK = "lanza();"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L

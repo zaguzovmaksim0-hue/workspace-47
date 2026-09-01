@@ -297,6 +297,28 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("element.addEventListener('click', preventDefault, { once: true })", source)
         self.assertIn('element.click()', source)
 
+    def test_unizar_recipe_targets_the_certificate_button_inside_its_container(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('UNIZAR_PORTAL_ID = "unizar-tramitador"', source)
+        self.assertIn(
+            '"https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent"',
+            source,
+        )
+        self.assertIn('UNIZAR_AUTH_CONTAINER_ID = "capaAccesoCertificado"', source)
+        self.assertIn('UNIZAR_AUTH_ELEMENT_ID = "entrar"', source)
+        self.assertIn(
+            'const val UNIZAR_AUTH_LABEL =\n            "Pulse para ejecutar Autofirma e identificarse con certificado."',
+            source,
+        )
+        self.assertIn('UNIZAR_AUTH_IMAGE_ALT = "certificado login"', source)
+        self.assertIn('UNIZAR_AUTH_ONCLICK = "lanza();"', source)
+        self.assertIn('UNIZAR_PORTAL_ID -> clickExactContainedButton(', source)
+        self.assertIn("container.querySelectorAll('button')", source)
+        self.assertIn("element.getAttribute('aria-label') !== $quotedExpectedLabel", source)
+        self.assertIn("element.querySelector('img')?.getAttribute('alt') !== $quotedExpectedImageAlt", source)
+        self.assertIn("elements.length !== 1", source)
+        self.assertIn('element.click()', source)
+
     def test_auth_sign_waits_for_bounded_post_sign_observation(self) -> None:
         source = self.read(INSTRUMENTATION)
         report = self.read(REPORT_HELPER)
