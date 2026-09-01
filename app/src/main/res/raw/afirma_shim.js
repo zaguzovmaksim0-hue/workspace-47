@@ -35,6 +35,23 @@
   const euskadiClientAuthPostEnabled = __JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__;
   const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const badajozCompatibilityEnabled = __JFM_BADAJOZ_COMPATIBILITY_ENABLED__;
+
+  function postShimDiagnostic(stage) {
+    if (!qaDiagnosticsEnabled || !bridge || typeof bridge.postMessage !== "function") {
+      return;
+    }
+    try {
+      bridge.postMessage(JSON.stringify({
+        type: "MINIAPPLET_SHIM_DIAGNOSTIC",
+        stage
+      }));
+    } catch (_) {
+      // Diagnostics must never change the portal method's behavior.
+    }
+  }
+
+  postShimDiagnostic("SCRIPT_INSTALLED");
+
   const ugrOrigin = "https://sede.ugr.es";
   const cantabriaOrigin = "https://rec.cantabria.es";
   const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
@@ -469,6 +486,7 @@
     if (!functionalSigningEnabled) {
       return false;
     }
+    postShimDiagnostic("SIGN_INTERCEPT_ENTRY");
     const successCallback = args[4];
     const errorCallback = args[5];
     const isSevillaAtseOrigin =
@@ -733,6 +751,7 @@
       rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
       return true;
     }
+    postShimDiagnostic("SIGN_INTERCEPT_ACCEPTED");
     if (pendingCallbacks.size !== 0) {
       const pending = pendingCallbacks.values().next().value;
       if (isIdenticalInFlightCall(pending, args)) {
@@ -775,6 +794,7 @@
         format: nativeFormat,
         extraProperties: args[3]
       }));
+      postShimDiagnostic("SIGN_MESSAGE_POSTED");
     } catch (_) {
       clearPending(directRequestId);
       rejectDirectCall(errorCallback, "PROTOCOL_FAILED");
@@ -1468,13 +1488,18 @@
         miniApplet = wrapMiniApplet(value, false, false, xSel, false, caibBatchCompatibilityEnabled);
       }
     });
-    const rewrapCurrentMiniApplet = () => {
+    const rewrapCurrentMiniApplet = stage => {
       // Some portal scripts replace the global with defineProperty after document-start.
       // Rewrap the object currently exposed by the page before its login button is used.
       miniApplet = wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
+      postShimDiagnostic(stage);
     };
-    window.addEventListener("DOMContentLoaded", rewrapCurrentMiniApplet, { once: true });
-    window.addEventListener("load", rewrapCurrentMiniApplet, { once: true });
+    window.addEventListener("DOMContentLoaded", () => {
+      rewrapCurrentMiniApplet("MINIAPPLET_DOMCONTENTLOADED_REWRAP");
+    }, { once: true });
+    window.addEventListener("load", () => {
+      rewrapCurrentMiniApplet("MINIAPPLET_LOAD_REWRAP");
+    }, { once: true });
   } else {
     wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
   }
@@ -1507,6 +1532,7 @@
         iSel || vSel || xSel,
         lugoBatchCompatibilityEnabled,
       );
+      postShimDiagnostic("AUTOSCRIPT_REWRAP");
     };
     window.addEventListener("DOMContentLoaded", rewrapCurrentAutoScript, { once: true });
     window.addEventListener("load", rewrapCurrentAutoScript, { once: true });
