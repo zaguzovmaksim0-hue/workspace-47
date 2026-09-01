@@ -289,6 +289,32 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('OFVIRTUAL_AUTH_BUTTON_ONCLICK = "autenticar();"', source)
         self.assertIn('OFVIRTUAL_PORTAL_ID -> clickExactAuthButton(', source)
 
+    def test_badajoz_and_lleida_recipes_use_reviewed_certificate_controls(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for expected in (
+            'BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"',
+            'BADAJOZ_LOGIN_PAGE_URL =',
+            'BADAJOZ_LOGIN_LINK_ID = "login"',
+            'BADAJOZ_LOGIN_LINK_HREF = "javascript: abrirLogin(\'\')"',
+            'BADAJOZ_CERT_BUTTON_ID = "firmar"',
+            'BADAJOZ_CERT_BUTTON_LABEL = "Certificado digital"',
+            'BADAJOZ_CERT_BUTTON_ONCLICK = "pulsarFirmarIdentificate();"',
+            'LLEIDA_PORTAL_ID = "diputacion-lleida-sede"',
+            'LLEIDA_LOGIN_PAGE_URL =',
+            'LLEIDA_LOGIN_LINK_ID = "login"',
+            'LLEIDA_LOGIN_LINK_HREF = "javascript: abrirLogin(\'\')"',
+            'LLEIDA_CERT_BUTTON_ID = "btnValid"',
+            'LLEIDA_CERT_BUTTON_ARIA_LABEL = "VALid"',
+            'LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"',
+            'BADAJOZ_PORTAL_ID -> {',
+            'LLEIDA_PORTAL_ID -> {',
+            'waitForExpectedUrl = true',
+            'private fun clickExactButton(',
+            'recipeUrlMatches(',
+            "element.getAttribute('aria-label') !== expectedAriaLabel",
+        ):
+            self.assertIn(expected, source)
+
     def test_auth_recipe_surfaces_terminal_navigation_failure_before_timeout(self) -> None:
         source = self.read(INSTRUMENTATION)
         helper = source[source.index('private fun clickExactAuthButton('):]
