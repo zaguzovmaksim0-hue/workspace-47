@@ -606,7 +606,11 @@ class WebMessageBridge internal constructor(
         if (json.optString(SHIM_DIAGNOSTIC_TYPE_FIELD) != SHIM_DIAGNOSTIC_TYPE) {
             return false
         }
-        if (!isMainFrame || json.keySet() != SHIM_DIAGNOSTIC_KEYS) {
+        if (
+            !isMainFrame ||
+                json.length() != SHIM_DIAGNOSTIC_KEYS.size ||
+                SHIM_DIAGNOSTIC_KEYS.any { !json.has(it) }
+        ) {
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
             return true
         }
