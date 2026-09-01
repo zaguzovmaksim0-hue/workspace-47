@@ -238,15 +238,19 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 webView.evaluateJavascript(
-                    "document.getElementById($quotedId)?.getAttribute('href') || ''",
-                ) { rawHref ->
-                    when {
-                        rawHref == quotedExpectedHref -> {
-                            webView.evaluateJavascript("document.getElementById($quotedId).click()", null)
-                            clicked = true
-                        }
-                        rawHref != JSONObject.quote("") ->
-                            failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    """
+                    (() => {
+                      const element = document.getElementById($quotedId);
+                      if (!element) return 0;
+                      if (element.getAttribute('href') !== $quotedExpectedHref) return 2;
+                      element.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
                     }
                     inspected.countDown()
                 }
