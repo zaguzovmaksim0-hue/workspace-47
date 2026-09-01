@@ -277,6 +277,24 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('OVORION_PORTAL_ID -> clickExactAuthButton(', source)
         self.assertIn('element.click()', source)
 
+    def test_sevilla_recipe_clicks_only_the_exact_certificate_anchor(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('SEVILLA_PORTAL_ID = "sevilla-sede"', source)
+        self.assertIn(
+            '"https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"',
+            source,
+        )
+        self.assertIn('SEVILLA_AUTH_CONTAINER_ID = "divBotonCertificado"', source)
+        self.assertIn('SEVILLA_AUTH_LABEL = "Acceder"', source)
+        self.assertIn('SEVILLA_AUTH_HREF = "#"', source)
+        self.assertIn('SEVILLA_AUTH_ONCLICK = "doSign();"', source)
+        self.assertIn('SEVILLA_PORTAL_ID -> clickExactContainedAnchor(', source)
+        self.assertIn('element.innerText', source)
+        self.assertIn('element.getAttribute(\'href\') !== $quotedExpectedHref', source)
+        self.assertIn('element.getAttribute(\'onclick\') !== $quotedExpectedOnClick', source)
+        self.assertIn('elements.length !== 1', source)
+        self.assertIn('element.click()', source)
+
     def test_auth_sign_waits_for_bounded_post_sign_observation(self) -> None:
         source = self.read(INSTRUMENTATION)
         report = self.read(REPORT_HELPER)
