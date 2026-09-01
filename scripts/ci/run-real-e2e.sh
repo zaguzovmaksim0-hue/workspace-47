@@ -15,7 +15,8 @@ readonly LOGS_DIR="$REPORT_DIR/navigation"
 readonly RESULT_PATH="$FIXTURE_DIR/result.json"
 readonly PROGRESS_PATH="$REPORT_DIR/progress.tsv"
 readonly CATALOG_FILE="$ROOT_DIR/app/src/main/res/raw/public_portal_catalog_v1.json"
-readonly PORTAL_TIMEOUT_SECONDS=165
+# 75s portal observation + 90s signing + 30s post-sign observation + 15s margin.
+readonly PORTAL_TIMEOUT_SECONDS=210
 readonly ADB_TIMEOUT_SECONDS=30
 readonly ADB_INSTALL_TIMEOUT_SECONDS=120
 readonly REPORT_HELPER="$ROOT_DIR/scripts/ci/real_e2e_report.py"

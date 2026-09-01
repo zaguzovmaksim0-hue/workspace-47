@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 
 PORTAL_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,95}")
 TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
+RESULT_SCHEMA_VERSION = 2
 HOST_RE = re.compile(
     r"(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+"
     r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
@@ -19,6 +20,7 @@ CLASSIFICATIONS = {
     "PASS_BROWSE",
     "PASS_MECHANISM_BOUNDARY",
     "PASS_CLIENT_TLS",
+    "PASS_REAL_CRYPTO_SIGN",
     "PASS_CRYPTO_CALLBACK",
     "PASS_PORTAL_AUTH",
     "BLOCKED_CONSEQUENTIAL_ACTION",
@@ -45,6 +47,14 @@ BOOLEAN_FIELDS = {
     "signingConfirmed",
     "signingCancelledAtBoundary",
     "signatureCompleted",
+    "signingCallbackObserved",
+    "postSignNavigationObserved",
+    "postSignPageFinished",
+    "postSignCallbackObserved",
+    "postSignHostChanged",
+    "postSignPathChanged",
+    "authenticatedReturnObserved",
+    "postSignPortalAuthSuccess",
     "portalAuthSuccess",
     "networkError",
     "sslError",
@@ -162,7 +172,7 @@ def select(args: argparse.Namespace) -> None:
 def validate_result_data(data: dict, expected_portal: str) -> None:
     if set(data) != RESULT_FIELDS:
         raise ValueError("REAL_E2E result schema mismatch")
-    if data["schemaVersion"] != 1 or data["portalId"] != expected_portal:
+    if data["schemaVersion"] != RESULT_SCHEMA_VERSION or data["portalId"] != expected_portal:
         raise ValueError("REAL_E2E result identity mismatch")
     if not PORTAL_RE.fullmatch(data["portalId"]) or not PORTAL_RE.fullmatch(data["profileId"]):
         raise ValueError("unsafe result identity")
@@ -274,7 +284,7 @@ def synthetic(args: argparse.Namespace) -> None:
     entry = next(item for item in catalog["entries"] if item["portalId"] == args.portal)
     host = urlsplit(entry["entryUrl"]).hostname
     data = {
-        "schemaVersion": 1,
+        "schemaVersion": RESULT_SCHEMA_VERSION,
         "portalId": args.portal,
         "profileId": entry["profileId"],
         "classification": "INFRASTRUCTURE_ERROR",

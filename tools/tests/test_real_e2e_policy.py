@@ -275,6 +275,66 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('OVORION_PORTAL_ID -> clickExactAuthButton(', source)
         self.assertIn('element.click()', source)
 
+    def test_auth_sign_waits_for_bounded_post_sign_observation(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        report = self.read(REPORT_HELPER)
+        self.assertIn('const val POST_SIGN_TIMEOUT_MILLIS = 30_000L', source)
+        for field in (
+            "postSignNavigationObserved",
+            "postSignPageFinished",
+            "postSignCallbackObserved",
+            "postSignHostChanged",
+            "postSignPathChanged",
+            "authenticatedReturnObserved",
+            "signingCallbackObserved",
+            "postSignPortalAuthSuccess",
+        ):
+            self.assertIn(field, source)
+            self.assertIn(field, report)
+        observation = source[source.index("private fun isObservationComplete("):]
+        observation = observation[:observation.index("private fun classify(")]
+        self.assertIn("postSignObservationDeadline", observation)
+        self.assertLess(
+            observation.index("postSignObservationDeadline ?: return false"),
+            observation.index("return result.pageFinished"),
+        )
+        self.assertIn("PASS_REAL_CRYPTO_SIGN", source)
+        self.assertIn('"PASS_REAL_CRYPTO_SIGN"', report)
+        self.assertIn("const val RESULT_SCHEMA_VERSION = 2", source)
+        self.assertIn("RESULT_SCHEMA_VERSION = 2", report)
+        self.assertIn("result.postSignNavigationObserved", source)
+        self.assertIn("result.authenticatedReturnObserved", source)
+        self.assertIn("result.signingCallbackObserved", source)
+        self.assertIn("result.postSignPortalAuthSuccess", source)
+        signing_wait = source[source.index("private fun waitForSigningTerminalState("):]
+        signing_wait = signing_wait[:signing_wait.index("private fun updateSigningEvidence(")]
+        self.assertNotIn("updatePostSignObservations", signing_wait)
+        self.assertIn("updateSigningEvidence", signing_wait)
+        self.assertIn("return diagnosticRecords()", signing_wait)
+        sign_branch = source[source.index("if (deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES)") :]
+        sign_branch = sign_branch[:sign_branch.index("} else {")]
+        self.assertLess(
+            sign_branch.index("val completedRecords = waitForSigningTerminalState("),
+            sign_branch.index("val tracker = PostSignTracker("),
+        )
+        self.assertIn("latestMainFrameNavigation(completedRecords)", sign_branch)
+        classify = source[source.index("private fun classify("):]
+        classify = classify[:classify.index("private fun allowedClientAuthHosts(")]
+        self.assertIn("result.postSignPortalAuthSuccess", classify)
+        self.assertNotIn("(result.portalAuthSuccess || result.authenticatedReturnObserved)", classify)
+        self.assertIn("result.signingCallbackObserved", classify)
+        navigation_regex = source[source.index("val SANITIZED_NAVIGATION_EVENT"):]
+        navigation_regex = navigation_regex[:navigation_regex.index("val SAFE_AUTH_SIGN_PROFILES")]
+        self.assertNotIn("NETWORK_REQUEST", navigation_regex)
+
+    def test_runner_allows_the_post_sign_window_to_finish(self) -> None:
+        runner = self.read(RUNNER)
+        self.assertIn("readonly PORTAL_TIMEOUT_SECONDS=210", runner)
+        self.assertIn(
+            "75s portal observation + 90s signing + 30s post-sign observation + 15s margin",
+            runner,
+        )
+
     def test_real_e2e_waits_for_owned_webview_via_catalog_inspect(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('catalogSmoke(portalId, "INSPECT").contains("WEBVIEW_ACTIVE")', source)
@@ -296,10 +356,10 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_consequential_portals_are_classified_without_deep_automation(self) -> None:
         source = self.read(INSTRUMENTATION)
         report = self.read(REPORT_HELPER)
-        self.assertIn('val CONSEQ_RECIPE_PORTALS = setOf(', source)
-        self.assertIn('"age-pag-reg"', source)
+        self.assertIn('val CONSEQ_RECIPE_PROFILES = setOf(', source)
+        self.assertIn('"reg-age-redsara"', source)
         self.assertIn('ProbeClassification.BLOCKED_CONSEQUENTIAL_ACTION', source)
-        self.assertIn('result.portalId in CONSEQ_RECIPE_PORTALS', source)
+        self.assertIn('result.profileId in CONSEQ_RECIPE_PROFILES', source)
         self.assertIn('"BLOCKED_CONSEQUENTIAL_ACTION"', report)
 
     def test_administrative_signing_profiles_are_not_deep_sign_allowlisted(self) -> None:
