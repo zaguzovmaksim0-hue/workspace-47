@@ -383,10 +383,9 @@ class RealE2eInstrumentedTest {
         expectedIdentifyHref: String,
         expectedLoginUrl: String,
     ) {
-        clickExactLabeledAnchor(
+        clickExactStaResponsiveIdentifyAnchor(
             scenario = scenario,
             expectedCurrentUrl = expectedEntryUrl,
-            expectedLabel = STA_IDENTIFY_LABEL,
             expectedHref = expectedIdentifyHref,
         )
         clickExactAnchor(
@@ -396,6 +395,79 @@ class RealE2eInstrumentedTest {
             expectedHref = STA_CERTIFICATE_LINK_HREF,
             waitForExpectedUrl = true,
         )
+    }
+
+    private fun clickExactStaResponsiveIdentifyAnchor(
+        scenario: ActivityScenario<MainActivity>,
+        expectedCurrentUrl: String,
+        expectedHref: String,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedExpectedLabel = JSONObject.quote(STA_IDENTIFY_LABEL)
+        val quotedExpectedHref = JSONObject.quote(expectedHref)
+        val quotedExpectedOnClick = JSONObject.quote(STA_IDENTIFY_ONCLICK)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && !recipeUrlMatches(currentUrl, expectedCurrentUrl)) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const elements = Array.from(document.querySelectorAll('a')).filter(element => {
+                        const labels = element.querySelectorAll(':scope > span.a-text');
+                        if (labels.length !== 1) return false;
+                        const label = (labels[0].textContent || '').trim().replace(/\s+/g, ' ');
+                        return label === $quotedExpectedLabel &&
+                          element.getAttribute('href') === $quotedExpectedHref &&
+                          element.getAttribute('onclick') === $quotedExpectedOnClick &&
+                          element.classList.contains('responsive') &&
+                          element.classList.contains('ui-link') &&
+                          element.classList.contains('tamano-defecto') &&
+                          element.classList.contains('iconed');
+                      });
+                      if (elements.length === 0) return 0;
+                      if (elements.length !== 1) return 2;
+                      elements[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        val terminalFailureDeadline =
+            SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
     private fun clickExactAnchor(
@@ -1591,6 +1663,8 @@ class RealE2eInstrumentedTest {
             "https://ovc24.dphuesca.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
         const val HUESCA_LOGIN_URL = HUESCA_IDENTIFY_HREF
         const val STA_IDENTIFY_LABEL = "Identificate"
+        const val STA_IDENTIFY_ONCLICK =
+            "if (jQuery(this).hasClass('disabled')) {return false;} else {;}"
         const val STA_CERTIFICATE_LINK_ID = "link-certificado"
         const val STA_CERTIFICATE_LINK_HREF =
             "/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=HOME"
