@@ -302,6 +302,7 @@ class RealE2eInstrumentedTest {
             )
             SANIDAD_PORTAL_ID -> runSanidadClientTlsRecipe(scenario)
             VEA_PORTAL_ID -> runVeaCertificateAuthRecipe(scenario)
+            TGSS_PORTAL_ID -> clickTgssIpceAuth(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -558,6 +559,89 @@ class RealE2eInstrumentedTest {
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
             if (waitingForExpectedUrl || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickTgssIpceAuth(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedFormAction = JSONObject.quote(TGSS_IPCE_FORM_ACTION)
+        val quotedSelectedAction = JSONObject.quote(TGSS_IPCE_FORM_ACTION_SELECTED)
+        val quotedButtonId = JSONObject.quote(TGSS_IPCE_BUTTON_ID)
+        val quotedButtonLabel = JSONObject.quote(TGSS_IPCE_BUTTON_LABEL)
+        val quotedButtonAria = JSONObject.quote(TGSS_IPCE_BUTTON_ARIA)
+        val quotedImageAlt = JSONObject.quote(TGSS_IPCE_IMAGE_ALT)
+        val quotedImagePath = JSONObject.quote(TGSS_IPCE_IMAGE_PATH)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForIdp = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                val uri = currentUrl?.let(Uri::parse)
+                if (uri?.scheme != "https" || uri.host != TGSS_IDP_HOST || uri.path != TGSS_IDP_PATH) {
+                    waitingForIdp = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = Array.from(document.forms).find(candidate =>
+                        candidate.getAttribute('name') === 'redirectForm' &&
+                        candidate.getAttribute('method')?.toLowerCase() === 'post' &&
+                        new URL(candidate.getAttribute('action'), window.location.href).href === $quotedFormAction
+                      );
+                      if (!form) return 0;
+                      const button = document.getElementById($quotedButtonId);
+                      if (!button || !form.contains(button)) return 0;
+                      const label = (button.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (button.tagName !== 'BUTTON' ||
+                          button.getAttribute('type') !== 'submit' ||
+                          button.getAttribute('aria-label') !== $quotedButtonAria ||
+                          label !== $quotedButtonLabel ||
+                          new URL(button.getAttribute('formaction'), window.location.href).href !== $quotedSelectedAction)
+                        return 2;
+                      const images = Array.from(button.querySelectorAll('img')).filter(image => {
+                        let target;
+                        try { target = new URL(image.getAttribute('src'), window.location.href); }
+                        catch (_) { return false; }
+                        return target.origin === 'https://idp.seg-social.es' &&
+                          target.pathname === $quotedImagePath &&
+                          image.getAttribute('alt') === $quotedImageAlt;
+                      });
+                      if (images.length !== 1) return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForIdp || !clicked) {
                 SystemClock.sleep(RECIPE_POLL_MILLIS)
                 continue
             }
@@ -2456,6 +2540,18 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val TGSS_PORTAL_ID = "tgss-importass"
+        const val TGSS_IDP_HOST = "idp.seg-social.es"
+        const val TGSS_IDP_PATH = "/PGIS/Login"
+        const val TGSS_IPCE_FORM_ACTION = "https://idp.seg-social.es/PGIS/Login"
+        const val TGSS_IPCE_FORM_ACTION_SELECTED =
+            "https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"
+        const val TGSS_IPCE_BUTTON_ID = "IPCEIdP"
+        const val TGSS_IPCE_BUTTON_LABEL = "DNIe o certificado"
+        const val TGSS_IPCE_BUTTON_ARIA = "Acceder a DNIe o certificado"
+        const val TGSS_IPCE_IMAGE_ALT = "Certificado admitido por la GISS"
+        const val TGSS_IPCE_IMAGE_PATH =
+            "/PasarelaStaticAuth/images-pasarela/Componentes/Botones/IPCE.svg"
         const val VEA_PORTAL_ID = "junta-andalucia-sede"
         const val VEA_ENTRY_URL =
             "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"

@@ -665,6 +665,21 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_tgss_recipe_waits_for_idp_and_selects_exact_ipce_button(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"tgss-importass"', source)
+        self.assertIn('uri.host != TGSS_IDP_HOST', source)
+        self.assertIn('uri.path != TGSS_IDP_PATH', source)
+        self.assertIn("candidate.getAttribute('name') === 'redirectForm'", source)
+        self.assertIn("document.getElementById($quotedButtonId)", source)
+        self.assertIn('button.getAttribute(\'aria-label\') !== $quotedButtonAria', source)
+        self.assertIn('label !== $quotedButtonLabel', source)
+        self.assertIn('new URL(button.getAttribute(\'formaction\'), window.location.href).href !== $quotedSelectedAction', source)
+        self.assertIn('"DNIe o certificado"', source)
+        self.assertIn('"Acceder a DNIe o certificado"', source)
+        self.assertIn('"Certificado admitido por la GISS"', source)
+        self.assertIn('"https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"', source)
+
     def test_vea_recipe_opens_auth_modal_then_certificate_only(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"junta-andalucia-sede"', source)
