@@ -665,6 +665,20 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_sanidad_recipe_pins_tardes_con_plan_certificate_panel(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"age-ministerio-de-sanidad"', source)
+        self.assertIn('expectedLabel = SANIDAD_REGISTRY_LABEL', source)
+        self.assertIn('expectedHref = SANIDAD_REGISTRY_HREF', source)
+        self.assertIn('expectedLabel = SANIDAD_FORMS_LABEL', source)
+        self.assertIn("document.getElementById('TRAM_TARDESCONPLAN')", source)
+        self.assertIn("document.getElementById('idTRAM_TARDESCONPLAN')", source)
+        self.assertIn("titleText.startsWith('Tardes con Plan')", source)
+        self.assertIn("panel.querySelectorAll('li.concertificado a')", source)
+        self.assertIn("label === 'Certificado digital'", source)
+        self.assertIn('target === $quotedTarget', source)
+        self.assertIn('tramiteId=TRAM_TARDESCONPLAN', source)
+
     def test_tea_recipe_clicks_only_exact_alegaciones_client_tls_target(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"age-sede-electronica-de-los-tribunales-economico-administrativos-tea"', source)

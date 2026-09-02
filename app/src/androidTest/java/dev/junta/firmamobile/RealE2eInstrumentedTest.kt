@@ -300,6 +300,7 @@ class RealE2eInstrumentedTest {
                 expectedLabel = TEA_AUTH_LABEL,
                 expectedHref = TEA_AUTH_HREF,
             )
+            SANIDAD_PORTAL_ID -> runSanidadClientTlsRecipe(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -556,6 +557,93 @@ class RealE2eInstrumentedTest {
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
             if (waitingForExpectedUrl || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runSanidadClientTlsRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = SANIDAD_ENTRY_URL,
+            expectedLabel = SANIDAD_REGISTRY_LABEL,
+            expectedHref = SANIDAD_REGISTRY_HREF,
+        )
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = SANIDAD_REGISTRY_URL,
+            expectedLabel = SANIDAD_FORMS_LABEL,
+            expectedHref = SANIDAD_FORMS_URL,
+            waitForExpectedUrl = true,
+        )
+        clickSanidadTardesCertificate(scenario)
+    }
+
+    private fun clickSanidadTardesCertificate(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedTarget = JSONObject.quote(SANIDAD_TARDES_CERT_URL)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForPanel = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, SANIDAD_FORMS_URL)) {
+                    waitingForPanel = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const panel = document.getElementById('TRAM_TARDESCONPLAN');
+                      if (!panel) return 0;
+                      if (!panel.classList.contains('panel')) return 2;
+                      const title = document.getElementById('idTRAM_TARDESCONPLAN');
+                      if (!title || !panel.contains(title)) return 2;
+                      const titleText = (title.innerText || '').trim().replace(/\\s+/g, ' ');
+                      if (!titleText.startsWith('Tardes con Plan')) return 2;
+                      const links = Array.from(panel.querySelectorAll('li.concertificado a')).filter(link => {
+                        const label = (link.innerText || '').trim().replace(/\\s+/g, ' ');
+                        let target;
+                        try { target = new URL(link.getAttribute('href'), window.location.href).href; }
+                        catch (_) { return false; }
+                        return label === 'Certificado digital' && target === $quotedTarget;
+                      });
+                      if (links.length === 0) return 0;
+                      if (links.length !== 1) return 2;
+                      links[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForPanel || !clicked) {
                 SystemClock.sleep(RECIPE_POLL_MILLIS)
                 continue
             }
@@ -2287,6 +2375,19 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val SANIDAD_PORTAL_ID = "age-ministerio-de-sanidad"
+        const val SANIDAD_ENTRY_URL = "https://sede.mscbs.gob.es/"
+        const val SANIDAD_REGISTRY_LABEL = "Registro electrónico"
+        const val SANIDAD_REGISTRY_HREF = "/registroElectronico/home.htm"
+        const val SANIDAD_REGISTRY_URL =
+            "https://sede.mscbs.gob.es/registroElectronico/home.htm"
+        const val SANIDAD_FORMS_LABEL = "índice de formularios"
+        const val SANIDAD_FORMS_URL =
+            "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
+        const val SANIDAD_TARDES_CERT_URL =
+            "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
+                "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
+                "ENTIDAD_ID=000&LANG=es&COUNTRY=ES"
         const val TEA_PORTAL_ID =
             "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
         const val TEA_ENTRY_URL = "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
