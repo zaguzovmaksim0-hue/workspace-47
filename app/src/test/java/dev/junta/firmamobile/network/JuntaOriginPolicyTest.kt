@@ -283,7 +283,6 @@ class JuntaOriginPolicyTest {
             "sede.depourense.es",
             "sedeelectronicadipusevilla.es",
             "sede.dacoruna.gal",
-            "www.dacoruna.gal",
             "pasarela-ident-sistemas.clave.gob.es",
             "sede.depo.gal",
             "lagomera.sedelectronica.es",
