@@ -378,6 +378,9 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("SEVILLA_SET_SERVLETS"))
         assertTrue(script.contains("SEVILLA_CARGAR_APP_AFIRMA"))
         assertTrue(script.contains("args[0] === sevillaAtseStorageUrl && args[1] === sevillaAtseRetrieveUrl"))
+        assertTrue(script.contains("event.preventDefault()"))
+        assertTrue(script.contains("target.getAttribute(\"onclick\") === \"doSign();\""))
+        assertTrue(script.contains("a[href=\"#\"][onclick=\"doSign();\"]"))
         assertFalse(script.contains("authenticate("))
     }
 

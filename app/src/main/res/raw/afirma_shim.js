@@ -1130,6 +1130,18 @@
       location.hash === "";
   }
 
+  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled) {
+    document.addEventListener("click", event => {
+      if (!isExactSevillaAtsePage()) return;
+      const target = event.target?.closest?.("a");
+      if (target?.getAttribute("href") === "#" &&
+          target.getAttribute("onclick") === "doSign();" &&
+          document.querySelectorAll('a[href="#"][onclick="doSign();"]').length === 1) {
+        event.preventDefault();
+      }
+    }, true);
+  }
+
   function interceptSevillaAtseSetupCall(call, args) {
     if (!isExactSevillaAtsePage()) return false;
     if (call === "SEVILLA_SET_FORCE_WS_MODE") {
