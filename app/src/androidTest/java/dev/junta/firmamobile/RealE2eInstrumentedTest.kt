@@ -284,6 +284,35 @@ class RealE2eInstrumentedTest {
                 )
             MENORCA_INSTITUTIONAL_PORTAL_ID, MENORCA_SEDE_PORTAL_ID ->
                 runMenorcaClientTlsRecipe(scenario)
+            VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
+                scenario = scenario,
+                expectedCurrentUrl = VALLADOLID_ENTRY_URL,
+                expectedLabel = VALLADOLID_CERT_LABEL,
+                expectedHref = VALLADOLID_CERT_HREF,
+            )
+            SORIA_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = SORIA_ENTRY_URL,
+                expectedElementId = SORIA_CERT_BUTTON_ID,
+                expectedLabel = SORIA_CERT_BUTTON_LABEL,
+                expectedAriaLabel = null,
+                expectedOnClick = SORIA_CERT_BUTTON_ONCLICK,
+            )
+            JAEN_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = JAEN_ENTRY_URL,
+                    expectedLabel = JAEN_LOGIN_LABEL,
+                    expectedHref = JAEN_LOGIN_HREF,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = JAEN_LOGIN_URL,
+                    expectedLabel = JAEN_CERT_LABEL,
+                    expectedHref = JAEN_CERT_HREF,
+                    waitForExpectedUrl = true,
+                )
+            }
             BADAJOZ_PORTAL_ID -> {
                 clickExactButton(
                     scenario = scenario,
@@ -1818,6 +1847,25 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val VALLADOLID_PORTAL_ID = "diputacion-valladolid-sede"
+        const val VALLADOLID_ENTRY_URL =
+            "https://www.sede.diputaciondevalladolid.es/tgauth/login"
+        const val VALLADOLID_CERT_LABEL = "ACCESO CON CERTIFICADO DIGITAL"
+        const val VALLADOLID_CERT_HREF = "/c/portal/cert-login"
+        const val SORIA_PORTAL_ID = "diputacion-soria-sede"
+        const val SORIA_ENTRY_URL =
+            "https://portaltramitador.dipsoria.es/web/inicioWebc.do?" +
+                "opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1"
+        const val SORIA_CERT_BUTTON_ID = "b_certificado"
+        const val SORIA_CERT_BUTTON_LABEL = "Acceder"
+        const val SORIA_CERT_BUTTON_ONCLICK = "pulsarCertificado();"
+        const val JAEN_PORTAL_ID = "diputacion-jaen-sede"
+        const val JAEN_ENTRY_URL = "https://sede.dipujaen.es/SolicitudGenerica"
+        const val JAEN_LOGIN_LABEL = "Acceder"
+        const val JAEN_LOGIN_HREF = "/IniciarSesion"
+        const val JAEN_LOGIN_URL = "https://sede.dipujaen.es/IniciarSesion"
+        const val JAEN_CERT_LABEL = "Acceder con certificado digital"
+        const val JAEN_CERT_HREF = "/IniciarSesion/Certificado"
         const val MENORCA_INSTITUTIONAL_PORTAL_ID = "menorca-portal-institucional"
         const val MENORCA_SEDE_PORTAL_ID = "menorca-sede-electronica"
         const val MENORCA_HOST = "www.carpetaciutadana.org"

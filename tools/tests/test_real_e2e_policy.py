@@ -665,6 +665,23 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_direct_client_tls_recipes_are_exact_authentication_controls(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal_id in (
+            "diputacion-valladolid-sede",
+            "diputacion-soria-sede",
+            "diputacion-jaen-sede",
+        ):
+            self.assertIn(f'"{portal_id}"', source)
+        self.assertIn('expectedLabel = VALLADOLID_CERT_LABEL', source)
+        self.assertIn('expectedHref = VALLADOLID_CERT_HREF', source)
+        self.assertIn('expectedElementId = SORIA_CERT_BUTTON_ID', source)
+        self.assertIn('expectedOnClick = SORIA_CERT_BUTTON_ONCLICK', source)
+        self.assertIn('expectedLabel = JAEN_LOGIN_LABEL', source)
+        self.assertIn('expectedHref = JAEN_LOGIN_HREF', source)
+        self.assertIn('expectedLabel = JAEN_CERT_LABEL', source)
+        self.assertIn('expectedHref = JAEN_CERT_HREF', source)
+
     def test_menorca_recipe_is_exact_and_authentication_only(self) -> None:
         source = self.read(INSTRUMENTATION)
         for portal_id in ("menorca-portal-institucional", "menorca-sede-electronica"):
