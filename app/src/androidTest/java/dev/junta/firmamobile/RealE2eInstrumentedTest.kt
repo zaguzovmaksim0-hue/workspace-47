@@ -232,6 +232,28 @@ class RealE2eInstrumentedTest {
                 expectedIdentifyHref = HUESCA_IDENTIFY_HREF,
                 expectedLoginUrl = HUESCA_LOGIN_URL,
             )
+            EIVISSA_INSTITUTIONAL_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = EIVISSA_INSTITUTIONAL_ENTRY_URL,
+                    expectedLabel = EIVISSA_SEDE_LABEL,
+                    expectedHref = EIVISSA_SEDE_HOME_ES_URL,
+                )
+                clickStaCertificateLogin(
+                    scenario = scenario,
+                    expectedEntryUrl = EIVISSA_SEDE_HOME_ES_URL,
+                    expectedIdentifyLabel = EIVISSA_IDENTIFY_LABEL,
+                    expectedIdentifyHref = EIVISSA_IDENTIFY_HREF,
+                    expectedLoginUrl = EIVISSA_LOGIN_URL,
+                )
+            }
+            EIVISSA_SEDE_PORTAL_ID -> clickStaCertificateLogin(
+                scenario = scenario,
+                expectedEntryUrl = EIVISSA_SEDE_HOME_URL,
+                expectedIdentifyLabel = EIVISSA_IDENTIFY_LABEL,
+                expectedIdentifyHref = EIVISSA_IDENTIFY_HREF,
+                expectedLoginUrl = EIVISSA_LOGIN_URL,
+            )
             BADAJOZ_PORTAL_ID -> {
                 clickExactButton(
                     scenario = scenario,
@@ -334,13 +356,14 @@ class RealE2eInstrumentedTest {
     private fun clickStaCertificateLogin(
         scenario: ActivityScenario<MainActivity>,
         expectedEntryUrl: String,
+        expectedIdentifyLabel: String = STA_IDENTIFY_LABEL,
         expectedIdentifyHref: String,
         expectedLoginUrl: String,
     ) {
         clickExactLabeledAnchor(
             scenario = scenario,
             expectedCurrentUrl = expectedEntryUrl,
-            expectedLabel = STA_IDENTIFY_LABEL,
+            expectedLabel = expectedIdentifyLabel,
             expectedHref = expectedIdentifyHref,
         )
         clickExactAnchor(
@@ -1527,6 +1550,18 @@ class RealE2eInstrumentedTest {
         const val STA_CERTIFICATE_LINK_ID = "link-certificado"
         const val STA_CERTIFICATE_LINK_HREF =
             "/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=HOME"
+        const val EIVISSA_INSTITUTIONAL_PORTAL_ID = "eivissa-portal-institucional"
+        const val EIVISSA_INSTITUTIONAL_ENTRY_URL = "https://www.conselldeivissa.es/"
+        const val EIVISSA_SEDE_PORTAL_ID = "eivissa-sede-electronica"
+        const val EIVISSA_SEDE_LABEL = "Seu electrònica"
+        const val EIVISSA_SEDE_HOME_ES_URL =
+            "https://seu.conselldeivissa.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_HOME&lang=ES"
+        const val EIVISSA_SEDE_HOME_URL =
+            "https://seu.conselldeivissa.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
+        const val EIVISSA_IDENTIFY_LABEL = "Identifícate"
+        const val EIVISSA_IDENTIFY_HREF =
+            "https://seu.conselldeivissa.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
+        const val EIVISSA_LOGIN_URL = EIVISSA_IDENTIFY_HREF
         const val BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"
         const val BADAJOZ_ENTRY_URL = "https://sede.dip-badajoz.es"
         const val BADAJOZ_LOGIN_PAGE_URL =
