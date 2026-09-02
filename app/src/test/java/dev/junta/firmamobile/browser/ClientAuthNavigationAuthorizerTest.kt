@@ -1607,13 +1607,36 @@ class ClientAuthNavigationAuthorizerTest {
             ),
         )
 
-        val nearMisses = listOf(
-            EIVISSA_SOURCE.replace(EIVISSA_PID, "6269002703260065905044") to EIVISSA_TARGET,
-            EIVISSA_SOURCE to "$EIVISSA_TARGET?extra=1",
-            EIVISSA_SOURCE to EIVISSA_TARGET.replace(EIVISSA_PID, "6269002703260065905044"),
-            EIVISSA_SOURCE to EIVISSA_TARGET.replace("seu.conselldeivissa.es", "seu.conselldeivissa.es.evil.example"),
+        val wrongSource = EIVISSA_SOURCE.replace(EIVISSA_PID, "6269002703260065905044")
+        val wrongSourceAuthorizer = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
         )
-        nearMisses.forEachIndexed { index, (source, target) ->
+        assertNull(
+            wrongSourceAuthorizer.observeTopLevelNavigation(
+                EIVISSA_PROFILE,
+                EIVISSA_START,
+                wrongSource,
+                250,
+                true,
+            ),
+        )
+        assertNull(
+            wrongSourceAuthorizer.observeTopLevelNavigation(
+                EIVISSA_PROFILE,
+                wrongSource,
+                EIVISSA_TARGET,
+                251,
+                true,
+            ),
+        )
+
+        val badTargets = listOf(
+            "$EIVISSA_TARGET?extra=1",
+            EIVISSA_TARGET.replace(EIVISSA_PID, "6269002703260065905044"),
+            EIVISSA_TARGET.replace("seu.conselldeivissa.es", "seu.conselldeivissa.es.evil.example"),
+        )
+        badTargets.forEachIndexed { index, target ->
             val fresh = ClientAuthNavigationAuthorizer(
                 BuiltInSiteProfiles.qaRegistry,
                 monotonic::nowNanos,
@@ -1623,17 +1646,17 @@ class ClientAuthNavigationAuthorizerTest {
                     EIVISSA_PROFILE,
                     EIVISSA_START,
                     EIVISSA_SOURCE,
-                    250L + index * 2,
+                    260L + index * 2,
                     true,
                 ),
             )
             assertNull(
-                "$source -> $target",
+                target,
                 fresh.observeTopLevelNavigation(
                     EIVISSA_PROFILE,
-                    source,
+                    EIVISSA_SOURCE,
                     target,
-                    251L + index * 2,
+                    261L + index * 2,
                     true,
                 ),
             )
