@@ -665,6 +665,23 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_clave_afirma_provider_is_shared_by_reviewed_client_tls_recipes(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"age-mutualidad-general-judicial-mugeju"', source)
+        self.assertIn('MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('clickAsturiasClaveAuth(scenario)\n        clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('clickCatalunyaClave(scenario)\n        clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('expectedHref = OURENSE_IDENTIFY_HREF,\n        )\n        clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('uri.host != CLAVE_PROVIDER_HOST', source)
+        self.assertIn('uri.path != CLAVE_PROVIDER_PATH', source)
+        self.assertIn("candidate.getAttribute('name') === 'idpRedirect'", source)
+        self.assertIn("form.querySelector('input[name=\"SAMLRequest\"][type=\"hidden\"]')", source)
+        self.assertIn("form.querySelector('input[name=\"RelayState\"][type=\"hidden\"]')", source)
+        self.assertIn("form.querySelector('input[name=\"SelectedIdP\"][type=\"hidden\"]')", source)
+        self.assertIn("button.getAttribute('onclick') === $quotedOnClick", source)
+        self.assertIn('"JAVASCRIPT:selectedIdP(\'AFIRMA\');idpRedirect.submit();"', source)
+        self.assertIn('"ImageRetrieve?id=IDP_AFIRMA"', source)
+
     def test_tgss_recipe_waits_for_idp_and_selects_exact_ipce_button(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"tgss-importass"', source)

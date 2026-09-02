@@ -286,14 +286,9 @@ class RealE2eInstrumentedTest {
                 runMenorcaClientTlsRecipe(scenario)
             LA_RIOJA_PORTAL_ID -> clickLaRiojaCertificateLogin(scenario)
             NAVARRA_PORTAL_ID -> runNavarraClientTlsRecipe(scenario)
-            ASTURIAS_PORTAL_ID -> clickAsturiasClaveAuth(scenario)
+            ASTURIAS_PORTAL_ID -> runAsturiasClaveCertificateRecipe(scenario)
             CATALUNYA_PETICIO_PORTAL_ID -> runCatalunyaPeticioClaveRecipe(scenario)
-            OURENSE_PORTAL_ID -> clickExactLabeledAnchor(
-                scenario = scenario,
-                expectedCurrentUrl = OURENSE_ENTRY_URL,
-                expectedLabel = OURENSE_IDENTIFY_LABEL,
-                expectedHref = OURENSE_IDENTIFY_HREF,
-            )
+            OURENSE_PORTAL_ID -> runOurenseClaveCertificateRecipe(scenario)
             TEA_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = TEA_ENTRY_URL,
@@ -303,6 +298,7 @@ class RealE2eInstrumentedTest {
             SANIDAD_PORTAL_ID -> runSanidadClientTlsRecipe(scenario)
             VEA_PORTAL_ID -> runVeaCertificateAuthRecipe(scenario)
             TGSS_PORTAL_ID -> clickTgssIpceAuth(scenario)
+            MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -567,6 +563,110 @@ class RealE2eInstrumentedTest {
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
+    private fun runAsturiasClaveCertificateRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickAsturiasClaveAuth(scenario)
+        clickClaveAfirmaProvider(scenario)
+    }
+
+    private fun runOurenseClaveCertificateRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = OURENSE_ENTRY_URL,
+            expectedLabel = OURENSE_IDENTIFY_LABEL,
+            expectedHref = OURENSE_IDENTIFY_HREF,
+        )
+        clickClaveAfirmaProvider(scenario)
+    }
+
+    private fun clickClaveAfirmaProvider(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedAction = JSONObject.quote(CLAVE_REDIRECT_ACTION)
+        val quotedOnClick = JSONObject.quote(CLAVE_AFIRMA_ONCLICK)
+        val quotedImageSrc = JSONObject.quote(CLAVE_AFIRMA_IMAGE_SRC)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForProvider = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                val uri = currentUrl?.let(Uri::parse)
+                if (uri == null ||
+                    uri.scheme != "https" ||
+                    uri.host != CLAVE_PROVIDER_HOST ||
+                    uri.path != CLAVE_PROVIDER_PATH ||
+                    uri.queryParameterNames.isNotEmpty()
+                ) {
+                    waitingForProvider = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = Array.from(document.forms).find(candidate =>
+                        candidate.getAttribute('name') === 'idpRedirect' &&
+                        candidate.getAttribute('method')?.toLowerCase() === 'post' &&
+                        new URL(candidate.getAttribute('action'), window.location.href).href === $quotedAction
+                      );
+                      if (!form) return 0;
+                      const saml = form.querySelector('input[name="SAMLRequest"][type="hidden"]');
+                      const relay = form.querySelector('input[name="RelayState"][type="hidden"]');
+                      const selected = form.querySelector('input[name="SelectedIdP"][type="hidden"]');
+                      if (!saml || saml.value.length < 512 ||
+                          !relay || relay.value.length < 1 || relay.value.length > 512 ||
+                          !selected || selected.value !== '') return 2;
+                      const buttons = Array.from(form.querySelectorAll('button')).filter(button =>
+                        button.getAttribute('onclick') === $quotedOnClick &&
+                        button.classList.contains('idp-button')
+                      );
+                      if (buttons.length === 0) return 0;
+                      if (buttons.length !== 1) return 2;
+                      const button = buttons[0];
+                      const article = button.closest('article.idp-card2');
+                      if (!article) return 2;
+                      const images = Array.from(article.querySelectorAll('img.spLogo')).filter(image =>
+                        image.getAttribute('src') === $quotedImageSrc
+                      );
+                      if (images.length !== 1 || typeof selectedIdP !== 'function') return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForProvider || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
     private fun clickTgssIpceAuth(
         scenario: ActivityScenario<MainActivity>,
     ) {
@@ -595,7 +695,7 @@ class RealE2eInstrumentedTest {
                 }
                 val currentUrl = webView.url
                 val uri = currentUrl?.let(Uri::parse)
-                if (uri?.scheme != "https" || uri.host != TGSS_IDP_HOST || uri.path != TGSS_IDP_PATH) {
+                if (uri == null || uri.scheme != "https" || uri.host != TGSS_IDP_HOST || uri.path != TGSS_IDP_PATH) {
                     waitingForIdp = true
                     inspected.countDown()
                     return@onActivity
@@ -828,6 +928,7 @@ class RealE2eInstrumentedTest {
         )
         clickCatalunyaAccedeix(scenario)
         clickCatalunyaClave(scenario)
+        clickClaveAfirmaProvider(scenario)
     }
 
     private fun clickCatalunyaAccedeix(
@@ -2540,6 +2641,14 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"
+        const val CLAVE_PROVIDER_HOST = "pasarela.clave.gob.es"
+        const val CLAVE_PROVIDER_PATH = "/Proxy2/ServiceProvider"
+        const val CLAVE_REDIRECT_ACTION =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val CLAVE_AFIRMA_ONCLICK =
+            "JAVASCRIPT:selectedIdP('AFIRMA');idpRedirect.submit();"
+        const val CLAVE_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"
         const val TGSS_PORTAL_ID = "tgss-importass"
         const val TGSS_IDP_HOST = "idp.seg-social.es"
         const val TGSS_IDP_PATH = "/PGIS/Login"
