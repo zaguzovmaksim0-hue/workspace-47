@@ -286,8 +286,21 @@ class RealE2eInstrumentedTest {
                 runMenorcaClientTlsRecipe(scenario)
             LA_RIOJA_PORTAL_ID -> clickLaRiojaCertificateLogin(scenario)
             NAVARRA_PORTAL_ID -> runNavarraClientTlsRecipe(scenario)
-            ASTURIAS_PORTAL_ID -> clickAsturiasClaveAuth(scenario)
+            ASTURIAS_PORTAL_ID -> runAsturiasClaveCertificateRecipe(scenario)
             CATALUNYA_PETICIO_PORTAL_ID -> runCatalunyaPeticioClaveRecipe(scenario)
+            OURENSE_PORTAL_ID -> runOurenseClaveCertificateRecipe(scenario)
+            TEA_PORTAL_ID -> clickExactLabeledAnchor(
+                scenario = scenario,
+                expectedCurrentUrl = TEA_ENTRY_URL,
+                expectedLabel = TEA_AUTH_LABEL,
+                expectedHref = TEA_AUTH_HREF,
+            )
+            SANIDAD_PORTAL_ID -> runSanidadClientTlsRecipe(scenario)
+            VEA_PORTAL_ID -> runVeaCertificateAuthRecipe(scenario)
+            TGSS_PORTAL_ID -> clickTgssIpceAuth(scenario)
+            CORUNA_PORTAL_ID -> runCorunaClaveCertificateRecipe(scenario)
+            MELILLA_PORTAL_ID -> clickMelillaAutofirmaEntry(scenario)
+            MUGEJU_PORTAL_ID, DIPUTACION_SEVILLA_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -552,6 +565,544 @@ class RealE2eInstrumentedTest {
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
+    private fun clickMelillaAutofirmaEntry(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedFormId = JSONObject.quote(MELILLA_FORM_ID)
+        val quotedFormName = JSONObject.quote(MELILLA_FORM_NAME)
+        val quotedInitialAction = JSONObject.quote(MELILLA_INITIAL_FORM_ACTION)
+        val quotedAuthBase = JSONObject.quote(MELILLA_AUTH_BASE)
+        val quotedProcedureId = JSONObject.quote(MELILLA_PROCEDURE_ID)
+        val quotedAutofirmaOnClick = JSONObject.quote(MELILLA_AUTOFIRMA_ONCLICK)
+        val quotedAutofirmaLabel = JSONObject.quote(MELILLA_AUTOFIRMA_LABEL)
+        val expectedHidden = JSONObject(MELILLA_HIDDEN_FIELDS).toString()
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForEntry = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || currentUrl != MELILLA_ENTRY_URL) {
+                    waitingForEntry = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = document.getElementById($quotedFormId);
+                      if (!form) return 0;
+                      if (form.tagName !== 'FORM' ||
+                          form.getAttribute('name') !== $quotedFormName ||
+                          form.getAttribute('method')?.toLowerCase() !== 'post' ||
+                          new URL(form.getAttribute('action'), window.location.href).href !== $quotedInitialAction) return 2;
+                      if (typeof window.catser !== 'object' || window.catser === null ||
+                          window.catser.urlauth !== $quotedAuthBase ||
+                          window.catser.dboid !== $quotedProcedureId ||
+                          typeof submitFormulario !== 'function') return 2;
+                      const expectedHidden = $expectedHidden;
+                      const hiddenInputs = Array.from(form.querySelectorAll('input[type="hidden"]'));
+                      const expectedNames = Object.keys(expectedHidden);
+                      if (hiddenInputs.length !== expectedNames.length) return 2;
+                      for (const name of expectedNames) {
+                        const matches = hiddenInputs.filter(input => input.getAttribute('name') === name);
+                        if (matches.length !== 1 || matches[0].value !== expectedHidden[name]) return 2;
+                      }
+                      const links = Array.from(form.querySelectorAll('a')).filter(link =>
+                        link.getAttribute('onclick') === $quotedAutofirmaOnClick &&
+                        link.getAttribute('href') === 'javascript:;'
+                      );
+                      if (links.length === 0) return 0;
+                      if (links.length !== 1) return 2;
+                      const link = links[0];
+                      const label = (link.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (label !== $quotedAutofirmaLabel ||
+                          !link.classList.contains('acceso-title') ||
+                          !link.classList.contains('acceso-mark') ||
+                          !link.classList.contains('autofirma') ||
+                          !link.classList.contains('main-element')) return 2;
+                      link.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForEntry || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runCorunaClaveCertificateRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickCorunaClaveAuth(scenario)
+        clickClaveAfirmaProvider(scenario)
+    }
+
+    private fun clickCorunaClaveAuth(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedFormId = JSONObject.quote(CORUNA_CLAVE_FORM_ID)
+        val quotedFormName = JSONObject.quote(CORUNA_CLAVE_FORM_NAME)
+        val quotedFormAction = JSONObject.quote(CORUNA_CLAVE_FORM_ACTION)
+        val quotedButtonId = JSONObject.quote(CORUNA_CLAVE_BUTTON_ID)
+        val quotedButtonName = JSONObject.quote(CORUNA_CLAVE_BUTTON_NAME)
+        val quotedButtonLabel = JSONObject.quote(CORUNA_CLAVE_BUTTON_LABEL)
+        val expectedHidden = JSONObject(CORUNA_CLAVE_HIDDEN_FIELDS).toString()
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForEntry = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || currentUrl != CORUNA_X004_URL) {
+                    waitingForEntry = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = document.getElementById($quotedFormId);
+                      if (!form) return 0;
+                      if (form.tagName !== 'FORM' ||
+                          form.getAttribute('name') !== $quotedFormName ||
+                          form.getAttribute('method')?.toLowerCase() !== 'post' ||
+                          new URL(form.getAttribute('action'), window.location.href).href !== $quotedFormAction) return 2;
+                      const expectedHidden = $expectedHidden;
+                      const hiddenInputs = Array.from(form.querySelectorAll('input[type="hidden"]'));
+                      const expectedNames = Object.keys(expectedHidden);
+                      if (hiddenInputs.length !== expectedNames.length) return 2;
+                      for (const name of expectedNames) {
+                        const matches = hiddenInputs.filter(input => input.getAttribute('name') === name);
+                        if (matches.length !== 1 || matches[0].value !== expectedHidden[name]) return 2;
+                      }
+                      const buttons = Array.from(form.querySelectorAll('button')).filter(button =>
+                        button.getAttribute('id') === $quotedButtonId &&
+                        button.getAttribute('name') === $quotedButtonName
+                      );
+                      if (buttons.length === 0) return 0;
+                      if (buttons.length !== 1) return 2;
+                      const button = buttons[0];
+                      const label = (button.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (button.type !== 'submit' ||
+                          button.getAttribute('onclick') !== null ||
+                          button.getAttribute('formaction') !== null ||
+                          label !== $quotedButtonLabel ||
+                          !button.classList.contains('btn') ||
+                          !button.classList.contains('btn-sm') ||
+                          !button.classList.contains('boton')) return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForEntry || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runAsturiasClaveCertificateRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickAsturiasClaveAuth(scenario)
+        clickClaveAfirmaProvider(scenario)
+    }
+
+    private fun runOurenseClaveCertificateRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = OURENSE_ENTRY_URL,
+            expectedLabel = OURENSE_IDENTIFY_LABEL,
+            expectedHref = OURENSE_IDENTIFY_HREF,
+        )
+        clickClaveAfirmaProvider(scenario)
+    }
+
+    private fun clickClaveAfirmaProvider(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedAction = JSONObject.quote(CLAVE_REDIRECT_ACTION)
+        val quotedOnClick = JSONObject.quote(CLAVE_AFIRMA_ONCLICK)
+        val quotedImageSrc = JSONObject.quote(CLAVE_AFIRMA_IMAGE_SRC)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForProvider = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                val uri = currentUrl?.let(Uri::parse)
+                if (uri == null ||
+                    uri.scheme != "https" ||
+                    uri.host != CLAVE_PROVIDER_HOST ||
+                    uri.path != CLAVE_PROVIDER_PATH ||
+                    uri.queryParameterNames.isNotEmpty()
+                ) {
+                    waitingForProvider = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = Array.from(document.forms).find(candidate =>
+                        candidate.getAttribute('name') === 'idpRedirect' &&
+                        candidate.getAttribute('method')?.toLowerCase() === 'post' &&
+                        new URL(candidate.getAttribute('action'), window.location.href).href === $quotedAction
+                      );
+                      if (!form) return 0;
+                      const saml = form.querySelector('input[name="SAMLRequest"][type="hidden"]');
+                      const relay = form.querySelector('input[name="RelayState"][type="hidden"]');
+                      const selected = form.querySelector('input[name="SelectedIdP"][type="hidden"]');
+                      if (!saml || saml.value.length < 512 ||
+                          !relay || relay.value.length < 1 || relay.value.length > 512 ||
+                          !selected || selected.value !== '') return 2;
+                      const buttons = Array.from(form.querySelectorAll('button')).filter(button =>
+                        button.getAttribute('onclick') === $quotedOnClick &&
+                        button.classList.contains('idp-button')
+                      );
+                      if (buttons.length === 0) return 0;
+                      if (buttons.length !== 1) return 2;
+                      const button = buttons[0];
+                      const article = button.closest('article.idp-card2');
+                      if (!article) return 2;
+                      const images = Array.from(article.querySelectorAll('img.spLogo')).filter(image =>
+                        image.getAttribute('src') === $quotedImageSrc
+                      );
+                      if (images.length !== 1 || typeof selectedIdP !== 'function') return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForProvider || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickTgssIpceAuth(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedFormAction = JSONObject.quote(TGSS_IPCE_FORM_ACTION)
+        val quotedSelectedAction = JSONObject.quote(TGSS_IPCE_FORM_ACTION_SELECTED)
+        val quotedButtonId = JSONObject.quote(TGSS_IPCE_BUTTON_ID)
+        val quotedButtonLabel = JSONObject.quote(TGSS_IPCE_BUTTON_LABEL)
+        val quotedButtonAria = JSONObject.quote(TGSS_IPCE_BUTTON_ARIA)
+        val quotedImageAlt = JSONObject.quote(TGSS_IPCE_IMAGE_ALT)
+        val quotedImagePath = JSONObject.quote(TGSS_IPCE_IMAGE_PATH)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForIdp = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                val uri = currentUrl?.let(Uri::parse)
+                if (uri == null || uri.scheme != "https" || uri.host != TGSS_IDP_HOST || uri.path != TGSS_IDP_PATH) {
+                    waitingForIdp = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = Array.from(document.forms).find(candidate =>
+                        candidate.getAttribute('name') === 'redirectForm' &&
+                        candidate.getAttribute('method')?.toLowerCase() === 'post' &&
+                        new URL(candidate.getAttribute('action'), window.location.href).href === $quotedFormAction
+                      );
+                      if (!form) return 0;
+                      const button = document.getElementById($quotedButtonId);
+                      if (!button || !form.contains(button)) return 0;
+                      const label = (button.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (button.tagName !== 'BUTTON' ||
+                          button.getAttribute('type') !== 'submit' ||
+                          button.getAttribute('aria-label') !== $quotedButtonAria ||
+                          label !== $quotedButtonLabel ||
+                          new URL(button.getAttribute('formaction'), window.location.href).href !== $quotedSelectedAction)
+                        return 2;
+                      const images = Array.from(button.querySelectorAll('img')).filter(image => {
+                        let target;
+                        try { target = new URL(image.getAttribute('src'), window.location.href); }
+                        catch (_) { return false; }
+                        return target.origin === 'https://idp.seg-social.es' &&
+                          target.pathname === $quotedImagePath &&
+                          image.getAttribute('alt') === $quotedImageAlt;
+                      });
+                      if (images.length !== 1) return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForIdp || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runVeaCertificateAuthRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickVeaAuthButton(
+            scenario = scenario,
+            expectedLabel = VEA_START_LABEL,
+            requireAuthModal = false,
+        )
+        clickVeaAuthButton(
+            scenario = scenario,
+            expectedLabel = VEA_CERT_LABEL,
+            requireAuthModal = true,
+        )
+    }
+
+    private fun clickVeaAuthButton(
+        scenario: ActivityScenario<MainActivity>,
+        expectedLabel: String,
+        requireAuthModal: Boolean,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedLabel = JSONObject.quote(expectedLabel)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForButton = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, VEA_ENTRY_URL)) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const buttons = Array.from(document.querySelectorAll('button')).filter(button => {
+                        const label = (button.innerText || '').trim().replace(/\s+/g, ' ');
+                        return label === $quotedLabel;
+                      });
+                      if (buttons.length === 0) return 0;
+                      if (buttons.length !== 1) return 2;
+                      const button = buttons[0];
+                      if (button.disabled || button.getAttribute('aria-disabled') === 'true') return 2;
+                      const modal = button.closest('app-modal-1');
+                      if (${if (requireAuthModal) "!modal" else "modal"}) return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                        else -> waitingForButton = true
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForButton || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runSanidadClientTlsRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = SANIDAD_ENTRY_URL,
+            expectedLabel = SANIDAD_REGISTRY_LABEL,
+            expectedHref = SANIDAD_REGISTRY_HREF,
+        )
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = SANIDAD_REGISTRY_URL,
+            expectedLabel = SANIDAD_FORMS_LABEL,
+            expectedHref = SANIDAD_FORMS_URL,
+            waitForExpectedUrl = true,
+        )
+        clickSanidadTardesCertificate(scenario)
+    }
+
+    private fun clickSanidadTardesCertificate(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedTarget = JSONObject.quote(SANIDAD_TARDES_CERT_URL)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForPanel = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, SANIDAD_FORMS_URL)) {
+                    waitingForPanel = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const panel = document.getElementById('TRAM_TARDESCONPLAN');
+                      if (!panel) return 0;
+                      if (!panel.classList.contains('panel')) return 2;
+                      const title = document.getElementById('idTRAM_TARDESCONPLAN');
+                      if (!title || !panel.contains(title)) return 2;
+                      const titleText = (title.innerText || '').trim().replace(/\\s+/g, ' ');
+                      if (!titleText.startsWith('Tardes con Plan')) return 2;
+                      const links = Array.from(panel.querySelectorAll('li.concertificado a')).filter(link => {
+                        const label = (link.innerText || '').trim().replace(/\\s+/g, ' ');
+                        let target;
+                        try { target = new URL(link.getAttribute('href'), window.location.href).href; }
+                        catch (_) { return false; }
+                        return label === 'Certificado digital' && target === $quotedTarget;
+                      });
+                      if (links.length === 0) return 0;
+                      if (links.length !== 1) return 2;
+                      links[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForPanel || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
     private fun runCatalunyaPeticioClaveRecipe(
         scenario: ActivityScenario<MainActivity>,
     ) {
@@ -563,6 +1114,7 @@ class RealE2eInstrumentedTest {
         )
         clickCatalunyaAccedeix(scenario)
         clickCatalunyaClave(scenario)
+        clickClaveAfirmaProvider(scenario)
     }
 
     private fun clickCatalunyaAccedeix(
@@ -2275,6 +2827,110 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val MELILLA_PORTAL_ID = "melilla-sede"
+        const val MELILLA_ENTRY_URL =
+            "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
+        const val MELILLA_FORM_ID = "webAppPageForm"
+        const val MELILLA_FORM_NAME = "webAppPageForm"
+        const val MELILLA_INITIAL_FORM_ACTION =
+            "https://sede.melilla.es/sta/CarpetaPublic/submitAjax.aa"
+        const val MELILLA_AUTH_BASE = "https://sede.melilla.es:443/sta"
+        const val MELILLA_PROCEDURE_ID = "6269000018479610199999"
+        const val MELILLA_AUTOFIRMA_ONCLICK = "submitFormulario(false,true);"
+        const val MELILLA_AUTOFIRMA_LABEL = "Con Autofirma"
+        val MELILLA_HIDDEN_FIELDS = mapOf(
+            "eventScreenId" to "",
+            "eventComponent" to "",
+            "eventObject" to "",
+            "eventAction" to "",
+            "eventArguments" to "",
+            "PAGE_CODE" to "CATALOGO",
+            "APP_CODE" to "STA",
+            "PAGE_COMPLETE" to "",
+            "ROOTID" to "1",
+            "HFC" to "HEADER#FOOTER",
+            "SESSION_REQUIRED" to "false",
+            "dboidSolicitud" to MELILLA_PROCEDURE_ID,
+            "autoFirma" to "false",
+            "fire" to "false",
+            "url" to "Relec/TramitaForm",
+            "urlBack" to " /sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+        )
+        const val CORUNA_PORTAL_ID = "diputacion-a-coruna-portal"
+        const val CORUNA_X004_URL =
+            "https://sede.dacoruna.gal/tramitador/entrada?" +
+                "idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL"
+        const val CORUNA_CLAVE_FORM_ID = "formularioExternoClave"
+        const val CORUNA_CLAVE_FORM_NAME = "formularioExternoClave"
+        const val CORUNA_CLAVE_FORM_ACTION = "https://sede.dacoruna.gal/SP2/TiWorksRequest"
+        const val CORUNA_CLAVE_BUTTON_ID = "acceso"
+        const val CORUNA_CLAVE_BUTTON_NAME = "acceso"
+        const val CORUNA_CLAVE_BUTTON_LABEL = "Entrar con Cl@ve"
+        val CORUNA_CLAVE_HIDDEN_FIELDS = mapOf(
+            "entrada" to "ciudadano",
+            "idEntidad" to "diputacion",
+            "idioma" to "gl",
+            "modo" to "Clave2CiudadanoAuthentication",
+            "tipoDeLogado" to "externo",
+            "idLogica" to "accesoDirecto",
+            "idExpediente" to "X004",
+            "detalleExpediente" to "",
+            "idExpedienteOrigen" to "",
+            "idVersionProceso" to "",
+            "idConvocatoria" to "",
+        )
+        const val MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"
+        const val CLAVE_PROVIDER_HOST = "pasarela.clave.gob.es"
+        const val CLAVE_PROVIDER_PATH = "/Proxy2/ServiceProvider"
+        const val CLAVE_REDIRECT_ACTION =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val CLAVE_AFIRMA_ONCLICK =
+            "JAVASCRIPT:selectedIdP('AFIRMA');idpRedirect.submit();"
+        const val CLAVE_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"
+        const val TGSS_PORTAL_ID = "tgss-importass"
+        const val TGSS_IDP_HOST = "idp.seg-social.es"
+        const val TGSS_IDP_PATH = "/PGIS/Login"
+        const val TGSS_IPCE_FORM_ACTION = "https://idp.seg-social.es/PGIS/Login"
+        const val TGSS_IPCE_FORM_ACTION_SELECTED =
+            "https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"
+        const val TGSS_IPCE_BUTTON_ID = "IPCEIdP"
+        const val TGSS_IPCE_BUTTON_LABEL = "DNIe o certificado"
+        const val TGSS_IPCE_BUTTON_ARIA = "Acceder a DNIe o certificado"
+        const val TGSS_IPCE_IMAGE_ALT = "Certificado admitido por la GISS"
+        const val TGSS_IPCE_IMAGE_PATH =
+            "/PasarelaStaticAuth/images-pasarela/Componentes/Botones/IPCE.svg"
+        const val VEA_PORTAL_ID = "junta-andalucia-sede"
+        const val VEA_ENTRY_URL =
+            "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"
+        const val VEA_START_LABEL = "INICIAR SOLICITUD"
+        const val VEA_CERT_LABEL = "Acceder con certificado electrónico"
+        const val SANIDAD_PORTAL_ID = "age-ministerio-de-sanidad"
+        const val SANIDAD_ENTRY_URL = "https://sede.mscbs.gob.es/"
+        const val SANIDAD_REGISTRY_LABEL = "Registro electrónico"
+        const val SANIDAD_REGISTRY_HREF = "/registroElectronico/home.htm"
+        const val SANIDAD_REGISTRY_URL =
+            "https://sede.mscbs.gob.es/registroElectronico/home.htm"
+        const val SANIDAD_FORMS_LABEL = "índice de formularios"
+        const val SANIDAD_FORMS_URL =
+            "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
+        const val SANIDAD_TARDES_CERT_URL =
+            "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
+                "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
+                "ENTIDAD_ID=000&LANG=es&COUNTRY=ES"
+        const val TEA_PORTAL_ID =
+            "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
+        const val TEA_ENTRY_URL = "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+        const val TEA_AUTH_LABEL = "Alegaciones"
+        const val TEA_AUTH_HREF =
+            "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0"
+        const val OURENSE_PORTAL_ID = "diputacion-ourense-sede"
+        const val OURENSE_ENTRY_URL =
+            "https://sede.depourense.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES"
+        const val OURENSE_IDENTIFY_LABEL = "Identificate"
+        const val OURENSE_IDENTIFY_HREF =
+            "https://sede.depourense.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
         const val CATALUNYA_PETICIO_PORTAL_ID = "catalunya-tramits-peticio-generica"
         const val CATALUNYA_PETICIO_ENTRY_URL =
             "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +

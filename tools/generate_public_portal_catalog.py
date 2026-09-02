@@ -156,19 +156,21 @@ def _profile_bindings(
         records_by_entry_url.setdefault(entry_url, []).append(record)
 
     bindings: dict[str, str] = {}
+    bound_profile_ids: set[str] = set()
     profile_by_start_url = {start_url: profile_id for profile_id, start_url in profiles}
     for profile_id, start_url in profiles:
         matches = records_by_entry_url.get(start_url, [])
-        if not matches:
-            raise ValueError(f"profile {profile_id} has no inventory entry for exact startUrl")
-        if len(matches) != 1:
+        if len(matches) > 1:
             raise ValueError(f"profile {profile_id} has multiple inventory entries for exact startUrl")
+        if not matches:
+            continue
         surface_key = str(matches[0].get("surface_key", ""))
         if not surface_key:
             raise ValueError(f"profile {profile_id} matched an invalid inventory surface")
         if surface_key in bindings:
             raise ValueError(f"multiple profiles map to inventory surface: {surface_key}")
         bindings[surface_key] = profile_id
+        bound_profile_ids.add(profile_id)
 
     for record in records:
         if "launch_url" not in record:
@@ -182,9 +184,15 @@ def _profile_bindings(
         surface_key = str(record.get("surface_key", ""))
         if not surface_key:
             raise ValueError("alias launch_url belongs to an invalid inventory surface")
-        if surface_key in bindings:
+        existing = bindings.get(surface_key)
+        if existing is not None:
             raise ValueError(f"redundant alias launch_url on profile-owned surface: {surface_key}")
         bindings[surface_key] = profile_id
+        bound_profile_ids.add(profile_id)
+
+    unbound = [profile_id for profile_id, _ in profiles if profile_id not in bound_profile_ids]
+    if unbound:
+        raise ValueError(f"profile {unbound[0]} has no inventory entry or launch_url for exact startUrl")
     return bindings
 
 

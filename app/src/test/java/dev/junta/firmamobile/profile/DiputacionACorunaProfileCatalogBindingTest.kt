@@ -27,7 +27,7 @@ import org.robolectric.annotation.SQLiteMode
 class DiputacionACorunaProfileCatalogBindingTest {
     private val profileId = ProfileId("diputacion-a-coruna-solicitud-general")
     private val portalId = PortalId("diputacion-a-coruna-portal")
-    private val startUrl = URI("https://www.dacoruna.gal/portada")
+    private val startUrl = URI("https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL")
     private val sourceUrl = URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
     private val targetUrl = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
 
@@ -36,14 +36,14 @@ class DiputacionACorunaProfileCatalogBindingTest {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Deputación da Coruña — Solicitude Xeral", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
-        assertEquals(setOf(ExactOrigin.parse("https://www.dacoruna.gal")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.dacoruna.gal")), profile.initiatorOrigins)
         assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
-        assertEquals(setOf(ExactOrigin.parse("https://sede.dacoruna.gal")), profile.trustedBrowseOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
@@ -78,6 +78,7 @@ class DiputacionACorunaProfileCatalogBindingTest {
 
         assertEquals(portalId, entry.portalId)
         assertEquals(profileId, entry.profileId)
+        assertEquals(startUrl, entry.launchUrl)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
         assertEquals("CLIENT_TLS_AUTH_CLAVE", entry.protocolFamily)

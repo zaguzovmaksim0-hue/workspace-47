@@ -283,7 +283,6 @@ class JuntaOriginPolicyTest {
             "sede.depourense.es",
             "sedeelectronicadipusevilla.es",
             "sede.dacoruna.gal",
-            "www.dacoruna.gal",
             "pasarela-ident-sistemas.clave.gob.es",
             "sede.depo.gal",
             "lagomera.sedelectronica.es",
@@ -650,7 +649,7 @@ class JuntaOriginPolicyTest {
             ),
         )
         assertEquals(
-            setOf("www.dacoruna.gal", "sede.dacoruna.gal", "pasarela.clave.gob.es"),
+            setOf("sede.dacoruna.gal", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(coruna),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(coruna).isEmpty())
