@@ -693,6 +693,7 @@ class MiniAppletBridgeAdapterTest {
         assertTrue(rejected(origin = Uri.parse("https://www.sevilla.org.evil.example")))
         assertTrue(rejected(pageUrl = null))
         assertTrue(rejected(pageUrl = "https://www.sevilla.org/ovweb/"))
+        assertTrue(rejected(pageUrl = "$SEVILLA_START_URL#"))
         assertTrue(rejected(pageUrl = "$SEVILLA_START_URL&unexpected=1"))
         assertTrue(rejected(rawMessage = sevillaMessage(algorithm = "SHA256withRSA")))
         assertTrue(rejected(rawMessage = sevillaMessage(format = "XAdES Detached")))
