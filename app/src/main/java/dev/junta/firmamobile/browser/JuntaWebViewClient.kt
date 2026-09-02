@@ -450,7 +450,8 @@ class JuntaWebViewClient(
 
         val pending = pendingInPlaceClientAuth.get()
         val retryablePreTlsTimeout =
-            error.errorCode == ERROR_TIMEOUT &&
+            (error.errorCode == ERROR_TIMEOUT ||
+                error.description.toString() == CHROMIUM_CONNECTION_TIMED_OUT) &&
                 pending?.wasPreconfirmedByUser == true &&
                 pending.navigationEpoch == currentNavigationEpoch() &&
                 pending.authorized.profileId == activeProfileId() &&
@@ -551,6 +552,7 @@ class JuntaWebViewClient(
 
     private companion object {
         const val HTTP_ERROR_START = 400
+        const val CHROMIUM_CONNECTION_TIMED_OUT = "net::ERR_CONNECTION_TIMED_OUT"
         const val UNKNOWN_METHOD = "UNKNOWN"
         const val GET_METHOD = "GET"
         val CONFIRMED_IN_PLACE_TRANSITIONS = setOf(
