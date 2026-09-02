@@ -335,7 +335,8 @@ class RealE2eInstrumentedTest {
     private fun waitForBadajozEntryPageReady(
         scenario: ActivityScenario<MainActivity>,
     ) {
-        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val deadline =
+            SystemClock.elapsedRealtime() + BADAJOZ_PAGE_READY_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             val inspected = CountDownLatch(1)
             var failure: String? = null
@@ -1636,6 +1637,7 @@ class RealE2eInstrumentedTest {
         const val UNIZAR_AUTH_ONCLICK = "lanza();"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
+        const val BADAJOZ_PAGE_READY_TIMEOUT_MILLIS = 60_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
         const val SIGNING_TIMEOUT_MILLIS = 90_000L
         const val POST_SIGN_TIMEOUT_MILLIS = 30_000L

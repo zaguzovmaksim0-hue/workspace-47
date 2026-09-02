@@ -674,6 +674,7 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_badajoz_recipe_waits_in_webview_for_the_ready_sign_hook(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('private fun waitForBadajozEntryPageReady(', source)
+        self.assertIn('BADAJOZ_PAGE_READY_TIMEOUT_MILLIS = 60_000L', source)
         self.assertIn("document.readyState === 'complete'", source)
         self.assertIn('REAL_E2E_RECIPE_PAGE_READY_TIMEOUT', source)
         self.assertIn('window.__jfmBadajozSignHookReady !== true', source)
