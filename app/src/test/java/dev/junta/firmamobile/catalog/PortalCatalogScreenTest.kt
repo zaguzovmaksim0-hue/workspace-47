@@ -137,6 +137,54 @@ class PortalCatalogScreenTest {
     }
 
     @Test
+    fun `selected region catalog keeps every bundled service reachable`() {
+        val items = repository.portals()
+        val sections = buildPersonalizedPortalSections(
+            items = items,
+            selectedRegion = PortalRegionCode.ANDALUSIA,
+            favoritePortalIds = emptySet(),
+            recentPortalIds = emptyList(),
+            searching = false,
+        )
+        val primary = sections.filter {
+            it.kind in setOf(
+                PortalCatalogSectionKind.SELECTED_REGION,
+                PortalCatalogSectionKind.NATIONAL,
+                PortalCatalogSectionKind.OTHER_REGIONS,
+            )
+        }
+        val byKind = primary.associateBy { it.kind }
+
+        assertEquals(183, items.size)
+        assertEquals(15, byKind.getValue(PortalCatalogSectionKind.SELECTED_REGION).items.size)
+        assertEquals(83, byKind.getValue(PortalCatalogSectionKind.NATIONAL).items.size)
+        assertEquals(85, byKind.getValue(PortalCatalogSectionKind.OTHER_REGIONS).items.size)
+
+        val visiblePortalIds = primary.flatMap { it.items }.map { it.portalId }
+        assertEquals(items.size, visiblePortalIds.size)
+        assertEquals(items.map { it.portalId }.toSet(), visiblePortalIds.toSet())
+    }
+
+    @Test
+    @Config(qualifiers = "w600dp-h2000dp")
+    fun `other territories section is visible and collapsed for a selected region`() {
+        val state = stateFor(selectedRegion = PortalRegionCode.ANDALUSIA)
+        val otherSection = state.sections.single { it.kind == PortalCatalogSectionKind.OTHER_REGIONS }
+        val otherPortal = otherSection.items.first()
+
+        setCatalogContent(state = state)
+
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Otros territorios de España"))
+        rule.onNodeWithText("Otros territorios de España").assertIsDisplayed()
+        rule.onNodeWithText("85 servicios").assertIsDisplayed()
+        rule.onNodeWithText(otherPortal.displayName).assertDoesNotExist()
+
+        rule.onNodeWithText("Otros territorios de España").performClick()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(otherPortal.displayName))
+        rule.onNodeWithText(otherPortal.displayName).assertIsDisplayed()
+    }
+
+    @Test
     @Config(qualifiers = "w600dp-h2000dp")
     fun `regional catalog starts fully collapsed`() {
         val andalusia = repository.portals().first { it.regionCode == PortalRegionCode.ANDALUSIA }

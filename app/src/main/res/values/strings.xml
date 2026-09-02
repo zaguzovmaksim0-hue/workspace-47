@@ -135,10 +135,10 @@
     <string name="catalog_section_recent_copy">Los últimos servicios que has abierto.</string>
     <string name="catalog_section_selected_region">En %1$s</string>
     <string name="catalog_section_region_copy">Servicios públicos de este territorio.</string>
-    <string name="catalog_section_spain">Servicios de toda España</string>
-    <string name="catalog_section_spain_copy">Organismos y servicios estatales disponibles desde cualquier región.</string>
-    <string name="catalog_section_other_regions">Otros territorios</string>
-    <string name="catalog_section_other_regions_copy">Resultados encontrados en el resto de España.</string>
+    <string name="catalog_section_spain">Servicios estatales</string>
+    <string name="catalog_section_spain_copy">Organismos y servicios del Estado disponibles desde cualquier región.</string>
+    <string name="catalog_section_other_regions">Otros territorios de España</string>
+    <string name="catalog_section_other_regions_copy">Servicios públicos de otras comunidades y territorios.</string>
     <plurals name="catalog_section_service_count">
         <item quantity="one">%1$d servicio</item>
         <item quantity="other">%1$d servicios</item>
