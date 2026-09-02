@@ -39,6 +39,16 @@
   const badajozDiagnosticWrappedFunctions = new WeakSet();
   const badajozDiagnosticPostedStages = new Set();
 
+  function markBadajozSignHookReady() {
+    try {
+      window.__jfmBadajozSignHookReady = true;
+    } catch (_) {}
+    if (!badajozSignHookReadyDiagnosticPosted) {
+      badajozSignHookReadyDiagnosticPosted = true;
+      postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY");
+    }
+  }
+
   function postShimDiagnostic(stage) {
     if (!qaDiagnosticsEnabled || !bridge || typeof bridge.postMessage !== "function") {
       return;
@@ -1432,8 +1442,7 @@
         target[name] = wrapMiniAppletMethod(target[name], call);
         if (call === "SIGN" && badajozCompatibilityEnabled &&
             !badajozSignHookReadyDiagnosticPosted) {
-          badajozSignHookReadyDiagnosticPosted = true;
-          postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY");
+          markBadajozSignHookReady();
         }
       }
       return;
@@ -1451,8 +1460,7 @@
     });
     if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&
         !badajozSignHookReadyDiagnosticPosted) {
-      badajozSignHookReadyDiagnosticPosted = true;
-      postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY");
+      markBadajozSignHookReady();
     }
   }
 
