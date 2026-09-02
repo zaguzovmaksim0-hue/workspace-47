@@ -307,6 +307,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             'LLEIDA_CERT_BUTTON_ARIA_LABEL = "VALid"',
             'LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"',
             'BADAJOZ_PORTAL_ID -> {',
+            'waitForBadajozSignHook = true',
             'LLEIDA_PORTAL_ID -> {',
             'waitForExpectedUrl = true',
             'LLEIDA_LOGIN_LINK_HREF',
