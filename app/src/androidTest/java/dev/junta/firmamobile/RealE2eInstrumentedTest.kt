@@ -233,6 +233,7 @@ class RealE2eInstrumentedTest {
                 expectedLoginUrl = HUESCA_LOGIN_URL,
             )
             BADAJOZ_PORTAL_ID -> {
+                waitForBadajozEntryPageReady(scenario)
                 clickExactButton(
                     scenario = scenario,
                     expectedCurrentUrl = BADAJOZ_ENTRY_URL,
@@ -329,6 +330,49 @@ class RealE2eInstrumentedTest {
             )
             else -> Unit
         }
+    }
+
+    private fun waitForBadajozEntryPageReady(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline =
+            SystemClock.elapsedRealtime() + BADAJOZ_PAGE_READY_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var ready = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null) {
+                    inspected.countDown()
+                    return@onActivity
+                }
+                if (!recipeUrlMatches(currentUrl, BADAJOZ_ENTRY_URL)) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    "document.readyState === 'complete'",
+                ) { readyState ->
+                    ready = readyState == "true"
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (ready) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        error("REAL_E2E_RECIPE_PAGE_READY_TIMEOUT")
     }
 
     private fun clickStaCertificateLogin(
@@ -1261,6 +1305,7 @@ class RealE2eInstrumentedTest {
         "REAL_E2E_RECIPE_TARGET_MISMATCH" -> "RECIPE_TARGET_MISMATCH"
         "REAL_E2E_RECIPE_INSPECT_TIMEOUT" -> "RECIPE_INSPECT_TIMEOUT"
         "REAL_E2E_RECIPE_TARGET_TIMEOUT" -> "RECIPE_TARGET_TIMEOUT"
+        "REAL_E2E_RECIPE_PAGE_READY_TIMEOUT" -> "RECIPE_PAGE_READY_TIMEOUT"
         else -> {
             val type = throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
                 ?: "UNKNOWN_ERROR"
@@ -1592,6 +1637,7 @@ class RealE2eInstrumentedTest {
         const val UNIZAR_AUTH_ONCLICK = "lanza();"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
+        const val BADAJOZ_PAGE_READY_TIMEOUT_MILLIS = 60_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
         const val SIGNING_TIMEOUT_MILLIS = 90_000L
         const val POST_SIGN_TIMEOUT_MILLIS = 30_000L
