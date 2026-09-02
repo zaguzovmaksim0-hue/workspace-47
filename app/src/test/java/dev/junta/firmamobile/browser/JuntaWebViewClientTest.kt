@@ -1032,6 +1032,88 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun carneJovenChromiumConnectionTimedOutMappedAsConnectErrorStillRetries() {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val confirmed = confirmedCarneJovenTarget(70L)
+        val callbacks = RecordingBrowserCallbacks()
+        var retryCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+            onPreconfirmedClientAuthNetworkTimeout = {
+                retryCount++
+                true
+            },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, 70L))
+        inPlaceClient.shouldInterceptRequest(webView, request(CARNE_JOVEN_SOURCE))
+        inPlaceClient.onPageStarted(webView, CARNE_JOVEN_SOURCE, null)
+        val target = carneJovenTargetUrl(
+            ticket = "synthetic-ticket-connect-timeout",
+            session = "synthetic-session-connect-timeout",
+        )
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(target)))
+        inPlaceClient.onPageStarted(webView, target, null)
+
+        inPlaceClient.onReceivedError(
+            webView,
+            request(target),
+            TestWebResourceError(
+                WebViewClient.ERROR_CONNECT,
+                "net::ERR_CONNECTION_TIMED_OUT",
+            ),
+        )
+
+        assertEquals(1, retryCount)
+        assertFalse(callbacks.events.contains("error:NETWORK_ERROR"))
+    }
+
+    @Test
+    fun carneJovenChromiumConnectionRefusedDoesNotRetry() {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val confirmed = confirmedCarneJovenTarget(70L)
+        val callbacks = RecordingBrowserCallbacks()
+        var retryCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+            onPreconfirmedClientAuthNetworkTimeout = {
+                retryCount++
+                true
+            },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, 70L))
+        inPlaceClient.shouldInterceptRequest(webView, request(CARNE_JOVEN_SOURCE))
+        inPlaceClient.onPageStarted(webView, CARNE_JOVEN_SOURCE, null)
+        val target = carneJovenTargetUrl(
+            ticket = "synthetic-ticket-refused",
+            session = "synthetic-session-refused",
+        )
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(target)))
+        inPlaceClient.onPageStarted(webView, target, null)
+
+        inPlaceClient.onReceivedError(
+            webView,
+            request(target),
+            TestWebResourceError(
+                WebViewClient.ERROR_CONNECT,
+                "net::ERR_CONNECTION_REFUSED",
+            ),
+        )
+
+        assertEquals(0, retryCount)
+        assertTrue(callbacks.events.contains("error:NETWORK_ERROR"))
+    }
+
+    @Test
     fun carneJovenTimeoutAfterClientCertChallengeNeverAutoRetries() {
         val profileId = ProfileId("carne-joven-andalucia")
         val confirmed = confirmedCarneJovenTarget(70L)
