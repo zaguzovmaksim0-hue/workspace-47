@@ -242,6 +242,7 @@ class RealE2eInstrumentedTest {
                     expectedLabel = BADAJOZ_CERT_BUTTON_LABEL,
                     expectedAriaLabel = null,
                     expectedOnClick = BADAJOZ_CERT_BUTTON_ONCLICK,
+                    waitForBadajozSignHook = true,
                 )
             }
             AEAT_PORTAL_ID -> {
@@ -609,6 +610,7 @@ class RealE2eInstrumentedTest {
         expectedAriaLabel: String?,
         expectedOnClick: String?,
         waitForExpectedUrl: Boolean = false,
+        waitForBadajozSignHook: Boolean = false,
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
@@ -618,6 +620,10 @@ class RealE2eInstrumentedTest {
         val quotedExpectedOnClick = expectedOnClick?.let { JSONObject.quote(it) } ?: "null"
         while (SystemClock.elapsedRealtime() < deadline) {
             if (hasObservedTerminalNavigationFailure()) return
+            if (waitForBadajozSignHook && !hasObservedBadajozSignHookReady()) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
             val inspected = CountDownLatch(1)
             var failure: String? = null
             var clicked = false
@@ -767,6 +773,12 @@ class RealE2eInstrumentedTest {
             record.contains("event=NETWORK_ERROR") ||
                 record.contains("event=SSL_ERROR_CANCELLED") ||
                 record.contains("event=NAVIGATION_BLOCKED")
+        }
+
+    private fun hasObservedBadajozSignHookReady(): Boolean =
+        diagnosticRecords().any { record ->
+            record.contains("event=MINIAPPLET_BRIDGE") &&
+                record.contains("stage=BADAJOZ_SIGN_HOOK_READY")
         }
 
     private fun observePortal(
