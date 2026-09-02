@@ -299,6 +299,7 @@ class RealE2eInstrumentedTest {
             VEA_PORTAL_ID -> runVeaCertificateAuthRecipe(scenario)
             TGSS_PORTAL_ID -> clickTgssIpceAuth(scenario)
             CORUNA_PORTAL_ID -> runCorunaClaveCertificateRecipe(scenario)
+            MELILLA_PORTAL_ID -> clickMelillaAutofirmaEntry(scenario)
             MUGEJU_PORTAL_ID, DIPUTACION_SEVILLA_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
@@ -556,6 +557,96 @@ class RealE2eInstrumentedTest {
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
             if (waitingForExpectedUrl || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickMelillaAutofirmaEntry(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedFormId = JSONObject.quote(MELILLA_FORM_ID)
+        val quotedFormName = JSONObject.quote(MELILLA_FORM_NAME)
+        val quotedInitialAction = JSONObject.quote(MELILLA_INITIAL_FORM_ACTION)
+        val quotedAuthBase = JSONObject.quote(MELILLA_AUTH_BASE)
+        val quotedProcedureId = JSONObject.quote(MELILLA_PROCEDURE_ID)
+        val quotedAutofirmaOnClick = JSONObject.quote(MELILLA_AUTOFIRMA_ONCLICK)
+        val quotedAutofirmaLabel = JSONObject.quote(MELILLA_AUTOFIRMA_LABEL)
+        val expectedHidden = JSONObject(MELILLA_HIDDEN_FIELDS).toString()
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForEntry = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || currentUrl != MELILLA_ENTRY_URL) {
+                    waitingForEntry = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = document.getElementById($quotedFormId);
+                      if (!form) return 0;
+                      if (form.tagName !== 'FORM' ||
+                          form.getAttribute('name') !== $quotedFormName ||
+                          form.getAttribute('method')?.toLowerCase() !== 'post' ||
+                          new URL(form.getAttribute('action'), window.location.href).href !== $quotedInitialAction) return 2;
+                      if (typeof window.catser !== 'object' || window.catser === null ||
+                          window.catser.urlauth !== $quotedAuthBase ||
+                          window.catser.dboid !== $quotedProcedureId ||
+                          typeof submitFormulario !== 'function') return 2;
+                      const expectedHidden = $expectedHidden;
+                      const hiddenInputs = Array.from(form.querySelectorAll('input[type="hidden"]'));
+                      const expectedNames = Object.keys(expectedHidden);
+                      if (hiddenInputs.length !== expectedNames.length) return 2;
+                      for (const name of expectedNames) {
+                        const matches = hiddenInputs.filter(input => input.getAttribute('name') === name);
+                        if (matches.length !== 1 || matches[0].value !== expectedHidden[name]) return 2;
+                      }
+                      const links = Array.from(form.querySelectorAll('a')).filter(link =>
+                        link.getAttribute('onclick') === $quotedAutofirmaOnClick &&
+                        link.getAttribute('href') === 'javascript:;'
+                      );
+                      if (links.length === 0) return 0;
+                      if (links.length !== 1) return 2;
+                      const link = links[0];
+                      const label = (link.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (label !== $quotedAutofirmaLabel ||
+                          !link.classList.contains('acceso-title') ||
+                          !link.classList.contains('acceso-mark') ||
+                          !link.classList.contains('autofirma') ||
+                          !link.classList.contains('main-element')) return 2;
+                      link.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForEntry || !clicked) {
                 SystemClock.sleep(RECIPE_POLL_MILLIS)
                 continue
             }
@@ -2736,6 +2827,36 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val MELILLA_PORTAL_ID = "melilla-sede"
+        const val MELILLA_ENTRY_URL =
+            "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
+        const val MELILLA_FORM_ID = "webAppPageForm"
+        const val MELILLA_FORM_NAME = "webAppPageForm"
+        const val MELILLA_INITIAL_FORM_ACTION =
+            "https://sede.melilla.es/sta/CarpetaPublic/submitAjax.aa"
+        const val MELILLA_AUTH_BASE = "https://sede.melilla.es:443/sta"
+        const val MELILLA_PROCEDURE_ID = "6269000018479610199999"
+        const val MELILLA_AUTOFIRMA_ONCLICK = "submitFormulario(false,true);"
+        const val MELILLA_AUTOFIRMA_LABEL = "Con Autofirma"
+        val MELILLA_HIDDEN_FIELDS = mapOf(
+            "eventScreenId" to "",
+            "eventComponent" to "",
+            "eventObject" to "",
+            "eventAction" to "",
+            "eventArguments" to "",
+            "PAGE_CODE" to "CATALOGO",
+            "APP_CODE" to "STA",
+            "PAGE_COMPLETE" to "",
+            "ROOTID" to "1",
+            "HFC" to "HEADER#FOOTER",
+            "SESSION_REQUIRED" to "false",
+            "dboidSolicitud" to MELILLA_PROCEDURE_ID,
+            "autoFirma" to "false",
+            "fire" to "false",
+            "url" to "Relec/TramitaForm",
+            "urlBack" to " /sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
+        )
         const val CORUNA_PORTAL_ID = "diputacion-a-coruna-portal"
         const val CORUNA_X004_URL =
             "https://sede.dacoruna.gal/tramitador/entrada?" +

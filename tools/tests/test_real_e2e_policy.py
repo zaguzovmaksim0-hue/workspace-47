@@ -684,6 +684,22 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('"JAVASCRIPT:selectedIdP(\'AFIRMA\');idpRedirect.submit();"', source)
         self.assertIn('"ImageRetrieve?id=IDP_AFIRMA"', source)
 
+    def test_melilla_recipe_enters_exact_autofirma_boundary_without_safe_sign_allowlist(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('MELILLA_PORTAL_ID -> clickMelillaAutofirmaEntry(scenario)', source)
+        self.assertIn('currentUrl != MELILLA_ENTRY_URL', source)
+        self.assertIn('window.catser.urlauth !== $quotedAuthBase', source)
+        self.assertIn('window.catser.dboid !== $quotedProcedureId', source)
+        self.assertIn("typeof submitFormulario !== 'function'", source)
+        self.assertIn('hiddenInputs.length !== expectedNames.length', source)
+        self.assertIn('"dboidSolicitud" to MELILLA_PROCEDURE_ID', source)
+        self.assertIn('"autoFirma" to "false"', source)
+        self.assertIn('"url" to "Relec/TramitaForm"', source)
+        self.assertIn('"submitFormulario(false,true);"', source)
+        self.assertIn('"Con Autofirma"', source)
+        safe_profiles = source[source.index('val SAFE_AUTH_SIGN_PROFILES = setOf('):]
+        self.assertNotIn('"melilla-sede"', safe_profiles.split(')', 1)[0])
+
     def test_coruna_recipe_pins_x004_clave_form_before_shared_afirma_boundary(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"diputacion-a-coruna-portal"', source)
