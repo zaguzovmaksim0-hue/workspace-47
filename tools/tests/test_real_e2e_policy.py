@@ -466,6 +466,21 @@ class RealE2ePolicyTest(unittest.TestCase):
         navigation_regex = navigation_regex[:navigation_regex.index("val SAFE_AUTH_SIGN_PROFILES")]
         self.assertNotIn("NETWORK_REQUEST", navigation_regex)
 
+    def test_safe_auth_sign_avoids_compose_idle_for_webview_signing(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn("private fun currentSigningState(", source)
+        self.assertIn("private fun clickSigningConfirmation(", source)
+        self.assertIn("AccessibilityNodeInfo.ACTION_CLICK", source)
+        observation = source[source.index("private fun observePortal("):]
+        observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
+        self.assertIn("currentSigningState(scenario)", observation)
+        self.assertIn("clickSigningConfirmation()", observation)
+        self.assertIn("if (!safeAuthSigning)", observation)
+        signing_gate = observation[observation.index("val signingConfirmationVisible"):]
+        signing_gate = signing_gate[:signing_gate.index("if (Capability.SIGN in profileCapabilities")]
+        self.assertIn("if (safeAuthSigning)", signing_gate)
+        self.assertIn("currentSigningState(scenario)", signing_gate)
+
     def test_runner_allows_the_post_sign_window_to_finish(self) -> None:
         runner = self.read(RUNNER)
         self.assertIn("readonly PORTAL_TIMEOUT_SECONDS=210", runner)
