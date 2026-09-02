@@ -369,6 +369,15 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("args[2] === \"XAdES\""))
         assertTrue(script.contains("args[3] == null"))
         assertTrue(script.contains("if (isSevillaAtseOrigin && !isExactSevillaAtseCall)"))
+        assertTrue(script.contains("location.pathname === sevillaAtsePage"))
+        assertTrue(script.contains("location.search === \"?modo=Contribuyente\""))
+        assertTrue(script.contains("https://www.sevilla.org/ovweb/sign/StorageService"))
+        assertTrue(script.contains("https://www.sevilla.org/ovweb/sign/RetrieveService"))
+        assertTrue(script.contains("sevillaAtseSetupState === 3"))
+        assertTrue(script.contains("SEVILLA_SET_FORCE_WS_MODE"))
+        assertTrue(script.contains("SEVILLA_SET_SERVLETS"))
+        assertTrue(script.contains("SEVILLA_CARGAR_APP_AFIRMA"))
+        assertTrue(script.contains("args[0] === sevillaAtseStorageUrl && args[1] === sevillaAtseRetrieveUrl"))
         assertFalse(script.contains("authenticate("))
     }
 
