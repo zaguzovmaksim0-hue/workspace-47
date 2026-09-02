@@ -307,6 +307,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             'LLEIDA_CERT_BUTTON_ARIA_LABEL = "VALid"',
             'LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"',
             'BADAJOZ_PORTAL_ID -> {',
+            'waitForBadajozEntryPageReady(scenario)',
             'waitForBadajozSignHook = true',
             'LLEIDA_PORTAL_ID -> {',
             'waitForExpectedUrl = true',
@@ -672,6 +673,9 @@ class RealE2ePolicyTest(unittest.TestCase):
 
     def test_badajoz_recipe_waits_in_webview_for_the_ready_sign_hook(self) -> None:
         source = self.read(INSTRUMENTATION)
+        self.assertIn('private fun waitForBadajozEntryPageReady(', source)
+        self.assertIn("document.readyState === 'complete'", source)
+        self.assertIn('REAL_E2E_RECIPE_PAGE_READY_TIMEOUT', source)
         self.assertIn('window.__jfmBadajozSignHookReady !== true', source)
         self.assertIn('typeof window.MiniApplet?.sign !== \'function\'', source)
         self.assertIn('"3" -> waitingForBadajozSignHook = true', source)
