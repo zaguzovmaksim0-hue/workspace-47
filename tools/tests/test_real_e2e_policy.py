@@ -612,6 +612,24 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_sedipualba_recipe_is_shared_and_fail_closed(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal_id in (
+            "diputacion-albacete-portal",
+            "diputacion-leon-sede",
+            "mallorca-portal-institucional",
+            "mallorca-sede-electronica",
+        ):
+            self.assertIn(f'"{portal_id}"', source)
+        self.assertIn("runSedipualbaClientTlsRecipe", source)
+        self.assertIn("frame.contentWindow.location.href", source)
+        self.assertIn("url.pathname === '/segex/identificacion_opciones.aspx'", source)
+        self.assertIn("keys.includes('idtoken') && keys.includes('idioma')", source)
+        self.assertIn("/^[A-Za-z0-9_-]{16,128}$/.test(idToken)", source)
+        self.assertIn("doc.getElementById('optSsl')", source)
+        self.assertNotIn('window.location.assign(', source)
+        self.assertIn("/imgs/identificacion/certificado.svg", source)
+
     def test_badajoz_recipe_waits_in_webview_for_the_ready_sign_hook(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('window.__jfmBadajozSignHookReady !== true', source)

@@ -220,6 +220,34 @@ class RealE2eInstrumentedTest {
                 expectedValue = OFVIRTUAL_AUTH_BUTTON_VALUE,
                 expectedOnClick = OFVIRTUAL_AUTH_BUTTON_ONCLICK,
             )
+            ALBACETE_PORTAL_ID -> runSedipualbaClientTlsRecipe(
+                scenario = scenario,
+                expectedEntryUrl = ALBACETE_ENTRY_URL,
+                expectedLoginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                expectedLoginHref = ALBACETE_LOGIN_URL,
+                expectedSourceHost = ALBACETE_SOURCE_HOST,
+                expectedIdioma = SEDIPUALBA_IDIOMA_ES,
+                expectedCertificateAlt = SEDIPUALBA_CERTIFICATE_ALT_ES,
+            )
+            LEON_PORTAL_ID -> runSedipualbaClientTlsRecipe(
+                scenario = scenario,
+                expectedEntryUrl = LEON_ENTRY_URL,
+                expectedLoginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                expectedLoginHref = LEON_LOGIN_URL,
+                expectedSourceHost = LEON_SOURCE_HOST,
+                expectedIdioma = SEDIPUALBA_IDIOMA_ES,
+                expectedCertificateAlt = SEDIPUALBA_CERTIFICATE_ALT_ES,
+            )
+            MALLORCA_INSTITUTIONAL_PORTAL_ID, MALLORCA_SEDE_PORTAL_ID ->
+                runSedipualbaClientTlsRecipe(
+                    scenario = scenario,
+                    expectedEntryUrl = MALLORCA_ENTRY_URL,
+                    expectedLoginLabel = SEDIPUALBA_LOGIN_LABEL_CA,
+                    expectedLoginHref = MALLORCA_LOGIN_URL,
+                    expectedSourceHost = MALLORCA_SOURCE_HOST,
+                    expectedIdioma = SEDIPUALBA_IDIOMA_CA,
+                    expectedCertificateAlt = SEDIPUALBA_CERTIFICATE_ALT_CA,
+                )
             BADAJOZ_PORTAL_ID -> {
                 clickExactButton(
                     scenario = scenario,
@@ -317,6 +345,120 @@ class RealE2eInstrumentedTest {
             )
             else -> Unit
         }
+    }
+
+    private fun runSedipualbaClientTlsRecipe(
+        scenario: ActivityScenario<MainActivity>,
+        expectedEntryUrl: String,
+        expectedLoginLabel: String,
+        expectedLoginHref: String,
+        expectedSourceHost: String,
+        expectedIdioma: String,
+        expectedCertificateAlt: String,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = expectedEntryUrl,
+            expectedLabel = expectedLoginLabel,
+            expectedHref = expectedLoginHref,
+        )
+        clickSedipualbaSslOptionInAuthFrame(
+            scenario = scenario,
+            expectedLoginUrl = expectedLoginHref,
+            expectedSourceHost = expectedSourceHost,
+            expectedIdioma = expectedIdioma,
+            expectedCertificateAlt = expectedCertificateAlt,
+        )
+    }
+
+    private fun clickSedipualbaSslOptionInAuthFrame(
+        scenario: ActivityScenario<MainActivity>,
+        expectedLoginUrl: String,
+        expectedSourceHost: String,
+        expectedIdioma: String,
+        expectedCertificateAlt: String,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedExpectedSourceOrigin = JSONObject.quote("https://$expectedSourceHost")
+        val quotedExpectedIdioma = JSONObject.quote(expectedIdioma)
+        val quotedCertificateAlt = JSONObject.quote(expectedCertificateAlt)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForExpectedUrl = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, expectedLoginUrl)) {
+                    waitingForExpectedUrl = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const expectedOrigin = $quotedExpectedSourceOrigin;
+                      const expectedIdioma = $quotedExpectedIdioma;
+                      const frames = Array.from(document.querySelectorAll('iframe')).filter(frame => {
+                        try {
+                          const url = new URL(frame.contentWindow.location.href);
+                          const keys = Array.from(url.searchParams.keys());
+                          const idToken = url.searchParams.get('idtoken') || '';
+                          return url.origin === expectedOrigin &&
+                            url.pathname === '/segex/identificacion_opciones.aspx' &&
+                            keys.length === 2 &&
+                            keys.includes('idtoken') && keys.includes('idioma') &&
+                            url.searchParams.get('idioma') === expectedIdioma &&
+                            /^[A-Za-z0-9_-]{16,128}$/.test(idToken);
+                        } catch (_) {
+                          return false;
+                        }
+                      });
+                      if (frames.length === 0) return 0;
+                      if (frames.length !== 1) return 2;
+                      const doc = frames[0].contentDocument;
+                      if (!doc) return 0;
+                      const option = doc.getElementById('optSsl');
+                      if (!option) return 0;
+                      if (option.tagName !== 'TBODY') return 2;
+                      const images = Array.from(option.querySelectorAll('img'));
+                      if (images.length !== 1) return 2;
+                      const image = images[0];
+                      let imageUrl;
+                      try { imageUrl = new URL(image.getAttribute('src'), frames[0].contentWindow.location.href); }
+                      catch (_) { return 2; }
+                      if (!imageUrl.pathname.endsWith('/imgs/identificacion/certificado.svg') ||
+                          image.getAttribute('alt') !== $quotedCertificateAlt) return 2;
+                      option.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForExpectedUrl || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
     private fun clickExactAnchor(
@@ -1477,6 +1619,38 @@ class RealE2eInstrumentedTest {
         const val OFVIRTUAL_AUTH_BUTTON_ID = "btnacceso"
         const val OFVIRTUAL_AUTH_BUTTON_VALUE = "Acceder"
         const val OFVIRTUAL_AUTH_BUTTON_ONCLICK = "autenticar();"
+        const val ALBACETE_PORTAL_ID = "diputacion-albacete-portal"
+        const val ALBACETE_ENTRY_URL =
+            "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+        const val ALBACETE_LOGIN_URL =
+            "https://sede.dipualba.es/carpetaciudadana/login.aspx?" +
+                "returnUrl=https%3a%2f%2fsede.dipualba.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d567"
+        const val ALBACETE_SOURCE_HOST = "sede.dipualba.es"
+        const val LEON_PORTAL_ID = "diputacion-leon-sede"
+        const val LEON_ENTRY_URL =
+            "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270"
+        const val LEON_LOGIN_URL =
+            "https://sede.dipuleon.es/carpetaciudadana/login.aspx?" +
+                "returnUrl=https%3a%2f%2fsede.dipuleon.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d20270"
+        const val LEON_SOURCE_HOST = "sede.dipuleon.es"
+        const val MALLORCA_INSTITUTIONAL_PORTAL_ID = "mallorca-portal-institucional"
+        const val MALLORCA_SEDE_PORTAL_ID = "mallorca-sede-electronica"
+        const val MALLORCA_ENTRY_URL =
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+        const val MALLORCA_LOGIN_URL =
+            "https://cim.secimallorca.net/carpetaciudadana/login.aspx?" +
+                "returnUrl=https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082"
+        const val MALLORCA_SOURCE_HOST = "cim.secimallorca.net"
+        const val SEDIPUALBA_LOGIN_LABEL_ES = "Iniciar sesión"
+        const val SEDIPUALBA_LOGIN_LABEL_CA = "Iniciar sessió"
+        const val SEDIPUALBA_IDIOMA_ES = "es"
+        const val SEDIPUALBA_IDIOMA_CA = "ca"
+        const val SEDIPUALBA_SOURCE_PATH = "/segex/identificacion_opciones.aspx"
+        const val SEDIPUALBA_CERTIFICATE_ALT_ES =
+            "Identificarse con certificado digital a través de nuestro servidor"
+        const val SEDIPUALBA_CERTIFICATE_ALT_CA =
+            "Identificar-se amb certificat digital a través del nostre servidor"
+        val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
         const val BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"
         const val BADAJOZ_ENTRY_URL = "https://sede.dip-badajoz.es"
         const val BADAJOZ_LOGIN_PAGE_URL =
