@@ -793,6 +793,49 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun ordinarySigningPreparationEmitsOnlyQaSanitizedBoundaryDiagnostics() {
+        val source = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
+        )
+        val preparationBlock = source
+            .substringAfter("private fun prepareMiniAppletSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    private fun recordMiniAppletPreparationDiagnostic")
+        val preparationDiagnosticBlock = source
+            .substringAfter(
+                "private fun recordMiniAppletPreparationDiagnostic(",
+                missingDelimiterValue = "",
+            )
+            .substringBefore("\n    private fun recordMiniAppletBridgeDiagnostic")
+        val diagnosticBlock = source
+            .substringAfter("private fun recordMiniAppletBridgeDiagnostic(", missingDelimiterValue = "")
+            .substringBefore("\n    private fun prepareMelillaBatchSigning")
+
+        assertTrue("ordinary signing must distinguish ownership rejection", "OWNERSHIP_REJECTED" in preparationBlock)
+        assertTrue(
+            "ordinary signing must record accepted preparation",
+            "PREPARE_READY" in preparationDiagnosticBlock,
+        )
+        assertTrue(
+            "ordinary signing must record rejected preparation",
+            "PREPARE_REJECTED" in preparationDiagnosticBlock,
+        )
+        assertTrue("preparation diagnostics must be QA-only", "BuildConfig.ALLOW_QA_PROFILES" in diagnosticBlock)
+        assertTrue(
+            "preparation diagnostics must use sanitized bridge logging",
+            "recordMiniAppletBridge(" in diagnosticBlock,
+        )
+        assertTrue(
+            "preparation diagnostics must log only normalized algorithm",
+            "algorithm = request.normalized.algorithm.name" in diagnosticBlock,
+        )
+        assertTrue(
+            "preparation diagnostics must log only normalized format",
+            "format = request.normalized.format.name" in diagnosticBlock,
+        )
+        assertTrue("preparation diagnostics must not log request ids", "requestId =" !in diagnosticBlock)
+    }
+
+    @Test
     fun mainActivityComposesExtremaduraBatchThroughTheSameOwnedSigningFlow() {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
