@@ -52,6 +52,7 @@ EXPECTED_GITLEAKS_IGNORES = {
     "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:139",
     "c52a1613e99d7ac0fe5f0b7cb80f4e26c8124bb4:app/src/test/java/dev/junta/firmamobile/signing/CaibBatchProtocolAdapterTest.kt:generic-api-key:140",
     "f3c8755356639b1e7842b9d20271186182dd754c:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:1307",
+    "eaf260815e2acfd285ea09090a7e164614b06f57:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:4306",
 }
 
 PINNED_ACTION = re.compile(r"^\s*-?\s*uses:\s*([\w.-]+/[\w./-]+)@([0-9a-f]{40})\s*(?:#.*)?$", re.M)
