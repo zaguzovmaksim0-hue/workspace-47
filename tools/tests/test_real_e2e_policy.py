@@ -471,8 +471,13 @@ class RealE2ePolicyTest(unittest.TestCase):
         source = self.read(INSTRUMENTATION)
         self.assertIn("private fun signingCoordinatorForScenario(", source)
         self.assertIn("private fun clickSigningConfirmation(", source)
-        self.assertIn("AccessibilityNodeInfo.ACTION_CLICK", source)
-        self.assertIn("repeat(16)", source)
+        self.assertIn("hasClickAction()", source)
+        self.assertIn("hasAnyAncestor(isDialog())", source)
+        self.assertIn("private fun performSigningConfirmationAction(", source)
+        self.assertIn("AtomicBoolean(false)", source)
+        self.assertIn("callbackHandled.set(onClick())", source)
+        self.assertIn("callbackHandled.get()", source)
+        self.assertNotIn("val exactClickableButton", source)
         observation = source[source.index("private fun observePortal("):]
         observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
         self.assertIn("signingCoordinatorForScenario(scenario)", observation)
@@ -698,6 +703,9 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('typeof window.MiniApplet?.sign !== \'function\'', source)
         self.assertIn('"3" -> waitingForBadajozSignHook = true', source)
         self.assertIn('performSemanticsAction(SemanticsActions.OnClick)', source)
+        self.assertIn('hasText("Firmar", substring = false, ignoreCase = false)', source)
+        self.assertIn('callbackHandled.set(onClick())', source)
+        self.assertIn('callbackHandled.get()', source)
 
     def test_select_emits_no_blank_record_for_empty_filtered_shard(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))

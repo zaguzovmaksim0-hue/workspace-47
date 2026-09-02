@@ -5,8 +5,12 @@ import android.os.SystemClock
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import android.webkit.WebView
-import android.view.accessibility.AccessibilityNodeInfo
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -40,6 +44,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertTrue
@@ -1111,54 +1116,32 @@ class RealE2eInstrumentedTest {
     }
 
     private fun clickSigningConfirmation(): Boolean {
-        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        val exactDialogButton =
+            hasText("Firmar", substring = false, ignoreCase = false) and
+                hasClickAction() and
+                hasAnyAncestor(isDialog())
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
-            val root = runCatching { automation.rootInActiveWindow }.getOrNull()
-            val button = root?.let { findAccessibleTextNode(it, "Firmar") }
-            if (button != null && runCatching {
-                    button.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                }.getOrDefault(false)
-            ) {
-                return true
-            }
-            if (runCatching {
-                    if (rule.onAllNodesWithText("Firmar").fetchSemanticsNodes().isEmpty()) {
-                        false
-                    } else {
-                        rule.onNodeWithText("Firmar")
-                            .performSemanticsAction(SemanticsActions.OnClick)
-                        true
-                    }
-                }.getOrDefault(false)
-            ) {
-                return true
-            }
+            if (performSigningConfirmationAction(exactDialogButton)) return true
             SystemClock.sleep(POLL_MILLIS)
         }
         return false
     }
 
-    private fun findAccessibleTextNode(
-        node: AccessibilityNodeInfo,
-        expectedText: String,
-    ): AccessibilityNodeInfo? {
-        if (node.isVisibleToUser && node.text?.toString()?.trim() == expectedText) {
-            var candidate: AccessibilityNodeInfo? = node
-            repeat(16) {
-                val current = candidate ?: return@repeat
-                if (current.isVisibleToUser && current.isClickable) {
-                    return current
-                }
-                candidate = current.parent
+    private fun performSigningConfirmationAction(matcher: SemanticsMatcher): Boolean {
+        val callbackHandled = AtomicBoolean(false)
+        return runCatching {
+            val nodes = rule.onAllNodes(matcher, useUnmergedTree = false).fetchSemanticsNodes()
+            if (nodes.size != 1) {
+                false
+            } else {
+                rule.onNode(matcher, useUnmergedTree = false)
+                    .performSemanticsAction(SemanticsActions.OnClick) { onClick ->
+                        callbackHandled.set(onClick())
+                    }
+                callbackHandled.get()
             }
-            return node
-        }
-        for (index in 0 until node.childCount) {
-            val child = runCatching { node.getChild(index) }.getOrNull() ?: continue
-            findAccessibleTextNode(child, expectedText)?.let { return it }
-        }
-        return null
+        }.getOrDefault(false)
     }
 
     private fun updateSigningEvidence(

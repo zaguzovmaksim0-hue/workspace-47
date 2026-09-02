@@ -62,6 +62,25 @@ jobs:
           fi
       - name: Scan complete Git history across all refs
         run: ./gitleaks git --redact --no-banner --log-opts="--all" --report-format sarif --report-path gitleaks.sarif .
+      - name: Summarize redacted Gitleaks findings
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -s gitleaks.sarif ]]; then
+            echo "GITLEAKS_REPORT_MISSING"
+            exit 0
+          fi
+          jq -r '
+            [.runs[]?.results[]?] as $results |
+            "GITLEAKS_FINDINGS_COUNT=\($results | length)",
+            ($results[] | [
+              (.ruleId // "unknown"),
+              (.locations[0].physicalLocation.artifactLocation.uri // "unknown"),
+              (.locations[0].physicalLocation.region.startLine // 0),
+              (.locations[0].physicalLocation.region.endLine // 0)
+            ] | @tsv)
+          ' gitleaks.sarif
 
   dependency-vulnerabilities:
     name: OSV source dependency scan

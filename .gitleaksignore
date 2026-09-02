@@ -1,4 +1,6 @@
 # Historical synthetic fixtures and public identifiers reviewed as false positives.
+# The Eivissa helper records public evidence identifiers in the inventory, not credentials.
+eaf260815e2acfd285ea09090a7e164614b06f57:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:4306
 f15a1d272cb088da8d900c238f7c745a9633b667:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1283
 2c4b1b77d61c6d348db0a6114bf21c5dbb419d20:app/src/test/java/dev/junta/firmamobile/browser/ClientAuthNavigationAuthorizerTest.kt:generic-api-key:1057
 36ae2899b4039eb5da9d40c158ff2ebcd4a944a7:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:2999
