@@ -5,6 +5,7 @@ import android.os.SystemClock
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import android.webkit.WebView
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -797,6 +798,7 @@ class RealE2eInstrumentedTest {
         var clientAuthConfirmations = 0
         var postSignObservationDeadline: Long? = null
         var postSignTracker: PostSignTracker? = null
+        val safeAuthSigning = deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES
 
         while (
             SystemClock.elapsedRealtime() < deadline ||
@@ -849,15 +851,22 @@ class RealE2eInstrumentedTest {
                 result.level = maxOf(result.level, 4)
             }
 
-            if (Capability.SIGN in profileCapabilities && !signingHandled &&
+            val signingConfirmationVisible = if (safeAuthSigning) {
+                !signingHandled && currentSigningState(scenario) is SigningUiState.AwaitingConfirmation
+            } else {
                 rule.onAllNodesWithText("Solicitud de firma").fetchSemanticsNodes().isNotEmpty()
+            }
+            if (Capability.SIGN in profileCapabilities && !signingHandled &&
+                signingConfirmationVisible
             ) {
                 result.signingConfirmationObserved = true
                 result.level = maxOf(result.level, 3)
                 if (deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES) {
                     val preSignRecords = diagnosticRecords()
                     val signingEvidenceTracker = SigningEvidenceTracker(preSignRecords)
-                    rule.onNodeWithText("Firmar").performClick()
+                    check(clickSigningConfirmation()) {
+                        "REAL_E2E_SIGN_CONFIRMATION_CLICK_TIMEOUT"
+                    }
                     result.signingConfirmed = true
                     val completedRecords = waitForSigningTerminalState(
                         scenario = scenario,
@@ -897,7 +906,9 @@ class RealE2eInstrumentedTest {
                 return
             }
 
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            if (!safeAuthSigning) {
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            }
             SystemClock.sleep(POLL_MILLIS)
         }
 
@@ -912,13 +923,7 @@ class RealE2eInstrumentedTest {
         val deadline = SystemClock.elapsedRealtime() + SIGNING_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             updateSigningEvidence(diagnosticRecords(), tracker, result)
-            var state: SigningUiState? = null
-            scenario.onActivity { activity ->
-                val field = MainActivity::class.java.getDeclaredField("signingCoordinator")
-                    .apply { isAccessible = true }
-                state = (field.get(activity) as SigningCoordinator).state.value
-            }
-            when (val current = state) {
+            when (val current = currentSigningState(scenario)) {
                 is SigningUiState.Completed -> {
                     result.signatureCompleted = true
                     result.level = maxOf(result.level, 4)
@@ -933,6 +938,55 @@ class RealE2eInstrumentedTest {
             SystemClock.sleep(POLL_MILLIS)
         }
         result.signingFailureCode = "TIMEOUT"
+        return null
+    }
+
+    private fun currentSigningState(scenario: ActivityScenario<MainActivity>): SigningUiState? {
+        var state: SigningUiState? = null
+        scenario.onActivity { activity ->
+            val field = MainActivity::class.java.getDeclaredField("signingCoordinator")
+                .apply { isAccessible = true }
+            state = (field.get(activity) as SigningCoordinator).state.value
+        }
+        return state
+    }
+
+    private fun clickSigningConfirmation(): Boolean {
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            val root = runCatching { automation.rootInActiveWindow }.getOrNull()
+            val button = root?.let { findAccessibleTextNode(it, "Firmar") }
+            if (button != null && runCatching {
+                    button.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                }.getOrDefault(false)
+            ) {
+                return true
+            }
+            SystemClock.sleep(POLL_MILLIS)
+        }
+        return false
+    }
+
+    private fun findAccessibleTextNode(
+        node: AccessibilityNodeInfo,
+        expectedText: String,
+    ): AccessibilityNodeInfo? {
+        if (node.isVisibleToUser && node.text?.toString()?.trim() == expectedText) {
+            var candidate: AccessibilityNodeInfo? = node
+            repeat(5) {
+                val current = candidate ?: return@repeat
+                if (current.isVisibleToUser && current.isClickable) {
+                    return current
+                }
+                candidate = current.parent
+            }
+            return node
+        }
+        for (index in 0 until node.childCount) {
+            val child = runCatching { node.getChild(index) }.getOrNull() ?: continue
+            findAccessibleTextNode(child, expectedText)?.let { return it }
+        }
         return null
     }
 
