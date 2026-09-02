@@ -7,12 +7,14 @@ import android.webkit.WebStorage
 import android.webkit.WebView
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -1056,6 +1058,17 @@ class RealE2eInstrumentedTest {
                     } else {
                         rule.onNodeWithText("Firmar")
                             .performSemanticsAction(SemanticsActions.OnClick)
+                        true
+                    }
+                }.getOrDefault(false)
+            ) {
+                return true
+            }
+            if (runCatching {
+                    if (rule.onAllNodesWithText("Firmar").fetchSemanticsNodes().isEmpty()) {
+                        false
+                    } else {
+                        rule.onNodeWithText("Firmar").performTouchInput { click() }
                         true
                     }
                 }.getOrDefault(false)
