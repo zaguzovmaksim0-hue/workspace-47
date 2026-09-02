@@ -285,6 +285,8 @@ class RealE2eInstrumentedTest {
             MENORCA_INSTITUTIONAL_PORTAL_ID, MENORCA_SEDE_PORTAL_ID ->
                 runMenorcaClientTlsRecipe(scenario)
             LA_RIOJA_PORTAL_ID -> clickLaRiojaCertificateLogin(scenario)
+            NAVARRA_PORTAL_ID -> runNavarraClientTlsRecipe(scenario)
+            ASTURIAS_PORTAL_ID -> clickAsturiasClaveAuth(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -545,6 +547,192 @@ class RealE2eInstrumentedTest {
                 continue
             }
             return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runNavarraClientTlsRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = NAVARRA_ENTRY_URL,
+            expectedLabel = NAVARRA_TRAMITAR_LABEL,
+            expectedHref = NAVARRA_RGE_URL,
+        )
+        clickNavarraCertificateLogin(scenario)
+    }
+
+    private fun clickNavarraCertificateLogin(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForRouter = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                val returnUrl = currentUrl?.let(::navarraRouterReturnUrl)
+                if (returnUrl == null) {
+                    waitingForRouter = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val quotedReturnUrl = JSONObject.quote(returnUrl)
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const expectedReturnUrl = $quotedReturnUrl;
+                      const elements = Array.from(document.querySelectorAll('a')).filter(element => {
+                        const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
+                        if (label !== 'Certificado Digital o DNIe') return false;
+                        let target;
+                        try { target = new URL(element.getAttribute('href'), window.location.href); }
+                        catch (_) { return false; }
+                        const keys = Array.from(target.searchParams.keys());
+                        return target.origin === 'https://ateka.navarra.es' &&
+                          target.pathname === '/ateka/Certificate/login' &&
+                          keys.length === 1 && keys[0] === 'returnUrl' &&
+                          target.searchParams.get('returnUrl') === expectedReturnUrl &&
+                          element.classList.contains('btn') &&
+                          element.classList.contains('btn-default') &&
+                          element.classList.contains('btn-login');
+                      });
+                      if (elements.length === 0) return 0;
+                      if (elements.length !== 1) return 2;
+                      elements[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForRouter || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun navarraRouterReturnUrl(actualUrl: String): String? {
+        val uri = Uri.parse(actualUrl)
+        if (uri.scheme != "https" ||
+            uri.host != NAVARRA_ATEKA_HOST ||
+            uri.path != NAVARRA_ROUTER_PATH ||
+            uri.queryParameterNames != setOf("ReturnUrl")
+        ) return null
+        val returnUrl = uri.getQueryParameter("ReturnUrl") ?: return null
+        if (returnUrl.length !in 80..4096 || !returnUrl.startsWith(NAVARRA_CALLBACK_PATH)) return null
+        val callback = Uri.parse("https://$NAVARRA_ATEKA_HOST$returnUrl")
+        val state = callback.getQueryParameter("state") ?: return null
+        val nonce = callback.getQueryParameter("nonce") ?: return null
+        val challenge = callback.getQueryParameter("code_challenge") ?: return null
+        return if (
+            callback.path == NAVARRA_CALLBACK_PATH &&
+            callback.getQueryParameter("client_id") == "rge" &&
+            callback.getQueryParameter("redirect_uri") == NAVARRA_RGE_URL &&
+            callback.getQueryParameter("response_type") == "code id_token" &&
+            callback.getQueryParameter("response_mode") == "form_post" &&
+            callback.getQueryParameter("code_challenge_method") == "S256" &&
+            callback.getQueryParameter("ui_locales") == "es" &&
+            state.length in 16..2048 &&
+            nonce.length in 16..512 &&
+            NAVARRA_CODE_CHALLENGE_PATTERN.matches(challenge)
+        ) returnUrl else null
+    }
+
+    private fun clickAsturiasClaveAuth(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, ASTURIAS_ENTRY_URL)) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = document.getElementById('sytInitForm');
+                      if (!form || form.tagName !== 'FORM') return 0;
+                      const action = new URL(form.getAttribute('action'), window.location.href);
+                      if (action.href !== 'https://tramita.asturias.es/sta/Relec/STARhssoManager' ||
+                          (form.getAttribute('method') || '').toLowerCase() !== 'post' ||
+                          form.getAttribute('target') !== '_blank') return 2;
+                      const expected = {
+                        PAGE_CODE: 'CATALOGO',
+                        APP_CODE: 'STA',
+                        ROOTID: '2',
+                        HFC: 'HEADER#FOOTER',
+                        dboidSolicitud: '6269000102616541907573',
+                        autoFirma: 'false',
+                        url: 'Relec/STARhssoManager',
+                        fire: 'true',
+                        urlBack: '/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites'
+                      };
+                      for (const [name, value] of Object.entries(expected)) {
+                        const inputs = Array.from(form.querySelectorAll('input')).filter(input => input.name === name);
+                        if (inputs.length !== 1 || inputs[0].type !== 'hidden' || inputs[0].value !== value) return 2;
+                      }
+                      const buttons = Array.from(form.querySelectorAll('button')).filter(button => {
+                        const label = (button.innerText || '').trim().replace(/\s+/g, ' ');
+                        return button.getAttribute('type') === 'button' &&
+                          label === 'Con sistema Clave' &&
+                          button.getAttribute('onclick') === 'javascript:sendFormCustom(false);';
+                      });
+                      if (buttons.length === 0) return 0;
+                      if (buttons.length !== 1) return 2;
+                      buttons[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
@@ -1930,6 +2118,20 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val NAVARRA_PORTAL_ID = "navarra-sede-registro-general"
+        const val NAVARRA_ENTRY_URL =
+            "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
+        const val NAVARRA_TRAMITAR_LABEL = "Tramitar"
+        const val NAVARRA_RGE_URL =
+            "https://administracionelectronica.navarra.es/RGE2/Default.aspx?idioma=es"
+        const val NAVARRA_ATEKA_HOST = "ateka.navarra.es"
+        const val NAVARRA_ROUTER_PATH = "/ateka/router"
+        const val NAVARRA_CALLBACK_PATH = "/ateka/connect/authorize/callback"
+        val NAVARRA_CODE_CHALLENGE_PATTERN = Regex("[A-Za-z0-9_-]{32,128}")
+        const val ASTURIAS_PORTAL_ID = "asturias-miprincipado-sede"
+        const val ASTURIAS_ENTRY_URL =
+            "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?" +
+                "redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites"
         const val LA_RIOJA_PORTAL_ID = "la-rioja-oficina-electronica"
         const val LA_RIOJA_HOST = "ias1.larioja.org"
         const val LA_RIOJA_SOURCE_PATH = "/casLR/login"

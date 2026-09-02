@@ -665,6 +665,27 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_navarra_recipe_links_live_router_state_to_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"navarra-sede-registro-general"', source)
+        self.assertIn('expectedLabel = NAVARRA_TRAMITAR_LABEL', source)
+        self.assertIn('uri.queryParameterNames != setOf("ReturnUrl")', source)
+        self.assertIn('callback.getQueryParameter("client_id") == "rge"', source)
+        self.assertIn('callback.getQueryParameter("redirect_uri") == NAVARRA_RGE_URL', source)
+        self.assertIn("label !== 'Certificado Digital o DNIe'", source)
+        self.assertIn("target.pathname === '/ateka/Certificate/login'", source)
+        self.assertIn("target.searchParams.get('returnUrl') === expectedReturnUrl", source)
+
+    def test_asturias_recipe_submits_only_reviewed_auth_form(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"asturias-miprincipado-sede"', source)
+        self.assertIn("document.getElementById('sytInitForm')", source)
+        self.assertIn("action.href !== 'https://tramita.asturias.es/sta/Relec/STARhssoManager'", source)
+        self.assertIn("dboidSolicitud: '6269000102616541907573'", source)
+        self.assertIn("autoFirma: 'false'", source)
+        self.assertIn("label === 'Con sistema Clave'", source)
+        self.assertIn("button.getAttribute('onclick') === 'javascript:sendFormCustom(false);'", source)
+
     def test_la_rioja_recipe_validates_redirect_state_before_certificate_login(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"la-rioja-oficina-electronica"', source)
