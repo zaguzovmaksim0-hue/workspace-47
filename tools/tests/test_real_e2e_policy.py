@@ -665,6 +665,19 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_menorca_recipe_is_exact_and_authentication_only(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal_id in ("menorca-portal-institucional", "menorca-sede-electronica"):
+            self.assertIn(f'"{portal_id}"', source)
+        self.assertIn('elementId = MENORCA_START_LINK_ID', source)
+        self.assertIn('expectedHref = MENORCA_START_LINK_HREF', source)
+        self.assertIn("document.getElementById('ctl00_Content1_Button1')", source)
+        self.assertIn("element.getAttribute('type') !== 'submit'", source)
+        self.assertIn("element.value !== 'Certificat electrònic'", source)
+        self.assertIn('uri.queryParameterNames == setOf("URL")', source)
+        self.assertIn('linkedUrl in MENORCA_ALLOWED_LINKED_URLS', source)
+        self.assertNotIn('LoginCert.aspx', source[source.index('private fun runMenorcaClientTlsRecipe'):source.index('private fun clickExactAnchor')])
+
     def test_sedipualba_recipe_is_shared_and_fail_closed(self) -> None:
         source = self.read(INSTRUMENTATION)
         for portal_id in (

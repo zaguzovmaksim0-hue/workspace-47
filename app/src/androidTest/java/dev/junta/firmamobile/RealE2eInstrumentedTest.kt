@@ -282,6 +282,8 @@ class RealE2eInstrumentedTest {
                     expectedIdioma = SEDIPUALBA_IDIOMA_CA,
                     expectedCertificateAlt = SEDIPUALBA_CERTIFICATE_ALT_CA,
                 )
+            MENORCA_INSTITUTIONAL_PORTAL_ID, MENORCA_SEDE_PORTAL_ID ->
+                runMenorcaClientTlsRecipe(scenario)
             BADAJOZ_PORTAL_ID -> {
                 clickExactButton(
                     scenario = scenario,
@@ -515,6 +517,86 @@ class RealE2eInstrumentedTest {
             return
         }
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runMenorcaClientTlsRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = MENORCA_ENTRY_URL,
+            elementId = MENORCA_START_LINK_ID,
+            expectedHref = MENORCA_START_LINK_HREF,
+        )
+        clickMenorcaCertificateSubmit(scenario)
+    }
+
+    private fun clickMenorcaCertificateSubmit(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForLogin = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !menorcaLoginUrlMatches(currentUrl)) {
+                    waitingForLogin = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const element = document.getElementById('ctl00_Content1_Button1');
+                      if (!element) return 0;
+                      if (element.tagName !== 'INPUT' ||
+                          element.getAttribute('type') !== 'submit' ||
+                          element.getAttribute('name') !== 'ctl00${'$'}Content1${'$'}Button1' ||
+                          element.value !== 'Certificat electrònic' ||
+                          element.className !== 'boton') return 2;
+                      element.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForLogin || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun menorcaLoginUrlMatches(actualUrl: String): Boolean {
+        val uri = Uri.parse(actualUrl)
+        val linkedUrl = uri.getQueryParameter("URL") ?: return false
+        return uri.scheme == "https" &&
+            uri.host == MENORCA_HOST &&
+            uri.path == MENORCA_LOGIN_PATH &&
+            uri.queryParameterNames == setOf("URL") &&
+            linkedUrl in MENORCA_ALLOWED_LINKED_URLS
     }
 
     private fun clickExactAnchor(
@@ -1736,6 +1818,21 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val MENORCA_INSTITUTIONAL_PORTAL_ID = "menorca-portal-institucional"
+        const val MENORCA_SEDE_PORTAL_ID = "menorca-sede-electronica"
+        const val MENORCA_HOST = "www.carpetaciutadana.org"
+        const val MENORCA_ENTRY_URL =
+            "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+        const val MENORCA_START_LINK_ID = "ctl00_Content1_HyperLink1"
+        const val MENORCA_START_LINK_HREF =
+            "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1"
+        const val MENORCA_LOGIN_PATH = "/cime/Login/Login.aspx"
+        const val MENORCA_LINKED_URL =
+            "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE^IDIOMA=1"
+        const val MENORCA_LINKED_URL_LEGACY_SEPARATOR =
+            "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx¿TIPO=REGE^IDIOMA=1"
+        val MENORCA_ALLOWED_LINKED_URLS =
+            setOf(MENORCA_LINKED_URL, MENORCA_LINKED_URL_LEGACY_SEPARATOR)
         const val BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"
         const val BADAJOZ_ENTRY_URL = "https://sede.dip-badajoz.es"
         const val BADAJOZ_LOGIN_PAGE_URL =
