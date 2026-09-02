@@ -680,6 +680,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.__jfmBadajozSignHookReady !== true', source)
         self.assertIn('typeof window.MiniApplet?.sign !== \'function\'', source)
         self.assertIn('"3" -> waitingForBadajozSignHook = true', source)
+        self.assertIn('performSemanticsAction(SemanticsActions.OnClick)', source)
 
     def test_select_emits_no_blank_record_for_empty_filtered_shard(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
