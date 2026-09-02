@@ -301,6 +301,7 @@ class RealE2eInstrumentedTest {
                 expectedHref = TEA_AUTH_HREF,
             )
             SANIDAD_PORTAL_ID -> runSanidadClientTlsRecipe(scenario)
+            VEA_PORTAL_ID -> runVeaCertificateAuthRecipe(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -557,6 +558,86 @@ class RealE2eInstrumentedTest {
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
             if (waitingForExpectedUrl || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runVeaCertificateAuthRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickVeaAuthButton(
+            scenario = scenario,
+            expectedLabel = VEA_START_LABEL,
+            requireAuthModal = false,
+        )
+        clickVeaAuthButton(
+            scenario = scenario,
+            expectedLabel = VEA_CERT_LABEL,
+            requireAuthModal = true,
+        )
+    }
+
+    private fun clickVeaAuthButton(
+        scenario: ActivityScenario<MainActivity>,
+        expectedLabel: String,
+        requireAuthModal: Boolean,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedLabel = JSONObject.quote(expectedLabel)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForButton = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, VEA_ENTRY_URL)) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const buttons = Array.from(document.querySelectorAll('button')).filter(button => {
+                        const label = (button.innerText || '').trim().replace(/\s+/g, ' ');
+                        return label === $quotedLabel;
+                      });
+                      if (buttons.length === 0) return 0;
+                      if (buttons.length !== 1) return 2;
+                      const button = buttons[0];
+                      if (button.disabled || button.getAttribute('aria-disabled') === 'true') return 2;
+                      const modal = button.closest('app-modal-1');
+                      if (${if (requireAuthModal) "!modal" else "modal"}) return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                        else -> waitingForButton = true
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForButton || !clicked) {
                 SystemClock.sleep(RECIPE_POLL_MILLIS)
                 continue
             }
@@ -2375,6 +2456,11 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val VEA_PORTAL_ID = "junta-andalucia-sede"
+        const val VEA_ENTRY_URL =
+            "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"
+        const val VEA_START_LABEL = "INICIAR SOLICITUD"
+        const val VEA_CERT_LABEL = "Acceder con certificado electrónico"
         const val SANIDAD_PORTAL_ID = "age-ministerio-de-sanidad"
         const val SANIDAD_ENTRY_URL = "https://sede.mscbs.gob.es/"
         const val SANIDAD_REGISTRY_LABEL = "Registro electrónico"

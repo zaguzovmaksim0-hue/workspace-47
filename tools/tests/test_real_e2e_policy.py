@@ -665,6 +665,18 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_vea_recipe_opens_auth_modal_then_certificate_only(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"junta-andalucia-sede"', source)
+        self.assertIn('expectedLabel = VEA_START_LABEL', source)
+        self.assertIn('requireAuthModal = false', source)
+        self.assertIn('expectedLabel = VEA_CERT_LABEL', source)
+        self.assertIn('requireAuthModal = true', source)
+        self.assertIn('"INICIAR SOLICITUD"', source)
+        self.assertIn('"Acceder con certificado electrónico"', source)
+        self.assertIn("button.closest('app-modal-1')", source)
+        self.assertIn("button.disabled || button.getAttribute('aria-disabled') === 'true'", source)
+
     def test_sanidad_recipe_pins_tardes_con_plan_certificate_panel(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"age-ministerio-de-sanidad"', source)
