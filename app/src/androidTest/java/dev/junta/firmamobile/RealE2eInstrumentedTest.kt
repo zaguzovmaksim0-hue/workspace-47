@@ -220,6 +220,18 @@ class RealE2eInstrumentedTest {
                 expectedValue = OFVIRTUAL_AUTH_BUTTON_VALUE,
                 expectedOnClick = OFVIRTUAL_AUTH_BUTTON_ONCLICK,
             )
+            BURGOS_PORTAL_ID -> clickStaCertificateLogin(
+                scenario = scenario,
+                expectedEntryUrl = BURGOS_ENTRY_URL,
+                expectedIdentifyHref = BURGOS_IDENTIFY_HREF,
+                expectedLoginUrl = BURGOS_LOGIN_URL,
+            )
+            HUESCA_PORTAL_ID -> clickStaCertificateLogin(
+                scenario = scenario,
+                expectedEntryUrl = HUESCA_ENTRY_URL,
+                expectedIdentifyHref = HUESCA_IDENTIFY_HREF,
+                expectedLoginUrl = HUESCA_LOGIN_URL,
+            )
             BADAJOZ_PORTAL_ID -> {
                 clickExactButton(
                     scenario = scenario,
@@ -317,6 +329,27 @@ class RealE2eInstrumentedTest {
             )
             else -> Unit
         }
+    }
+
+    private fun clickStaCertificateLogin(
+        scenario: ActivityScenario<MainActivity>,
+        expectedEntryUrl: String,
+        expectedIdentifyHref: String,
+        expectedLoginUrl: String,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = expectedEntryUrl,
+            expectedLabel = STA_IDENTIFY_LABEL,
+            expectedHref = expectedIdentifyHref,
+        )
+        clickExactAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = expectedLoginUrl,
+            elementId = STA_CERTIFICATE_LINK_ID,
+            expectedHref = STA_CERTIFICATE_LINK_HREF,
+            waitForExpectedUrl = true,
+        )
     }
 
     private fun clickExactAnchor(
@@ -1477,6 +1510,23 @@ class RealE2eInstrumentedTest {
         const val OFVIRTUAL_AUTH_BUTTON_ID = "btnacceso"
         const val OFVIRTUAL_AUTH_BUTTON_VALUE = "Acceder"
         const val OFVIRTUAL_AUTH_BUTTON_ONCLICK = "autenticar();"
+        const val BURGOS_PORTAL_ID = "diputacion-burgos-portal"
+        const val BURGOS_ENTRY_URL =
+            "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO"
+        const val BURGOS_IDENTIFY_HREF =
+            "https://registro.diputaciondeburgos.es/sta/CarpetaPrivate/doEvent?APP_CODE=STA&PAGE_CODE=HOME"
+        const val BURGOS_LOGIN_URL = BURGOS_IDENTIFY_HREF
+        const val HUESCA_PORTAL_ID = "diputacion-huesca-portal"
+        const val HUESCA_ENTRY_URL =
+            "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME"
+        const val HUESCA_IDENTIFY_HREF =
+            "https://ovc24.dphuesca.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
+        const val HUESCA_LOGIN_URL = HUESCA_IDENTIFY_HREF
+        const val STA_IDENTIFY_LABEL = "Identificate"
+        const val STA_CERTIFICATE_LINK_ID = "link-certificado"
+        const val STA_CERTIFICATE_LINK_HREF =
+            "/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=HOME"
         const val BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"
         const val BADAJOZ_ENTRY_URL = "https://sede.dip-badajoz.es"
         const val BADAJOZ_LOGIN_PAGE_URL =
