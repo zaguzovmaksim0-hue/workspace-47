@@ -147,8 +147,15 @@ def selected_ids(
     shard_total: int | None = None,
 ) -> list[str]:
     ids = [entry["portalId"] for entry in catalog["entries"]]
-    if portal and (not PORTAL_RE.fullmatch(portal) or portal not in ids):
-        raise ValueError("portal filter is not exactly one bundled portal")
+    requested: list[str] | None = None
+    if portal:
+        requested = portal.split(",")
+        if (
+            len(requested) > 32
+            or len(requested) != len(set(requested))
+            or any(not value or not PORTAL_RE.fullmatch(value) or value not in ids for value in requested)
+        ):
+            raise ValueError("portal filter must contain 1-32 unique bundled portal ids separated by commas")
     if (shard_index is None) != (shard_total is None):
         raise ValueError("shard index and total must be supplied together")
     if shard_total is not None:
@@ -158,8 +165,9 @@ def selected_ids(
         start = shard_index * base + min(shard_index, extra)
         size = base + (1 if shard_index < extra else 0)
         ids = ids[start : start + size]
-    if portal:
-        ids = [portal] if portal in ids else []
+    if requested is not None:
+        shard_ids = set(ids)
+        ids = [value for value in requested if value in shard_ids]
     return ids
 
 

@@ -37,7 +37,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("permissions:\n  contents: read", source)
         self.assertIn("if: github.ref == 'refs/heads/main'", source)
         self.assertIn("environment: real-e2e", source)
-        self.assertIn("group: real-e2e-${{ inputs.portal_id || 'catalog' }}", source)
+        self.assertIn("group: real-e2e-${{ contains(inputs.portal_id, ',') && 'batch' || inputs.portal_id || 'catalog' }}", source)
         self.assertIn("cancel-in-progress: false", source)
         self.assertIn("ref: ${{ github.sha }}", source)
         self.assertIn("persist-credentials: false", source)
@@ -538,6 +538,30 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertEqual([selected], completed.stdout.splitlines())
         rejected = self.helper("select", "--catalog", str(CATALOG), "--portal", "not-a-real-portal")
         self.assertNotEqual(0, rejected.returncode)
+
+    def test_report_helper_batch_portal_filter_is_exact_and_ordered(self) -> None:
+        catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+        selected = [
+            catalog["entries"][5]["portalId"],
+            catalog["entries"][1]["portalId"],
+            catalog["entries"][9]["portalId"],
+        ]
+        completed = self.helper(
+            "select", "--catalog", str(CATALOG), "--portal", ",".join(selected)
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        self.assertEqual(selected, completed.stdout.splitlines())
+
+        for rejected_filter in (
+            f"{selected[0]},{selected[0]}",
+            f"{selected[0]},",
+            f"{selected[0]},not-a-real-portal",
+            f"{selected[0]}, {selected[1]}",
+        ):
+            rejected = self.helper(
+                "select", "--catalog", str(CATALOG), "--portal", rejected_filter
+            )
+            self.assertNotEqual(0, rejected.returncode)
 
     def test_progress_validator_accepts_only_sanitized_checkpoint_fields(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
