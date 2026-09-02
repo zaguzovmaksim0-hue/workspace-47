@@ -1050,15 +1050,9 @@ class RealE2eInstrumentedTest {
             hasText("Firmar", substring = false, ignoreCase = false) and
                 hasClickAction() and
                 hasAnyAncestor(isDialog())
-        val exactClickableButton =
-            hasText("Firmar", substring = false, ignoreCase = false) and
-                hasClickAction()
-        val matchers = listOf(exactDialogButton, exactClickableButton)
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
-            for (matcher in matchers) {
-                if (performSigningConfirmationAction(matcher)) return true
-            }
+            if (performSigningConfirmationAction(exactDialogButton)) return true
             SystemClock.sleep(POLL_MILLIS)
         }
         return false

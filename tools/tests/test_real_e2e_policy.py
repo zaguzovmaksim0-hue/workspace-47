@@ -477,6 +477,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("AtomicBoolean(false)", source)
         self.assertIn("callbackHandled.set(onClick())", source)
         self.assertIn("callbackHandled.get()", source)
+        self.assertNotIn("val exactClickableButton", source)
         observation = source[source.index("private fun observePortal("):]
         observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
         self.assertIn("signingCoordinatorForScenario(scenario)", observation)
