@@ -468,18 +468,22 @@ class RealE2ePolicyTest(unittest.TestCase):
 
     def test_safe_auth_sign_avoids_compose_idle_for_webview_signing(self) -> None:
         source = self.read(INSTRUMENTATION)
-        self.assertIn("private fun currentSigningState(", source)
+        self.assertIn("private fun signingCoordinatorForScenario(", source)
         self.assertIn("private fun clickSigningConfirmation(", source)
         self.assertIn("AccessibilityNodeInfo.ACTION_CLICK", source)
         observation = source[source.index("private fun observePortal("):]
         observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
-        self.assertIn("currentSigningState(scenario)", observation)
+        self.assertIn("signingCoordinatorForScenario(scenario)", observation)
+        self.assertIn("signingCoordinator?.state?.value", observation)
         self.assertIn("clickSigningConfirmation()", observation)
         self.assertIn("if (!safeAuthSigning)", observation)
         signing_gate = observation[observation.index("val signingConfirmationVisible"):]
         signing_gate = signing_gate[:signing_gate.index("if (Capability.SIGN in profileCapabilities")]
         self.assertIn("if (safeAuthSigning)", signing_gate)
-        self.assertIn("currentSigningState(scenario)", signing_gate)
+        self.assertIn("signingCoordinator?.state?.value", signing_gate)
+        signing_wait = source[source.index("private fun waitForSigningTerminalState("):]
+        signing_wait = signing_wait[:signing_wait.index("private fun signingCoordinatorForScenario(")]
+        self.assertIn("signingCoordinator.state.value", signing_wait)
 
     def test_runner_allows_the_post_sign_window_to_finish(self) -> None:
         runner = self.read(RUNNER)
