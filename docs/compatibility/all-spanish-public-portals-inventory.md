@@ -4258,7 +4258,7 @@ records:
     official_site: "https://www.conselldeivissa.es/"
     e_sede: "https://seu.conselldeivissa.es/"
     entry_url: "https://www.conselldeivissa.es/"
-    launch_url: "https://seu.conselldeivissa.es/"
+    launch_url: "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043"
     procedure_page: "https://seu.conselldeivissa.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_HOME&lang=ES"
     certificate_required: "NO_VERIFICADO"
     signature_required: "NO_VERIFICADO"
@@ -4289,6 +4289,7 @@ records:
     official_site: "https://seu.conselldeivissa.es/"
     e_sede: "https://seu.conselldeivissa.es/"
     entry_url: "https://seu.conselldeivissa.es/"
+    launch_url: "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043"
     procedure_page: "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043"
     certificate_required: "SI"
     signature_required: "SI"
@@ -4301,11 +4302,11 @@ records:
     inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Firma local CAdES de Instancia General tras autenticación con certificado, sin ejecutar presentación administrativa."
     protocol_evidence: "La Instancia General vigente (PID 6269002703260065905043) devuelve authentication.autofirma=true tras autenticación controlada. Summary llama window.signFiles; /sta/reg/autofirma.js fija en Android SHA256withRSA, CAdES, headless=true, filter=encodedcert:<cert>;filter=nonexpired:, mode=implicit y MIME opcional, usando AutofirmaDownload/Upload same-origin."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["I03B", "EIVISSA-INSTANCIA-GENERAL-2026-08-18", "EIVISSA-REG-AUTOFIRMA-2026-08-18", "EIVISSA-CONTROLLED-AUTH-2026-08-18"]
-    reason: "IMPLEMENTED_NOT_E2E: perfil QA limitado al origin/PID y al contrato Android CAdES SHA256 implícito demostrado; autenticación con certificado validada, pero no se realizó firma real, AutofirmaUpload, presentación, pago ni aceptación E2E."
-    reviewed_at: "2026-08-18"
-    next_gate: "Validar en dispositivo físico una firma segura sin presentación y comprobar aceptación del resultado antes de cualquier promoción E2E."
+    client_tls_auth: "SI"
+    evidence_ids: ["I03B", "EIVISSA-INSTANCIA-GENERAL-2026-08-18", "EIVISSA-REG-AUTOFIRMA-2026-08-18", "EIVISSA-CONTROLLED-AUTH-2026-08-18", "EIVISSA-LIVE-CERT-TLS-2026-09-02"]
+    reason: "IMPLEMENTED_NOT_E2E: el launch QA queda ligado a la Instancia General exacta; el selector /sta/reg/auth/es/PID ofrece CERTIFICADO DIGITAL y el GET exacto /sta/reg/auth/do/CERT/es/PID provoca TLS 1.2 CertificateRequest same-origin. Falta confirmar con el certificado real el retorno autenticado y la firma/callback sin presentación administrativa."
+    reviewed_at: "2026-09-02"
+    next_gate: "Ejecutar REAL E2E con certificado real: confirmar CLIENT_TLS_AUTH y estado autenticado, después validar firma/callback de la Instancia General deteniéndose antes de cualquier presentación administrativa."
 
   - inventory_id: "ES-PUB-0123"
     surface_key: "formentera-portal-institucional"

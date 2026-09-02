@@ -844,6 +844,21 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('linkedUrl in MENORCA_ALLOWED_LINKED_URLS', source)
         self.assertNotIn('LoginCert.aspx', source[source.index('private fun runMenorcaClientTlsRecipe'):source.index('private fun clickExactAnchor')])
 
+    def test_eivissa_recipe_targets_only_instancia_general_certificate_auth(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal_id in ("eivissa-portal-institucional", "eivissa-sede-electronica"):
+            self.assertIn(f'"{portal_id}"', source)
+        self.assertIn('runEivissaCertificateAuthRecipe(scenario)', source)
+        self.assertIn('EIVISSA_PROCEDURE_ID = "6269002703260065905043"', source)
+        self.assertIn('EIVISSA_REGISTER_LABEL = "Registro electrónico"', source)
+        self.assertIn('"javascript:enterNewReg(window.catser.dboid,\'es\');"', source)
+        self.assertIn('EIVISSA_CERT_LABEL = "CERTIFICADO DIGITAL"', source)
+        self.assertIn('"/sta/reg/auth/do/CERT/es/$EIVISSA_PROCEDURE_ID"', source)
+        recipe = source[source.index('private fun runEivissaCertificateAuthRecipe'):]
+        recipe = recipe[:recipe.index('private fun runSedipualbaClientTlsRecipe')]
+        self.assertNotIn('window.location.assign(', recipe)
+        self.assertNotIn('form.submit()', recipe)
+
     def test_sedipualba_recipe_is_shared_and_fail_closed(self) -> None:
         source = self.read(INSTRUMENTATION)
         for portal_id in (

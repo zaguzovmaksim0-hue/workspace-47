@@ -1570,6 +1570,100 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun eivissaInPlaceCertificateAuthArmsOnlyExactPidSourceAndTarget() {
+        val eivissa = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        assertNull(
+            eivissa.observeTopLevelNavigation(
+                EIVISSA_PROFILE,
+                EIVISSA_START,
+                EIVISSA_SOURCE,
+                240,
+                true,
+            ),
+        )
+        val authorized = eivissa.observeTopLevelNavigation(
+            EIVISSA_PROFILE,
+            EIVISSA_SOURCE,
+            EIVISSA_TARGET,
+            241,
+            true,
+        )
+
+        assertEquals(EIVISSA_PROFILE, authorized?.profileId)
+        assertEquals("seu.conselldeivissa.es", authorized?.target?.host)
+        assertEquals(EIVISSA_TARGET_PATH, authorized?.target?.rawPath)
+        assertEquals(EIVISSA_SOURCE, authorized?.source?.toASCIIString())
+        assertNull(
+            eivissa.observeTopLevelNavigation(
+                EIVISSA_PROFILE,
+                EIVISSA_SOURCE,
+                EIVISSA_TARGET,
+                241,
+                true,
+            ),
+        )
+
+        val wrongSource = EIVISSA_SOURCE.replace(EIVISSA_PID, "6269002703260065905044")
+        val wrongSourceAuthorizer = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+        assertNull(
+            wrongSourceAuthorizer.observeTopLevelNavigation(
+                EIVISSA_PROFILE,
+                EIVISSA_START,
+                wrongSource,
+                250,
+                true,
+            ),
+        )
+        assertNull(
+            wrongSourceAuthorizer.observeTopLevelNavigation(
+                EIVISSA_PROFILE,
+                wrongSource,
+                EIVISSA_TARGET,
+                251,
+                true,
+            ),
+        )
+
+        val badTargets = listOf(
+            "$EIVISSA_TARGET?extra=1",
+            EIVISSA_TARGET.replace(EIVISSA_PID, "6269002703260065905044"),
+            EIVISSA_TARGET.replace("seu.conselldeivissa.es", "seu.conselldeivissa.es.evil.example"),
+        )
+        badTargets.forEachIndexed { index, target ->
+            val fresh = ClientAuthNavigationAuthorizer(
+                BuiltInSiteProfiles.qaRegistry,
+                monotonic::nowNanos,
+            )
+            assertNull(
+                fresh.observeTopLevelNavigation(
+                    EIVISSA_PROFILE,
+                    EIVISSA_START,
+                    EIVISSA_SOURCE,
+                    260L + index * 2,
+                    true,
+                ),
+            )
+            assertNull(
+                target,
+                fresh.observeTopLevelNavigation(
+                    EIVISSA_PROFILE,
+                    EIVISSA_SOURCE,
+                    target,
+                    261L + index * 2,
+                    true,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun veaInPlaceGetRejectsSourceTargetMethodAndFrameNearMisses() {
         val invalidCalls = listOf(
             Triple(veaSource(redirectUrl = "https://evil.example/?iniciarSolicitud=true&procedureId=1&versionId=2"), veaTarget(), "GET"),
@@ -1631,6 +1725,15 @@ class ClientAuthNavigationAuthorizerTest {
     private fun urlEncode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8.name())
 
     private companion object {
+        val EIVISSA_PROFILE = ProfileId("eivissa-sede-electronica")
+        const val EIVISSA_PID = "6269002703260065905043"
+        const val EIVISSA_START =
+            "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=$EIVISSA_PID"
+        const val EIVISSA_SOURCE =
+            "https://seu.conselldeivissa.es/sta/reg/auth/es/$EIVISSA_PID"
+        const val EIVISSA_TARGET_PATH = "/sta/reg/auth/do/CERT/es/$EIVISSA_PID"
+        const val EIVISSA_TARGET = "https://seu.conselldeivissa.es$EIVISSA_TARGET_PATH"
         val VEA_PROFILE = ProfileId("junta-andalucia-vea-peg")
         const val VEA_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
         const val VEA_START = "$VEA_ORIGIN/inicio/procedimiento-detalle/PEG_VEA"

@@ -2332,23 +2332,36 @@
     },
     {
       "profileId": "eivissa-sede-electronica",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Consell Insular d’Eivissa — Sede electrónica",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
-      "startUrl": "https://seu.conselldeivissa.es/",
+      "startUrl": "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043",
       "initiatorOrigins": ["https://seu.conselldeivissa.es"],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [{"operation":"SIGN","safeDescription":"Firma de Instancia General en la Sede electrónica del Consell Insular d’Eivissa","inputAdapterId":"miniapplet-autoscript-v1","callbackContractId":"autoscript-sign-callback-v1","capabilities":["SIGN"],"endpointId":null,"algorithms":["SHA256_WITH_RSA"],"format":"CADES","packaging":"DETACHED","mode":"IMPLICIT","fixedExtraProperties":{"headless":"true","mode":"implicit"},"allowedExtraProperties":["filter","mimeType"]}],
-      "capabilities": ["SIGN"],
-      "clientAuthPolicy": null,
+      "capabilities": ["SIGN","CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode":"IN_PLACE_FROM_SOURCE",
+        "requestOrigins":["https://seu.conselldeivissa.es"],
+        "sourceUrls":["https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043"],
+        "requestPath":"/sta/reg/auth/do/CERT/es/6269002703260065905043",
+        "fixedQueryParameters":{},
+        "requiredEphemeralQueryParameters":[],
+        "allowEmptyIssuerList":false,
+        "grantTtlSeconds":15,
+        "requestPort":443,
+        "requestMethod":"GET"
+      },
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
         {"url":"https://seu.conselldeivissa.es/","reviewedOn":"2026-08-18"},
         {"url":"https://seu.conselldeivissa.es/sta/reg/autofirma.js","reviewedOn":"2026-08-18"},
-        {"url":"https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043","reviewedOn":"2026-08-18"}
+        {"url":"https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043","reviewedOn":"2026-08-18"},
+        {"url":"https://seu.conselldeivissa.es/sta/reg/auth/es/6269002703260065905043","reviewedOn":"2026-09-02"},
+        {"url":"https://seu.conselldeivissa.es/sta/reg/auth/do/CERT/es/6269002703260065905043","reviewedOn":"2026-09-02"}
       ]
     },
     {

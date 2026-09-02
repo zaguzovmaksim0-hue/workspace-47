@@ -232,28 +232,8 @@ class RealE2eInstrumentedTest {
                 expectedIdentifyHref = HUESCA_IDENTIFY_HREF,
                 expectedLoginUrl = HUESCA_LOGIN_URL,
             )
-            EIVISSA_INSTITUTIONAL_PORTAL_ID -> {
-                clickExactLabeledAnchor(
-                    scenario = scenario,
-                    expectedCurrentUrl = EIVISSA_INSTITUTIONAL_ENTRY_URL,
-                    expectedLabel = EIVISSA_SEDE_LABEL,
-                    expectedHref = EIVISSA_SEDE_HOME_ES_URL,
-                )
-                clickStaCertificateLogin(
-                    scenario = scenario,
-                    expectedEntryUrl = EIVISSA_SEDE_HOME_ES_URL,
-                    expectedIdentifyLabel = EIVISSA_IDENTIFY_LABEL,
-                    expectedIdentifyHref = EIVISSA_IDENTIFY_HREF,
-                    expectedLoginUrl = EIVISSA_LOGIN_URL,
-                )
-            }
-            EIVISSA_SEDE_PORTAL_ID -> clickStaCertificateLogin(
-                scenario = scenario,
-                expectedEntryUrl = EIVISSA_SEDE_HOME_URL,
-                expectedIdentifyLabel = EIVISSA_IDENTIFY_LABEL,
-                expectedIdentifyHref = EIVISSA_IDENTIFY_HREF,
-                expectedLoginUrl = EIVISSA_LOGIN_URL,
-            )
+            EIVISSA_INSTITUTIONAL_PORTAL_ID, EIVISSA_SEDE_PORTAL_ID ->
+                runEivissaCertificateAuthRecipe(scenario)
             ALBACETE_PORTAL_ID -> runSedipualbaClientTlsRecipe(
                 scenario = scenario,
                 expectedEntryUrl = ALBACETE_ENTRY_URL,
@@ -447,6 +427,24 @@ class RealE2eInstrumentedTest {
             expectedCurrentUrl = expectedLoginUrl,
             elementId = STA_CERTIFICATE_LINK_ID,
             expectedHref = STA_CERTIFICATE_LINK_HREF,
+            waitForExpectedUrl = true,
+        )
+    }
+
+    private fun runEivissaCertificateAuthRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = EIVISSA_PROCEDURE_URL,
+            expectedLabel = EIVISSA_REGISTER_LABEL,
+            expectedHref = EIVISSA_REGISTER_HREF,
+        )
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = EIVISSA_AUTH_SOURCE_URL,
+            expectedLabel = EIVISSA_CERT_LABEL,
+            expectedHref = EIVISSA_CERT_HREF,
             waitForExpectedUrl = true,
         )
     }
@@ -2784,17 +2782,19 @@ class RealE2eInstrumentedTest {
         const val STA_CERTIFICATE_LINK_HREF =
             "/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=HOME"
         const val EIVISSA_INSTITUTIONAL_PORTAL_ID = "eivissa-portal-institucional"
-        const val EIVISSA_INSTITUTIONAL_ENTRY_URL = "https://www.conselldeivissa.es/"
         const val EIVISSA_SEDE_PORTAL_ID = "eivissa-sede-electronica"
-        const val EIVISSA_SEDE_LABEL = "Seu electrònica"
-        const val EIVISSA_SEDE_HOME_ES_URL =
-            "https://seu.conselldeivissa.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_HOME&lang=ES"
-        const val EIVISSA_SEDE_HOME_URL =
-            "https://seu.conselldeivissa.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
-        const val EIVISSA_IDENTIFY_LABEL = "Identifícate"
-        const val EIVISSA_IDENTIFY_HREF =
-            "https://seu.conselldeivissa.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
-        const val EIVISSA_LOGIN_URL = EIVISSA_IDENTIFY_HREF
+        const val EIVISSA_PROCEDURE_ID = "6269002703260065905043"
+        const val EIVISSA_PROCEDURE_URL =
+            "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=$EIVISSA_PROCEDURE_ID"
+        const val EIVISSA_REGISTER_LABEL = "Registro electrónico"
+        const val EIVISSA_REGISTER_HREF =
+            "javascript:enterNewReg(window.catser.dboid,'es');"
+        const val EIVISSA_AUTH_SOURCE_URL =
+            "https://seu.conselldeivissa.es/sta/reg/auth/es/$EIVISSA_PROCEDURE_ID"
+        const val EIVISSA_CERT_LABEL = "CERTIFICADO DIGITAL"
+        const val EIVISSA_CERT_HREF =
+            "/sta/reg/auth/do/CERT/es/$EIVISSA_PROCEDURE_ID"
         const val ALBACETE_PORTAL_ID = "diputacion-albacete-portal"
         const val ALBACETE_ENTRY_URL =
             "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"

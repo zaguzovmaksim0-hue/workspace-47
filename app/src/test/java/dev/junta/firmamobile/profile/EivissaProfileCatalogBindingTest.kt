@@ -29,6 +29,10 @@ class EivissaProfileCatalogBindingTest {
     private val profileId = ProfileId(EivissaCadesDetachedAdapter.PROFILE_ID)
     private val portalId = PortalId("eivissa-sede-electronica")
     private val startUrl = URI(EivissaCadesDetachedAdapter.START_URL)
+    private val clientAuthSourceUrl =
+        "https://seu.conselldeivissa.es/sta/reg/auth/es/${EivissaCadesDetachedAdapter.PROCEDURE_ID}"
+    private val clientAuthPath =
+        "/sta/reg/auth/do/CERT/es/${EivissaCadesDetachedAdapter.PROCEDURE_ID}"
 
     @Test
     fun qaProfilePreservesExactEivissaSignerContractAndReleaseStaysDisabled() {
@@ -37,8 +41,15 @@ class EivissaProfileCatalogBindingTest {
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN)), profile.initiatorOrigins)
-        assertEquals(setOf(Capability.SIGN), profile.capabilities)
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, clientAuth.transitionMode)
+        assertEquals(setOf(ExactOrigin.parse(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN)), clientAuth.requestOrigins)
+        assertEquals(setOf(URI(clientAuthSourceUrl)), clientAuth.sourceUrls)
+        assertEquals(clientAuthPath, clientAuth.requestPath)
+        assertFalse(clientAuth.allowEmptyIssuerList)
+        assertEquals(15, clientAuth.grantTtlSeconds)
+        assertEquals(HttpMethod.GET, clientAuth.requestMethod)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
@@ -67,7 +78,9 @@ class EivissaProfileCatalogBindingTest {
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
         assertEquals(setOf(SignatureFormat.CADES), entry.observedSignatureFormats)
-        assertEquals("2026-08-18", entry.reviewedOn.toString())
+        assertTrue("CLIENT_TLS_AUTH" in entry.observedMechanisms.map { it.name })
+        assertEquals(startUrl, entry.launchUrl)
+        assertEquals("2026-09-02", entry.reviewedOn.toString())
         val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
         val release = PortalCatalogRepository(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
         val qaPortal = qa.portals().single { it.portalId == portalId }

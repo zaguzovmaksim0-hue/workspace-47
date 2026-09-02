@@ -1059,6 +1059,18 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
+    fun querylessInPlaceClientAuthExceptionIsScopedOnlyToEivissaProfile() {
+        val exactOwner = "\"profileId\": \"eivissa-sede-electronica\""
+        val unreviewedOwner = "\"profileId\": \"eivissa-queryless-in-place-copy\""
+        assertTrue(BuiltInSiteProfiles.JSON.contains(exactOwner))
+        assertThrows(IllegalArgumentException::class.java) {
+            SiteProfileCatalogParser.parse(
+                BuiltInSiteProfiles.JSON.replaceFirst(exactOwner, unreviewedOwner),
+            )
+        }
+    }
+
+    @Test
     fun rejectsDuplicateUnknownAndUnsupportedSchemaKeys() {
         val json = BuiltInSiteProfiles.JSON
         assertThrows(IllegalArgumentException::class.java) {
