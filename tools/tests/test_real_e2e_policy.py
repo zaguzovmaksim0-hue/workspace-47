@@ -673,6 +673,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('clickAsturiasClaveAuth(scenario)\n        clickClaveAfirmaProvider(scenario)', source)
         self.assertIn('clickCatalunyaClave(scenario)\n        clickClaveAfirmaProvider(scenario)', source)
         self.assertIn('expectedHref = OURENSE_IDENTIFY_HREF,\n        )\n        clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('clickCorunaClaveAuth(scenario)\n        clickClaveAfirmaProvider(scenario)', source)
         self.assertIn('uri.host != CLAVE_PROVIDER_HOST', source)
         self.assertIn('uri.path != CLAVE_PROVIDER_PATH', source)
         self.assertIn("candidate.getAttribute('name') === 'idpRedirect'", source)
@@ -682,6 +683,21 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("button.getAttribute('onclick') === $quotedOnClick", source)
         self.assertIn('"JAVASCRIPT:selectedIdP(\'AFIRMA\');idpRedirect.submit();"', source)
         self.assertIn('"ImageRetrieve?id=IDP_AFIRMA"', source)
+
+    def test_coruna_recipe_pins_x004_clave_form_before_shared_afirma_boundary(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"diputacion-a-coruna-portal"', source)
+        self.assertIn('CORUNA_PORTAL_ID -> runCorunaClaveCertificateRecipe(scenario)', source)
+        self.assertIn('currentUrl != CORUNA_X004_URL', source)
+        self.assertIn('document.getElementById($quotedFormId)', source)
+        self.assertIn("form.getAttribute('method')?.toLowerCase() !== 'post'", source)
+        self.assertIn("form.querySelectorAll('input[type=\"hidden\"]')", source)
+        self.assertIn('hiddenInputs.length !== expectedNames.length', source)
+        self.assertIn("button.type !== 'submit'", source)
+        self.assertIn('"idExpediente" to "X004"', source)
+        self.assertIn('"modo" to "Clave2CiudadanoAuthentication"', source)
+        self.assertIn('"https://sede.dacoruna.gal/SP2/TiWorksRequest"', source)
+        self.assertIn('"Entrar con Cl@ve"', source)
 
     def test_tgss_recipe_waits_for_idp_and_selects_exact_ipce_button(self) -> None:
         source = self.read(INSTRUMENTATION)

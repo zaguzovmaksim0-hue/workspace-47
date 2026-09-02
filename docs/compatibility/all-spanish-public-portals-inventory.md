@@ -5219,6 +5219,7 @@ records:
     official_site: "https://www.dacoruna.gal/portada"
     e_sede: "https://sede.dacoruna.gal"
     entry_url: "https://www.dacoruna.gal/portada"
+    launch_url: "https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL"
     procedure_page: "https://sede.dacoruna.gal/sxc/gl/procedimientosytramites/tramites/SolicitudGeneral_N"
     certificate_required: "CONDICIONAL"
     signature_required: "CONDICIONAL"

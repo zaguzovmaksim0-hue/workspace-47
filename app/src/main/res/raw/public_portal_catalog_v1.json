@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "48ab3e017ca185ddb7d88f04bd8597dc4bf1600cc341f6630d39219b9be8d312",
+  "sourceRevision": "e502f6be969c4b28aa398f595f1b55c626e3091a52de08c0d79323d14242d75d",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4346,6 +4346,7 @@
       "territory": "Galicia",
       "purpose": "La Solicitude Xeral X004 delega la identificación en Cl@ve; la rama de certificado cualificado alcanza el endpoint exacto de autenticación TLS cliente. La firma documental posterior no se implementa.",
       "entryUrl": "https://www.dacoruna.gal/portada",
+      "launchUrl": "https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "CLIENT_TLS_AUTH",

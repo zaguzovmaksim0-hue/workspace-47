@@ -1708,15 +1708,26 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         )
 
 
-    def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
+    def test_every_profile_has_only_exact_effective_launch_bindings(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
         profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        bound_by_profile: dict[str, list[dict[str, object]]] = {}
 
         self.assertEqual(len(catalog["entries"]), len(entries_by_url))
+        for entry in catalog["entries"]:
+            profile_id = entry.get("profileId")
+            if profile_id is not None:
+                bound_by_profile.setdefault(profile_id, []).append(entry)
         for profile in profiles:
-            entry = entries_by_url[profile["startUrl"]]
-            self.assertEqual(profile["profileId"], entry["profileId"])
+            bound = bound_by_profile.get(profile["profileId"], [])
+            self.assertGreaterEqual(len(bound), 1, profile["profileId"])
+            for entry in bound:
+                self.assertEqual(
+                    profile["startUrl"],
+                    entry.get("launchUrl", entry["entryUrl"]),
+                    entry["portalId"],
+                )
 
     def test_missing_inventory_match_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
@@ -2995,7 +3006,7 @@ records:
         self.assertEqual("diputacion-a-coruna-portal", target["portalId"])
         self.assertEqual("diputacion-a-coruna-solicitud-general", target["profileId"])
         self.assertEqual("https://www.dacoruna.gal/portada", target["entryUrl"])
-        self.assertNotIn("launchUrl", target)
+        self.assertEqual("https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL", target["launchUrl"])
         self.assertEqual("CLIENT_TLS_AUTH_CLAVE", target["protocolFamily"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])

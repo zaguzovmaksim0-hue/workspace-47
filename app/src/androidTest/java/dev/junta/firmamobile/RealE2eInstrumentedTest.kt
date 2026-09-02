@@ -298,6 +298,7 @@ class RealE2eInstrumentedTest {
             SANIDAD_PORTAL_ID -> runSanidadClientTlsRecipe(scenario)
             VEA_PORTAL_ID -> runVeaCertificateAuthRecipe(scenario)
             TGSS_PORTAL_ID -> clickTgssIpceAuth(scenario)
+            CORUNA_PORTAL_ID -> runCorunaClaveCertificateRecipe(scenario)
             MUGEJU_PORTAL_ID, DIPUTACION_SEVILLA_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
@@ -555,6 +556,100 @@ class RealE2eInstrumentedTest {
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
             if (waitingForExpectedUrl || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runCorunaClaveCertificateRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickCorunaClaveAuth(scenario)
+        clickClaveAfirmaProvider(scenario)
+    }
+
+    private fun clickCorunaClaveAuth(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedFormId = JSONObject.quote(CORUNA_CLAVE_FORM_ID)
+        val quotedFormName = JSONObject.quote(CORUNA_CLAVE_FORM_NAME)
+        val quotedFormAction = JSONObject.quote(CORUNA_CLAVE_FORM_ACTION)
+        val quotedButtonId = JSONObject.quote(CORUNA_CLAVE_BUTTON_ID)
+        val quotedButtonName = JSONObject.quote(CORUNA_CLAVE_BUTTON_NAME)
+        val quotedButtonLabel = JSONObject.quote(CORUNA_CLAVE_BUTTON_LABEL)
+        val expectedHidden = JSONObject(CORUNA_CLAVE_HIDDEN_FIELDS).toString()
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForEntry = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || currentUrl != CORUNA_X004_URL) {
+                    waitingForEntry = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = document.getElementById($quotedFormId);
+                      if (!form) return 0;
+                      if (form.tagName !== 'FORM' ||
+                          form.getAttribute('name') !== $quotedFormName ||
+                          form.getAttribute('method')?.toLowerCase() !== 'post' ||
+                          new URL(form.getAttribute('action'), window.location.href).href !== $quotedFormAction) return 2;
+                      const expectedHidden = $expectedHidden;
+                      const hiddenInputs = Array.from(form.querySelectorAll('input[type="hidden"]'));
+                      const expectedNames = Object.keys(expectedHidden);
+                      if (hiddenInputs.length !== expectedNames.length) return 2;
+                      for (const name of expectedNames) {
+                        const matches = hiddenInputs.filter(input => input.getAttribute('name') === name);
+                        if (matches.length !== 1 || matches[0].value !== expectedHidden[name]) return 2;
+                      }
+                      const buttons = Array.from(form.querySelectorAll('button')).filter(button =>
+                        button.getAttribute('id') === $quotedButtonId &&
+                        button.getAttribute('name') === $quotedButtonName
+                      );
+                      if (buttons.length === 0) return 0;
+                      if (buttons.length !== 1) return 2;
+                      const button = buttons[0];
+                      const label = (button.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (button.type !== 'submit' ||
+                          button.getAttribute('onclick') !== null ||
+                          button.getAttribute('formaction') !== null ||
+                          label !== $quotedButtonLabel ||
+                          !button.classList.contains('btn') ||
+                          !button.classList.contains('btn-sm') ||
+                          !button.classList.contains('boton')) return 2;
+                      button.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForEntry || !clicked) {
                 SystemClock.sleep(RECIPE_POLL_MILLIS)
                 continue
             }
@@ -2641,6 +2736,29 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val CORUNA_PORTAL_ID = "diputacion-a-coruna-portal"
+        const val CORUNA_X004_URL =
+            "https://sede.dacoruna.gal/tramitador/entrada?" +
+                "idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL"
+        const val CORUNA_CLAVE_FORM_ID = "formularioExternoClave"
+        const val CORUNA_CLAVE_FORM_NAME = "formularioExternoClave"
+        const val CORUNA_CLAVE_FORM_ACTION = "https://sede.dacoruna.gal/SP2/TiWorksRequest"
+        const val CORUNA_CLAVE_BUTTON_ID = "acceso"
+        const val CORUNA_CLAVE_BUTTON_NAME = "acceso"
+        const val CORUNA_CLAVE_BUTTON_LABEL = "Entrar con Cl@ve"
+        val CORUNA_CLAVE_HIDDEN_FIELDS = mapOf(
+            "entrada" to "ciudadano",
+            "idEntidad" to "diputacion",
+            "idioma" to "gl",
+            "modo" to "Clave2CiudadanoAuthentication",
+            "tipoDeLogado" to "externo",
+            "idLogica" to "accesoDirecto",
+            "idExpediente" to "X004",
+            "detalleExpediente" to "",
+            "idExpedienteOrigen" to "",
+            "idVersionProceso" to "",
+            "idConvocatoria" to "",
+        )
         const val MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"
         const val CLAVE_PROVIDER_HOST = "pasarela.clave.gob.es"
         const val CLAVE_PROVIDER_PATH = "/Proxy2/ServiceProvider"
