@@ -665,6 +665,16 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_la_rioja_recipe_validates_redirect_state_before_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"la-rioja-oficina-electronica"', source)
+        self.assertIn('uri.queryParameterNames != LA_RIOJA_SOURCE_QUERY_KEYS', source)
+        self.assertIn('target.queryParameterNames == setOf("act_codi", "uuidep")', source)
+        self.assertIn('LA_RIOJA_UUID_PATTERN.matches(uuid)', source)
+        self.assertIn("document.getElementById('boton_certificado')", source)
+        self.assertIn("label !== 'Conectar'", source)
+        self.assertIn("loginClientCertSSL('https://ias1.larioja.org/clientcertSSL/login')", source)
+
     def test_direct_client_tls_recipes_are_exact_authentication_controls(self) -> None:
         source = self.read(INSTRUMENTATION)
         for portal_id in (

@@ -284,6 +284,7 @@ class RealE2eInstrumentedTest {
                 )
             MENORCA_INSTITUTIONAL_PORTAL_ID, MENORCA_SEDE_PORTAL_ID ->
                 runMenorcaClientTlsRecipe(scenario)
+            LA_RIOJA_PORTAL_ID -> clickLaRiojaCertificateLogin(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -546,6 +547,88 @@ class RealE2eInstrumentedTest {
             return
         }
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickLaRiojaCertificateLogin(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForLogin = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !laRiojaSourceUrlMatches(currentUrl)) {
+                    waitingForLogin = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const element = document.getElementById('boton_certificado');
+                      if (!element) return 0;
+                      const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (element.tagName !== 'BUTTON' ||
+                          element.getAttribute('type') !== 'button' ||
+                          label !== 'Conectar' ||
+                          element.getAttribute('onclick') !==
+                            "loginClientCertSSL('https://ias1.larioja.org/clientcertSSL/login')" ||
+                          element.className !== 'btn btn-success') return 2;
+                      element.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForLogin || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun laRiojaSourceUrlMatches(actualUrl: String): Boolean {
+        val uri = Uri.parse(actualUrl)
+        if (uri.scheme != "https" ||
+            uri.host != LA_RIOJA_HOST ||
+            uri.path != LA_RIOJA_SOURCE_PATH ||
+            uri.queryParameterNames != LA_RIOJA_SOURCE_QUERY_KEYS ||
+            uri.getQueryParameter("inst") != "G" ||
+            uri.getQueryParameter("apli") != "OFIVIR" ||
+            uri.getQueryParameter("nodo") != "CIUDANO"
+        ) return false
+        val param = uri.getQueryParameter("param") ?: return false
+        if (!LA_RIOJA_PARAM_PATTERN.matches(param)) return false
+        val target = Uri.parse(uri.getQueryParameter("TARGET") ?: return false)
+        val uuid = target.getQueryParameter("uuidep") ?: return false
+        return target.scheme == "https" &&
+            target.host == LA_RIOJA_HOST &&
+            target.path == LA_RIOJA_TARGET_PATH &&
+            target.queryParameterNames == setOf("act_codi", "uuidep") &&
+            target.getQueryParameter("act_codi") == "24697" &&
+            LA_RIOJA_UUID_PATTERN.matches(uuid)
     }
 
     private fun runMenorcaClientTlsRecipe(
@@ -1847,6 +1930,13 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val LA_RIOJA_PORTAL_ID = "la-rioja-oficina-electronica"
+        const val LA_RIOJA_HOST = "ias1.larioja.org"
+        const val LA_RIOJA_SOURCE_PATH = "/casLR/login"
+        const val LA_RIOJA_TARGET_PATH = "/oficinavirtual/presentacion"
+        val LA_RIOJA_SOURCE_QUERY_KEYS = setOf("inst", "apli", "nodo", "param", "TARGET")
+        val LA_RIOJA_PARAM_PATTERN = Regex("[A-Za-z0-9_-]{16,256}")
+        val LA_RIOJA_UUID_PATTERN = Regex("[0-9a-f]{40}")
         const val VALLADOLID_PORTAL_ID = "diputacion-valladolid-sede"
         const val VALLADOLID_ENTRY_URL =
             "https://www.sede.diputaciondevalladolid.es/tgauth/login"
