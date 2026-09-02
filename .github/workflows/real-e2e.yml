@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       portal_id:
-        description: Optional exact catalog portalId; blank runs the entire catalog
+        description: Optional exact portalId or comma-separated portalIds; blank runs the entire catalog
         required: false
         type: string
       deep_auth_signing:
@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: real-e2e-${{ inputs.portal_id || 'catalog' }}
+  group: real-e2e-${{ contains(inputs.portal_id, ',') && 'batch' || inputs.portal_id || 'catalog' }}
   cancel-in-progress: false
 
 env:
