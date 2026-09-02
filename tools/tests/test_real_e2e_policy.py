@@ -665,6 +665,21 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_tea_recipe_clicks_only_exact_alegaciones_client_tls_target(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"age-sede-electronica-de-los-tribunales-economico-administrativos-tea"', source)
+        self.assertIn('expectedCurrentUrl = TEA_ENTRY_URL', source)
+        self.assertIn('expectedLabel = TEA_AUTH_LABEL', source)
+        self.assertIn('expectedHref = TEA_AUTH_HREF', source)
+        self.assertIn('"https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0"', source)
+
+    def test_ourense_recipe_only_enters_reviewed_clave_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"diputacion-ourense-sede"', source)
+        self.assertIn('expectedLabel = OURENSE_IDENTIFY_LABEL', source)
+        self.assertIn('expectedHref = OURENSE_IDENTIFY_HREF', source)
+        self.assertNotIn('OURENSE_CERTIFICATE', source)
+
     def test_catalunya_peticio_recipe_uses_non_captcha_clave_path(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"catalunya-tramits-peticio-generica"', source)

@@ -288,6 +288,18 @@ class RealE2eInstrumentedTest {
             NAVARRA_PORTAL_ID -> runNavarraClientTlsRecipe(scenario)
             ASTURIAS_PORTAL_ID -> clickAsturiasClaveAuth(scenario)
             CATALUNYA_PETICIO_PORTAL_ID -> runCatalunyaPeticioClaveRecipe(scenario)
+            OURENSE_PORTAL_ID -> clickExactLabeledAnchor(
+                scenario = scenario,
+                expectedCurrentUrl = OURENSE_ENTRY_URL,
+                expectedLabel = OURENSE_IDENTIFY_LABEL,
+                expectedHref = OURENSE_IDENTIFY_HREF,
+            )
+            TEA_PORTAL_ID -> clickExactLabeledAnchor(
+                scenario = scenario,
+                expectedCurrentUrl = TEA_ENTRY_URL,
+                expectedLabel = TEA_AUTH_LABEL,
+                expectedHref = TEA_AUTH_HREF,
+            )
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -2275,6 +2287,19 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val TEA_PORTAL_ID =
+            "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
+        const val TEA_ENTRY_URL = "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+        const val TEA_AUTH_LABEL = "Alegaciones"
+        const val TEA_AUTH_HREF =
+            "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0"
+        const val OURENSE_PORTAL_ID = "diputacion-ourense-sede"
+        const val OURENSE_ENTRY_URL =
+            "https://sede.depourense.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES"
+        const val OURENSE_IDENTIFY_LABEL = "Identificate"
+        const val OURENSE_IDENTIFY_HREF =
+            "https://sede.depourense.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
         const val CATALUNYA_PETICIO_PORTAL_ID = "catalunya-tramits-peticio-generica"
         const val CATALUNYA_PETICIO_ENTRY_URL =
             "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
