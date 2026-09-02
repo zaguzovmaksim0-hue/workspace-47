@@ -4,6 +4,7 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
+import dev.junta.firmamobile.catalog.PortalMechanism
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
@@ -29,24 +30,54 @@ class DiputacionMalagaProfileCatalogBindingTest {
     private val startUrl = URI("https://sede.malaga.es/instancia-general/nueva-instancia-general/")
 
     @Test
-    fun qaProfileIsNavigationOnlyAndReleaseStaysDisabled() {
+    fun qaProfilePinsTheReviewedMalagaClaveClientTlsTransition() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        val sourceUrl = URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
+        val targetUrl = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
+
+        assertEquals(2, profile.profileVersion)
+        assertEquals("Diputación de Málaga — Instancia general — acceso con certificado", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://sede.malaga.es")), profile.initiatorOrigins)
-        assertEquals(setOf(ExactOrigin.parse("https://clave.malaga.es")), profile.redirectOrigins)
+        assertEquals(
+            setOf(
+                ExactOrigin.parse("https://clave.malaga.es"),
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ),
+            profile.redirectOrigins,
+        )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
+        assertEquals(setOf(sourceUrl), policy.sourceUrls)
+        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
+        assertTrue(policy.fixedQueryParameters.isEmpty())
+        assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
+        assertEquals(443, policy.requestPort)
+        assertTrue(policy.allowEmptyIssuerList)
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, sourceUrl)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, targetUrl)?.trustMode,
+        )
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
     }
 
     @Test
-    fun publicCatalogBindsOnlyThePendingNavigationContract() {
+    fun publicCatalogExposesTheReviewedClientTlsMechanismButKeepsReleaseDisabled() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0164" }
         assertEquals(portalId, entry.portalId)
@@ -54,6 +85,11 @@ class DiputacionMalagaProfileCatalogBindingTest {
         assertEquals(startUrl, entry.entryUrl)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
+        assertEquals("CLIENT_TLS_AUTH_CLAVE", entry.protocolFamily)
+        assertTrue(PortalMechanism.CLIENT_TLS_AUTH in entry.observedMechanisms)
+        assertTrue(PortalMechanism.CERTIFICATE_ACCESS in entry.observedMechanisms)
+        assertTrue(PortalMechanism.ELECTRONIC_SIGNATURE in entry.observedMechanisms)
+        assertEquals("2026-09-03", entry.reviewedOn.toString())
         assertTrue(entry.observedSignatureFormats.isEmpty())
 
         val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)

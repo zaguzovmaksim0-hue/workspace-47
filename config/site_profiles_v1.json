@@ -2202,23 +2202,35 @@
     },
     {
       "profileId": "diputacion-malaga-instancia-general",
-      "profileVersion": 1,
-      "displayName": "Diputación de Málaga — Instancia general",
+      "profileVersion": 2,
+      "displayName": "Diputación de Málaga — Instancia general — acceso con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
       "initiatorOrigins": ["https://sede.malaga.es"],
-      "redirectOrigins": ["https://clave.malaga.es"],
+      "redirectOrigins": ["https://clave.malaga.es","https://pasarela.clave.gob.es"],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": [],
-      "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
+        "requestPath": "/IdP2/AuthenticateCitizen",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
-        {"url":"https://sede.malaga.es/instancia-general/","reviewedOn":"2026-08-20"},
-        {"url":"https://sede.malaga.es/instancia-general/nueva-instancia-general/","reviewedOn":"2026-08-20"},
-        {"url":"https://clave.malaga.es/clave.php","reviewedOn":"2026-08-20"}
+        {"url":"https://sede.malaga.es/instancia-general/nueva-instancia-general/","reviewedOn":"2026-09-03"},
+        {"url":"https://clave.malaga.es/clave.php","reviewedOn":"2026-09-03"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-09-03"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-09-03"},
+        {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-09-03"}
       ]
     },
     {

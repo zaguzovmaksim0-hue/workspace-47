@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "48ab3e017ca185ddb7d88f04bd8597dc4bf1600cc341f6630d39219b9be8d312",
+  "sourceRevision": "98abb6e42875f21c14f2e9797188e17c5e94dac438691b33bf834d229fc444c1",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4720,14 +4720,15 @@
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "regionCode": "ES-AN",
       "territory": "Andalucía",
-      "purpose": "Instancia general exacta con navegación QA hasta el handoff local a Cl@ve; no se expone firma, selección de certificado ni client-auth.",
+      "purpose": "La Instancia general inicia autenticación Cl@ve; la rama eIdentifier/certificado usa client TLS en pasarela-ident.clave.gob.es. El perfil implementa solo el lanzamiento exacto y esta autenticación acotada; no implementa firma ni presentación administrativa.",
       "entryUrl": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "CLAVE_GATEWAY_UNVERIFIED",
+      "protocolFamily": "CLIENT_TLS_AUTH_CLAVE",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
@@ -4735,12 +4736,13 @@
         "D06",
         "DP26A",
         "DP26B",
-        "MALAGA-INSTANCIA-2026-08-20",
-        "MALAGA-INSTANCIA-LAUNCH-2026-08-20",
-        "MALAGA-CLAVE-2026-08-20"
+        "MALAGA-INSTANCIA-LAUNCH-2026-09-03",
+        "MALAGA-CLAVE-LOCAL-2026-09-03",
+        "MALAGA-CLAVE-SP-2026-09-03",
+        "MALAGA-CLAVE-AFIRMA-2026-09-03"
       ],
-      "reviewedOn": "2026-08-20",
-      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta hasta el primer handoff Cl@ve observado. No expone SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, ABI de firma, formato, algoritmo ni endpoint; la autenticación Cl@ve completa y el registro final no se ejecutaron."
+      "reviewedOn": "2026-09-03",
+      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA-only limitado al launch exacto, handoff local Cl@ve, ServiceProvider/ServiceRedirect y client TLS de AFIRMA. No expone SIGN, formato, algoritmo, callback ni envío del registro."
     },
     {
       "portalId": "diputacion-ourense-sede",

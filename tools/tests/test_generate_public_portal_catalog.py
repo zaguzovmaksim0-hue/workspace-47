@@ -1644,9 +1644,11 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertIn("clienteFirma".lower(), target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
-    def test_diputacion_malaga_profile_binds_exact_pending_navigation_contract(self) -> None:
+    def test_diputacion_malaga_profile_binds_exact_clave_client_tls_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0164")
+        profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
+        profile = next(item for item in profiles if item["profileId"] == "diputacion-malaga-instancia-general")
 
         self.assertEqual("diputacion-malaga-instancia-general", target["profileId"])
         self.assertEqual("diputacion-malaga-sede", target["portalId"])
@@ -1657,10 +1659,34 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertNotIn("launchUrl", target)
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
-        self.assertEqual("2026-08-20", target["reviewedOn"])
-        self.assertIn("CERTIFICATE_ACCESS", target["observedMechanisms"])
-        self.assertIn("ELECTRONIC_SIGNATURE", target["observedMechanisms"])
+        self.assertEqual("2026-09-03", target["reviewedOn"])
+        self.assertEqual("CLIENT_TLS_AUTH_CLAVE", target["protocolFamily"])
+        self.assertEqual(
+            ["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH", "ELECTRONIC_SIGNATURE"],
+            target["observedMechanisms"],
+        )
         self.assertEqual([], target["observedSignatureFormats"])
+        self.assertEqual(2, profile["profileVersion"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        self.assertEqual(
+            ["https://clave.malaga.es", "https://pasarela.clave.gob.es"],
+            profile["redirectOrigins"],
+        )
+        policy = profile["clientAuthPolicy"]
+        self.assertEqual("DIRECT_FROM_SOURCE", policy["transitionMode"])
+        self.assertEqual(["https://pasarela-ident.clave.gob.es"], policy["requestOrigins"])
+        self.assertEqual(
+            ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
+            policy["sourceUrls"],
+        )
+        self.assertEqual("/IdP2/AuthenticateCitizen", policy["requestPath"])
+        self.assertEqual({}, policy["fixedQueryParameters"])
+        self.assertEqual([], policy["requiredEphemeralQueryParameters"])
+        self.assertTrue(policy["allowEmptyIssuerList"])
+        self.assertEqual(15, policy["grantTtlSeconds"])
+        self.assertEqual(443, policy["requestPort"])
+        self.assertIn("client tls", target["limitations"].lower())
+        self.assertIn("no expone sign", target["limitations"].lower())
     def test_tarragona_valid_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         tarragona = next(

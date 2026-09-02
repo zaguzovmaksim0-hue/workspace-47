@@ -318,6 +318,7 @@ class RealE2eInstrumentedTest {
                     waitForExpectedUrl = true,
                 )
             }
+            MALAGA_PORTAL_ID -> runMalagaClaveCertificateRecipe(scenario)
             SEVILLA_PORTAL_ID -> clickExactContainedAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = SEVILLA_ENTRY_URL,
@@ -380,6 +381,166 @@ class RealE2eInstrumentedTest {
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
         error("REAL_E2E_RECIPE_PAGE_READY_TIMEOUT")
+    }
+
+    private fun runMalagaClaveCertificateRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickMalagaClaveEntry(scenario)
+        clickMalagaClaveAfirmaProvider(scenario)
+    }
+
+    private fun clickMalagaClaveEntry(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedExpectedAction = JSONObject.quote(MALAGA_LOCAL_CLAVE_URL)
+        val quotedExpectedValue = JSONObject.quote(MALAGA_CLAVE_SUBMIT_VALUE)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForSource = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && !recipeUrlMatches(currentUrl, MALAGA_ENTRY_URL)) {
+                    if (recipeUrlMatches(currentUrl, MALAGA_LOCAL_CLAVE_URL) ||
+                        recipeUrlMatches(currentUrl, MALAGA_CLAVE_SERVICE_PROVIDER_URL)
+                    ) {
+                        clicked = true
+                    } else {
+                        waitingForSource = true
+                    }
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const forms = Array.from(document.querySelectorAll('form#claveFrm'));
+                      if (forms.length === 0) return 0;
+                      if (forms.length !== 1) return 2;
+                      const form = forms[0];
+                      if ((form.getAttribute('method') || '').toLowerCase() !== 'post' ||
+                          form.action !== $quotedExpectedAction) return 2;
+                      const tokenInputs = form.querySelectorAll('input[type="hidden"][name="tkn"]');
+                      if (tokenInputs.length !== 1 ||
+                          !tokenInputs[0].value || tokenInputs[0].value.length > 16384) return 2;
+                      const submits = Array.from(form.querySelectorAll('input[type="submit"]'));
+                      if (submits.length !== 1 || submits[0].value !== $quotedExpectedValue) return 2;
+                      submits[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            if (waitingForSource) SystemClock.sleep(RECIPE_POLL_MILLIS)
+            else SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickMalagaClaveAfirmaProvider(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedServiceProvider = JSONObject.quote(MALAGA_CLAVE_SERVICE_PROVIDER_URL)
+        val quotedServiceRedirect = JSONObject.quote(MALAGA_CLAVE_SERVICE_REDIRECT_URL)
+        val quotedAfirmaOnClick = JSONObject.quote(MALAGA_AFIRMA_ONCLICK)
+        val quotedAfirmaImage = JSONObject.quote(MALAGA_AFIRMA_IMAGE_SRC)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForExpectedUrl = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, MALAGA_CLAVE_SERVICE_PROVIDER_URL)) {
+                    waitingForExpectedUrl = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      if (location.href !== $quotedServiceProvider) return 2;
+                      const forms = Array.from(document.querySelectorAll('form[name="idpRedirect"]'));
+                      if (forms.length !== 1) return forms.length === 0 ? 0 : 2;
+                      const form = forms[0];
+                      if ((form.getAttribute('method') || '').toLowerCase() !== 'post' ||
+                          form.action !== $quotedServiceRedirect) return 2;
+                      const saml = form.querySelectorAll('input[type="hidden"][name="SAMLRequest"]');
+                      const relay = form.querySelectorAll('input[type="hidden"][name="RelayState"]');
+                      const selected = form.querySelectorAll('input[type="hidden"][name="SelectedIdP"]');
+                      if (saml.length !== 1 || relay.length !== 1 || selected.length !== 1 ||
+                          saml[0].value.length < 512 || saml[0].value.length > 32768 ||
+                          relay[0].value.length < 1 || relay[0].value.length > 512 ||
+                          selected[0].value !== '') return 2;
+                      if (typeof window.selectedIdP !== 'function') return 2;
+                      const controls = Array.from(document.querySelectorAll('[onclick]')).filter(
+                        element => element.getAttribute('onclick') === $quotedAfirmaOnClick
+                      );
+                      const images = Array.from(document.querySelectorAll('img')).filter(
+                        image => image.getAttribute('src') === $quotedAfirmaImage
+                      );
+                      if (controls.length !== 1 || images.length !== 1 ||
+                          !controls[0].contains(images[0])) return 2;
+                      controls[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForExpectedUrl) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        val terminalFailureDeadline =
+            SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
     private fun clickStaCertificateLogin(
@@ -1689,6 +1850,18 @@ class RealE2eInstrumentedTest {
         const val LLEIDA_CERT_BUTTON_ARIA_LABEL = "VALid"
         const val LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"
         const val DIPUTACION_SEVILLA_PORTAL_ID = "diputacion-sevilla-sede"
+        const val MALAGA_PORTAL_ID = "diputacion-malaga-sede"
+        const val MALAGA_ENTRY_URL =
+            "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
+        const val MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"
+        const val MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"
+        const val MALAGA_CLAVE_SERVICE_PROVIDER_URL =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val MALAGA_CLAVE_SERVICE_REDIRECT_URL =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val MALAGA_AFIRMA_ONCLICK =
+            "JAVASCRIPT:selectedIdP('AFIRMA');idpRedirect.submit();"
+        const val MALAGA_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"
         const val DIPUTACION_SEVILLA_INDEX_URL =
             "https://sedeelectronicadipusevilla.es/opencms/system/modules/sede/elements/secciones/index"
         const val DIPUTACION_SEVILLA_AUTH_URL =
