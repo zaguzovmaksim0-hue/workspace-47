@@ -98,10 +98,12 @@ class EivissaCadesDetachedAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("eivissa-instancia-general-cades-v1")
         const val PROFILE_ID = "eivissa-sede-electronica"
-        const val PROFILE_VERSION = 1
+        const val PROFILE_VERSION = 2
         const val INITIATOR_ORIGIN = "https://seu.conselldeivissa.es"
-        const val START_URL = "https://seu.conselldeivissa.es/"
         const val PROCEDURE_ID = "6269002703260065905043"
+        const val START_URL =
+            "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=$PROCEDURE_ID"
         const val SAFE_DESCRIPTION = "Firma de Instancia General en la Sede electrónica del Consell Insular d’Eivissa"
         const val MAX_PAYLOAD_BYTES = 524_288
         const val MAX_EXTRA_PROPERTIES_CHARS = 16_384

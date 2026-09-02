@@ -501,6 +501,16 @@ object SiteProfileCatalogParser {
                     (clientAuthPolicy.fixedQueryParameters.isNotEmpty() ||
                         clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty() ||
                         p.profileId.value == PATTEX_PROFILE_ID)
+            val sameOriginInPlaceClientAuth =
+                p.profileId.value == EIVISSA_PROFILE_ID &&
+                    clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+                    clientAuthPolicy.requestPort == 443 &&
+                    clientAuthPolicy.requestMethod == HttpMethod.GET &&
+                    clientAuthOrigins == p.initiatorOrigins &&
+                    clientAuthPolicy.sourceUrls == setOf(URI(EIVISSA_CLIENT_AUTH_SOURCE_URL)) &&
+                    clientAuthPolicy.requestPath == EIVISSA_CLIENT_AUTH_PATH &&
+                    clientAuthPolicy.fixedQueryParameters.isEmpty() &&
+                    clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty()
             val sameOriginRedirectClientAuth =
                 p.profileId.value == LA_RIOJA_PROFILE_ID &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE &&
@@ -514,9 +524,12 @@ object SiteProfileCatalogParser {
             if (clientAuthPolicy?.requestPort == 443) {
                 require(
                     (clientAuthOrigins intersect p.initiatorOrigins).isEmpty() ||
-                        sameOriginDirectClientAuth || sameOriginRedirectClientAuth
+                        sameOriginDirectClientAuth || sameOriginInPlaceClientAuth || sameOriginRedirectClientAuth
                 )
-                require((clientAuthOrigins intersect p.redirectOrigins).isEmpty() || sameOriginDirectClientAuth)
+                require(
+                    (clientAuthOrigins intersect p.redirectOrigins).isEmpty() ||
+                        sameOriginDirectClientAuth || sameOriginInPlaceClientAuth
+                )
                 require((clientAuthOrigins intersect p.trustedBrowseOrigins).isEmpty())
             }
             if (p.compatibilityStatus == CompatibilityStatus.BROWSE_ONLY ||
@@ -539,7 +552,9 @@ object SiteProfileCatalogParser {
                         p.capabilities ==
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
-                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID ||
+                    p.profileId.value == EIVISSA_PROFILE_ID
+                ) {
                     require(p.endpoints.isEmpty())
                     require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
                     require(p.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
@@ -1305,8 +1320,22 @@ object SiteProfileCatalogParser {
         require(profile.startUrl.toASCIIString() == EIVISSA_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EIVISSA_ORIGIN)))
         require(profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        require(clientAuth.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE)
+        require(clientAuth.requestOrigins == setOf(ExactOrigin.parse(EIVISSA_ORIGIN)))
+        require(clientAuth.sourceUrls == setOf(URI(EIVISSA_CLIENT_AUTH_SOURCE_URL)))
+        require(clientAuth.requestPath == EIVISSA_CLIENT_AUTH_PATH)
+        require(clientAuth.fixedQueryParameters.isEmpty())
+        require(clientAuth.requiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.sourceFixedQueryParameters.isEmpty())
+        require(clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameterMappings.isEmpty())
+        require(!clientAuth.allowEmptyIssuerList)
+        require(clientAuth.grantTtlSeconds == 15 && clientAuth.requestPort == 443)
+        require(clientAuth.requestMethod == HttpMethod.GET)
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
         val op = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         require(op.safeDescription == EIVISSA_SAFE_DESCRIPTION)
@@ -1318,8 +1347,8 @@ object SiteProfileCatalogParser {
         require(op.mode == SignatureMode.IMPLICIT)
         require(op.fixedExtraProperties == EIVISSA_FIXED_EXTRA_PROPERTIES)
         require(op.allowedExtraProperties == setOf("filter", "mimeType"))
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EIVISSA_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+        val evidence = profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn }
+        require(evidence == EIVISSA_EVIDENCE_REVIEWS)
     }
 
     private fun validateTenerifeProfile(profile: SiteProfile) {
@@ -2956,17 +2985,26 @@ object SiteProfileCatalogParser {
         "https://sede.xunta.gal/presenta/main.293423417603b2d37c80.js",
     )
     private const val EIVISSA_PROFILE_ID = "eivissa-sede-electronica"
-    private const val EIVISSA_PROFILE_VERSION = 1
+    private const val EIVISSA_PROFILE_VERSION = 2
     private const val EIVISSA_DISPLAY_NAME = "Consell Insular d’Eivissa — Sede electrónica"
-    private const val EIVISSA_START_URL = "https://seu.conselldeivissa.es/"
+    private const val EIVISSA_PROCEDURE_ID = "6269002703260065905043"
+    private const val EIVISSA_START_URL =
+        "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?" +
+            "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=$EIVISSA_PROCEDURE_ID"
     private const val EIVISSA_ORIGIN = "https://seu.conselldeivissa.es"
+    private const val EIVISSA_CLIENT_AUTH_SOURCE_URL =
+        "$EIVISSA_ORIGIN/sta/reg/auth/es/$EIVISSA_PROCEDURE_ID"
+    private const val EIVISSA_CLIENT_AUTH_PATH =
+        "/sta/reg/auth/do/CERT/es/$EIVISSA_PROCEDURE_ID"
     private const val EIVISSA_SAFE_DESCRIPTION =
         "Firma de Instancia General en la Sede electrónica del Consell Insular d’Eivissa"
     private val EIVISSA_FIXED_EXTRA_PROPERTIES = linkedMapOf("headless" to "true", "mode" to "implicit")
-    private val EIVISSA_EVIDENCE_URLS = setOf(
-        EIVISSA_START_URL,
-        "https://seu.conselldeivissa.es/sta/reg/autofirma.js",
-        "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043",
+    private val EIVISSA_EVIDENCE_REVIEWS = mapOf(
+        "https://seu.conselldeivissa.es/" to LocalDate.parse("2026-08-18"),
+        "https://seu.conselldeivissa.es/sta/reg/autofirma.js" to LocalDate.parse("2026-08-18"),
+        EIVISSA_START_URL to LocalDate.parse("2026-08-18"),
+        EIVISSA_CLIENT_AUTH_SOURCE_URL to LocalDate.parse("2026-09-02"),
+        "$EIVISSA_ORIGIN$EIVISSA_CLIENT_AUTH_PATH" to LocalDate.parse("2026-09-02"),
     )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
     private const val TENERIFE_PROFILE_VERSION = 1

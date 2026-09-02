@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "e502f6be969c4b28aa398f595f1b55c626e3091a52de08c0d79323d14242d75d",
+  "sourceRevision": "4b8214749a1a0fa531d105b1f058fa8cf3963f6de06e4f0aebc732ba57121c6e",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -3465,7 +3465,7 @@
       "territory": "Illes Balears",
       "purpose": "El portal institucional delega la tramitación electrónica mediante su enlace público «Seu electrònica» a la Sede oficial del Consell Insular d’Eivissa, cuyo launch canónico ya dispone de perfil QA-only independiente.",
       "entryUrl": "https://www.conselldeivissa.es/",
-      "launchUrl": "https://seu.conselldeivissa.es/",
+      "launchUrl": "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
       "protocolFamily": "DELEGACION_EIVISSA_SEDE",
@@ -3491,10 +3491,12 @@
       "territory": "Illes Balears",
       "purpose": "Firma local CAdES de Instancia General tras autenticación con certificado, sin ejecutar presentación administrativa.",
       "entryUrl": "https://seu.conselldeivissa.es/",
+      "launchUrl": "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043",
       "observedMechanisms": [
         "AUTOFIRMA",
         "AUTOSCRIPT",
         "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH",
         "ELECTRONIC_SIGNATURE"
       ],
       "observedSignatureFormats": [
@@ -3508,10 +3510,11 @@
         "I03B",
         "EIVISSA-INSTANCIA-GENERAL-2026-08-18",
         "EIVISSA-REG-AUTOFIRMA-2026-08-18",
-        "EIVISSA-CONTROLLED-AUTH-2026-08-18"
+        "EIVISSA-CONTROLLED-AUTH-2026-08-18",
+        "EIVISSA-LIVE-CERT-TLS-2026-09-02"
       ],
-      "reviewedOn": "2026-08-18",
-      "limitations": "IMPLEMENTED_NOT_E2E: perfil QA limitado al origin/PID y al contrato Android CAdES SHA256 implícito demostrado; autenticación con certificado validada, pero no se realizó firma real, AutofirmaUpload, presentación, pago ni aceptación E2E."
+      "reviewedOn": "2026-09-02",
+      "limitations": "IMPLEMENTED_NOT_E2E: el launch QA queda ligado a la Instancia General exacta; el selector /sta/reg/auth/es/PID ofrece CERTIFICADO DIGITAL y el GET exacto /sta/reg/auth/do/CERT/es/PID provoca TLS 1.2 CertificateRequest same-origin. Falta confirmar con el certificado real el retorno autenticado y la firma/callback sin presentación administrativa."
     },
     {
       "portalId": "formentera-portal-institucional",

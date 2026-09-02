@@ -1006,7 +1006,18 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin.serialized == EivissaCadesDetachedAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty() &&
-            profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) &&
+            profile.clientAuthPolicy?.let { clientAuth ->
+                clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+                    clientAuth.requestOrigins == setOf(ExactOrigin.parse(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
+                    clientAuth.sourceUrls == setOf(java.net.URI(EIVISSA_CLIENT_AUTH_SOURCE_URL)) &&
+                    clientAuth.requestPath == EIVISSA_CLIENT_AUTH_PATH &&
+                    clientAuth.fixedQueryParameters.isEmpty() &&
+                    clientAuth.requiredEphemeralQueryParameters.isEmpty() &&
+                    !clientAuth.allowEmptyIssuerList && clientAuth.grantTtlSeconds == 15 &&
+                    clientAuth.requestPort == 443 &&
+                    clientAuth.requestMethod == dev.junta.firmamobile.profile.HttpMethod.GET
+            } == true &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
             profile.certificateRules.requireDigitalSignatureKeyUsage && profile.operationPolicies.size == 1 &&
             operation.safeDescription == EivissaCadesDetachedAdapter.SAFE_DESCRIPTION &&
@@ -1746,6 +1757,10 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val TYPE_MINIAPPLET_SIGN = "MINIAPPLET_SIGN"
         private const val TYPE_MINIAPPLET_CANCEL = "MINIAPPLET_CANCEL"
         private const val ALGORITHM_SHA1_RSA = "SHA1withRSA"
+        private const val EIVISSA_CLIENT_AUTH_SOURCE_URL =
+            "https://seu.conselldeivissa.es/sta/reg/auth/es/${EivissaCadesDetachedAdapter.PROCEDURE_ID}"
+        private const val EIVISSA_CLIENT_AUTH_PATH =
+            "/sta/reg/auth/do/CERT/es/${EivissaCadesDetachedAdapter.PROCEDURE_ID}"
         private val EIVISSA_SUMMARY_PATH = Regex(
             "^/sta/reg/(?:tramite|tramit)/" + EivissaCadesDetachedAdapter.PROCEDURE_ID +
                 "/(?:formulario|formulari)/summary/referencia/[0-9a-fA-F-]{36}$",

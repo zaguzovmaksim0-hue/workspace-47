@@ -2139,7 +2139,7 @@ records:
         self.assertEqual("eivissa-sede-electronica", eivissa["profileId"])
         self.assertEqual("ES-PUB-0121", eivissa["inventoryId"])
         self.assertEqual("https://www.conselldeivissa.es/", eivissa["entryUrl"])
-        self.assertEqual("https://seu.conselldeivissa.es/", eivissa["launchUrl"])
+        self.assertEqual("https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043", eivissa["launchUrl"])
         self.assertEqual("E2E_PENDING", eivissa["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", eivissa["inventoryStatus"])
         self.assertEqual("2026-08-21", eivissa["reviewedOn"])
@@ -2148,6 +2148,15 @@ records:
         self.assertEqual([], eivissa["observedSignatureFormats"])
         self.assertIn("alias", eivissa["limitations"].lower())
         self.assertIn("e2e", eivissa["limitations"].lower())
+
+
+    def test_eivissa_sede_launches_exact_instancia_general_profile(self) -> None:
+        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
+        target = next(entry for entry in catalog["entries"] if entry["portalId"] == "eivissa-sede-electronica")
+        self.assertEqual("eivissa-sede-electronica", target["profileId"])
+        self.assertEqual("https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043", target["launchUrl"])
+        self.assertIn("CLIENT_TLS_AUTH", target["observedMechanisms"])
+        self.assertEqual("2026-09-02", target["reviewedOn"])
 
 
     def test_fuerteventura_institutional_alias_binds_exact_existing_sede_profile(self) -> None:
