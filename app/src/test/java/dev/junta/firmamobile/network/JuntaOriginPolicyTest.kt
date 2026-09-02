@@ -667,7 +667,7 @@ class JuntaOriginPolicyTest {
             ),
         )
         assertEquals(
-            setOf("sede.malaga.es", "clave.malaga.es"),
+            setOf("sede.malaga.es", "clave.malaga.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(malaga),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(malaga).isEmpty())
@@ -677,9 +677,15 @@ class JuntaOriginPolicyTest {
                 malaga,
             ),
         )
-        assertFalse(
+        assertTrue(
             JuntaOriginPolicy.isAllowed(
                 Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                malaga,
+            ),
+        )
+        assertFalse(
+            JuntaOriginPolicy.isAllowed(
+                Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
                 malaga,
             ),
         )
