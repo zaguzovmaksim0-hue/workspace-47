@@ -618,16 +618,14 @@ class RealE2eInstrumentedTest {
         val quotedExpectedLabel = expectedLabel?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedAriaLabel = expectedAriaLabel?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedOnClick = expectedOnClick?.let { JSONObject.quote(it) } ?: "null"
+        val quotedWaitForBadajozSignHook = waitForBadajozSignHook.toString()
         while (SystemClock.elapsedRealtime() < deadline) {
             if (hasObservedTerminalNavigationFailure()) return
-            if (waitForBadajozSignHook && !hasObservedBadajozSignHookReady()) {
-                SystemClock.sleep(RECIPE_POLL_MILLIS)
-                continue
-            }
             val inspected = CountDownLatch(1)
             var failure: String? = null
             var clicked = false
             var waitingForExpectedUrl = false
+            var waitingForBadajozSignHook = false
             scenario.onActivity { activity ->
                 val field = MainActivity::class.java.getDeclaredField("currentWebView")
                     .apply { isAccessible = true }
@@ -654,6 +652,7 @@ class RealE2eInstrumentedTest {
                       const expectedLabel = $quotedExpectedLabel;
                       const expectedAriaLabel = $quotedExpectedAriaLabel;
                       const expectedOnClick = $quotedExpectedOnClick;
+                      const waitForBadajozSignHook = $quotedWaitForBadajozSignHook;
                       const elements = Array.from(document.querySelectorAll('button')).filter(element => {
                         if (element.getAttribute('type') !== 'button') return false;
                         if (expectedId !== null && element.id !== expectedId) return false;
@@ -666,6 +665,10 @@ class RealE2eInstrumentedTest {
                       });
                       if (elements.length === 0) return 0;
                       if (elements.length !== 1) return 2;
+                      if (waitForBadajozSignHook && (
+                          window.__jfmBadajozSignHookReady !== true ||
+                          typeof window.MiniApplet?.sign !== 'function'
+                      )) return 3;
                       elements[0].click();
                       return 1;
                     })()
@@ -674,6 +677,7 @@ class RealE2eInstrumentedTest {
                     when (recipeCode) {
                         "1" -> clicked = true
                         "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                        "3" -> waitingForBadajozSignHook = true
                     }
                     inspected.countDown()
                 }
@@ -681,6 +685,10 @@ class RealE2eInstrumentedTest {
             check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
             check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
             if (waitingForExpectedUrl) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            if (waitingForBadajozSignHook) {
                 SystemClock.sleep(RECIPE_POLL_MILLIS)
                 continue
             }
@@ -773,12 +781,6 @@ class RealE2eInstrumentedTest {
             record.contains("event=NETWORK_ERROR") ||
                 record.contains("event=SSL_ERROR_CANCELLED") ||
                 record.contains("event=NAVIGATION_BLOCKED")
-        }
-
-    private fun hasObservedBadajozSignHookReady(): Boolean =
-        diagnosticRecords().any { record ->
-            record.contains("event=MINIAPPLET_BRIDGE") &&
-                record.contains("stage=BADAJOZ_SIGN_HOOK_READY")
         }
 
     private fun observePortal(

@@ -583,6 +583,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         source = self.read(ROOT / "app/src/main/res/raw/afirma_shim.js")
         self.assertIn('postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED")', source)
         self.assertIn('postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY")', source)
+        self.assertIn('window.__jfmBadajozSignHookReady = true', source)
         self.assertIn('postBadajozDiagnosticOnce("BADAJOZ_CERT_BUTTON_CLICK")', source)
         for stage in (
             "BADAJOZ_PULSAR_SIGN_ENTRY",
@@ -595,6 +596,12 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setInterval(rewrapLateBadajozGlobals, 250)', source)
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
+
+    def test_badajoz_recipe_waits_in_webview_for_the_ready_sign_hook(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('window.__jfmBadajozSignHookReady !== true', source)
+        self.assertIn('typeof window.MiniApplet?.sign !== \'function\'', source)
+        self.assertIn('"3" -> waitingForBadajozSignHook = true', source)
 
     def test_select_emits_no_blank_record_for_empty_filtered_shard(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
