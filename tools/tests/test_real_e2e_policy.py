@@ -471,6 +471,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("private fun signingCoordinatorForScenario(", source)
         self.assertIn("private fun clickSigningConfirmation(", source)
         self.assertIn("AccessibilityNodeInfo.ACTION_CLICK", source)
+        self.assertIn("repeat(16)", source)
         observation = source[source.index("private fun observePortal("):]
         observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
         self.assertIn("signingCoordinatorForScenario(scenario)", observation)
