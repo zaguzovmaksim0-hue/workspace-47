@@ -800,13 +800,25 @@ class BrowserSecurityRegressionTest {
         val preparationBlock = source
             .substringAfter("private fun prepareMiniAppletSigning(", missingDelimiterValue = "")
             .substringBefore("\n    private fun recordMiniAppletPreparationDiagnostic")
+        val preparationDiagnosticBlock = source
+            .substringAfter(
+                "private fun recordMiniAppletPreparationDiagnostic(",
+                missingDelimiterValue = "",
+            )
+            .substringBefore("\n    private fun recordMiniAppletBridgeDiagnostic")
         val diagnosticBlock = source
             .substringAfter("private fun recordMiniAppletBridgeDiagnostic(", missingDelimiterValue = "")
             .substringBefore("\n    private fun prepareMelillaBatchSigning")
 
         assertTrue("ordinary signing must distinguish ownership rejection", "OWNERSHIP_REJECTED" in preparationBlock)
-        assertTrue("ordinary signing must record accepted preparation", "PREPARE_READY" in diagnosticBlock)
-        assertTrue("ordinary signing must record rejected preparation", "PREPARE_REJECTED" in diagnosticBlock)
+        assertTrue(
+            "ordinary signing must record accepted preparation",
+            "PREPARE_READY" in preparationDiagnosticBlock,
+        )
+        assertTrue(
+            "ordinary signing must record rejected preparation",
+            "PREPARE_REJECTED" in preparationDiagnosticBlock,
+        )
         assertTrue("preparation diagnostics must be QA-only", "BuildConfig.ALLOW_QA_PROFILES" in diagnosticBlock)
         assertTrue(
             "preparation diagnostics must use sanitized bridge logging",
