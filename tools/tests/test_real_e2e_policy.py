@@ -665,6 +665,18 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_catalunya_peticio_recipe_uses_non_captcha_clave_path(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"catalunya-tramits-peticio-generica"', source)
+        self.assertIn('expectedLabel = CATALUNYA_SIGNED_START_LABEL', source)
+        self.assertIn("element.value === 'Accedeix'", source)
+        self.assertIn('reqCode=autenticarFormulariHtml&authMFA=false', source)
+        self.assertIn('uri.queryParameterNames == CATALUNYA_AOC_QUERY_KEYS', source)
+        self.assertIn("document.getElementById('btnContinuaClave')", source)
+        self.assertIn("element.getAttribute('onclick') !== \"submitLoginForm('clave')\"", source)
+        self.assertIn("element.classList.contains('g-recaptcha')", source)
+        self.assertNotIn('btnContinuaCertCaptcha', source[source.index('private fun runCatalunyaPeticioClaveRecipe'):source.index('private fun runNavarraClientTlsRecipe')])
+
     def test_navarra_recipe_links_live_router_state_to_certificate_login(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"navarra-sede-registro-general"', source)

@@ -287,6 +287,7 @@ class RealE2eInstrumentedTest {
             LA_RIOJA_PORTAL_ID -> clickLaRiojaCertificateLogin(scenario)
             NAVARRA_PORTAL_ID -> runNavarraClientTlsRecipe(scenario)
             ASTURIAS_PORTAL_ID -> clickAsturiasClaveAuth(scenario)
+            CATALUNYA_PETICIO_PORTAL_ID -> runCatalunyaPeticioClaveRecipe(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
@@ -549,6 +550,162 @@ class RealE2eInstrumentedTest {
             return
         }
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun runCatalunyaPeticioClaveRecipe(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = CATALUNYA_PETICIO_ENTRY_URL,
+            expectedLabel = CATALUNYA_SIGNED_START_LABEL,
+            expectedHref = CATALUNYA_SIGNED_START_URL,
+        )
+        clickCatalunyaAccedeix(scenario)
+        clickCatalunyaClave(scenario)
+    }
+
+    private fun clickCatalunyaAccedeix(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForPage = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, CATALUNYA_SIGNED_START_URL)) {
+                    waitingForPage = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const elements = Array.from(document.querySelectorAll('input')).filter(element =>
+                        element.getAttribute('type') === 'button' &&
+                        element.value === 'Accedeix' &&
+                        element.getAttribute('onclick') ===
+                          "location.href='/gsitgf/AppJava/traint/renderitzaruploadSecure.do?reqCode=autenticarFormulariHtml&authMFA=false'" &&
+                        element.classList.contains('btn') &&
+                        element.classList.contains('btn-form')
+                      );
+                      if (elements.length === 0) return 0;
+                      if (elements.length !== 1) return 2;
+                      elements[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForPage || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickCatalunyaClave(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            var waitingForAoc = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !catalunyaAocUrlMatches(currentUrl)) {
+                    waitingForAoc = true
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const form = document.getElementById('login-form');
+                      if (!form || form.tagName !== 'FORM' ||
+                          form.getAttribute('action') !== '/o/oauth2/login' ||
+                          (form.getAttribute('method') || '').toLowerCase() !== 'post') return 2;
+                      const authMethod = document.getElementById('authMethod');
+                      if (!authMethod || authMethod.tagName !== 'INPUT' ||
+                          authMethod.getAttribute('type') !== 'hidden' ||
+                          authMethod.getAttribute('name') !== 'authMethod') return 2;
+                      const element = document.getElementById('btnContinuaClave');
+                      if (!element) return 0;
+                      const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
+                      if (element.tagName !== 'BUTTON' ||
+                          label !== 'Cl@ve PIN24, Ciutadans UE ...' ||
+                          element.getAttribute('onclick') !== "submitLoginForm('clave')" ||
+                          !element.classList.contains('btn-clave') ||
+                          element.classList.contains('g-recaptcha')) return 2;
+                      element.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (waitingForAoc || !clicked) {
+                SystemClock.sleep(RECIPE_POLL_MILLIS)
+                continue
+            }
+            return
+        }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun catalunyaAocUrlMatches(actualUrl: String): Boolean {
+        val uri = Uri.parse(actualUrl)
+        return uri.scheme == "https" &&
+            uri.host == CATALUNYA_AOC_HOST &&
+            uri.path == CATALUNYA_AOC_PATH &&
+            uri.queryParameterNames == CATALUNYA_AOC_QUERY_KEYS &&
+            uri.getQueryParameter("lang") == "ca" &&
+            uri.getQueryParameter("scope") == "autenticacio_usuari" &&
+            uri.getQueryParameter("state") == "state" &&
+            uri.getQueryParameter("redirect_uri") == CATALUNYA_AOC_REDIRECT_URI &&
+            uri.getQueryParameter("response_type") == "code" &&
+            uri.getQueryParameter("client_id") == "gsit.gencat.cat" &&
+            uri.getQueryParameter("approval_prompt") == "auto"
     }
 
     private fun runNavarraClientTlsRecipe(
@@ -2118,6 +2275,24 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_CERTIFICATE_ALT_CA =
             "Identificar-se amb certificat digital a través del nostre servidor"
         val SEDIPUALBA_TOKEN_PATTERN = Regex("[A-Za-z0-9_-]{16,128}")
+        const val CATALUNYA_PETICIO_PORTAL_ID = "catalunya-tramits-peticio-generica"
+        const val CATALUNYA_PETICIO_ENTRY_URL =
+            "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?" +
+                "category=72461610-a82c-11e3-a972-000c29052e2c"
+        const val CATALUNYA_SIGNED_START_LABEL =
+            "Inicia . Ves a Presentar amb signatura electrònica"
+        const val CATALUNYA_SIGNED_START_URL =
+            "https://ovt.gencat.cat/gsitgf/AppJava/traint/renderitzar.do?" +
+                "reqCode=inicial&set-locale=ca_ES&idioma=ca_ES&idServei=ING001HTM2&" +
+                "urlRetorn=https%3A%2F%2Ftramits.gencat.cat%2Fca%2Ftramits%2Ftramits-temes%2F" +
+                "Peticio-generica%3Fcategory%3D72461610-a82c-11e3-a972-000c29052e2c"
+        const val CATALUNYA_AOC_HOST = "valid.aoc.cat"
+        const val CATALUNYA_AOC_PATH = "/o/oauth2/auth"
+        const val CATALUNYA_AOC_REDIRECT_URI =
+            "https://ovt.gencat.cat/gsitfc/AppJava/redirectservlet"
+        val CATALUNYA_AOC_QUERY_KEYS = setOf(
+            "lang", "scope", "state", "redirect_uri", "response_type", "client_id", "approval_prompt",
+        )
         const val NAVARRA_PORTAL_ID = "navarra-sede-registro-general"
         const val NAVARRA_ENTRY_URL =
             "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
