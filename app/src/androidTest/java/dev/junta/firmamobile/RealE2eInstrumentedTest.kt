@@ -1122,20 +1122,28 @@ class RealE2eInstrumentedTest {
                 hasAnyAncestor(isDialog())
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
-            if (performSigningConfirmationAction(exactDialogButton)) return true
+            if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = true)) {
+                return true
+            }
+            if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = false)) {
+                return true
+            }
             SystemClock.sleep(POLL_MILLIS)
         }
         return false
     }
 
-    private fun performSigningConfirmationAction(matcher: SemanticsMatcher): Boolean {
+    private fun performSigningConfirmationAction(
+        matcher: SemanticsMatcher,
+        useUnmergedTree: Boolean,
+    ): Boolean {
         val callbackHandled = AtomicBoolean(false)
         return runCatching {
-            val nodes = rule.onAllNodes(matcher, useUnmergedTree = false).fetchSemanticsNodes()
+            val nodes = rule.onAllNodes(matcher, useUnmergedTree).fetchSemanticsNodes()
             if (nodes.size != 1) {
                 false
             } else {
-                rule.onNode(matcher, useUnmergedTree = false)
+                rule.onNode(matcher, useUnmergedTree)
                     .performSemanticsAction(SemanticsActions.OnClick) { onClick ->
                         callbackHandled.set(onClick())
                     }
