@@ -563,6 +563,35 @@ class RealE2ePolicyTest(unittest.TestCase):
             )
             self.assertNotEqual(0, rejected.returncode)
 
+        exact_32 = [entry["portalId"] for entry in catalog["entries"][:32]]
+        accepted_32 = self.helper(
+            "select", "--catalog", str(CATALOG), "--portal", ",".join(exact_32)
+        )
+        self.assertEqual(0, accepted_32.returncode, accepted_32.stderr)
+        self.assertEqual(exact_32, accepted_32.stdout.splitlines())
+
+        rejected_33 = self.helper(
+            "select",
+            "--catalog",
+            str(CATALOG),
+            "--portal",
+            ",".join(exact_32 + [catalog["entries"][32]["portalId"]]),
+        )
+        self.assertNotEqual(0, rejected_33.returncode)
+
+        rejected_multi_shard = self.helper(
+            "select",
+            "--catalog",
+            str(CATALOG),
+            "--portal",
+            ",".join(selected),
+            "--shard-index",
+            "0",
+            "--shard-total",
+            "6",
+        )
+        self.assertNotEqual(0, rejected_multi_shard.returncode)
+
     def test_progress_validator_accepts_only_sanitized_checkpoint_fields(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "progress.tsv"

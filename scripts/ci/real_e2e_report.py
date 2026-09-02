@@ -158,6 +158,8 @@ def selected_ids(
             raise ValueError("portal filter must contain 1-32 unique bundled portal ids separated by commas")
     if (shard_index is None) != (shard_total is None):
         raise ValueError("shard index and total must be supplied together")
+    if requested is not None and len(requested) > 1 and shard_total not in (None, 1):
+        raise ValueError("portal filter cannot be combined with multi-shard selection")
     if shard_total is not None:
         if shard_total < 1 or shard_total > 32 or shard_index is None or not 0 <= shard_index < shard_total:
             raise ValueError("invalid shard selection")
