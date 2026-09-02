@@ -665,6 +665,97 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
+    def test_catalunya_peticio_recipe_uses_non_captcha_clave_path(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"catalunya-tramits-peticio-generica"', source)
+        self.assertIn('expectedLabel = CATALUNYA_SIGNED_START_LABEL', source)
+        self.assertIn("element.value === 'Accedeix'", source)
+        self.assertIn('reqCode=autenticarFormulariHtml&authMFA=false', source)
+        self.assertIn('uri.queryParameterNames == CATALUNYA_AOC_QUERY_KEYS', source)
+        self.assertIn("document.getElementById('btnContinuaClave')", source)
+        self.assertIn("element.getAttribute('onclick') !== \"submitLoginForm('clave')\"", source)
+        self.assertIn("element.classList.contains('g-recaptcha')", source)
+        self.assertNotIn('btnContinuaCertCaptcha', source[source.index('private fun runCatalunyaPeticioClaveRecipe'):source.index('private fun runNavarraClientTlsRecipe')])
+
+    def test_navarra_recipe_links_live_router_state_to_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"navarra-sede-registro-general"', source)
+        self.assertIn('expectedLabel = NAVARRA_TRAMITAR_LABEL', source)
+        self.assertIn('uri.queryParameterNames != setOf("ReturnUrl")', source)
+        self.assertIn('callback.getQueryParameter("client_id") == "rge"', source)
+        self.assertIn('callback.getQueryParameter("redirect_uri") == NAVARRA_RGE_URL', source)
+        self.assertIn("label !== 'Certificado Digital o DNIe'", source)
+        self.assertIn("target.pathname === '/ateka/Certificate/login'", source)
+        self.assertIn("target.searchParams.get('returnUrl') === expectedReturnUrl", source)
+
+    def test_asturias_recipe_submits_only_reviewed_auth_form(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"asturias-miprincipado-sede"', source)
+        self.assertIn("document.getElementById('sytInitForm')", source)
+        self.assertIn("action.href !== 'https://tramita.asturias.es/sta/Relec/STARhssoManager'", source)
+        self.assertIn("dboidSolicitud: '6269000102616541907573'", source)
+        self.assertIn("autoFirma: 'false'", source)
+        self.assertIn("label === 'Con sistema Clave'", source)
+        self.assertIn("button.getAttribute('onclick') === 'javascript:sendFormCustom(false);'", source)
+
+    def test_la_rioja_recipe_validates_redirect_state_before_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('"la-rioja-oficina-electronica"', source)
+        self.assertIn('uri.queryParameterNames != LA_RIOJA_SOURCE_QUERY_KEYS', source)
+        self.assertIn('target.queryParameterNames == setOf("act_codi", "uuidep")', source)
+        self.assertIn('LA_RIOJA_UUID_PATTERN.matches(uuid)', source)
+        self.assertIn("document.getElementById('boton_certificado')", source)
+        self.assertIn("label !== 'Conectar'", source)
+        self.assertIn("loginClientCertSSL('https://ias1.larioja.org/clientcertSSL/login')", source)
+
+    def test_direct_client_tls_recipes_are_exact_authentication_controls(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal_id in (
+            "diputacion-valladolid-sede",
+            "diputacion-soria-sede",
+            "diputacion-jaen-sede",
+        ):
+            self.assertIn(f'"{portal_id}"', source)
+        self.assertIn('expectedLabel = VALLADOLID_CERT_LABEL', source)
+        self.assertIn('expectedHref = VALLADOLID_CERT_HREF', source)
+        self.assertIn('expectedElementId = SORIA_CERT_BUTTON_ID', source)
+        self.assertIn('expectedOnClick = SORIA_CERT_BUTTON_ONCLICK', source)
+        self.assertIn('expectedLabel = JAEN_LOGIN_LABEL', source)
+        self.assertIn('expectedHref = JAEN_LOGIN_HREF', source)
+        self.assertIn('expectedLabel = JAEN_CERT_LABEL', source)
+        self.assertIn('expectedHref = JAEN_CERT_HREF', source)
+
+    def test_menorca_recipe_is_exact_and_authentication_only(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal_id in ("menorca-portal-institucional", "menorca-sede-electronica"):
+            self.assertIn(f'"{portal_id}"', source)
+        self.assertIn('elementId = MENORCA_START_LINK_ID', source)
+        self.assertIn('expectedHref = MENORCA_START_LINK_HREF', source)
+        self.assertIn("document.getElementById('ctl00_Content1_Button1')", source)
+        self.assertIn("element.getAttribute('type') !== 'submit'", source)
+        self.assertIn("element.value !== 'Certificat electrònic'", source)
+        self.assertIn('uri.queryParameterNames == setOf("URL")', source)
+        self.assertIn('linkedUrl in MENORCA_ALLOWED_LINKED_URLS', source)
+        self.assertNotIn('LoginCert.aspx', source[source.index('private fun runMenorcaClientTlsRecipe'):source.index('private fun clickExactAnchor')])
+
+    def test_sedipualba_recipe_is_shared_and_fail_closed(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal_id in (
+            "diputacion-albacete-portal",
+            "diputacion-leon-sede",
+            "mallorca-portal-institucional",
+            "mallorca-sede-electronica",
+        ):
+            self.assertIn(f'"{portal_id}"', source)
+        self.assertIn("runSedipualbaClientTlsRecipe", source)
+        self.assertIn("frame.contentWindow.location.href", source)
+        self.assertIn("url.pathname === '/segex/identificacion_opciones.aspx'", source)
+        self.assertIn("keys.includes('idtoken') && keys.includes('idioma')", source)
+        self.assertIn("/^[A-Za-z0-9_-]{16,128}$/.test(idToken)", source)
+        self.assertIn("doc.getElementById('optSsl')", source)
+        self.assertNotIn('window.location.assign(', source)
+        self.assertIn("/imgs/identificacion/certificado.svg", source)
+
     def test_badajoz_recipe_waits_in_webview_for_the_ready_sign_hook(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('window.__jfmBadajozSignHookReady !== true', source)
