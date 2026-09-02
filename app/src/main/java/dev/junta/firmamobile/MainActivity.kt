@@ -542,14 +542,46 @@ class MainActivity : ComponentActivity() {
     ) {
         val requestId = request.normalized.requestId
         if (!signingFlowOwnership.acquire(SigningFlowKind.ORDINARY, requestId)) {
+            recordMiniAppletBridgeDiagnostic(
+                request = request,
+                stage = "OWNERSHIP_REJECTED",
+                errorCode = SigningErrorCode.PROTOCOL_FAILED,
+            )
             request.normalized.close()
             runCatching { reply.failure(SigningErrorCode.PROTOCOL_FAILED) }
             return
         }
         val result = signingCoordinator.prepare(request.normalized, reply)
+        recordMiniAppletPreparationDiagnostic(request, result)
         if (result is SigningPreparationResult.Rejected && signingCoordinator.state.value is SigningUiState.Idle) {
             signingFlowOwnership.release(SigningFlowKind.ORDINARY, requestId)
         }
+    }
+
+    private fun recordMiniAppletPreparationDiagnostic(
+        request: MiniAppletBridgeRequest,
+        result: SigningPreparationResult,
+    ) {
+        val (stage, errorCode) = when (result) {
+            is SigningPreparationResult.Ready -> "PREPARE_READY" to null
+            is SigningPreparationResult.Rejected -> "PREPARE_REJECTED" to result.code
+        }
+        recordMiniAppletBridgeDiagnostic(request, stage, errorCode)
+    }
+
+    private fun recordMiniAppletBridgeDiagnostic(
+        request: MiniAppletBridgeRequest,
+        stage: String,
+        errorCode: SigningErrorCode?,
+    ) {
+        if (!BuildConfig.ALLOW_QA_PROFILES) return
+        (application as JuntaFirmaApplication).sanitizedLogger.recordMiniAppletBridge(
+            stage = stage,
+            originHost = request.normalized.context.origin.host,
+            algorithm = request.normalized.algorithm.name,
+            format = request.normalized.format.name,
+            errorCode = errorCode?.name,
+        )
     }
 
     private fun prepareMelillaBatchSigning(
