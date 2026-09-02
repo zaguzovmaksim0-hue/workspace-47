@@ -1015,7 +1015,7 @@ class RealE2eInstrumentedTest {
     ): AccessibilityNodeInfo? {
         if (node.isVisibleToUser && node.text?.toString()?.trim() == expectedText) {
             var candidate: AccessibilityNodeInfo? = node
-            repeat(5) {
+            repeat(16) {
                 val current = candidate ?: return@repeat
                 if (current.isVisibleToUser && current.isClickable) {
                     return current
