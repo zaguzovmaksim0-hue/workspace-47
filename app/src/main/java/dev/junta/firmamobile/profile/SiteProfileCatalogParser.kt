@@ -49,7 +49,7 @@ object SiteProfileCatalogParser {
             endpoints = endpoints.associateBy { it.endpointId },
             operationPolicies = operations.associateBy { it.operation },
             capabilities = enums(o.array("capabilities")),
-            clientAuthPolicy = o.nullableObject("clientAuthPolicy")?.let(::clientAuth),
+            clientAuthPolicy = o.nullableObject("clientAuthPolicy")?.let { clientAuth(it, profileId) },
             certificateRules = certificateRules(o.objValue("certificateRules")),
             evidence = o.array("evidence").map(::evidence),
         )
@@ -107,7 +107,7 @@ object SiteProfileCatalogParser {
         )
     }
 
-    private fun clientAuth(o: JObject): ClientAuthPolicy {
+    private fun clientAuth(o: JObject, profileId: ProfileId): ClientAuthPolicy {
         val baseKeys = arrayOf(
             "transitionMode", "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
             "requiredEphemeralQueryParameters", "allowEmptyIssuerList", "grantTtlSeconds",
@@ -235,9 +235,21 @@ object SiteProfileCatalogParser {
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
                 require(requestPort == 443)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
-                require(sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty())
+                val exactQuerylessEivissaGet =
+                    profileId.value == EIVISSA_PROFILE_ID &&
+                        requestMethod == HttpMethod.GET &&
+                        fixed.isEmpty() && ephemeral.isEmpty() &&
+                        sourceFixed.isEmpty() && sourceEphemeral.isEmpty() &&
+                        sourceBase64UrlConstraints.isEmpty() &&
+                        requestContinuationUrlConstraints.isEmpty() &&
+                        returnUrlConstraints.isEmpty()
+                require(
+                    exactQuerylessEivissaGet ||
+                        sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty(),
+                )
                 when (requestMethod) {
                     HttpMethod.POST -> {
+                        require(!exactQuerylessEivissaGet)
                         require(fixed.isEmpty() && ephemeral.isEmpty())
                         require(
                             sourceBase64UrlConstraints.isEmpty() &&
@@ -246,9 +258,12 @@ object SiteProfileCatalogParser {
                         )
                     }
                     HttpMethod.GET -> {
-                        require(sourceBase64UrlConstraints.isNotEmpty())
-                        require(returnUrlConstraints.isNotEmpty())
-                        require(fixed.isNotEmpty() || ephemeral.isNotEmpty())
+                        require(
+                            exactQuerylessEivissaGet ||
+                                (sourceBase64UrlConstraints.isNotEmpty() &&
+                                    returnUrlConstraints.isNotEmpty() &&
+                                    (fixed.isNotEmpty() || ephemeral.isNotEmpty())),
+                        )
                     }
                 }
             }
