@@ -653,6 +653,23 @@ class RealE2ePolicyTest(unittest.TestCase):
             rejected = self.helper("validate-log", "--log", str(path))
             self.assertNotEqual(0, rejected.returncode)
 
+    def test_sta_responsive_identify_uses_visible_contract_not_inner_text(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('private fun clickExactStaResponsiveIdentifyAnchor(', source)
+        self.assertIn("querySelectorAll(':scope > span.a-text')", source)
+        self.assertIn("(labels[0].textContent || '').trim().replace(/\\s+/g, ' ')", source)
+        self.assertIn("element.classList.contains('responsive')", source)
+        self.assertIn("element.classList.contains('ui-link')", source)
+        self.assertIn("element.classList.contains('tamano-defecto')", source)
+        self.assertIn("element.classList.contains('iconed')", source)
+        self.assertIn("element.getAttribute(\'onclick\') === $quotedExpectedOnClick", source)
+        self.assertIn('STA_IDENTIFY_ONCLICK =', source)
+        helper = source[source.index('private fun clickExactStaResponsiveIdentifyAnchor'):]
+        helper = helper[:helper.index('private fun clickExactAnchor')]
+        self.assertNotIn('element.innerText', helper)
+        self.assertNotIn('window.location.assign(', helper)
+        self.assertNotIn('form.submit()', helper)
+
     def test_badajoz_hook_diagnostics_are_sanitized_and_bounded(self) -> None:
         source = self.read(ROOT / "app/src/main/res/raw/afirma_shim.js")
         self.assertIn('postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED")', source)
