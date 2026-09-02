@@ -50,6 +50,7 @@ import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
 import dev.junta.firmamobile.browser.BrowserTrustController
 import dev.junta.firmamobile.browser.BrowserUrlPolicy
+import dev.junta.firmamobile.browser.CarneJovenPreTlsRetryController
 import dev.junta.firmamobile.browser.AuthorizedClientAuthTarget
 import dev.junta.firmamobile.browser.ClientAuthGrant
 import dev.junta.firmamobile.browser.ClientCertPreferenceClearRequest
@@ -246,6 +247,9 @@ fun BrowserScreen(
     val clientAuthAuthorizer = remember(selectedServiceId) {
         ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.runtimeRegistry)
     }
+    val carneJovenPreTlsRetryController = remember(selectedServiceId) {
+        CarneJovenPreTlsRetryController()
+    }
     val clientAuthClearRequest = remember(selectedServiceId) {
         AtomicReference<ClientCertPreferenceClearRequest?>()
     }
@@ -341,6 +345,7 @@ fun BrowserScreen(
     }
 
     fun abandonClientAuth() {
+        carneJovenPreTlsRetryController.reset()
         cancelClientAuthClearCallback()
         preserveWebViewDuringClientAuthClear = false
         preconfirmedInPlaceClientAuthRef.set(null)
@@ -360,6 +365,7 @@ fun BrowserScreen(
     }
 
     fun recoverClientAuthPreparationFailure(requestAnotherClear: Boolean) {
+        carneJovenPreTlsRetryController.reset()
         cancelClientAuthClearCallback()
         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
         pendingClientAuthTarget = null
@@ -480,6 +486,7 @@ fun BrowserScreen(
     }
 
     fun beginClientCertPreferenceRecovery() {
+        carneJovenPreTlsRetryController.reset()
         cancelClientAuthClearCallback()
         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
         pendingClientAuthTarget = null
@@ -960,8 +967,36 @@ fun BrowserScreen(
                                         pendingClientAuthTargetEpoch = navigationEpoch.longValue
                                         pendingClientAuthTarget = authorized
                                     } else {
+                                        carneJovenPreTlsRetryController.reset()
                                         clientAuthAuthorizer.invalidate()
                                     }
+                                },
+                                onPreconfirmedClientAuthNetworkTimeout = retry@{ authorized ->
+                                    val retrySource = carneJovenPreTlsRetryController.nextSource(authorized)
+                                        ?: return@retry false
+                                    val liveWebView = webViewRef.get()
+                                    val liveClient = normalClientRef.get()
+                                    if (liveWebView !== webView || liveClient == null ||
+                                        authorized.profileId != effectiveTopLevelProfileId
+                                    ) {
+                                        carneJovenPreTlsRetryController.reset()
+                                        return@retry false
+                                    }
+                                    val refreshed = authorized.refreshedAfterUserConfirmation()
+                                    if (!liveClient.armConfirmedInPlaceClientAuth(
+                                            refreshed,
+                                            navigationEpoch.longValue,
+                                        )
+                                    ) {
+                                        carneJovenPreTlsRetryController.reset()
+                                        return@retry false
+                                    }
+                                    preconfirmedInPlaceClientAuthRef.set(refreshed)
+                                    browserError = null
+                                    pageProgress = 0
+                                    liveWebView.stopLoading()
+                                    liveWebView.loadUrl(retrySource.toASCIIString())
+                                    true
                                 },
                                 isConfirmedClientAuthReturnUrl = { rawUrl ->
                                     inPlaceClientAuthHandlerRef.get()?.isAuthFlowUrl(rawUrl) == true
@@ -970,6 +1005,9 @@ fun BrowserScreen(
                                     inPlaceClientAuthHandlerRef.get()?.resolveRequestContinuation(rawUrl)
                                 },
                                 onInPlaceClientAuthChallenge = onInPlaceChallenge@{ authorized, request ->
+                                    if (carneJovenPreTlsRetryController.matchesRetryContract(authorized)) {
+                                        carneJovenPreTlsRetryController.reset()
+                                    }
                                     val currentHandler = inPlaceClientAuthHandlerRef.get()
                                     val continuation = currentHandler?.resolveRequestContinuation(
                                         authorized.target.toASCIIString(),
@@ -1339,6 +1377,7 @@ fun BrowserScreen(
                     pendingClientAuthTarget = null
                     abandonClientAuth()
                 } else {
+                    carneJovenPreTlsRetryController.reset()
                     val confirmedTarget = authorized.refreshedAfterUserConfirmation()
                     pendingClientAuthTarget = null
                     onCancelSigning(SigningCancelReason.NAVIGATION, null)

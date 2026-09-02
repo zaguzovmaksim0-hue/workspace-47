@@ -10,6 +10,7 @@ import android.webkit.ClientCertRequest
 import android.webkit.WebResourceRequest
 import android.webkit.TestWebResourceError
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.webkit.ValueCallback
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
@@ -983,6 +984,165 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun carneJovenPreTlsTimeoutRetriesConfirmedFlowWithoutRetainingOldGrant() {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val source = CARNE_JOVEN_SOURCE
+        val confirmed = confirmedCarneJovenTarget(70L)
+        val callbacks = RecordingBrowserCallbacks()
+        var retryTarget: AuthorizedClientAuthTarget? = null
+        var retryCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+            onPreconfirmedClientAuthNetworkTimeout = { authorized ->
+                retryTarget = authorized
+                retryCount++
+                true
+            },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, 70L))
+        inPlaceClient.shouldInterceptRequest(webView, request(source))
+        inPlaceClient.onPageStarted(webView, source, null)
+        val refreshedTarget = carneJovenTargetUrl(
+            ticket = "synthetic-ticket-retry",
+            session = "synthetic-session-retry",
+        )
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(refreshedTarget)))
+        inPlaceClient.onPageStarted(webView, refreshedTarget, null)
+
+        inPlaceClient.onReceivedError(
+            webView,
+            request(refreshedTarget),
+            TestWebResourceError(WebViewClient.ERROR_TIMEOUT, "synthetic connect timeout"),
+        )
+
+        assertEquals(1, retryCount)
+        assertEquals(refreshedTarget, retryTarget?.target?.toASCIIString())
+        assertFalse(callbacks.events.contains("error:NETWORK_ERROR"))
+        assertTrue(logger.exportText().contains("client-auth-pre-tls-timeout-retry"))
+
+        // The failed target was consumed before retry; a late challenge cannot reuse it.
+        val lateRequest = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, lateRequest)
+        assertEquals(1, lateRequest.ignores)
+    }
+
+    @Test
+    fun carneJovenTimeoutAfterClientCertChallengeNeverAutoRetries() {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val confirmed = confirmedCarneJovenTarget(70L)
+        val callbacks = RecordingBrowserCallbacks()
+        var retryCount = 0
+        var challengeCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+            onPreconfirmedClientAuthNetworkTimeout = {
+                retryCount++
+                true
+            },
+            onInPlaceClientAuthChallenge = { _, _ -> challengeCount++ },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, 70L))
+        inPlaceClient.shouldInterceptRequest(webView, request(CARNE_JOVEN_SOURCE))
+        inPlaceClient.onPageStarted(webView, CARNE_JOVEN_SOURCE, null)
+        val target = carneJovenTargetUrl(
+            ticket = "synthetic-ticket-post-cert",
+            session = "synthetic-session-post-cert",
+        )
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(target)))
+        inPlaceClient.onPageStarted(webView, target, null)
+        inPlaceClient.onReceivedClientCertRequest(webView, RecordingClientCertRequest())
+        assertEquals(1, challengeCount)
+
+        inPlaceClient.onReceivedError(
+            webView,
+            request(target),
+            TestWebResourceError(WebViewClient.ERROR_TIMEOUT, "synthetic post-cert timeout"),
+        )
+
+        assertEquals(0, retryCount)
+        assertTrue(callbacks.events.contains("error:NETWORK_ERROR"))
+    }
+
+    @Test
+    fun carneJovenNonTimeoutNetworkFailureDoesNotRetryAndClearsPendingGrant() {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val confirmed = confirmedCarneJovenTarget(70L)
+        val callbacks = RecordingBrowserCallbacks()
+        var retryCount = 0
+        val inPlaceClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 70L },
+            onPreconfirmedClientAuthNetworkTimeout = {
+                retryCount++
+                true
+            },
+        )
+        assertTrue(inPlaceClient.armConfirmedInPlaceClientAuth(confirmed, 70L))
+        inPlaceClient.shouldInterceptRequest(webView, request(CARNE_JOVEN_SOURCE))
+        inPlaceClient.onPageStarted(webView, CARNE_JOVEN_SOURCE, null)
+        val target = carneJovenTargetUrl(
+            ticket = "synthetic-ticket-connect-error",
+            session = "synthetic-session-connect-error",
+        )
+        assertFalse(inPlaceClient.shouldOverrideUrlLoading(webView, request(target)))
+        inPlaceClient.onPageStarted(webView, target, null)
+
+        inPlaceClient.onReceivedError(
+            webView,
+            request(target),
+            TestWebResourceError(WebViewClient.ERROR_CONNECT, "synthetic connect failure"),
+        )
+
+        assertEquals(0, retryCount)
+        assertTrue(callbacks.events.contains("error:NETWORK_ERROR"))
+        val lateRequest = RecordingClientCertRequest()
+        inPlaceClient.onReceivedClientCertRequest(webView, lateRequest)
+        assertEquals(1, lateRequest.ignores)
+    }
+
+    @Test
+    fun carneJovenRetryControllerIsExactBoundedAndResettable() {
+        val authorized = confirmedCarneJovenTarget(70L)
+        val controller = CarneJovenPreTlsRetryController(maxRetries = 2)
+
+        assertEquals(java.net.URI(CARNE_JOVEN_SOURCE), controller.nextSource(authorized))
+        assertEquals(java.net.URI(CARNE_JOVEN_SOURCE), controller.nextSource(authorized))
+        assertNull(controller.nextSource(authorized))
+
+        controller.reset()
+        assertEquals(java.net.URI(CARNE_JOVEN_SOURCE), controller.nextSource(authorized))
+        controller.reset()
+        assertNull(
+            controller.nextSource(
+                authorized.copy(profileId = ProfileId("junta-andalucia-vea-peg")),
+            ),
+        )
+        assertNull(
+            controller.nextSource(
+                authorized.copy(
+                    target = java.net.URI(
+                        "https://ws235.juntadeandalucia.es/not-authenticationFacade",
+                    ),
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun veaPreconfirmedSourceAlsoRebindsWhenPageStartedPrecedesIntercept() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val source = veaSourceUrl()
@@ -1134,6 +1294,37 @@ class JuntaWebViewClientTest {
         veaClient.onReceivedClientCertRequest(webView, nearMissRequest)
         assertEquals(1, nearMissRequest.ignores)
     }
+
+    private fun confirmedCarneJovenTarget(epoch: Long): AuthorizedClientAuthTarget {
+        val profileId = ProfileId("carne-joven-andalucia")
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        authorizer.observeTopLevelNavigation(
+            profileId,
+            CARNE_JOVEN_INDEX,
+            CARNE_JOVEN_SOURCE,
+            epoch - 1,
+            true,
+        )
+        authorizer.onTopLevelPageStarted(CARNE_JOVEN_SOURCE, epoch)
+        return checkNotNull(
+            authorizer.observeTopLevelNavigation(
+                profileId,
+                CARNE_JOVEN_SOURCE,
+                carneJovenTargetUrl(),
+                epoch,
+                true,
+            ),
+        ).refreshedAfterUserConfirmation()
+    }
+
+    private fun carneJovenTargetUrl(
+        ticket: String = "synthetic-ticket",
+        session: String = "synthetic-session",
+    ): String =
+        "https://ws235.juntadeandalucia.es/authenticationFacade" +
+            "?action=validateCert&appId=IAJ.CARNETJOVEN" +
+            "&ticketId=$ticket&webSessionId=$session" +
+            "&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
 
     private fun confirmedVeaTarget(epoch: Long): AuthorizedClientAuthTarget {
         val profileId = ProfileId("junta-andalucia-vea-peg")
@@ -1302,6 +1493,10 @@ class JuntaWebViewClientTest {
     }
 
     private companion object {
+        const val CARNE_JOVEN_INDEX =
+            "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+        const val CARNE_JOVEN_SOURCE =
+            "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
         const val VEA_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
         const val VEA_START = "$VEA_ORIGIN/inicio/procedimiento-detalle/PEG_VEA"
         const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"

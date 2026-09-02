@@ -67,6 +67,7 @@ class JuntaWebViewClient(
     private val activeProfileId: () -> ProfileId? = { null },
     private val currentNavigationEpoch: () -> Long = { 0L },
     private val onClientAuthTarget: (AuthorizedClientAuthTarget) -> Unit = {},
+    private val onPreconfirmedClientAuthNetworkTimeout: (AuthorizedClientAuthTarget) -> Boolean = { false },
     private val onInPlaceClientAuthChallenge: (AuthorizedClientAuthTarget, ClientCertRequest) -> Unit = { _, request ->
         request.ignore()
     },
@@ -139,7 +140,11 @@ class JuntaWebViewClient(
                 val refreshed = preconfirmed.authorized.copy(target = target).refreshedAfterUserConfirmation()
                 preconfirmedInPlaceSource.compareAndSet(preconfirmed, null)
                 pendingInPlaceClientAuth.set(
-                    PendingInPlaceClientAuth(refreshed, currentNavigationEpoch()),
+                    PendingInPlaceClientAuth(
+                        authorized = refreshed,
+                        navigationEpoch = currentNavigationEpoch(),
+                        wasPreconfirmedByUser = true,
+                    ),
                 )
                 logger.recordNavigationEvent(
                     code = DiagnosticEventCode.NAVIGATION_ALLOWED,
@@ -331,6 +336,7 @@ class JuntaWebViewClient(
         ) {
             return false
         }
+        pendingInPlaceClientAuth.set(null)
         preconfirmedInPlaceSource.set(
             PreconfirmedInPlaceSource(authorized, navigationEpoch, sourceObserved = false),
         )
@@ -440,10 +446,38 @@ class JuntaWebViewClient(
         request: WebResourceRequest,
         error: WebResourceError,
     ) {
-        if (request.isForMainFrame && isCurrentWebView(view)) {
-            logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR)
-            callbacks.onBrowserError(BrowserErrorCode.NETWORK_ERROR)
+        if (!request.isForMainFrame || !isCurrentWebView(view)) return
+
+        val pending = pendingInPlaceClientAuth.get()
+        val retryablePreTlsTimeout =
+            error.errorCode == ERROR_TIMEOUT &&
+                pending?.wasPreconfirmedByUser == true &&
+                pending.navigationEpoch == currentNavigationEpoch() &&
+                pending.authorized.profileId == activeProfileId() &&
+                request.url.toString() == pending.authorized.target.toASCIIString()
+        if (retryablePreTlsTimeout &&
+            pending != null &&
+            pendingInPlaceClientAuth.compareAndSet(pending, null)
+        ) {
+            val handled = runCatching {
+                onPreconfirmedClientAuthNetworkTimeout(pending.authorized)
+            }.getOrDefault(false)
+            if (handled) {
+                logger.recordPortalCallback(
+                    stage = "client-auth-pre-tls-timeout-retry",
+                    host = pending.authorized.target.host,
+                )
+                return
+            }
+        } else if (pending != null &&
+            request.url.toString() == pending.authorized.target.toASCIIString()
+        ) {
+            // A failed main-frame target must never retain a usable client-cert grant.
+            pendingInPlaceClientAuth.compareAndSet(pending, null)
         }
+
+        logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR)
+        callbacks.onBrowserError(BrowserErrorCode.NETWORK_ERROR)
     }
 
     override fun onReceivedHttpError(
@@ -512,6 +546,7 @@ class JuntaWebViewClient(
     private data class PendingInPlaceClientAuth(
         val authorized: AuthorizedClientAuthTarget,
         val navigationEpoch: Long,
+        val wasPreconfirmedByUser: Boolean = false,
     )
 
     private companion object {
