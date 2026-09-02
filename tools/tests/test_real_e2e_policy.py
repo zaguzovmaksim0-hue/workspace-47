@@ -668,7 +668,8 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_clave_afirma_provider_is_shared_by_reviewed_client_tls_recipes(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('"age-mutualidad-general-judicial-mugeju"', source)
-        self.assertIn('MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('MUGEJU_PORTAL_ID, DIPUTACION_SEVILLA_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('"diputacion-sevilla-sede"', source)
         self.assertIn('clickAsturiasClaveAuth(scenario)\n        clickClaveAfirmaProvider(scenario)', source)
         self.assertIn('clickCatalunyaClave(scenario)\n        clickClaveAfirmaProvider(scenario)', source)
         self.assertIn('expectedHref = OURENSE_IDENTIFY_HREF,\n        )\n        clickClaveAfirmaProvider(scenario)', source)

@@ -298,7 +298,7 @@ class RealE2eInstrumentedTest {
             SANIDAD_PORTAL_ID -> runSanidadClientTlsRecipe(scenario)
             VEA_PORTAL_ID -> runVeaCertificateAuthRecipe(scenario)
             TGSS_PORTAL_ID -> clickTgssIpceAuth(scenario)
-            MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
+            MUGEJU_PORTAL_ID, DIPUTACION_SEVILLA_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = VALLADOLID_ENTRY_URL,
