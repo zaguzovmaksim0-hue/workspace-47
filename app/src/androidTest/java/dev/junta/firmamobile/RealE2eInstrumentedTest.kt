@@ -832,6 +832,11 @@ class RealE2eInstrumentedTest {
         var postSignObservationDeadline: Long? = null
         var postSignTracker: PostSignTracker? = null
         val safeAuthSigning = deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES
+        val signingCoordinator = if (safeAuthSigning) {
+            signingCoordinatorForScenario(scenario)
+        } else {
+            null
+        }
 
         while (
             SystemClock.elapsedRealtime() < deadline ||
@@ -885,7 +890,8 @@ class RealE2eInstrumentedTest {
             }
 
             val signingConfirmationVisible = if (safeAuthSigning) {
-                !signingHandled && currentSigningState(scenario) is SigningUiState.AwaitingConfirmation
+                !signingHandled &&
+                    signingCoordinator?.state?.value is SigningUiState.AwaitingConfirmation
             } else {
                 rule.onAllNodesWithText("Solicitud de firma").fetchSemanticsNodes().isNotEmpty()
             }
@@ -902,7 +908,7 @@ class RealE2eInstrumentedTest {
                     }
                     result.signingConfirmed = true
                     val completedRecords = waitForSigningTerminalState(
-                        scenario = scenario,
+                        signingCoordinator = requireNotNull(signingCoordinator),
                         tracker = signingEvidenceTracker,
                         result = result,
                     )
@@ -949,14 +955,14 @@ class RealE2eInstrumentedTest {
     }
 
     private fun waitForSigningTerminalState(
-        scenario: ActivityScenario<MainActivity>,
+        signingCoordinator: SigningCoordinator,
         tracker: SigningEvidenceTracker,
         result: ProbeResult,
     ): List<String>? {
         val deadline = SystemClock.elapsedRealtime() + SIGNING_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             updateSigningEvidence(diagnosticRecords(), tracker, result)
-            when (val current = currentSigningState(scenario)) {
+            when (val current = signingCoordinator.state.value) {
                 is SigningUiState.Completed -> {
                     result.signatureCompleted = true
                     result.level = maxOf(result.level, 4)
@@ -974,14 +980,16 @@ class RealE2eInstrumentedTest {
         return null
     }
 
-    private fun currentSigningState(scenario: ActivityScenario<MainActivity>): SigningUiState? {
-        var state: SigningUiState? = null
+    private fun signingCoordinatorForScenario(
+        scenario: ActivityScenario<MainActivity>,
+    ): SigningCoordinator {
+        var coordinator: SigningCoordinator? = null
         scenario.onActivity { activity ->
             val field = MainActivity::class.java.getDeclaredField("signingCoordinator")
                 .apply { isAccessible = true }
-            state = (field.get(activity) as SigningCoordinator).state.value
+            coordinator = field.get(activity) as SigningCoordinator
         }
-        return state
+        return requireNotNull(coordinator)
     }
 
     private fun clickSigningConfirmation(): Boolean {
