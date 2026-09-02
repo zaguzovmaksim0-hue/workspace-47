@@ -263,6 +263,13 @@ internal fun buildPersonalizedPortalSections(
                     )
                 }
             }
+        } else {
+            val otherRegions = items.filter {
+                it.regionCode != PortalRegionCode.SPAIN && it.regionCode != selectedRegion
+            }
+            if (otherRegions.isNotEmpty()) {
+                add(PortalCatalogSection(PortalCatalogSectionKind.OTHER_REGIONS, otherRegions))
+            }
         }
     }
 }
