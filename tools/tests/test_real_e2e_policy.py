@@ -379,6 +379,35 @@ class RealE2ePolicyTest(unittest.TestCase):
         ):
             self.assertIn(expected, source)
 
+    def test_malaga_recipe_uses_only_the_reviewed_clave_afirma_client_auth_path(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for expected in (
+            'MALAGA_PORTAL_ID = "diputacion-malaga-sede"',
+            'MALAGA_ENTRY_URL =',
+            'MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"',
+            'MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"',
+            'MALAGA_CLAVE_SERVICE_PROVIDER_URL =',
+            'MALAGA_CLAVE_SERVICE_REDIRECT_URL =',
+            'MALAGA_AFIRMA_ONCLICK =',
+            'MALAGA_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"',
+            'MALAGA_PORTAL_ID -> runMalagaClaveCertificateRecipe(scenario)',
+            "document.querySelectorAll('form#claveFrm')",
+            "input[type=\"hidden\"][name=\"tkn\"]",
+            "input[type=\"submit\"]",
+            "document.querySelectorAll('form[name=\"idpRedirect\"]')",
+            "input[type=\"hidden\"][name=\"SAMLRequest\"]",
+            "input[type=\"hidden\"][name=\"RelayState\"]",
+            "input[type=\"hidden\"][name=\"SelectedIdP\"]",
+            "typeof window.selectedIdP !== 'function'",
+            "controls.length !== 1 || images.length !== 1",
+        ):
+            self.assertIn(expected, source)
+        recipe = source[source.index('private fun runMalagaClaveCertificateRecipe('):]
+        recipe = recipe[:recipe.index('private fun clickStaCertificateLogin(')]
+        self.assertNotIn('window.location=', recipe.replace(' ', ''))
+        self.assertNotIn('loadUrl(', recipe)
+        self.assertIn('controls[0].click()', recipe)
+
     def test_unizar_recipe_targets_the_certificate_button_inside_its_container(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('UNIZAR_PORTAL_ID = "unizar-tramitador"', source)

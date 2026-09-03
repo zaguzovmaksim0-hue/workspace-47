@@ -5585,19 +5585,19 @@ records:
     certificate_required: "CONDICIONAL"
     signature_required: "SI"
     js_client: "NO_VERIFICADO"
-    protocol_family: "CLAVE_GATEWAY_UNVERIFIED"
+    protocol_family: "CLIENT_TLS_AUTH_CLAVE"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
-    operation_summary: "Instancia general exacta con navegación QA hasta el handoff local a Cl@ve; no se expone firma, selección de certificado ni client-auth."
-    protocol_evidence: "La ficha oficial de Instancia general enlaza Iniciar el Trámite a /instancia-general/nueva-instancia-general/. Ese launch público publica un POST a https://clave.malaga.es/clave.php; el POST vigente devuelve Conectando a cl@ve... y un formulario hacia pasarela.clave.gob.es/Proxy2/ServiceProvider. El perfil permite solo sede.malaga.es y el primer handoff local clave.malaga.es; la pasarela nacional queda fail-closed y el contrato de firma posterior sigue NO_VERIFICADO."
-    client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP26A", "DP26B", "MALAGA-INSTANCIA-2026-08-20", "MALAGA-INSTANCIA-LAUNCH-2026-08-20", "MALAGA-CLAVE-2026-08-20"]
-    reason: "IMPLEMENTED_NOT_E2E: perfil QA-only de navegación exacta hasta el primer handoff Cl@ve observado. No expone SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, ABI de firma, formato, algoritmo ni endpoint; la autenticación Cl@ve completa y el registro final no se ejecutaron."
-    reviewed_at: "2026-08-20"
-    next_gate: "Con credenciales de prueba autorizadas, continuar el flujo Cl@ve hasta un estado autenticado pre-firma y observar el contrato posterior; detenerse antes de firma criptográfica y asiento registral final."
+    operation_summary: "La Instancia general inicia autenticación Cl@ve; la rama eIdentifier/certificado usa client TLS en pasarela-ident.clave.gob.es. El perfil implementa solo el lanzamiento exacto y esta autenticación acotada; no implementa firma ni presentación administrativa."
+    protocol_evidence: "El launch vigente publica form#claveFrm POST a https://clave.malaga.es/clave.php con 'Acceder con cl@ve'. El handoff local construye SAMLRequest/RelayState y POST a https://pasarela.clave.gob.es/Proxy2/ServiceProvider. En navegador real la página Cl@ve ofrece exactamente una rama AFIRMA mediante selectedIdP('AFIRMA');idpRedirect.submit(), con POST a /Proxy2/ServiceRedirect; el siguiente request observado es POST https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen, endpoint de client-certificate authentication ya usado por el contrato Cl@ve. No se ejecutó firma documental ni presentación registral."
+    client_tls_auth: "SI"
+    evidence_ids: ["D06", "DP26A", "DP26B", "MALAGA-INSTANCIA-LAUNCH-2026-09-03", "MALAGA-CLAVE-LOCAL-2026-09-03", "MALAGA-CLAVE-SP-2026-09-03", "MALAGA-CLAVE-AFIRMA-2026-09-03"]
+    reason: "IMPLEMENTED_NOT_E2E: perfil QA-only limitado al launch exacto, handoff local Cl@ve, ServiceProvider/ServiceRedirect y client TLS de AFIRMA. No expone SIGN, formato, algoritmo, callback ni envío del registro."
+    reviewed_at: "2026-09-03"
+    next_gate: "Validar en Android QA el acceso con certificado hasta la primera vista autenticada de la Diputación de Málaga y detenerse antes de cualquier firma documental o presentación final."
 
   - inventory_id: "ES-PUB-0165"
     surface_key: "diputacion-ourense-sede"
@@ -6658,6 +6658,10 @@ availability, certificado, firma ni contrato técnico.
 [MALAGA-INSTANCIA-2026-08-20]: https://sede.malaga.es/instancia-general/
 [MALAGA-INSTANCIA-LAUNCH-2026-08-20]: https://sede.malaga.es/instancia-general/nueva-instancia-general/
 [MALAGA-CLAVE-2026-08-20]: https://clave.malaga.es/clave.php
+[MALAGA-INSTANCIA-LAUNCH-2026-09-03]: https://sede.malaga.es/instancia-general/nueva-instancia-general/
+[MALAGA-CLAVE-LOCAL-2026-09-03]: https://clave.malaga.es/clave.php
+[MALAGA-CLAVE-SP-2026-09-03]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
+[MALAGA-CLAVE-AFIRMA-2026-09-03]: https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen
 [DP27A]: https://sede.depourense.es
 [DP27B]: https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_FIRMASELEC
 [DP28A]: https://sede.diputaciondepalencia.es

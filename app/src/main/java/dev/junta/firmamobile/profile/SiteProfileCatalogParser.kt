@@ -467,6 +467,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == MUGEJU_PROFILE_ID) {
                 validateMugejuProfile(p)
             }
+            if (p.profileId.value == MALAGA_PROFILE_ID) {
+                validateMalagaProfile(p)
+            }
             if (p.profileId.value == XUNTA_PROFILE_ID) {
                 validateXuntaProfile(p)
             }
@@ -573,6 +576,7 @@ object SiteProfileCatalogParser {
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
+                            MALAGA_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
                             CORUNA_PROFILE_ID,
                         ) -> p.initiatorOrigins + p.redirectOrigins
@@ -1481,6 +1485,43 @@ object SiteProfileCatalogParser {
         require(
             profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn } ==
                 MUGEJU_EVIDENCE_REVIEWS,
+        )
+    }
+
+    private fun validateMalagaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == MALAGA_PROFILE_VERSION)
+        require(profile.displayName == MALAGA_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == MALAGA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MALAGA_ORIGIN)))
+        require(
+            profile.redirectOrigins == setOf(
+                ExactOrigin.parse(MALAGA_LOCAL_CLAVE_ORIGIN),
+                ExactOrigin.parse(AIREF_CLAVE_ORIGIN),
+            ),
+        )
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)),
+                sourceUrls = setOf(URI(MALAGA_CLIENT_AUTH_SOURCE_URL)),
+                requestPath = MALAGA_CLIENT_AUTH_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+            ),
+        )
+        require(
+            profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn } ==
+                MALAGA_EVIDENCE_REVIEWS,
         )
     }
 
@@ -2449,6 +2490,7 @@ object SiteProfileCatalogParser {
                             PALENCIA_PROFILE_ID,
                             EL_HIERRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
+                            MALAGA_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
                             CORUNA_PROFILE_ID,
                         )
@@ -2468,6 +2510,7 @@ object SiteProfileCatalogParser {
                             MUGEJU_PROFILE_ID,
                             JCCM_REGISTRO_PROFILE_ID,
                             OURENSE_PROFILE_ID,
+                            MALAGA_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
                             CORUNA_PROFILE_ID,
                         )
@@ -3017,6 +3060,24 @@ object SiteProfileCatalogParser {
     )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val OURENSE_PROFILE_ID = "diputacion-ourense-sede"
+    private const val MALAGA_PROFILE_ID = "diputacion-malaga-instancia-general"
+    private const val MALAGA_PROFILE_VERSION = 2
+    private const val MALAGA_DISPLAY_NAME =
+        "Diputación de Málaga — Instancia general — acceso con certificado"
+    private const val MALAGA_START_URL =
+        "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
+    private const val MALAGA_ORIGIN = "https://sede.malaga.es"
+    private const val MALAGA_LOCAL_CLAVE_ORIGIN = "https://clave.malaga.es"
+    private const val MALAGA_CLIENT_AUTH_SOURCE_URL =
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+    private const val MALAGA_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
+    private val MALAGA_EVIDENCE_REVIEWS = mapOf(
+        MALAGA_START_URL to LocalDate.parse("2026-09-03"),
+        "$MALAGA_LOCAL_CLAVE_ORIGIN/clave.php" to LocalDate.parse("2026-09-03"),
+        "$AIREF_CLAVE_ORIGIN/Proxy2/ServiceProvider" to LocalDate.parse("2026-09-03"),
+        MALAGA_CLIENT_AUTH_SOURCE_URL to LocalDate.parse("2026-09-03"),
+        "$AIREF_CLIENT_AUTH_ORIGIN$MALAGA_CLIENT_AUTH_REQUEST_PATH" to LocalDate.parse("2026-09-03"),
+    )
     private const val SEVILLA_DIPUTACION_PROFILE_ID = "diputacion-sevilla-sede"
     private const val CORUNA_PROFILE_ID = "diputacion-a-coruna-solicitud-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
