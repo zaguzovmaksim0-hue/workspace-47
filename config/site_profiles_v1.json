@@ -2202,7 +2202,7 @@
     },
     {
       "profileId": "diputacion-malaga-instancia-general",
-      "profileVersion": 2,
+      "profileVersion": 3,
       "displayName": "Diputación de Málaga — Instancia general — acceso con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -2214,10 +2214,11 @@
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
-        "transitionMode": "DIRECT_FROM_SOURCE",
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
         "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
         "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
         "requestPath": "/IdP2/AuthenticateCitizen",
+        "requestMethod": "POST",
         "fixedQueryParameters": {},
         "requiredEphemeralQueryParameters": [],
         "allowEmptyIssuerList": true,

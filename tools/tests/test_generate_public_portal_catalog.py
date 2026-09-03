@@ -1666,20 +1666,21 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             target["observedMechanisms"],
         )
         self.assertEqual([], target["observedSignatureFormats"])
-        self.assertEqual(2, profile["profileVersion"])
+        self.assertEqual(3, profile["profileVersion"])
         self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
         self.assertEqual(
             ["https://clave.malaga.es", "https://pasarela.clave.gob.es"],
             profile["redirectOrigins"],
         )
         policy = profile["clientAuthPolicy"]
-        self.assertEqual("DIRECT_FROM_SOURCE", policy["transitionMode"])
+        self.assertEqual("IN_PLACE_FROM_SOURCE", policy["transitionMode"])
         self.assertEqual(["https://pasarela-ident.clave.gob.es"], policy["requestOrigins"])
         self.assertEqual(
             ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
             policy["sourceUrls"],
         )
         self.assertEqual("/IdP2/AuthenticateCitizen", policy["requestPath"])
+        self.assertEqual("POST", policy["requestMethod"])
         self.assertEqual({}, policy["fixedQueryParameters"])
         self.assertEqual([], policy["requiredEphemeralQueryParameters"])
         self.assertTrue(policy["allowEmptyIssuerList"])
