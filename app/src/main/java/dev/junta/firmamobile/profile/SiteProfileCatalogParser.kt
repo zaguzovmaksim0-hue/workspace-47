@@ -1508,10 +1508,11 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
         require(
             profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)),
                 sourceUrls = setOf(URI(MALAGA_CLIENT_AUTH_SOURCE_URL)),
                 requestPath = MALAGA_CLIENT_AUTH_REQUEST_PATH,
+                requestMethod = HttpMethod.POST,
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
@@ -3061,7 +3062,7 @@ object SiteProfileCatalogParser {
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val OURENSE_PROFILE_ID = "diputacion-ourense-sede"
     private const val MALAGA_PROFILE_ID = "diputacion-malaga-instancia-general"
-    private const val MALAGA_PROFILE_VERSION = 2
+    private const val MALAGA_PROFILE_VERSION = 3
     private const val MALAGA_DISPLAY_NAME =
         "Diputación de Málaga — Instancia general — acceso con certificado"
     private const val MALAGA_START_URL =

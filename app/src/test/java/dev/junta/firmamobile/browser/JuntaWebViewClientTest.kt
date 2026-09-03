@@ -616,6 +616,63 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun malagaExactTopLevelPostArmsTheInPlaceClaveClientTlsChallenge() {
+        val profileId = ProfileId("diputacion-malaga-instancia-general")
+        var captured: AuthorizedClientAuthTarget? = null
+        var capturedRequest: ClientCertRequest? = null
+        val malagaClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 205L },
+            onInPlaceClientAuthChallenge = { authorized, request ->
+                captured = authorized
+                capturedRequest = request
+            },
+        )
+
+        malagaClient.onPageStarted(webView, MALAGA_CLAVE_SERVICE_REDIRECT, null)
+        assertNull(malagaClient.shouldInterceptRequest(webView, request(MALAGA_CLAVE_CERT_TARGET, method = "POST")))
+        val clientCert = RecordingClientCertRequest(requestHost = "pasarela-ident.clave.gob.es")
+        malagaClient.onReceivedClientCertRequest(webView, clientCert)
+
+        assertEquals(profileId, captured?.profileId)
+        assertEquals(MALAGA_CLAVE_CERT_TARGET, captured?.target?.toASCIIString())
+        assertSame(clientCert, capturedRequest)
+        assertEquals(0, clientCert.ignores)
+    }
+
+    @Test
+    fun malagaGetWrongTargetAndUnarmedClientCertificateChallengeFailClosed() {
+        val profileId = ProfileId("diputacion-malaga-instancia-general")
+        val scenarios = listOf(
+            "GET" to MALAGA_CLAVE_CERT_TARGET,
+            "POST" to MALAGA_CLAVE_CERT_TARGET.replace("/AuthenticateCitizen", "/other"),
+            "POST" to "$MALAGA_CLAVE_CERT_TARGET?extra=1",
+        )
+        scenarios.forEachIndexed { index, (method, target) ->
+            var callbackCount = 0
+            val malagaClient = JuntaWebViewClient(
+                callbacks = RecordingBrowserCallbacks(),
+                logger = logger,
+                navigationPolicy = JuntaNavigationPolicy(profileId),
+                clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+                activeProfileId = { profileId },
+                currentNavigationEpoch = { 206L + index },
+                onInPlaceClientAuthChallenge = { _, _ -> callbackCount++ },
+            )
+            malagaClient.onPageStarted(webView, MALAGA_CLAVE_SERVICE_REDIRECT, null)
+            assertNull(malagaClient.shouldInterceptRequest(webView, request(target, method = method)))
+            val clientCert = RecordingClientCertRequest(requestHost = "pasarela-ident.clave.gob.es")
+            malagaClient.onReceivedClientCertRequest(webView, clientCert)
+            assertEquals(0, callbackCount)
+            assertEquals(1, clientCert.ignores)
+        }
+    }
+
+    @Test
     fun tarragonaGetWrongTargetAndUnarmedClientCertificateChallengeFailClosed() {
         val profileId = ProfileId("diputacion-tarragona-sede")
         val scenarios = listOf(
@@ -1584,6 +1641,10 @@ class JuntaWebViewClientTest {
         const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"
         const val VEA_API_LOGIN = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
         const val VEA_API_RETURN = "https://api-veaja.cloud.juntadeandalucia.es/auth/returnLogin"
+        const val MALAGA_CLAVE_SERVICE_REDIRECT =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val MALAGA_CLAVE_CERT_TARGET =
+            "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         const val TARRAGONA_VALID_SOURCE =
             "https://valid.aoc.cat/o/oauth2/auth?response_type=code&client_id=valid.dipta.cat&" +
                 "redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode&" +
