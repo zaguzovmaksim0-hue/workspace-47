@@ -49,7 +49,7 @@ object SiteProfileCatalogParser {
             endpoints = endpoints.associateBy { it.endpointId },
             operationPolicies = operations.associateBy { it.operation },
             capabilities = enums(o.array("capabilities")),
-            clientAuthPolicy = o.nullableObject("clientAuthPolicy")?.let(::clientAuth),
+            clientAuthPolicy = o.nullableObject("clientAuthPolicy")?.let { clientAuth(it, profileId) },
             certificateRules = certificateRules(o.objValue("certificateRules")),
             evidence = o.array("evidence").map(::evidence),
         )
@@ -107,7 +107,7 @@ object SiteProfileCatalogParser {
         )
     }
 
-    private fun clientAuth(o: JObject): ClientAuthPolicy {
+    private fun clientAuth(o: JObject, profileId: ProfileId): ClientAuthPolicy {
         val baseKeys = arrayOf(
             "transitionMode", "requestOrigins", "sourceUrls", "requestPath", "fixedQueryParameters",
             "requiredEphemeralQueryParameters", "allowEmptyIssuerList", "grantTtlSeconds",
@@ -147,6 +147,12 @@ object SiteProfileCatalogParser {
             true
         }
         val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
+        val requestOrigins = origins(o.array("requestOrigins")).also { require(it.size == 1) }
+        val sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
+            .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) }
+        val requestPath = o.string("requestPath").also {
+            require(it.startsWith('/') && URI(null, null, it, null).rawPath == it)
+        }
         val fixed = stringMap(o.objValue("fixedQueryParameters"))
         val ephemeral = strings(o.array("requiredEphemeralQueryParameters"))
         val sourceFixed = if ("sourceFixedQueryParameters" in o.values) {
@@ -235,7 +241,18 @@ object SiteProfileCatalogParser {
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
                 require(requestPort == 443)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
-                require(sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty())
+                val reviewedUnparameterizedPostSource =
+                    profileId.value == MALAGA_PROFILE_ID &&
+                        requestMethod == HttpMethod.POST &&
+                        requestPort == 443 &&
+                        requestOrigins == setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)) &&
+                        sourceUrls == setOf(URI(MALAGA_CLIENT_AUTH_SOURCE_URL)) &&
+                        requestPath == MALAGA_CLIENT_AUTH_REQUEST_PATH &&
+                        fixed.isEmpty() && ephemeral.isEmpty()
+                require(
+                    sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty() ||
+                        reviewedUnparameterizedPostSource
+                )
                 when (requestMethod) {
                     HttpMethod.POST -> {
                         require(fixed.isEmpty() && ephemeral.isEmpty())
@@ -255,12 +272,9 @@ object SiteProfileCatalogParser {
         }
         return ClientAuthPolicy(
             transitionMode = transitionMode,
-            requestOrigins = origins(o.array("requestOrigins")).also { require(it.size == 1) },
-            sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
-                .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) },
-            requestPath = o.string("requestPath").also {
-                require(it.startsWith('/') && URI(null, null, it, null).rawPath == it)
-            },
+            requestOrigins = requestOrigins,
+            sourceUrls = sourceUrls,
+            requestPath = requestPath,
             fixedQueryParameters = fixed,
             requiredEphemeralQueryParameters = ephemeral,
             allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),

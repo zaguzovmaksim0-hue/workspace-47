@@ -13,6 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -75,6 +76,34 @@ class DiputacionMalagaProfileCatalogBindingTest {
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, targetUrl)?.trustMode,
         )
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+    }
+
+    @Test
+    fun unparameterizedPostExceptionIsScopedToTheExactReviewedMalagaContract() {
+        val json = BuiltInSiteProfiles.JSON
+        val start = json.indexOf("\"profileId\": \"diputacion-malaga-instancia-general\"")
+        assertTrue(start >= 0)
+        val end = json.indexOf("\"profileId\":", start + 1).let { if (it >= 0) it else json.length }
+        val block = json.substring(start, end)
+        val mutations = listOf(
+            block.replace(
+                "\"profileId\": \"diputacion-malaga-instancia-general\"",
+                "\"profileId\": \"unreviewed-malaga-client-auth\"",
+            ),
+            block.replace(
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirectOther",
+            ),
+            block.replace(
+                "\"requestPath\": \"/IdP2/AuthenticateCitizen\"",
+                "\"requestPath\": \"/IdP2/AuthenticateCitizen/other\"",
+            ),
+        )
+        mutations.forEach { mutatedBlock ->
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(json.substring(0, start) + mutatedBlock + json.substring(end))
+            }
+        }
     }
 
     @Test
