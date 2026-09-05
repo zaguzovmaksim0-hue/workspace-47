@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :app:dependencies --write-locks
 androidx.activity:activity-compose:1.13.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.activity:activity-ktx:1.13.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.activity:activity:1.13.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
@@ -117,10 +118,10 @@ androidx.window:window-core:1.5.0=debugRuntimeClasspath,qaRuntimeClasspath,relea
 androidx.window:window:1.5.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 com.fasterxml.woodstox:woodstox-core:6.5.1=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 com.google.guava:listenablefuture:1.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okhttp3:okhttp-android:5.4.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okhttp3:okhttp:5.4.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okio:okio-jvm:3.17.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okio:okio:3.17.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okhttp3:okhttp-android:5.5.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okhttp3:okhttp:5.5.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okio:okio-jvm:3.18.1=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okio:okio:3.18.1=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 com.tom-roush:pdfbox-android:2.0.27.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 commons-codec:commons-codec:1.18.0=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 jakarta.xml.bind:jakarta.xml.bind-api:3.0.1=debugRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
