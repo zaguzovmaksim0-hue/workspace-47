@@ -171,31 +171,51 @@ class ProtocolProbeInstrumentedTest {
         }
     }
 
-    @Test
-    fun iframeIntentIsBlockedWithoutConsumingTheTopLevelSignWindow() {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        instrumentation.uiAutomation.adoptShellPermissionIdentity(Manifest.permission.DUMP)
-        try {
-            launchProbeWithoutInitialLoad().use { scenario ->
-                loadSyntheticPage(scenario, SYNTHETIC_IFRAME_THEN_MAIN_FRAME_PAGE)
+@Test
+fun iframeIntentIsBlockedWithoutPoisoningTheLaterTopLevelSign() {
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    instrumentation.uiAutomation.adoptShellPermissionIdentity(Manifest.permission.DUMP)
+    try {
+        launchProbeWithoutInitialLoad().use { scenario ->
+            loadSyntheticPage(scenario, SYNTHETIC_IFRAME_THEN_MAIN_FRAME_PAGE)
+            awaitTitle(scenario, SYNTHETIC_READY_TITLE)
 
-                val observation = awaitStatus(scenario, CORRELATED_OBSERVATION)
-                val correlatedLines = observation.lineSequence()
-                    .filter { it.contains(CORRELATED_OBSERVATION) }
-                    .toList()
-                assertTrue(observation, correlatedLines.isNotEmpty())
-                assertTrue(correlatedLines.all { it.contains("argument.0.length=37") })
-                assertTrue(correlatedLines.all { it.contains("correlation=REQUEST_ID") })
-                assertFalse(observation.contains(IFRAME_INTENT_CANARY))
-                assertFalse(observation.contains(MAIN_FRAME_INTENT_CANARY))
-                assertHistoryExcludes(scenario, IFRAME_INTENT_CANARY, MAIN_FRAME_INTENT_CANARY)
-                assertEquals(Lifecycle.State.RESUMED, scenario.state)
-            }
-        } finally {
-            instrumentation.uiAutomation.dropShellPermissionIdentity()
+            // Keep this integration test independent of the recorder's 250 ms active-call
+            // security window. The active-window/subframe invariant itself is covered by
+            // ProtocolObservationRecorderTest.subframeNativeBranchCannotConsumeTheTopLevelSignWindow.
+            evaluateJavascriptAndWait(
+                scenario,
+                "document.getElementById('probe-frame').src=" +
+                    "'intent://$IFRAME_INTENT_CANARY/#Intent;scheme=https;end';",
+            )
+            val blockedObservation = awaitStatus(scenario, "event=NAVIGATION_BLOCKED")
+            assertTrue(blockedObservation, blockedObservation.contains("event=NAVIGATION_BLOCKED"))
+            assertFalse(blockedObservation.contains("event=PROTOCOL_CORRELATION_REJECTED"))
+
+            evaluateJavascriptAndWait(
+                scenario,
+                "window.MiniApplet.sign(" +
+                    "'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'," +
+                    "'SHA256withRSA','CAdES','','','');",
+            )
+            val observation = awaitStatus(scenario, CORRELATED_OBSERVATION)
+            val correlatedLines = observation.lineSequence()
+                .filter { it.contains(CORRELATED_OBSERVATION) }
+                .toList()
+            assertTrue(observation, correlatedLines.isNotEmpty())
+            assertTrue(correlatedLines.all { it.contains("argument.0.length=37") })
+            assertTrue(correlatedLines.all { it.contains("correlation=REQUEST_ID") })
+            assertTrue(observation, observation.contains("event=NAVIGATION_BLOCKED"))
+            assertFalse(observation.contains("event=PROTOCOL_CORRELATION_REJECTED"))
+            assertFalse(observation.contains(IFRAME_INTENT_CANARY))
+            assertFalse(observation.contains(MAIN_FRAME_INTENT_CANARY))
+            assertHistoryExcludes(scenario, IFRAME_INTENT_CANARY, MAIN_FRAME_INTENT_CANARY)
+            assertEquals(Lifecycle.State.RESUMED, scenario.state)
         }
+    } finally {
+        instrumentation.uiAutomation.dropShellPermissionIdentity()
     }
-
+}
     @Test
     fun standaloneIntentBeforeSignIsNeverAttachedRetroactively() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -323,6 +343,18 @@ class ProtocolProbeInstrumentedTest {
         return observation
     }
 
+
+private fun evaluateJavascriptAndWait(
+    scenario: ActivityScenario<ProtocolProbeActivity>,
+    script: String,
+) {
+    val completed = CountDownLatch(1)
+    scenario.onActivity { activity ->
+        activity.findViewById<WebView>(R.id.protocol_probe_webview)
+            .evaluateJavascript(script) { completed.countDown() }
+    }
+    assertTrue("JavaScript evaluation timed out", completed.await(5, TimeUnit.SECONDS))
+}
     private fun awaitTitle(
         scenario: ActivityScenario<ProtocolProbeActivity>,
         expected: String,
@@ -410,6 +442,7 @@ class ProtocolProbeInstrumentedTest {
         const val OBSERVATION_FAILURE_CANARY = "jfm-observation-failure-canary"
         const val NON_STRING_MESSAGE_CANARY = "jfm-non-string-message-canary"
         const val SYNTHETIC_DONE_TITLE = "probe-flow-done"
+        const val SYNTHETIC_READY_TITLE = "probe-flow-ready"
         const val ORIGINAL_BEHAVIOR_PRESERVED_TITLE = "probe-original-behavior-preserved"
         const val SAFE_PROBE_STATE_EXPRESSION =
             "JSON.stringify({" +
@@ -443,33 +476,22 @@ class ProtocolProbeInstrumentedTest {
               }, 500));
             </script>
         """.trimIndent()
-        val SYNTHETIC_IFRAME_THEN_MAIN_FRAME_PAGE = """
-            <!doctype html>
-            <iframe id="probe-frame"></iframe>
-            <script>
-              window.MiniApplet = {
-                sign: function(dat) {
-                  if (dat.length === 17) {
-                    document.getElementById("probe-frame").src =
-                      "intent://$IFRAME_INTENT_CANARY/#Intent;scheme=https;end";
-                  } else {
-                    window.open(
-                      "intent://$MAIN_FRAME_INTENT_CANARY/#Intent;scheme=https;end"
-                    );
-                  }
-                }
-              };
-              window.addEventListener("load", () => setTimeout(() => {
-                window.MiniApplet.sign(
-                  "xxxxxxxxxxxxxxxxx", "SHA256withRSA", "CAdES", "", "", ""
-                );
-                setTimeout(() => window.MiniApplet.sign(
-                  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-                  "SHA256withRSA", "CAdES", "", "", ""
-                ), 200);
-              }, 500));
-            </script>
-        """.trimIndent()
+val SYNTHETIC_IFRAME_THEN_MAIN_FRAME_PAGE = """
+    <!doctype html>
+    <iframe id="probe-frame"></iframe>
+    <script>
+      window.MiniApplet = {
+        sign: function() {
+          window.open(
+            "intent://$MAIN_FRAME_INTENT_CANARY/#Intent;scheme=https;end"
+          );
+        }
+      };
+      window.addEventListener("load", () => {
+        document.title = "$SYNTHETIC_READY_TITLE";
+      });
+    </script>
+""".trimIndent()
         val SYNTHETIC_STANDALONE_THEN_SIGN_PAGE = """
             <!doctype html>
             <script>
