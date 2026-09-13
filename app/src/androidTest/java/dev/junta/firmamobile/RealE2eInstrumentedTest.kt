@@ -8,6 +8,7 @@ import android.webkit.WebView
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -1116,11 +1117,12 @@ class RealE2eInstrumentedTest {
         var postSignObservationDeadline: Long? = null
         var postSignTracker: PostSignTracker? = null
         val safeAuthSigning = deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES
-        val signingCoordinator = if (safeAuthSigning) {
+        var signingCoordinator = if (safeAuthSigning) {
             signingCoordinatorForScenario(scenario)
         } else {
             null
         }
+        var signingCoordinatorRefreshed = false
 
         while (
             SystemClock.elapsedRealtime() < deadline ||
@@ -1130,6 +1132,18 @@ class RealE2eInstrumentedTest {
             updateRecordObservations(records, result)
             postSignTracker?.let { updatePostSignObservations(records, it, result) }
             updateCurrentHostFromRecords(records, result)
+
+            // The WebView bridge can finish prepare while Compose is still replacing the
+            // browser subtree. Refresh the coordinator once after the sanitized preparation
+            // marker so a recreated Activity cannot leave the probe watching a stale instance.
+            if (safeAuthSigning && !signingCoordinatorRefreshed && records.any {
+                    it.contains("event=MINIAPPLET_BRIDGE") &&
+                        it.contains("stage=PREPARE_READY")
+                }
+            ) {
+                signingCoordinator = signingCoordinatorForScenario(scenario)
+                signingCoordinatorRefreshed = true
+            }
 
             if (result.hasTerminalSecurityFailure()) {
                 result.classification = ProbeClassification.FAIL_SECURITY_OR_NETWORK
@@ -1277,13 +1291,14 @@ class RealE2eInstrumentedTest {
     }
 
     private fun clickSigningConfirmation(): Boolean {
+        val exactSigningLabel =
+            hasText("Firmar", substring = false, ignoreCase = false) or
+                hasAnyDescendant(
+                    hasText("Firmar", substring = false, ignoreCase = false),
+                )
         val exactDialogButton =
-            hasText("Firmar", substring = false, ignoreCase = false) and
-                hasClickAction() and
-                hasAnyAncestor(isDialog())
-        val exactTextButton =
-            hasText("Firmar", substring = false, ignoreCase = false) and
-                hasClickAction()
+            exactSigningLabel and hasClickAction() and hasAnyAncestor(isDialog())
+        val exactTextButton = exactSigningLabel and hasClickAction()
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = true)) {
