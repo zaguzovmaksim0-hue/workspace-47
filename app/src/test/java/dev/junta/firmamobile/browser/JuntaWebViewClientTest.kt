@@ -645,6 +645,48 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun malagaClavePostSourceCanArmTargetBeforeSourcePageStartCallback() {
+        val profileId = ProfileId("diputacion-malaga-instancia-general")
+        var captured: AuthorizedClientAuthTarget? = null
+        var capturedRequest: ClientCertRequest? = null
+        val malagaClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 207L },
+            onInPlaceClientAuthChallenge = { authorized, request ->
+                captured = authorized
+                capturedRequest = request
+            },
+        )
+
+        // Chromium can report the source POST and immediately report the target POST before
+        // WebViewClient.onPageStarted(ServiceRedirect) has run on the UI thread.
+        malagaClient.onPageStarted(webView, MALAGA_CLAVE_SERVICE_PROVIDER_URL, null)
+        assertNull(
+            malagaClient.shouldInterceptRequest(
+                webView,
+                request(MALAGA_CLAVE_SERVICE_REDIRECT, method = "POST"),
+            ),
+        )
+        assertNull(
+            malagaClient.shouldInterceptRequest(
+                webView,
+                request(MALAGA_CLAVE_CERT_TARGET, method = "POST"),
+            ),
+        )
+        val clientCert = RecordingClientCertRequest(requestHost = "pasarela-ident.clave.gob.es")
+        malagaClient.onReceivedClientCertRequest(webView, clientCert)
+
+        assertEquals(profileId, captured?.profileId)
+        assertEquals(MALAGA_CLAVE_CERT_TARGET, captured?.target?.toASCIIString())
+        assertSame(clientCert, capturedRequest)
+        assertEquals(0, clientCert.ignores)
+    }
+
+    @Test
     fun malagaGetWrongTargetAndUnarmedClientCertificateChallengeFailClosed() {
         val profileId = ProfileId("diputacion-malaga-instancia-general")
         val scenarios = listOf(
@@ -1641,6 +1683,8 @@ class JuntaWebViewClientTest {
         const val VEA_AUTH_FACADE = "$VEA_ORIGIN/authFacade"
         const val VEA_API_LOGIN = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
         const val VEA_API_RETURN = "https://api-veaja.cloud.juntadeandalucia.es/auth/returnLogin"
+        const val MALAGA_CLAVE_SERVICE_PROVIDER_URL =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val MALAGA_CLAVE_SERVICE_REDIRECT =
             "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
         const val MALAGA_CLAVE_CERT_TARGET =
