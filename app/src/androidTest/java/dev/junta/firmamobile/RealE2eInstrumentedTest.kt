@@ -511,8 +511,10 @@ class RealE2eInstrumentedTest {
                       const images = Array.from(document.querySelectorAll('img')).filter(
                         image => image.getAttribute('src') === $quotedAfirmaImage
                       );
-                      if (controls.length !== 1 || images.length !== 1 ||
-                          !controls[0].contains(images[0])) return 2;
+                      if (controls.length !== 1 || images.length !== 1) return 2;
+                      const controlCard = controls[0].closest('article');
+                      const imageCard = images[0].closest('article');
+                      if (!controlCard || controlCard !== imageCard) return 2;
                       controls[0].click();
                       return 1;
                     })()

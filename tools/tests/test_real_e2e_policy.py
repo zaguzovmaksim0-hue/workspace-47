@@ -400,12 +400,16 @@ class RealE2ePolicyTest(unittest.TestCase):
             "input[type=\"hidden\"][name=\"SelectedIdP\"]",
             "typeof window.selectedIdP !== 'function'",
             "controls.length !== 1 || images.length !== 1",
+            "const controlCard = controls[0].closest('article')",
+            "const imageCard = images[0].closest('article')",
+            "if (!controlCard || controlCard !== imageCard) return 2",
         ):
             self.assertIn(expected, source)
         recipe = source[source.index('private fun runMalagaClaveCertificateRecipe('):]
         recipe = recipe[:recipe.index('private fun clickStaCertificateLogin(')]
         self.assertNotIn('window.location=', recipe.replace(' ', ''))
         self.assertNotIn('loadUrl(', recipe)
+        self.assertNotIn('controls[0].contains(images[0])', recipe)
         self.assertIn('controls[0].click()', recipe)
 
     def test_unizar_recipe_targets_the_certificate_button_inside_its_container(self) -> None:
