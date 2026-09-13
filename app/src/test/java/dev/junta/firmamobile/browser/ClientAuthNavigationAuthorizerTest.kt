@@ -1292,6 +1292,42 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun malagaPostTargetPageStartDoesNotDropSourceBeforeTargetResourceCallback() {
+        val malaga = ClientAuthNavigationAuthorizer(
+            BuiltInSiteProfiles.qaRegistry,
+            monotonic::nowNanos,
+        )
+
+        assertNull(
+            malaga.observeTopLevelResourceRequest(
+                activeProfileId = MALAGA_PROFILE,
+                currentUrl = MALAGA_SERVICE_PROVIDER,
+                targetUrl = MALAGA_SERVICE_REDIRECT,
+                method = "POST",
+                currentEpoch = 220,
+                isMainFrameRequest = true,
+            ),
+        )
+
+        // Android WebView may publish the target page start before the target POST reaches
+        // shouldInterceptRequest. The exact target page start must not discard the source arm.
+        malaga.onTopLevelPageStarted(MALAGA_TARGET, currentEpoch = 221)
+
+        val authorized = malaga.observeTopLevelResourceRequest(
+            activeProfileId = MALAGA_PROFILE,
+            currentUrl = MALAGA_TARGET,
+            targetUrl = MALAGA_TARGET,
+            method = "POST",
+            currentEpoch = 221,
+            isMainFrameRequest = true,
+        )
+
+        assertEquals(MALAGA_PROFILE, authorized?.profileId)
+        assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
+        assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
+    }
+
+    @Test
     fun tarragonaInPlaceClientTlsRejectsSourceTargetAndMethodExpansion() {
         val invalidCalls = listOf(
             Triple(TARRAGONA_VALID_SOURCE, TARRAGONA_CERT_TARGET, "GET"),
@@ -1767,6 +1803,13 @@ class ClientAuthNavigationAuthorizerTest {
                 "redirect_uri=https%3A%2F%2Fegovern.altanet.org%2Fvalid%2Fcode&" +
                 "scope=autenticacio_usuari&state=synthetic-state&access_type=online&approval_prompt=auto"
         const val TARRAGONA_CERT_TARGET = "https://cert.valid.aoc.cat/o/oauth2/cert"
+        val MALAGA_PROFILE = ProfileId("diputacion-malaga-instancia-general")
+        const val MALAGA_SERVICE_PROVIDER =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val MALAGA_SERVICE_REDIRECT =
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        const val MALAGA_TARGET =
+            "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
