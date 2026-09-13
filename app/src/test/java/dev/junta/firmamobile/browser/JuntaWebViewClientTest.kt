@@ -687,6 +687,51 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun malagaPostNavigationCallbackKeepsExactTargetInWebViewAndArmsClientTls() {
+        val profileId = ProfileId("diputacion-malaga-instancia-general")
+        var currentUrl = MALAGA_CLAVE_SERVICE_PROVIDER_URL
+        var captured: AuthorizedClientAuthTarget? = null
+        var capturedRequest: ClientCertRequest? = null
+        val malagaClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+            activeProfileId = { profileId },
+            currentPageUrl = { currentUrl },
+            currentNavigationEpoch = { 208L },
+            onInPlaceClientAuthChallenge = { authorized, request ->
+                captured = authorized
+                capturedRequest = request
+            },
+        )
+
+        malagaClient.onPageStarted(webView, currentUrl, null)
+        assertFalse(
+            malagaClient.shouldOverrideUrlLoading(
+                webView,
+                request(MALAGA_CLAVE_SERVICE_REDIRECT, method = "POST"),
+            ),
+        )
+
+        currentUrl = MALAGA_CLAVE_SERVICE_REDIRECT
+        assertFalse(
+            malagaClient.shouldOverrideUrlLoading(
+                webView,
+                request(MALAGA_CLAVE_CERT_TARGET, method = "POST"),
+            ),
+        )
+
+        val clientCert = RecordingClientCertRequest(requestHost = "pasarela-ident.clave.gob.es")
+        malagaClient.onReceivedClientCertRequest(webView, clientCert)
+
+        assertEquals(profileId, captured?.profileId)
+        assertEquals(MALAGA_CLAVE_CERT_TARGET, captured?.target?.toASCIIString())
+        assertSame(clientCert, capturedRequest)
+        assertEquals(0, clientCert.ignores)
+    }
+
+    @Test
     fun malagaGetWrongTargetAndUnarmedClientCertificateChallengeFailClosed() {
         val profileId = ProfileId("diputacion-malaga-instancia-general")
         val scenarios = listOf(
