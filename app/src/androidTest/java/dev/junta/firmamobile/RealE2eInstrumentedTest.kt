@@ -1116,11 +1116,12 @@ class RealE2eInstrumentedTest {
         var postSignObservationDeadline: Long? = null
         var postSignTracker: PostSignTracker? = null
         val safeAuthSigning = deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES
-        val signingCoordinator = if (safeAuthSigning) {
+        var signingCoordinator = if (safeAuthSigning) {
             signingCoordinatorForScenario(scenario)
         } else {
             null
         }
+        var signingCoordinatorRefreshed = false
 
         while (
             SystemClock.elapsedRealtime() < deadline ||
@@ -1130,6 +1131,18 @@ class RealE2eInstrumentedTest {
             updateRecordObservations(records, result)
             postSignTracker?.let { updatePostSignObservations(records, it, result) }
             updateCurrentHostFromRecords(records, result)
+
+            // The WebView bridge can finish prepare while Compose is still replacing the
+            // browser subtree. Refresh the coordinator once after the sanitized preparation
+            // marker so a recreated Activity cannot leave the probe watching a stale instance.
+            if (safeAuthSigning && !signingCoordinatorRefreshed && records.any {
+                    it.contains("event=MINIAPPLET_BRIDGE") &&
+                        it.contains("stage=PREPARE_READY")
+                }
+            ) {
+                signingCoordinator = signingCoordinatorForScenario(scenario)
+                signingCoordinatorRefreshed = true
+            }
 
             if (result.hasTerminalSecurityFailure()) {
                 result.classification = ProbeClassification.FAIL_SECURITY_OR_NETWORK
