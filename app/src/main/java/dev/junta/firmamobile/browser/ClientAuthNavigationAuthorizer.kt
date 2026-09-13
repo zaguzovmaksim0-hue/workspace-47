@@ -3,6 +3,7 @@ package dev.junta.firmamobile.browser
 import dev.junta.firmamobile.profile.ClientAuthPolicy
 import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.HttpMethod
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.SiteProfileRegistry
@@ -314,7 +315,17 @@ class ClientAuthNavigationAuthorizer internal constructor(
     fun onTopLevelPageStarted(url: String, currentEpoch: Long) {
         val source = pending ?: return
         val uri = strictClientAuthHttpsUri(url)
-        if (uri != source.source || currentEpoch != source.armingEpoch + 1 ||
+        val profile = registry.profile(source.profileId)
+        val policy = profile?.clientAuthPolicy
+        val isExpectedSourcePageStart =
+            uri == source.source && currentEpoch == source.armingEpoch + 1
+        val isExpectedPostTargetPageStart =
+            policy?.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+                policy.requestMethod != HttpMethod.GET &&
+                uri != null &&
+                policy.matchesRequestUrl(uri) &&
+                currentEpoch == source.armingEpoch + 1
+        if ((!isExpectedSourcePageStart && !isExpectedPostTargetPageStart) ||
             source.isExpiredOrInvalid(monotonicNanos())
         ) {
             pending = null
