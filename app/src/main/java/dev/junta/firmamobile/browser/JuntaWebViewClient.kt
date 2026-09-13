@@ -127,6 +127,27 @@ class JuntaWebViewClient(
         }
         val currentUrl = currentPageUrl(view)
         val currentProfileId = activeProfileId()
+        if (isModernMainFrame && !method.equals(GET_METHOD, ignoreCase = true)) {
+            clientAuthAuthorizer?.observeTopLevelResourceRequest(
+                activeProfileId = currentProfileId,
+                currentUrl = currentUrl,
+                targetUrl = targetUrl,
+                method = method,
+                currentEpoch = currentNavigationEpoch(),
+                isMainFrameRequest = true,
+            )?.let { authorized ->
+                pendingInPlaceClientAuth.set(
+                    PendingInPlaceClientAuth(authorized, currentNavigationEpoch()),
+                )
+                logger.recordNavigationEvent(
+                    code = DiagnosticEventCode.NAVIGATION_ALLOWED,
+                    rawUrl = targetUrl,
+                    isMainFrame = true,
+                    method = method,
+                )
+                return false
+            }
+        }
         if (isModernMainFrame) {
             val preconfirmed = preconfirmedInPlaceSource.get()
             val target = strictClientAuthHttpsUri(targetUrl)
