@@ -126,9 +126,35 @@ class ClientAuthNavigationAuthorizer internal constructor(
         if (policy.transitionMode != ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ||
             !method.equals(policy.requestMethod.name, ignoreCase = true)
         ) return null
-        val source = currentUrl?.let(::strictClientAuthHttpsUri)?.takeIf { policy.matchesSourceUrl(it) } ?: return null
-        val target = strictClientAuthHttpsUri(targetUrl)?.takeIf { policy.matchesRequestUrl(it) } ?: return null
+        val requestTarget = strictClientAuthHttpsUri(targetUrl) ?: return null
         val nowNanos = monotonicNanos()
+        if (policy.matchesSourceUrl(requestTarget)) {
+            val current = currentUrl?.let(::strictClientAuthHttpsUri)
+            if (current == null || !currentBelongsToPostSource(profile, current, requestTarget)) {
+                pending = null
+                return null
+            }
+            pending = PendingSource(
+                profileId = profile.profileId,
+                source = requestTarget,
+                armingEpoch = currentEpoch,
+                observedAtMonotonicNanos = nowNanos,
+                lifetimeNanos = grantLifetimeNanos(policy),
+            )
+            return null
+        }
+        val source = currentUrl?.let(::strictClientAuthHttpsUri)
+            ?.takeIf { policy.matchesSourceUrl(it) }
+            ?: pending?.takeIf { pendingSource ->
+                pendingSource.profileId == profile.profileId &&
+                    (currentEpoch == pendingSource.armingEpoch ||
+                        currentEpoch == pendingSource.armingEpoch + 1) &&
+                    !pendingSource.isExpiredOrInvalid(nowNanos) &&
+                    policy.matchesSourceUrl(pendingSource.source)
+            }?.source
+            ?: return null
+        pending = null
+        val target = requestTarget.takeIf { policy.matchesRequestUrl(it) } ?: return null
         val previous = consumedInPlace
         if (previous != null &&
             previous.profileId == profile.profileId && previous.source == source &&
@@ -314,6 +340,19 @@ class ClientAuthNavigationAuthorizer internal constructor(
         val current = currentUrl?.let(::strictClientAuthHttpsUri) ?: return false
         if (current.port !in setOf(-1, 443)) return false
         return runCatching { ExactOrigin.parse("https://${current.host}") }.getOrNull() in profile.initiatorOrigins
+    }
+
+    private fun currentBelongsToPostSource(
+        profile: SiteProfile,
+        current: URI,
+        source: URI,
+    ): Boolean {
+        if (current.port !in setOf(-1, 443)) return false
+        val currentOrigin = runCatching { ExactOrigin.parse("https://${current.host}") }.getOrNull()
+        if (currentOrigin in profile.initiatorOrigins) return true
+        val currentPort = if (current.port == -1) 443 else current.port
+        val sourcePort = if (source.port == -1) 443 else source.port
+        return currentPort == sourcePort && current.host.equals(source.host, ignoreCase = true)
     }
 
     private data class PendingSource(
