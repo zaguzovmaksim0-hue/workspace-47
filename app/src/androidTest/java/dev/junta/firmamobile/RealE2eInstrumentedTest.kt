@@ -1281,12 +1281,25 @@ class RealE2eInstrumentedTest {
             hasText("Firmar", substring = false, ignoreCase = false) and
                 hasClickAction() and
                 hasAnyAncestor(isDialog())
+        val exactTextButton =
+            hasText("Firmar", substring = false, ignoreCase = false) and
+                hasClickAction()
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = true)) {
                 return true
             }
             if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = false)) {
+                return true
+            }
+            // Material3 AlertDialog is hosted in a Popup. On some emulator/API combinations the
+            // popup's IsDialog semantics are not exposed as an ancestor, even though the native
+            // coordinator is already in AwaitingConfirmation and the exact button is visible.
+            // Keep this fallback safe by requiring one exact clickable label and a true callback.
+            if (performSigningConfirmationAction(exactTextButton, useUnmergedTree = true)) {
+                return true
+            }
+            if (performSigningConfirmationAction(exactTextButton, useUnmergedTree = false)) {
                 return true
             }
             SystemClock.sleep(POLL_MILLIS)
