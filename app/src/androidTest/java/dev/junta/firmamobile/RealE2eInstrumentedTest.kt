@@ -8,6 +8,7 @@ import android.webkit.WebView
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -1290,13 +1291,14 @@ class RealE2eInstrumentedTest {
     }
 
     private fun clickSigningConfirmation(): Boolean {
+        val exactSigningLabel =
+            hasText("Firmar", substring = false, ignoreCase = false) or
+                hasAnyDescendant(
+                    hasText("Firmar", substring = false, ignoreCase = false),
+                )
         val exactDialogButton =
-            hasText("Firmar", substring = false, ignoreCase = false) and
-                hasClickAction() and
-                hasAnyAncestor(isDialog())
-        val exactTextButton =
-            hasText("Firmar", substring = false, ignoreCase = false) and
-                hasClickAction()
+            exactSigningLabel and hasClickAction() and hasAnyAncestor(isDialog())
+        val exactTextButton = exactSigningLabel and hasClickAction()
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = true)) {

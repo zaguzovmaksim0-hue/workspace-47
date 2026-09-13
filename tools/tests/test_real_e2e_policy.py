@@ -503,6 +503,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("signingCoordinatorRefreshed", source)
         self.assertIn('it.contains("stage=PREPARE_READY")', source)
         self.assertIn("private fun clickSigningConfirmation(", source)
+        self.assertIn("hasAnyDescendant(", source)
         self.assertIn("hasClickAction()", source)
         self.assertIn("hasAnyAncestor(isDialog())", source)
         self.assertIn("private fun performSigningConfirmationAction(", source)
