@@ -499,6 +499,7 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_safe_auth_sign_avoids_compose_idle_for_webview_signing(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn("private fun signingCoordinatorForScenario(", source)
+        self.assertIn("application().sanitizedLogger.snapshot()", source)
         self.assertIn("var signingCoordinator = if (safeAuthSigning)", source)
         self.assertIn("signingCoordinatorRefreshed", source)
         self.assertIn('it.contains("stage=PREPARE_READY")', source)

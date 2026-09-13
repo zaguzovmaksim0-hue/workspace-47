@@ -1556,7 +1556,17 @@ class RealE2eInstrumentedTest {
 
     private fun diagnosticRecords(): List<String> {
         val file = File(application().filesDir, "qa-navigation.log")
-        return if (file.isFile) file.readLines(StandardCharsets.US_ASCII) else emptyList()
+        val fileRecords = if (file.isFile) {
+            file.readLines(StandardCharsets.US_ASCII)
+        } else {
+            emptyList()
+        }
+        // The file sink is a cross-process artifact. During a live probe its truncating rewrite can
+        // briefly expose an incomplete file; the in-process sanitized snapshot is ordered and uses
+        // the same allowlisted records. Prefer it when available and retain the file as a fallback
+        // for a recreated process.
+        val loggerRecords = application().sanitizedLogger.snapshot()
+        return loggerRecords.ifEmpty { fileRecords }
     }
 
     private fun waitUntil(timeoutMillis: Long, predicate: () -> Boolean) {
