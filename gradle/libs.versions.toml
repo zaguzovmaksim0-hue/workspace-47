@@ -14,7 +14,7 @@ coroutines = "1.11.0"
 bouncycastle = "1.85"
 datastore = "1.2.0"
 lifecycle = "2.10.0"
-okhttp = "5.4.0"
+okhttp = "5.5.0"
 # Keep Santuario on 3.x for Android: 4.x requires Java 11 System.Logger at runtime.
 xmlsec = "3.0.6"
 pdfboxAndroid = "2.0.27.0"
