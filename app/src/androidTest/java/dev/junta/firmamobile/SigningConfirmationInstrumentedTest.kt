@@ -22,6 +22,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -146,7 +147,31 @@ class SigningConfirmationInstrumentedTest {
                     // The QA smoke OPEN command deliberately requires an
                     // unlocked identity. Exercise the real catalog UI here.
                     rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
-                    rule.onNodeWithText("Buscar organismo o servicio").performTextInput("OVORION")
+                    rule.onNodeWithText("Buscar organismo o servicio").performTextReplacement("Ovorion")
+                    // Catalog search combines DataStore preferences with input
+                    // asynchronously. Await the resolved state, not only the
+                    // editable text; opening an empty transitional list races it.
+                    var observedSearch = ""
+                    var resolvedItems = 0
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val accessor = MainActivity::class.java.getDeclaredMethod("getCatalogViewModel")
+                                    .apply { isAccessible = true }
+                                val state = (accessor.invoke(activity) as dev.junta.firmamobile.catalog.PortalCatalogViewModel).state.value
+                                observedSearch = state.searchText
+                                resolvedItems = state.sections.sumOf { it.items.size }
+                                ready = state.searchText == "Ovorion" && state.sections.any { section ->
+                                    section.items.any { it.portalId.value == OVORION_PORTAL_ID }
+                                }
+                            }
+                            ready
+                        }
+                    } catch (_: androidx.compose.ui.test.ComposeTimeoutException) {
+                        fail("Synthetic catalog query not resolved: query=$observedSearch itemCount=$resolvedItems")
+                    }
+                    rule.waitForIdle()
                     rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir"))
                     rule.onAllNodesWithText("Abrir")[0].performClick()
                     waitForWebView(scenario)

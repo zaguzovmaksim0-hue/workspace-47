@@ -37,7 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -206,7 +206,7 @@ fun BrowserScreen(
     val currentConsumeExternalReturn by rememberUpdatedState(consumeExternalReturn)
     val currentSigningState by rememberUpdatedState(signingState)
     val clientCertPreferenceState by
-        clientCertPreferenceCoordinator.state.collectAsStateWithLifecycle()
+        clientCertPreferenceCoordinator.state.collectAsState()
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
@@ -328,7 +328,7 @@ fun BrowserScreen(
     }
     val clientCertPreferenceBlocked =
         !preserveWebViewDuringClientAuthClear && !preserveInteractiveWebViewDuringClear &&
-            (clientCertPreferenceCoordinator.state.value != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
+            (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
     fun advanceNavigationEpoch() {
         interactiveClientAuth.cancelPending()
