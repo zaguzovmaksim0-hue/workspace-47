@@ -60,6 +60,7 @@ internal class NativeCadesEngine(
         var certificateHash: ByteArray? = null
         var encodedSignature: ByteArray? = null
         return try {
+            identity.certificate.checkValidity(Date.from(clock.instant()))
             certificateBytes = identity.certificate.encoded
             certificateHash = MessageDigest.getInstance(SHA_256).digest(certificateBytes)
 

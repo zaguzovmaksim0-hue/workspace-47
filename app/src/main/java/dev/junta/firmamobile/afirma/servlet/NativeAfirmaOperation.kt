@@ -4,6 +4,7 @@ import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.signing.LocalSignatureResult
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import java.net.URI
+import java.time.Clock
 import java.security.MessageDigest
 import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
@@ -17,7 +18,8 @@ import kotlinx.coroutines.withContext
 internal class NativeAfirmaOperation(
     private val invocation: AfirmaServletInvocation,
     private val transport: AfirmaResultTransport = AfirmaServletTransport(),
-    private val engine: NativeCadesEngine = NativeCadesEngine(),
+    private val clock: Clock = Clock.systemUTC(),
+    private val engine: NativeCadesEngine = NativeCadesEngine(clock = clock),
 ) : PreparedAfirmaOperation {
     private val lock = Any()
     private var closed = false
@@ -42,7 +44,7 @@ internal class NativeAfirmaOperation(
     }
 
     override fun certificateCompatible(identity: UnlockedIdentity): Boolean = runCatching {
-        identity.certificate.checkValidity(Date())
+        identity.certificate.checkValidity(Date.from(clock.instant()))
         if (invocation.operation == AfirmaServletOperation.SIGN) {
             val usage = identity.certificate.keyUsage
             identity.certificate.publicKey.algorithm.equals("RSA", true) &&

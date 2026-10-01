@@ -3,6 +3,9 @@ package dev.junta.firmamobile.afirma.servlet
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.nonExportableSyntheticIdentity
 import java.net.URI
+import java.time.Clock
+import java.time.ZoneOffset
+import dev.junta.firmamobile.certificate.UnlockedIdentity
 import java.net.URLEncoder
 import java.util.Base64
 import kotlinx.coroutines.CancellationException
@@ -26,7 +29,7 @@ class NativeAfirmaOperationTest {
                 assertEquals("Request-123", id)
                 wire = result
                 AfirmaDeliveryResult.ACKNOWLEDGED
-            })
+            }, clock = clockFor(identity.identity))
             assertEquals(payload.size, operation.details.payloadBytes)
             assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.execute(identity.identity) { authorized++ })
             val fields = checkNotNull(wire).split('|')
@@ -46,7 +49,7 @@ class NativeAfirmaOperationTest {
         val invocation = AfirmaServletInvocation(AfirmaServletOperation.SELECT_CERTIFICATE, "https://portal.example",
             URI("https://store.example/select"), "Select-123", null, null, true, ByteArray(0))
         var body: String? = null
-        val operation = NativeAfirmaOperation(invocation, AfirmaResultTransport { _, _, result -> body = result; AfirmaDeliveryResult.ACKNOWLEDGED })
+        val operation = NativeAfirmaOperation(invocation, AfirmaResultTransport { _, _, result -> body = result; AfirmaDeliveryResult.ACKNOWLEDGED }, clock = clockFor(identity.identity))
         assertEquals("selectcert", operation.details.operation)
         assertNull(operation.details.payloadSha256)
         operation.execute(identity.identity) {}
@@ -66,7 +69,7 @@ class NativeAfirmaOperationTest {
         val parsed = AfirmaServletInvocationParser.parse(uri, "https://portal.example/start") as AfirmaServletParseResult.Accepted
         val identity = nonExportableSyntheticIdentity()
         var wire: String? = null
-        val operation = NativeAfirmaOperation(parsed.invocation, AfirmaResultTransport { _, _, result -> wire = result; AfirmaDeliveryResult.ACKNOWLEDGED })
+        val operation = NativeAfirmaOperation(parsed.invocation, AfirmaResultTransport { _, _, result -> wire = result; AfirmaDeliveryResult.ACKNOWLEDGED }, clock = clockFor(identity.identity))
         operation.execute(identity.identity) {}
         val fields = checkNotNull(wire).split('|'); assertEquals(2, fields.size)
         assertTrue(fields.none { it.contains('.') })
@@ -78,7 +81,7 @@ class NativeAfirmaOperationTest {
 
     @Test fun deniedFinalAuthorizationNeverContactsStorage() = runBlocking {
         val identity = nonExportableSyntheticIdentity(); var uploads = 0
-        val operation = NativeAfirmaOperation(invocation(), AfirmaResultTransport { _, _, _ -> uploads++; AfirmaDeliveryResult.ACKNOWLEDGED })
+        val operation = NativeAfirmaOperation(invocation(), AfirmaResultTransport { _, _, _ -> uploads++; AfirmaDeliveryResult.ACKNOWLEDGED }, clock = clockFor(identity.identity))
         try {
             operation.execute(identity.identity) { throw CancellationException("Synthetic changed owner") }
             fail("An unowned request must not be sent")
@@ -88,7 +91,7 @@ class NativeAfirmaOperationTest {
 
     @Test fun operationClosedDuringAuthorizationDoesNotSendItsSnapshot() = runBlocking {
         val identity = nonExportableSyntheticIdentity(); var uploads = 0
-        val operation = NativeAfirmaOperation(invocation(), AfirmaResultTransport { _, _, _ -> uploads++; AfirmaDeliveryResult.ACKNOWLEDGED })
+        val operation = NativeAfirmaOperation(invocation(), AfirmaResultTransport { _, _, _ -> uploads++; AfirmaDeliveryResult.ACKNOWLEDGED }, clock = clockFor(identity.identity))
         try {
             operation.execute(identity.identity) { operation.close() }
             fail("A closed operation must not upload")
@@ -98,7 +101,7 @@ class NativeAfirmaOperationTest {
 
     @Test fun aSecondExecutionNeverDuplicatesTheStorageRequest() = runBlocking {
         val identity = nonExportableSyntheticIdentity(); var uploads = 0
-        val operation = NativeAfirmaOperation(invocation(), AfirmaResultTransport { _, _, _ -> uploads++; AfirmaDeliveryResult.UNCERTAIN })
+        val operation = NativeAfirmaOperation(invocation(), AfirmaResultTransport { _, _, _ -> uploads++; AfirmaDeliveryResult.UNCERTAIN }, clock = clockFor(identity.identity))
         assertEquals(AfirmaDeliveryResult.UNCERTAIN, operation.execute(identity.identity) {})
         try { operation.execute(identity.identity) {}; fail("No automatic repeat after uncertainty") }
         catch (_: IllegalStateException) { }
@@ -114,6 +117,22 @@ class NativeAfirmaOperationTest {
         assertEquals("https://store.example/StorageService", operation.details.destination)
         operation.close()
     }
+
+    @Test fun expiredAndNotYetValidIdentitiesAreRejectedBeforeCryptographyOrStorage() = runBlocking {
+        val identity = nonExportableSyntheticIdentity()
+        for (instant in listOf(identity.identity.summary.validFrom.minusSeconds(1), identity.identity.summary.validUntil.plusSeconds(1))) {
+            var uploads = 0
+            val operation = NativeAfirmaOperation(invocation(), AfirmaResultTransport { _, _, _ -> uploads++; AfirmaDeliveryResult.ACKNOWLEDGED },
+                clock = Clock.fixed(instant, ZoneOffset.UTC))
+            assertFalse(operation.certificateCompatible(identity.identity))
+            try { operation.execute(identity.identity) {}; fail("Invalid date must not reach storage") }
+            catch (_: IllegalStateException) { }
+            assertEquals(0, uploads); operation.close()
+        }
+        assertEquals(0, identity.encodedReads.get())
+    }
+
+    private fun clockFor(identity: UnlockedIdentity) = Clock.fixed(identity.summary.validFrom.plusSeconds(60), ZoneOffset.UTC)
 
     private fun invocation(payload: ByteArray = "PAYLOAD_NOT_FOR_LOGS".toByteArray(),
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA, detached: Boolean = true) =

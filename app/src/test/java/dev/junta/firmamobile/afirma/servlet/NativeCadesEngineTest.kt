@@ -1,6 +1,9 @@
 package dev.junta.firmamobile.afirma.servlet
 
 import dev.junta.firmamobile.signing.LocalSignatureResult
+import dev.junta.firmamobile.certificate.UnlockedIdentity
+import java.time.Clock
+import java.time.ZoneOffset
 import dev.junta.firmamobile.signing.LocalSignatureError
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.nonExportableSyntheticIdentity
@@ -16,7 +19,7 @@ import org.junit.Test
 
 class NativeCadesEngineTest {
     @Test fun attachedAndDetachedCadesAreValidatedAgainstOriginalContentAndSelectedCertificate() {
-        val identity = nonExportableSyntheticIdentity(); val engine = NativeCadesEngine(); val payload = "synthetic document".toByteArray()
+        val identity = nonExportableSyntheticIdentity(); val engine = NativeCadesEngine(clock = clockFor(identity.identity)); val payload = "synthetic document".toByteArray()
         for (detached in listOf(true, false)) for (algorithm in SigningAlgorithm.entries) {
             val outcome = engine.sign(payload, identity.identity, algorithm, detached)
             assertTrue(outcome.toString(), outcome is LocalSignatureResult.Success)
@@ -40,7 +43,7 @@ class NativeCadesEngineTest {
 
     @Test fun mutatedContentCertificateAlgorithmAndModeAreRejectedIndependently() {
         val identity = freshSyntheticIdentity(); val other = freshSyntheticIdentity(); val payload = "abc".toByteArray()
-        val engine = NativeCadesEngine()
+        val engine = NativeCadesEngine(clock = clockFor(identity))
         for (detached in listOf(true, false)) {
             val result = engine.sign(payload, identity, SigningAlgorithm.SHA256_WITH_RSA, detached) as LocalSignatureResult.Success
             result.signature.use { signature -> signature.withBytes { encoded ->
@@ -55,18 +58,28 @@ class NativeCadesEngineTest {
     }
 
     @Test fun invalidAndOversizedInputFailsWithoutExposingAnUnverifiedSignature() {
-        val identity = freshSyntheticIdentity(); val engine = NativeCadesEngine(maxInputBytes = 4, maxOutputBytes = 2048)
+        val identity = freshSyntheticIdentity(); val engine = NativeCadesEngine(maxInputBytes = 4, maxOutputBytes = 2048, clock = clockFor(identity))
         val result = engine.sign(ByteArray(5), identity, SigningAlgorithm.SHA256_WITH_RSA, true)
         assertEquals(LocalSignatureError.INPUT_TOO_LARGE, (result as LocalSignatureResult.Failure).error)
         assertFalse(engine.verify(byteArrayOf(1,2,3), byteArrayOf(1), identity.certificate, SigningAlgorithm.SHA256_WITH_RSA, true))
-        val small = NativeCadesEngine(maxOutputBytes = 16).sign(byteArrayOf(1), identity, SigningAlgorithm.SHA256_WITH_RSA, true)
+        val small = NativeCadesEngine(maxOutputBytes = 16, clock = clockFor(identity)).sign(byteArrayOf(1), identity, SigningAlgorithm.SHA256_WITH_RSA, true)
         assertEquals(LocalSignatureError.OUTPUT_TOO_LARGE, (small as LocalSignatureResult.Failure).error)
     }
 
     @Test fun returnedSignatureIsCloseableAndCannotBeReadAfterRelease() {
         val identity = freshSyntheticIdentity()
-        val result = NativeCadesEngine().sign(byteArrayOf(1), identity, SigningAlgorithm.SHA256_WITH_RSA, true) as LocalSignatureResult.Success
+        val result = NativeCadesEngine(clock = clockFor(identity)).sign(byteArrayOf(1), identity, SigningAlgorithm.SHA256_WITH_RSA, true) as LocalSignatureResult.Success
         result.signature.close(); result.signature.close()
         assertThrows(IllegalStateException::class.java) { result.signature.withBytes { it.size } }
     }
+    @Test fun signingRefusesExpiredAndNotYetValidCertificatesWithoutReturningSignature() {
+        val identity = freshSyntheticIdentity()
+        for (instant in listOf(identity.summary.validFrom.minusSeconds(1), identity.summary.validUntil.plusSeconds(1))) {
+            val engine = NativeCadesEngine(clock = Clock.fixed(instant, ZoneOffset.UTC))
+            assertTrue(engine.sign(byteArrayOf(1), identity, SigningAlgorithm.SHA256_WITH_RSA, true) is LocalSignatureResult.Failure)
+        }
+    }
+
+    private fun clockFor(identity: UnlockedIdentity) = Clock.fixed(identity.summary.validFrom.plusSeconds(60), ZoneOffset.UTC)
+
 }
