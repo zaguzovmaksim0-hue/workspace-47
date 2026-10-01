@@ -33,10 +33,14 @@ internal interface PreparedAfirmaOperation : Closeable {
     /** Implementations call authorizeUpload immediately before the one upload.
      * It must return to the caller's UI dispatcher and revalidate ownership. */
     suspend fun execute(identity: UnlockedIdentity, authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult
+    /** Optional one-shot CANCEL notification, never uses a personal key or document.
+     * The caller must explicitly authorize before upload. Unsupported operations
+     * return NOT_SENT; implementations share a terminal gate with execute. */
+    suspend fun notifyCancellation(authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult = AfirmaDeliveryResult.NOT_SENT
 }
 
-internal enum class AfirmaConsentPhase { REVIEW, WORKING, SENDING, FINISHED }
-internal enum class AfirmaConsentProblem { LOCKED, INCOMPATIBLE, EXPIRED, CANCELLED, FAILED, ACKNOWLEDGED, REJECTED, UNCERTAIN, NOT_SENT }
+internal enum class AfirmaConsentPhase { REVIEW, WORKING, SENDING, CANCELLING, FINISHED }
+internal enum class AfirmaConsentProblem { LOCKED, INCOMPATIBLE, EXPIRED, CANCELLED, FAILED, ACKNOWLEDGED, REJECTED, UNCERTAIN, NOT_SENT, CANCEL_ACKNOWLEDGED, CANCEL_NOT_SENT, CANCEL_REJECTED, CANCEL_UNCERTAIN }
 internal data class AfirmaConsentPrompt(
     val token: UUID,
     val details: AfirmaConsentDetails,
