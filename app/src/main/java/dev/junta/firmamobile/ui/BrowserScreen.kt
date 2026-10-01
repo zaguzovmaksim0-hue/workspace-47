@@ -688,11 +688,11 @@ fun BrowserScreen(
                     clientAuthGrant != null ||
                     clientAuthPreparing ||
                     currentClientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE
-                pendingClientAuthTarget = null
-                clientAuthGrant = null
-                if (hadClientAuthState) pendingNormalUrl.set(validatedEntryUrl)
-                abandonClientAuth()
                 if (hadClientAuthState) {
+                    pendingClientAuthTarget = null
+                    clientAuthGrant = null
+                    pendingNormalUrl.set(validatedEntryUrl)
+                    abandonClientAuth()
                     advanceNavigationEpoch()
                     onCancelSigning(SigningCancelReason.BACKGROUND, null)
                     webViewRecreationEpoch++
