@@ -20,6 +20,8 @@ import java.time.ZoneOffset
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadow.api.Shadow
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
@@ -69,15 +71,12 @@ class InteractiveClientAuthWiringTest {
 
     @Test fun sslFailureCancelsTheTlsErrorAndPendingInteractiveRequest() {
         val f = Fixture(); f.client.onReceivedClientCertRequest(f.view, f.request)
-        var canceled = 0; var proceeded = 0
-        val handler = object : SslErrorHandler() {
-            override fun cancel() { canceled++ }
-            override fun proceed() { proceeded++ }
-        }
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
         val cert = SslCertificate("CN=synthetic.invalid", "CN=synthetic.invalid", "", "")
         f.client.onReceivedSslError(f.view, handler,
             SslError(SslError.SSL_UNTRUSTED, cert, "https://auth.unknown.example/"))
-        assertEquals(1, canceled); assertEquals(0, proceeded)
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
         assertEquals(1, f.request.ignores); assertEquals(0, f.request.proceeds)
         assertNull(f.prompt)
         f.view.destroy()

@@ -1,7 +1,6 @@
 package dev.junta.firmamobile
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag

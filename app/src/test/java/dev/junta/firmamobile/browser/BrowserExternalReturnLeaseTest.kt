@@ -10,6 +10,7 @@ class BrowserExternalReturnLeaseTest {
         assertFalse(lease.isValid(owner, 7))
         lease.begin(owner, 7)
         assertTrue(lease.isValid(owner, 7)); assertTrue(lease.isValid(owner, 7))
+        assertTrue(lease.markDeparture(owner, 7))
         assertTrue(lease.consume(owner, 7)); assertFalse(lease.consume(owner, 7))
     }
 
@@ -48,4 +49,27 @@ class BrowserExternalReturnLeaseTest {
         lease.begin(first, 0)
         assertFalse(lease.isValid(replacement, 0))
     }
+    @Test fun pickerResultWithoutActivityStopCannotAuthorizeALaterDeparture() {
+        val owner = Any(); val lease = BrowserExternalReturnLease<Any> { 100L }
+        val token = lease.begin(owner, 7)
+        lease.finish(token)
+        assertFalse(lease.markDeparture(owner, 7))
+        assertFalse(lease.consume(owner, 7))
+    }
+
+    @Test fun resultBetweenStopAndStartPreservesTheActualReturn() {
+        val owner = Any(); val lease = BrowserExternalReturnLease<Any> { 100L }
+        val token = lease.begin(owner, 7)
+        assertTrue(lease.markDeparture(owner, 7)); lease.finish(token)
+        assertTrue(lease.consume(owner, 7))
+        assertFalse(lease.markDeparture(owner, 7))
+    }
+
+    @Test fun olderPickerResultCannotCancelANewerLaunch() {
+        val owner = Any(); val lease = BrowserExternalReturnLease<Any> { 100L }
+        val old = lease.begin(owner, 7); lease.begin(owner, 7)
+        lease.finish(old)
+        assertTrue(lease.markDeparture(owner, 7)); assertTrue(lease.consume(owner, 7))
+    }
+
 }

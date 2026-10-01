@@ -121,8 +121,12 @@ class MainActivity : ComponentActivity() {
     private var pendingExternalHandoff by mutableStateOf<dev.junta.firmamobile.browser.ExternalHandoff.Request?>(null)
     private var externalHandoffFailed by mutableStateOf(false)
     private val browserExternalReturn = dev.junta.firmamobile.browser.BrowserExternalReturnLease<WebView>()
+    private var browserFileReturnToken: UUID? = null
+    private var certificateReturnToken: UUID? = null
     private val browserFilePicker: androidx.activity.result.ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        browserFileReturnToken?.let(browserExternalReturn::finish)
+        browserFileReturnToken = null
         browserFileChooser.deliver(result.resultCode, result.data)
     }
     private val browserFileChooser: dev.junta.firmamobile.browser.BrowserFileChooser by lazy {
@@ -135,7 +139,7 @@ class MainActivity : ComponentActivity() {
                 checkUriPermission(uri, android.os.Process.myPid(), android.os.Process.myUid(),
                     Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED
             },
-            launch = { intent -> withBrowserExternalReturn { browserFilePicker.launch(intent) } },
+            launch = { intent -> withBrowserExternalReturn(onToken = { browserFileReturnToken = it }) { browserFilePicker.launch(intent) } },
         )
     }
 
@@ -170,6 +174,8 @@ class MainActivity : ComponentActivity() {
     private val certificatePicker = registerForActivityResult(
         OpenableDocumentContract,
     ) { uri ->
+        certificateReturnToken?.let(browserExternalReturn::finish)
+        certificateReturnToken = null
         uri?.let(certificateViewModel::onCertificateSelected)
     }
 
@@ -407,7 +413,7 @@ class MainActivity : ComponentActivity() {
                         certificateState = unlocked,
                         certificatePanelVisible = certificatePanelVisible,
                         mayRetainExternalReturn = {
-                            currentWebView?.let { browserExternalReturn.isValid(it, currentNavigationEpoch) } == true
+                            currentWebView?.let { browserExternalReturn.markDeparture(it, currentNavigationEpoch) } == true
                         },
                         consumeExternalReturn = {
                             currentWebView?.let { browserExternalReturn.consume(it, currentNavigationEpoch) } == true
@@ -623,8 +629,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun <T> withBrowserExternalReturn(action: () -> T): T {
+    private fun <T> withBrowserExternalReturn(onToken: (UUID?) -> Unit = {}, action: () -> T): T {
         val token = currentWebView?.let { browserExternalReturn.begin(it, currentNavigationEpoch) }
+        onToken(token)
         return try {
             action()
         } catch (error: Exception) {
@@ -636,7 +643,7 @@ class MainActivity : ComponentActivity() {
     private fun launchCertificatePicker() {
         cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
         certificateViewModel.prepareForCertificateSelection()
-        withBrowserExternalReturn { certificatePicker.launch(PKCS12_MIME_TYPES) }
+        withBrowserExternalReturn(onToken = { certificateReturnToken = it }) { certificatePicker.launch(PKCS12_MIME_TYPES) }
     }
 
     override fun onDestroy() {

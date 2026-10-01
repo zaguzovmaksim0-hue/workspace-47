@@ -10,7 +10,7 @@ import java.util.UUID
 class BrowserExternalReturnLease<Owner : Any>(
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
 ) {
-    private data class Pending<Owner>(val token: UUID, val owner: Owner, val epoch: Long, val started: Long)
+    private data class Pending<Owner>(val token: UUID, val owner: Owner, val epoch: Long, val started: Long, var departed: Boolean = false)
     private var pending: Pending<Owner>? = null
 
     fun begin(owner: Owner, epoch: Long): UUID {
@@ -34,8 +34,23 @@ class BrowserExternalReturnLease<Owner : Any>(
         return valid
     }
 
+    fun markDeparture(owner: Owner, epoch: Long): Boolean {
+        if (!isValid(owner, epoch)) return false
+        val lease = pending ?: return false
+        if (lease.departed) return false
+        lease.departed = true
+        return true
+    }
+
+    /** Some pickers are overlays and never stop the Activity. Their result
+     * must not leave a lease that authorizes an unrelated later background. */
+    fun finish(token: UUID) {
+        val lease = pending ?: return
+        if (lease.token == token && !lease.departed) pending = null
+    }
+
     fun consume(owner: Owner, epoch: Long): Boolean {
-        val valid = isValid(owner, epoch)
+        val valid = isValid(owner, epoch) && pending?.departed == true
         pending = null
         return valid
     }
