@@ -157,9 +157,8 @@ class SigningConfirmationInstrumentedTest {
                         rule.waitUntil(timeoutMillis = 15_000) {
                             var ready = false
                             scenario.onActivity { activity ->
-                                val accessor = MainActivity::class.java.getDeclaredMethod("getCatalogViewModel")
-                                    .apply { isAccessible = true }
-                                val state = (accessor.invoke(activity) as dev.junta.firmamobile.catalog.PortalCatalogViewModel).state.value
+                                val state = androidx.lifecycle.ViewModelProvider(activity)
+                                    .get(dev.junta.firmamobile.catalog.PortalCatalogViewModel::class.java).state.value
                                 observedSearch = state.searchText
                                 resolvedItems = state.sections.sumOf { it.items.size }
                                 ready = state.searchText == "Ovorion" && state.sections.any { section ->
