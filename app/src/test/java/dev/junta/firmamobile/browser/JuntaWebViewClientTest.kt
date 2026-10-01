@@ -1428,7 +1428,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun veaObservedReturnLoginShapeRequiresLiveConfirmedClientAuthFlow() {
+    fun veaReturnPageLoadsWithoutGrantingUnconfirmedClientAuth() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val returnUrl = "$VEA_API_RETURN?appId=CHIE.VEA&resCode=synthetic-result" +
             "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
@@ -1438,7 +1438,10 @@ class JuntaWebViewClientTest {
             navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
             activeProfileId = { profileId },
         )
-        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+        assertFalse(staticClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+        val unconfirmedCert = RecordingClientCertRequest()
+        staticClient.onReceivedClientCertRequest(webView, unconfirmedCert)
+        assertEquals(1, unconfirmedCert.ignores)
 
         val liveClient = JuntaWebViewClient(
             callbacks = RecordingBrowserCallbacks(),
@@ -1462,7 +1465,10 @@ class JuntaWebViewClientTest {
             activeProfileId = { profileId },
             currentNavigationEpoch = { 70L },
         )
-        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+        assertFalse(staticClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+        val unconfirmedCert = RecordingClientCertRequest(requestHost = "ws235-4.juntadeandalucia.es")
+        staticClient.onReceivedClientCertRequest(webView, unconfirmedCert)
+        assertEquals(1, unconfirmedCert.ignores)
 
         var challenge: AuthorizedClientAuthTarget? = null
         val liveClient = JuntaWebViewClient(
@@ -1485,7 +1491,12 @@ class JuntaWebViewClientTest {
 
         val nearMiss = veaClusterContinuationUrl()
             .replace("ticketId=synthetic-ticket", "ticketId=other-ticket")
-        assertTrue(liveClient.shouldOverrideUrlLoading(webView, request(nearMiss)))
+        challenge = null
+        assertFalse(liveClient.shouldOverrideUrlLoading(webView, request(nearMiss)))
+        val nearMissCert = RecordingClientCertRequest(requestHost = "ws235-4.juntadeandalucia.es")
+        liveClient.onReceivedClientCertRequest(webView, nearMissCert)
+        assertEquals(1, nearMissCert.ignores)
+        assertNull(challenge)
     }
 
     @Test
@@ -1504,7 +1515,7 @@ class JuntaWebViewClientTest {
         )
         val directTarget = veaTargetUrl()
 
-        assertTrue(veaClient.shouldOverrideUrlLoading(webView, request(directTarget)))
+        assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(directTarget)))
         veaClient.shouldInterceptRequest(webView, request(directTarget))
         val request = RecordingClientCertRequest()
         veaClient.onReceivedClientCertRequest(webView, request)

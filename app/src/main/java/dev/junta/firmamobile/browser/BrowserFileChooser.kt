@@ -73,14 +73,19 @@ class BrowserFileChooser(
             request.reply.onReceiveValue(null)
             return
         }
+        var invalidSelection = false
         val uris = buildList {
             data?.data?.let(::add)
             data?.clipData?.let { clip ->
-                for (index in 0 until minOf(clip.itemCount, MAX_FILES + 1)) add(clip.getItemAt(index).uri)
+                if (clip.itemCount > MAX_FILES) invalidSelection = true
+                for (index in 0 until minOf(clip.itemCount, MAX_FILES)) {
+                    val uri = clip.getItemAt(index).uri
+                    if (uri == null) invalidSelection = true else add(uri)
+                }
             }
         }.distinct()
-        val valid = uris.isNotEmpty() && uris.size <= MAX_FILES && (request.multiple || uris.size == 1) &&
-            uris.all { uri ->
+        val valid = !invalidSelection && uris.isNotEmpty() && uris.size <= MAX_FILES &&
+            (request.multiple || uris.size == 1) && uris.all { uri ->
                 uri.scheme == "content" && !uri.authority.isNullOrBlank() &&
                     uri.userInfo == null && runCatching { canRead(uri) }.getOrDefault(false)
             }

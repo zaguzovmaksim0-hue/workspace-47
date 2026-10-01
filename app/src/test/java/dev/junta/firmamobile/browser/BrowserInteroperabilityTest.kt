@@ -141,6 +141,32 @@ class BrowserInteroperabilityTest {
         assertArrayEquals(arrayOf(first, second), f.results.last())
     }
 
+    @Test
+    fun malformedTextClipIsRejectedOnceWithoutCrashingOrReturningPartialSelection() = withFixture { f ->
+        f.chooser.open(f.view, f.callback, Params(WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE))
+        val selected = Uri.parse("content://picker.example/selected.pdf")
+        f.chooser.deliver(Activity.RESULT_OK, Intent().apply {
+            data = selected
+            clipData = ClipData.newPlainText("fixture", "not-a-content-uri")
+        })
+        assertEquals(1, f.results.size)
+        assertNull(f.results.single())
+        f.chooser.open(f.view, f.callback, Params())
+        f.chooser.deliver(Activity.RESULT_OK, Intent().setData(selected))
+        assertArrayEquals(arrayOf(selected), f.results.last())
+    }
+
+    @Test
+    fun oversizedClipIsRejectedEvenWhenRepeatedUrisDeduplicateBelowTheLimit() = withFixture { f ->
+        val selected = Uri.parse("content://picker.example/selected.pdf")
+        val clip = ClipData.newRawUri("fixture", selected)
+        repeat(32) { clip.addItem(ClipData.Item(selected)) }
+        f.chooser.open(f.view, f.callback, Params(WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE))
+        f.chooser.deliver(Activity.RESULT_OK, Intent().apply { clipData = clip })
+        assertEquals(1, f.results.size)
+        assertNull(f.results.single())
+    }
+
     private fun withFixture(block: (Fixture) -> Unit) {
         val fixture = Fixture()
         try { block(fixture) } finally { fixture.chooser.cancel(); fixture.view.destroy() }
