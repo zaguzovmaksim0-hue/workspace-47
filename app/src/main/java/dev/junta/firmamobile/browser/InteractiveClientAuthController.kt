@@ -170,6 +170,20 @@ internal class InteractiveClientAuthController<Owner : Any>(
         }
     }
 
+    /** SslError has no request ownership flag. Only a failure at the pending
+     * callback's own endpoint may terminate that callback; unrelated subresource
+     * failures must not become errors for the entire open page. */
+    fun onServerTlsError(owner: Owner, epoch: Long, failedUrl: String?) {
+        val current = pending ?: return
+        if (current.owner !== owner || current.epoch != epoch || !ownedAndLive(current)) return
+        val failed = runCatching {
+            val uri = URI(failedUrl ?: return)
+            if (!uri.scheme.equals("https", ignoreCase = true) || uri.userInfo != null) return
+            endpoint(uri.host ?: return, if (uri.port == -1) 443 else uri.port)
+        }.getOrNull()
+        if (failed == current.endpoint) cancelPending()
+    }
+
     fun cancel(token: UUID) {
         if (pending?.token == token) cancelPending()
     }

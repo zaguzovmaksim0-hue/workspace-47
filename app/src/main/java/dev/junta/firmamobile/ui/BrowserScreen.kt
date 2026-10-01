@@ -1052,6 +1052,9 @@ fun BrowserScreen(
                                 activeProfileId = { effectiveTopLevelProfileId },
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
+                                onInteractiveClientAuthSslError = { owner, failedUrl ->
+                                    interactiveClientAuth.onServerTlsError(owner, navigationEpoch.longValue, failedUrl)
+                                },
                                 onInteractiveClientAuthChallenge = { owner, request ->
                                     val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
                                         pendingCertificateSelection != null || pendingRequest != null ||

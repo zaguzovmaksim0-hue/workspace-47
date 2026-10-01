@@ -263,6 +263,31 @@ class InteractiveClientAuthControllerTest {
         assertEquals(1, f.clears)
     }
 
+    @Test fun onlyOwnedTlsEndpointFailureReleasesPendingCallback() {
+        val f = Fixture(); f.offer(); val token = f.prompt!!.token
+        f.controller.onServerTlsError(f.owner, f.epoch, "https://unrelated.example/resource")
+        f.controller.onServerTlsError(f.owner, f.epoch, null)
+        f.controller.onServerTlsError(f.owner, f.epoch, "https://auth.new-provider.example:8443/")
+        assertEquals(token, f.prompt!!.token); assertEquals(0, f.request.ignores)
+        f.controller.onServerTlsError(f.owner, f.epoch, "https://auth.new-provider.example/path")
+        assertNull(f.prompt); assertEquals(1, f.request.ignores)
+    }
+
+    @Test fun staleOwnerOrEpochTlsErrorCannotCancelCurrentCallback() {
+        val f = Fixture(); f.offer(); val token = f.prompt!!.token
+        f.controller.onServerTlsError(Any(), f.epoch, "https://auth.new-provider.example/")
+        f.controller.onServerTlsError(f.owner, f.epoch - 1, "https://auth.new-provider.example/")
+        assertEquals(token, f.prompt!!.token); assertEquals(0, f.request.ignores)
+    }
+
+    @Test fun malformedTlsErrorUrlCannotBeUsedAsCallbackOwnership() {
+        val f = Fixture(); f.offer(); val token = f.prompt!!.token
+        for (url in listOf("http://auth.new-provider.example", "https://user@auth.new-provider.example", "not a url")) {
+            f.controller.onServerTlsError(f.owner, f.epoch, url)
+        }
+        assertEquals(token, f.prompt!!.token); assertEquals(0, f.request.ignores)
+    }
+
     private class Fixture {
         val synthetic = nonExportableSyntheticIdentity()
         var identity: UnlockedIdentity? = synthetic.identity

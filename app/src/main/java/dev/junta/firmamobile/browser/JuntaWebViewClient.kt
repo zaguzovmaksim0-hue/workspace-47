@@ -74,6 +74,7 @@ class JuntaWebViewClient(
     private val resolveConfirmedClientAuthContinuationUrl: (String) -> AuthorizedClientAuthTarget? = { null },
     private val isConfirmedClientAuthReturnUrl: (String) -> Boolean = { false },
     private val onInteractiveClientAuthChallenge: (WebView, ClientCertRequest) -> Unit = { _, request -> request.ignore() },
+    private val onInteractiveClientAuthSslError: (WebView, String?) -> Unit = { _, _ -> },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
@@ -448,7 +449,7 @@ class JuntaWebViewClient(
         handler.cancel()
         if (isCurrentWebView(view)) {
             logger.recordBrowserEvent(DiagnosticEventCode.SSL_ERROR_CANCELLED)
-            callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
+            onInteractiveClientAuthSslError(view, runCatching { error.url }.getOrNull())
         }
     }
 

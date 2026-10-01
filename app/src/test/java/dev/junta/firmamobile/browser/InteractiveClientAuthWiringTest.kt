@@ -82,6 +82,21 @@ class InteractiveClientAuthWiringTest {
         f.view.destroy()
     }
 
+    @Test fun unrelatedSslFailureDoesNotInvalidateConsentForAnotherServer() {
+        val f = Fixture(); f.client.onReceivedClientCertRequest(f.view, f.request)
+        val token = f.prompt!!.token
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val cert = SslCertificate("CN=synthetic.invalid", "CN=synthetic.invalid", "", "")
+        f.client.onReceivedSslError(f.view, handler,
+            SslError(SslError.SSL_UNTRUSTED, cert, "https://unrelated.example/image"))
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
+        assertEquals(token, f.prompt!!.token)
+        assertEquals(0, f.request.ignores)
+        assertEquals(0, f.request.proceeds)
+        f.controller.close(); f.view.destroy()
+    }
+
     private class Fixture {
         val view = WebView(ApplicationProvider.getApplicationContext<Context>())
         val synthetic = nonExportableSyntheticIdentity()
@@ -109,6 +124,7 @@ class InteractiveClientAuthWiringTest {
             callbacks, SanitizedLogger(), JuntaNavigationPolicy(ProfileId("junta-andalucia")),
             currentPageUrl = { "https://portal.example/" }, isActiveWebView = { current && it === view },
             activeProfileId = { activeProfile }, currentNavigationEpoch = { epoch },
+            onInteractiveClientAuthSslError = { owner, failedUrl -> controller.onServerTlsError(owner, epoch, failedUrl) },
             onInteractiveClientAuthChallenge = { owner, request ->
                 controller.offer(owner, epoch, "https://portal.example/", request)
             },
