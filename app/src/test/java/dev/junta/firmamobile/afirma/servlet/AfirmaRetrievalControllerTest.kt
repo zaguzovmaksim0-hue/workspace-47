@@ -164,6 +164,16 @@ class AfirmaRetrievalControllerTest {
         assertNull(f.prompt); assertFalse(f.controller.hasPending); assertEquals(0, f.handoffs)
     }
 
+    @Test fun equivalentHttpsAuthoritiesCannotRepeatTheConsumedFileRequest() = runTest {
+        val f = Fixture(this); f.offer(); runCurrent(); f.op.close()
+        val same = AfirmaDeferredInvocation(AfirmaServletOperation.SIGN, "https://page.example",
+            URI("HTTPS://RETRIEVE.EXAMPLE:443/get?secret-query=not-in-ui"), "File-123", "Response",
+            URI("https://store.example/put"), "12345678", null)
+        f.controller.offer(f.owner, f.epoch, same); runCurrent()
+        assertEquals(1, f.resolutions)
+        assertEquals(AfirmaRetrievalProblem.UNAVAILABLE, f.prompt!!.problem)
+    }
+
     private class Fixture(scope: CoroutineScope) {
         val owner = Any(); var currentOwner = owner; var epoch = 2L; var now = 100L; var foreground = true
         var prompt: AfirmaRetrievalPrompt? = null

@@ -660,7 +660,13 @@ fun BrowserScreen(
     }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
-        pendingRequest = request
+        // URI notifications have no per-call reply channel. A second observer
+        // must not replace consent or consume a concurrently loaded request.
+        val busy = nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
+            pendingRequest != null || pendingCertificateSelection != null || pendingInPlaceClientAuth != null ||
+            pendingClientAuthTarget != null || interactivePrompt != null || clientAuthPreparing ||
+            currentSigningState !is SigningUiState.Idle
+        if (!busy) pendingRequest = request
     }
     val callbacks = remember(
         selectedServiceId,
@@ -1329,7 +1335,8 @@ fun BrowserScreen(
                                             request.authorized.profileId == effectiveTopLevelProfileId &&
                                                 pendingClientAuthTarget == null &&
                                                 clientAuthGrant == null &&
-                                                !clientAuthPreparing
+                                                !clientAuthPreparing && !nativeAfirma.hasPending &&
+                                                !nativeFallback.hasPending && !nativeRetrieval.hasPending
                                         if (!canOwnRequest) {
                                             request.postBody.fill(0)
                                         } else {
@@ -1342,7 +1349,9 @@ fun BrowserScreen(
                                         request: MelillaBatchBridgeRequest,
                                         reply: MelillaBatchReplyChannel,
                                         ->
-                                        if (onMelillaBatchRequest != null) {
+                                        if (nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
+                                            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
+                                        } else if (onMelillaBatchRequest != null) {
                                             onMelillaBatchRequest(request, reply)
                                         }
                                     }.takeIf { onMelillaBatchRequest != null },

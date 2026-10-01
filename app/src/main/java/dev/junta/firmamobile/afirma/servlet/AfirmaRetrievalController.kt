@@ -4,6 +4,7 @@ import java.io.Closeable
 import java.security.MessageDigest
 import java.time.Duration
 import java.util.UUID
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.concurrent.atomic.AtomicBoolean
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import kotlinx.coroutines.CancellationException
@@ -164,7 +165,7 @@ internal class AfirmaRetrievalController<Owner : Any>(
             pending.request.retrievalDisplay, pending.loading, problem))
     }
     private fun fingerprint(request: AfirmaDeferredInvocation): String {
-        val input = (request.retrievalUrl.toASCIIString() + "\u0000" + request.fileId).toByteArray(Charsets.UTF_8)
+        val input = (request.retrievalUrl.toASCIIString().toHttpUrl().toString() + "\u0000" + request.fileId).toByteArray(Charsets.UTF_8)
         return try { MessageDigest.getInstance("SHA-256").digest(input).joinToString("") { "%02x".format(it) } }
         finally { input.fill(0) }
     }

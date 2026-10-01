@@ -528,6 +528,19 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun legacyUriBridgeCannotBypassTheNativePreparationInterlock() {
+        val source = projectSource("app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt")
+        val handler = source.substringAfter("val handleAfirmaRequest: (AfirmaRequest) -> Unit =")
+            .substringBefore("val callbacks = remember(")
+        for (flag in listOf("nativeAfirma.hasPending", "nativeFallback.hasPending", "nativeRetrieval.hasPending")) {
+            assertTrue("Legacy URI notifications must respect $flag", flag in handler)
+        }
+        assertTrue("Pending URI dialog assignment must be guarded", "if (!busy) pendingRequest = request" in handler)
+        assertTrue("The validated WebMessageBridge URI path must use the guarded handler", "onAfirmaRequest = handleAfirmaRequest" in source)
+        assertTrue("Preparation is canceled on background, not silently restarted", "nativeRetrieval.onBackground()" in source)
+    }
+
+    @Test
     fun clientTlsWebViewWaitsForGenerationBoundPreferenceBarrier() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
@@ -566,7 +579,7 @@ class BrowserSecurityRegressionTest {
         assertTrue(
             "Renderer, disposal, profile and background paths must use process cleanup",
             "DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator)" in screenSource &&
-                "DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator)" in screenSource &&
+                "DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator, nativeRetrieval, nativeAfirma)" in screenSource &&
                 "Lifecycle.Event.ON_STOP" in screenSource &&
                 "abandonClientAuth" in screenSource,
         )
