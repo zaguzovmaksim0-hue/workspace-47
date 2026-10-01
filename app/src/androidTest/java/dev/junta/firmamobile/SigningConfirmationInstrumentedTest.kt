@@ -15,6 +15,10 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -139,7 +143,12 @@ class SigningConfirmationInstrumentedTest {
                     rule.onNodeWithText("Explorar sedes sin desbloquear el certificado")
                         .performScrollTo().performClick()
                     waitForText("SERVICIOS PÚBLICOS")
-                    openOvorionPortal()
+                    // The QA smoke OPEN command deliberately requires an
+                    // unlocked identity. Exercise the real catalog UI here.
+                    rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
+                    rule.onNodeWithText("Buscar organismo o servicio").performTextInput("OVORION")
+                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir"))
+                    rule.onAllNodesWithText("Abrir")[0].performClick()
                     waitForWebView(scenario)
                     var original: WebView? = null
                     scenario.onActivity { activity ->
