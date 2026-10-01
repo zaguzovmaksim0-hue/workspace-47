@@ -1354,6 +1354,7 @@ fun BrowserScreen(
                                         } else if (onMelillaBatchRequest != null) {
                                             onMelillaBatchRequest(request, reply)
                                         }
+                                        Unit // The reply result must not change this nullable callback's Unit contract.
                                     }.takeIf { onMelillaBatchRequest != null },
                                     onMelillaBatchCancel = onMelillaBatchCancel,
                                     activeProfileId = { effectiveTopLevelProfileId },
