@@ -67,6 +67,34 @@ jobs:
         run: scripts/ci/verify-android-artifacts.sh
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
+      - name: Record QA artifact provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$VERIFY_REF" > app/build/outputs/apk/qa/SOURCE_COMMIT.txt
+          (cd app/build/outputs/apk/qa && sha256sum app-qa.apk > SHA256SUMS)
+      - name: Retain verified QA candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: firmamobile-qa-${{ env.VERIFY_REF }}
+          path: |
+            app/build/outputs/apk/qa/app-qa.apk
+            app/build/outputs/apk/qa/SOURCE_COMMIT.txt
+            app/build/outputs/apk/qa/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 3
+      - name: Retain Android unit and lint reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-unit-lint-${{ env.VERIFY_REF }}
+          path: |
+            app/build/test-results/testDebugUnitTest/
+            app/build/test-results/testQaUnitTest/
+            app/build/reports/lint-results-debug.xml
+            app/build/reports/lint-results-qa.xml
+          if-no-files-found: warn
+          retention-days: 3
 
   android-instrumented:
     name: Android emulator instrumentation

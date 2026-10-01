@@ -192,6 +192,15 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("set +o pipefail", source)
         self.assertIn("set -o pipefail", source)
 
+    def test_candidate_apk_has_exact_head_provenance(self) -> None:
+        source = self.read(CI)
+        self.assertLess(source.index("Verify Android artifacts"), source.index("Retain verified QA candidate"))
+        self.assertLess(source.index("Verify release signing fails closed"), source.index("Retain verified QA candidate"))
+        self.assertIn("firmamobile-qa-${{ env.VERIFY_REF }}", source)
+        self.assertIn('"$VERIFY_REF" > app/build/outputs/apk/qa/SOURCE_COMMIT.txt', source)
+        self.assertIn("sha256sum app-qa.apk > SHA256SUMS", source)
+        self.assertIn("Retain Android unit and lint reports", source)
+
     def test_security_workflow_scans_history_and_dependencies_with_pinned_tools(self) -> None:
         source = self.read(SECURITY)
         self.assertIn("fetch-depth: 0", source)
