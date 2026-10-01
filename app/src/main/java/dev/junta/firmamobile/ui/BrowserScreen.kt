@@ -23,7 +23,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,6 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.afirma.servlet.AfirmaConsentController
+import dev.junta.firmamobile.afirma.servlet.AfirmaFallbackController
+import dev.junta.firmamobile.afirma.servlet.AfirmaFallbackPrompt
+import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt
+import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocationParser
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletParseResult
+import dev.junta.firmamobile.afirma.servlet.NativeAfirmaOperation
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
@@ -290,6 +300,38 @@ fun BrowserScreen(
     }
     var pageProgress by remember { mutableIntStateOf(100) }
     var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
+    val nativeAfirmaScope = rememberCoroutineScope()
+    var nativeAfirmaPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaConsentPrompt?>(null) }
+    var nativeFallbackPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaFallbackPrompt?>(null) }
+    val nativeFallback = remember(selectedServiceId, validatedEntryUrl) {
+        AfirmaFallbackController<WebView>(
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            canRespond = { lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) },
+            onPrompt = { nativeFallbackPrompt = it },
+        )
+    }
+    LaunchedEffect(nativeFallback, nativeFallbackPrompt?.token) {
+        while (nativeFallbackPrompt != null) { delay(1_000); nativeFallback.tick() }
+    }
+    val nativeAfirma = remember(selectedServiceId, validatedEntryUrl) {
+        AfirmaConsentController<WebView>(
+            scope = nativeAfirmaScope,
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            identityProvider = { currentIdentityProvider() },
+            canRespond = { lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) },
+            onPrompt = { nativeAfirmaPrompt = it },
+        )
+    }
+    LaunchedEffect(nativeAfirma, certificateState, certificatePanelVisible) { nativeAfirma.refreshIdentity() }
+    DisposableEffect(nativeAfirma, nativeFallback) {
+        onDispose { nativeAfirma.close(); nativeFallback.invalidate() }
+    }
+    LaunchedEffect(nativeAfirma, nativeAfirmaPrompt?.token, nativeAfirmaPrompt?.phase) {
+        while (nativeAfirmaPrompt != null && nativeAfirmaPrompt?.phase != AfirmaConsentPhase.FINISHED) {
+            delay(1_000)
+            nativeAfirma.tick()
+        }
+    }
     var interactivePrompt by remember { mutableStateOf<InteractiveClientAuthPrompt?>(null) }
     var interactiveProblem by remember { mutableStateOf<InteractiveClientAuthProblem?>(null) }
     var preserveInteractiveWebViewDuringClear by remember { mutableStateOf(false) }
@@ -331,6 +373,8 @@ fun BrowserScreen(
             (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
     fun advanceNavigationEpoch() {
+        nativeAfirma.invalidate()
+        nativeFallback.invalidate()
         interactiveClientAuth.cancelPending()
         bridgeAttachmentLease.current()?.abandonMiniAppletRequests()
         check(navigationEpoch.longValue != Long.MAX_VALUE)
@@ -630,6 +674,8 @@ fun BrowserScreen(
             }
 
             override fun onBrowserError(error: BrowserErrorCode) {
+                nativeAfirma.invalidate()
+                nativeFallback.invalidate()
                 interactiveClientAuth.cancelPending()
                 if (error == BrowserErrorCode.SSL_ERROR || error == BrowserErrorCode.SAFE_BROWSING) {
                     interactiveClientAuth.revokeCachedChoice()
@@ -720,6 +766,8 @@ fun BrowserScreen(
     BackHandler(onBack = ::goBack)
     DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
+            nativeAfirma.invalidate()
+            nativeFallback.invalidate()
             interactiveClientAuth.close()
             sessionDataClearLease.invalidate()
             globalDataClearLease.invalidate()
@@ -751,6 +799,7 @@ fun BrowserScreen(
             if (event == Lifecycle.Event.ON_STOP) {
                 wasBackgrounded = true
                 val expectedReturn = currentMayRetainExternalReturn()
+                nativeAfirma.onBackground(expectedReturn)
                 interactiveClientAuth.onBackground(expectedReturn)
                 val hadClientAuthState = pendingClientAuthTarget != null ||
                     pendingInPlaceClientAuth != null ||
@@ -768,6 +817,7 @@ fun BrowserScreen(
             } else if (event == Lifecycle.Event.ON_START && wasBackgrounded) {
                 wasBackgrounded = false
                 val returnStillValid = currentConsumeExternalReturn()
+                nativeAfirma.onForeground(returnStillValid)
                 interactiveClientAuth.onForeground(returnStillValid)
                 val sameIdentity = retainedFingerprint == currentIdentityProvider()?.let(::certificateSelectionFingerprint)
                 val grantLive = clientAuthGrant?.authorized?.isExpiredOrInvalid() != true &&
@@ -1052,13 +1102,35 @@ fun BrowserScreen(
                                 activeProfileId = { effectiveTopLevelProfileId },
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
+                                onNativeAfirmaInvocation = { owner, rawUri, page ->
+                                    val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                        pendingCertificateSelection != null || pendingRequest != null ||
+                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending || clientAuthPreparing ||
+                                        currentSigningState !is SigningUiState.Idle
+                                    if (busy) true else {
+                                        when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
+                                            is AfirmaServletParseResult.Accepted -> {
+                                                val operation = runCatching { NativeAfirmaOperation(parsed.invocation) }.getOrElse {
+                                                    parsed.invocation.close()
+                                                    null
+                                                }
+                                                if (operation == null) nativeFallback.offer(owner, navigationEpoch.longValue, null)
+                                                else nativeAfirma.offer(owner, navigationEpoch.longValue, operation)
+                                            }
+                                            is AfirmaServletParseResult.Unsupported -> nativeFallback.offer(owner, navigationEpoch.longValue, rawUri)
+                                            is AfirmaServletParseResult.Invalid -> nativeFallback.offer(owner, navigationEpoch.longValue, null)
+                                        }
+                                        true
+                                    }
+                                },
                                 onInteractiveClientAuthSslError = { owner, failedUrl ->
                                     interactiveClientAuth.onServerTlsError(owner, navigationEpoch.longValue, failedUrl)
                                 },
                                 onInteractiveClientAuthChallenge = { owner, request ->
                                     val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
                                         pendingCertificateSelection != null || pendingRequest != null ||
-                                        clientAuthPreparing || currentSigningState !is SigningUiState.Idle
+                                        clientAuthPreparing || nativeAfirma.hasPending || nativeFallback.hasPending ||
+                                        currentSigningState !is SigningUiState.Idle
                                     if (busy) request.ignore() else {
                                         interactiveClientAuth.offer(
                                             owner, navigationEpoch.longValue,
@@ -1110,6 +1182,10 @@ fun BrowserScreen(
                                     inPlaceClientAuthHandlerRef.get()?.resolveRequestContinuation(rawUrl)
                                 },
                                 onInPlaceClientAuthChallenge = onInPlaceChallenge@{ authorized, request ->
+                                    if (nativeAfirma.hasPending || nativeFallback.hasPending) {
+                                        request.ignore()
+                                        return@onInPlaceChallenge
+                                    }
                                     if (carneJovenPreTlsRetryController.matchesRetryContract(authorized)) {
                                         carneJovenPreTlsRetryController.reset()
                                     }
@@ -1202,11 +1278,15 @@ fun BrowserScreen(
                                     logger = logger,
                                     onAfirmaRequest = handleAfirmaRequest,
                                     onMiniAppletRequest = { request, reply ->
-                                        onMiniAppletRequest(request, reply)
+                                        if (nativeAfirma.hasPending || nativeFallback.hasPending) {
+                                            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
+                                        } else onMiniAppletRequest(request, reply)
                                     },
                                     onMiniAppletCancel = onMiniAppletCancel,
                                     onCertificateSelectionRequest = { request, reply ->
-                                        prepareCertificateSelection(request, reply)
+                                        if (nativeAfirma.hasPending || nativeFallback.hasPending) {
+                                            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
+                                        } else prepareCertificateSelection(request, reply)
                                     },
                                     onCertificateSelectionCancel = { requestId ->
                                         if (pendingCertificateSelection?.request?.requestId == requestId) {
@@ -1422,6 +1502,34 @@ fun BrowserScreen(
     }
 
     if (!certificatePanelVisible) {
+        nativeAfirmaPrompt?.let { prompt ->
+            NativeAfirmaConsentDialog(
+                prompt = prompt,
+                onConfirm = { nativeAfirma.confirm(prompt.token) },
+                onUnlock = onChangeCertificate,
+                onCancel = { nativeAfirma.cancel(prompt.token) },
+                onDismiss = { nativeAfirma.dismiss(prompt.token) },
+            )
+        }
+        nativeFallbackPrompt?.let { fallback ->
+            AlertDialog(
+                onDismissRequest = { nativeFallback.dismiss(fallback.token) },
+                title = { Text(stringResource(R.string.native_afirma_title)) },
+                text = { Text(stringResource(if (fallback.invalid) R.string.native_afirma_invalid else R.string.native_afirma_unsupported)) },
+                confirmButton = {
+                    TextButton(onClick = { nativeFallback.dismiss(fallback.token) }) {
+                        Text(stringResource(R.string.native_afirma_close))
+                    }
+                },
+                dismissButton = {
+                    if (!fallback.invalid) {
+                        TextButton(onClick = {
+                            nativeFallback.consume(fallback.token)?.let { onOpenOfficialAutoFirma(Uri.parse(it)) }
+                        }) { Text(stringResource(R.string.native_afirma_official)) }
+                    }
+                },
+            )
+        }
         interactivePrompt?.let { prompt ->
             InteractiveClientAuthDialog(
                 prompt = prompt,

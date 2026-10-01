@@ -75,6 +75,7 @@ class JuntaWebViewClient(
     private val isConfirmedClientAuthReturnUrl: (String) -> Boolean = { false },
     private val onInteractiveClientAuthChallenge: (WebView, ClientCertRequest) -> Unit = { _, request -> request.ignore() },
     private val onInteractiveClientAuthSslError: (WebView, String?) -> Unit = { _, _ -> },
+    private val onNativeAfirmaInvocation: (WebView, String, String) -> Boolean = { _, _, _ -> false },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
@@ -100,6 +101,11 @@ class JuntaWebViewClient(
         method: String,
     ): Boolean {
         if (!isCurrentWebView(view)) return true
+        if (isModernMainFrame && method.equals(GET_METHOD, ignoreCase = true)) {
+            val nativeUri = NativeAfirmaNavigation.extract(targetUrl)
+            val page = currentPageUrl(view)
+            if (nativeUri != null && page != null && onNativeAfirmaInvocation(view, nativeUri, page)) return true
+        }
         if (isModernMainFrame) {
             recordVeaAuthReturnDiagnostic(targetUrl)
             val continuation = resolveConfirmedClientAuthContinuationUrl(targetUrl)

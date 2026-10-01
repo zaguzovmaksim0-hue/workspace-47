@@ -226,6 +226,109 @@ class SigningConfirmationInstrumentedTest {
     }
 
     @Test
+    fun inlineNativeAfirmaRequestUnlocksInTheRealBrowserAndCancelsWithoutSending() {
+        val uri = Uri.parse("content://dev.junta.firmamobile.tests/native-afirma-identity.p12")
+        val bytes = syntheticPkcs12()
+        try {
+            val repository = CertificateRepository(
+                documentAccess = SyntheticDocumentAccess(uri, bytes),
+                referenceStore = MemoryReferenceStore(StoredCertificateReference(
+                    uri = uri, displayName = "synthetic-identity.p12",
+                    mimeType = CertificateRepository.MIME_X_PKCS12,
+                    size = bytes.size.toLong(), summary = null,
+                )),
+                loader = Pkcs12Loader(),
+            )
+            TestCertificateDependencies.install(repository, CertificateSession()).use {
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    waitForText("Explorar sedes sin desbloquear el certificado")
+                    rule.onNodeWithText("Explorar sedes sin desbloquear el certificado")
+                        .performScrollTo().performClick()
+                    waitForText("SERVICIOS PÚBLICOS")
+                    // The QA smoke OPEN command deliberately requires an
+                    // unlocked identity. Exercise the real catalog UI here.
+                    rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
+                    rule.onNodeWithText("Buscar organismo o servicio").performTextReplacement("Ovorion")
+                    // Catalog search combines DataStore preferences with input
+                    // asynchronously. Await the resolved state, not only the
+                    // editable text; opening an empty transitional list races it.
+                    var observedSearch = ""
+                    var resolvedItems = 0
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val state = androidx.lifecycle.ViewModelProvider(activity)
+                                    .get(dev.junta.firmamobile.catalog.PortalCatalogViewModel::class.java).state.value
+                                observedSearch = state.searchText
+                                resolvedItems = state.sections.sumOf { it.items.size }
+                                ready = state.searchText == "Ovorion" && state.sections.any { section ->
+                                    section.items.any { it.portalId.value == OVORION_PORTAL_ID }
+                                }
+                            }
+                            ready
+                        }
+                    } catch (_: androidx.compose.ui.test.ComposeTimeoutException) {
+                        fail("Synthetic catalog query not resolved: query=$observedSearch itemCount=$resolvedItems")
+                    }
+                    rule.waitForIdle()
+                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir"))
+                    rule.onAllNodesWithText("Abrir")[0].performClick()
+                    waitForWebView(scenario)
+                    var original: WebView? = null
+                    scenario.onActivity { activity ->
+                        original = checkNotNull(findWebView(activity.window.decorView)).apply {
+                            stopLoading()
+                            loadDataWithBaseURL(
+                                "https://portal.synthetic.example/start",
+                                "<html><head><title>NATIVE_AFIRMA_READY</title></head><body><input value=retained-draft></body></html>",
+                                "text/html", "UTF-8", "https://portal.synthetic.example/start",
+                            )
+                        }
+                    }
+                    waitForWebViewTitle(scenario, "NATIVE_AFIRMA_READY")
+                    val invocation = Uri.parse(
+                        "afirma://sign?id=Synthetic-123&stservlet=https%3A%2F%2Fstore.synthetic.example%2Fput" +
+                            "&format=CAdES&algorithm=SHA256withRSA&dat=c3ludGhldGlj",
+                    )
+                    val request = object : android.webkit.WebResourceRequest {
+                        override fun getUrl() = invocation
+                        override fun isForMainFrame() = true
+                        override fun isRedirect() = false
+                        override fun hasGesture() = true
+                        override fun getMethod() = "GET"
+                        override fun getRequestHeaders(): MutableMap<String, String> = mutableMapOf()
+                    }
+                    scenario.onActivity {
+                        val view = checkNotNull(original)
+                        assertTrue(view.webViewClient.shouldOverrideUrlLoading(view, request))
+                    }
+                    rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed().performClick()
+                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                        .performScrollTo().performTextInput(TEST_PASSPHRASE)
+                    rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
+                    waitForText("Certificado encontrado")
+                    scenario.onActivity { activity ->
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("NATIVE_AFIRMA_READY", original?.title)
+                    }
+                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    rule.onNodeWithTag("native-afirma-confirm").assertIsDisplayed()
+                    // Do not send a real request or sign a document in this UI test.
+                    rule.onNodeWithTag("native-afirma-cancel").assertIsDisplayed().performClick()
+                    rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
+                    rule.onNodeWithTag("native-afirma-close").assertIsDisplayed().performClick()
+                    rule.onNodeWithTag("native-afirma-consent").assertDoesNotExist()
+                    scenario.onActivity { activity ->
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("NATIVE_AFIRMA_READY", original?.title)
+                    }
+                }
+            }
+        } finally { bytes.fill(0) }
+    }
+
+    @Test
     fun composeBrowserUsesMatchParentLayoutAndCompositesWebViewPixels() {
         val uri = Uri.parse("content://dev.junta.firmamobile.tests/rendering-identity.p12")
         val bytes = syntheticPkcs12()
