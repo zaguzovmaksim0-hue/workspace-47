@@ -742,6 +742,31 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `catalog service names stay searchable when a profile uses its organization name`() {
+        val id = PortalId("junta-andalucia-ovorion")
+        for (query in listOf("Ovorion", "OVORIÓN", "ovorion")) {
+            val result = qaRepository.portals(PortalCatalogQuery(searchText = query)).single { it.portalId == id }
+            val unfiltered = qaRepository.portals().single { it.portalId == id }
+            assertEquals(unfiltered, result)
+            assertEquals(qaRepository.resolveLaunch(unfiltered), qaRepository.resolveLaunch(result))
+        }
+    }
+
+    @Test
+    fun `every public service name is a search alias without changing trust or launch policy`() {
+        for (repository in listOf(qaRepository, releaseRepository)) {
+            val unfiltered = repository.portals().associateBy { it.portalId }
+            for (metadata in publicCatalog.entries) {
+                val result = repository.portals(PortalCatalogQuery(searchText = metadata.displayName))
+                    .single { it.portalId == metadata.portalId }
+                val before = checkNotNull(unfiltered[metadata.portalId])
+                assertEquals(before, result)
+                assertEquals(repository.resolveLaunch(before), repository.resolveLaunch(result))
+            }
+        }
+    }
+
+    @Test
     fun `supports accent insensitive search and public filters`() {
         val autonomous = qaRepository.portals(
             PortalCatalogQuery(filter = PortalCatalogFilter.AUTONOMOUS_COMMUNITIES),

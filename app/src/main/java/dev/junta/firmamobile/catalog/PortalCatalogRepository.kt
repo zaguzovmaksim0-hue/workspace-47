@@ -26,6 +26,8 @@ class PortalCatalogRepository(
 ) {
     val bundledCatalogVersion: Int = publicCatalog.catalogVersion
     val portalIds: Set<PortalId> = publicCatalog.entries.mapTo(linkedSetOf()) { it.portalId }
+    // Public service aliases affect search only, never profile trust or launch policy.
+    private val publicNameSearchKeys = publicCatalog.entries.associate { it.portalId to it.displayName.searchKey() }
     private val resolvedItems by lazy(LazyThreadSafetyMode.NONE) {
         publicCatalog.entries.map(::resolve)
     }
@@ -156,8 +158,9 @@ class PortalCatalogRepository(
 
         val needle = query.searchText.searchKey()
         if (needle.isEmpty()) return true
-        return sequenceOf(displayName, organization, territory, purpose)
-            .any { needle in it.searchKey() }
+        return needle in publicNameSearchKeys[portalId].orEmpty() ||
+            sequenceOf(displayName, organization, territory, purpose)
+                .any { needle in it.searchKey() }
     }
 
     private fun SiteProfile.toPublicCapabilities(): Set<PortalServiceCapability> = buildSet {
