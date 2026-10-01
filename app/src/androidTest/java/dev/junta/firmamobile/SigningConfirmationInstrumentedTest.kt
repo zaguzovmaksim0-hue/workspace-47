@@ -8,11 +8,13 @@ import android.util.Base64
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
+import android.webkit.ClientCertRequest
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -115,6 +117,79 @@ class SigningConfirmationInstrumentedTest {
         } finally {
             bytes.fill(0)
         }
+    }
+
+    @Test
+    fun unknownTlsRequestCanUnlockWithoutReplacingTheBrowserOrAutoApproving() {
+        val uri = Uri.parse("content://dev.junta.firmamobile.tests/interactive-tls-identity.p12")
+        val bytes = syntheticPkcs12()
+        try {
+            val repository = CertificateRepository(
+                documentAccess = SyntheticDocumentAccess(uri, bytes),
+                referenceStore = MemoryReferenceStore(StoredCertificateReference(
+                    uri = uri, displayName = "synthetic-identity.p12",
+                    mimeType = CertificateRepository.MIME_X_PKCS12,
+                    size = bytes.size.toLong(), summary = null,
+                )),
+                loader = Pkcs12Loader(),
+            )
+            TestCertificateDependencies.install(repository, CertificateSession()).use {
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    waitForText("Explorar sedes sin desbloquear el certificado")
+                    rule.onNodeWithText("Explorar sedes sin desbloquear el certificado")
+                        .performScrollTo().performClick()
+                    waitForText("SERVICIOS PÚBLICOS")
+                    openOvorionPortal()
+                    waitForWebView(scenario)
+                    var original: WebView? = null
+                    scenario.onActivity { activity ->
+                        original = checkNotNull(findWebView(activity.window.decorView)).apply {
+                            stopLoading()
+                            loadDataWithBaseURL(
+                                "https://portal.synthetic.example/start",
+                                "<html><head><title>TLS_FIXTURE_READY</title></head><body><input value=retained-draft></body></html>",
+                                "text/html", "UTF-8", "https://portal.synthetic.example/start",
+                            )
+                        }
+                    }
+                    waitForWebViewTitle(scenario, "TLS_FIXTURE_READY")
+                    var proceeded = 0
+                    var ignored = 0
+                    val request = object : ClientCertRequest() {
+                        override fun getHost() = "auth.synthetic.example"
+                        override fun getPort() = 443
+                        override fun getKeyTypes() = arrayOf("RSA")
+                        override fun getPrincipals(): Array<java.security.Principal> = emptyArray()
+                        override fun proceed(key: java.security.PrivateKey, chain: Array<java.security.cert.X509Certificate>) { proceeded++ }
+                        override fun ignore() { ignored++ }
+                        override fun cancel() { error("No sticky cancellation in this flow") }
+                    }
+                    scenario.onActivity {
+                        val view = checkNotNull(original)
+                        view.webViewClient.onReceivedClientCertRequest(view, request)
+                    }
+                    rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed().performClick()
+                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                        .performScrollTo().performTextInput(TEST_PASSPHRASE)
+                    rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
+                    waitForText("Certificado encontrado")
+                    scenario.onActivity { activity ->
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("TLS_FIXTURE_READY", original?.title)
+                        assertEquals(0, proceeded)
+                        assertEquals(0, ignored)
+                    }
+                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    rule.onNodeWithTag("interactive-client-auth-confirm").assertIsDisplayed().performClick()
+                    scenario.onActivity { activity ->
+                        assertEquals(1, proceeded)
+                        assertEquals(0, ignored)
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("TLS_FIXTURE_READY", original?.title)
+                    }
+                }
+            }
+        } finally { bytes.fill(0) }
     }
 
     @Test
