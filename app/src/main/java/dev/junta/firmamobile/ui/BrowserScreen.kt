@@ -53,6 +53,9 @@ import dev.junta.firmamobile.browser.BrowserUrlPolicy
 import dev.junta.firmamobile.browser.CarneJovenPreTlsRetryController
 import dev.junta.firmamobile.browser.AuthorizedClientAuthTarget
 import dev.junta.firmamobile.browser.ClientAuthGrant
+import dev.junta.firmamobile.browser.InteractiveClientAuthController
+import dev.junta.firmamobile.browser.InteractiveClientAuthPrompt
+import dev.junta.firmamobile.browser.InteractiveClientAuthProblem
 import dev.junta.firmamobile.browser.ClientCertPreferenceClearRequest
 import dev.junta.firmamobile.browser.ClientCertPreferenceClearResult
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
@@ -191,10 +194,17 @@ fun BrowserScreen(
     onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     onMelillaBatchCancel: (UUID) -> Unit = {},
     onShowFileChooser: ((WebView, android.webkit.ValueCallback<Array<Uri>>, android.webkit.WebChromeClient.FileChooserParams) -> Boolean)? = null,
+    certificatePanelVisible: Boolean = false,
+    mayRetainExternalReturn: () -> Boolean = { false },
+    consumeExternalReturn: () -> Boolean = { false },
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val selectedServiceId = profileId
+    val currentIdentityProvider by rememberUpdatedState(clientCertificateIdentityProvider)
+    val currentMayRetainExternalReturn by rememberUpdatedState(mayRetainExternalReturn)
+    val currentConsumeExternalReturn by rememberUpdatedState(consumeExternalReturn)
+    val currentSigningState by rememberUpdatedState(signingState)
     val clientCertPreferenceState by
         clientCertPreferenceCoordinator.state.collectAsStateWithLifecycle()
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
@@ -280,11 +290,48 @@ fun BrowserScreen(
     }
     var pageProgress by remember { mutableIntStateOf(100) }
     var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
+    var interactivePrompt by remember { mutableStateOf<InteractiveClientAuthPrompt?>(null) }
+    var interactiveProblem by remember { mutableStateOf<InteractiveClientAuthProblem?>(null) }
+    var preserveInteractiveWebViewDuringClear by remember { mutableStateOf(false) }
+    val interactiveClientAuth = remember(selectedServiceId, validatedEntryUrl, clientCertPreferenceCoordinator) {
+        InteractiveClientAuthController<WebView>(
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            identityProvider = { currentIdentityProvider() },
+            canRespond = {
+                lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                    clientCertPreferenceCoordinator.state.value == ClientCertPreferenceBarrierState.IDLE
+            },
+            clearClientCertPreferences = {
+                preserveInteractiveWebViewDuringClear = true
+                clientCertPreferenceCoordinator.requestClear { _, result ->
+                    mainHandler.post {
+                        preserveInteractiveWebViewDuringClear = false
+                        if (result == ClientCertPreferenceClearResult.FAILED) {
+                            browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                        }
+                    }
+                }
+            },
+            onPrompt = { interactivePrompt = it },
+            onProblem = { interactiveProblem = it },
+        )
+    }
+    LaunchedEffect(certificateState, certificatePanelVisible) {
+        interactiveClientAuth.refreshIdentity()
+    }
+    LaunchedEffect(clientCertPreferenceState) {
+        // Another process-scoped clear may supersede this callback. Once the
+        // platform settles, an old preservation flag cannot escape its barrier.
+        if (clientCertPreferenceState != ClientCertPreferenceBarrierState.CLEARING) {
+            preserveInteractiveWebViewDuringClear = false
+        }
+    }
     val clientCertPreferenceBlocked =
-        !preserveWebViewDuringClientAuthClear &&
-            (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
+        !preserveWebViewDuringClientAuthClear && !preserveInteractiveWebViewDuringClear &&
+            (clientCertPreferenceCoordinator.state.value != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
     fun advanceNavigationEpoch() {
+        interactiveClientAuth.cancelPending()
         bridgeAttachmentLease.current()?.abandonMiniAppletRequests()
         check(navigationEpoch.longValue != Long.MAX_VALUE)
         navigationEpoch.longValue++
@@ -337,7 +384,8 @@ fun BrowserScreen(
     }
 
     fun requestProcessClientCertPreferenceClear() {
-        clientCertPreferenceCoordinator.requestClear()
+        // A generic-choice revocation already owns an in-flight process clear.
+        if (!preserveInteractiveWebViewDuringClear) clientCertPreferenceCoordinator.requestClear()
     }
 
     fun cancelPendingInPlaceClientAuth() {
@@ -346,6 +394,8 @@ fun BrowserScreen(
     }
 
     fun abandonClientAuth() {
+        interactiveClientAuth.cancelPending()
+        interactiveClientAuth.revokeCachedChoice()
         carneJovenPreTlsRetryController.reset()
         cancelClientAuthClearCallback()
         preserveWebViewDuringClientAuthClear = false
@@ -580,6 +630,10 @@ fun BrowserScreen(
             }
 
             override fun onBrowserError(error: BrowserErrorCode) {
+                interactiveClientAuth.cancelPending()
+                if (error == BrowserErrorCode.SSL_ERROR || error == BrowserErrorCode.SAFE_BROWSING) {
+                    interactiveClientAuth.revokeCachedChoice()
+                }
                 browserError = error
                 pageProgress = 100
             }
@@ -666,6 +720,7 @@ fun BrowserScreen(
     BackHandler(onBack = ::goBack)
     DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
+            interactiveClientAuth.close()
             sessionDataClearLease.invalidate()
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
@@ -680,23 +735,49 @@ fun BrowserScreen(
     }
 
     DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator) {
+        var wasBackgrounded = false
+        var retainedLegacyState = false
+        var retainedFingerprint: String? = null
+        fun revokeLegacyBackgroundFlow() {
+            pendingClientAuthTarget = null
+            clientAuthGrant = null
+            pendingNormalUrl.set(validatedEntryUrl)
+            abandonClientAuth()
+            advanceNavigationEpoch()
+            onCancelSigning(SigningCancelReason.BACKGROUND, null)
+            webViewRecreationEpoch++
+        }
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
+                wasBackgrounded = true
+                val expectedReturn = currentMayRetainExternalReturn()
+                interactiveClientAuth.onBackground(expectedReturn)
                 val hadClientAuthState = pendingClientAuthTarget != null ||
                     pendingInPlaceClientAuth != null ||
                     inPlaceClientAuthHandlerRef.get() != null ||
                     clientAuthGrant != null ||
                     clientAuthPreparing ||
                     currentClientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE
-                if (hadClientAuthState) {
-                    pendingClientAuthTarget = null
-                    clientAuthGrant = null
-                    pendingNormalUrl.set(validatedEntryUrl)
-                    abandonClientAuth()
-                    advanceNavigationEpoch()
-                    onCancelSigning(SigningCancelReason.BACKGROUND, null)
-                    webViewRecreationEpoch++
+                retainedLegacyState = hadClientAuthState && expectedReturn
+                retainedFingerprint = if (retainedLegacyState) {
+                    currentIdentityProvider()?.let(::certificateSelectionFingerprint)
+                } else null
+                if (hadClientAuthState && !expectedReturn && !preserveInteractiveWebViewDuringClear) {
+                    revokeLegacyBackgroundFlow()
                 }
+            } else if (event == Lifecycle.Event.ON_START && wasBackgrounded) {
+                wasBackgrounded = false
+                val returnStillValid = currentConsumeExternalReturn()
+                interactiveClientAuth.onForeground(returnStillValid)
+                val sameIdentity = retainedFingerprint == currentIdentityProvider()?.let(::certificateSelectionFingerprint)
+                val grantLive = clientAuthGrant?.authorized?.isExpiredOrInvalid() != true &&
+                    pendingInPlaceClientAuth?.authorized?.isExpiredOrInvalid() != true &&
+                    pendingClientAuthTarget?.isExpiredOrInvalid() != true
+                if (retainedLegacyState && (!returnStillValid || !sameIdentity || !grantLive)) {
+                    revokeLegacyBackgroundFlow()
+                }
+                retainedLegacyState = false
+                retainedFingerprint = null
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -766,6 +847,8 @@ fun BrowserScreen(
             if (!leavingClientAuth) webViewRef.get()?.reload()
         },
         onChangeCertificate = {
+            interactiveClientAuth.cancelPending()
+            interactiveClientAuth.revokeCachedChoice()
             cancelPendingCertificateSelection(
                 dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
             )
@@ -969,6 +1052,17 @@ fun BrowserScreen(
                                 activeProfileId = { effectiveTopLevelProfileId },
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
+                                onInteractiveClientAuthChallenge = { owner, request ->
+                                    val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                        pendingCertificateSelection != null || pendingRequest != null ||
+                                        clientAuthPreparing || currentSigningState !is SigningUiState.Idle
+                                    if (busy) request.ignore() else {
+                                        interactiveClientAuth.offer(
+                                            owner, navigationEpoch.longValue,
+                                            owner.url ?: validatedEntryUrl, request,
+                                        )
+                                    }
+                                },
                                 onClientAuthTarget = { authorized ->
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
@@ -1266,6 +1360,7 @@ fun BrowserScreen(
                             dedicatedClientRef.getAndSet(null)?.abandon()
                         }
                         if (webViewRef.compareAndSet(webView, null)) {
+                            interactiveClientAuth.cancelPending()
                             normalClientRef.set(null)
                             onWebViewChanged(null)
                         }
@@ -1321,6 +1416,27 @@ fun BrowserScreen(
                 }
             },
         )
+    }
+
+    if (!certificatePanelVisible) {
+        interactivePrompt?.let { prompt ->
+            InteractiveClientAuthDialog(
+                prompt = prompt,
+                onConfirm = { interactiveClientAuth.confirm(prompt.token) },
+                onUnlock = onChangeCertificate,
+                onCancel = { interactiveClientAuth.cancel(prompt.token) },
+            )
+        }
+        if (interactiveProblem != null && interactivePrompt == null) {
+            AlertDialog(
+                onDismissRequest = { interactiveProblem = null },
+                title = { Text(stringResource(R.string.interactive_tls_title)) },
+                text = { Text(stringResource(R.string.interactive_tls_ended)) },
+                confirmButton = {
+                    TextButton(onClick = { interactiveProblem = null }) { Text(stringResource(R.string.interactive_tls_close)) }
+                },
+            )
+        }
     }
 
     pendingInPlaceClientAuth?.let { pending ->

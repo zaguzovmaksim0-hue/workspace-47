@@ -120,6 +120,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private var pendingExternalHandoff by mutableStateOf<dev.junta.firmamobile.browser.ExternalHandoff.Request?>(null)
     private var externalHandoffFailed by mutableStateOf(false)
+    private val browserExternalReturn = dev.junta.firmamobile.browser.BrowserExternalReturnLease<WebView>()
     private val browserFilePicker: androidx.activity.result.ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         browserFileChooser.deliver(result.resultCode, result.data)
@@ -134,7 +135,7 @@ class MainActivity : ComponentActivity() {
                 checkUriPermission(uri, android.os.Process.myPid(), android.os.Process.myUid(),
                     Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED
             },
-            launch = { browserFilePicker.launch(it) },
+            launch = { intent -> withBrowserExternalReturn { browserFilePicker.launch(intent) } },
         )
     }
 
@@ -404,6 +405,13 @@ class MainActivity : ComponentActivity() {
                         profileId = browserDestination.profileId,
                         entryUrl = browserDestination.entryUrl,
                         certificateState = unlocked,
+                        certificatePanelVisible = certificatePanelVisible,
+                        mayRetainExternalReturn = {
+                            currentWebView?.let { browserExternalReturn.isValid(it, currentNavigationEpoch) } == true
+                        },
+                        consumeExternalReturn = {
+                            currentWebView?.let { browserExternalReturn.consume(it, currentNavigationEpoch) } == true
+                        },
                         logger = app.sanitizedLogger,
                         signingState = signingState,
                         onMiniAppletRequest = ::prepareMiniAppletSigning,
@@ -441,10 +449,11 @@ class MainActivity : ComponentActivity() {
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onShowFileChooser = { view, callback, params -> browserFileChooser.open(view, callback, params) },
                         onWebViewChanged = {
-                            if (currentWebView !== it) { browserFileChooser.cancel(); pendingExternalHandoff = null }
+                            if (currentWebView !== it) { browserFileChooser.cancel(); pendingExternalHandoff = null; browserExternalReturn.invalidate() }
                             currentWebView = it
                         },
                         onNavigationEpochChanged = {
+                            browserExternalReturn.invalidate()
                             browserFileChooser.cancel()
                             pendingExternalHandoff = null
                             currentNavigationEpoch = it
@@ -606,7 +615,7 @@ class MainActivity : ComponentActivity() {
         val intent = dev.junta.firmamobile.browser.ExternalHandoff.intentFor(request) ?: return
         cancelSigning(SigningCancelReason.NAVIGATION)
         try {
-            startActivity(intent)
+            withBrowserExternalReturn { startActivity(intent) }
         } catch (_: android.content.ActivityNotFoundException) {
             externalHandoffFailed = true
         } catch (_: SecurityException) {
@@ -614,10 +623,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun <T> withBrowserExternalReturn(action: () -> T): T {
+        val token = currentWebView?.let { browserExternalReturn.begin(it, currentNavigationEpoch) }
+        return try {
+            action()
+        } catch (error: Exception) {
+            token?.let(browserExternalReturn::cancel)
+            throw error
+        }
+    }
+
     private fun launchCertificatePicker() {
         cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
         certificateViewModel.prepareForCertificateSelection()
-        certificatePicker.launch(PKCS12_MIME_TYPES)
+        withBrowserExternalReturn { certificatePicker.launch(PKCS12_MIME_TYPES) }
     }
 
     override fun onDestroy() {

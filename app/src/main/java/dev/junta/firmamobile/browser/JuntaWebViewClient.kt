@@ -73,6 +73,7 @@ class JuntaWebViewClient(
     },
     private val resolveConfirmedClientAuthContinuationUrl: (String) -> AuthorizedClientAuthTarget? = { null },
     private val isConfirmedClientAuthReturnUrl: (String) -> Boolean = { false },
+    private val onInteractiveClientAuthChallenge: (WebView, ClientCertRequest) -> Unit = { _, request -> request.ignore() },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
@@ -375,7 +376,9 @@ class JuntaWebViewClient(
             !request.host.equals(pending.authorized.target.host, ignoreCase = true) ||
             request.port != pending.authorized.policy.requestPort
         ) {
-            request.ignore()
+            // This is a real platform TLS challenge, not permission inferred
+            // from a navigation recipe. The optional delegate requires consent.
+            onInteractiveClientAuthChallenge(view, request)
             return
         }
         onInPlaceClientAuthChallenge(pending.authorized, request)
@@ -445,6 +448,7 @@ class JuntaWebViewClient(
         handler.cancel()
         if (isCurrentWebView(view)) {
             logger.recordBrowserEvent(DiagnosticEventCode.SSL_ERROR_CANCELLED)
+            callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
         }
     }
 

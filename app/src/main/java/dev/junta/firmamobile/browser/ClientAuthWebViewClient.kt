@@ -15,11 +15,8 @@ import dev.junta.firmamobile.profile.matchesReturnUrl
 import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
-import java.security.MessageDigest
 import java.time.Clock
-import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.security.auth.x500.X500Principal
 
 internal data class ClientAuthGrant(
     val authorized: AuthorizedClientAuthTarget,
@@ -149,68 +146,17 @@ internal class ClientAuthRequestHandler(
         ) {
             return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_HOST_PORT)
         }
-        val certificate = identity.certificate
-        val algorithm = certificate.publicKey.algorithm.uppercase()
-        if (algorithm !in authorized.certificateRules.allowedKeyAlgorithms) {
-            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ALGORITHM)
-        }
-        if (authorized.policy.requireOfferedKeyTypeMatch) {
-            val offeredKeyTypes = request.keyTypes?.map(String::uppercase)?.toSet().orEmpty()
-            if (offeredKeyTypes.isEmpty() || offeredKeyTypes.none { it == algorithm || (algorithm == "EC" && it == "ECDSA") }) {
-                return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_KEY_TYPE)
-            }
-        }
-        try {
-            certificate.checkValidity(Date.from(clock.instant()))
-        } catch (_: Exception) {
-            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_VALIDITY)
-        }
-        val keyUsage = certificate.keyUsage
-        if (authorized.certificateRules.requireDigitalSignatureKeyUsage &&
-            keyUsage != null && (keyUsage.isEmpty() || !keyUsage[0])
-        ) {
-            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_KEY_USAGE)
-        }
-        val extendedKeyUsage = try {
-            certificate.extendedKeyUsage
-        } catch (_: Exception) {
-            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EKU)
-        }
-        if (authorized.policy.requireTlsClientAuthExtendedKeyUsage &&
-            extendedKeyUsage != null &&
-            TLS_CLIENT_AUTH_OID !in extendedKeyUsage && ANY_EXTENDED_KEY_USAGE_OID !in extendedKeyUsage
-        ) {
-            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_EKU)
-        }
-        val principals = request.principals?.toList().orEmpty()
-        if (principals.isEmpty()) {
-            return if (authorized.policy.allowEmptyIssuerList) {
-                ClientAuthValidation(true)
-            } else {
-                ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
-            }
-        }
-        val acceptableIssuerDer = principals.mapNotNull { principal ->
-            (principal as? X500Principal)?.encoded
-        }
-        if (acceptableIssuerDer.size != principals.size) {
-            return ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
-        }
-        val chain = identity.chain.ifEmpty { listOf(certificate) }
-        val issuerMatches = chain.any { chainCertificate ->
-            val issuer = chainCertificate.issuerX500Principal.encoded
-            acceptableIssuerDer.any { acceptable -> MessageDigest.isEqual(issuer, acceptable) }
-        }
-        return if (issuerMatches) {
-            ClientAuthValidation(true)
-        } else {
-            ClientAuthValidation(false, ClientAuthRequestDiagnostic.REJECTED_ISSUER)
-        }
-    }
-
-    private companion object {
-        const val TLS_CLIENT_AUTH_OID = "1.3.6.1.5.5.7.3.2"
-        const val ANY_EXTENDED_KEY_USAGE_OID = "2.5.29.37.0"
+        val rejection = clientCertificateRejection(
+            request = request,
+            identity = identity,
+            allowedKeyAlgorithms = authorized.certificateRules.allowedKeyAlgorithms,
+            requireOfferedKeyTypeMatch = authorized.policy.requireOfferedKeyTypeMatch,
+            requireDigitalSignatureKeyUsage = authorized.certificateRules.requireDigitalSignatureKeyUsage,
+            requireTlsClientAuthExtendedKeyUsage = authorized.policy.requireTlsClientAuthExtendedKeyUsage,
+            allowEmptyIssuerList = authorized.policy.allowEmptyIssuerList,
+            clock = clock,
+        )
+        return ClientAuthValidation(rejection == null, rejection)
     }
 }
 

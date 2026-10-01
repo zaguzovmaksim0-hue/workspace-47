@@ -188,4 +188,17 @@
     <string name="external_handoff_continue">Continuar</string>
     <string name="external_handoff_unavailable_title">No se pudo abrir la aplicación</string>
     <string name="external_handoff_unavailable_copy">No hay una aplicación compatible instalada o el enlace no es válido. La página permanece abierta; puedes volver al menú y abrir el trámite en el navegador.</string>
+    <string name="interactive_tls_title">Acceso con certificado</string>
+    <string name="interactive_tls_server">Servidor que solicita el certificado: %1$s</string>
+    <string name="interactive_tls_page">Página abierta: %1$s</string>
+    <string name="interactive_tls_operation">Es una petición de identificación TLS, no una firma de documentos. Puede proceder de un recurso de la página.</string>
+    <string name="interactive_tls_certificate">Certificado: %1$s</string>
+    <string name="interactive_tls_unlock_copy">Desbloquea o selecciona un certificado. Después tendrás que confirmar su envío a este servidor.</string>
+    <string name="interactive_tls_incompatible">El certificado no coincide con los requisitos del servidor o no es válido para este acceso. Puedes seleccionar otro.</string>
+    <string name="interactive_tls_cache_notice">Android puede recordar la elección para este servidor durante un máximo de 10 minutos en este navegador. Bloquear el certificado o salir del navegador elimina esa elección, no las cookies del sitio.</string>
+    <string name="interactive_tls_confirm">Usar este certificado</string>
+    <string name="interactive_tls_unlock">Abrir certificado</string>
+    <string name="interactive_tls_change">Cambiar certificado</string>
+    <string name="interactive_tls_ended">La petición ha terminado o ya no pertenece a esta página. No se ha repetido la operación. Vuelve al sitio para iniciar el acceso de nuevo.</string>
+    <string name="interactive_tls_close">Cerrar</string>
 </resources>
