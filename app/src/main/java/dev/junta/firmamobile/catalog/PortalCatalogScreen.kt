@@ -45,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -423,7 +424,8 @@ private fun PortalCard(
             }
             Button(
                 onClick = { onOpenPortal(portal) },
-                modifier = Modifier.weight(1.15f).heightIn(min = 48.dp),
+                modifier = Modifier.weight(1.15f).heightIn(min = 48.dp)
+                    .testTag("catalog-open-${portal.portalId.value}"),
                 shape = CatalogShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = JuntaTeal,

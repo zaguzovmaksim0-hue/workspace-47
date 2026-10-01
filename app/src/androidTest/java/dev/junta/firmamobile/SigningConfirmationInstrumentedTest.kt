@@ -15,6 +15,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToIndex
@@ -171,8 +173,16 @@ class SigningConfirmationInstrumentedTest {
                         fail("Synthetic catalog query not resolved: query=$observedSearch itemCount=$resolvedItems")
                     }
                     rule.waitForIdle()
-                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir"))
-                    rule.onAllNodesWithText("Abrir")[0].performClick()
+                    // Hide the search IME before scrolling; text-node index 0
+                    // was unstable while insets and merged semantics changed.
+                    androidx.test.espresso.Espresso.closeSoftKeyboard()
+                    rule.waitForIdle()
+                    val openTag = "catalog-open-$OVORION_PORTAL_ID"
+                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(openTag))
+                    rule.waitUntil(timeoutMillis = 10_000) {
+                        rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1
+                    }
+                    rule.onNodeWithTag(openTag).assertIsDisplayed().performClick()
                     waitForWebView(scenario)
                     var original: WebView? = null
                     scenario.onActivity { activity ->
@@ -272,8 +282,16 @@ class SigningConfirmationInstrumentedTest {
                         fail("Synthetic catalog query not resolved: query=$observedSearch itemCount=$resolvedItems")
                     }
                     rule.waitForIdle()
-                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir"))
-                    rule.onAllNodesWithText("Abrir")[0].performClick()
+                    // Hide the search IME before scrolling; text-node index 0
+                    // was unstable while insets and merged semantics changed.
+                    androidx.test.espresso.Espresso.closeSoftKeyboard()
+                    rule.waitForIdle()
+                    val openTag = "catalog-open-$OVORION_PORTAL_ID"
+                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(openTag))
+                    rule.waitUntil(timeoutMillis = 10_000) {
+                        rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1
+                    }
+                    rule.onNodeWithTag(openTag).assertIsDisplayed().performClick()
                     waitForWebView(scenario)
                     var original: WebView? = null
                     scenario.onActivity { activity ->
