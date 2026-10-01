@@ -120,10 +120,11 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private var pendingExternalHandoff by mutableStateOf<dev.junta.firmamobile.browser.ExternalHandoff.Request?>(null)
     private var externalHandoffFailed by mutableStateOf(false)
-    private val browserFilePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val browserFilePicker: androidx.activity.result.ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         browserFileChooser.deliver(result.resultCode, result.data)
     }
-    private val browserFileChooser by lazy {
+    private val browserFileChooser: dev.junta.firmamobile.browser.BrowserFileChooser by lazy {
         dev.junta.firmamobile.browser.BrowserFileChooser(
             navigationEpoch = { currentNavigationEpoch },
             isCurrentView = { it === currentWebView },
