@@ -240,7 +240,7 @@ class JuntaWebViewClient(
                 true
             }
             is NavigationDecision.OpenExternal -> {
-                if (!isModernMainFrame) {
+                if (!isModernMainFrame || !method.equals(GET_METHOD, ignoreCase = true)) {
                     logger.recordNavigationEvent(
                         code = DiagnosticEventCode.NAVIGATION_BLOCKED,
                         rawUrl = targetUrl,

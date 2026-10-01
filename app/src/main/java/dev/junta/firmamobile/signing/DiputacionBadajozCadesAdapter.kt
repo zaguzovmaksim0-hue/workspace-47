@@ -26,7 +26,7 @@ class DiputacionBadajozCadesAdapter internal constructor(
                 MiniAppletPayloadCodec.withDecoded(payload) { data, extraProperties ->
                     require(data.isNotEmpty() && data.size <= MAX_CHALLENGE_BYTES)
                     require(data.isSafeChallenge())
-                    require(extraProperties == EXPECTED_EXTRA_PROPERTIES)
+                    require(LiteralSigningProperties.canonicalize(extraProperties, EXPECTED_EXTRA_PROPERTIES) != null)
                     CadesDetachedCodec.createPreSign(
                         content = data,
                         expectedContentBytes = data.size,
@@ -101,7 +101,7 @@ class DiputacionBadajozCadesAdapter internal constructor(
             MiniAppletPayloadCodec.withDecoded(payload) { data, extraProperties ->
                 data.isNotEmpty() && data.size <= MAX_CHALLENGE_BYTES &&
                     data.isSafeChallenge() &&
-                    extraProperties == EXPECTED_EXTRA_PROPERTIES
+                    LiteralSigningProperties.canonicalize(extraProperties, EXPECTED_EXTRA_PROPERTIES) != null
             }
         }
     }.getOrDefault(false)

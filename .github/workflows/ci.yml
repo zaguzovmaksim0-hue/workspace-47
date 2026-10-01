@@ -138,6 +138,8 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install Python test dependencies
         run: python -m pip install --disable-pip-version-check --requirement tools/requirements.txt
+      - name: Test AutoFirma JavaScript interoperability
+        run: node --test scripts/tests/afirma-interoperability.test.mjs
       - name: Run Python tests
         run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
 

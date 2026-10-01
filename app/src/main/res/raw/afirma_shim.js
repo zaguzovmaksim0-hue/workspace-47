@@ -191,6 +191,7 @@
     /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
   const wrappedMethods = new WeakSet();
+  const installedMethodGetters = new WeakSet();
   const pendingCallbacks = new Map();
   const pendingBatchCallbacks = new Map();
   let activeMelillaBatch = null;
@@ -507,6 +508,27 @@
     return true;
   }
 
+  function equivalentLiteralProperties(raw, expected) {
+    if (typeof raw !== "string" || raw.length > maxExtraPropertiesChars) return false;
+    const parse = value => {
+      const map = new Map();
+      const lines = value.split(/\r\n|\n|\r/);
+      if (lines.length > 64) return null;
+      for (const line of lines) {
+        if (line === "") continue;
+        const at = line.indexOf("=");
+        if (at < 1 || /[\x00-\x1f\x7f\\]/.test(line)) return null;
+        const key = line.slice(0, at);
+        if (!/^[A-Za-z0-9_.-]+$/.test(key) || map.has(key)) return null;
+        map.set(key, line.slice(at + 1));
+      }
+      return map;
+    };
+    const actual = parse(raw), required = parse(expected);
+    return actual !== null && required !== null && actual.size === required.size &&
+      Array.from(required).every(([key, value]) => actual.get(key) === value);
+  }
+
   function interceptMiniAppletSign(args) {
     if (!functionalSigningEnabled) {
       return false;
@@ -705,8 +727,8 @@
       isBadajozOrigin && args.length === 6 &&
       typeof args[0] === "string" && args[0].length > 0 &&
       args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
-      args[1] === "SHA256withRSA" && args[2] === "Cades" &&
-      args[3] === badajozExtraProperties &&
+      args[1] === "SHA256withRSA" && typeof args[2] === "string" && args[2].toLowerCase() === "cades" &&
+      equivalentLiteralProperties(args[3], badajozExtraProperties) &&
       typeof successCallback === "function" && typeof errorCallback === "function";
     if (isBadajozOrigin && !isExactBadajozCall) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
@@ -819,7 +841,7 @@
         dataB64,
         algorithm: args[1],
         format: nativeFormat,
-        extraProperties: args[3]
+        extraProperties: isExactBadajozCall ? badajozExtraProperties : args[3]
       }));
       postShimDiagnostic("SIGN_MESSAGE_POSTED");
     } catch (_) {
@@ -1480,6 +1502,7 @@
 
   function installMethodHook(target, name, call) {
     const descriptor = Object.getOwnPropertyDescriptor(target, name);
+    if (descriptor && descriptor.get && installedMethodGetters.has(descriptor.get)) return;
     if (descriptor && descriptor.configurable === false) {
       if (descriptor.writable === true && typeof target[name] === "function") {
         target[name] = wrapMiniAppletMethod(target[name], call);
@@ -1501,6 +1524,7 @@
         current = wrapMiniAppletMethod(value, call);
       }
     });
+    installedMethodGetters.add(Object.getOwnPropertyDescriptor(target, name).get);
     if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&
         !badajozSignHookReadyDiagnosticPosted) {
       markBadajozSignHookReady();
@@ -1644,35 +1668,54 @@
     );
   }
 
-  if (functionalSigningEnabled && badajozCompatibilityEnabled) {
-    postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
-    document.addEventListener("click", event => {
-      if (event.target && event.target.id === "firmar") {
-        postBadajozDiagnosticOnce("BADAJOZ_CERT_BUTTON_CLICK");
-      }
-    }, true);
-    const rewrapLateBadajozGlobals = () => {
+  if (functionalSigningEnabled) {
+    let hookGuardTimer = null;
+    let documentActive = true;
+    const repairCurrentSigningLibraries = () => {
+      if (!documentActive) return;
       try {
-        wrapBadajozDiagnostic(window, "pulsarFirmarIdentificate", "BADAJOZ_PULSAR_SIGN_ENTRY");
-        wrapBadajozDiagnostic(window, "firmar", "BADAJOZ_FIRMAR_ENTRY");
         wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
-        wrapBadajozDiagnostic(window.MiniApplet, "getBase64FromText", "BADAJOZ_GET_BASE64_ENTRY");
-        wrapBadajozDiagnostic(window.MiniApplet, "echo", "BADAJOZ_ECHO_ENTRY");
-        wrapBadajozDiagnostic(window.MiniApplet, "setForceWSMode", "BADAJOZ_FORCE_WS_ENTRY");
-        wrapMiniApplet(
-          window.AutoScript,
-          ugrCompatibilityEnabled,
-          melillaBatchCompatibilityEnabled,
-          iSel || vSel || xSel,
-          lugoBatchCompatibilityEnabled,
-        );
+        wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled,
+          iSel || vSel || xSel, lugoBatchCompatibilityEnabled);
+        if (badajozCompatibilityEnabled) {
+          wrapBadajozDiagnostic(window, "pulsarFirmarIdentificate", "BADAJOZ_PULSAR_SIGN_ENTRY");
+          wrapBadajozDiagnostic(window, "firmar", "BADAJOZ_FIRMAR_ENTRY");
+          wrapBadajozDiagnostic(window.MiniApplet, "getBase64FromText", "BADAJOZ_GET_BASE64_ENTRY");
+          wrapBadajozDiagnostic(window.MiniApplet, "echo", "BADAJOZ_ECHO_ENTRY");
+          wrapBadajozDiagnostic(window.MiniApplet, "setForceWSMode", "BADAJOZ_FORCE_WS_ENTRY");
+        }
       } catch (_) {
-        // A late portal global remains fail-closed until the next bounded retry.
+        // A non-configurable or throwing page object is not forcibly replaced.
       }
     };
-    rewrapLateBadajozGlobals();
-    const lateRewrapTimer = window.setInterval(rewrapLateBadajozGlobals, 250);
-    window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis);
+    const stopHookGuard = () => {
+      if (hookGuardTimer !== null) window.clearInterval(hookGuardTimer);
+      hookGuardTimer = null;
+    };
+    const startHookGuard = () => {
+      if (!documentActive || document.visibilityState === "hidden") return;
+      repairCurrentSigningLibraries();
+      if (hookGuardTimer === null) {
+        hookGuardTimer = window.setInterval(repairCurrentSigningLibraries, 500);
+      }
+    };
+    // Capture runs before ordinary page click/submit handlers, not just after
+    // DOMContentLoaded. Polling covers programmatic late library replacement.
+    document.addEventListener("click", repairCurrentSigningLibraries, true);
+    document.addEventListener("submit", repairCurrentSigningLibraries, true);
+    document.addEventListener("load", repairCurrentSigningLibraries, true);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") stopHookGuard(); else startHookGuard();
+    });
+    window.addEventListener("pagehide", () => { documentActive = false; stopHookGuard(); });
+    window.addEventListener("pageshow", () => { documentActive = true; startHookGuard(); });
+    if (badajozCompatibilityEnabled) {
+      postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
+      document.addEventListener("click", event => {
+        if (event.target && event.target.id === "firmar") postBadajozDiagnosticOnce("BADAJOZ_CERT_BUTTON_CLICK");
+      }, true);
+    }
+    startHookGuard();
   }
 
   if (document.readyState === "loading") {

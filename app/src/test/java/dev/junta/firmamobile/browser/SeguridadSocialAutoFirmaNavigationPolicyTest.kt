@@ -23,29 +23,26 @@ class SeguridadSocialAutoFirmaNavigationPolicyTest {
             "&idPagina=com.ss.sede.RegistroElectronicoDeApoderamiento"
 
     @Test
-    fun blocksExactOfficialAutoFirmaSignIntentFromLeavingTheApp() {
+    fun validatesOfficialIntentForExplicitUserHandoff() {
         val intent =
             "intent://sign?algorithm=SHA256withRSA&format=PAdES&fileid=opaque" +
                 "&rtservlet=https%3A%2F%2Fexample.invalid%2Fretrieve" +
                 "&stservlet=https%3A%2F%2Fexample.invalid%2Fstorage" +
                 "#Intent;scheme=afirma;package=es.gob.afirma;end"
 
-        val decision = policy.decide(intent, source) as NavigationDecision.Block
+        val decision = policy.decide(intent, source) as NavigationDecision.OpenOfficialAutoFirma
 
-        assertEquals(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT, decision.reason)
+        assertEquals("afirma", decision.uri.scheme)
     }
 
     @Test
-    fun blocksDirectOfficialAfirmaUriFromLeavingTheApp() {
+    fun validatesDirectUriForExplicitUserHandoff() {
         val direct = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj"
 
         val decision = policy.decide(direct, source)
 
-        assertTrue(decision is NavigationDecision.Block)
-        assertEquals(
-            NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT,
-            (decision as NavigationDecision.Block).reason,
-        )
+        assertTrue(decision is NavigationDecision.OpenOfficialAutoFirma)
+        assertEquals(direct, (decision as NavigationDecision.OpenOfficialAutoFirma).uri.toString())
     }
 
     @Test

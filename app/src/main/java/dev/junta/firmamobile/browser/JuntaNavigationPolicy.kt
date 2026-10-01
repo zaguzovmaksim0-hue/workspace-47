@@ -84,6 +84,9 @@ class JuntaNavigationPolicy(
         if (isAutoFirmaPlayStoreUrl(target, rawUrl)) {
             return NavigationDecision.Block(NavigationBlockReason.PLAY_STORE_FALLBACK)
         }
+        if (BrowserUrlPolicy(registry, selectedProfileId).resolve(rawUrl).uri == null) {
+            return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
+        }
         val targetUri = runCatching { java.net.URI(rawUrl) }.getOrNull()
         if (targetUri != null && registry.isClientAuthBrowseUrl(selectedProfileId, targetUri)) {
             return NavigationDecision.AllowInWebView
@@ -97,15 +100,12 @@ class JuntaNavigationPolicy(
         if (JuntaOriginPolicy.isAllowed(target, selectedProfileId)) {
             return NavigationDecision.AllowInWebView
         }
-        val otherProfile = registry.resolve(target)?.profile?.profileId
-        if (otherProfile != null && otherProfile != selectedProfileId) {
-            return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
-        }
-        if (isClientAuthRequestOrigin(target)) {
-            return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
-        }
-        return if (isSafeExternalHttpsUrl(target)) {
-            NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION)
+        // Browser permissions and key permissions are independent. All admitted
+        // public HTTPS pages can load, including IdP redirects and POST targets;
+        // BrowserUrlPolicy and the native bridge still withhold signing trust.
+        val resolution = BrowserUrlPolicy(registry, selectedProfileId).resolve(rawUrl)
+        return if (resolution.uri != null) {
+            NavigationDecision.AllowInWebView
         } else {
             NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
@@ -249,7 +249,7 @@ class JuntaNavigationPolicy(
         ) {
             return NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI)
         }
-        return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)
+        return NavigationDecision.OpenOfficialAutoFirma(uri)
     }
 
     private fun hasSafeOfficialAutoFirmaQuery(encodedQuery: String): Boolean {

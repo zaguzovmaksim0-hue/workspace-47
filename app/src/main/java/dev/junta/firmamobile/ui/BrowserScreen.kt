@@ -170,7 +170,7 @@ internal fun certificateEligibleForSelection(
 fun BrowserScreen(
     profileId: ProfileId,
     entryUrl: URI,
-    certificateState: CertificateUiState.Unlocked,
+    certificateState: CertificateUiState.Unlocked?,
     logger: SanitizedLogger,
     signingState: SigningUiState,
     onMiniAppletRequest: (MiniAppletBridgeRequest, SigningReplySink) -> Unit,
@@ -190,6 +190,7 @@ fun BrowserScreen(
     onNavigationEpochChanged: (Long) -> Unit = {},
     onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     onMelillaBatchCancel: (UUID) -> Unit = {},
+    onShowFileChooser: ((WebView, android.webkit.ValueCallback<Array<Uri>>, android.webkit.WebChromeClient.FileChooserParams) -> Boolean)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -738,7 +739,9 @@ fun BrowserScreen(
             ?: selectedProfile?.displayName
             ?: stringResource(R.string.app_name),
         trustLabel = trustLabel,
-        certificateOwner = certificateState.summary.ownerName,
+        certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
+        certificateAvailable = certificateState != null,
+        onOpenInBrowser = { webViewRef.get()?.url?.let { onOpenExternal(Uri.parse(it)) } },
         onBack = ::goBack,
         onHome = {
             clientAuthGrant = null
@@ -766,8 +769,12 @@ fun BrowserScreen(
             cancelPendingCertificateSelection(
                 dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
             )
-            clientAuthGrant = null
-            abandonClientAuth()
+            if (clientAuthGrant != null || inPlaceClientAuthHandlerRef.get() != null ||
+                pendingClientAuthTarget != null || pendingInPlaceClientAuth != null
+            ) {
+                clientAuthGrant = null
+                abandonClientAuth()
+            }
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             onChangeCertificate()
         },
@@ -945,6 +952,7 @@ fun BrowserScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                         webViewRef.set(webView)
+                        onShowFileChooser?.let(webView::setFileChooserListener)
                         webView.setPageProgressListener { progress ->
                             webView.post {
                                 if (webViewRef.get() === webView) pageProgress = progress
@@ -1272,8 +1280,9 @@ fun BrowserScreen(
     pendingRequest?.let { request ->
         AfirmaObservationDialog(
             request = request,
-            certificateOwner = certificateState.summary.ownerName,
+            certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
             onDismiss = { pendingRequest = null },
+            onOpenOfficial = { pendingRequest = null; onOpenOfficialAutoFirma(Uri.parse(request.rawUri)) },
         )
     }
 
@@ -1320,7 +1329,7 @@ fun BrowserScreen(
                 ?: selectedProfile?.displayName
                 ?: stringResource(R.string.app_name),
             host = pending.authorized.target.host,
-            certificateOwner = certificateState.summary.ownerName,
+            certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
             onContinue = {
                 if (pending.authorized.profileId != effectiveTopLevelProfileId ||
                     pending.navigationEpoch != navigationEpoch.longValue ||
@@ -1369,7 +1378,7 @@ fun BrowserScreen(
                 ?: selectedProfile?.displayName
                 ?: stringResource(R.string.app_name),
             host = authorized.target.host,
-            certificateOwner = certificateState.summary.ownerName,
+            certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
             onContinue = {
                 if (authorized.profileId != effectiveTopLevelProfileId ||
                     pendingClientAuthTargetEpoch != navigationEpoch.longValue
@@ -1451,6 +1460,8 @@ internal fun BrowserLayout(
     onClearCurrentSite: () -> Unit,
     onClearSession: () -> Unit,
     onDeleteAllBrowserData: () -> Unit,
+    onOpenInBrowser: (() -> Unit)? = null,
+    certificateAvailable: Boolean = true,
     content: @Composable (Modifier) -> Unit,
 ) {
     var confirmClearCurrentSite by remember { mutableStateOf(false) }
@@ -1472,6 +1483,7 @@ internal fun BrowserLayout(
                 onClearCurrentSiteRequested = { confirmClearCurrentSite = true },
                 onClearSessionRequested = { confirmClearSession = true },
                 onDeleteAllBrowserDataRequested = { confirmDeleteAllData = true },
+                onOpenInBrowser = onOpenInBrowser,
                 windowInsets = browserInsets.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                 ),
@@ -1481,6 +1493,7 @@ internal fun BrowserLayout(
         bottomBar = {
             BrowserCertificateStrip(
                 certificateOwner = certificateOwner,
+                certificateAvailable = certificateAvailable,
                 modifier = Modifier
                     .testTag(BROWSER_BOTTOM_BAR_TAG),
                 windowInsets = browserInsets.only(
@@ -1732,6 +1745,7 @@ private fun AfirmaObservationDialog(
     request: AfirmaRequest,
     certificateOwner: String,
     onDismiss: () -> Unit,
+    onOpenOfficial: () -> Unit,
 ) {
     val algorithm = request.singleValue("algorithm") ?: stringResource(R.string.unknown_value)
     val format = request.singleValue("format") ?: stringResource(R.string.unknown_value)
@@ -1748,9 +1762,10 @@ private fun AfirmaObservationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
-            }
+            TextButton(onClick = onOpenOfficial) { Text(stringResource(R.string.open_official_autofirma)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
 }

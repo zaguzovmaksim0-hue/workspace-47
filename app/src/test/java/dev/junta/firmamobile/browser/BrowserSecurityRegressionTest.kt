@@ -143,7 +143,8 @@ class BrowserSecurityRegressionTest {
         val crossProfile = controller.navigate(redSara.startUrl.toASCIIString())
 
         assertEquals(junta.profileId, initial.activeProfileId)
-        assertEquals(TrustMode.BLOCKED, crossProfile.resolution.trustMode)
+        assertEquals(TrustMode.BROWSE_ONLY, crossProfile.resolution.trustMode)
+        assertEquals(null, crossProfile.resolution.site)
         assertEquals(null, crossProfile.activeProfileId)
         assertEquals(2L, crossProfile.epoch)
         assertEquals(

@@ -90,7 +90,7 @@
     <string name="afirma_request_certificate">Certificado: %1$s</string>
     <string name="afirma_request_format">Formato: %1$s</string>
     <string name="afirma_request_algorithm">Algoritmo: %1$s</string>
-    <string name="afirma_request_observed_copy">La solicitud se ha detenido antes de firmar. La confirmación y la firma nativa se habilitarán en la siguiente fase.</string>
+    <string name="afirma_request_observed_copy">Esta solicitud usa el protocolo externo de AutoFirma. Puedes continuar en la aplicación oficial instalada; la firma se confirma allí. FirmaMobile no firmará esta solicitud automáticamente.</string>
     <string name="signing_confirmation_title">Solicitud de firma</string>
     <string name="signing_site">Sitio: %1$s</string>
     <string name="signing_profile">Perfil: %1$s</string>
@@ -178,4 +178,14 @@
     <string name="region_melilla">Ciudad Autónoma de Melilla</string>
     <string name="cancel">Cancelar</string>
     <string name="close">Cerrar</string>
+    <string name="browse_without_certificate">Explorar sedes sin desbloquear el certificado</string>
+    <string name="browser_no_unlocked_certificate">Sin certificado desbloqueado</string>
+    <string name="browser_open_external">Abrir en navegador</string>
+    <string name="open_official_autofirma">Abrir AutoFirma</string>
+    <string name="external_handoff_title">Continuar fuera de FirmaMobile</string>
+    <string name="external_browser_copy">Se abrirá %1$s en tu navegador. Las cookies no se comparten con FirmaMobile: puede ser necesario empezar el acceso de nuevo.</string>
+    <string name="external_autofirma_copy">La solicitud de %1$s se enviará a la aplicación oficial AutoFirma instalada. Revisa y confirma allí la operación. Esta opción no equivale a una firma local completada.</string>
+    <string name="external_handoff_continue">Continuar</string>
+    <string name="external_handoff_unavailable_title">No se pudo abrir la aplicación</string>
+    <string name="external_handoff_unavailable_copy">No hay una aplicación compatible instalada o el enlace no es válido. La página permanece abierta; puedes volver al menú y abrir el trámite en el navegador.</string>
 </resources>

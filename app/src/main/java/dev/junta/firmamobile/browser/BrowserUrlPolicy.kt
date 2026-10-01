@@ -32,7 +32,7 @@ class BrowserUrlPolicy(
         }
         val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return blocked()
         if (uri.isOpaque || !uri.scheme.equals("https", ignoreCase = true) || uri.host == null || uri.userInfo != null ||
-            uri.port !in setOf(-1, 443) || uri.rawFragment != null
+            uri.port !in setOf(-1, 443)
         ) {
             return blocked()
         }
@@ -60,7 +60,8 @@ class BrowserUrlPolicy(
 
         val direct = registry.resolve(uri)
         if (direct != null && direct.profile.profileId != selectedProfileId) {
-            return blocked()
+            // Crossing a profile is ordinary browsing, never inherited signing trust.
+            return BrowserUrlResolution(uri, null, TrustMode.BROWSE_ONLY)
         }
         if (direct != null) {
             return BrowserUrlResolution(uri, direct, direct.trustMode)

@@ -9,9 +9,11 @@ import dev.junta.firmamobile.BuildConfig
 
 @SuppressLint("SetJavaScriptEnabled")
 class TrustedJuntaWebView(context: Context) : WebView(context) {
+    private val chrome = JuntaWebChromeClient()
+
     init {
         configureSettings()
-        webChromeClient = JuntaWebChromeClient()
+        webChromeClient = chrome
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(this@TrustedJuntaWebView, false)
@@ -20,7 +22,11 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
     }
 
     fun setPageProgressListener(listener: (Int) -> Unit) {
-        webChromeClient = JuntaWebChromeClient(listener)
+        chrome.progressListener = listener
+    }
+
+    fun setFileChooserListener(listener: (WebView, android.webkit.ValueCallback<Array<android.net.Uri>>, android.webkit.WebChromeClient.FileChooserParams) -> Boolean) {
+        chrome.fileChooser = listener
     }
 
     @Suppress("DEPRECATION")
