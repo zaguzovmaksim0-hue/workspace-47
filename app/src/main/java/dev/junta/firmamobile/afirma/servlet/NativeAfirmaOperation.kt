@@ -90,6 +90,24 @@ internal class NativeAfirmaOperation(
         } finally { snapshot.payload.fill(0); snapshot.cipher?.close() }
     }
 
+    override suspend fun notifyCancellation(authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult {
+        check(invoked.compareAndSet(false, true)) { "Operation was already started" }
+        try {
+            val (endpoint, sessionId) = synchronized(lock) {
+                check(!closed) { "Operation is closed" }
+                val target = invocation.storageUrl to invocation.sessionId
+                // Release document and cipher buffers before awaiting authorization.
+                invocation.close()
+                target
+            }
+            currentCoroutineContext().ensureActive()
+            authorizeUpload()
+            currentCoroutineContext().ensureActive()
+            synchronized(lock) { check(!closed) { "Operation was cancelled during authorization" } }
+            return transport.store(endpoint, sessionId, "CANCEL")
+        } finally { close() }
+    }
+
     override fun close() = synchronized(lock) {
         if (!closed) { closed = true; invocation.close() }
     }

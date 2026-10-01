@@ -236,7 +236,7 @@ class SigningConfirmationInstrumentedTest {
     }
 
     @Test
-    fun inlineNativeAfirmaRequestUnlocksInTheRealBrowserAndCancelsWithoutSending() {
+    fun inlineNativeAfirmaRequestUnlocksInTheRealBrowserAndBackgroundCancelsWithoutSending() {
         val uri = Uri.parse("content://dev.junta.firmamobile.tests/native-afirma-identity.p12")
         val bytes = syntheticPkcs12()
         try {
@@ -332,8 +332,12 @@ class SigningConfirmationInstrumentedTest {
                     }
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
                     rule.onNodeWithTag("native-afirma-confirm").assertIsDisplayed()
-                    // Do not send a real request or sign a document in this UI test.
-                    rule.onNodeWithTag("native-afirma-cancel").assertIsDisplayed().performClick()
+                    // Explicit REVIEW cancellation now notifies storage. This
+                    // lifecycle test intentionally exercises the purely local
+                    // path: no CANCEL POST, no signing, no remote endpoint.
+                    scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+                    scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+                    rule.waitForIdle()
                     rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
                     rule.onNodeWithTag("native-afirma-close").assertIsDisplayed().performClick()
                     rule.onNodeWithTag("native-afirma-consent").assertDoesNotExist()

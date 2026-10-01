@@ -29,8 +29,9 @@ internal fun NativeAfirmaConsentDialog(
 ) {
     val finished = prompt.phase == AfirmaConsentPhase.FINISHED
     val review = prompt.phase == AfirmaConsentPhase.REVIEW
+    val cancelling = prompt.phase == AfirmaConsentPhase.CANCELLING
     AlertDialog(
-        onDismissRequest = if (finished) onDismiss else onCancel,
+        onDismissRequest = if (finished || review) onDismiss else onCancel,
         modifier = Modifier.testTag("native-afirma-consent"),
         properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
         title = { Text(stringResource(R.string.native_afirma_title)) },
@@ -46,9 +47,14 @@ internal fun NativeAfirmaConsentDialog(
                     prompt.details.payloadSha256?.let { Text(stringResource(R.string.native_afirma_digest, it)) }
                 }
                 prompt.certificateOwner?.let { Text(stringResource(R.string.native_afirma_certificate, it)) }
+                if (review) Text(stringResource(R.string.native_afirma_cancel_notice))
                 when (prompt.phase) {
                     AfirmaConsentPhase.WORKING -> Text(stringResource(R.string.native_afirma_working))
                     AfirmaConsentPhase.SENDING -> Text(stringResource(R.string.native_afirma_sending))
+                    AfirmaConsentPhase.CANCELLING -> {
+                        Text(stringResource(R.string.native_afirma_cancel_progress))
+                        Text(stringResource(R.string.native_afirma_cancel_stop_warning))
+                    }
                     else -> Unit
                 }
                 when (prompt.problem) {
@@ -61,6 +67,10 @@ internal fun NativeAfirmaConsentDialog(
                     AfirmaConsentProblem.CANCELLED -> Text(stringResource(R.string.native_afirma_cancelled))
                     AfirmaConsentProblem.EXPIRED -> Text(stringResource(R.string.native_afirma_expired))
                     AfirmaConsentProblem.FAILED -> Text(stringResource(R.string.native_afirma_failed))
+                    AfirmaConsentProblem.CANCEL_ACKNOWLEDGED -> Text(stringResource(R.string.native_afirma_cancel_acknowledged))
+                    AfirmaConsentProblem.CANCEL_NOT_SENT -> Text(stringResource(R.string.native_afirma_cancel_not_sent))
+                    AfirmaConsentProblem.CANCEL_REJECTED -> Text(stringResource(R.string.native_afirma_cancel_rejected))
+                    AfirmaConsentProblem.CANCEL_UNCERTAIN -> Text(stringResource(R.string.native_afirma_cancel_uncertain))
                     null -> if (review) Text(stringResource(R.string.native_afirma_review_notice))
                 }
             }
@@ -79,8 +89,15 @@ internal fun NativeAfirmaConsentDialog(
             }
         },
         dismissButton = {
-            if (!finished) TextButton(onClick = onCancel, modifier = Modifier.testTag("native-afirma-cancel")) {
-                Text(stringResource(R.string.cancel))
+            if (!finished) TextButton(
+                onClick = onCancel,
+                modifier = Modifier.testTag(if (cancelling) "native-afirma-stop-cancel" else "native-afirma-cancel"),
+            ) {
+                Text(stringResource(when {
+                    review -> R.string.native_afirma_cancel_notify
+                    cancelling -> R.string.native_afirma_cancel_stop
+                    else -> R.string.cancel
+                }))
             }
         },
     )

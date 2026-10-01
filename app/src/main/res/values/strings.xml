@@ -238,4 +238,13 @@
     <string name="afirma_retrieval_expired">La solicitud ha caducado o ya no pertenece a esta página.</string>
     <string name="afirma_retrieval_failed">No se pudo recuperar y validar esta solicitud.</string>
     <string name="afirma_retrieval_restart">El servidor puede haber eliminado el archivo al leerlo. No se repetirá la descarga automáticamente. Vuelve a la página y comienza una nueva operación; no reutilices la misma solicitud.</string>
+    <string name="native_afirma_cancel_notify">Cancelar y avisar al servidor</string>
+    <string name="native_afirma_cancel_notice">Al cancelar y avisar al servidor, solo se intentará enviar una notificación de cancelación. No se enviarán el certificado, el documento ni una firma.</string>
+    <string name="native_afirma_cancel_progress">Enviando solo la notificación de cancelación al servidor… No se envían certificados, documentos ni firmas.</string>
+    <string name="native_afirma_cancel_stop">Detener la espera</string>
+    <string name="native_afirma_cancel_stop_warning">Detener la espera solo actúa en este dispositivo. La notificación puede haber llegado al servidor aunque no se reciba su acuse. Comprueba el estado del trámite en la web.</string>
+    <string name="native_afirma_cancel_acknowledged">El servidor de almacenamiento ha acusado recibo de la notificación de cancelación. Ese acuse no confirma que el trámite se haya retirado o anulado. Comprueba su estado en la web.</string>
+    <string name="native_afirma_cancel_not_sent">La operación se ha cancelado solo en este dispositivo. No se ha enviado ninguna notificación al servidor.</string>
+    <string name="native_afirma_cancel_rejected">El servidor de almacenamiento no aceptó la notificación de cancelación. Comprueba el estado del trámite en la web.</string>
+    <string name="native_afirma_cancel_uncertain">No se sabe si el servidor de almacenamiento recibió la notificación de cancelación. Comprueba el estado del trámite en la web antes de repetir la operación. La notificación no se enviará de nuevo automáticamente.</string>
 </resources>

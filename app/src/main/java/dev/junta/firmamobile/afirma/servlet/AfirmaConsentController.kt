@@ -15,6 +15,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 /** Public facts only: never a session ID, cipher key, encoded payload or URL query. */
 internal data class AfirmaConsentDetails(
@@ -71,6 +72,7 @@ internal class AfirmaConsentController<Owner : Any>(
         var problem: AfirmaConsentProblem? = null
         var job: Job? = null
         var started = false
+        var cancellationOutcome: AfirmaCancellationOutcome? = null
         var released = false
         fun release() { if (!released) { released = true; operation.close() } }
     }
@@ -95,6 +97,8 @@ internal class AfirmaConsentController<Owner : Any>(
         val pending = current ?: return
         if (pending.phase == AfirmaConsentPhase.FINISHED) return
         if (!valid(pending)) { expire(pending); return }
+        // Cancellation is key-free, including recompositions and foreground return.
+        if (pending.cancellationOutcome != null) return
         val identity = identityProvider()
         val fingerprint = fingerprint(identity)
         if (pending.started) {
@@ -183,10 +187,71 @@ internal class AfirmaConsentController<Owner : Any>(
         return true
     }
 
+    /** Explicit REVIEW button only. Lifecycle callers continue using local cancel. */
+    fun requestCancellation(token: UUID): Boolean {
+        val pending = current?.takeIf {
+            it.token == token && !it.started && it.phase == AfirmaConsentPhase.REVIEW
+        } ?: return false
+        if (backgrounded || !canRespond()) return false
+        if (!valid(pending)) { expire(pending); return false }
+        val outcome = AfirmaCancellationOutcome()
+        pending.cancellationOutcome = outcome
+        pending.started = true
+        pending.phase = AfirmaConsentPhase.CANCELLING
+        pending.problem = null
+        publish(pending)
+        if (!ownsCancellation(pending)) {
+            if (current === pending && pending.phase != AfirmaConsentPhase.FINISHED) finish(pending, outcome.interrupt())
+            return false
+        }
+        val entered = AtomicBoolean(false)
+        val job = scope.launch(start = CoroutineStart.LAZY) {
+            entered.set(true)
+            try {
+                val delivery = withTimeout(15_000L) {
+                    pending.operation.notifyCancellation {
+                        currentCoroutineContext().ensureActive()
+                        if (!ownsCancellation(pending) || !outcome.markAuthorized()) {
+                            throw CancellationException("Cancellation request no longer owned")
+                        }
+                        currentCoroutineContext().ensureActive()
+                        if (!ownsCancellation(pending)) throw CancellationException("Cancellation ownership changed")
+                    }
+                }
+                currentCoroutineContext().ensureActive()
+                if (current === pending && pending.phase == AfirmaConsentPhase.CANCELLING) {
+                    finish(pending, outcome.complete(delivery))
+                }
+            } catch (error: CancellationException) {
+                if (current === pending && pending.phase == AfirmaConsentPhase.CANCELLING) finish(pending, outcome.interrupt())
+                throw error
+            } catch (_: Exception) {
+                if (current === pending && pending.phase == AfirmaConsentPhase.CANCELLING) finish(pending, outcome.interrupt())
+            } finally { pending.release() }
+        }
+        pending.job = job
+        job.invokeOnCompletion {
+            if (!entered.get()) scope.launch(NonCancellable) {
+                if (current === pending && pending.phase == AfirmaConsentPhase.CANCELLING) finish(pending, outcome.interrupt())
+                else pending.release()
+            }
+        }
+        if (!job.start()) {
+            finish(pending, outcome.interrupt())
+            return false
+        }
+        return true
+    }
+
+    private fun ownsCancellation(pending: Pending<Owner>): Boolean =
+        current === pending && pending.phase == AfirmaConsentPhase.CANCELLING &&
+            valid(pending) && !backgrounded && canRespond()
+
     fun cancel(token: UUID) {
         val pending = current?.takeIf { it.token == token } ?: return
         if (pending.phase == AfirmaConsentPhase.FINISHED) return
-        val reason = if (pending.phase == AfirmaConsentPhase.SENDING) AfirmaConsentProblem.UNCERTAIN else AfirmaConsentProblem.CANCELLED
+        val reason = pending.cancellationOutcome?.interrupt()
+            ?: if (pending.phase == AfirmaConsentPhase.SENDING) AfirmaConsentProblem.UNCERTAIN else AfirmaConsentProblem.CANCELLED
         finish(pending, reason)
         pending.job?.cancel()
     }
@@ -225,7 +290,8 @@ internal class AfirmaConsentController<Owner : Any>(
     }.getOrDefault(false)
 
     private fun expire(pending: Pending<Owner>) {
-        finish(pending, if (pending.phase == AfirmaConsentPhase.SENDING) AfirmaConsentProblem.UNCERTAIN else AfirmaConsentProblem.EXPIRED)
+        finish(pending, pending.cancellationOutcome?.interrupt()
+            ?: if (pending.phase == AfirmaConsentPhase.SENDING) AfirmaConsentProblem.UNCERTAIN else AfirmaConsentProblem.EXPIRED)
         pending.job?.cancel()
     }
 

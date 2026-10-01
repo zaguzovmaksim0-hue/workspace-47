@@ -1555,7 +1555,13 @@ fun BrowserScreen(
                 prompt = prompt,
                 onConfirm = { nativeAfirma.confirm(prompt.token) },
                 onUnlock = onChangeCertificate,
-                onCancel = { nativeAfirma.cancel(prompt.token) },
+                onCancel = {
+                    if (prompt.phase == AfirmaConsentPhase.REVIEW) {
+                        nativeAfirma.requestCancellation(prompt.token)
+                    } else {
+                        nativeAfirma.cancel(prompt.token)
+                    }
+                },
                 onDismiss = { nativeAfirma.dismiss(prompt.token) },
             )
         }
