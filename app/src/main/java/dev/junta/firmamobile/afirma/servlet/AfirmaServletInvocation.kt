@@ -29,6 +29,7 @@ internal class AfirmaServletInvocation(
 
 internal sealed interface AfirmaServletParseResult {
     class Accepted(val invocation: AfirmaServletInvocation) : AfirmaServletParseResult
+    class Deferred(val invocation: AfirmaDeferredInvocation) : AfirmaServletParseResult
     data class Invalid(val reason: String) : AfirmaServletParseResult
     data class Unsupported(val reason: String) : AfirmaServletParseResult
 }

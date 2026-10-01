@@ -13,10 +13,7 @@ import java.util.Locale
  * autoscript/UrlParameters and CAdESParameters. Default mode is EXPLICIT.
  */
 internal object AfirmaServletInvocationParser {
-    fun parse(rawUri: String, pageUrl: String): AfirmaServletParseResult {
-        var payload: ByteArray? = null
-        var advancedCipher: AfirmaAesParameters? = null
-        return try {
+    fun parse(rawUri: String, pageUrl: String): AfirmaServletParseResult = safely {
             if (rawUri.length > MAX_URI || rawUri.any(Char::isISOControl)) invalid("invalid_uri_size_or_control")
             val page = URI(pageUrl)
             if (!AfirmaEndpointPolicy.accepts(URI(page.scheme, page.userInfo, page.host, page.port, page.path, page.query, null)) || page.rawUserInfo != null) {
@@ -32,8 +29,29 @@ internal object AfirmaServletInvocationParser {
                 else -> unsupported("operation_not_implemented")
             }
             val values = parameters(uri.rawQuery ?: invalid("missing_parameters"))
+            build(op, source, values, allowIndirect = true)
+    }
+
+    /** XML values have already been form-decoded exactly once. Do not run them
+     * through a synthetic URI and accidentally interpret '%' or '+' twice. */
+    internal fun parseRetrieved(
+        operation: AfirmaServletOperation,
+        sourceOrigin: String,
+        values: Map<String, String>,
+    ): AfirmaServletParseResult = safely {
+        if (values.size > 64 || values.keys.any { !NAME.matches(it) } ||
+            values.values.any { value -> value.any(Char::isISOControl) } ||
+            values.entries.sumOf { it.key.length.toLong() + it.value.length } > MAX_URI
+        ) invalid("invalid_retrieved_parameters")
+        build(operation, sourceOrigin, values, allowIndirect = false)
+    }
+
+    private fun build(op: AfirmaServletOperation, source: String, values: Map<String, String>, allowIndirect: Boolean): AfirmaServletParseResult {
+        var payload: ByteArray? = null
+        var advancedCipher: AfirmaAesParameters? = null
+        return try {
             if (values.keys.any { it !in KNOWN_PARAMETERS }) unsupported("unknown_parameter")
-            if (values.keys.any { it in setOf("fileid", "rid", "rtservlet", "serverurl", "ksb64", "keystore", "defaultkeystore") }) {
+            if (values.keys.any { it in setOf("serverurl", "ksb64", "keystore", "defaultkeystore") }) {
                 unsupported("indirect_data_or_cipher_or_keystore_variant")
             }
             values["op"]?.let {
@@ -49,14 +67,6 @@ internal object AfirmaServletInvocationParser {
             }
             for (name in listOf("aw", "dlgload")) values[name]?.let {
                 if (!it.equals("true", true) && !it.equals("false", true)) invalid("invalid_boolean_metadata")
-            }
-            val sessionId = values["id"] ?: invalid("missing_session_id")
-            if (!SESSION_ID.matches(sessionId)) invalid("invalid_session_id")
-            val endpoint = URI(values["stservlet"] ?: invalid("missing_storage_url"))
-            if (!AfirmaEndpointPolicy.accepts(endpoint)) invalid("invalid_storage_url")
-            endpoint.rawQuery?.let { query ->
-                val names = query.split('&').map { decodeComponent(it.substringBefore('=')).lowercase(Locale.ROOT) }
-                if (names.any { it in setOf("op", "v", "id", "dat") }) invalid("ambiguous_storage_parameters")
             }
             val key = values["key"]
             if (key != null && (key.length != 8 || key.any { it.code !in 0x20..0x7e })) invalid("invalid_legacy_key")
@@ -76,6 +86,29 @@ internal object AfirmaServletInvocationParser {
                     val iv = strictBase64(fields["iv"] ?: invalid("missing_cipher_iv"), 16)
                     try { advancedCipher = AfirmaAesParameters(aesKey, iv) } finally { iv.fill(0) }
                 } finally { aesKey.fill(0) }
+            }
+            if (values.containsKey("fileid")) {
+                if (!allowIndirect) unsupported("recursive_retrieval")
+                if (values.keys.any { it in setOf("dat", "format", "algorithm", "properties", "cop") }) invalid("mixed_inline_and_indirect")
+                val fileId = values.getValue("fileid")
+                if (!SESSION_ID.matches(fileId)) invalid("invalid_file_id")
+                val retrieval = checkedEndpoint(values["rtservlet"] ?: invalid("missing_retrieval_url"))
+                val expectedStorage = values["stservlet"]?.let(::checkedEndpoint)
+                val responseId = values["rid"] ?: values["id"]
+                if (responseId != null && !SESSION_ID.matches(responseId)) invalid("invalid_response_id")
+                if (values["rid"] != null && values["id"] != null && values["rid"] != values["id"]) invalid("conflicting_response_id")
+                return AfirmaServletParseResult.Deferred(AfirmaDeferredInvocation(
+                    op, source, retrieval, fileId, responseId, expectedStorage, key, advancedCipher,
+                ))
+            }
+            if (values.keys.any { it in setOf("rid", "rtservlet") }) unsupported("incomplete_indirect_envelope")
+            val sessionId = values["id"] ?: invalid("missing_session_id")
+            if (!SESSION_ID.matches(sessionId)) invalid("invalid_session_id")
+            val endpoint = URI(values["stservlet"] ?: invalid("missing_storage_url"))
+            if (!AfirmaEndpointPolicy.accepts(endpoint)) invalid("invalid_storage_url")
+            endpoint.rawQuery?.let { query ->
+                val names = query.split('&').map { decodeComponent(it.substringBefore('=')).lowercase(Locale.ROOT) }
+                if (names.any { it in setOf("op", "v", "id", "dat") }) invalid("ambiguous_storage_parameters")
             }
             val properties = values["properties"]?.takeIf(String::isNotEmpty)?.let(::properties).orEmpty()
             val algorithm: SigningAlgorithm?
@@ -110,13 +143,27 @@ internal object AfirmaServletInvocationParser {
             }
             AfirmaServletParseResult.Accepted(AfirmaServletInvocation(op, source, endpoint, sessionId, key,
                 algorithm, detached, checkNotNull(payload), advancedCipher))
-        } catch (error: UnsupportedInput) {
-            AfirmaServletParseResult.Unsupported(error.code)
-        } catch (error: InvalidInput) {
-            AfirmaServletParseResult.Invalid(error.code)
-        } catch (_: Exception) {
-            AfirmaServletParseResult.Invalid("malformed_input")
         } finally { payload?.fill(0); advancedCipher?.close() }
+    }
+
+    private fun safely(action: () -> AfirmaServletParseResult): AfirmaServletParseResult = try {
+        action()
+    } catch (error: UnsupportedInput) {
+        AfirmaServletParseResult.Unsupported(error.code)
+    } catch (error: InvalidInput) {
+        AfirmaServletParseResult.Invalid(error.code)
+    } catch (_: Exception) {
+        AfirmaServletParseResult.Invalid("malformed_input")
+    }
+
+    private fun checkedEndpoint(raw: String): URI {
+        val endpoint = URI(raw)
+        if (!AfirmaEndpointPolicy.accepts(endpoint)) invalid("invalid_intermediate_url")
+        endpoint.rawQuery?.let { query ->
+            val names = query.split('&').map { decodeComponent(it.substringBefore('=')).lowercase(Locale.ROOT) }
+            if (names.any { it in setOf("op", "v", "id", "dat") }) invalid("ambiguous_intermediate_parameters")
+        }
+        return endpoint
     }
 
     private fun parameters(query: String): Map<String, String> {

@@ -36,6 +36,12 @@ internal fun interface AfirmaResultTransport {
     suspend fun store(endpoint: URI, sessionId: String, result: String): AfirmaDeliveryResult
 }
 
+internal enum class AfirmaRetrievalProblem { NOT_SENT, UNAVAILABLE, UNCERTAIN, TOO_LARGE, INVALID, UNSUPPORTED, CANCELLED, EXPIRED }
+internal class AfirmaRetrievalException(val problem: AfirmaRetrievalProblem) : IOException("AutoFirma configuration retrieval: $problem")
+internal fun interface AfirmaRequestTransport {
+    suspend fun retrieve(endpoint: URI, fileId: String): AfirmaRetrievedBytes
+}
+
 internal object AfirmaEndpointPolicy {
     private val DNS = Regex("[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+", RegexOption.IGNORE_CASE)
     fun accepts(uri: URI): Boolean = runCatching {
@@ -59,7 +65,7 @@ internal object AfirmaEndpointPolicy {
 internal class AfirmaServletTransport(
     private val dns: Dns = publicDns(),
     private val clientBuilder: () -> OkHttpClient.Builder = { OkHttpClient.Builder() },
-) : AfirmaResultTransport {
+) : AfirmaResultTransport, AfirmaRequestTransport {
     override suspend fun store(endpoint: URI, sessionId: String, result: String): AfirmaDeliveryResult {
         if (!AfirmaEndpointPolicy.accepts(endpoint) || !SESSION_ID.matches(sessionId) ||
             result.isEmpty() || result.length > MAX_RESULT_CHARS || result.any { it.code !in 0x20..0x7e }
@@ -129,6 +135,92 @@ internal class AfirmaServletTransport(
                     client.connectionPool.evictAll()
                     client.dispatcher.executorService.shutdown()
                     if (continuation.isActive) continuation.resume(value)
+                }
+            })
+        }
+    }
+
+    override suspend fun retrieve(endpoint: URI, fileId: String): AfirmaRetrievedBytes {
+        if (!AfirmaEndpointPolicy.accepts(endpoint) || !SESSION_ID.matches(fileId)) {
+            throw AfirmaRetrievalException(AfirmaRetrievalProblem.NOT_SENT)
+        }
+        val form = FormBody.Builder().add("op", "get").add("v", "1_0").add("id", fileId).build()
+        val written = AtomicBoolean(false)
+        val body = object : RequestBody() {
+            override fun contentType() = form.contentType()
+            override fun contentLength() = form.contentLength()
+            // The official retriever deletes the file after read. Even a GET
+            // protocol operation is not safe to retry after an uncertain POST.
+            override fun isOneShot() = true
+            override fun writeTo(sink: BufferedSink) {
+                if (!written.compareAndSet(false, true)) throw IOException("Configuration retrieval is one-shot")
+                form.writeTo(sink)
+            }
+        }
+        val request = runCatching { Request.Builder().url(endpoint.toASCIIString()).post(body).build() }
+            .getOrNull() ?: throw AfirmaRetrievalException(AfirmaRetrievalProblem.NOT_SENT)
+        if (request.url.queryParameterNames.any { it.lowercase(java.util.Locale.ROOT) in RESERVED_QUERY_KEYS }) {
+            throw AfirmaRetrievalException(AfirmaRetrievalProblem.NOT_SENT)
+        }
+        val sent = AtomicBoolean(false)
+        val client = clientBuilder().proxy(Proxy.NO_PROXY).dns(dns).cookieJar(CookieJar.NO_COOKIES)
+            .authenticator(okhttp3.Authenticator.NONE).proxyAuthenticator(okhttp3.Authenticator.NONE)
+            .followRedirects(false).followSslRedirects(false).retryOnConnectionFailure(false)
+            .connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS).callTimeout(45, TimeUnit.SECONDS)
+            .connectionPool(ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
+            .eventListener(object : EventListener() { override fun requestBodyStart(call: Call) { sent.set(true) } })
+            .build()
+        val call = client.newCall(request)
+        return suspendCancellableCoroutine { continuation ->
+            continuation.invokeOnCancellation { call.cancel() }
+            call.enqueue(object : Callback {
+                private fun cleanup() {
+                    client.connectionPool.evictAll()
+                    client.dispatcher.executorService.shutdown()
+                }
+                override fun onFailure(call: Call, e: IOException) {
+                    cleanup()
+                    if (continuation.isActive) continuation.resumeWith(Result.failure(AfirmaRetrievalException(
+                        if (sent.get()) AfirmaRetrievalProblem.UNCERTAIN else AfirmaRetrievalProblem.NOT_SENT,
+                    )))
+                }
+                override fun onResponse(call: Call, response: Response) {
+                    var owned: AfirmaRetrievedBytes? = null
+                    var failure: AfirmaRetrievalException? = null
+                    try {
+                        response.use {
+                            if (it.code != 200 || it.body == null) throw AfirmaRetrievalException(AfirmaRetrievalProblem.UNAVAILABLE)
+                            val body = checkNotNull(it.body)
+                            if (body.contentLength() > AfirmaDeferredInvocation.MAX_WIRE_BYTES) {
+                                throw AfirmaRetrievalException(AfirmaRetrievalProblem.TOO_LARGE)
+                            }
+                            val stream = body.source()
+                            if (stream.request(AfirmaDeferredInvocation.MAX_WIRE_BYTES + 1L)) {
+                                throw AfirmaRetrievalException(AfirmaRetrievalProblem.TOO_LARGE)
+                            }
+                            val bytes = stream.readByteArray()
+                            if (bytes.isEmpty()) throw AfirmaRetrievalException(AfirmaRetrievalProblem.INVALID)
+                            if (bytes.size >= 4 && bytes[0].toInt().toChar().equals('e', true) &&
+                                bytes[1].toInt().toChar().equals('r', true) && bytes[2].toInt().toChar().equals('r', true) && bytes[3] == 45.toByte()
+                            ) {
+                                bytes.fill(0)
+                                throw AfirmaRetrievalException(AfirmaRetrievalProblem.UNAVAILABLE)
+                            }
+                            owned = AfirmaRetrievedBytes(bytes)
+                        }
+                    } catch (e: AfirmaRetrievalException) { failure = e }
+                    catch (_: IOException) { failure = AfirmaRetrievalException(AfirmaRetrievalProblem.UNCERTAIN) }
+                    catch (_: Exception) { failure = AfirmaRetrievalException(AfirmaRetrievalProblem.INVALID) }
+                    finally { cleanup() }
+                    val value = owned
+                    if (value != null) {
+                        if (continuation.isActive) {
+                            continuation.resume(value, onCancellation = { _, result, _ -> result.close() })
+                        } else value.close()
+                    } else if (continuation.isActive) {
+                        continuation.resumeWith(Result.failure(failure ?: AfirmaRetrievalException(AfirmaRetrievalProblem.INVALID)))
+                    }
                 }
             })
         }

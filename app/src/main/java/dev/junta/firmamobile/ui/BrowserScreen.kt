@@ -55,6 +55,9 @@ import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocationParser
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletParseResult
 import dev.junta.firmamobile.afirma.servlet.NativeAfirmaOperation
+import dev.junta.firmamobile.afirma.servlet.AfirmaDeferredResolver
+import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalController
+import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalPrompt
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
@@ -372,7 +375,30 @@ fun BrowserScreen(
         !preserveWebViewDuringClientAuthClear && !preserveInteractiveWebViewDuringClear &&
             (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
+    var nativeRetrievalPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaRetrievalPrompt?>(null) }
+    val nativeRetrieval = remember(selectedServiceId, validatedEntryUrl, nativeAfirma) {
+        AfirmaRetrievalController<WebView>(
+            scope = nativeAfirmaScope,
+            resolver = AfirmaDeferredResolver(),
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            canRespond = { lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) },
+            onPrompt = { nativeRetrievalPrompt = it },
+            onPrepared = { owner, epoch, operation ->
+                val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                    pendingCertificateSelection != null || pendingRequest != null || interactivePrompt != null ||
+                    nativeAfirma.hasPending || nativeFallback.hasPending || clientAuthPreparing ||
+                    currentSigningState !is SigningUiState.Idle
+                if (busy) { operation.close(); false } else nativeAfirma.offer(owner, epoch, operation)
+            },
+        )
+    }
+    DisposableEffect(nativeRetrieval) { onDispose { nativeRetrieval.close() } }
+    LaunchedEffect(nativeRetrieval, nativeRetrievalPrompt?.token, nativeRetrievalPrompt?.loading) {
+        while (nativeRetrievalPrompt?.loading == true) { delay(1_000); nativeRetrieval.tick() }
+    }
+
     fun advanceNavigationEpoch() {
+        nativeRetrieval.invalidate()
         nativeAfirma.invalidate()
         nativeFallback.invalidate()
         interactiveClientAuth.cancelPending()
@@ -674,6 +700,7 @@ fun BrowserScreen(
             }
 
             override fun onBrowserError(error: BrowserErrorCode) {
+                nativeRetrieval.invalidate()
                 nativeAfirma.invalidate()
                 nativeFallback.invalidate()
                 interactiveClientAuth.cancelPending()
@@ -766,6 +793,7 @@ fun BrowserScreen(
     BackHandler(onBack = ::goBack)
     DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
+            nativeRetrieval.invalidate()
             nativeAfirma.invalidate()
             nativeFallback.invalidate()
             interactiveClientAuth.close()
@@ -782,7 +810,7 @@ fun BrowserScreen(
         }
     }
 
-    DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator) {
+    DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator, nativeRetrieval, nativeAfirma) {
         var wasBackgrounded = false
         var retainedLegacyState = false
         var retainedFingerprint: String? = null
@@ -799,6 +827,7 @@ fun BrowserScreen(
             if (event == Lifecycle.Event.ON_STOP) {
                 wasBackgrounded = true
                 val expectedReturn = currentMayRetainExternalReturn()
+                nativeRetrieval.onBackground()
                 nativeAfirma.onBackground(expectedReturn)
                 interactiveClientAuth.onBackground(expectedReturn)
                 val hadClientAuthState = pendingClientAuthTarget != null ||
@@ -817,6 +846,7 @@ fun BrowserScreen(
             } else if (event == Lifecycle.Event.ON_START && wasBackgrounded) {
                 wasBackgrounded = false
                 val returnStillValid = currentConsumeExternalReturn()
+                nativeRetrieval.onForeground()
                 nativeAfirma.onForeground(returnStillValid)
                 interactiveClientAuth.onForeground(returnStillValid)
                 val sameIdentity = retainedFingerprint == currentIdentityProvider()?.let(::certificateSelectionFingerprint)
@@ -1105,7 +1135,7 @@ fun BrowserScreen(
                                 onNativeAfirmaInvocation = { owner, rawUri, page ->
                                     val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
                                         pendingCertificateSelection != null || pendingRequest != null ||
-                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending || clientAuthPreparing ||
+                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending || clientAuthPreparing ||
                                         currentSigningState !is SigningUiState.Idle
                                     if (busy) true else {
                                         when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
@@ -1117,6 +1147,7 @@ fun BrowserScreen(
                                                 if (operation == null) nativeFallback.offer(owner, navigationEpoch.longValue, null)
                                                 else nativeAfirma.offer(owner, navigationEpoch.longValue, operation)
                                             }
+                                            is AfirmaServletParseResult.Deferred -> nativeRetrieval.offer(owner, navigationEpoch.longValue, parsed.invocation)
                                             is AfirmaServletParseResult.Unsupported -> nativeFallback.offer(owner, navigationEpoch.longValue, rawUri)
                                             is AfirmaServletParseResult.Invalid -> nativeFallback.offer(owner, navigationEpoch.longValue, null)
                                         }
@@ -1129,7 +1160,7 @@ fun BrowserScreen(
                                 onInteractiveClientAuthChallenge = { owner, request ->
                                     val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
                                         pendingCertificateSelection != null || pendingRequest != null ||
-                                        clientAuthPreparing || nativeAfirma.hasPending || nativeFallback.hasPending ||
+                                        clientAuthPreparing || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
                                         currentSigningState !is SigningUiState.Idle
                                     if (busy) request.ignore() else {
                                         interactiveClientAuth.offer(
@@ -1182,7 +1213,7 @@ fun BrowserScreen(
                                     inPlaceClientAuthHandlerRef.get()?.resolveRequestContinuation(rawUrl)
                                 },
                                 onInPlaceClientAuthChallenge = onInPlaceChallenge@{ authorized, request ->
-                                    if (nativeAfirma.hasPending || nativeFallback.hasPending) {
+                                    if (nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
                                         request.ignore()
                                         return@onInPlaceChallenge
                                     }
@@ -1278,13 +1309,13 @@ fun BrowserScreen(
                                     logger = logger,
                                     onAfirmaRequest = handleAfirmaRequest,
                                     onMiniAppletRequest = { request, reply ->
-                                        if (nativeAfirma.hasPending || nativeFallback.hasPending) {
+                                        if (nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
                                             reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
                                         } else onMiniAppletRequest(request, reply)
                                     },
                                     onMiniAppletCancel = onMiniAppletCancel,
                                     onCertificateSelectionRequest = { request, reply ->
-                                        if (nativeAfirma.hasPending || nativeFallback.hasPending) {
+                                        if (nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
                                             reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
                                         } else prepareCertificateSelection(request, reply)
                                     },
@@ -1443,6 +1474,7 @@ fun BrowserScreen(
                             dedicatedClientRef.getAndSet(null)?.abandon()
                         }
                         if (webViewRef.compareAndSet(webView, null)) {
+                            nativeRetrieval.invalidate()
                             interactiveClientAuth.cancelPending()
                             normalClientRef.set(null)
                             onWebViewChanged(null)
@@ -1502,6 +1534,12 @@ fun BrowserScreen(
     }
 
     if (!certificatePanelVisible) {
+        nativeRetrievalPrompt?.let { prompt ->
+            AfirmaRetrievalDialog(prompt,
+                onCancel = { nativeRetrieval.cancel(prompt.token) },
+                onClose = { nativeRetrieval.dismiss(prompt.token) },
+            )
+        }
         nativeAfirmaPrompt?.let { prompt ->
             NativeAfirmaConsentDialog(
                 prompt = prompt,

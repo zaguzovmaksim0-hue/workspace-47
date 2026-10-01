@@ -5,6 +5,7 @@ import java.net.URI
 import java.net.URLDecoder
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.async
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Dns
@@ -90,6 +91,83 @@ class AfirmaServletTransportTest {
             "https://box.local/", "https://box.localhost/", "https://user@store.example/", "https://store.example/#fragment")) {
             assertFalse(url, AfirmaEndpointPolicy.accepts(URI(url)))
         }
+    }
+
+    @Test fun retrievalUsesTheFileIdInExactlyOnePostWithoutBrowserCookies() = withServer { f ->
+        f.server.enqueue(MockResponse.Builder().code(200).body("0.cipher_fixture\n").build())
+        val owned = runBlocking { f.transport.retrieve(f.endpoint("?route=one"), "File-123") }
+        val bytes = owned.take(); assertEquals("0.cipher_fixture\n", bytes.toString(Charsets.UTF_8)); bytes.fill(0); owned.close()
+        val request = checkNotNull(f.server.takeRequest(2, TimeUnit.SECONDS))
+        assertEquals("POST", request.method); assertEquals("route=one", request.url.encodedQuery)
+        assertNull(request.headers["Cookie"]); assertNull(request.headers["Authorization"])
+        assertEquals("op=get&v=1_0&id=File-123", checkNotNull(request.body).utf8())
+        assertNull(f.server.takeRequest(200, TimeUnit.MILLISECONDS))
+    }
+
+    @Test fun configurationRedirectsAreNotFollowedAfterAConsumingRead() {
+        for (code in listOf(302, 307, 308)) withServer { f ->
+            f.server.enqueue(MockResponse.Builder().code(code).addHeader("Location", f.endpoint("?other=1")).body("redirect").build())
+            f.server.enqueue(MockResponse.Builder().code(200).body("must not be read").build())
+            val error = assertThrows(AfirmaRetrievalException::class.java) { runBlocking { f.transport.retrieve(f.endpoint(), "File-123") } }
+            assertEquals(AfirmaRetrievalProblem.UNAVAILABLE, error.problem)
+            assertNotNull(f.server.takeRequest(2, TimeUnit.SECONDS))
+            assertNull(f.server.takeRequest(200, TimeUnit.MILLISECONDS))
+        }
+    }
+
+    @Test fun retryAfterZeroNeverRepeatsConfigurationPost() = withServer { f ->
+        f.server.enqueue(MockResponse.Builder().code(503).addHeader("Retry-After", "0").body("unavailable").build())
+        f.server.enqueue(MockResponse.Builder().code(200).body("would consume another copy").build())
+        assertThrows(AfirmaRetrievalException::class.java) { runBlocking { f.transport.retrieve(f.endpoint(), "File-123") } }
+        assertNotNull(f.server.takeRequest(2, TimeUnit.SECONDS))
+        assertNull(f.server.takeRequest(300, TimeUnit.MILLISECONDS))
+    }
+
+    @Test fun invalidIdsAndDuplicateQueryFieldsFailWithoutContactingRetriever() = withServer { f ->
+        for ((url, id) in listOf(f.endpoint() to "../escape", f.endpoint("?id=Another") to "File-123",
+            f.endpoint("?%6fp=get") to "File-123", f.endpoint("?v=1_0") to "File-123",
+            URI("http://store.example:${f.server.port}/get") to "File-123")) {
+            val error = assertThrows(AfirmaRetrievalException::class.java) { runBlocking { f.transport.retrieve(url, id) } }
+            assertEquals(AfirmaRetrievalProblem.NOT_SENT, error.problem)
+        }
+        assertEquals(0, f.server.requestCount)
+    }
+
+    @Test fun untrustedRetrieverCannotReceiveFileId() = withServer { f ->
+        val untrusted = AfirmaServletTransport(dns = f.dns)
+        val error = assertThrows(AfirmaRetrievalException::class.java) { runBlocking { untrusted.retrieve(f.endpoint(), "File-123") } }
+        assertEquals(AfirmaRetrievalProblem.NOT_SENT, error.problem)
+        assertNull(f.server.takeRequest(200, TimeUnit.MILLISECONDS))
+    }
+
+    @Test fun knownLengthAndChunkedConfigurationResponsesHaveTheSameHardLimit() {
+        for (chunked in listOf(false, true)) withServer { f ->
+            val value = "x".repeat(AfirmaDeferredInvocation.MAX_WIRE_BYTES + 1)
+            val response = MockResponse.Builder().code(200)
+            if (chunked) response.chunkedBody(value, 8192) else response.body(value)
+            f.server.enqueue(response.build())
+            val error = assertThrows(AfirmaRetrievalException::class.java) { runBlocking { f.transport.retrieve(f.endpoint(), "File-123") } }
+            assertEquals(AfirmaRetrievalProblem.TOO_LARGE, error.problem)
+            assertEquals(1, f.server.requestCount)
+        }
+    }
+
+    @Test fun emptyOrExplicitServerErrorIsNotTreatedAsConfiguration() {
+        for (body in listOf("", "err-06: fixture expired\n")) withServer { f ->
+            f.server.enqueue(MockResponse.Builder().code(200).body(body).build())
+            assertThrows(AfirmaRetrievalException::class.java) { runBlocking { f.transport.retrieve(f.endpoint(), "File-123") } }
+            assertEquals(1, f.server.requestCount)
+        }
+    }
+
+    @Test fun cancelWhileRetrieverDelaysBodyDoesNotRetryOrDeliverAResponse() = withServer { f ->
+        f.server.enqueue(MockResponse.Builder().code(200).body("0.delayed").bodyDelay(700, TimeUnit.MILLISECONDS).build())
+        runBlocking {
+            val task = async(kotlinx.coroutines.Dispatchers.Default) { f.transport.retrieve(f.endpoint(), "File-123") }
+            assertNotNull(f.server.takeRequest(3, TimeUnit.SECONDS))
+            task.cancel(); task.join(); assertTrue(task.isCancelled)
+        }
+        assertNull(f.server.takeRequest(200, TimeUnit.MILLISECONDS))
     }
 
     private class Fixture(val server: MockWebServer, certificates: HandshakeCertificates) {

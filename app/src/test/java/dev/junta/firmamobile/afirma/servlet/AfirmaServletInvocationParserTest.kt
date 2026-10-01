@@ -62,8 +62,8 @@ class AfirmaServletInvocationParserTest {
         unsupported(sign(mapOf("format" to "PAdES")))
     }
 
-    @Test fun indirectAndMultiOperationVariantsAreExplicitlyUnsupported() {
-        unsupported(sign(mapOf("fileid" to "file123", "rtservlet" to "https://store.example/retrieve")))
+    @Test fun mixedDataIsInvalidAndUnimplementedMultiOperationVariantsRemainUnsupported() {
+        invalid(sign(mapOf("fileid" to "file123", "rtservlet" to "https://store.example/retrieve")))
         unsupported(sign(mapOf("dat" to "https://store.example/data")))
         unsupported(sign(mapOf("cop" to "cosign")))
         unsupported(sign().replace("afirma://sign", "afirma://batch"))

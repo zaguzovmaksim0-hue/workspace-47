@@ -229,4 +229,13 @@
     <string name="native_afirma_unsupported">Esta variante del protocolo todavía no está implementada aquí. No se ha usado el certificado. Puedes continuar con la aplicación oficial si está disponible.</string>
     <string name="native_afirma_invalid">La solicitud está incompleta o contiene parámetros incoherentes. No se ha usado el certificado ni contactado con su servidor.</string>
     <string name="native_afirma_official">Abrir AutoFirma oficial</string>
+    <string name="afirma_retrieval_title">Preparando solicitud de AutoFirma</string>
+    <string name="afirma_retrieval_source">Página de origen: %1$s</string>
+    <string name="afirma_retrieval_server">Servidor de la solicitud: %1$s</string>
+    <string name="afirma_retrieval_loading">Se están recuperando y comprobando los datos. Todavía no se usa ningún certificado ni se firma nada. Revisarás la operación después.</string>
+    <string name="afirma_retrieval_unsupported">La solicitud descargada necesita una operación o unos parámetros que esta versión todavía no admite.</string>
+    <string name="afirma_retrieval_cancelled">Se ha detenido la preparación. No se ha autorizado ninguna firma.</string>
+    <string name="afirma_retrieval_expired">La solicitud ha caducado o ya no pertenece a esta página.</string>
+    <string name="afirma_retrieval_failed">No se pudo recuperar y validar esta solicitud.</string>
+    <string name="afirma_retrieval_restart">El servidor puede haber eliminado el archivo al leerlo. No se repetirá la descarga automáticamente. Vuelve a la página y comienza una nueva operación; no reutilices la misma solicitud.</string>
 </resources>
