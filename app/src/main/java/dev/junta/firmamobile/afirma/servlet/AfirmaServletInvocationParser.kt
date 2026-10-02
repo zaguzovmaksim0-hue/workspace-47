@@ -25,6 +25,7 @@ internal object AfirmaServletInvocationParser {
                 uri.rawFragment != null || uri.rawPath !in setOf("", "/")) invalid("invalid_protocol_uri")
             val op = when (uri.host?.lowercase(Locale.ROOT)) {
                 "sign" -> AfirmaServletOperation.SIGN
+                "cosign" -> AfirmaServletOperation.COSIGN
                 "selectcert" -> AfirmaServletOperation.SELECT_CERTIFICATE
                 else -> unsupported("operation_not_implemented")
             }
@@ -55,9 +56,12 @@ internal object AfirmaServletInvocationParser {
                 unsupported("indirect_data_or_cipher_or_keystore_variant")
             }
             values["op"]?.let {
-                val expected = if (op == AfirmaServletOperation.SIGN) "sign" else "selectcert"
+                val expected = when (op) { AfirmaServletOperation.SIGN -> "sign"; AfirmaServletOperation.COSIGN -> "cosign"; AfirmaServletOperation.SELECT_CERTIFICATE -> "selectcert" }
                 if (!it.equals(expected, true)) invalid("conflicting_operation")
             }
+            val pdfCoSign = op == AfirmaServletOperation.COSIGN
+            // cop belongs to sign-and-save, which is not this route. Retain
+            // only the previously accepted redundant sign marker.
             values["cop"]?.let { if (!it.equals("sign", true) || op != AfirmaServletOperation.SIGN) unsupported("cosign_or_countersign") }
             for (name in listOf("ver", "v")) values[name]?.let { if (it !in setOf("1", "2", "3", "4")) unsupported("protocol_version") }
             if (values["ver"] != null && values["v"] != null && values["ver"] != values["v"]) invalid("conflicting_protocol_versions")
@@ -114,10 +118,11 @@ internal object AfirmaServletInvocationParser {
             val algorithm: SigningAlgorithm?
             val detached: Boolean
             var padesOptions: NativePadesOptions? = null
-            if (op == AfirmaServletOperation.SIGN) {
+            if (op != AfirmaServletOperation.SELECT_CERTIFICATE) {
                 val format = values["format"] ?: invalid("missing_format")
                 if (format.isBlank()) invalid("missing_format")
                 val pdf = NativePadesOptions.acceptsFormat(format)
+                if (pdfCoSign && !pdf) unsupported("cosign_only_pdf")
                 if (!pdf && !format.equals("cades", true)) unsupported("signature_format")
                 algorithm = when (values["algorithm"]?.lowercase(Locale.ROOT)) {
                     "sha1withrsa" -> SigningAlgorithm.SHA1_WITH_RSA

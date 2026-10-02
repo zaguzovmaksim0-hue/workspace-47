@@ -31,14 +31,14 @@ internal class NativeAfirmaOperation(
             AfirmaConsentDetails(
                 sourceOrigin = invocation.sourceOrigin,
                 destination = safeDestination(invocation.storageUrl),
-                operation = if (invocation.operation == AfirmaServletOperation.SIGN) "sign" else "selectcert",
-                format = if (invocation.operation == AfirmaServletOperation.SIGN) {
+                operation = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) { if (invocation.pdfCoSign) "cosign" else "sign" } else "selectcert",
+                format = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
                     invocation.padesOptions?.let { "PDF · PAdES · ${it.subFilter}" }
                         ?: if (invocation.detached) "CAdES · detached" else "CAdES · attached"
                 } else null,
                 algorithm = invocation.algorithm?.wireName(),
                 payloadBytes = payload.size,
-                payloadSha256 = if (invocation.operation == AfirmaServletOperation.SIGN) {
+                payloadSha256 = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
                     MessageDigest.getInstance("SHA-256").digest(payload).joinToString("") { "%02x".format(it) }
                 } else null,
             )
@@ -47,7 +47,7 @@ internal class NativeAfirmaOperation(
 
     override fun certificateCompatible(identity: UnlockedIdentity): Boolean = runCatching {
         identity.certificate.checkValidity(Date.from(clock.instant()))
-        if (invocation.operation == AfirmaServletOperation.SIGN) {
+        if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
             val usage = identity.certificate.keyUsage
             identity.certificate.publicKey.algorithm.equals("RSA", true) &&
                 (usage == null || usage.getOrElse(0) { false } || usage.getOrElse(1) { false })
@@ -59,7 +59,7 @@ internal class NativeAfirmaOperation(
         val snapshot = synchronized(lock) {
             check(!closed) { "Operation is closed" }
             Snapshot(invocation.operation, invocation.storageUrl, invocation.sessionId, invocation.key,
-                invocation.algorithm, invocation.detached, invocation.payloadCopy(), invocation.cipherCopy(), invocation.padesOptions)
+                invocation.algorithm, invocation.detached, invocation.payloadCopy(), invocation.cipherCopy(), invocation.padesOptions, invocation.pdfCoSign)
         }
         try {
             currentCoroutineContext().ensureActive()
@@ -70,8 +70,9 @@ internal class NativeAfirmaOperation(
                 try {
                     val certResult = snapshot.cipher?.encode(certificate) ?: AfirmaIntermediateCipher.encode(certificate, snapshot.key)
                     if (snapshot.operation == AfirmaServletOperation.SELECT_CERTIFICATE) certResult else {
+                        check(!snapshot.pdfCoSign || snapshot.pades != null) { "Co-sign is implemented only for PDF" }
                         val generated = snapshot.pades?.let { options ->
-                            padesEngine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), options)
+                            padesEngine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), options, snapshot.pdfCoSign)
                         } ?: engine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), snapshot.detached)
                         when (val signed = generated) {
                             is LocalSignatureResult.Success -> signed.signature.use { signature ->
@@ -118,7 +119,7 @@ internal class NativeAfirmaOperation(
 
     private class Snapshot(val operation: AfirmaServletOperation, val endpoint: URI, val sessionId: String,
         val key: String?, val algorithm: SigningAlgorithm?, val detached: Boolean, val payload: ByteArray,
-        val cipher: AfirmaAesParameters?, val pades: NativePadesOptions?)
+        val cipher: AfirmaAesParameters?, val pades: NativePadesOptions?, val pdfCoSign: Boolean)
 
     private companion object {
         fun SigningAlgorithm.wireName() = when (this) {

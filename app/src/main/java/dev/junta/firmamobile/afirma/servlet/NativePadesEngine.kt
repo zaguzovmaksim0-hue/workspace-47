@@ -1,6 +1,5 @@
 package dev.junta.firmamobile.afirma.servlet
 
-import com.tom_roush.pdfbox.cos.COSDictionary
 import com.tom_roush.pdfbox.cos.COSInteger
 import com.tom_roush.pdfbox.cos.COSName
 import com.tom_roush.pdfbox.io.MemoryUsageSetting
@@ -23,7 +22,7 @@ import java.util.Calendar
 import java.util.TimeZone
 import org.bouncycastle.asn1.ASN1InputStream
 
-/** First invisible PDF signature through the existing Android PDFBox and CMS
+/** Invisible PDF signatures through the existing Android PDFBox and CMS
  * implementations. No profile, endpoint, key export, timestamp or network API.
  * The byte-preserving incremental output is independently re-opened and checked
  * before it is eligible for the existing explicit one-shot upload. */
@@ -39,7 +38,7 @@ internal class NativePadesEngine(
     init { require(maxInputBytes in 1..524_288 && maxOutputBytes in 1..2_097_152) }
 
     fun sign(pdf: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
-        options: NativePadesOptions = NativePadesOptions()): LocalSignatureResult {
+        options: NativePadesOptions = NativePadesOptions(), requireExistingSignature: Boolean = false): LocalSignatureResult {
         if (pdf.size > maxInputBytes) return failure(LocalSignatureError.INPUT_TOO_LARGE)
         if (!pdfHeader(pdf)) return failure()
         val original = pdf.copyOf()
@@ -52,9 +51,12 @@ internal class NativePadesEngine(
             check(identity.certificate.publicKey.algorithm.equals("RSA", true) &&
                 (usage == null || usage.getOrElse(0) { false } || usage.getOrElse(1) { false }))
             load(original).use { document ->
-                // Do not choose an existing signature field or change a certified
-                // document without implementing its requested permission model.
-                check(canSignFirst(document))
+                // Verify previous approval signatures before accessing the new
+                // private key. Certified/locked documents and blank signature
+                // fields remain unsupported rather than silently altered.
+                val previous = checkNotNull(NativePdfSignatureHistory.inspect(original, document))
+                check(previous.size < NativePdfSignatureHistory.MAX_SIGNATURES)
+                check(!requireExistingSignature || previous.isNotEmpty())
                 val signature = PDSignature().apply {
                     setFilter(PDSignature.FILTER_ADOBE_PPKLITE)
                     setSubFilter(COSName.getPDFName(options.subFilter))
@@ -100,9 +102,14 @@ internal class NativePadesEngine(
         algorithm: SigningAlgorithm, options: NativePadesOptions = NativePadesOptions()): Boolean = runCatching {
         if (original.size !in 5..maxInputBytes || signedPdf.size !in 5..maxOutputBytes) return false
         if (!pdfHeader(original) || !pdfHeader(signedPdf)) return false
+        val previous = load(original).use { NativePdfSignatureHistory.inspect(original, it) } ?: return false
         load(signedPdf).use { document ->
-            if (document.isEncrypted) return false
-            val signature = document.signatureDictionaries.singleOrNull() ?: return false
+            val all = NativePdfSignatureHistory.inspect(signedPdf, document) ?: return false
+            if (all.size != previous.size + 1 || all.dropLast(1) != previous) return false
+            val signature = document.signatureDictionaries.singleOrNull {
+                val range = it.byteRange
+                range?.size == 4 && range[2].toLong() + range[3] == signedPdf.size.toLong()
+            } ?: return false
             if (signature.filter != PDSignature.FILTER_ADOBE_PPKLITE.name || signature.subFilter != options.subFilter ||
                 signature.signDate == null || signature.reason != options.reason ||
                 signature.location != options.location || signature.contactInfo != options.contact
@@ -134,20 +141,6 @@ internal class NativePadesEngine(
         }
     }.getOrDefault(false)
 
-    private fun canSignFirst(document: PDDocument): Boolean {
-        if (document.isEncrypted || document.numberOfPages !in 1..2_000 ||
-            document.signatureDictionaries.isNotEmpty() || document.signatureFields.isNotEmpty()) return false
-        val catalog = document.documentCatalog.cosObject
-        if (catalog.containsKey(COSName.PERMS)) return false
-        val form = catalog.getDictionaryObject(COSName.ACRO_FORM) as? COSDictionary
-        if (form?.containsKey(COSName.XFA) == true) return false
-        val objects = document.document.objects
-        if (objects.size > 20_000) return false
-        return objects.none { obj ->
-            val dict = obj.`object` as? COSDictionary
-            dict != null && (dict.getNameAsString(COSName.TYPE) == "Sig" || dict.containsKey(COSName.BYTERANGE))
-        }
-    }
     private fun load(bytes: ByteArray): PDDocument = PDDocument.load(
         ByteArrayInputStream(bytes), MemoryUsageSetting.setupMainMemoryOnly(16L * 1024 * 1024))
     private fun pdfHeader(bytes: ByteArray) = bytes.size >= 5 &&

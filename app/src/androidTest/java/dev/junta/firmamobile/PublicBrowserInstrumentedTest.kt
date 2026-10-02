@@ -127,6 +127,38 @@ class PublicBrowserInstrumentedTest {
         }
     }
 
+    @Test fun actualPublicBrowserOffersCanonicalPdfCoSignWithoutProfileAuthority() {
+        val current = AtomicReference<WebView?>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            render(scenario, current)
+            val view = checkNotNull(current.get())
+            // This case exercises request-to-consent only; validity of prior
+            // signatures is checked before signing in the real engine suite.
+            val invocation = Uri.parse("afirma://cosign?id=PublicCoPdf123&stservlet=https%3A%2F%2Fstorage.synthetic.example%2Fput&format=PAdES&algorithm=SHA256withRSA&dat=" + java.util.Base64.getUrlEncoder().encodeToString(nativeInstrumentedPdf()))
+            scenario.onActivity {
+                assertTrue(view.webViewClient.shouldOverrideUrlLoading(view, object : WebResourceRequest {
+                    override fun getUrl() = invocation
+                    override fun isForMainFrame() = true
+                    override fun isRedirect() = false
+                    override fun hasGesture() = true
+                    override fun getMethod() = "GET"
+                    override fun getRequestHeaders(): MutableMap<String, String> = mutableMapOf()
+                }))
+            }
+            awaitConsent("native-afirma-unlock", scenario, current) { "native callback invoked once" }
+            rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
+            rule.onNodeWithText("Añadir una firma al PDF ya firmado").assertIsDisplayed()
+            rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
+            // Lifecycle interruption is local; do not invoke server-notifying
+            // cancellation against a real storage endpoint in this test.
+            scenario.moveToState(Lifecycle.State.CREATED)
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            rule.waitForIdle()
+            rule.onNodeWithTag("native-afirma-close").performClick()
+            scenario.onActivity { assertSame(view, current.get()); assertEquals("PUBLIC_SYNTHETIC_READY", view.title) }
+        }
+    }
+
     private fun render(scenario: ActivityScenario<MainActivity>, current: AtomicReference<WebView?>) {
         scenario.onActivity { activity ->
             val app = activity.application as JuntaFirmaApplication

@@ -4,7 +4,7 @@ import dev.junta.firmamobile.signing.SigningAlgorithm
 import java.io.Closeable
 import java.net.URI
 
-internal enum class AfirmaServletOperation { SIGN, SELECT_CERTIFICATE }
+internal enum class AfirmaServletOperation { SIGN, COSIGN, SELECT_CERTIFICATE }
 
 /** Sensitive URI fields deliberately have no generated data-class toString. */
 internal class AfirmaServletInvocation(
@@ -19,6 +19,7 @@ internal class AfirmaServletInvocation(
     cipherParameters: AfirmaAesParameters? = null,
     val padesOptions: NativePadesOptions? = null,
 ) : Closeable {
+    val pdfCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN
     private var ownedCipher = cipherParameters?.copy()
     @Synchronized fun cipherCopy(): AfirmaAesParameters? = ownedCipher?.copy()
     private var ownedPayload: ByteArray? = payload.copyOf()

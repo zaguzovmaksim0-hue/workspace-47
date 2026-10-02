@@ -83,11 +83,13 @@ class NativePadesEngineTest {
         }
     }
 
-    @Test fun existingSignaturesCertificationAndUnselectedSignatureFieldsAreNotSilentlyChanged() {
+    @Test fun damagedSignaturesCertificationAndUnselectedSignatureFieldsAreNotSilentlyChanged() {
         val identity = freshSyntheticIdentity()
         val engine = NativePadesEngine(clock = Clock.fixed(identity.certificate.notBefore.toInstant().plusSeconds(60), ZoneOffset.UTC))
         val input = nativePadesFixture(); val signed = sign(engine, input, identity)
-        assertTrue(engine.sign(signed, identity, SigningAlgorithm.SHA256_WITH_RSA) is LocalSignatureResult.Failure)
+        val damaged = signed.copyOf().also { it[15] = (it[15].toInt() xor 1).toByte() }
+        assertTrue(engine.sign(damaged, identity, SigningAlgorithm.SHA256_WITH_RSA) is LocalSignatureResult.Failure)
+        damaged.fill(0)
         for (kind in listOf("permission", "signature-field", "xfa")) {
             val altered = ByteArrayOutputStream().use { out ->
                 PDDocument.load(input).use { doc ->

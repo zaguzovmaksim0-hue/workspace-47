@@ -77,6 +77,22 @@ class NativeAfirmaNavigationTest {
         }
     }
 
+    @Test fun coSignUsesTheNativeDataHandlerAndRetainsMainFrameRestrictions() {
+        val target = "cosign?id=Session123&stservlet=https%3A%2F%2Fstore.example%2Fput&format=PAdES&algorithm=SHA256withRSA&dat=JVBERi0="
+        val uri = "afirma://$target"
+        assertEquals(uri, NativeAfirmaNavigation.extract(uri))
+        assertEquals(uri, NativeAfirmaNavigation.extract("intent://$target#Intent;scheme=afirma;package=es.gob.afirma;end"))
+        assertNull(NativeAfirmaNavigation.extract(uri.replace("cosign", "countersign")))
+        fixture { f ->
+            f.client.shouldOverrideUrlLoading(f.view, Request(uri, mainFrame = false))
+            f.client.shouldOverrideUrlLoading(f.view, Request(uri, method = "POST"))
+            assertTrue(f.invocations.isEmpty())
+            assertTrue(f.client.shouldOverrideUrlLoading(f.view, Request(uri)))
+            assertEquals(listOf(uri to "https://unconfigured.example/form"), f.invocations)
+            assertEquals(0, f.oldRequests)
+        }
+    }
+
     private class Fixture {
         val view = WebView(ApplicationProvider.getApplicationContext<Context>())
         var active = true; var accept = true; var oldRequests = 0

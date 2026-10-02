@@ -66,6 +66,7 @@ internal object AfirmaConfigurationXml {
                     if (rootSeen || attributes.length != 0) fail()
                     operation = when (qName.lowercase(java.util.Locale.ROOT)) {
                         "op", "sign" -> AfirmaServletOperation.SIGN
+                        "cosign" -> AfirmaServletOperation.COSIGN
                         "selectcert" -> AfirmaServletOperation.SELECT_CERTIFICATE
                         else -> fail()
                     }

@@ -39,10 +39,15 @@ internal fun NativeAfirmaConsentDialog(
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.native_afirma_source, prompt.details.sourceOrigin))
                 Text(stringResource(R.string.native_afirma_destination, prompt.details.destination))
-                Text(stringResource(if (prompt.details.operation == "selectcert") R.string.native_afirma_selectcert else R.string.native_afirma_sign))
+                Text(stringResource(when (prompt.details.operation) {
+                    "selectcert" -> R.string.native_afirma_selectcert
+                    "cosign" -> R.string.native_afirma_pdf_cosign
+                    else -> R.string.native_afirma_sign
+                }))
+                if (prompt.details.format?.startsWith("PDF") == true) Text(stringResource(R.string.native_afirma_pdf_prior_signatures))
                 prompt.details.format?.let { Text(stringResource(R.string.native_afirma_format, it)) }
                 prompt.details.algorithm?.let { Text(stringResource(R.string.native_afirma_algorithm, it)) }
-                if (prompt.details.operation == "sign") {
+                if (prompt.details.operation != "selectcert") {
                     Text(stringResource(R.string.native_afirma_size, prompt.details.payloadBytes))
                     prompt.details.payloadSha256?.let { Text(stringResource(R.string.native_afirma_digest, it)) }
                 }
