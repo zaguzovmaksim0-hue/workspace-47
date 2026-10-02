@@ -144,7 +144,7 @@ jobs:
           profile: pixel_7_pro
           disable-animations: true
           emulator-boot-timeout: 600
-          script: ./gradlew connectedQaAndroidTest --no-daemon --console=plain
+          script: bash scripts/run-android-instrumentation-ci.sh
       - name: Upload instrumentation failure report
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -154,6 +154,15 @@ jobs:
             app/build/reports/androidTests/connected/qa/
             app/build/outputs/androidTest-results/connected/qa/
           if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload emulator precondition and window diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-emulator-state-${{ env.VERIFY_REF }}
+          path: app/build/outputs/instrumentation-device-state/
+          if-no-files-found: warn
           retention-days: 1
 
   python:
@@ -173,7 +182,7 @@ jobs:
       - name: Install Python test dependencies
         run: python -m pip install --disable-pip-version-check --requirement tools/requirements.txt
       - name: Test AutoFirma JavaScript interoperability
-        run: node --test scripts/tests/afirma-interoperability.test.mjs
+        run: node --test scripts/tests/afirma-interoperability.test.mjs scripts/tests/android-instrumentation-harness.test.mjs
       - name: Run Python tests
         run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
 
