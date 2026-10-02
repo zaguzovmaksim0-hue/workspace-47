@@ -158,18 +158,18 @@ class PublicBrowserInstrumentedTest {
 
     /** This test-only decorator does not answer certificate/signing requests.
      * All protocol, ownership and consent behavior belongs to the real client. */
-    private class LocalResponseClient(
+    internal class LocalResponseClient(
         private val delegate: WebViewClient,
         private val fixtureUrl: String,
         private val finished: AtomicBoolean,
         private val intercepted: AtomicBoolean,
+        private val html: String = "<html><head><title>PUBLIC_SYNTHETIC_READY</title></head><body><input value='local draft'></body></html>",
     ) : WebViewClient() {
         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
             val response = delegate.shouldInterceptRequest(view, request)
             if (response != null) return response
             if (request.url.toString() == fixtureUrl && request.method == "GET") {
                 intercepted.set(true)
-                val html = "<html><head><title>PUBLIC_SYNTHETIC_READY</title></head><body><input value='local draft'></body></html>"
                 return WebResourceResponse("text/html", "UTF-8", 200, "OK", mapOf("Cache-Control" to "no-store"),
                     ByteArrayInputStream(html.toByteArray(Charsets.UTF_8)))
             }

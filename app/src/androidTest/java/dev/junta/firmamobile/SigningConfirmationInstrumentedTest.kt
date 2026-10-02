@@ -185,17 +185,45 @@ class SigningConfirmationInstrumentedTest {
                     rule.onNodeWithTag(openTag).assertIsDisplayed().performClick()
                     waitForWebView(scenario)
                     var original: WebView? = null
+                    val fixtureFinished = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureIntercepted = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureUrl = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+                        .profile(dev.junta.firmamobile.profile.ProfileId("junta-andalucia")))
+                        .startUrl.resolve("/__firmamobile_tls_fixture__").toASCIIString()
                     scenario.onActivity { activity ->
                         original = checkNotNull(findWebView(activity.window.decorView)).apply {
                             stopLoading()
-                            loadDataWithBaseURL(
-                                "https://portal.synthetic.example/start",
+                            // Same-origin HTTPS interception avoids a renderer
+                            // site swap just to inject local test HTML. Real
+                            // navigation, mTLS and error callbacks stay delegated.
+                            webViewClient = PublicBrowserInstrumentedTest.LocalResponseClient(
+                                webViewClient, fixtureUrl, fixtureFinished, fixtureIntercepted,
                                 "<html><head><title>TLS_FIXTURE_READY</title></head><body><input value=retained-draft></body></html>",
-                                "text/html", "UTF-8", "https://portal.synthetic.example/start",
                             )
+                            loadUrl(fixtureUrl)
                         }
                     }
-                    waitForWebViewTitle(scenario, "TLS_FIXTURE_READY")
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val view = findWebView(activity.window.decorView)
+                                ready = view === original && view?.url == fixtureUrl &&
+                                    view?.title == "TLS_FIXTURE_READY" && view?.progress == 100 &&
+                                    activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                            }
+                            ready && fixtureFinished.get() && fixtureIntercepted.get()
+                        }
+                    } catch (failure: Throwable) {
+                        var state = ""
+                        scenario.onActivity { activity ->
+                            val view = findWebView(activity.window.decorView)
+                            state = "sameView=${view === original};localUrl=${view?.url == fixtureUrl};" +
+                                "titleMatches=${view?.title == "TLS_FIXTURE_READY"};progress=${view?.progress}"
+                        }
+                        throw AssertionError("Local TLS fixture failed before issuing any certificate callback: " +
+                            "$state;intercepted=${fixtureIntercepted.get()};finished=${fixtureFinished.get()}", failure)
+                    }
                     var proceeded = 0
                     var ignored = 0
                     val request = object : ClientCertRequest() {
