@@ -113,11 +113,12 @@ internal object AfirmaServletInvocationParser {
             val properties = values["properties"]?.takeIf(String::isNotEmpty)?.let(::properties).orEmpty()
             val algorithm: SigningAlgorithm?
             val detached: Boolean
+            var padesOptions: NativePadesOptions? = null
             if (op == AfirmaServletOperation.SIGN) {
-                if (!values["format"].equals("cades", true)) {
-                    if (values["format"].isNullOrBlank()) invalid("missing_format")
-                    unsupported("signature_format")
-                }
+                val format = values["format"] ?: invalid("missing_format")
+                if (format.isBlank()) invalid("missing_format")
+                val pdf = NativePadesOptions.acceptsFormat(format)
+                if (!pdf && !format.equals("cades", true)) unsupported("signature_format")
                 algorithm = when (values["algorithm"]?.lowercase(Locale.ROOT)) {
                     "sha1withrsa" -> SigningAlgorithm.SHA1_WITH_RSA
                     "sha256withrsa" -> SigningAlgorithm.SHA256_WITH_RSA
@@ -125,15 +126,26 @@ internal object AfirmaServletInvocationParser {
                     null, "" -> invalid("missing_algorithm")
                     else -> unsupported("signature_algorithm")
                 }
-                if (properties.keys.any { it != "mode" }) unsupported("signature_property_not_implemented")
-                detached = when (properties["mode"]?.lowercase(Locale.ROOT) ?: "explicit") {
-                    "explicit" -> true
-                    "implicit" -> false
-                    else -> unsupported("signature_mode")
+                if (pdf) {
+                    padesOptions = NativePadesOptions.parse(properties)
+                        ?: unsupported("pdf_signature_property_not_implemented")
+                    // Both request modes contain the PDF and an embedded CMS.
+                    // This must never produce a raw CAdES response to a PDF request.
+                    detached = true
+                } else {
+                    if (properties.keys.any { it != "mode" }) unsupported("signature_property_not_implemented")
+                    detached = when (properties["mode"]?.lowercase(Locale.ROOT) ?: "explicit") {
+                        "explicit" -> true
+                        "implicit" -> false
+                        else -> unsupported("signature_mode")
+                    }
                 }
                 val encoded = values["dat"] ?: unsupported("interactive_file_selection_required")
                 if (encoded.startsWith("http:", true) || encoded.startsWith("https:", true)) unsupported("remote_data")
                 payload = strictBase64(encoded, MAX_PAYLOAD)
+                if (pdf && (payload.size < 5 || !payload.copyOfRange(0, 5).contentEquals(byteArrayOf(37, 80, 68, 70, 45)))) {
+                    invalid("pdf_data_expected")
+                }
             } else {
                 if (values.keys.any { it in setOf("dat", "format", "algorithm", "cop") }) invalid("unexpected_signing_parameters")
                 if (properties.isNotEmpty()) unsupported("certificate_filter_not_implemented")
@@ -142,7 +154,7 @@ internal object AfirmaServletInvocationParser {
                 payload = ByteArray(0)
             }
             AfirmaServletParseResult.Accepted(AfirmaServletInvocation(op, source, endpoint, sessionId, key,
-                algorithm, detached, checkNotNull(payload), advancedCipher))
+                algorithm, detached, checkNotNull(payload), advancedCipher, padesOptions))
         } finally { payload?.fill(0); advancedCipher?.close() }
     }
 

@@ -20,6 +20,7 @@ internal class NativeAfirmaOperation(
     private val transport: AfirmaResultTransport = AfirmaServletTransport(),
     private val clock: Clock = Clock.systemUTC(),
     private val engine: NativeCadesEngine = NativeCadesEngine(clock = clock),
+    private val padesEngine: NativePadesEngine = NativePadesEngine(clock = clock),
 ) : PreparedAfirmaOperation {
     private val lock = Any()
     private var closed = false
@@ -32,7 +33,8 @@ internal class NativeAfirmaOperation(
                 destination = safeDestination(invocation.storageUrl),
                 operation = if (invocation.operation == AfirmaServletOperation.SIGN) "sign" else "selectcert",
                 format = if (invocation.operation == AfirmaServletOperation.SIGN) {
-                    if (invocation.detached) "CAdES · detached" else "CAdES · attached"
+                    invocation.padesOptions?.let { "PDF · PAdES · ${it.subFilter}" }
+                        ?: if (invocation.detached) "CAdES · detached" else "CAdES · attached"
                 } else null,
                 algorithm = invocation.algorithm?.wireName(),
                 payloadBytes = payload.size,
@@ -57,7 +59,7 @@ internal class NativeAfirmaOperation(
         val snapshot = synchronized(lock) {
             check(!closed) { "Operation is closed" }
             Snapshot(invocation.operation, invocation.storageUrl, invocation.sessionId, invocation.key,
-                invocation.algorithm, invocation.detached, invocation.payloadCopy(), invocation.cipherCopy())
+                invocation.algorithm, invocation.detached, invocation.payloadCopy(), invocation.cipherCopy(), invocation.padesOptions)
         }
         try {
             currentCoroutineContext().ensureActive()
@@ -68,8 +70,10 @@ internal class NativeAfirmaOperation(
                 try {
                     val certResult = snapshot.cipher?.encode(certificate) ?: AfirmaIntermediateCipher.encode(certificate, snapshot.key)
                     if (snapshot.operation == AfirmaServletOperation.SELECT_CERTIFICATE) certResult else {
-                        when (val signed = engine.sign(snapshot.payload, identity,
-                            checkNotNull(snapshot.algorithm), snapshot.detached)) {
+                        val generated = snapshot.pades?.let { options ->
+                            padesEngine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), options)
+                        } ?: engine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), snapshot.detached)
+                        when (val signed = generated) {
                             is LocalSignatureResult.Success -> signed.signature.use { signature ->
                                 currentCoroutineContext().ensureActive()
                                 // Upstream consumer expects certificate first, signature second,
@@ -113,7 +117,8 @@ internal class NativeAfirmaOperation(
     }
 
     private class Snapshot(val operation: AfirmaServletOperation, val endpoint: URI, val sessionId: String,
-        val key: String?, val algorithm: SigningAlgorithm?, val detached: Boolean, val payload: ByteArray, val cipher: AfirmaAesParameters?)
+        val key: String?, val algorithm: SigningAlgorithm?, val detached: Boolean, val payload: ByteArray,
+        val cipher: AfirmaAesParameters?, val pades: NativePadesOptions?)
 
     private companion object {
         fun SigningAlgorithm.wireName() = when (this) {

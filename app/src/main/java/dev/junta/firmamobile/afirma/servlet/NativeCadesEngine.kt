@@ -39,6 +39,7 @@ internal class NativeCadesEngine(
     private val clock: Clock = Clock.systemUTC(),
     private val signatureObserver: SensitiveSignatureCopyObserver =
         SensitiveSignatureCopyObserver {},
+    private val includeSigningTime: Boolean = true,
 ) {
     init {
         require(maxInputBytes > 0)
@@ -102,7 +103,13 @@ internal class NativeCadesEngine(
                 .build()
             val signerInfo = JcaSignerInfoGeneratorBuilder(digestProvider)
                 .setSignedAttributeGenerator(
-                    DefaultSignedAttributeTableGenerator(AttributeTable(suppliedAttributes)),
+                    org.bouncycastle.cms.CMSAttributeTableGenerator { parameters ->
+                        val generated = DefaultSignedAttributeTableGenerator(AttributeTable(suppliedAttributes))
+                            .getAttributes(parameters)
+                        // PAdES expresses the claimed time in PDF /M. BC's
+                        // default generator otherwise adds signingTime itself.
+                        if (includeSigningTime) generated else generated.remove(CMSAttributes.signingTime)
+                    },
                 )
                 .build(contentSigner, JcaX509CertificateHolder(identity.certificate))
 
@@ -168,6 +175,7 @@ internal class NativeCadesEngine(
         val included = signed.certificates.getMatches(null).filter(signer.sid::match)
         if (included.size != 1 || included.single() != expectedCertificate) return false
         val attrs = signer.signedAttributes ?: return false
+        if (!includeSigningTime && attrs.getAll(CMSAttributes.signingTime).size() != 0) return false
         val references = attrs.getAll(PKCSObjectIdentifiers.id_aa_signingCertificateV2)
         if (references.size() != 1) return false
         val reference = attrs.get(PKCSObjectIdentifiers.id_aa_signingCertificateV2)

@@ -59,7 +59,7 @@ class AfirmaServletInvocationParserTest {
         unsupported(sign(mapOf("sticky" to "true")))
         unsupported(sign(mapOf("unknown" to "value")))
         unsupported(sign(mapOf("algorithm" to "SHA256withECDSA")))
-        unsupported(sign(mapOf("format" to "PAdES")))
+        unsupported(sign(mapOf("format" to "XAdES")))
     }
 
     @Test fun mixedDataIsInvalidAndUnimplementedMultiOperationVariantsRemainUnsupported() {

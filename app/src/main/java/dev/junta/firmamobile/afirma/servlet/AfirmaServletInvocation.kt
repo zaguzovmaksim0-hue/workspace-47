@@ -17,6 +17,7 @@ internal class AfirmaServletInvocation(
     val detached: Boolean,
     payload: ByteArray,
     cipherParameters: AfirmaAesParameters? = null,
+    val padesOptions: NativePadesOptions? = null,
 ) : Closeable {
     private var ownedCipher = cipherParameters?.copy()
     @Synchronized fun cipherCopy(): AfirmaAesParameters? = ownedCipher?.copy()

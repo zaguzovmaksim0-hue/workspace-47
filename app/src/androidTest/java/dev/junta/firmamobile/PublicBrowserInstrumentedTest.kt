@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -85,6 +86,36 @@ class PublicBrowserInstrumentedTest {
             }
             awaitConsent("native-afirma-unlock", scenario, current) { "native callback invoked once" }
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
+            rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
+            // Lifecycle interruption is local; do not invoke server-notifying
+            // cancellation against a real storage endpoint in this test.
+            scenario.moveToState(Lifecycle.State.CREATED)
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            rule.waitForIdle()
+            rule.onNodeWithTag("native-afirma-close").performClick()
+            scenario.onActivity { assertSame(view, current.get()); assertEquals("PUBLIC_SYNTHETIC_READY", view.title) }
+        }
+    }
+
+    @Test fun actualPublicBrowserOffersPdfSigningWithoutAnExistingSiteProfile() {
+        val current = AtomicReference<WebView?>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            render(scenario, current)
+            val view = checkNotNull(current.get())
+            val invocation = Uri.parse("afirma://sign?id=PublicPdf123&stservlet=https%3A%2F%2Fstorage.synthetic.example%2Fput&format=PAdES&algorithm=SHA256withRSA&dat=" + java.util.Base64.getUrlEncoder().encodeToString(nativeInstrumentedPdf()))
+            scenario.onActivity {
+                assertTrue(view.webViewClient.shouldOverrideUrlLoading(view, object : WebResourceRequest {
+                    override fun getUrl() = invocation
+                    override fun isForMainFrame() = true
+                    override fun isRedirect() = false
+                    override fun hasGesture() = true
+                    override fun getMethod() = "GET"
+                    override fun getRequestHeaders(): MutableMap<String, String> = mutableMapOf()
+                }))
+            }
+            awaitConsent("native-afirma-unlock", scenario, current) { "native callback invoked once" }
+            rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
+            rule.onNodeWithText("PDF · PAdES", substring = true).assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             // Lifecycle interruption is local; do not invoke server-notifying
             // cancellation against a real storage endpoint in this test.
