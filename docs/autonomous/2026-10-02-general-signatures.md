@@ -66,3 +66,5 @@ All existing exact-head GitHub Actions gates remain mandatory before installatio
 - Credential-provider privileged caller approval: https://developer.android.com/identity/sign-in/privileged-apps
 
 No personal signing key, real government document, private account or administrative action is used for automated validation. Main is not merged by this package. WARP, existing Codex/proxy runtime and unrelated working trees remain outside the change.
+
+The unqualified local XAdES default is Enveloping, matching the pinned upstream XAdESSigner format default. The legacy mode value is syntactically checked but does not change packaging, as upstream Utils.checkIllegalParams explicitly ignores mode for XAdES. The integrator corrected the authored default and its expectations after checking those exact sources; original and integrated hashes remain separate. Old native-navigation tests that assumed every batch/countersign route was unsupported now retain malformed/unknown-operation checks and independently test the new data routes with unchanged main-frame/GET restrictions.

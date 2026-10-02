@@ -21,8 +21,8 @@ class NativeXadesOptionsTest {
     ): NativeXadesOptions? = NativeXadesOptions.parse(format, properties)
 
     @Test
-    fun formatMappingIsCaseInsensitiveAndBareFormatDefaultsToDetached() {
-        val cases = listOf("XAdES" to NativeXadesPackaging.DETACHED) +
+    fun formatMappingIsCaseInsensitiveAndBareFormatDefaultsToCanonicalEnveloping() {
+        val cases = listOf("XAdES" to NativeXadesPackaging.ENVELOPING) +
             variants.map { "XAdES ${it.first}" to it.second }
         for ((format, packaging) in cases) {
             for (spelling in listOf(format, format.lowercase(), format.uppercase())) {
@@ -31,7 +31,7 @@ class NativeXadesOptionsTest {
             }
         }
         assertEquals(
-            NativeXadesOptions(NativeXadesPackaging.DETACHED, "application/octet-stream", null),
+            NativeXadesOptions(NativeXadesPackaging.ENVELOPING, "application/octet-stream", null),
             options()
         )
         val rejected = listOf("", "CAdES", "Detached", "XAdEStri", "XAdES TriPhase") +

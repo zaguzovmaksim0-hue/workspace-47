@@ -35,7 +35,7 @@ class NativeAfirmaNavigationTest {
             "intent://$payload#Intent;scheme=afirma;package=es.gob.afirma;component=es.gob.afirma/.Fake;end",
             "intent://$payload#Intent;scheme=afirma;package=es.gob.afirma;S.browser_fallback_url=https%3A%2F%2Fevil.example;end",
             "afirma://user@sign?x=1", "afirma://sign:443?x=1", "afirma://sign/path?x=1", "afirma://sign?x=1#fragment",
-            "afirma://sign?x=1\n", "javascript:afirma://sign", "afirma://batch?x=1",
+            "afirma://sign?x=1\n", "javascript:afirma://sign", "afirma://unsupported-op?x=1",
         )
         invalid.forEach { assertNull(it, NativeAfirmaNavigation.extract(it)) }
     }
@@ -82,7 +82,7 @@ class NativeAfirmaNavigationTest {
         val uri = "afirma://$target"
         assertEquals(uri, NativeAfirmaNavigation.extract(uri))
         assertEquals(uri, NativeAfirmaNavigation.extract("intent://$target#Intent;scheme=afirma;package=es.gob.afirma;end"))
-        assertNull(NativeAfirmaNavigation.extract(uri.replace("cosign", "countersign")))
+        assertNull(NativeAfirmaNavigation.extract(uri.replace("cosign", "unsupported-op")))
         fixture { f ->
             f.client.shouldOverrideUrlLoading(f.view, Request(uri, mainFrame = false))
             f.client.shouldOverrideUrlLoading(f.view, Request(uri, method = "POST"))
@@ -90,6 +90,21 @@ class NativeAfirmaNavigationTest {
             assertTrue(f.client.shouldOverrideUrlLoading(f.view, Request(uri)))
             assertEquals(listOf(uri to "https://unconfigured.example/form"), f.invocations)
             assertEquals(0, f.oldRequests)
+        }
+    }
+
+    @Test fun batchAndCounterSignAreDataRoutesWithTheSameTopLevelRestrictions() {
+        for (operation in listOf("batch", "countersign")) {
+            val target = "afirma://$operation?id=Session123&dat=YWJj"
+            assertEquals(target, NativeAfirmaNavigation.extract(target))
+            fixture { f ->
+                f.client.shouldOverrideUrlLoading(f.view, Request(target, mainFrame = false))
+                f.client.shouldOverrideUrlLoading(f.view, Request(target, method = "POST"))
+                assertTrue(f.invocations.isEmpty())
+                assertTrue(f.client.shouldOverrideUrlLoading(f.view, Request(target)))
+                assertEquals(listOf(target to "https://unconfigured.example/form"), f.invocations)
+                assertEquals(0, f.oldRequests)
+            }
         }
     }
 

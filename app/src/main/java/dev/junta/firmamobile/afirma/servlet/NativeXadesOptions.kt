@@ -62,7 +62,7 @@ internal data class NativeXadesOptions(
             ) return null
 
             return NativeXadesOptions(
-                packaging = selectedPackaging ?: explicitPackaging ?: NativeXadesPackaging.DETACHED,
+                packaging = selectedPackaging ?: explicitPackaging ?: NativeXadesPackaging.ENVELOPING,
                 mimeType = mimeType,
                 contentDescription = description
             )
