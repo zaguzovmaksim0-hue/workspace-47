@@ -122,6 +122,11 @@ class MainActivity : ComponentActivity() {
     private var externalHandoffFailed by mutableStateOf(false)
     private val browserExternalReturn = dev.junta.firmamobile.browser.BrowserExternalReturnLease<WebView>()
     private var browserFileReturnToken: UUID? = null
+    private var documentDownloadReturnToken: UUID? = null
+    private val documentDownloadLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        documentDownloadReturnToken?.let(browserExternalReturn::finish)
+        documentDownloadReturnToken = null
+    }
     private var certificateReturnToken: UUID? = null
     private val browserFilePicker: androidx.activity.result.ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -454,6 +459,16 @@ class MainActivity : ComponentActivity() {
                         },
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onShowFileChooser = { view, callback, params -> browserFileChooser.open(view, callback, params) },
+                        onDocumentDownload = { view, request ->
+                            if (currentWebView !== view || certificatePanelVisible ||
+                                request.component?.className != dev.junta.firmamobile.browser.download.DocumentDownloadActivity::class.java.name
+                            ) false else try {
+                                withBrowserExternalReturn(onToken = { documentDownloadReturnToken = it }) {
+                                    documentDownloadLauncher.launch(request)
+                                }
+                                true
+                            } catch (_: Exception) { false }
+                        },
                         onWebViewChanged = {
                             if (currentWebView !== it) { browserFileChooser.cancel(); pendingExternalHandoff = null; browserExternalReturn.invalidate() }
                             currentWebView = it

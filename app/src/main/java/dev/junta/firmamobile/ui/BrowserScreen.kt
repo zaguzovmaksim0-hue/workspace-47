@@ -227,6 +227,7 @@ fun BrowserScreen(
     popupTransport: BrowserPopupTransport? = null,
     onPopupWindowClose: () -> Unit = onExitBrowser,
     onRelatedClientCertPreferenceClear: (Boolean) -> Unit = {},
+    onDocumentDownload: ((WebView, android.content.Intent) -> Boolean)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -1199,6 +1200,19 @@ fun BrowserScreen(
                         )
                         webViewRef.set(webView)
                         onShowFileChooser?.let(webView::setFileChooserListener)
+                        webView.setDocumentDownloadLauncher(
+                            canRespond = {
+                                activePopup == null && webViewRef.get() === webView &&
+                                    lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                                    !certificatePanelVisible && currentSigningState is SigningUiState.Idle &&
+                                    !nativeAfirma.hasPending && !nativeFallback.hasPending && !nativeRetrieval.hasPending &&
+                                    interactivePrompt == null && pendingRequest == null && pendingCertificateSelection == null &&
+                                    pendingInPlaceClientAuth == null && pendingClientAuthTarget == null &&
+                                    !clientAuthPreparing && clientAuthGrant == null &&
+                                    currentClientCertPreferenceState == ClientCertPreferenceBarrierState.IDLE
+                            },
+                            launch = onDocumentDownload,
+                        )
                         webView.setPopupListeners(
                             create = popupRequest@{ owner, _, userGesture, message ->
                                 if (popupTransport != null || !userGesture || owner !== webViewRef.get() ||
@@ -1878,6 +1892,7 @@ fun BrowserScreen(
                             },
                             onNavigationEpochChanged = onNavigationEpochChanged,
                             onShowFileChooser = onShowFileChooser,
+                            onDocumentDownload = onDocumentDownload,
                             certificatePanelVisible = certificatePanelVisible,
                             mayRetainExternalReturn = mayRetainExternalReturn,
                             consumeExternalReturn = consumeExternalReturn,

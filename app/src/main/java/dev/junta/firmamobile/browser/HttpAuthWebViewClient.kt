@@ -36,7 +36,11 @@ import dev.junta.firmamobile.R
 
 /** A per-client adapter; every non-HTTP-auth callback stays with the actual
  * browser client. Replacing the client or destroying its view ends pending auth. */
-internal class HttpAuthWebViewClient(private val delegate: WebViewClient) : WebViewClient() {
+internal class HttpAuthWebViewClient(
+    private val delegate: WebViewClient,
+    private val observeDownloadRequest: (WebResourceRequest) -> Unit = {},
+    private val downloadNavigation: (String) -> Unit = {},
+) : WebViewClient() {
     private var epoch = 0L
     private var closed = false
     private var owner: WebView? = null
@@ -176,7 +180,7 @@ internal class HttpAuthWebViewClient(private val delegate: WebViewClient) : WebV
     fun close() { closed = true; controller.close(); release() }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-        controller.invalidate(); epoch++; delegate.onPageStarted(view, url, favicon)
+        controller.invalidate(); epoch++; downloadNavigation(url); delegate.onPageStarted(view, url, favicon)
     }
     override fun onPageFinished(view: WebView, url: String) = delegate.onPageFinished(view, url)
     override fun onPageCommitVisible(view: WebView, url: String) = delegate.onPageCommitVisible(view, url)
@@ -185,7 +189,10 @@ internal class HttpAuthWebViewClient(private val delegate: WebViewClient) : WebV
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = delegate.shouldOverrideUrlLoading(view, request)
     @Suppress("DEPRECATION")
     override fun shouldOverrideUrlLoading(view: WebView, url: String) = delegate.shouldOverrideUrlLoading(view, url)
-    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? = delegate.shouldInterceptRequest(view, request)
+    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+        observeDownloadRequest(request)
+        return delegate.shouldInterceptRequest(view, request)
+    }
     @Suppress("DEPRECATION")
     override fun shouldInterceptRequest(view: WebView, url: String): WebResourceResponse? = delegate.shouldInterceptRequest(view, url)
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) = delegate.onReceivedClientCertRequest(view, request)

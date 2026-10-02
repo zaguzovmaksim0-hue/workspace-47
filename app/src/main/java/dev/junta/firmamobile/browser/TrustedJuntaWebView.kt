@@ -11,13 +11,15 @@ import dev.junta.firmamobile.BuildConfig
 @SuppressLint("SetJavaScriptEnabled")
 class TrustedJuntaWebView(context: Context) : WebView(context) {
     private val chrome = JuntaWebChromeClient()
+    private val downloads = dev.junta.firmamobile.browser.download.BrowserDownloadCapture(this)
     private var httpAuthClient: HttpAuthWebViewClient? = null
     internal var isNativeReleased: Boolean = false
         private set
 
     override fun setWebViewClient(client: WebViewClient) {
         httpAuthClient?.close()
-        val wrapped = HttpAuthWebViewClient(client)
+        downloads.clear()
+        val wrapped = HttpAuthWebViewClient(client, downloads::observe, downloads::navigationStarted)
         httpAuthClient = wrapped
         super.setWebViewClient(wrapped)
     }
@@ -25,6 +27,7 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
     override fun destroy() {
         if (isNativeReleased) return
         isNativeReleased = true
+        downloads.close()
         chrome.createWindow = null
         chrome.closeWindow = null
         httpAuthClient?.close()
@@ -50,6 +53,10 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
         chrome.createWindow = create
         chrome.closeWindow = close
         settings.setSupportMultipleWindows(create != null)
+    }
+
+    fun setDocumentDownloadLauncher(canRespond: () -> Boolean, launch: ((WebView, android.content.Intent) -> Boolean)?) {
+        downloads.configure(canRespond, launch)
     }
 
     fun setPageProgressListener(listener: (Int) -> Unit) {

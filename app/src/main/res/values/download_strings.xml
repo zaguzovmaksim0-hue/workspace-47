@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="document_download_title">Guardar documento</string>
+    <string name="document_download_server">Servidor: %1$s</string>
+    <string name="document_download_foreign">El archivo está en otro servidor. No se enviarán las cookies de la página.</string>
+    <string name="document_download_offer">Se volverá a solicitar el archivo al servidor mediante GET, sin repetir el envío de un formulario. Las direcciones de un solo uso pueden no funcionar. Límite: 32 MiB. Después podrás elegir dónde guardarlo.</string>
+    <string name="document_download_session">Se utilizarán las cookies actuales de este mismo servidor. No se transfiere el certificado ni una contraseña guardada.</string>
+    <string name="document_download_fetching">Descargando una copia temporal privada…</string>
+    <string name="document_download_ready">Copia preparada. Elige dónde guardar el documento.</string>
+    <string name="document_download_picking">Selecciona una ubicación en el selector de documentos de Android.</string>
+    <string name="document_download_copying">Guardando el documento…</string>
+    <string name="document_download_saved">Documento entregado a la ubicación elegida. La copia temporal se ha eliminado.</string>
+    <string name="document_download_failed">No se pudo completar la operación. No se repetirá automáticamente. La sesión puede requerir otro acceso, el enlace puede haber caducado o el archivo puede superar el límite. No se seguirá una redirección ni se ignorará una advertencia TLS.</string>
+    <string name="document_download_expired">La descarga se canceló o ya no está disponible. Vuelve a la página y genera un enlace nuevo.</string>
+    <string name="document_download_bytes">Recibidos: %1$d bytes</string>
+    <string name="document_download_start">Descargar esta copia</string>
+    <string name="document_download_save">Guardar como…</string>
+    <string name="document_download_done">Volver a la página</string>
+    <string name="document_download_cancel">Cancelar y volver</string>
+    <string name="document_download_unsupported">No se descargará automáticamente: no se ha comprobado un GET directo de una página HTTPS o el archivo supera 32 MiB. No se repetirá un formulario. Los enlaces blob, data, redirecciones y descargas POST aún no están admitidos.</string>
+    <string name="document_download_save_failed">No se pudo guardar en esa ubicación. La copia temporal sigue disponible: puedes elegir otra ubicación sin volver a descargar.</string>
+</resources>
