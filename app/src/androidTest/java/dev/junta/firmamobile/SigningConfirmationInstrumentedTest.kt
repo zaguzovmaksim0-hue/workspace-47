@@ -211,6 +211,21 @@ class SigningConfirmationInstrumentedTest {
                         val view = checkNotNull(original)
                         view.webViewClient.onReceivedClientCertRequest(view, request)
                     }
+                    // Observe the one issued Chromium callback; do not invoke it again.
+                    try {
+                        rule.waitUntil(timeoutMillis = 5_000) {
+                            runCatching { rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed() }.isSuccess
+                        }
+                    } catch (failure: Throwable) {
+                        var state = ""
+                        scenario.onActivity { activity ->
+                            val view = findWebView(activity.window.decorView)
+                            state = "lifecycle=${activity.lifecycle.currentState};sameView=${original === view};" +
+                                "progress=${view?.progress};localTitle=${view?.title == "TLS_FIXTURE_READY"};" +
+                                "ignored=$ignored;proceeded=$proceeded"
+                        }
+                        throw AssertionError("TLS consent missing after the original callback: $state", failure)
+                    }
                     rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed().performClick()
                     rule.onNodeWithContentDescription("Contraseña del certificado")
                         .performScrollTo().performTextInput(TEST_PASSPHRASE)
@@ -574,11 +589,14 @@ class SigningConfirmationInstrumentedTest {
         expected: String,
     ) {
         rule.waitUntil(timeoutMillis = 15_000) {
-            var title: String? = null
+            var ready = false
             scenario.onActivity { activity ->
-                title = findWebView(activity.window.decorView)?.title
+                ready = findWebView(activity.window.decorView)?.let { view ->
+                    view.title == expected && view.progress == 100 &&
+                        activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                } == true
             }
-            title == expected
+            ready
         }
     }
 

@@ -336,8 +336,16 @@ class BrowserSecurityRegressionTest {
         assertTrue("Clear-session handler must be present", sessionBlock.isNotEmpty())
         val epochIndex = sessionBlock.indexOf("advanceNavigationEpoch()")
         val clearIndex = sessionBlock.indexOf("siteDataCleaner.clearProfileSession")
-        val preferenceIndex = sessionBlock.indexOf("clientCertPreferenceCoordinator.requestClear")
-        val exitIndex = sessionBlock.indexOf("onClearSession()")
+        val profileBranchIndex = sessionBlock.indexOf("            } else {")
+        assertTrue("Profile cleanup must follow navigation invalidation", profileBranchIndex > epochIndex)
+        val preferenceIndex = sessionBlock.indexOf("clientCertPreferenceCoordinator.requestClear", profileBranchIndex)
+        val exitIndex = sessionBlock.indexOf("onClearSession()", profileBranchIndex)
+        val publicBranch = sessionBlock.substringBefore("            } else {")
+        val publicClear = publicBranch.indexOf("siteDataCleaner.clearOrigin")
+        val publicPreferences = publicBranch.indexOf("clientCertPreferenceCoordinator.requestClear")
+        val publicLock = publicBranch.indexOf("onClearSession()")
+        assertTrue("Public cleanup must invalidate before clearing and lock after preference cleanup",
+            publicClear > epochIndex && publicPreferences > publicClear && publicLock > publicPreferences)
         assertTrue(
             "Closing the certificate session must invalidate the active navigation before deleting profile session state",
             epochIndex >= 0 && clearIndex in (epochIndex + 1) until preferenceIndex,

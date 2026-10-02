@@ -29,6 +29,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class PublicBrowserInstrumentedTest {
     @get:Rule val rule = createEmptyComposeRule()
+    private val observedLog = SanitizedLogger()
     private val entry = URI("https://unprofiled.synthetic.example/form")
 
     @Test fun actualPublicBrowserKeepsNativeCertificateConsentButNoAutomaticKey() {
@@ -41,6 +42,7 @@ class PublicBrowserInstrumentedTest {
                 val view = checkNotNull(current.get())
                 view.webViewClient.onReceivedClientCertRequest(view, request)
             }
+            awaitConsent("interactive-client-auth-unlock", scenario, current) { "ignored=${request.ignores},proceeded=${request.proceeds}" }
             rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed()
             assertEquals(0, request.proceeds)
             rule.onNodeWithTag("interactive-client-auth-cancel").performClick()
@@ -65,6 +67,7 @@ class PublicBrowserInstrumentedTest {
                     override fun getRequestHeaders(): MutableMap<String, String> = mutableMapOf()
                 }))
             }
+            awaitConsent("native-afirma-unlock", scenario, current) { "native callback invoked once" }
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             // Automatic lifecycle interruption is local; do not press the
@@ -83,7 +86,7 @@ class PublicBrowserInstrumentedTest {
             activity.setContent {
                 BrowserScreen(
                     profileId = null, entryUrl = entry, certificateState = null,
-                    logger = SanitizedLogger(), signingState = SigningUiState.Idle,
+                    logger = observedLog, signingState = SigningUiState.Idle,
                     onMiniAppletRequest = { _, _ -> error("Public browsing must not receive profile bridge signing requests") },
                     onMiniAppletCancel = {}, onConfirmSigning = {}, onCancelSigning = { _, _ -> },
                     onDismissSigningState = {}, onExitBrowser = {}, onOpenExternal = {}, onOpenOfficialAutoFirma = {},
@@ -104,9 +107,41 @@ class PublicBrowserInstrumentedTest {
         }
         rule.waitUntil(timeoutMillis = 15_000) {
             var ready = false
-            scenario.onActivity { ready = current.get()?.title == "PUBLIC_SYNTHETIC_READY" }
+            scenario.onActivity {
+                ready = current.get()?.let { view ->
+                    view.title == "PUBLIC_SYNTHETIC_READY" && view.progress == 100 &&
+                        it.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+                } == true
+            }
             ready
         }
+    }
+
+    /** Chromium callbacks and Android dialog windows are outside Compose's
+     * test clock. Observe the one issued request; never retry the callback. */
+    private fun awaitConsent(
+        tag: String, scenario: ActivityScenario<MainActivity>, current: AtomicReference<WebView?>,
+        callbackState: () -> String,
+    ) {
+        var observedAtFirstCheck = false
+        var first = true
+        try {
+            rule.waitUntil(timeoutMillis = 5_000) {
+                val shown = runCatching { rule.onNodeWithTag(tag).assertIsDisplayed() }.isSuccess
+                if (first) { observedAtFirstCheck = shown; first = false }
+                shown
+            }
+        } catch (failure: Throwable) {
+            var state = ""
+            scenario.onActivity { activity ->
+                val view = current.get()
+                state = "lifecycle=${activity.lifecycle.currentState};view=${view != null};progress=${view?.progress};" +
+                    "localTitle=${view?.title == "PUBLIC_SYNTHETIC_READY"};focus=${view?.hasWindowFocus()}"
+            }
+            throw AssertionError("Consent did not appear after one callback: $tag; $state; ${callbackState()}; " +
+                observedLog.snapshot().takeLast(12).joinToString(" | "), failure)
+        }
+        android.util.Log.i("FirmaSyntheticConsent", "tag=$tag;visibleOnFirstObservation=$observedAtFirstCheck;${callbackState()}")
     }
 
     private class CertificateRequest : ClientCertRequest() {

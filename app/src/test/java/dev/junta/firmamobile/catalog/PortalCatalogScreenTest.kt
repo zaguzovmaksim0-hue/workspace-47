@@ -13,6 +13,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -24,6 +25,7 @@ import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
@@ -113,10 +115,12 @@ class PortalCatalogScreenTest {
         setCatalogContent(state = state, onOpenPortal = { opened = it })
 
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(externalOnly.displayName))
-        rule.onNodeWithText("Abrir").performClick()
+        rule.onNodeWithTag("catalog-open-${externalOnly.portalId.value}").performClick()
         rule.runOnIdle {
             assertNotNull(opened)
             assertFalse(externalOnly.isEnabled)
+            assertTrue(externalOnly.opensWithoutProfile)
+            assertTrue(externalOnly.canOpen)
         }
     }
 
