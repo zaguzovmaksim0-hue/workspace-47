@@ -168,11 +168,21 @@ class CiPolicyTest(unittest.TestCase):
             "govulncheck ./...",
             "scripts/ci/verify-android-artifacts.sh",
             "scripts/ci/verify-release-fail-closed.sh",
-            "connectedQaAndroidTest --no-daemon --console=plain",
+            "script: bash scripts/run-android-instrumentation-ci.sh",
             "Android emulator instrumentation",
             "python -m pip install --disable-pip-version-check --requirement tools/requirements.txt",
         ):
             self.assertIn(required, source)
+        harness = self.read(ROOT / "scripts/run-android-instrumentation-ci.sh")
+        # The full command moved to the checked emulator-only harness; it has
+        # not been removed, filtered or allowed to ignore its exit status.
+        self.assertIn("\n./gradlew connectedQaAndroidTest --no-daemon --console=plain\n", harness)
+        self.assertIn('[[ "${GITHUB_ACTIONS:-}" == "true" && "${CI:-}" == "true" ]]', harness)
+        self.assertIn('getprop ro.kernel.qemu', harness)
+        self.assertIn('exit "$status"', harness)
+        self.assertNotIn("testInstrumentationRunnerArguments", harness)
+        self.assertIn("scripts/tests/android-instrumentation-harness.test.mjs", source)
+        self.assertIn("android-emulator-state-${{ env.VERIFY_REF }}", source)
         self.assertIn("timeout-minutes:", source)
         self.assertIn('GO_VERSION: "1.26.6"', source)
         self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
