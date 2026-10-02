@@ -70,6 +70,26 @@ class NativePadesRequestTest {
         assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.notifyCancellation { allowed = true })
         assertEquals(1, sends); operation.close()
     }
+    @Test fun encryptedRetrievedDescriptorProducesTheSameTypedPdfOperationExactlyOnce() = runBlocking {
+        val pdf = nativePadesFixture()
+        val values = fields(pdf).apply { this["key"] = "87654321" }
+        val xml = "<sign>" + values.entries.joinToString("") {
+            "<e k='${it.key}' v='${URLEncoder.encode(it.value, "UTF-8")}'/>"
+        } + "</sign>"
+        val response = AfirmaIntermediateCipher.encode(xml.toByteArray(), "12345678").toByteArray()
+        val reduced = "afirma://sign?fileid=PdfFile123&rid=Pdf-123&rtservlet=https%3A%2F%2Fretrieve.example%2Fget&stservlet=https%3A%2F%2Fstorage.example%2Fput&key=12345678"
+        val deferred = (AfirmaServletInvocationParser.parse(reduced, "https://unprofiled.example/form") as AfirmaServletParseResult.Deferred).invocation
+        var fetches = 0; var actual: AfirmaServletInvocation? = null
+        val resolver = AfirmaDeferredResolver(AfirmaRequestTransport { _, _ -> fetches++; AfirmaRetrievedBytes(response) },
+            operationFactory = { invocation -> actual = invocation; NativeAfirmaOperation(invocation) })
+        val operation = resolver.resolve(deferred)
+        assertTrue(operation.details.format!!.startsWith("PDF · PAdES"))
+        assertArrayEquals(pdf, actual!!.payloadCopy()); assertEquals("87654321", actual!!.key)
+        assertEquals(1, fetches); assertTrue(response.all { it == 0.toByte() })
+        try { resolver.resolve(deferred); fail("Repeated consuming retrieval") } catch (_: IllegalStateException) { }
+        assertEquals(1, fetches); operation.close()
+    }
+
     private fun fields(pdf: ByteArray, format: String = "PAdES") = linkedMapOf("id" to "Pdf-123", "stservlet" to "https://storage.example/put", "format" to format, "algorithm" to "SHA256withRSA", "dat" to Base64.getEncoder().encodeToString(pdf))
     private fun parse(pdf: ByteArray, format: String = "PAdES", properties: String = "", key: String? = null): AfirmaServletParseResult {
         val values = fields(pdf, format)
