@@ -7,6 +7,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.matcher.ViewMatchers.withTagValue
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.junta.firmamobile.browser.HttpAuthReply
@@ -25,10 +26,10 @@ class HttpAuthBrowserInstrumentedTest {
         withBrowser { scenario, view ->
             val reply = Reply()
             scenario.onActivity { assertTrue((view.webViewClient as HttpAuthWebViewClient).request(view, "auth.synthetic.example", "Synthetic area", reply)) }
-            onView(withTagValue(`is`("http-auth-username"))).perform(replaceText("synthetic-user"))
-            onView(withTagValue(`is`("http-auth-password"))).perform(replaceText("not-a-real-password"))
+            onView(withTagValue(`is`("http-auth-username"))).inRoot(isDialog()).perform(replaceText("synthetic-user"))
+            onView(withTagValue(`is`("http-auth-password"))).inRoot(isDialog()).perform(replaceText("not-a-real-password"))
             scenario.onActivity { assertEquals(0, reply.proceeds); assertEquals(0, reply.cancels) }
-            onView(withText("Continuar")).perform(click())
+            onView(withText("Continuar")).inRoot(isDialog()).perform(click())
             scenario.onActivity {
                 assertEquals(1, reply.proceeds); assertEquals(0, reply.cancels)
                 assertEquals("synthetic-user" to "not-a-real-password", reply.value)
@@ -40,7 +41,7 @@ class HttpAuthBrowserInstrumentedTest {
         withBrowser { scenario, view ->
             val reply = Reply()
             scenario.onActivity { assertTrue((view.webViewClient as HttpAuthWebViewClient).request(view, "auth.synthetic.example", "", reply)) }
-            onView(withTagValue(`is`("http-auth-password"))).perform(replaceText("local-test-text"))
+            onView(withTagValue(`is`("http-auth-password"))).inRoot(isDialog()).perform(replaceText("local-test-text"))
             scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
             scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
             scenario.onActivity { assertEquals(0, reply.proceeds); assertEquals(1, reply.cancels) }
