@@ -118,6 +118,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private class PendingExternalApp(
+        val token: UUID,
+        val sourceHost: String,
+        val target: dev.junta.firmamobile.browser.ExternalAppLink,
+    )
+    private var pendingExternalApp by mutableStateOf<PendingExternalApp?>(null)
+    private val externalAppConsent by lazy {
+        dev.junta.firmamobile.browser.ExternalAppConsentLease<WebView>(
+            isCurrent = { view, epoch -> view === currentWebView && epoch == currentNavigationEpoch },
+            canRespond = { lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) &&
+                !certificatePanelVisible && currentWebView?.isShown == true && !isFinishing && !isDestroyed },
+        )
+    }
+
     private var pendingExternalHandoff by mutableStateOf<dev.junta.firmamobile.browser.ExternalHandoff.Request?>(null)
     private var externalHandoffFailed by mutableStateOf(false)
     private val browserExternalReturn = dev.junta.firmamobile.browser.BrowserExternalReturnLease<WebView>()
@@ -442,6 +456,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onOpenExternal = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER, uri) },
                         onOpenOfficialAutoFirma = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.AUTOFIRMA, uri) },
+                        onExternalAppRequest = ::requestExternalApp,
                         onChangeCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
                             certificatePanelVisible = true
@@ -470,10 +485,11 @@ class MainActivity : ComponentActivity() {
                             } catch (_: Exception) { false }
                         },
                         onWebViewChanged = {
-                            if (currentWebView !== it) { browserFileChooser.cancel(); pendingExternalHandoff = null; browserExternalReturn.invalidate() }
+                            if (currentWebView !== it) { clearExternalApp(); browserFileChooser.cancel(); pendingExternalHandoff = null; browserExternalReturn.invalidate() }
                             currentWebView = it
                         },
                         onNavigationEpochChanged = {
+                            clearExternalApp()
                             browserExternalReturn.invalidate()
                             browserFileChooser.cancel()
                             pendingExternalHandoff = null
@@ -558,6 +574,21 @@ class MainActivity : ComponentActivity() {
                         onContinue = { destination = AppDestination.Catalog },
                     )
                 }
+                pendingExternalApp?.let { request ->
+                    LaunchedEffect(request.token) {
+                        kotlinx.coroutines.delay(120_000)
+                        if (pendingExternalApp === request) clearExternalApp()
+                    }
+                    dev.junta.firmamobile.ui.ExternalAppConsentDialog(
+                        sourceHost = request.sourceHost,
+                        scheme = request.target.scheme,
+                        requestedPackage = request.target.packageName,
+                        fallbackHost = request.target.webFallback?.host,
+                        onOpenApp = { launchExternalApp(request, fallback = false) },
+                        onOpenWeb = { launchExternalApp(request, fallback = true) },
+                        onCancel = ::clearExternalApp,
+                    )
+                }
                 pendingExternalHandoff?.let { request ->
                     androidx.compose.material3.AlertDialog(
                         onDismissRequest = { pendingExternalHandoff = null },
@@ -623,6 +654,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        clearExternalApp()
         catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         certificateViewModel.onAppBackgrounded()
@@ -635,8 +667,40 @@ class MainActivity : ComponentActivity() {
         super.onLowMemory()
     }
 
+    private fun requestExternalApp(view: WebView, target: dev.junta.firmamobile.browser.ExternalAppLink): Boolean {
+        if (view !== currentWebView || pendingExternalApp != null || pendingExternalHandoff != null ||
+            externalHandoffFailed || certificatePanelVisible || !view.hasWindowFocus()
+        ) return false
+        val source = dev.junta.firmamobile.browser.PublicBrowserAddress.parse(view.url ?: "") ?: return false
+        val token = externalAppConsent.reserve(view, currentNavigationEpoch) ?: return false
+        pendingExternalApp = PendingExternalApp(token, source.host, target)
+        return true
+    }
+
+    private fun clearExternalApp() {
+        pendingExternalApp = null
+        externalAppConsent.invalidate()
+    }
+
+    private fun launchExternalApp(request: PendingExternalApp, fallback: Boolean) {
+        if (pendingExternalApp !== request) return
+        // Consume the exact owner/epoch ticket before the external side effect.
+        if (!externalAppConsent.consume(request.token)) { clearExternalApp(); return }
+        pendingExternalApp = null
+        val intent = if (fallback) request.target.fallbackIntent() else request.target.minimalIntent()
+        if (intent == null) return
+        cancelSigning(SigningCancelReason.NAVIGATION)
+        try {
+            withBrowserExternalReturn { startActivity(intent) }
+        } catch (_: android.content.ActivityNotFoundException) {
+            externalHandoffFailed = true
+        } catch (_: SecurityException) {
+            externalHandoffFailed = true
+        }
+    }
+
     private fun requestExternalHandoff(kind: dev.junta.firmamobile.browser.ExternalHandoff.Kind, uri: Uri) {
-        if (pendingExternalHandoff != null) return
+        if (pendingExternalHandoff != null || pendingExternalApp != null) return
         val request = dev.junta.firmamobile.browser.ExternalHandoff.Request(
             kind, uri, currentNavigationEpoch,
             if (kind == dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER) uri.host else currentWebView?.url?.let { Uri.parse(it).host },

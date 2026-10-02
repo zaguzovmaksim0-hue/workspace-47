@@ -228,6 +228,7 @@ fun BrowserScreen(
     onPopupWindowClose: () -> Unit = onExitBrowser,
     onRelatedClientCertPreferenceClear: (Boolean) -> Unit = {},
     onDocumentDownload: ((WebView, android.content.Intent) -> Boolean)? = null,
+    onExternalAppRequest: ((WebView, dev.junta.firmamobile.browser.ExternalAppLink) -> Boolean)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -236,6 +237,7 @@ fun BrowserScreen(
     val currentMayRetainExternalReturn by rememberUpdatedState(mayRetainExternalReturn)
     val currentConsumeExternalReturn by rememberUpdatedState(consumeExternalReturn)
     val currentSigningState by rememberUpdatedState(signingState)
+    val currentExternalAppRequest by rememberUpdatedState(onExternalAppRequest)
     val clientCertPreferenceState by
         clientCertPreferenceCoordinator.state.collectAsState()
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
@@ -1255,6 +1257,18 @@ fun BrowserScreen(
                                 activeProfileId = { effectiveTopLevelProfileId },
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
+                                onExternalAppRequest = { owner, target ->
+                                    val busy = activePopup != null || certificatePanelVisible ||
+                                        pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                        pendingCertificateSelection != null || pendingRequest != null ||
+                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending ||
+                                        nativeRetrieval.hasPending || clientAuthPreparing || clientAuthGrant != null ||
+                                        currentSigningState !is SigningUiState.Idle ||
+                                        clientCertPreferenceCoordinator.state.value != ClientCertPreferenceBarrierState.IDLE
+                                    !busy && owner === webViewRef.get() &&
+                                        lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                                        currentExternalAppRequest?.invoke(owner, target) == true
+                                },
                                 onNativeAfirmaInvocation = { owner, rawUri, page ->
                                     val busy = activePopup != null || pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
                                         pendingCertificateSelection != null || pendingRequest != null ||
@@ -1893,6 +1907,7 @@ fun BrowserScreen(
                             onNavigationEpochChanged = onNavigationEpochChanged,
                             onShowFileChooser = onShowFileChooser,
                             onDocumentDownload = onDocumentDownload,
+                            onExternalAppRequest = onExternalAppRequest,
                             certificatePanelVisible = certificatePanelVisible,
                             mayRetainExternalReturn = mayRetainExternalReturn,
                             consumeExternalReturn = consumeExternalReturn,

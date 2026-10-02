@@ -76,6 +76,7 @@ class JuntaWebViewClient(
     private val onInteractiveClientAuthChallenge: (WebView, ClientCertRequest) -> Unit = { _, request -> request.ignore() },
     private val onInteractiveClientAuthSslError: (WebView, String?) -> Unit = { _, _ -> },
     private val onNativeAfirmaInvocation: (WebView, String, String) -> Boolean = { _, _, _ -> false },
+    private val onExternalAppRequest: (WebView, ExternalAppLink) -> Boolean = { _, _ -> false },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
@@ -88,6 +89,7 @@ class JuntaWebViewClient(
             request.url.toString(),
             request.isForMainFrame,
             request.method,
+            request.hasGesture() && !request.isRedirect,
         )
 
     @Deprecated("Legacy callback retained for old WebView implementations")
@@ -99,12 +101,23 @@ class JuntaWebViewClient(
         targetUrl: String,
         isModernMainFrame: Boolean,
         method: String,
+        hasUserGesture: Boolean = false,
     ): Boolean {
         if (!isCurrentWebView(view)) return true
         if (isModernMainFrame && method.equals(GET_METHOD, ignoreCase = true)) {
             val nativeUri = NativeAfirmaNavigation.extract(targetUrl)
             val page = currentPageUrl(view)
             if (nativeUri != null && page != null && onNativeAfirmaInvocation(view, nativeUri, page)) return true
+            // Ordinary app links are not a new AutoFirma trust path. Only the
+            // current, visible main-frame user click can offer a separate
+            // confirmation; no external Activity is started from this callback.
+            if (hasUserGesture && page != null && PublicBrowserAddress.parse(page) != null &&
+                view.isShown && view.hasWindowFocus()
+            ) {
+                ExternalAppLink.parse(targetUrl)?.let { link ->
+                    if (onExternalAppRequest(view, link)) return true
+                }
+            }
         }
         if (isModernMainFrame) {
             recordVeaAuthReturnDiagnostic(targetUrl)
