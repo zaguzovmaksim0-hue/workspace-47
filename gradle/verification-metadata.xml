@@ -4961,5 +4961,21 @@
             <sha256 value="194ac1fc1986dd1f62046fae37ddf77e63770fdc1f3d34baaa397cfbf4d191a2" origin="Verified against published Google Maven digest for native Credential Manager support" />
          </artifact>
       </component>
+      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk7" version="1.9.0">
+         <artifact name="kotlin-stdlib-jdk7-1.9.0.pom">
+            <sha256 value="c11074f0c898a98b863c614471d438d3df92a1ec3382a6e37f935d7d71954b5a" origin="Verified published digest for dependency versions resolved by exact-head GitHub Actions" />
+         </artifact>
+         <artifact name="kotlin-stdlib-jdk7-1.9.0.jar">
+            <sha256 value="b7979a7aac94055f0d9f1fd3b47ce5ffe1cb6032a842ba9fbe7186f085289178" origin="Verified published digest for dependency versions resolved by exact-head GitHub Actions" />
+         </artifact>
+      </component>
+      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.8.0">
+         <artifact name="kotlin-stdlib-jdk8-1.8.0.pom">
+            <sha256 value="2bb6c7551b97c7ba029f9866582e7aa19d63abfd4cd53da3fc0c462f3ab5fc26" origin="Verified published digest for dependency versions resolved by exact-head GitHub Actions" />
+         </artifact>
+         <artifact name="kotlin-stdlib-jdk8-1.8.0.jar">
+            <sha256 value="05b62804441b0c9a1920b6b7d5cf7329a4e24b6258478e32b1f046ca01900946" origin="Verified published digest for dependency versions resolved by exact-head GitHub Actions" />
+         </artifact>
+      </component>
    </components>
 </verification-metadata>
