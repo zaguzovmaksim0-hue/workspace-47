@@ -36,6 +36,7 @@ internal object NativePdfSignatureHistory {
 
     fun inspect(pdf: ByteArray, document: PDDocument): List<NativePdfPriorSignature>? = runCatching {
         val current = read(pdf, document, verifyCryptography = true) ?: return null
+        if (!earlierRevisionsMatch(pdf, current)) return null
         for ((index, entry) in current.withIndex()) {
             if (entry.revisionEnd == pdf.size) continue
             val revision = pdf.copyOf(entry.revisionEnd)
@@ -49,7 +50,37 @@ internal object NativePdfSignatureHistory {
         current
     }.getOrNull()
 
-    private fun read(pdf: ByteArray, document: PDDocument, verifyCryptography: Boolean): List<NativePdfPriorSignature>? {
+    /** Even if the newest catalog hides every old field, earlier complete
+     * revisions remain in the preserved file prefix. Reopen bounded historical
+     * footers rather than treating an empty latest field list as unsigned. */
+    private fun earlierRevisionsMatch(pdf: ByteArray, expected: List<NativePdfPriorSignature>): Boolean {
+        val text = String(pdf, Charsets.ISO_8859_1)
+        val footers = FOOTER.findAll(text).take(17).toList()
+        if (footers.isEmpty() || footers.size > 16) return false
+        for (footer in footers) {
+            val offset = footer.groupValues[1].toLongOrNull() ?: return false
+            if (offset !in 0 until footer.range.first.toLong()) return false
+            var end = footer.range.last + 1
+            var whitespace = 0
+            while (end < pdf.size && pdf[end].toInt() in PDF_WHITESPACE && whitespace < 32) { end++; whitespace++ }
+            if (end == pdf.size) continue
+            val prefix = pdf.copyOf(end)
+            try {
+                PDDocument.load(ByteArrayInputStream(prefix), memory()).use { revision ->
+                    if (revision.document.startXref != offset) return false
+                    val entries = read(prefix, revision, verifyCryptography = false, requireCompleteCoverage = false)
+                        ?: return false
+                    if (entries != expected.filter { it.revisionEnd <= end }) return false
+                }
+            } finally { prefix.fill(0) }
+        }
+        return true
+    }
+    private val FOOTER = Regex("startxref[\\t\\r\\n ]{1,64}([0-9]{1,10})[\\t\\r\\n ]{1,64}%%EOF")
+    private val PDF_WHITESPACE = setOf(0, 9, 10, 12, 13, 32)
+
+    private fun read(pdf: ByteArray, document: PDDocument, verifyCryptography: Boolean,
+        requireCompleteCoverage: Boolean = true): List<NativePdfPriorSignature>? {
         if (pdf.size !in 5..2_097_152 || document.isEncrypted || document.numberOfPages !in 1..2_000 ||
             document.document.objects.size > 20_000) return null
         val catalog = document.documentCatalog.cosObject
@@ -118,7 +149,7 @@ internal object NativePdfSignatureHistory {
             if (entry.range[1] < previousEnd || entry.revisionEnd <= previousEnd) return null
             previousEnd = entry.revisionEnd
         }
-        if (entries.isNotEmpty() && entries.last().revisionEnd != pdf.size) return null
+        if (requireCompleteCoverage && entries.isNotEmpty() && entries.last().revisionEnd != pdf.size) return null
         return entries
     }
 

@@ -12,7 +12,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.pressKey
+import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentDetails
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentProblem
@@ -149,7 +152,8 @@ class AfirmaServerCancellationInstrumentedTest {
                 rule.runOnIdle { current.value = prompt(AfirmaConsentPhase.REVIEW, operation = operation) }
                 rule.onNodeWithTag("native-afirma-confirm").assertIsDisplayed()
                 rule.onNodeWithTag("native-afirma-cancel").assertIsDisplayed()
-                InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+                // Target the focused modal window, not the Activity behind it.
+                onView(isRoot()).inRoot(isDialog()).perform(pressKey(KeyEvent.KEYCODE_BACK))
                 rule.runOnIdle {
                     assertEquals(index + 1, dismissed)
                     assertEquals(index, canceled)

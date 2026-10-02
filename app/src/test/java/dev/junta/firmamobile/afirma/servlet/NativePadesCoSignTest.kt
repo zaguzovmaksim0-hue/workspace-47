@@ -137,6 +137,40 @@ class NativePadesCoSignTest {
         one.fill(0); two.fill(0)
     }
 
+    @Test fun hidingPreviousSignatureFieldsDoesNotTurnTheDocumentIntoAnUnsignedSource() {
+        val key = freshSyntheticIdentity(); val engine = NativePadesEngine(clock = clock(key))
+        val one = signed(engine, nativePadesFixture(), key)
+        val hidden = ByteArrayOutputStream().use { output ->
+            PDDocument.load(one).use { document ->
+                document.documentCatalog.cosObject.removeItem(COSName.ACRO_FORM)
+                document.documentCatalog.cosObject.isNeedToBeUpdated = true
+                document.saveIncremental(output)
+            }
+            output.toByteArray()
+        }
+        PDDocument.load(hidden).use { document ->
+            assertTrue("Fixture really hides the old field", document.signatureFields.isEmpty())
+            assertNull(NativePdfSignatureHistory.inspect(hidden, document))
+        }
+        assertTrue(engine.sign(hidden, key, SigningAlgorithm.SHA256_WITH_RSA) is LocalSignatureResult.Failure)
+        one.fill(0); hidden.fill(0)
+    }
+
+    @Test fun anUnsignedEditedPdfIsNotMistakenForAHiddenSignedRevision() {
+        val key = freshSyntheticIdentity(); val engine = NativePadesEngine(clock = clock(key))
+        val edited = ByteArrayOutputStream().use { output ->
+            PDDocument.load(nativePadesFixture()).use { document ->
+                document.documentInformation.title = "Unsigned local draft"
+                document.documentInformation.cosObject.isNeedToBeUpdated = true
+                document.saveIncremental(output)
+            }
+            output.toByteArray()
+        }
+        val result = signed(engine, edited, key)
+        assertTrue(engine.verify(result, edited, key.certificate, SigningAlgorithm.SHA256_WITH_RSA))
+        result.fill(0); edited.fill(0)
+    }
+
     @Test fun inputAndOutputBudgetsAreStillAppliedToSequentialSigning() {
         val key = freshSyntheticIdentity(); val engine = NativePadesEngine(clock = clock(key))
         val one = signed(engine, nativePadesFixture(), key)
