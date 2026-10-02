@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_popup_title">Ventana adicional</string>
+    <string name="browser_popup_close">Volver a la página anterior</string>
+</resources>

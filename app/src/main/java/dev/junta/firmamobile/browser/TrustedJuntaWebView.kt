@@ -21,6 +21,8 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
     }
 
     override fun destroy() {
+        chrome.createWindow = null
+        chrome.closeWindow = null
         httpAuthClient?.close()
         httpAuthClient = null
         super.destroy()
@@ -34,6 +36,16 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
             setAcceptThirdPartyCookies(this@TrustedJuntaWebView, false)
         }
         setWebContentsDebuggingEnabled(BuildConfig.ENABLE_WEBVIEW_CONTENTS_DEBUGGING)
+    }
+
+    /** Window requests are handled only when an owning browser host opts in. */
+    fun setPopupListeners(
+        create: ((WebView, Boolean, Boolean, android.os.Message) -> Boolean)?,
+        close: ((WebView) -> Unit)?,
+    ) {
+        chrome.createWindow = create
+        chrome.closeWindow = close
+        settings.setSupportMultipleWindows(create != null)
     }
 
     fun setPageProgressListener(listener: (Int) -> Unit) {

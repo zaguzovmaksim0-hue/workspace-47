@@ -22,12 +22,17 @@ class JuntaWebChromeClient(
         progressListener(newProgress.coerceIn(0, 100))
     }
 
+    var createWindow: ((WebView, Boolean, Boolean, android.os.Message) -> Boolean)? = null
+    var closeWindow: ((WebView) -> Unit)? = null
+
+    override fun onCloseWindow(window: WebView) { closeWindow?.invoke(window) }
+
     override fun onCreateWindow(
         view: WebView,
         isDialog: Boolean,
         isUserGesture: Boolean,
         resultMsg: android.os.Message,
-    ): Boolean = false
+    ): Boolean = createWindow?.invoke(view, isDialog, isUserGesture, resultMsg) ?: false
 
     override fun onJsAlert(
         view: WebView,
