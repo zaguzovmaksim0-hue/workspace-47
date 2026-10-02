@@ -503,7 +503,16 @@ fun BrowserScreen(
 
     fun requestProcessClientCertPreferenceClear() {
         // A generic-choice revocation already owns an in-flight process clear.
-        if (!preserveInteractiveWebViewDuringClear) clientCertPreferenceCoordinator.requestClear()
+        if (!preserveInteractiveWebViewDuringClear) {
+            // Closing an unprofiled child also revokes process-wide choices.
+            // Notify the retained parent BEFORE the barrier enters CLEARING;
+            // otherwise it interprets this as an unrelated reset and rebuilds
+            // its original WebView, losing the form we deliberately retained.
+            onRelatedClientCertPreferenceClear(true)
+            clientCertPreferenceCoordinator.requestClear { _, _ ->
+                mainHandler.post { onRelatedClientCertPreferenceClear(false) }
+            }
+        }
     }
 
     fun cancelPendingInPlaceClientAuth() {
@@ -900,7 +909,11 @@ fun BrowserScreen(
                 }
             } else if (event == Lifecycle.Event.ON_START && wasBackgrounded) {
                 wasBackgrounded = false
-                val returnStillValid = currentConsumeExternalReturn()
+                // Only the visible child consumes the single-use return. The
+                // retained parent merely observes validity; consuming here
+                // would make the same return appear expired to its child.
+                val returnStillValid = if (activePopup != null) currentMayRetainExternalReturn()
+                    else currentConsumeExternalReturn()
                 nativeRetrieval.onForeground()
                 nativeAfirma.onForeground(returnStillValid)
                 interactiveClientAuth.onForeground(returnStillValid)

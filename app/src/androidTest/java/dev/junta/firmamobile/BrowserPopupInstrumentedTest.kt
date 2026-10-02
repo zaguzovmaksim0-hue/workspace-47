@@ -103,7 +103,33 @@ class BrowserPopupInstrumentedTest {
         }
     }
 
-    private fun withBrowser(test: (ActivityScenario<MainActivity>, List<WebView>) -> Unit) {
+    @Test fun aChildConsumesTheExplicitExternalReturnOnlyOnce() {
+        val lease = java.util.concurrent.atomic.AtomicBoolean(false)
+        val consumed = java.util.concurrent.atomic.AtomicInteger(0)
+        withBrowser(mayRetain = { lease.get() }, consumeReturn = { consumed.incrementAndGet(); lease.getAndSet(false) }) { scenario, views ->
+            val parent = views.first()
+            tapElement(scenario, parent, "open")
+            rule.waitUntil(timeoutMillis = 15_000) { views.size == 2 }
+            val child = views[1]
+            ready(scenario, child, "CHILD_READY")
+            lease.set(true)
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+            rule.waitForIdle()
+            assertEquals("The hidden parent must not consume the child's return", 1, consumed.get())
+            rule.onNodeWithTag("browser-popup-header").assertIsDisplayed()
+            assertEquals("true", evaluate(child, "window.opener !== null"))
+            rule.onNodeWithTag("browser-popup-close").performClick()
+            rule.waitForIdle()
+            scenario.onActivity { assertTrue(parent.isShown); assertEquals("PARENT_READY", parent.title) }
+        }
+    }
+
+    private fun withBrowser(
+        mayRetain: () -> Boolean = { false },
+        consumeReturn: () -> Boolean = { false },
+        test: (ActivityScenario<MainActivity>, List<WebView>) -> Unit,
+    ) {
         val views = Collections.synchronizedList(mutableListOf<WebView>())
         val decorated = Collections.newSetFromMap(IdentityHashMap<WebView, Boolean>())
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -119,6 +145,8 @@ class BrowserPopupInstrumentedTest {
                         onOpenOfficialAutoFirma = {}, onChangeCertificate = {}, onLockCertificate = {},
                         onClearSession = {}, clientCertificateIdentityProvider = { null },
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
+                        mayRetainExternalReturn = mayRetain,
+                        consumeExternalReturn = consumeReturn,
                         onWebViewChanged = { view ->
                             callbackTrace.add("owner=" + if (view == null) "none" else System.identityHashCode(view).toString())
                             if (view != null && decorated.add(view)) {
