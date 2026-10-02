@@ -13,6 +13,8 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
     private val chrome = JuntaWebChromeClient()
     private val downloads = dev.junta.firmamobile.browser.download.BrowserDownloadCapture(this)
     private var httpAuthClient: HttpAuthWebViewClient? = null
+    internal var webAuthnEngineState: WebAuthnEngineState = WebAuthnEngineState.UNSUPPORTED
+        private set
     internal var isNativeReleased: Boolean = false
         private set
 
@@ -37,6 +39,7 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
 
     init {
         configureSettings()
+        webAuthnEngineState = NativeWebAuthnSupport.configure(settings)
         webChromeClient = chrome
         CookieManager.getInstance().apply {
             setAcceptCookie(true)

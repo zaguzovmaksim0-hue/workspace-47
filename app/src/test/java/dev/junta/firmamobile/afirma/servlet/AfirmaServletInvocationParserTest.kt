@@ -59,14 +59,14 @@ class AfirmaServletInvocationParserTest {
         unsupported(sign(mapOf("sticky" to "true")))
         unsupported(sign(mapOf("unknown" to "value")))
         unsupported(sign(mapOf("algorithm" to "SHA256withECDSA")))
-        unsupported(sign(mapOf("format" to "XAdES")))
+        unsupported(sign(mapOf("format" to "XAdES-T")))
     }
 
     @Test fun mixedDataIsInvalidAndUnimplementedMultiOperationVariantsRemainUnsupported() {
         invalid(sign(mapOf("fileid" to "file123", "rtservlet" to "https://store.example/retrieve")))
         unsupported(sign(mapOf("dat" to "https://store.example/data")))
         unsupported(sign(mapOf("cop" to "cosign")))
-        unsupported(sign().replace("afirma://sign", "afirma://batch"))
+        invalid(sign().replace("afirma://sign", "afirma://batch")) // A batch requires a structured descriptor, not arbitrary payload.
         unsupported(sign().replace("&dat=cGF5bG9hZA%3D%3D", ""))
     }
 

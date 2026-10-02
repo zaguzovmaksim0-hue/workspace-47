@@ -49,7 +49,7 @@ class AfirmaConfigurationXmlTest {
     }
 
     @Test fun unknownRootsNamespaceAndRootAttributesDoNotChangeOperationSemantics() {
-        for (xml in listOf("<batch/>", "<countersign/>", "<p:sign xmlns:p='urn:test'/>", "<sign xmlns='urn:test'/>",
+        for (xml in listOf("<signandsave/>", "<unsupported/>", "<p:sign xmlns:p='urn:test'/>", "<sign xmlns='urn:test'/>",
             "<sign operation='selectcert'/>", "<sign/><selectcert/>", "<sign><e k='id' v='A'/></selectcert>")) invalid(xml)
     }
 

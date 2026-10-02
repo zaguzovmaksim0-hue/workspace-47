@@ -19,7 +19,7 @@ internal fun interface AfirmaRequestResolver {
  */
 internal class AfirmaDeferredResolver(
     private val transport: AfirmaRequestTransport = AfirmaServletTransport(),
-    private val operationFactory: (AfirmaServletInvocation) -> PreparedAfirmaOperation = { NativeAfirmaOperation(it) },
+    private val operationFactory: (AfirmaServletInvocation) -> PreparedAfirmaOperation = { nativeOperation(it) },
     private val parsingDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AfirmaRequestResolver {
     override suspend fun resolve(request: AfirmaDeferredInvocation): PreparedAfirmaOperation {

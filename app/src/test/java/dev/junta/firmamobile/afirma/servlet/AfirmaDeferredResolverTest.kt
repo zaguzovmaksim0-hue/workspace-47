@@ -95,7 +95,7 @@ class AfirmaDeferredResolverTest {
 
     @Test fun recursiveLookupAndUnsupportedFormatsDoNotStartASecondFetchOrSign() = runBlocking {
         assertProblem(AfirmaRetrievalProblem.UNSUPPORTED, wire(xml(mapOf("fileid" to "Nested", "rtservlet" to RETRIEVE))))
-        assertProblem(AfirmaRetrievalProblem.UNSUPPORTED, wire(xml(mapOf("format" to "XAdES"))))
+        assertProblem(AfirmaRetrievalProblem.UNSUPPORTED, wire(xml(mapOf("format" to "XAdES-T"))))
         assertProblem(AfirmaRetrievalProblem.UNSUPPORTED, wire(xml(mapOf("properties" to b64("signaturePolicyIdentifier=not-implemented".toByteArray())))))
     }
 

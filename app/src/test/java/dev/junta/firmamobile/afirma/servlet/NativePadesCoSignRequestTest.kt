@@ -23,7 +23,7 @@ class NativePadesCoSignRequestTest {
                 assertTrue(it.pdfCoSign); assertNotNull(it.padesOptions)
             }
         }
-        for (format in listOf("CAdES", "XAdES", "PAdEStri")) {
+        for (format in listOf("CAdES", "XAdES", "PAdES-LTA")) {
             assertTrue(parse(fields(nativePadesFixture(), format)) is AfirmaServletParseResult.Unsupported)
         }
         assertTrue(parse(fields(nativePadesFixture()), "countersign") is AfirmaServletParseResult.Unsupported)

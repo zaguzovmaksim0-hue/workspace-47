@@ -271,6 +271,7 @@ fun BrowserScreen(
             trustController.navigate(validatedEntryUrl).activeProfileId,
         )
     }
+    var webAuthnState by remember { mutableStateOf<dev.junta.firmamobile.browser.WebAuthnEngineState?>(null) }
     val webViewRef = remember { AtomicReference<WebView?>() }
     val bridgeAttachmentLease = remember {
         BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>()
@@ -971,6 +972,7 @@ fun BrowserScreen(
     )) {
     BrowserLayout(
         publicBrowsing = selectedServiceId == null,
+        webAuthnState = webAuthnState,
         currentUrl = currentUrl,
         profileName = effectiveProfile?.displayName
             ?: selectedProfile?.displayName
@@ -1201,6 +1203,7 @@ fun BrowserScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                         webViewRef.set(webView)
+                        webAuthnState = webView.webAuthnEngineState
                         onShowFileChooser?.let(webView::setFileChooserListener)
                         webView.setDocumentDownloadLauncher(
                             canRespond = {
@@ -1277,7 +1280,7 @@ fun BrowserScreen(
                                     if (busy) true else {
                                         when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
                                             is AfirmaServletParseResult.Accepted -> {
-                                                val operation = runCatching { NativeAfirmaOperation(parsed.invocation) }.getOrElse {
+                                                val operation = runCatching { dev.junta.firmamobile.afirma.servlet.nativeOperation(parsed.invocation) }.getOrElse {
                                                     parsed.invocation.close()
                                                     null
                                                 }
@@ -1949,6 +1952,7 @@ internal fun BrowserLayout(
     onOpenInBrowser: (() -> Unit)? = null,
     certificateAvailable: Boolean = true,
     publicBrowsing: Boolean = false,
+    webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null,
     content: @Composable (Modifier) -> Unit,
 ) {
     var confirmClearCurrentSite by remember { mutableStateOf(false) }
@@ -1978,6 +1982,7 @@ internal fun BrowserLayout(
                 modifier = Modifier.testTag(BROWSER_TOOLBAR_TAG),
             )
             if (publicBrowsing) PublicBrowsingNotice()
+            webAuthnState?.let { WebAuthnStatusButton(it, onOpenInBrowser) }
             }
         },
         bottomBar = {

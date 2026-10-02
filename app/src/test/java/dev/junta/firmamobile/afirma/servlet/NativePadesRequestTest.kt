@@ -21,7 +21,7 @@ class NativePadesRequestTest {
         }
         val retrieved = AfirmaServletInvocationParser.parseRetrieved(AfirmaServletOperation.SIGN, "https://portal.example", fields(pdf)) as AfirmaServletParseResult.Accepted
         retrieved.invocation.use { assertNotNull(it.padesOptions) }
-        assertTrue(parse(pdf, "PAdEStri") is AfirmaServletParseResult.Unsupported)
+        assertTrue(parse(pdf, "PAdEStri") is AfirmaServletParseResult.Invalid) // Missing mandatory pre/post service, not a silent local fallback.
         assertTrue(parse(pdf, "CAdES", "signatureSubFilter=ETSI.CAdES.detached") is AfirmaServletParseResult.Unsupported)
     }
     @Test fun unsupportedPdfInstructionsAreNotSilentlyDiscarded() {

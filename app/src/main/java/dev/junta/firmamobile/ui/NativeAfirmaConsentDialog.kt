@@ -39,9 +39,15 @@ internal fun NativeAfirmaConsentDialog(
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.native_afirma_source, prompt.details.sourceOrigin))
                 Text(stringResource(R.string.native_afirma_destination, prompt.details.destination))
+                prompt.details.serviceDestinations.forEach { endpoint -> Text(stringResource(R.string.native_multiphase_service, endpoint)) }
+                prompt.details.batchItems?.let { Text(stringResource(R.string.native_multiphase_count, it)) }
+                if (prompt.details.delegatedSigning) Text(stringResource(R.string.native_multiphase_delegated))
+                prompt.resultSummary?.let { Text(it, Modifier.testTag("native-multiphase-results")) }
                 Text(stringResource(when (prompt.details.operation) {
                     "selectcert" -> R.string.native_afirma_selectcert
-                    "cosign" -> R.string.native_afirma_pdf_cosign
+                    "cosign" -> R.string.native_multiphase_cosign
+                    "countersign" -> R.string.native_multiphase_countersign
+                    "batch" -> R.string.native_multiphase_batch
                     else -> R.string.native_afirma_sign
                 }))
                 if (prompt.details.format?.startsWith("PDF") == true) Text(stringResource(R.string.native_afirma_pdf_prior_signatures))

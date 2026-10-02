@@ -26,14 +26,25 @@ internal data class AfirmaConsentDetails(
     val algorithm: String?,
     val payloadBytes: Int,
     val payloadSha256: String?,
+    val serviceDestinations: List<String> = emptyList(),
+    val batchItems: Int? = null,
+    val delegatedSigning: Boolean = false,
 )
 
 internal interface PreparedAfirmaOperation : Closeable {
     val details: AfirmaConsentDetails
+    val resultSummary: String? get() = null
     fun certificateCompatible(identity: UnlockedIdentity): Boolean
     /** Implementations call authorizeUpload immediately before the one upload.
      * It must return to the caller's UI dispatcher and revalidate ownership. */
     suspend fun execute(identity: UnlockedIdentity, authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult
+    /** Revalidate ownership between phases without consuming the single final
+     * upload permission. Default keeps existing one-stage operations unchanged. */
+    suspend fun executeWithCheckpoints(identity: UnlockedIdentity, checkpoint: suspend () -> Unit,
+        authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult {
+        checkpoint()
+        return execute(identity, authorizeUpload)
+    }
     /** Optional one-shot CANCEL notification, never uses a personal key or document.
      * The caller must explicitly authorize before upload. Unsupported operations
      * return NOT_SENT; implementations share a terminal gate with execute. */
@@ -48,6 +59,7 @@ internal data class AfirmaConsentPrompt(
     val phase: AfirmaConsentPhase,
     val certificateOwner: String?,
     val problem: AfirmaConsentProblem?,
+    val resultSummary: String? = null,
 ) {
     val canConfirm: Boolean get() = phase == AfirmaConsentPhase.REVIEW && problem == null && certificateOwner != null
 }
@@ -139,7 +151,13 @@ internal class AfirmaConsentController<Owner : Any>(
         val job = scope.launch(start = CoroutineStart.LAZY) {
             bodyEntered.set(true)
             try {
-                val delivery = pending.operation.execute(identity) {
+                val checkpoint: suspend () -> Unit = {
+                    currentCoroutineContext().ensureActive()
+                    if (current !== pending || pending.phase !in setOf(AfirmaConsentPhase.WORKING, AfirmaConsentPhase.SENDING) ||
+                        !valid(pending) || backgrounded || !canRespond() || fingerprint(identityProvider()) != pending.fingerprint
+                    ) throw CancellationException("Signing phase no longer owned")
+                }
+                val delivery = pending.operation.executeWithCheckpoints(identity, checkpoint) {
                     // execute must call this in the controller's coroutine
                     // context, never from a detached global scope.
                     if (current !== pending || pending.phase != AfirmaConsentPhase.WORKING || !valid(pending) || backgrounded || !canRespond() ||
@@ -305,7 +323,7 @@ internal class AfirmaConsentController<Owner : Any>(
 
     private fun publish(pending: Pending<Owner>) {
         if (current === pending) onPrompt(AfirmaConsentPrompt(pending.token, pending.details,
-            pending.phase, pending.certificateOwner, pending.problem))
+            pending.phase, pending.certificateOwner, pending.problem, pending.operation.resultSummary))
     }
 
     private fun fingerprint(identity: UnlockedIdentity?): String? = runCatching {
