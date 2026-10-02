@@ -45,7 +45,8 @@ internal fun NativeAfirmaConsentDialog(
                 prompt.resultSummary?.let { Text(it, Modifier.testTag("native-multiphase-results")) }
                 Text(stringResource(when (prompt.details.operation) {
                     "selectcert" -> R.string.native_afirma_selectcert
-                    "cosign" -> R.string.native_multiphase_cosign
+                    "cosign" -> if (prompt.details.format?.startsWith("PDF") == true && !prompt.details.delegatedSigning)
+                        R.string.native_afirma_pdf_cosign else R.string.native_multiphase_cosign
                     "countersign" -> R.string.native_multiphase_countersign
                     "batch" -> R.string.native_multiphase_batch
                     else -> R.string.native_afirma_sign

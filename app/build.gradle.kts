@@ -368,6 +368,11 @@ dependencies {
     implementation(libs.androidx.webkit)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
+    constraints {
+        implementation("androidx.fragment:fragment:1.5.7") {
+            because("Align Credential Manager's compile graph with the locked runtime version required by ActivityResult APIs")
+        }
+    }
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.lifecycle.runtime.compose)
