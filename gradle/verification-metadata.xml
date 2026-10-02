@@ -4985,5 +4985,13 @@
             <sha256 value="67e9066ca4acfdc6e3cc508293c31ba0398057ff118e4f70b1e1813c9a3456d1" origin="Verified published Google Maven digest for exact CI compile dependency"/>
          </artifact>
       </component>
+      <component group="androidx.loader" name="loader" version="1.1.0">
+         <artifact name="loader-1.1.0.pom">
+            <sha256 value="2c74ecc13bd93b8c2a48340057f3fd083b88ff51e9169ae70d63f998d686a2dc" origin="Verified published Google Maven checksum for Android test runtime dependency"/>
+         </artifact>
+         <artifact name="loader-1.1.0.aar">
+            <sha256 value="a83b597cd2409dc177f7f932f7c4082ef7b5508b69b6c4ba71607e75dbd99971" origin="Verified published Google Maven checksum for Android test runtime dependency"/>
+         </artifact>
+      </component>
    </components>
 </verification-metadata>

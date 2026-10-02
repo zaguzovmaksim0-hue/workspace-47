@@ -71,8 +71,11 @@ internal object NativeSigningXml {
         runCatching { setFeature("http://apache.org/xml/features/disallow-doctype-decl", true) }
         runCatching { setFeature("http://xml.org/sax/features/external-general-entities", false) }
         runCatching { setFeature("http://xml.org/sax/features/external-parameter-entities", false) }
-        runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "") }
-        runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "") }
+        // Standard JAXP property URIs: the equivalent XMLConstants fields
+        // are absent from Android SDK stubs. Unsupported providers still
+        // retain the explicit no-DTD/entity guards above and in parse().
+        runCatching { setAttribute("http://javax.xml.XMLConstants/property/accessExternalDTD", "") }
+        runCatching { setAttribute("http://javax.xml.XMLConstants/property/accessExternalSchema", "") }
     }
     fun canonical(node: Node): ByteArray {
         check(ready)
@@ -84,8 +87,8 @@ internal object NativeSigningXml {
     fun serialize(doc: Document): ByteArray {
         val f = TransformerFactory.newInstance().apply {
             runCatching { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
-            runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "") }
-            runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "") }
+            runCatching { setAttribute("http://javax.xml.XMLConstants/property/accessExternalDTD", "") }
+            runCatching { setAttribute("http://javax.xml.XMLConstants/property/accessExternalStylesheet", "") }
         }
         return ByteArrayOutputStream().use { out ->
             f.newTransformer().apply {
