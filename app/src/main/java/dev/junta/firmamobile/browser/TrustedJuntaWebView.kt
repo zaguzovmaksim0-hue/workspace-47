@@ -12,6 +12,8 @@ import dev.junta.firmamobile.BuildConfig
 class TrustedJuntaWebView(context: Context) : WebView(context) {
     private val chrome = JuntaWebChromeClient()
     private var httpAuthClient: HttpAuthWebViewClient? = null
+    internal var isNativeReleased: Boolean = false
+        private set
 
     override fun setWebViewClient(client: WebViewClient) {
         httpAuthClient?.close()
@@ -21,6 +23,8 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
     }
 
     override fun destroy() {
+        if (isNativeReleased) return
+        isNativeReleased = true
         chrome.createWindow = null
         chrome.closeWindow = null
         httpAuthClient?.close()

@@ -39,6 +39,7 @@ class BrowserPopupInstrumentedTest {
     @get:Rule val rule = createEmptyComposeRule()
     private val origin = "https://popup.synthetic.example"
     private val logger = SanitizedLogger()
+    private val callbackTrace = Collections.synchronizedList(mutableListOf<String>())
 
     @Test fun realWindowKeepsOpenerAndReturnsWithoutLosingTheParentDraft() {
         withBrowser { scenario, views ->
@@ -58,7 +59,11 @@ class BrowserPopupInstrumentedTest {
             }
             assertEquals("\"returned\"", evaluate(parent, "document.getElementById('status').textContent"))
             assertEquals("\"edited\"", evaluate(parent, "document.getElementById('draft').value"))
-            scenario.onActivity { assertTrue(parent.isShown); assertEquals("PARENT_READY", parent.title) }
+            scenario.onActivity {
+                assertTrue("Parent must survive return: released=${(parent as? dev.junta.firmamobile.browser.TrustedJuntaWebView)?.isNativeReleased};" +
+                    "attached=${parent.isAttachedToWindow};owners=$callbackTrace", parent.isShown)
+                assertEquals("PARENT_READY", parent.title)
+            }
         }
     }
 
@@ -90,7 +95,11 @@ class BrowserPopupInstrumentedTest {
             rule.onNodeWithTag("browser-popup-close").performClick()
             rule.waitForIdle()
             assertEquals(1, request.ignores); assertEquals(0, request.proceeds)
-            scenario.onActivity { assertTrue(parent.isShown); assertEquals("PARENT_READY", parent.title) }
+            scenario.onActivity {
+                assertTrue("Parent must survive return: released=${(parent as? dev.junta.firmamobile.browser.TrustedJuntaWebView)?.isNativeReleased};" +
+                    "attached=${parent.isAttachedToWindow};owners=$callbackTrace", parent.isShown)
+                assertEquals("PARENT_READY", parent.title)
+            }
         }
     }
 
@@ -111,6 +120,7 @@ class BrowserPopupInstrumentedTest {
                         onClearSession = {}, clientCertificateIdentityProvider = { null },
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onWebViewChanged = { view ->
+                            callbackTrace.add("owner=" + if (view == null) "none" else System.identityHashCode(view).toString())
                             if (view != null && decorated.add(view)) {
                                 views.add(view)
                                 // Queued from the factory before Chromium receives
@@ -139,7 +149,17 @@ class BrowserPopupInstrumentedTest {
     private fun evaluate(view: WebView, script: String): String {
         val result = AtomicReference<String?>()
         rule.runOnIdle { view.evaluateJavascript(script) { result.set(it) } }
-        rule.waitUntil(timeoutMillis = 5_000) { result.get() != null }
+        try {
+            rule.waitUntil(timeoutMillis = 5_000) { result.get() != null }
+        } catch (failure: Throwable) {
+            var state = ""
+            rule.runOnIdle {
+                state = "view=${System.identityHashCode(view)};attached=${view.isAttachedToWindow};shown=${view.isShown};" +
+                    "released=${(view as? dev.junta.firmamobile.browser.TrustedJuntaWebView)?.isNativeReleased}"
+            }
+            throw AssertionError("Original page unavailable: $state;owners=$callbackTrace;" +
+                logger.snapshot().takeLast(12).joinToString("|"), failure)
+        }
         return checkNotNull(result.get())
     }
     private fun tapElement(scenario: ActivityScenario<MainActivity>, view: WebView, id: String) {

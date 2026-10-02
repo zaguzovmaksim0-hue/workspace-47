@@ -855,10 +855,10 @@ fun BrowserScreen(
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeAttachmentLease.close()
-            webViewRef.getAndSet(null)?.let { webView ->
+            // AndroidView.onRelease is the sole native-view owner. Disposing
+            // Compose state must not also destroy an attached child WebView.
+            webViewRef.getAndSet(null)?.let {
                 onWebViewChanged(null)
-                webView.stopLoading()
-                webView.destroy()
             }
             abandonClientAuth()
         }
@@ -1589,8 +1589,14 @@ fun BrowserScreen(
                             normalClientRef.set(null)
                             onWebViewChanged(null)
                         }
-                        webView.stopLoading()
-                        webView.destroy()
+                        // Detach before native destruction, and let the current
+                        // Chromium onCloseWindow callback unwind first. The
+                        // parent frame has already regained visibility above.
+                        (webView.parent as? ViewGroup)?.removeView(webView)
+                        mainHandler.post {
+                            webView.stopLoading()
+                            webView.destroy()
+                        }
                     },
                 )
             }
