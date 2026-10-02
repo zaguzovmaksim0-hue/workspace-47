@@ -5,11 +5,26 @@ import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import dev.junta.firmamobile.BuildConfig
 
 @SuppressLint("SetJavaScriptEnabled")
 class TrustedJuntaWebView(context: Context) : WebView(context) {
     private val chrome = JuntaWebChromeClient()
+    private var httpAuthClient: HttpAuthWebViewClient? = null
+
+    override fun setWebViewClient(client: WebViewClient) {
+        httpAuthClient?.close()
+        val wrapped = HttpAuthWebViewClient(client)
+        httpAuthClient = wrapped
+        super.setWebViewClient(wrapped)
+    }
+
+    override fun destroy() {
+        httpAuthClient?.close()
+        httpAuthClient = null
+        super.destroy()
+    }
 
     init {
         configureSettings()
