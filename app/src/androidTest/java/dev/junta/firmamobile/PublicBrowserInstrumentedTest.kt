@@ -1,9 +1,16 @@
 package dev.junta.firmamobile
 
+import android.graphics.Bitmap
 import android.net.Uri
+import android.net.http.SslError
 import android.webkit.ClientCertRequest
+import android.webkit.RenderProcessGoneDetail
+import android.webkit.SslErrorHandler
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -12,28 +19,30 @@ import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
 import dev.junta.firmamobile.security.SanitizedLogger
 import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.ui.BrowserScreen
+import java.io.ByteArrayInputStream
 import java.net.URI
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Reserved .example URLs and inline HTML only. No real account, certificate or submission. */
+/** Reserved .example URLs and intercepted local HTML only. No real account,
+ * certificate, TLS grant, remote page response or administrative submission. */
 @RunWith(AndroidJUnit4::class)
 class PublicBrowserInstrumentedTest {
     @get:Rule val rule = createEmptyComposeRule()
     private val observedLog = SanitizedLogger()
     private val entry = URI("https://unprofiled.synthetic.example/form")
     private val fixturePage = entry.resolve("/__local_fixture__")
-    private val fixturePathHash = java.security.MessageDigest.getInstance("SHA-256")
-        .digest(fixturePage.rawPath.toByteArray()).take(4).joinToString("") { "%02x".format(it) }
 
     @Test fun actualPublicBrowserKeepsNativeCertificateConsentButNoAutomaticKey() {
         val current = AtomicReference<WebView?>()
@@ -44,6 +53,7 @@ class PublicBrowserInstrumentedTest {
             scenario.onActivity { activity ->
                 val view = checkNotNull(current.get())
                 val barrier = (activity.application as JuntaFirmaApplication).clientCertPreferenceCoordinator.state.value
+                assertEquals(ClientCertPreferenceBarrierState.IDLE, barrier)
                 android.util.Log.i("FirmaSyntheticConsent", "beforeTls;barrier=$barrier;fixture=${view.url == fixturePage.toASCIIString()}")
                 view.webViewClient.onReceivedClientCertRequest(view, request)
                 android.util.Log.i("FirmaSyntheticConsent", "afterTls;ignored=${request.ignores};proceeded=${request.proceeds}")
@@ -76,8 +86,8 @@ class PublicBrowserInstrumentedTest {
             awaitConsent("native-afirma-unlock", scenario, current) { "native callback invoked once" }
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
-            // Automatic lifecycle interruption is local; do not press the
-            // server-notifying cancellation button against a network endpoint.
+            // Lifecycle interruption is local; do not invoke server-notifying
+            // cancellation against a real storage endpoint in this test.
             scenario.moveToState(Lifecycle.State.CREATED)
             scenario.moveToState(Lifecycle.State.RESUMED)
             rule.waitForIdle()
@@ -103,32 +113,84 @@ class PublicBrowserInstrumentedTest {
             }
         }
         rule.waitUntil(timeoutMillis = 15_000) { current.get() != null }
+        val completedFixture = AtomicBoolean(false)
+        val interceptedFixture = AtomicBoolean(false)
+        var original: WebView? = null
         scenario.onActivity {
-            current.get()!!.apply {
-                stopLoading()
-                // A distinct URL separates this local document from the
-                // initial network load and its delayed failure callbacks.
-                loadDataWithBaseURL(fixturePage.toASCIIString(),
-                    "<html><head><title>PUBLIC_SYNTHETIC_READY</title></head><body><input value='local draft'></body></html>",
-                    "text/html", "UTF-8", fixturePage.toASCIIString())
-            }
+            val view = checkNotNull(current.get())
+            original = view
+            view.stopLoading()
+            // Keep the application's actual client and every callback used by
+            // these tests. Replace only the fixture's network response. A
+            // loadDataWithBaseURL title is not proof of a completed navigation.
+            view.webViewClient = LocalResponseClient(
+                view.webViewClient, fixturePage.toASCIIString(), completedFixture, interceptedFixture,
+            )
+            view.loadUrl(fixturePage.toASCIIString())
         }
-        rule.waitUntil(timeoutMillis = 15_000) {
-            var ready = false
-            scenario.onActivity {
-                ready = current.get()?.let { view ->
-                    view.title == "PUBLIC_SYNTHETIC_READY" && view.progress == 100 &&
-                        it.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-                } == true
+        try {
+            rule.waitUntil(timeoutMillis = 15_000) {
+                var ready = false
+                scenario.onActivity { activity ->
+                    val barrier = (activity.application as JuntaFirmaApplication).clientCertPreferenceCoordinator.state.value
+                    ready = current.get()?.let { view ->
+                        view === original && view.url == fixturePage.toASCIIString() &&
+                            view.title == "PUBLIC_SYNTHETIC_READY" && view.progress == 100 &&
+                            activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                            barrier == ClientCertPreferenceBarrierState.IDLE
+                    } == true
+                }
+                ready && interceptedFixture.get() && completedFixture.get()
             }
-            // A title/progress change can precede onPageStarted. Await the
-            // actual document-completion event before injecting a TLS request;
-            // otherwise the real navigation invalidates the synthetic request.
-            val completedFixture = observedLog.snapshot().any {
-                it.contains("event=PAGE_FINISHED ") && it.contains("path_sha256_8=$fixturePathHash")
+        } catch (failure: Throwable) {
+            var state = ""
+            scenario.onActivity { activity ->
+                val view = current.get()
+                val barrier = (activity.application as JuntaFirmaApplication).clientCertPreferenceCoordinator.state.value
+                state = "sameView=${view === original};lifecycle=${activity.lifecycle.currentState};" +
+                    "localUrl=${view?.url == fixturePage.toASCIIString()};progress=${view?.progress};" +
+                    "localTitle=${view?.title == "PUBLIC_SYNTHETIC_READY"};barrier=$barrier"
             }
-            ready && completedFixture
+            throw AssertionError("Local fixture not ready: $state;intercepted=${interceptedFixture.get()};" +
+                "finished=${completedFixture.get()};" + observedLog.snapshot().takeLast(12).joinToString(" | "), failure)
         }
+    }
+
+    /** This test-only decorator does not answer certificate/signing requests.
+     * All protocol, ownership and consent behavior belongs to the real client. */
+    private class LocalResponseClient(
+        private val delegate: WebViewClient,
+        private val fixtureUrl: String,
+        private val finished: AtomicBoolean,
+        private val intercepted: AtomicBoolean,
+    ) : WebViewClient() {
+        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+            val response = delegate.shouldInterceptRequest(view, request)
+            if (response != null) return response
+            if (request.url.toString() == fixtureUrl && request.method == "GET") {
+                intercepted.set(true)
+                val html = "<html><head><title>PUBLIC_SYNTHETIC_READY</title></head><body><input value='local draft'></body></html>"
+                return WebResourceResponse("text/html", "UTF-8", 200, "OK", mapOf("Cache-Control" to "no-store"),
+                    ByteArrayInputStream(html.toByteArray(Charsets.UTF_8)))
+            }
+            // No test resource should cause outgoing network activity.
+            return WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", emptyMap(), ByteArrayInputStream(ByteArray(0)))
+        }
+        override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+            if (url == fixtureUrl) finished.set(false)
+            delegate.onPageStarted(view, url, favicon)
+        }
+        override fun onPageFinished(view: WebView, url: String) {
+            delegate.onPageFinished(view, url)
+            if (url == fixtureUrl) finished.set(true)
+        }
+        override fun onPageCommitVisible(view: WebView, url: String) = delegate.onPageCommitVisible(view, url)
+        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = delegate.shouldOverrideUrlLoading(view, request)
+        override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) = delegate.onReceivedClientCertRequest(view, request)
+        override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) = delegate.onReceivedError(view, request, error)
+        override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) = delegate.onReceivedHttpError(view, request, response)
+        override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) = delegate.onReceivedSslError(view, handler, error)
+        override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail) = delegate.onRenderProcessGone(view, detail)
     }
 
     /** Chromium callbacks and Android dialog windows are outside Compose's
