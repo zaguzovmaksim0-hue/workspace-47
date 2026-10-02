@@ -168,11 +168,29 @@ class BrowserPopupInstrumentedTest {
     }
 
     private fun ready(scenario: ActivityScenario<MainActivity>, view: WebView, title: String) {
-        rule.waitUntil(timeoutMillis = 15_000) {
-            var yes = false
-            scenario.onActivity { yes = view.title == title && view.progress == 100 && view.isShown }
-            yes
+        var nativeReadyBeforeHeader = false
+        try {
+            rule.waitUntil(timeoutMillis = 15_000) {
+                var nativeReady = false
+                scenario.onActivity {
+                    nativeReady = view.title == title && view.progress == 100 && view.isShown && view.isAttachedToWindow &&
+                        (view as? dev.junta.firmamobile.browser.TrustedJuntaWebView)?.isNativeReleased != true
+                }
+                // Chromium progress and Compose layout have separate clocks.
+                // Observe both before asserting on the actual popup header;
+                // do not issue a second window request or reload either page.
+                val headerReady = title != "CHILD_READY" || runCatching {
+                    rule.onNodeWithTag("browser-popup-header").assertIsDisplayed()
+                }.isSuccess
+                if (nativeReady && !headerReady) nativeReadyBeforeHeader = true
+                nativeReady && headerReady
+            }
+        } catch (failure: Throwable) {
+            throw AssertionError("Original popup did not become ready: expectedTitle=$title;" +
+                "nativeReadyBeforeHeader=$nativeReadyBeforeHeader;owners=$callbackTrace;" +
+                logger.snapshot().takeLast(12).joinToString("|"), failure)
         }
+        android.util.Log.i("FirmaPopupUiReadiness", "expectedTitle=$title;nativeReadyBeforeHeader=$nativeReadyBeforeHeader")
     }
     private fun evaluate(view: WebView, script: String): String {
         val result = AtomicReference<String?>()
