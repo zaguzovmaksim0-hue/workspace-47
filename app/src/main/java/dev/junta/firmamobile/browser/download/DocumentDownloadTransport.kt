@@ -21,7 +21,25 @@ import okhttp3.Response
 internal enum class DocumentDownloadProblem { NETWORK, SERVER, REDIRECT, AUTHENTICATION, TOO_LARGE, NOT_DOCUMENT, CANCELLED, STORAGE }
 internal class DocumentDownloadException(val problem: DocumentDownloadProblem) : IOException("Document transfer: $problem")
 internal class StagedDocument(val file: File, val bytes: Long, val sha256: String) : AutoCloseable {
-    override fun close() { file.delete() }
+    init { synchronized(active) { active.add(file.absolutePath) } }
+    override fun close() { abandon(file) }
+    companion object {
+        private val active = mutableSetOf<String>()
+        fun createFile(directory: File): File = synchronized(active) {
+            File.createTempFile("document-", ".part", directory).also { active.add(it.absolutePath) }
+        }
+        fun abandon(file: File) = synchronized(active) {
+            file.delete(); active.remove(file.absolutePath)
+            Unit
+        }
+        fun pruneStale(directory: File, nowMillis: Long) = synchronized(active) {
+            directory.listFiles()?.filter {
+                it.isFile && it.name.startsWith("document-") && it.name.endsWith(".part") &&
+                    it.lastModified() < nowMillis - 3_600_000L && it.absolutePath !in active
+            }?.forEach { it.delete() }
+            Unit
+        }
+    }
 }
 
 /** One newly and explicitly approved GET, not the already-consumed WebView
@@ -34,7 +52,7 @@ internal class DocumentDownloadTransport(
         suspendCancellableCoroutine { continuation ->
             val file = try {
                 if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Staging unavailable")
-                File.createTempFile("document-", ".part", directory)
+                StagedDocument.createFile(directory)
             } catch (_: Exception) {
                 continuation.resumeWith(Result.failure(DocumentDownloadException(DocumentDownloadProblem.STORAGE)))
                 return@suspendCancellableCoroutine
@@ -53,7 +71,7 @@ internal class DocumentDownloadTransport(
                         return chain.proceed(chain.request())
                     }
                 }).build() } catch (_: Exception) {
-                    file.delete()
+                    StagedDocument.abandon(file)
                     continuation.resumeWith(Result.failure(DocumentDownloadException(DocumentDownloadProblem.NETWORK)))
                     return@suspendCancellableCoroutine
                 }
@@ -65,7 +83,7 @@ internal class DocumentDownloadTransport(
             continuation.invokeOnCancellation { call.cancel() }
             call.enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    file.delete(); cleanup()
+                    StagedDocument.abandon(file); cleanup()
                     if (continuation.isActive) continuation.resumeWith(Result.failure(DocumentDownloadException(DocumentDownloadProblem.NETWORK)))
                 }
                 override fun onResponse(call: Call, response: Response) {
@@ -102,7 +120,7 @@ internal class DocumentDownloadTransport(
                         if (continuation.isActive) continuation.resume(result, onCancellation = { _, value, _ -> value.close() })
                         else result.close()
                     } else {
-                        file.delete()
+                        StagedDocument.abandon(file)
                         if (continuation.isActive) continuation.resumeWith(Result.failure(DocumentDownloadException(problem)))
                     }
                 }

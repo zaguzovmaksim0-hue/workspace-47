@@ -57,6 +57,22 @@ class DocumentDownloadSaveTest {
         f.waitState(DocumentDownloadState.SAVED)
         assertEquals(1, f.fetches); assertArrayEquals(f.bytes, f.target.readBytes())
     }
+    @Test fun retryRemainsBlockedUntilTheEarlierProviderCleanupFinishes() = fixture { f ->
+        f.model.start(); f.waitState(DocumentDownloadState.READY)
+        f.provider.rejectWrite = true; f.provider.holdCleanup = true
+        f.model.beginPicker(); f.model.save(f.uri, f.context.contentResolver)
+        try {
+            assertTrue(f.provider.cleanupStarted.await(3, java.util.concurrent.TimeUnit.SECONDS))
+            assertEquals(DocumentDownloadState.COPYING, f.model.state)
+            assertFalse("Do not race a new save against old URI deletion", f.model.beginPicker())
+        } finally { f.provider.allowCleanup.countDown() }
+        f.waitState(DocumentDownloadState.SAVE_FAILED)
+        f.provider.rejectWrite = false
+        assertTrue(f.model.beginPicker()); f.model.save(f.uri, f.context.contentResolver)
+        f.waitState(DocumentDownloadState.SAVED)
+        assertArrayEquals(f.bytes, f.target.readBytes()); assertEquals(1, f.fetches)
+    }
+
     @Test fun expiredOfferNeverDownloadsAndCancellationDeletesStagedBytes() = fixture { f ->
         val expired = DocumentDownloadModel(null, f.directory) { _, _, _ -> error("No expired download") }
         expired.start(); assertEquals(DocumentDownloadState.EXPIRED, expired.state)
@@ -89,6 +105,9 @@ class DocumentDownloadSaveTest {
     }
     private class Provider(private val file: File) : ContentProvider() {
         var rejectWrite = false
+        var holdCleanup = false
+        val cleanupStarted = java.util.concurrent.CountDownLatch(1)
+        val allowCleanup = java.util.concurrent.CountDownLatch(1)
         override fun onCreate() = true
         override fun getType(uri: Uri) = "application/pdf"
         override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? = null
@@ -100,7 +119,11 @@ class DocumentDownloadSaveTest {
             return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE or ParcelFileDescriptor.MODE_CREATE or ParcelFileDescriptor.MODE_TRUNCATE)
         }
         override fun call(method: String, arg: String?, extras: Bundle?): Bundle {
-            if (method == "android:deleteDocument") file.delete()
+            if (method == "android:deleteDocument") {
+                cleanupStarted.countDown()
+                if (holdCleanup) check(allowCleanup.await(3, java.util.concurrent.TimeUnit.SECONDS))
+                file.delete()
+            }
             return Bundle()
         }
     }

@@ -460,7 +460,7 @@ class MainActivity : ComponentActivity() {
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onShowFileChooser = { view, callback, params -> browserFileChooser.open(view, callback, params) },
                         onDocumentDownload = { view, request ->
-                            if (currentWebView !== view || certificatePanelVisible ||
+                            if (currentWebView !== view || certificatePanelVisible || request.component?.packageName != packageName ||
                                 request.component?.className != dev.junta.firmamobile.browser.download.DocumentDownloadActivity::class.java.name
                             ) false else try {
                                 withBrowserExternalReturn(onToken = { documentDownloadReturnToken = it }) {

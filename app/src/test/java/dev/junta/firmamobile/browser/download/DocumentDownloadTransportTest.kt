@@ -75,6 +75,19 @@ class DocumentDownloadTransportTest {
         assertTrue(f.directory.listFiles().orEmpty().isEmpty())
         assertTrue(f.server.requestCount <= 1)
     }
+    @Test fun staleCleanupNeverDeletesAnActivePreparedFileOrAnUnrelatedFile() {
+        val dir = Files.createTempDirectory("stage-retention-").toFile()
+        val now = System.currentTimeMillis()
+        val live = StagedDocument.createFile(dir).apply { writeText("held"); setLastModified(now - 7_200_000L) }
+        val orphan = java.io.File(dir, "document-orphan.part").apply { writeText("old"); setLastModified(now - 7_200_000L) }
+        val unrelated = java.io.File(dir, "report.pdf").apply { writeText("keep"); setLastModified(now - 7_200_000L) }
+        try {
+            StagedDocument.pruneStale(dir, now)
+            assertTrue(live.exists()); assertTrue(unrelated.exists()); assertFalse(orphan.exists())
+            StagedDocument.abandon(live); assertFalse(live.exists())
+        } finally { StagedDocument.abandon(live); dir.deleteRecursively() }
+    }
+
     private class Fixture(val server: MockWebServer, trusted: HandshakeCertificates) {
         val directory = Files.createTempDirectory("document-test-").toFile()
         val dns = object : Dns {

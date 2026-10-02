@@ -97,9 +97,7 @@ internal class DocumentDownloadModel(
             try {
                 // Only our private prefix is eligible for recovery cleanup.
                 withContext(Dispatchers.IO) {
-                    val cutoff = System.currentTimeMillis() - 3_600_000L
-                    directory.listFiles()?.filter { it.isFile && it.name.startsWith("document-") && it.name.endsWith(".part") && it.lastModified() < cutoff }
-                        ?.forEach { it.delete() }
+                    StagedDocument.pruneStale(directory, System.currentTimeMillis())
                 }
                 var lastPublished = 0L
                 val result = fetch(request, directory) { count ->
@@ -129,6 +127,7 @@ internal class DocumentDownloadModel(
         job = viewModelScope.launch {
             val exportingJob = coroutineContext[Job]!!
             var committed = false
+            var recoverableFailure = false
             try {
                 val receipt = withContext(Dispatchers.IO) {
                     source.file.inputStream().use { input ->
@@ -142,12 +141,17 @@ internal class DocumentDownloadModel(
                 committed = true
                 source.close(); staged = null; state = DocumentDownloadState.SAVED
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { state = DocumentDownloadState.SAVE_FAILED }
+            catch (_: Exception) { recoverableFailure = true }
             finally {
                 if (!committed) withContext(NonCancellable + Dispatchers.IO) {
                     // This URI was returned by CREATE_DOCUMENT, not an existing
                     // file supplied by a page. Remove only that partial output.
                     runCatching { DocumentsContract.deleteDocument(resolver, uri) }
+                }
+                // Do not expose retry while deletion of the earlier destination
+                // is still running: a provider may reuse a just-created URI.
+                if (recoverableFailure && state == DocumentDownloadState.COPYING) {
+                    state = DocumentDownloadState.SAVE_FAILED
                 }
             }
         }
