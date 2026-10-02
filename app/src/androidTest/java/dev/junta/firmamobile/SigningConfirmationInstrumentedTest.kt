@@ -337,17 +337,45 @@ class SigningConfirmationInstrumentedTest {
                     rule.onNodeWithTag(openTag).assertIsDisplayed().performClick()
                     waitForWebView(scenario)
                     var original: WebView? = null
+                    val fixtureFinished = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureIntercepted = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureUrl = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+                        .profile(dev.junta.firmamobile.profile.ProfileId("junta-andalucia")))
+                        .startUrl.resolve("/__firmamobile_afirma_fixture__").toASCIIString()
                     scenario.onActivity { activity ->
                         original = checkNotNull(findWebView(activity.window.decorView)).apply {
                             stopLoading()
-                            loadDataWithBaseURL(
-                                "https://portal.synthetic.example/start",
+                            // Same-origin HTTPS interception avoids a renderer
+                            // site swap just to inject local test HTML. Real
+                            // navigation, mTLS and error callbacks stay delegated.
+                            webViewClient = PublicBrowserInstrumentedTest.LocalResponseClient(
+                                webViewClient, fixtureUrl, fixtureFinished, fixtureIntercepted,
                                 "<html><head><title>NATIVE_AFIRMA_READY</title></head><body><input value=retained-draft></body></html>",
-                                "text/html", "UTF-8", "https://portal.synthetic.example/start",
                             )
+                            loadUrl(fixtureUrl)
                         }
                     }
-                    waitForWebViewTitle(scenario, "NATIVE_AFIRMA_READY")
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val view = findWebView(activity.window.decorView)
+                                ready = view === original && view?.url == fixtureUrl &&
+                                    view?.title == "NATIVE_AFIRMA_READY" && view?.progress == 100 &&
+                                    activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                            }
+                            ready && fixtureFinished.get() && fixtureIntercepted.get()
+                        }
+                    } catch (failure: Throwable) {
+                        var state = ""
+                        scenario.onActivity { activity ->
+                            val view = findWebView(activity.window.decorView)
+                            state = "sameView=${view === original};localUrl=${view?.url == fixtureUrl};" +
+                                "titleMatches=${view?.title == "NATIVE_AFIRMA_READY"};progress=${view?.progress}"
+                        }
+                        throw AssertionError("Local AutoFirma fixture failed before issuing any protocol callback: " +
+                            "$state;intercepted=${fixtureIntercepted.get()};finished=${fixtureFinished.get()}", failure)
+                    }
                     val invocation = Uri.parse(
                         "afirma://sign?id=Synthetic-123&stservlet=https%3A%2F%2Fstore.synthetic.example%2Fput" +
                             "&format=CAdES&algorithm=SHA256withRSA&dat=c3ludGhldGlj",
