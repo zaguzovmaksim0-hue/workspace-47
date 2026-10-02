@@ -31,6 +31,9 @@ class PublicBrowserInstrumentedTest {
     @get:Rule val rule = createEmptyComposeRule()
     private val observedLog = SanitizedLogger()
     private val entry = URI("https://unprofiled.synthetic.example/form")
+    private val fixturePage = entry.resolve("/__local_fixture__")
+    private val fixturePathHash = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(fixturePage.rawPath.toByteArray()).take(4).joinToString("") { "%02x".format(it) }
 
     @Test fun actualPublicBrowserKeepsNativeCertificateConsentButNoAutomaticKey() {
         val current = AtomicReference<WebView?>()
@@ -38,9 +41,12 @@ class PublicBrowserInstrumentedTest {
             render(scenario, current)
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
             val request = CertificateRequest()
-            scenario.onActivity {
+            scenario.onActivity { activity ->
                 val view = checkNotNull(current.get())
+                val barrier = (activity.application as JuntaFirmaApplication).clientCertPreferenceCoordinator.state.value
+                android.util.Log.i("FirmaSyntheticConsent", "beforeTls;barrier=$barrier;fixture=${view.url == fixturePage.toASCIIString()}")
                 view.webViewClient.onReceivedClientCertRequest(view, request)
+                android.util.Log.i("FirmaSyntheticConsent", "afterTls;ignored=${request.ignores};proceeded=${request.proceeds}")
             }
             awaitConsent("interactive-client-auth-unlock", scenario, current) { "ignored=${request.ignores},proceeded=${request.proceeds}" }
             rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed()
@@ -100,9 +106,11 @@ class PublicBrowserInstrumentedTest {
         scenario.onActivity {
             current.get()!!.apply {
                 stopLoading()
-                loadDataWithBaseURL(entry.toASCIIString(),
+                // A distinct URL separates this local document from the
+                // initial network load and its delayed failure callbacks.
+                loadDataWithBaseURL(fixturePage.toASCIIString(),
                     "<html><head><title>PUBLIC_SYNTHETIC_READY</title></head><body><input value='local draft'></body></html>",
-                    "text/html", "UTF-8", entry.toASCIIString())
+                    "text/html", "UTF-8", fixturePage.toASCIIString())
             }
         }
         rule.waitUntil(timeoutMillis = 15_000) {
@@ -113,7 +121,13 @@ class PublicBrowserInstrumentedTest {
                         it.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
                 } == true
             }
-            ready
+            // A title/progress change can precede onPageStarted. Await the
+            // actual document-completion event before injecting a TLS request;
+            // otherwise the real navigation invalidates the synthetic request.
+            val completedFixture = observedLog.snapshot().any {
+                it.contains("event=PAGE_FINISHED ") && it.contains("path_sha256_8=$fixturePathHash")
+            }
+            ready && completedFixture
         }
     }
 
